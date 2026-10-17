@@ -1,0 +1,106 @@
+{
+ "card": "I1-card",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/latent_open/runs/oc/I1-card/20261017-202908",
+ "stage": "done",
+ "started": "2026-10-17T20:29:09.660Z",
+ "calls": [
+  {
+   "id": "0001 run:price-sheet",
+   "stage": "Frame",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 50096,
+   "cost_usd": 0.00271664,
+   "tokens": 10464,
+   "errors": []
+  },
+  {
+   "id": "0002 seed:idea:seed:producer",
+   "stage": "Produce",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 676680,
+   "cost_usd": 0.28360463999999996,
+   "tokens": 280220,
+   "errors": []
+  },
+  {
+   "id": "0003 seed:idea:seed:dramaturg",
+   "stage": "Check",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 85173,
+   "cost_usd": 0.044242484,
+   "tokens": 41283,
+   "errors": []
+  },
+  {
+   "id": "0004 seed:idea:seed:critic",
+   "stage": "Check",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 250227,
+   "cost_usd": 0.0135919,
+   "tokens": 32214,
+   "errors": []
+  },
+  {
+   "id": "0005 seed:idea:seed:dramaturg-resample",
+   "stage": "Check",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 118092,
+   "cost_usd": 0.054654776,
+   "tokens": 46632,
+   "errors": []
+  },
+  {
+   "id": "0006 seed:idea:seed:dramaturg-2",
+   "stage": "Check",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 124361,
+   "cost_usd": 0.057199516000000006,
+   "tokens": 47749,
+   "errors": []
+  },
+  {
+   "id": "0007 seed:idea:seed:dramaturg-2-resample",
+   "stage": "Check",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 138192,
+   "cost_usd": 0.06072836,
+   "tokens": 49460,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.516738316,
+ "tokens": 508022,
+ "by_model": {
+  "opencode-go/glm-5.3-flash": {
+   "calls": 2,
+   "cost_usd": 0.01630854,
+   "tokens": 42678
+  },
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 5,
+   "cost_usd": 0.5004297759999999,
+   "tokens": 465344
+  }
+ },
+ "done": true,
+ "updated": "2026-10-17T20:49:58.292Z",
+ "go": [
+  "opencode-go/glm-5.3-flash: $0.016 over 2 calls = 0.0% of its $60 monthly cap, 0.1% of a 5-hour window",
+  "opencode-go/deepseek-v4-pro: $0.500 over 5 calls = 3.3% of its $15 monthly cap, 16.7% of a 5-hour window"
+ ]
+}

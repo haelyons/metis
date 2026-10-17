@@ -101,7 +101,7 @@ const card = loadCard()
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-')
 const RUN = opt('out', path.join(CFG.runs_dir, card.key.replace(/[^A-Za-z0-9._-]/g, '_'), stamp))
 for (const d of ['raw', 'research']) fs.mkdirSync(path.join(RUN, d), { recursive: true })
-const status = { run_dir: RUN, card: card.key, models: M, stage: 'start', started: new Date().toISOString(), calls: [], cost_usd: 0, tokens: 0, done: false }
+const status = { run_dir: RUN, card: card.key, models: M, stage: 'start', started: new Date().toISOString(), calls: [], cost_usd: 0, tokens: 0, by_model: {}, done: false }
 const saveStatus = () => { status.updated = new Date().toISOString(); fs.writeFileSync(path.join(RUN, 'status.json.tmp'), JSON.stringify(status, null, 1)); fs.renameSync(path.join(RUN, 'status.json.tmp'), path.join(RUN, 'status.json')) }
 fs.writeFileSync(path.join(RUN, 'card.md'), `Root question: ${card.root}\n\n${card.text}\n`)
 saveStatus()
@@ -112,6 +112,8 @@ async function call(stage, model, agent, prompt, check, timeoutMin, cwd) {
   const rec = { id, stage, model, state: 'running', attempts: 0, ms: 0, cost_usd: 0, tokens: 0 }
   status.calls.push(rec); saveStatus()
   let session = null, res = null, errors = []
+  const base = path.join(RUN, 'raw', id.replace('#', '-'))
+  fs.writeFileSync(`${base}.prompt.md`, prompt)
   for (let attempt = 1; attempt <= 2; attempt++) {
     rec.attempts = attempt
     const p = attempt === 1 ? prompt : `Your reply could not be used: ${errors.join('; ')}. Reply again with only the JSON asked for.`
@@ -125,6 +127,9 @@ async function call(stage, model, agent, prompt, check, timeoutMin, cwd) {
   }
   rec.state = errors.length ? 'failed' : 'ok'
   rec.errors = errors
+  await oc.exportSession(session, `${base}.export.json`)
+  const bm = status.by_model[model] = status.by_model[model] || { calls: 0, cost_usd: 0, tokens: 0 }
+  bm.calls++; bm.cost_usd += rec.cost_usd; bm.tokens += rec.tokens
   saveStatus()
   return { json: res && res.json, ok: !errors.length, errors, model, raw_text: res && res.text }
 }
@@ -179,7 +184,9 @@ async function main() {
     const sum = ['fit', 'change', 'new'].reduce((t, c) => t + (per[c].median || 0), 0)
     return { ...v, scores: per, sum }
   })
-  const best = scored.slice().sort((a, b) => b.sum - a.sum)[0] || null
+  // ties: higher fit, then lower total spread across critics
+  const spread = s => ['fit', 'change', 'new'].reduce((t, c) => t + (s.scores[c].spread || 0), 0)
+  const best = scored.slice().sort((a, b) => b.sum - a.sum || (b.scores.fit.median || 0) - (a.scores.fit.median || 0) || spread(a) - spread(b))[0] || null
   const result = {
     card: card.key, root: card.root, models: M, run_dir: RUN, wall_min: +((Date.now() - t0) / MIN).toFixed(1),
     cost_usd: +status.cost_usd.toFixed(4), tokens: status.tokens,

@@ -1,0 +1,50 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 5,
+      "ref": "card:if_lever",
+      "reason": "Either outcome changes whether to scale synthetic-drift probing or keep paying human audits; decision_rule keys directly on the measured held-out AUROC."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.decision_rule",
+      "reason": "0.80-vs-0.679 gap exceeds seed/bootstrap noise; statement-run axis spans 75× bought as GPU compute; probe, generator, audit labels held fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "plan:outside_budget",
+      "reason": "Scored against human-intent labels with only a 50-pair inter-annotator check; anchor plants its own signal, so no independent truth for the scored AUROC."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Plan states nobody measured Lean drift readability, human-label scoring or synthetic-to-natural transfer; closest prior is SMT-LIB, a different system."
+    },
+    {
+      "criterion": "internals",
+      "value": 3,
+      "ref": "plan:checks",
+      "reason": "Compares verbalized confidence and TF-IDF on the same held-out set, but decision_rule gives no numeric margin and the LLM-judge goes untested."
+    },
+    {
+      "criterion": "reshape",
+      "value": 5,
+      "ref": "plan:restructuring.condition_phase",
+      "reason": "Human audit is the serial bottleneck; synthetic perturbation replaces training labels; transfer-gate checks ≥0.70 on audited pairs before the 100k main spend."
+    },
+    {
+      "criterion": "baseline",
+      "value": 3,
+      "ref": "plan:phases.anchor",
+      "reason": "Sequential baseline tuned and copies on same GPUs hold, card:anchor states the ±0.05 check, but no named phase times the arms — one condition fails."
+    }
+  ],
+  "decides_by": "transfer-gate",
+  "decides_by_reason": "transfer-gate measures held-out AUROC on the 200 audited pairs that decision_rule thresholds; anchor only plants signal and times throughput; audit only labels."
+}
+```

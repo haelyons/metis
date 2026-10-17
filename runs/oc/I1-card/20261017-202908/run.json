@@ -1,0 +1,143 @@
+{
+ "name": "I1-card",
+ "run_dir": "/home/hal/dev/interp/latent_open/runs/oc/I1-card/20261017-202908",
+ "script": "/home/hal/dev/interp/latent_open/qt2/dist/question_tree_v2.js",
+ "script_sha256": "b7d451cf548e526458359e6ea5f1e4ad8e9a63b0b027088dc619e07984d0490a",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/latent_open/runs/oc/I1-card/20261017-202908/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "I1",
+    "title": "Drift probes on the autoformalizer",
+    "text": "Probe the autoformalizer's activations while it writes definitions and statements, to flag when it has quietly strengthened a hypothesis or guessed a convention. In math, generators often 'know' they are wrong: a linear probe predicts trace correctness at 0.953 AUROC on MATH-500, against 0.674 for verbalized confidence. But transfer to other domains is weak (0.54/0.55 from MATH to ARC), the signal is 'diagnostic, not causal', and the only interp study of autoformalization (SMT-LIB, not Lean) gets 0.960 against a solver oracle but 0.679 against an LLM proxy for intent. No one has measured this on Lean, and the labels it needs are the human audit itself.",
+    "root_question": "What actually stops us from autoformalizing most of published math into Lean? Is it gaps in Mathlib coverage, the step of translating informal proofs where authors skip things that are 'obvious', or something deeper about how mathematicians write? The Lean kernel is a free and perfect verifier, so this looks like one of the few domains where brute-force search can't fool itself. Could you split every paper into tiny lemma-sized subgoals and throw many different open-source prover models at each one in parallel, with each model scoped to a known failure mode like wrong definitions, mismatched conventions or silently strengthened hypotheses? Is compute a major blocker at some level, and could a shit ton of GPU parallelism fix it, or is the real bottleneck checking that the formal statement means the same thing as the English one?",
+    "kind": "interp",
+    "root_link": "B4 / framer 4.3: whether a misformalization of the root statement or its definitions, which the kernel cannot see, leaves a readable trace inside the generator, which would shrink the human audit set.",
+    "compute_open": "Quantity is models and labelled statements analysed. The most reported is nine models up to 72B on 100 training and 200 held-out math problems (https://arxiv.org/html/2605.09502v1) and 950 SMT-LIB encodings (https://arxiv.org/html/2609.11085v2). Unknown above that: whether Lean statement drift is linearly readable in any model at all, and how a probe scores against human rather than solver or LLM-proxy intent labels.",
+    "sequential": "The chain is: expert-labelled faithful/unfaithful pairs, then one forward pass per statement to cache activations, then a probe fit (minutes on a fraction of one GPU), then held-out evaluation. That is about 4 steps, with one run per model and realistically per subfield. Only the labelling step is serial (it is the expert audit). Labels could arrive in parallel if faithful statements were perturbed synthetically in targeted directions, as BPF's counterfactual probe generation does (https://arxiv.org/abs/2606.16541). That pays off only if probes trained on synthetic drift transfer to natural misformalizations. The nearest precedent is Goodfire's Rakuten SAE probes, trained on synthetic data, which held up on real production data (https://www.goodfire.com/research/rakuten-sae-probes-for-pii-detection).",
+    "source_urls": [
+     "https://arxiv.org/html/2605.09502v1",
+     "https://arxiv.org/html/2609.11085v2",
+     "https://arxiv.org/html/2504.05419v1"
+    ]
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/deepseek-v4-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/latent_open",
+  "commit": "e635804b0fe929d2ed556701e94990a108996451",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-17T20:29:09.660Z",
+ "finished": "2026-10-17T20:49:58.293Z",
+ "totals": {
+  "cost_usd": 0.516738316,
+  "tokens": 508022,
+  "calls": 7,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 2,
+    "cost_usd": 0.01630854,
+    "tokens": 42678
+   },
+   "opencode-go/deepseek-v4-pro": {
+    "calls": 5,
+    "cost_usd": 0.5004297759999999,
+    "tokens": 465344
+   }
+  }
+ }
+}

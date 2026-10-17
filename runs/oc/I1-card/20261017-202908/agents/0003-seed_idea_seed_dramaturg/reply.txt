@@ -1,0 +1,80 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Research question — the plan's object of measurement/prediction; contains no factual claim, so no source is required."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "PARTIAL",
+      "page_quote": "A linear probe on the sparse features recovers 0.960 AUROC for GenV+HN.",
+      "note": "The predictive clause ('Lean misformalizations should be linearly readable') needs no source, but the factual premise 'a linear probe predicts trace correctness at 0.953' has no source, and 0.953 does not appear on the page. The page states 0.960 (SAE linear probe) and 0.961 (GenV+HN AUROC), and that metric is reference-equivalence, not 'trace correctness'."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Describes the plan's procedure (what it will build/measure); no factual claim, so no source is required."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Describes the plan's method (parallel counterfactual generation, side-by-side multi-GPU forward passes); no factual claim, so no source is required."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Conditional prediction of the plan's outcome (what it will measure); no source is required."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "Yet, when tracking panel-majority intent, GenV+HN trails at 0.679 AUROC while the Judge achieves 0.778.",
+      "note": "Conditional prediction of the plan's outcome; no source is required. The recalled 0.679 figure matches the page's panel-majority intent AUROC (0.679)."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "A linear probe on the sparse features recovers 0.960 AUROC for GenV+HN.",
+      "note": "Test plan (what will be cached, trained, timed, compared) needs no source; the comparison anchors 0.960 and 0.679 both appear on the page (0.960 SAE probe; 0.679 panel-majority intent)."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "A linear probe on the sparse features recovers 0.960 AUROC for GenV+HN.",
+      "page_value": 950,
+      "note": "All checkable facts hold: 0.960 matches the SAE linear probe; 0.679 matches 'GenV+HN trails at 0.679 AUROC' on panel-majority intent; 950 matches 'The primary benchmark contains 950 candidate encodings from 197 source problems'; 27B matches 'All verifiers share a frozen 27B parameter instruction-tuned backbone'."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "",
+      "note": "Negative factual claims about the literature ('No one has measured drift readability in Lean', 'scored a probe against human audit labels', 'tested synthetic-to-natural transfer') are unsourced; the page is a single SMT-LIB paper and cannot establish the absence of prior Lean work."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "A linear probe on the sparse features recovers 0.960 AUROC for GenV+HN.",
+      "page_value": 0.96,
+      "note": "The carried value 0.96 matches the page's 0.960 (SAE probe) and the cited quote. The remaining clauses are the plan's own targets/predictions (planted probe ≥0.90, parallel-vs-sequential ±0.05, shuffle control 0.50), which need no source."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Self-stated limitation of the plan; no factual claim about external work, so no source is required."
+    },
+    {
+      "ref": "src:s_genv_oracle",
+      "status": "SUPPORTED",
+      "page_quote": "A linear probe on the sparse features recovers 0.960 AUROC for GenV+HN.",
+      "note": "Quote appears verbatim in Section 7 (Inside the Verifier), supporting the cited AUROC (0.960) for the GenV+HN sparse-feature probe."
+    }
+  ]
+}
+```
