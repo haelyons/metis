@@ -8,8 +8,8 @@ const argv = process.argv.slice(2)
 
 function latest() {
   const runs = []
-  const walk = (d, depth) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) if (e.isDirectory()) { const p = path.join(d, e.name); if (fs.existsSync(path.join(p, 'status.json'))) runs.push(p); else if (depth < 2) walk(p, depth + 1) } }
-  for (const d of [CFG.runs_dir, CFG.workflow && CFG.workflow.runs_dir]) if (d && fs.existsSync(d)) walk(d, 0)
+  const walk = (d, depth) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) if (e.isDirectory()) { const p = path.join(d, e.name); if (fs.existsSync(path.join(p, 'status.json'))) runs.push(p); else if (depth < 4) walk(p, depth + 1) } }
+  for (const d of [CFG.runs_dir, CFG.workflow && CFG.workflow.runs_dir, CFG.loop && CFG.loop.runs_dir]) if (d && fs.existsSync(d)) walk(d, 0)
   return runs.sort((a, b) => fs.statSync(path.join(b, 'status.json')).mtimeMs - fs.statSync(path.join(a, 'status.json')).mtimeMs)[0]
 }
 function show(dir) {

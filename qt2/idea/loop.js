@@ -4,14 +4,15 @@
 // from the card and the frame check -> option-critic panel scores the idea and the variants -> if a variant scores
 // higher, card and frame check for it. Every model call is an OpenCode call, logged like the others.
 //
-// usage: node loop.js --seed seed.json [--name label]
+// usage: node loop.js --seed seed.json [--name label] [--dir <earlier loop dir>]
+//   --dir reuses a round's card and frame check when its result.json / frame.json are already there
 //   seed.json: {id, title, text, root_question, kind: "physical"|"interp", root_link, compute_open, sequential, source_urls}
 const fs = require('node:fs')
 const path = require('node:path')
 const vm = require('node:vm')
 const { spawnSync } = require('node:child_process')
 const oc = require('./oc.js')
-const { validate } = require('./schema.js')
+const { validate, promptSuffix } = require('./schema.js')
 
 const SRC = path.join(__dirname, '..', 'src')
 const ctx = vm.createContext({ console })
@@ -24,7 +25,7 @@ const CFG = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf
 const SEED = JSON.parse(fs.readFileSync(opt('seed'), 'utf8'))
 const NAME = opt('name', path.basename(opt('seed')).replace(/\.json$/, ''))
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-')
-const LOOP = path.join(CFG.loop.runs_dir, NAME, stamp)
+const LOOP = opt('dir', path.join(CFG.loop.runs_dir, NAME, stamp))
 fs.mkdirSync(path.join(LOOP, 'calls'), { recursive: true })
 const KIND = SEED.kind === 'interp' ? 'interp' : 'physical'
 const CRIT = KIND === 'interp' ? ['stakes', 'open', 'internals'] : ['stakes', 'open']   // the pick totals: reshape is reported, not summed
@@ -41,6 +42,7 @@ async function call(name, model, prompt, check) {
     session = res.sessionID; spend += res.cost
     fs.appendFileSync(path.join(LOOP, 'ledger.jsonl'), JSON.stringify({ ts: new Date().toISOString(), name, model, attempt, tokens: res.tokens, cost_usd: res.cost, ms: res.ms, errors: res.errors }) + '\n')
     errors = res.errors.length ? res.errors : res.json == null ? ['no JSON found in the reply'] : check(res.json)
+    fs.appendFileSync(path.join(LOOP, 'ledger.jsonl'), JSON.stringify({ name, attempt, check_errors: errors.slice(0, 10) }) + '\n')
     if (!errors.length) break
   }
   await oc.exportSession(session, `${base}.export.json`)
@@ -58,11 +60,11 @@ function cardAndFrame(record, tag) {
   const F = JSON.parse(fs.readFileSync(CFG.roots_args, 'utf8'))
   const args = { ...Object.fromEntries(Object.entries(F).filter(([k]) => !['fixed_roots', 'base'].includes(k))), base: 'auto', fixed_roots: [], seed_ideas: [{ ...record, root_question: SEED.root_question, kind: KIND }] }
   fs.writeFileSync(path.join(dir, 'args.json'), JSON.stringify(args, null, 1))
-  runNode('wf.js', ['--args', path.join(dir, 'args.json'), '--name', `${NAME}-${tag}`, '--out', path.join(dir, 'card')])
+  if (!fs.existsSync(path.join(dir, 'card', 'result.json'))) runNode('wf.js', ['--args', path.join(dir, 'args.json'), '--name', `${NAME}-${tag}`, '--out', path.join(dir, 'card')])
   const result = JSON.parse(fs.readFileSync(path.join(dir, 'card', 'result.json'), 'utf8'))
   const card = (result.cards || [])[0] || ''
   fs.writeFileSync(path.join(dir, 'card.md'), card.split('\n**Judges.**')[0].replace(/^<a id="[^"]*"><\/a>/, ''))
-  runNode('frame.js', ['--card-file', path.join(dir, 'card.md'), '--root', SEED.root_question, '--out', path.join(dir, 'frame')])
+  if (!fs.existsSync(path.join(dir, 'frame', 'frame.json'))) runNode('frame.js', ['--card-file', path.join(dir, 'card.md'), '--root', SEED.root_question, '--out', path.join(dir, 'frame')])
   const frame = JSON.parse(fs.readFileSync(path.join(dir, 'frame', 'frame.json'), 'utf8'))
   const row = (result.table || '').split('\n').find(l => l.startsWith('| ['))
   const cells = row ? row.split('|').slice(1, -1).map(s => s.trim()) : []
@@ -93,12 +95,18 @@ const median = xs => { const s = xs.filter(Number.isFinite).sort((a, b) => a - b
   const nb = await call('neighbours', CFG.loop.generator, P_NEIGHBOURS(SEED, r0), r => validate(SCHEMA_VARIANTS, r).concat(r.variants && r.variants.length === 3 ? [] : ['give exactly three variants']))
   const options = [{ id: 'O', title: SEED.title, summary: SEED.text, root_link: SEED.root_link, compute_open: SEED.compute_open, sequential: SEED.sequential }]
     .concat(((nb && nb.variants) || []).map(v => ({ id: v.id, title: v.title, summary: v.text, root_link: v.root_link, compute_open: v.compute_open, sequential: v.sequential, changes: v.changes })))
-  const scored = await Promise.all(CFG.loop.screen.map(m => call(`screen-${m.split('/').pop()}`, m, P_OPTION_CRITIC(SEED.root_question, CRIT_OPTION(KIND), options),
-    r => validate(SCHEMA_OPTION_SCORES, r).concat(gate_oc((r && r.items) || [], options, [...CRIT, 'reshape']).errors))))
+  const scored = await Promise.all(CFG.loop.screen.map(m => call(`screen-${m.split('/').pop()}`, m, P_OPTION_CRITIC(SEED.root_question, CRIT_OPTION(KIND), options) + promptSuffix(SCHEMA_OPTION_SCORES),
+    r => {   // the gate assumes the schema's shape, so it runs only once the schema check passes
+      const e = validate(SCHEMA_OPTION_SCORES, r)
+      if (e.length) return e
+      const g = gate_oc(r.items, options, [...CRIT, 'reshape'])
+      return g.ok ? [] : g.errors.concat([...(g.degenerate || [])].map(d => `${d}: reason only restates the criterion`))
+    })))
   const screen = options.map(o => {
     const per = Object.fromEntries([...CRIT, 'reshape'].map(c => [c, median(scored.filter(Boolean).map(s => ((s.items.find(i => i.id === o.id) || {}).scores || []).find(x => x.criterion === c)).map(x => x && x.value))]))
     return { id: o.id, title: o.title, changes: o.changes || '', ...per, total: CRIT.reduce((t, c) => t + (per[c] || 0), 0) }
   })
+  if (!scored.some(Boolean)) throw new Error('every screen call failed its check; see ledger.jsonl')
   const orig = screen[0]
   const best = screen.slice(1).sort((a, b) => b.total - a.total || (b.reshape || 0) - (a.reshape || 0))[0]
   let r1 = null
