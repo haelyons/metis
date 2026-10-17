@@ -1,0 +1,323 @@
+{
+ "card": "R4:interp:I1",
+ "root": "What actually stops us from autoformalizing most of published math into Lean? Is it gaps in Mathlib coverage, the step of translating informal proofs where authors skip things that are 'obvious', or something deeper about how mathematicians write? The Lean kernel is a free and perfect verifier, so this looks like one of the few domains where brute-force search can't fool itself. Could you split every paper into tiny lemma-sized subgoals and throw many different open-source prover models at each one in parallel, with each model scoped to a known failure mode like wrong definitions, mismatched conventions or silently strengthened hypotheses? Is compute a major blocker at some level, and could a shit ton of GPU parallelism fix it, or is the real bottleneck checking that the formal statement means the same thing as the English one?",
+ "models": {
+  "research": "opencode-go/kimi-k3",
+  "dramaturg": [
+   "opencode-go/glm-5.3",
+   "opencode-go/deepseek-v4-pro"
+  ],
+  "critic": [
+   "opencode-go/kimi-k3",
+   "opencode-go/qwen3.8-max",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "run_dir": "/home/hal/stage/runs-idea/R4_interp_I1/20261017-194549",
+ "wall_min": 14.5,
+ "cost_usd": 1.0321,
+ "tokens": 367816,
+ "research_ok": true,
+ "research_errors": [],
+ "no_programme_reason": "",
+ "gaps": [
+  "None of the three programmes publishes an expert-labelled real-misformalization test set; Kimina's ~1,000-problem human-curated set (used to tune its judge prompt) is the closest artefact but is private, so the card's held-out real-error set must be built independently.",
+  "DeepMind's formalizer is a closed Gemini model: the card's probe methodology requires activation access, so results on open 7B/8B/32B formalizers transfer to AlphaProof only if run internally.",
+  "FormalAlign is the only hidden-state-based alignment work found, and it is a separately fine-tuned 7B evaluator trained on a contrastive loss over synthetic misalignments — not frozen-model linear probes; the card's cross-model probe-transfer arm ('copied across models') is untested by any programme.",
+  "The card is scoped to competition and conjecture statements; the research-level definition formalization in the 2026 AlphaProof-Nexus programme (OEIS/Erdős problems) is at or beyond the card's stated test distribution, so the lever outcome there is extrapolation, not evidence.",
+  "Goedel-Prover and Kimina both use external LLM judges (Qwen2.5-72B, QwQ-32B) plus ad-hoc safeguards (negation-proving, triviality filters); the card's comparison is against expert-label probes and text-only baselines, not against these production judge ensembles, so adoption decisions would need a head-to-head with the judges they actually run."
+ ],
+ "programmes": [
+  {
+   "n": 1,
+   "name": "Goedel-Prover (Goedel-LM: Princeton Language and Intelligence with Tsinghua, Amazon, Meta FAIR, Numina)",
+   "url": "https://goedel-lm.github.io/",
+   "step": "The 'Statement Formalization' quality-assessment gate: after two trained formalizers produce 16 candidate Lean 4 formalizations per informal problem, each surviving candidate must pass a Faithfulness-and-Completeness (FC) check that the formal statement preserves the informal problem's meaning, before the surviving 1.64M statements enter expert-iteration proof training.",
+   "claims": [
+    {
+     "claim": "Goedel-Prover mass-autoformalizes 928K informal statements into 1.64M accepted formal statements (1.78M total with Lean Workbook), training two formalizers that each produce 8 candidates per problem, in under 24 hours on 8 H100 GPUs.",
+     "url": "https://goedel-lm.github.io/",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "Semantic correctness of formalizations is checked today not by humans or by probes but by an external LLM judge: Qwen2.5-72B-Instruct issues 4 independent judgments per statement and statements scoring below 0.5 are filtered out.",
+     "url": "https://goedel-lm.github.io/",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The paper itself frames this LLM-based semantic check as the mechanism that guarantees the 1.64M statements preserve the original problems' content.",
+     "url": "https://arxiv.org/html/2502.07640v2",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "A hidden-state probe on the formalizer, trained on ~8,000 machine-made errors and matching expert-label probes within 0.03 AUROC at ≥0.70, would substitute for (or pre-screen) the Qwen2.5-72B judge across all ~1.78M statements: four 72B forward passes per statement replaced by a near-free activation readout, and the probe could run inside generation to reject misformalizations online during expert iteration rather than as a post-hoc filter. If it also transfers across their Formalizer A and B (the card's cross-model arm), one probe covers both styles.",
+   "if_not_changes": "Goedel-Prover keeps its FC test with the 72B judge; the result tells them cheap self-monitoring of the formalizer does not generalize to real errors, so their LLM-as-judge design choice is validated and nothing in the pipeline changes.",
+   "already_done": {
+    "status": "no",
+    "claim": "Goedel-Prover's quality gate is purely LLM-as-judge (plus the Lean compiler for syntax); neither the paper, project page, nor repository describes hidden-state probes on the formalizer or any comparison of machine-labelled versus expert-labelled training for misformalization detection.",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 3,
+     "values": [
+      5,
+      3,
+      3
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/kimi-k3: Card measures real-misformalization detection on open 8B/32B Lean formalizers — the exact quantity Goedel's FC semantic gate depends on, on the model class it runs.",
+      "opencode-go/qwen3.8-max: Probe results would inform the FC gate, but via open stand-in formalizers rather than the supported Qwen judge itself.",
+      "opencode-go/minimax-m3: Probe targets hidden states of open 7B/8B/32B formalizers; Goedel's formalizers are their own and the 72B judge is external. Stand-in required."
+     ]
+    },
+    "change": {
+     "median": 4,
+     "values": [
+      4,
+      3,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/kimi-k3: Probe parity would replace four 72B judge passes per statement on Goedel's own formalizers; failure only validates the existing judge, leaving pipeline unchanged.",
+      "opencode-go/qwen3.8-max: Only a positive result would replace the 72B judge; a negative result leaves the supported FC gate unchanged.",
+      "opencode-go/minimax-m3: Either result changes judge choice: lever replaces 72B with probes; if-not validates current LLM-as-judge design."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/kimi-k3: Both checkers support gate being purely LLM-judge plus compiler; no hidden-state probes or machine-versus-expert label comparison anywhere in paper or repo.",
+      "opencode-go/qwen3.8-max: Supported claims show only LLM-judge and compiler checks, no hidden-state probes or machine-versus-expert label comparison.",
+      "opencode-go/minimax-m3: No probe-based misformalization detection or machine-vs-expert experiment is described in Goedel-Prover's pipeline."
+     ]
+    }
+   },
+   "sum": 12
+  },
+  {
+   "n": 2,
+   "name": "Project Numina / Kimina (Numina & Moonshot AI Kimi team — Kimina-Autoformalizer-7B, Kimina-Prover, NuminaMath-Lean)",
+   "url": "https://arxiv.org/html/2504.11354v1",
+   "step": "The semantic-correctness gate inside the Kimina-Autoformalizer expert-iteration loop, which produces the autoformalized half (~100k of ~200k problems) of Kimina-Prover's RL problem set and the released NuminaMath-Lean dataset: candidate formalizations that compile are judged for meaning, because, as the team states, 'there is no straightforward way to verify the correctness of a generated formal problem statement with respect to the natural language input.'",
+   "claims": [
+    {
+     "claim": "Semantic judging is done by an external 32B LLM with unanimous voting over multiple samples, not by the formalizer itself.",
+     "url": "https://arxiv.org/html/2504.11354v1",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "Because the judge misses real errors, the loop is supervised by human Lean 4 experts who continuously monitor outputs and tune the judge prompt.",
+     "url": "https://arxiv.org/html/2504.11354v1",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The team explicitly identifies the residual gap the card targets: the autoformalizer repeatedly makes mistakes the LLM judge cannot catch once outputs compile; their evaluation still rests on a human-curated test set of ~1,000 and a dedicated annotation team that refined ~10k human statements against ~100k autoformalized ones.",
+     "url": "https://arxiv.org/html/2504.11354v1",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "This is the most direct beneficiary: Kimina-Autoformalizer-7B is exactly the card's model class (open 7B Lean formalizer), and the card tests whether the errors the judge misses are internally registered. If the machine-trained probe matches the expert-trained probe on real misformalizations, Numina can replace part of the expert-monitoring queue and the ~1,000-label judge calibration with a probe scored during the expert-iteration loop, letting the autoformalized share of the RL problem set grow without scaling the annotation team proportionally.",
+   "if_not_changes": "The pipeline keeps the QwQ-32B unanimous-vote judge plus Lean-expert monitoring and the human annotation pipeline; the result would tell them machine-labelled probes cannot substitute for expert attention, i.e. their current costly human-in-the-loop design is necessary, not incidental.",
+   "already_done": {
+    "status": "partly",
+    "claim": "FormalAlign (ICLR 2025; authors include Jing Xiong and Zhengying Liu, also Kimina contributors) trains hidden-state-based alignment scoring for autoformalization, the card's stated closest prior — but it is a separately fine-tuned Mistral-7B evaluator trained and tested only on synthetic misalignments, not linear probes on the production formalizer validated against expert-found real errors, and Kimina's production loop still uses the QwQ judge plus experts.",
+    "checks": [
+     "PARTIAL",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/kimi-k3: Kimina-Autoformalizer-7B is the card's exact model class, and the team names judge-missed post-compile errors — precisely what the card's real-error AUROC measures — as their gap.",
+      "opencode-go/qwen3.8-max: It measures whether autoformalizers internally register meaning errors, the supported gate's unresolved problem with judge-missed real mistakes.",
+      "opencode-go/minimax-m3: Kimina-Autoformalizer-7B is exactly the card's open 7B Lean formalizer class; probes apply directly to production system."
+     ]
+    },
+    "change": {
+     "median": 4,
+     "values": [
+      4,
+      3,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/kimi-k3: Success substitutes probe scoring for part of the expert-monitoring queue and judge calibration; failure confirms costly human oversight is necessary, redirecting annotation scaling decisions.",
+      "opencode-go/qwen3.8-max: Only a positive result would reduce expert monitoring; a negative result keeps the supported judge-plus-expert loop unchanged.",
+      "opencode-go/minimax-m3: Either result changes practice: lever replaces expert monitoring and shrinks annotation team; if-not validates human-in-the-loop."
+     ]
+    },
+    "new": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      3
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/kimi-k3: Contributors' FormalAlign already does hidden-state alignment scoring on synthetic errors — card's closest prior — but never tested on real expert-found misformalizations; question only partly answered.",
+      "opencode-go/qwen3.8-max: FormalAlign partly addresses hidden-state alignment on synthetic errors, but supported production still lacks real-error, machine-versus-expert probe validation.",
+      "opencode-go/minimax-m3: FormalAlign is partial prior (separate evaluator, synthetic errors only); production probes on formalizer vs expert labels untested."
+     ]
+    }
+   },
+   "sum": 12
+  },
+  {
+   "n": 3,
+   "name": "Google DeepMind AlphaProof (including the 2026 AlphaProof-Nexus research-level proof-search programme)",
+   "url": "https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/",
+   "step": "The formalizer network — a fine-tuned Gemini model that translates ~1M informal problems into Lean statements to build AlphaProof's reinforcement-learning library — and, in the 2026 follow-up, Gemini autoformalization of open research questions (OEIS, Erdős problems) where a misformalized statement means the agent proves the wrong theorem.",
+   "claims": [
+    {
+     "claim": "AlphaProof's training data comes from a fine-tuned Gemini model that automatically translates natural language problem statements into formal statements, building a large formal problem library.",
+     "url": "https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The scale of autoformalization is around one million informal problems translated by the formalizer network.",
+     "url": "https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "For the high-stakes IMO contest use, DeepMind did not trust the autoformalizer at all: problems were translated to formal language manually by humans.",
+     "url": "https://deepmind.google/blog/ai-solves-imo-problems-at-silver-medal-level/",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The follow-up research-level programme autoformalizes open questions (492 OEIS problems) and spends substantial compute per problem, so undetected misformalization directly wastes search budget and can produce vacuously 'solved' wrong statements.",
+     "url": "https://arxiv.org/pdf/2605.22763v1",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "A probe that flags real misformalizations at expert-label quality would give DeepMind a scalable semantic check on the ~1M-problem training library and a pre-filter on autoformalized open problems before the agent spends its ~27.5 TPU-hours-per-problem search budget; over time it could shrink the manual translation step used for contest and research problems.",
+   "if_not_changes": "Nothing changes: misformalized problems remain tolerated noise in the large training library, and high-stakes formalization (contest problems, open conjectures) continues to be done or audited manually by their Lean experts.",
+   "already_done": {
+    "status": "no",
+    "claim": "Public materials describe only the fine-tuned Gemini formalizer plus manual translation for the contest; no probe-based misformalization detection or machine-versus-expert label experiment is reported. (Note: the formalizer is closed, so the card's open-model probes would only transfer internally.)",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      3
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/kimi-k3: The quantity matches AlphaProof's formalizer gate, but its formalizer is closed Gemini; the card's open 7B/8B/32B probes are stand-ins DeepMind must bridge internally.",
+      "opencode-go/qwen3.8-max: It targets semantic validation, but only through open stand-in models, not the supported closed Gemini formalizer used by AlphaProof.",
+      "opencode-go/minimax-m3: AlphaProof's Gemini formalizer is closed; card only tests open 7B/8B/32B models, requiring transfer to bridge."
+     ]
+    },
+    "change": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/kimi-k3: Only a positive result matters — a pre-filter before 27.5 TPU-hour searches — and even that needs internal re-implementation on Gemini the card does not do.",
+      "opencode-go/qwen3.8-max: Only a positive result could add a semantic prefilter; a negative result leaves manual auditing and tolerated noise unchanged.",
+      "opencode-go/minimax-m3: Either result changes practice: lever adds probe filtering to ~1M library and research questions; if-not keeps manual translation."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/kimi-k3: Supported claims show only fine-tuned Gemini formalizer plus manual translation for contests; no probe-based misformalization detection or machine-versus-expert label experiment is reported.",
+      "opencode-go/qwen3.8-max: Supported materials describe Gemini autoformalization and manual contest translation, but no probe-based or machine-versus-expert misformalization measurement.",
+      "opencode-go/minimax-m3: No probe-based misformalization detection is reported; formalizer outputs only checked by compilation and manual review."
+     ]
+    }
+   },
+   "sum": 11
+  }
+ ],
+ "best": {
+  "name": "Goedel-Prover (Goedel-LM: Princeton Language and Intelligence with Tsinghua, Amazon, Meta FAIR, Numina)",
+  "step": "The 'Statement Formalization' quality-assessment gate: after two trained formalizers produce 16 candidate Lean 4 formalizations per informal problem, each surviving candidate must pass a Faithfulness-and-Completeness (FC) check that the formal statement preserves the informal problem's meaning, before the surviving 1.64M statements enter expert-iteration proof training.",
+  "sum": 12,
+  "fit": 3,
+  "change": 4,
+  "new": 5
+ },
+ "failed_calls": []
+}

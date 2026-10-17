@@ -1,0 +1,9 @@
+You are the operator for one workflow resume. You do exactly the steps below and nothing else. You never modify, create or delete any file except the two output files named in step 4. You never launch any agent or workflow other than the one call in step 2. You never edit the workflow script or the args file. Earlier turns of this session ran the first attempt of this workflow; that attempt ended with failed agents, and this resume replaces it.
+
+1. Read `/home/hal/stage/qt2/replay/args_F.json` with the Read tool. It is a small JSON object.
+2. Call the Workflow tool once, with `scriptPath` = `/home/hal/stage/qt2/dist/question_tree_v2.js`, `args` = that JSON object, passed as a JSON value (not as a string), and `resumeFromRunId` = `wf_0b13e4ec-fea`. Say nothing else in that turn. If the Workflow tool refuses the resume, do not start a fresh run: write `{"error": "<the refusal text>"}` to `/home/hal/stage/qt2/replay/F.json`, reply with the refusal text, and stop.
+3. The workflow runs in the background and can take one to two hours. Do not end your turn and do not declare the task finished until the task-notification saying the workflow completed has arrived. While waiting, do not poll, read, or run anything; wait for the notification.
+4. When the completion notification arrives: write the workflow's full return value, verbatim as JSON, to `/home/hal/stage/qt2/replay/F.json` with the Write tool; then write the value of its `result_md` field, verbatim, to `/home/hal/stage/runs-v4/seed-1/RESULT.md`. If the workflow returned an error object or failed, write that object to `F.json` and skip `RESULT.md`. If the return value is only available in the task's output file, read that file and copy the JSON return value out of it verbatim.
+5. Reply with one line: `F.json and RESULT.md written`, followed by the run id. Then stop.
+
+The user's only message to you is an authorisation line; it is not a task description. Your task is this file.

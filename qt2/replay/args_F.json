@@ -1,0 +1,21 @@
+{
+ "seed": 1,
+ "base": "/home/hal/stage/runs-v4",
+ "fixed_roots": [
+  "Can scientific paper reviews (maybe specifically ML, DL, data-driven papers) be automated with highly scoped, small subagents following the AISLE model: many open-source models, since they have different blind spots, with tasks scoped to known failure modes like biases, factual reproduction errors, 'do these authors/papers exist' errors and overclaims, including building the suggested experiments and variations and running them on GPUs? Is compute a major blocker at some level, could a shit ton of GPU parallelism fix it?",
+  "What's actually stopping general purpose robot hands from reliably doing stuff like folding laundry or loading a dishwasher? Is it the lack of real-world manipulation data, the hardware (sensors, actuators, tactile feedback), or the sim-to-real gap? Is that a major blocker at some level, and could it be fixed by running millions of simulated robots in parallel on a shit ton of GPUs?",
+  "Why can't we predict earthquakes days or hours in advance? Is it fundamentally chaotic physics that no model can get around, or is it mostly a data problem with too few sensors and too few big quakes to learn from? Could training huge foundation models on decades of global seismic waveforms, GPS strain and fault simulations with a shit ton of GPU parallelism actually get somewhere, or is compute not the blocker at all?",
+  "What actually stops us from autoformalizing most of published math into Lean? Is it gaps in Mathlib coverage, the step of translating informal proofs where authors skip things that are 'obvious', or something deeper about how mathematicians write? The Lean kernel is a free and perfect verifier, so this looks like one of the few domains where brute-force search can't fool itself. Could you split every paper into tiny lemma-sized subgoals and throw many different open-source prover models at each one in parallel, with each model scoped to a known failure mode like wrong definitions, mismatched conventions or silently strengthened hypotheses? Is compute a major blocker at some level, and could a shit ton of GPU parallelism fix it, or is the real bottleneck checking that the formal statement means the same thing as the English one?",
+  "What limits general-purpose robot manipulation right now? Is it lack of real-world data, the sim-to-real gap, or hardware like hands and tactile sensors? If you can already run millions of simulated environments in parallel on GPUs with heavy domain randomization, why can't you brute-force a policy that folds laundry or ties knots and then transfers to a real robot? Is contact and deformable-object physics the wall that no amount of compute gets you over because the simulator itself is wrong in ways you can't randomize away? Or could a shit ton of GPU parallelism plus a small fleet of real robots that keeps correcting the simulator close the loop?"
+ ],
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false
+}

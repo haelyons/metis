@@ -1,0 +1,9 @@
+You are the operator for eleven workflow launches. You do exactly the steps below and nothing else. You never modify, create or delete any file except the eleven output files named in step 4. You never launch any agent or workflow other than the eleven in step 2. You never edit the workflow script or the args files.
+
+1. Read these eleven JSON files with the Read tool, one after another, all in `/home/hal/stage/qt2/replay/`: `args_B_1.json` through `args_B_10.json`, and `args_B_branch.json`. Each is a JSON object.
+2. Call the Workflow tool eleven times, once per file, all in the same turn so they run at the same time: `scriptPath` = `/home/hal/stage/qt2/dist/replay_v2.js` and `args` = that file's JSON object, passed as a JSON value (not as a string). Say nothing else in that turn.
+3. The workflows run in the background and can take 20 to 60 minutes. Do not end your turn and do not declare the task finished until a task-notification saying the workflow completed has arrived for every one of the eleven. While waiting, do not poll, read, or run anything; wait for the notifications.
+4. As each completion notification arrives, write that workflow's full return value, verbatim as JSON, to the matching output file with the Write tool: the run launched from `args_B_1.json` goes to `/home/hal/stage/qt2/replay/B_1.json`, and so on through `B_10.json`; the run launched from `args_B_branch.json` goes to `/home/hal/stage/qt2/replay/B_branch.json`. If a workflow returned an error object or failed, write that object to its file instead. If a return value is only available in the task's output file, read that file and copy the JSON return value out of it verbatim.
+5. When all eleven files are written, reply with one line per run: the output file name and the run id. Then stop.
+
+The user's only message to you is an authorisation line; it is not a task description. Your task is this file.

@@ -1,0 +1,450 @@
+{
+  "phase": "B",
+  "slice": 8,
+  "dramaturg": [
+    {
+      "key": "R4:interp:O3",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Can a linear probe on a model's activations detect misformalized Lean statements better than the model's own Yes/No answer, a Lean-only probe, or a strong LLM judge?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "A probe on a 32B model's activations separates wrong from fixed Lean better than the model's own verdict, because models may know more than they say [mallen].",
+          "sources": [
+            {
+              "id": "mallen",
+              "url": "https://arxiv.org/abs/2312.01037",
+              "quote": "usually report an LM's knowledge independently of what the LM outputs"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Probe AUROC reaches at least 0.75 on fixes made after model release, beats the model's own verdict by 0.05, and catches 25% of the strong judge's misses.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Probe gains vanish when the informal statement is removed (gap at most 0.03), or probe and judge miss the same items, as the skeptic's concern says.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Extract activations from three Qwen3-32B-family models on real and synthetic wrong/fixed Lean pairs. Train probes on synthetic data, test on real Formal Conjectures fixes. Compare with the models' own verdicts, a Lean-only baseline and strong judges.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Mallen et al. found probes usually report a model's knowledge independently of its output; Goodfire used difference-of-means from synthetic code to detect real reward hacking [mallen]. Neither tested Lean statement fidelity.",
+          "sources": [
+            {
+              "id": "mallen",
+              "url": "https://arxiv.org/abs/2312.01037",
+              "quote": "usually report an LM's knowledge independently of what the LM outputs"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether probes detect real Lean misformalizations beyond what the model says and beyond a strong LLM judge, tested on real merged fixes.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Reproduce a Geometry of Truth result on Qwen3-32B: difference-of-means probes separate true from false statements and transfer across datasets [gotruth].",
+          "sources": [
+            {
+              "id": "gotruth",
+              "url": "https://arxiv.org/abs/2310.06824",
+              "quote": "generalize as well as other probing techniques"
+            }
+          ]
+        },
+        {
+          "ref": "card:limits",
+          "text": "Fixed statements may differ from wrong ones in style, not fidelity. One author wrote 268 of 515 PRs and 239 were merged in one month. A fixed statement may still be wrong, inflating false-positive rates.",
+          "sources": []
+        },
+        {
+          "ref": "src:mallen",
+          "url": "https://arxiv.org/abs/2312.01037",
+          "quote": "usually report an LM's knowledge independently of what the LM outputs",
+          "supports": "H1 framing: probes can reveal knowledge the model does not state; logistic regression on contrast pairs worked best."
+        },
+        {
+          "ref": "src:gotruth",
+          "url": "https://arxiv.org/abs/2310.06824",
+          "quote": "generalize as well as other probing techniques",
+          "supports": "Difference-of-means probes and the Geometry of Truth sanity check."
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Research question stating what the plan will measure; cites no source and makes no external factual claim, so nothing to check against a page."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "We find that, especially in middle layers, linear probes usually report an LM's knowledge independently of what the LM outputs, enabling us to elicit the correct answer despite the model's untruthful output.",
+            "note": "The prediction about the 32B model needs no source. The one sourced claim, 'models may know more than they say', is supported by the Mallen abstract verbatim. Caveat: Mallen's evidence comes from 'quirky' models finetuned to err when 'Bob' appears in the prompt, not from naturally occurring errors; the card's hedge ('may') is appropriate."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Success criteria (predicted AUROC, margin over model verdict, fraction of judge misses caught). Pure prediction; no source needed and none cited."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Failure criteria (gap at most 0.03 without informal statement; probe and judge miss the same items). Pure prediction; 'the skeptic's concern' is an internal reference, not an external factual claim. No source needed."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Describes what the plan will build and measure (activation extraction, probe training on synthetic data, test on Formal Conjectures fixes, baselines). No external factual claim requiring a source."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "We find that, especially in middle layers, linear probes usually report an LM's knowledge independently of what the LM outputs, enabling us to elicit the correct answer despite the model's untruthful output.",
+            "note": "First claim (Mallen et al. found probes report knowledge independently of output) is supported verbatim by the cited page. Second claim (Goodfire used difference-of-means from synthetic code to detect real reward hacking) cites no source and does not appear on the Mallen page, which mentions neither Goodfire, difference-of-means, code, nor reward hacking: that claim is UNSUPPORTED. 'Neither tested Lean statement fidelity' is consistent with the Mallen page (no mention of Lean) but cannot be checked for Goodfire."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "States the gap the plan will test. Framing of what will be measured; no source cited and none required."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "We also show that simple difference-in-mean probes generalize as well as other probing techniques while identifying directions which are more causally implicated in model outputs.",
+            "note": "Cited page supports that difference-in-mean probes separate true/false statements ('LLMs linearly represent the truth or falsehood of factual statements') and transfer across datasets ('probes trained on one dataset generalize to different datasets'). Minor terminology difference: the paper says 'difference-in-mean', the card says 'difference-of-means'. The abstract page names no specific models; 'on Qwen3-32B' is what the plan will do, not a claim about the paper, so it needs no source."
+          },
+          {
+            "ref": "card:limits",
+            "status": "UNSUPPORTED",
+            "page_quote": "",
+            "note": "The only checkable factual claim, 'One author wrote 268 of 515 PRs and 239 were merged in one month', carries specific values but cites no source, so it cannot be verified. The other two sentences are hedged caveats about the plan's own data ('may differ in style', 'may still be wrong') and need no source. Fix: cite the repository or PR listing the counts come from."
+          },
+          {
+            "ref": "src:mallen",
+            "status": "SUPPORTED",
+            "page_quote": "The best probing method (logistic regression on contrast pairs) recovers 89% of the gap in AUROC between truthful and untruthful contexts, and 75% for questions harder than those used to train the probe.",
+            "note": "Quote 'usually report an LM's knowledge independently of what the LM outputs' appears verbatim in the abstract. Both 'supports' claims hold: probes reveal knowledge the model does not state, and logistic regression on contrast pairs is named as the best probing method. Page: Mallen, Brumley, Kharchenko, Belrose, 'Eliciting Latent Knowledge from Quirky Language Models'."
+          },
+          {
+            "ref": "src:gotruth",
+            "status": "SUPPORTED",
+            "page_quote": "We also show that simple difference-in-mean probes generalize as well as other probing techniques while identifying directions which are more causally implicated in model outputs.",
+            "note": "Quote 'generalize as well as other probing techniques' appears verbatim in the abstract. Supports difference-of-means (paper's term: 'difference-in-mean') probes and the true/false separation plus cross-dataset transfer used as the sanity check. Page: Marks and Tegmark, 'The Geometry of Truth'. The abstract page does not name the models used."
+          }
+        ]
+      },
+      "findings_ok": false,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "We find that, especially in middle layers, linear probes usually report an LM's knowledge independently of what the LM outputs, enabling us to elicit the correct answer despite the model's untruthful output.",
+            "note": "First claim (Mallen et al. found probes report knowledge independently of output) is supported verbatim by the cited page. Second claim (Goodfire used difference-of-means from synthetic code to detect real reward hacking) cites no source and does not appear on the Mallen page, which mentions neither Goodfire, difference-of-means, code, nor reward hacking: that claim is UNSUPPORTED. 'Neither tested Lean statement fidelity' is consistent with the Mallen page (no mention of Lean) but cannot be checked for Goodfire."
+          },
+          {
+            "ref": "card:limits",
+            "status": "UNSUPPORTED",
+            "page_quote": "",
+            "note": "The only checkable factual claim, 'One author wrote 268 of 515 PRs and 239 were merged in one month', carries specific values but cites no source, so it cannot be verified. The other two sentences are hedged caveats about the plan's own data ('may differ in style', 'may still be wrong') and need no source. Fix: cite the repository or PR listing the counts come from."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R4:interp:O4",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Do a model's hidden states for an English statement and its Lean formalization drift apart when the formalization is wrong, and is that more useful than a text judge or cheap baselines?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Expected to fail on fine-grained errors: English-Lean hidden-state similarity likely reflects only topic, as similarity alone did far worse than likelihood alone in [formalalign].",
+          "sources": [
+            {
+              "id": "formalalign",
+              "url": "https://arxiv.org/html/2410.10135v1",
+              "quote": "the exponential of the average log-probability"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Hidden-state similarity beats the best word-overlap, embedding and likelihood baselines by at least 10 points on fixed-versus-wrong pairs and catches at least 25% of errors the judge missed.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Similarity separates matched from random pairs only (topic level), fails to beat cheap baselines on fine pairs, and is redundant with the text judge.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Compare English and Lean hidden states in Qwen3-32B, Goedel-Prover-V2-32B and Kimina-7B on 715 mined wrong-to-fixed pairs and two benchmarks, against the same model as text judge and cheap baselines [formalalign].",
+          "sources": [
+            {
+              "id": "formalalign",
+              "url": "https://arxiv.org/html/2410.10135v1",
+              "quote": "the exponential of the average log-probability"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "FormalAlign trained a combined certainty plus similarity scorer; similarity alone scored 45.25/20.75/20.49/21.81 vs certainty 98.98/85.64/53.69/55.55 on Alignment-Selection [formalalign].",
+          "sources": [
+            {
+              "id": "formalalign",
+              "url": "https://arxiv.org/html/2410.10135v1",
+              "quote": "the exponential of the average log-probability"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether untrained or label-free similarity of English and Lean states separates real research-level misformalization fixes, and whether it adds anything to a same-model text judge.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Qwen3-32B as judge on all 500 CriticLeanBench items should reproduce published ACC 85.6, TPR 96.0, TNR 75.2 [criticlean].",
+          "sources": [
+            {
+              "id": "criticlean",
+              "url": "https://arxiv.org/html/2507.06181",
+              "quote": "with default inference parameters"
+            }
+          ],
+          "value": "ACC 85.6, TPR 96.0, TNR 75.2"
+        },
+        {
+          "ref": "card:limits",
+          "text": "Positives are only errors already found, biased toward what judges find. Small named slices (density, Euclidean) are checked item by item only. Results show detecting errors the model's own reading exposes, not misformalization in general.",
+          "sources": []
+        },
+        {
+          "ref": "src:formalalign",
+          "url": "https://arxiv.org/html/2410.10135v1",
+          "quote": "the exponential of the average log-probability",
+          "supports": "FormalAlign certainty and similarity definitions, misalignment types, Table 6 comparison"
+        },
+        {
+          "ref": "src:criticlean",
+          "url": "https://arxiv.org/html/2507.06181",
+          "quote": "with default inference parameters",
+          "supports": "CriticLeanBench, Template [G] prompt, Qwen3-32B reproduction target"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is the research question)",
+            "note": "Research question only; contains no factual claim that needs a source. Its framing (hidden-state drift vs text judge vs cheap baselines) matches the design checked under test_summary."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "It is calculated by taking the exponential of the average log-probability assigned by the model to each token in the formal sequence [...] Table 6: w/ cer 98.98 / 85.64 / 53.69 / 55.55; w/ sim 45.25 / 20.75 / 20.49 / 21.81",
+            "note": "The only sourced factual claim is that similarity alone did far worse than likelihood alone in FormalAlign. Table 6 (alignment-selection on FormL4-Basic, FormL4-Random, MiniF2F-Valid, MiniF2F-Test) shows w/ sim 45.25/20.75/20.49/21.81 vs w/ cer 98.98/85.64/53.69/55.55; the recorded quote is the certainty (likelihood) definition and appears verbatim. The 'topic only' expectation is a prediction and needs no source."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is a prediction)",
+            "note": "Pre-registered success threshold (>=10 points over baselines, >=25% of judge-missed errors). Prediction; no factual claim to check."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is a prediction)",
+            "note": "Pre-registered failure outcome. Prediction; no factual claim to check."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "It is calculated by taking the exponential of the average log-probability assigned by the model to each token in the formal sequence",
+            "note": "Describes what the plan will build and measure (three models, 715 mined pairs, two benchmarks, text judge, baselines); those design choices need no source. The one cited element, the likelihood baseline, is defined on the FormalAlign page by the recorded quote (certainty score = exp of mean token log-prob). The page also defines the similarity score as cosine similarity between hidden states of informal input and formal output, matching the planned comparison."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "Comparison of overall alignment-selection performance across: with only the certainty score (w/ cer), with only the similarity score (w/ sim), and the complete model (Ours). w/ cer 98.98 85.64 53.69 55.55; w/ sim 45.25 20.75 20.49 21.81; Ours 99.21 85.85 66.39 66.70",
+            "note": "All eight numbers match Table 6 exactly; columns are FormL4-Basic, FormL4-Random, MiniF2F-Valid, MiniF2F-Test, and 'Alignment Selection (AS)' is the metric ('quantifies how well a model selects the aligned formal output from multiple candidates'). On 'trained a combined certainty plus similarity scorer': the page says the model is trained with 'a dual loss that combines a pair of mutually enhancing autoformalization and alignment tasks' (cross-entropy + contrastive) and the alignment score 'combines two metrics: the certainty score and the similarity score', 'computed by taking the average' (Eq. 5). Nuance: the combination is a fixed unweighted average at inference, not a learned combiner, though both component scores come from the fine-tuned model."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "It is computed using the cosine similarity between the hidden states of the informal input and the formal output",
+            "note": "Gap statement phrased as the question the plan will measure; no external factual claim and no source cited. Consistent with the FormalAlign page fetched for other items: its similarity comes from the fine-tuned model's hidden states (trained, not label-free), and its misalignments are synthetic perturbations (constant, exponent, variable_new, variable_type, equality, random pairing) rather than real research-level fixes."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "All open-source models are inferred using the vLLM framework with default inference parameters. [...] Table 2: Qwen3-32B | ACC 85.6 | TPR 96.0 | FPR 4.0 | TNR 75.2 | FNR 24.8",
+            "note": "Table 2 of CriticLean lists Qwen3-32B at ACC 85.6, TPR 96.0, TNR 75.2, exactly the value recorded. CriticLeanBench is '500 natural language and Lean 4 language statement pairs (i.e., 250 correct and 250 incorrect pairs)', matching 'all 500 items'. Recorded quote appears verbatim; the page gives no explicit temperature/top-p values, only 'vLLM framework with default inference parameters', so the reproduction setting is as specific as the page allows."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item describes the plan's own scope)",
+            "note": "Statements about the plan's own data (positives are already-found errors, small slices checked item by item) and the scope of its conclusions. No external factual claim; nothing to check against a page."
+          },
+          {
+            "ref": "src:formalalign",
+            "status": "SUPPORTED",
+            "page_quote": "It is calculated by taking the exponential of the average log-probability assigned by the model to each token in the formal sequence",
+            "note": "Quote appears verbatim (certainty score, Eq. 3). Page also carries the similarity definition ('cosine similarity between the hidden states of the informal input and the formal output', Eq. 4), the misalignment types in Table 2 (constant, exponent, variable_new, variable_type, equality, random), and Table 6 (w/ cer, w/ sim, Ours rows), so it supports everything listed under 'supports'. Page spells the dataset 'FormL4', not 'FormalL4'."
+          },
+          {
+            "ref": "src:criticlean",
+            "status": "SUPPORTED",
+            "page_quote": "All open-source models are inferred using the vLLM framework with default inference parameters.",
+            "note": "Quote appears verbatim. Page supports all three listed uses: CriticLeanBench is defined as 500 pairs (250 correct, 250 incorrect) and the text says it uses 'Template [G] for systematic assessment'; Appendix G is 'Prompt: Formal Verification Expert' with goal 'Determine if the Lean theorem statement is an exact and faithful formalization of the mathematical problem' and output 'Return exactly one JSON object' with is_assistant_correct [Correct/Incorrect]; Table 2 gives Qwen3-32B ACC 85.6 / TPR 96.0 / TNR 75.2."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": []
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R4:interp:O3",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:if_lever",
+            "reason": "Outcome informs whether to build probe-based auditing, but only for Qwen3-32B-family models on Formal Conjectures; link to the broad autoformalization bottleneck is indirect."
+          },
+          {
+            "criterion": "lever",
+            "value": 1,
+            "ref": "plan:compute_axis.levels",
+            "reason": "Compute is a single level (28 h) and not varied; the comparison is probe versus baselines, so the quantity measured is not compute."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 3,
+            "ref": "card:anchor",
+            "reason": "Labels come from human-merged PR fixes, with a 50-triple audit. The Geometry of Truth anchor has no numeric tolerance, so exact reproduction is missing."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:left_open",
+            "reason": "Prior work did not test Lean statement fidelity, and the plan states the gap: real merged fixes, beyond what the model says and beyond a strong judge."
+          },
+          {
+            "criterion": "internals",
+            "value": 5,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "Probe is compared with B4 (strong judge) and B1 on the same items, with numeric margins: 0.05 over B1, 25% of B4 misses, McNemar p<0.05."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "No sequential dependency is removed. Data-parallel with one replica per GPU is independent copies."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "card:method",
+            "reason": "restructuring.method is none, so the baseline criterion does not apply."
+          }
+        ],
+        "decides_by": "S1",
+        "decides_by_reason": "Probe AUROC, Delta-control and B0/B1 comparisons come from S1 extraction. Only the B4 miss-catch condition needs S2, but the \"style, not fidelity\" failure is decidable after S1."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R4:interp:O4",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Outcomes guide whether to pursue hidden-state auditing, but only for already-found errors and a few models; failure is the more likely outcome."
+          },
+          {
+            "criterion": "lever",
+            "value": 1,
+            "ref": "plan:compute_axis",
+            "reason": "Axis is model size 7 to 32B (under 10x), and the question asks about representation, not compute; bigger models also differ in other ways."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 4,
+            "ref": "card:anchor",
+            "reason": "Truth is human-triaged fixes and benchmark labels independent of the method, with a CriticLeanBench anchor within a tolerance; triage is human-rated."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:left_open",
+            "reason": "FormalAlign used a trained scorer; untrained similarity on research-level fixes is stated as open, though its similarity-only result is a partial prior."
+          },
+          {
+            "criterion": "internals",
+            "value": 5,
+            "ref": "card:if_lever",
+            "reason": "Compares to best of lexical, embedding, likelihood baselines and the same-model judge on the same items with 10-point margin and 25% catch."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "No sequential dependency; independent forward passes run data-parallel, one job per GPU."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so baseline timing criterion does not apply."
+          }
+        ],
+        "decides_by": "p1",
+        "decides_by_reason": "C1 gate at p1 stops the run if AUROC is under 0.90, a decision-rule outcome; otherwise C2 and C3 need later phases."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R4:interp:top: dramaturg: degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not; degenerate: card:test_summary; degenerate: card:left_open; degenerate: card:limits",
+    "R4:interp:random: dramaturg: degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not; degenerate: card:left_open; degenerate: card:limits",
+    "R4:interp:top: dramaturg (resample): degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not; degenerate: card:test_summary; degenerate: card:left_open"
+  ]
+}

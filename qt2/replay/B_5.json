@@ -1,0 +1,503 @@
+{
+  "phase": "B",
+  "slice": 5,
+  "dramaturg": [
+    {
+      "key": "R3:physical:W7",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "On one rented 8-GPU machine, how much storm-forecast skill does about 60 times more compute (3 km explicit vs 12 km parameterized convection) buy, compared with radar assimilation and an ML emulator?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "The 3 km WRF with explicit convection beats the 12 km WRF with parameterized convection on radar-checked storm skill, but radar assimilation matters more early on, as in Roberts & Lean 2008.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "The 3 km explicit-convection WRF has a paired 95% bootstrap interval for the skill-score gain over 12 km that lies above 0, plus better timing of the daily cycle.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "The interval for the 3 km minus 12 km FSS gain spans 0, as Roberts & Lean saw at 4 km [roberts_lean].",
+          "sources": [
+            {
+              "id": "roberts_lean",
+              "url": "https://doi.org/10.1175/2007MWR2123.1",
+              "quote": "The 1-km model was the most skilful at all but the smallest scales."
+            }
+          ]
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Run WRF at 12 km and 3 km on 16 central-US storm days, score both against radar, and compare with archived HRRR, a StormCast ML emulator and persistence. A paired bootstrap tests whether 60x compute buys skill.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Roberts & Lean 2008 ran the Met Office model at 12, 4 and 1 km on 10 convective days against radar; the 1 km run was most skilful, 4 km improved little on 12 km [roberts_lean].",
+          "sources": [
+            {
+              "id": "roberts_lean",
+              "url": "https://doi.org/10.1175/2007MWR2123.1",
+              "quote": "The 1-km model was the most skilful at all but the smallest scales."
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether the gain from 12 km to 3 km holds in WRF over the central US in 2024, and how it compares with radar assimilation and an ML emulator on the same machine.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "NCAR WRF v4.4 CONUS 12 km benchmark: 0.3-0.4 s per 72 s step on 144 cores; also archived HRRR scored against radar matching the StormCast paper's curve shape.",
+          "sources": [
+            {
+              "id": "wrf_bench",
+              "url": "https://www2.mmm.ucar.edu/wrf/users/benchmark/v44/benchdata_v44.html",
+              "quote": "0.3–0.4 s per 72 s step on a 425 × 300 grid, using 144 cores"
+            }
+          ],
+          "value": "0.3-0.4 s per step on 144 cores"
+        },
+        {
+          "ref": "card:limits",
+          "text": "Result covers warm-season central-US convection with 16 cases, not km-scale climate modelling. WRF run speed and StormCast inference time are estimates until the pilot measures them. The radar-assimilation effect is confounded with HRRR's own physics.",
+          "sources": []
+        },
+        {
+          "ref": "src:roberts_lean",
+          "url": "https://doi.org/10.1175/2007MWR2123.1",
+          "quote": "The 1-km model was the most skilful at all but the smallest scales.",
+          "supports": "Closest precedent and 4 km spin-up caveat"
+        },
+        {
+          "ref": "src:wrf_bench",
+          "url": "https://www2.mmm.ucar.edu/wrf/users/benchmark/v44/benchdata_v44.html",
+          "quote": "0.3–0.4 s per 72 s step on a 425 × 300 grid, using 144 cores",
+          "supports": "Cost estimate anchor and pilot build check"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; the item states what the plan will measure",
+            "note": "Framing of what the plan will measure; no factual claim needs a source. The 'about 60 times more compute' figure is arithmetic (4x finer in each horizontal direction = 16x columns, times a ~4x shorter time step = ~64x), not a sourced measurement."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "It is anticipated that the introduction of data assimilation at a high resolution will improve skill further, particularly over the first few hours when the spinup from a coarse-resolution initial state is a problem.",
+            "note": "The 3 km vs 12 km part is a prediction and needs no source. The attribution 'radar assimilation matters more early on, as in Roberts & Lean 2008' cites no source on the card; checked against the Roberts & Lean page fetched for other items, it is only partly backed. The paper says 'The purpose was to examine the improvement to forecast skill from increased resolution alone. Data assimilation is a separate issue for subsequent papers.' What it observed is that 'The 4- and 1-km models are initially less skillful than the 12-km model, because they have not had time to spin up from the 12-km initial state' with the 1-km model overtaking 'after 1-2 h'; the 12-km run used 3DVAR, MOPS and latent heat nudging while the 4/1-km runs were initialised from it. The early-hours effect is attributed to spin-up, and a DA benefit in the first few hours is anticipated, not measured. Cite roberts_lean and soften 'as in' to 'as anticipated by'."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; the item states a prediction",
+            "note": "Prediction of the plan's own result (bootstrap interval above 0, better diurnal timing); no factual claim requiring a source."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "PARTIAL",
+            "page_quote": "The 4-km model performs poorly compared with the 1-km model, and shows little or no improvement on the 12-km model at any scale apart from the high-accumulation thresholds.",
+            "note": "The prediction (interval spans 0) needs no source. The attribution 'as Roberts & Lean saw at 4 km' is loosely supported: the page says the 4-km model 'did not improve much on the 12-km model'. But Roberts & Lean reported no bootstrap or confidence interval (no occurrence of 'bootstrap' or 'confidence' in the full text; their error bars represent radar uncertainty), and the 4-km result was threshold-dependent: 'For the low thresholds of 0.2 and 1.0 mm, both the 1- and 12-km models were significantly more skillful over all scales than the 4-km model', while 'For the higher thresholds of 4.0 and 16.0 mm, the 4- and 1-km models have comparable skill, but the 12-km model is considerably worse'. The recorded quote (about the 1-km model) does not itself support the 4-km claim; the 4-km sentence above does."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; the item states what the plan will build and measure",
+            "note": "Describes the planned experiment (12 km and 3 km WRF on 16 days, radar scoring, HRRR/StormCast/persistence comparison, paired bootstrap); no factual claim requiring a source."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "The Met Office Unified Model was run with grid spacings of 12, 4, and 1 km for 10 days in which convection occurred during the summers of 2003 and 2004. ... The results show that the 1-km model was the most skillful over all but the smallest scales (approximately <10-15 km). ... The 4-km model did not improve much on the 12-km model because of the difficulties of representing convection at that resolution, which was accentuated by the spinup from 12-km fields.",
+            "note": "Every claim checks out against the abstract: Met Office Unified Model, 12/4/1 km, 10 convective days, verified against radar ('comparison of rainfall forecasts with radar using fractional coverage'), 1 km most skilful, 4 km improved little on 12 km. The recorded quote is slightly misworded ('skilful at' vs page 'skillful over') but the substance is exact."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; the item states the gap the plan will address",
+            "note": "Gap statement framing what the plan will test (WRF, central US, 2024, comparison with radar assimilation and an ML emulator); no factual claim requiring a source."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "On 144 cores (processors), using a GNU compiler (V10.1.0), each 72 s time step requires about 0.4 s ... On 144 cores (processors), using a ifort compiler (Intel V19.1.1), each 72 s time step requires about 0.3 s",
+            "note": "The WRF v4.4 CONUS 12-km benchmark figures are confirmed by the page: 425x300 grid, 72 s time step, about 0.3 s (Intel ifort) to 0.4 s (GNU) per step on 144 cores; the carried value '0.3-0.4 s per step on 144 cores' matches. The second clause, 'archived HRRR scored against radar matching the StormCast paper's curve shape', is a factual reference to a StormCast paper result with no source cited, so that part is unsupported."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; the item states the plan's scope and caveats",
+            "note": "Scope and caveat statements about the plan's own design (16 warm-season central-US cases, run-time estimates pending the pilot, radar-assimilation effect confounded with HRRR physics); no factual claim requiring a source."
+          },
+          {
+            "ref": "src:roberts_lean",
+            "status": "PARTIAL",
+            "page_quote": "The results show that the 1-km model was the most skillful over all but the smallest scales (approximately <10-15 km).",
+            "note": "Reachable: doi.org redirects to journals.ametsoc.org, which returned 403 to the automated fetcher but served the full text (HTTP 200) to curl with a browser user agent. The recorded quote does not appear verbatim; the page has 'the 1-km model was the most skillful over all but the smallest scales' (abstract) and 'The 1-km model was more skillful than the 12-km model over all but the smallest scales for both 4-h and hourly accumulations' (section 5a). Substance supports 'closest precedent'. The '4 km spin-up caveat' is also on the page: 'The 4-km model did not improve much on the 12-km model because of the difficulties of representing convection at that resolution, which was accentuated by the spinup from 12-km fields.' Replace the quote with one of the page's sentences."
+          },
+          {
+            "ref": "src:wrf_bench",
+            "status": "PARTIAL",
+            "page_quote": "On 144 cores (processors), using a GNU compiler (V10.1.0), each 72 s time step requires about 0.4 s ... On 144 cores (processors), using a ifort compiler (Intel V19.1.1), each 72 s time step requires about 0.3 s",
+            "note": "Page reachable. The recorded quote is a composite, not a page sentence; the page does not contain the phrase '0.3-0.4 s per 72 s step'. All figures are confirmed: CONUS 12-km case, 425x300 grid, 72 s time step, about 0.3 s per step with Intel ifort and about 0.4 s with GNU, both on 144 cores. Supports the cost-estimate anchor and pilot build check; only the quote wording needs replacing with the page's two sentences."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "It is anticipated that the introduction of data assimilation at a high resolution will improve skill further, particularly over the first few hours when the spinup from a coarse-resolution initial state is a problem.",
+            "note": "The 3 km vs 12 km part is a prediction and needs no source. The attribution 'radar assimilation matters more early on, as in Roberts & Lean 2008' cites no source on the card; checked against the Roberts & Lean page fetched for other items, it is only partly backed. The paper says 'The purpose was to examine the improvement to forecast skill from increased resolution alone. Data assimilation is a separate issue for subsequent papers.' What it observed is that 'The 4- and 1-km models are initially less skillful than the 12-km model, because they have not had time to spin up from the 12-km initial state' with the 1-km model overtaking 'after 1-2 h'; the 12-km run used 3DVAR, MOPS and latent heat nudging while the 4/1-km runs were initialised from it. The early-hours effect is attributed to spin-up, and a DA benefit in the first few hours is anticipated, not measured. Cite roberts_lean and soften 'as in' to 'as anticipated by'."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "PARTIAL",
+            "page_quote": "The 4-km model performs poorly compared with the 1-km model, and shows little or no improvement on the 12-km model at any scale apart from the high-accumulation thresholds.",
+            "note": "The prediction (interval spans 0) needs no source. The attribution 'as Roberts & Lean saw at 4 km' is loosely supported: the page says the 4-km model 'did not improve much on the 12-km model'. But Roberts & Lean reported no bootstrap or confidence interval (no occurrence of 'bootstrap' or 'confidence' in the full text; their error bars represent radar uncertainty), and the 4-km result was threshold-dependent: 'For the low thresholds of 0.2 and 1.0 mm, both the 1- and 12-km models were significantly more skillful over all scales than the 4-km model', while 'For the higher thresholds of 4.0 and 16.0 mm, the 4- and 1-km models have comparable skill, but the 12-km model is considerably worse'. The recorded quote (about the 1-km model) does not itself support the 4-km claim; the 4-km sentence above does."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "On 144 cores (processors), using a GNU compiler (V10.1.0), each 72 s time step requires about 0.4 s ... On 144 cores (processors), using a ifort compiler (Intel V19.1.1), each 72 s time step requires about 0.3 s",
+            "note": "The WRF v4.4 CONUS 12-km benchmark figures are confirmed by the page: 425x300 grid, 72 s time step, about 0.3 s (Intel ifort) to 0.4 s (GNU) per step on 144 cores; the carried value '0.3-0.4 s per step on 144 cores' matches. The second clause, 'archived HRRR scored against radar matching the StormCast paper's curve shape', is a factual reference to a StormCast paper result with no source cited, so that part is unsupported."
+          },
+          {
+            "ref": "src:roberts_lean",
+            "status": "PARTIAL",
+            "page_quote": "The results show that the 1-km model was the most skillful over all but the smallest scales (approximately <10-15 km).",
+            "note": "Reachable: doi.org redirects to journals.ametsoc.org, which returned 403 to the automated fetcher but served the full text (HTTP 200) to curl with a browser user agent. The recorded quote does not appear verbatim; the page has 'the 1-km model was the most skillful over all but the smallest scales' (abstract) and 'The 1-km model was more skillful than the 12-km model over all but the smallest scales for both 4-h and hourly accumulations' (section 5a). Substance supports 'closest precedent'. The '4 km spin-up caveat' is also on the page: 'The 4-km model did not improve much on the 12-km model because of the difficulties of representing convection at that resolution, which was accentuated by the spinup from 12-km fields.' Replace the quote with one of the page's sentences."
+          },
+          {
+            "ref": "src:wrf_bench",
+            "status": "PARTIAL",
+            "page_quote": "On 144 cores (processors), using a GNU compiler (V10.1.0), each 72 s time step requires about 0.4 s ... On 144 cores (processors), using a ifort compiler (Intel V19.1.1), each 72 s time step requires about 0.3 s",
+            "note": "Page reachable. The recorded quote is a composite, not a page sentence; the page does not contain the phrase '0.3-0.4 s per 72 s step'. All figures are confirmed: CONUS 12-km case, 425x300 grid, 72 s time step, about 0.3 s per step with Intel ifort and about 0.4 s with GNU, both on 144 cores. Supports the cost-estimate anchor and pilot build check; only the quote wording needs replacing with the page's two sentences."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R3:physical:W11",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "On a synthetic benchmark fault, does earthquake-forecast skill keep rising as the assimilation ensemble grows, or does it level off early while model error and sensor depth decide?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Skill levels off at tens to hundreds of members, because model error and depth of data limit it first, as the one perfect-model study [van_dinther] suggests.",
+          "sources": [
+            {
+              "id": "van_dinther",
+              "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+              "quote": "as little as 20 ensemble members"
+            }
+          ]
+        },
+        {
+          "ref": "card:sequential_part",
+          "text": "Each member's adaptive time stepping through earthquakes: thousands of steps per event, up to about 8,050 accepted steps per cycle.",
+          "sources": []
+        },
+        {
+          "ref": "card:method",
+          "text": "Thousands of independent members run as columns of one batched matrix on GPU; finished members are gathered into smaller batches every 32 steps so slow ruptures do not stall the rest.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Skill is still rising beyond 1,024 members in the model-error or particle-filter arms, by more than the gain from deep stress data.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Skill plateaus at 256 members or fewer in every ensemble Kalman filter arm; model error or deep data changes skill more than going from 32 members to the largest.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Run thousands of copies of a benchmark earthquake fault on GPUs inside ensemble Kalman and particle filters. Measure forecast skill against ensemble size, with and without model error and deep sensors, against simple baselines [van_dinther].",
+          "sources": [
+            {
+              "id": "van_dinther",
+              "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+              "quote": "as little as 20 ensemble members"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "van Dinther et al. 2019 ran an ensemble Kalman filter with 150 members on a 2-D subduction analogue; Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model.",
+          "sources": [
+            {
+              "id": "van_dinther",
+              "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+              "quote": "as little as 20 ensemble members"
+            }
+          ],
+          "value": 150
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Forecast skill versus ensemble size beyond 150 members, under model error, on a depth-resolved rate-and-state fault, with EnKF compared against a large particle filter.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "A single-member run of the first benchmark fault at 25 m reproduces an independent code, QDYN: recurrence interval and first-event time within 1%, slip-rate series overlay at benchmark stations.",
+          "sources": []
+        },
+        {
+          "ref": "card:limits",
+          "text": "A plateau would confirm the hypothesis only for synthetic data from a known model class, not the real Earth. GPU timings are assumptions until Phase 0b; truth noise amplitude is tuned, not observed.",
+          "sources": []
+        },
+        {
+          "ref": "src:van_dinther",
+          "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+          "quote": "as little as 20 ensemble members",
+          "supports": "EnKF with 150 members, 17% vs 68% alarm time, no localization or inflation."
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; this field states what the plan will measure",
+            "note": "The question only describes what the study will measure (skill vs ensemble size on a synthetic fault); it carries no factual claim that needs a source."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "However, as little as 20 ensemble members are found to already capture most of the diversity within the models",
+            "note": "Quote is verbatim on the page and the paper is confirmed as a perfect-model experiment (\"We perform a perfect model experiment to test whether EDA could be used to estimate fault stresses\"). But the page does not suggest skill levels off: it says \"Larger ensembles typically allow for improved forecasts, so we show results for the largest number tested: 150 ensemble members\", and Appendix B reports \"increasing the number of ensemble members N, decreases the L1 norm as 1/sqrt(N)\" with a power-law fit, i.e. continued improvement rather than a plateau. The 20-member sentence is about ensemble diversity, not forecast skill. The causal part (model error, data depth limit first) is the plan's prediction and needs no source."
+          },
+          {
+            "ref": "card:sequential_part",
+            "status": "UNSUPPORTED",
+            "page_quote": "n/a - no source cited",
+            "note": "The description of adaptive time stepping is a design statement, but \"thousands of steps per event, up to about 8,050 accepted steps per cycle\" is a specific factual figure with no source cited and nothing on the fetched page bears on it."
+          },
+          {
+            "ref": "card:method",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; this field states what the plan will build",
+            "note": "Describes the batched-GPU execution scheme the plan will build (column-batched members, regathering every 32 steps). No external factual claim, so no source is needed."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; this field states a predicted outcome",
+            "note": "A pre-registered outcome criterion (skill still rising beyond 1,024 members in model-error or particle-filter arms). Prediction, no source needed."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; this field states a predicted outcome",
+            "note": "A pre-registered outcome criterion (plateau at 256 or fewer members in every EnKF arm). Prediction, no source needed."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "PARTIAL",
+            "page_quote": "a periodic recurrence model needs to sound an alarm for 68 per cent of the time",
+            "note": "The plan description itself (thousands of members, EnKF and particle filters, model-error and deep-sensor arms) needs no source. The citation is attached to \"simple baselines\"; the recorded quote (\"as little as 20 ensemble members\") is verbatim on the page but is about ensemble diversity, not baselines. The page does support a simple-baseline comparison elsewhere: the EnKF \"only requires an alarm to sound for 17 per cent instead of 68 per cent of the time\" versus a periodic recurrence model."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_value": 150,
+            "page_quote": "Larger ensembles typically allow for improved forecasts, so we show results for the largest number tested: 150 ensemble members.",
+            "note": "The van Dinther half is supported: GJI vol. 217 (2019), authors van Dinther, Kunsch, Fichtner; EnKF; 150 members (page value 150 matches the card value); \"It is based on a 2-D, coupled thermomechanical code\"; and \"a perfect model test in a subduction zone setup that mimicks a scaled laboratory experiment\". The Diab-Montero et al. 2023 claim (50 members, single-point 1-D fault, perfect model) cites no source and cannot be checked against the fetched page. The recorded quote is on the page but does not itself state the 150 figure."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "Larger ensembles typically allow for improved forecasts, so we show results for the largest number tested: 150 ensemble members.",
+            "note": "No source is cited. The fetched van Dinther page is consistent with the framing: 150 was the largest ensemble tested and the study was a perfect-model experiment (so no model error was examined). The claim that no later work has gone beyond this (the gap itself) is a statement about the literature that the page cannot confirm."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "UNSUPPORTED",
+            "page_quote": "n/a - no source cited",
+            "note": "This is a factual result claim (a 25 m single-member run reproduces QDYN recurrence interval and first-event time within 1%, slip-rate overlay at benchmark stations) with no source cited. Nothing on the fetched page mentions QDYN, a 25 m benchmark, or these comparisons."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "n/a - no source cited; this field scopes the plan's own claims",
+            "note": "Scoping and caveat statements about the plan (synthetic-only inference, GPU timings as assumptions until Phase 0b, tuned truth-noise amplitude). No external factual claim, so no source needed."
+          },
+          {
+            "ref": "src:van_dinther",
+            "status": "PARTIAL",
+            "page_quote": "However, as little as 20 ensemble members are found to already capture most of the diversity within the models",
+            "note": "Recorded quote appears verbatim. Of the claims the source is cited for: EnKF with 150 members is on the page (\"assimilated into 150 ensemble members of a seismic cycle model using an EnKF\"); 17% vs 68% alarm time is on the page (\"sounding an alarm only 17 per cent instead of 68 per cent of the time\"). \"No localization or inflation\" is not stated explicitly: the page lists \"covariance inflation (to take errors of the forward model into account)\" and \"covariance regularization and localization (to counteract spurious correlations due to limited ensemble size)\" only as \"Example improvements\" in Section 4.2 \"Future challenges and opportunities\", which implies they were not used but there is no sentence saying so. The recorded quote itself does not bear on any of the three claims."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "REJECT",
+        "blocking": [
+          {
+            "ref": "card:sequential_part",
+            "status": "UNSUPPORTED",
+            "page_quote": "n/a - no source cited",
+            "note": "The description of adaptive time stepping is a design statement, but \"thousands of steps per event, up to about 8,050 accepted steps per cycle\" is a specific factual figure with no source cited and nothing on the fetched page bears on it."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "UNSUPPORTED",
+            "page_quote": "n/a - no source cited",
+            "note": "This is a factual result claim (a 25 m single-member run reproduces QDYN recurrence interval and first-event time within 1%, slip-rate overlay at benchmark stations) with no source cited. Nothing on the fetched page mentions QDYN, a 25 m benchmark, or these comparisons."
+          }
+        ],
+        "listed": [
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "However, as little as 20 ensemble members are found to already capture most of the diversity within the models",
+            "note": "Quote is verbatim on the page and the paper is confirmed as a perfect-model experiment (\"We perform a perfect model experiment to test whether EDA could be used to estimate fault stresses\"). But the page does not suggest skill levels off: it says \"Larger ensembles typically allow for improved forecasts, so we show results for the largest number tested: 150 ensemble members\", and Appendix B reports \"increasing the number of ensemble members N, decreases the L1 norm as 1/sqrt(N)\" with a power-law fit, i.e. continued improvement rather than a plateau. The 20-member sentence is about ensemble diversity, not forecast skill. The causal part (model error, data depth limit first) is the plan's prediction and needs no source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "PARTIAL",
+            "page_quote": "a periodic recurrence model needs to sound an alarm for 68 per cent of the time",
+            "note": "The plan description itself (thousands of members, EnKF and particle filters, model-error and deep-sensor arms) needs no source. The citation is attached to \"simple baselines\"; the recorded quote (\"as little as 20 ensemble members\") is verbatim on the page but is about ensemble diversity, not baselines. The page does support a simple-baseline comparison elsewhere: the EnKF \"only requires an alarm to sound for 17 per cent instead of 68 per cent of the time\" versus a periodic recurrence model."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_value": 150,
+            "page_quote": "Larger ensembles typically allow for improved forecasts, so we show results for the largest number tested: 150 ensemble members.",
+            "note": "The van Dinther half is supported: GJI vol. 217 (2019), authors van Dinther, Kunsch, Fichtner; EnKF; 150 members (page value 150 matches the card value); \"It is based on a 2-D, coupled thermomechanical code\"; and \"a perfect model test in a subduction zone setup that mimicks a scaled laboratory experiment\". The Diab-Montero et al. 2023 claim (50 members, single-point 1-D fault, perfect model) cites no source and cannot be checked against the fetched page. The recorded quote is on the page but does not itself state the 150 figure."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "Larger ensembles typically allow for improved forecasts, so we show results for the largest number tested: 150 ensemble members.",
+            "note": "No source is cited. The fetched van Dinther page is consistent with the framing: 150 was the largest ensemble tested and the study was a perfect-model experiment (so no model error was examined). The claim that no later work has gone beyond this (the gap itself) is a statement about the literature that the page cannot confirm."
+          },
+          {
+            "ref": "src:van_dinther",
+            "status": "PARTIAL",
+            "page_quote": "However, as little as 20 ensemble members are found to already capture most of the diversity within the models",
+            "note": "Recorded quote appears verbatim. Of the claims the source is cited for: EnKF with 150 members is on the page (\"assimilated into 150 ensemble members of a seismic cycle model using an EnKF\"); 17% vs 68% alarm time is on the page (\"sounding an alarm only 17 per cent instead of 68 per cent of the time\"). \"No localization or inflation\" is not stated explicitly: the page lists \"covariance inflation (to take errors of the forward model into account)\" and \"covariance regularization and localization (to counteract spurious correlations due to limited ensemble size)\" only as \"Example improvements\" in Section 4.2 \"Future challenges and opportunities\", which implies they were not used but there is no sentence saying so. The recorded quote itself does not bear on any of the three claims."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R3:physical:W7",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 2,
+            "ref": "card:limits",
+            "reason": "Tests weather storm skill, not earthquake prediction; the stand-in is far from the root question, and a 3 km gain is already likely."
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "plan:compute_axis",
+            "reason": "Axis is 60x and compute-bought, with held_fixed inputs. But noise is not compared with an expected effect size, and 16 cases may be underpowered."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 4,
+            "ref": "card:anchor",
+            "reason": "Independent MRMS radar truth plus a benchmark reproduction within 2x and an HRRR scorer check; the benchmark is a different grid, so not exact."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:closest_prior",
+            "reason": "Prior covers the UK model at 4 km and 1 km on 10 days; WRF, central US and 2024 with ML comparison remain open, and the gap is stated."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:method",
+            "reason": "Method is none; runs are independent cases side by side, with no time-dependency removal."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "card:method",
+            "reason": "restructuring.method is none, so the baseline criterion does not apply."
+          }
+        ],
+        "decides_by": "p2",
+        "decides_by_reason": "The decision rule needs a bootstrap CI over cases of FSS(B)-FSS(A); only the p2 main runs provide enough cases. The pilot has one case."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R3:physical:W11",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Result bears on real forecasting only through a synthetic known-model step; plateau is already the more likely outcome given the prior."
+          },
+          {
+            "criterion": "lever",
+            "value": 4,
+            "ref": "plan:compute_axis.levels",
+            "reason": "Ensemble size spans 1,000x, with inputs held fixed and SE-based noise rule; but the deep-data comparison is a data change, not compute."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 4,
+            "ref": "card:anchor",
+            "reason": "Hidden synthetic truth scored by Molchan area; anchor matches independent QDYN within 1%, though not a published number."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:left_open",
+            "reason": "Prior reached 150 members perfect-model; plan states the gap beyond 150 under model error with a particle filter."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:method",
+            "reason": "Independent members run side by side with compaction rebalancing; no step dependency is removed, and prior already used ensembles."
+          },
+          {
+            "criterion": "baseline",
+            "value": 1,
+            "ref": "plan:restructuring.baseline_copies",
+            "reason": "Baseline is untuned NumPy CPU, copies on same GPUs not stated, and no phase times arms to one answer."
+          }
+        ],
+        "decides_by": "p1",
+        "decides_by_reason": "Decision rule needs skill versus ensemble size from E1-E4, which only production phase p1 produces; p0b only measures timings and verification."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": []
+}

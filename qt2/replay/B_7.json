@@ -1,0 +1,536 @@
+{
+  "phase": "B",
+  "slice": 7,
+  "dramaturg": [
+    {
+      "key": "R4:physical:B",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Can D(9), the ninth Dedekind number, be recomputed modulo small primes on INT8 tensor cores for far less than the published FP64 cost, within $1,000?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Switching Jäkel's matrix formula from FP64 to exact INT8/INT32 modular arithmetic cuts the cost per check enough that a few residues of D(9) fit in $1,000.",
+          "sources": []
+        },
+        {
+          "ref": "card:sequential_part",
+          "text": "Each pair class needs a GEMM then trace; 4.26e9 pair classes total, but they are independent.",
+          "sources": []
+        },
+        {
+          "ref": "card:method",
+          "text": "Interval classes and prime residues are independent sums, so 9,919 classes share one queue across 8 GPUs, and the matrices are built once and reused for every prime.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "More compute buys more independent residue checks of D(9); at most about 5 primes fit, and 19 primes would rebuild D(9) exactly by Chinese remainder theorem.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "One residue costs more than $750 (memory traffic and O(m²) work keep efficiency low), so the budget buys no full residue, only the measured cost curve.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Reimplement Jäkel's D(9) formula modulo small primes on INT8 tensor cores, benchmark against his FP64 path on one GPU, then spend up to $750 on 8 GPUs computing residues and compare each with the published value.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Jäkel computed D(9) with FP64 batched DGEMM on A100s in 5,311 GPU-hours [jakel]; Ootomo et al. emulate DGEMM on integer tensor cores [ootomo].",
+          "sources": [
+            {
+              "id": "jakel",
+              "url": "https://arxiv.org/pdf/2304.00895",
+              "quote": "5311 GPU hours and 4257682565 matrix multiplications"
+            },
+            {
+              "id": "ootomo",
+              "url": "https://arxiv.org/abs/2306.11975",
+              "quote": "DGEMM emulated on integer Tensor Cores"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether modular INT8 tensor-core arithmetic makes D(9) residue checks affordable on rented 2026 hardware; no measured cost for this is known.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Published D(9) value reduces to 6 mod 210, matching the proven congruences mod 2, 3, 5 and 7 [pawelski]; small-n d(4)..d(8) must also be reproduced.",
+          "sources": [
+            {
+              "id": "pawelski",
+              "url": "https://arxiv.org/pdf/2302.04615",
+              "quote": "d₉ ≡ 0, 0, 1, 6 modulo 2, 3, 5, 7"
+            }
+          ],
+          "value": 6
+        },
+        {
+          "ref": "card:limits",
+          "text": "Result measures cost and agreement mod a few primes, not a full independent D(9). Cost estimates assume Jäkel's efficiency and hardware spec readings that are uncertain. Web search was unavailable, so post-2023 work may be missed.",
+          "sources": []
+        },
+        {
+          "ref": "src:pawelski",
+          "url": "https://arxiv.org/pdf/2302.04615",
+          "quote": "d₉ ≡ 0, 0, 1, 6 modulo 2, 3, 5, 7",
+          "supports": "d9 ≡ 6 mod 210 anchor"
+        },
+        {
+          "ref": "src:jakel",
+          "url": "https://arxiv.org/pdf/2304.00895",
+          "quote": "5311 GPU hours and 4257682565 matrix multiplications",
+          "supports": "Baseline cost, formula, class counts and cuBLAS FP64 method"
+        },
+        {
+          "ref": "src:ootomo",
+          "url": "https://arxiv.org/abs/2306.11975",
+          "quote": "DGEMM emulated on integer Tensor Cores",
+          "supports": "Prior art on integer tensor cores for high-precision work"
+        },
+        {
+          "ref": "num:n_interval_classes",
+          "name": "Interval classes of D5",
+          "value": 9919,
+          "unit": "classes",
+          "basis": "CITED",
+          "quote": "5311 GPU hours and 4257682565 matrix multiplications",
+          "page_setting": "Nauty reduction of 7,828,354 intervals of D5",
+          "url": "https://arxiv.org/pdf/2304.00895"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "A batch of matrices is processed in parallel via CUDA's \"cublasDgemmStridedBatched\" kernel. Since a shift from integer values to double precision occurs, we have to assure that all values are not bigger than 2^53 to rule out a loss of precision.",
+            "note": "Research question (what the plan will measure); needs no source. Its only factual premise, that the published computation ran in FP64, is confirmed on the Jäkel page cited elsewhere in the card (cublasDgemmStridedBatched, double precision, 5311 GPU hours on A100s)."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "There the matrices α and β are generated and multiplied. A batch of matrices is processed in parallel via CUDA's \"cublasDgemmStridedBatched\" kernel.",
+            "note": "Prediction; needs no source. Premise that Jäkel's formula is a matrix-multiplication formula run in FP64 cuBLAS is confirmed on the Jäkel page. Whether INT8/INT32 modular arithmetic fits a few residues in $1,000 is the thing the plan will measure."
+          },
+          {
+            "ref": "card:sequential_part",
+            "status": "PARTIAL",
+            "page_quote": "We get the reductions D2 : 56 → 33, D3 : 1127 → 446, D4 : 274409 → 80741 and D5 : 8646896880 → 4257682565.",
+            "note": "Content verified on the Jäkel page but the item cites no source. The page's algorithm does, per pair class [(a,b)], 'compute the matrix product γab = αab · βab; compute the trace of γab^2; multiply the trace with ω(a,b) and #[(a,b)]', then sums, so each pair class is an independent GEMM-then-trace. 4257682565 pair classes = 4.26e9 (and '4257682565 matrix multiplications'). Add [jakel] as the source."
+          },
+          {
+            "ref": "card:method",
+            "status": "PARTIAL",
+            "page_quote": "For D2 we compute 6, for D3 18, for D4 134 and for D5 9919 equivalence classes. Due to nauty's efficiency, the last computation can be performed within just a couple of seconds on a 2.4 GHz desktop PC. Note that according to Theorem 2 there are 7828354 intervals of D5.",
+            "note": "9,919 interval classes verified on the Jäkel page, and the page's algorithm is an outer sum 'for [I] ∈ Int(Dn)/≡' with each class's result multiplied by #[I], so interval classes are independent summands. The item cites no source for these facts. Prime-residue independence, the shared 8-GPU queue, and building matrices once for all primes are design choices the plan will build and need no source."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "PARTIAL",
+            "page_quote": "5311 GPU hours and 4257682565 matrix multiplications later, we got the following value for the ninth Dedekind number: 286386577668298411128469151667598498812366.",
+            "note": "'At most about 5 primes fit' is a cost prediction and needs no source. '19 primes would rebuild D(9) exactly by CRT' is a factual claim with no source and appears on no fetched page. Checked against the published value on the Jäkel page (D(9) ≈ 2.86e41): it holds only if the primes are the 19 largest below 256 (product ≈ 4.3e43, and 19 is exactly the minimum); the 19 smallest primes (≈ 7.9e24) or the 19 largest below 128 (≈ 5.4e35) do not suffice. The item does not say which primes."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "For this interval we have a reduction 57471561 → 140736. This reduction has a big runtime impact, since the involved matrices have dimension 7581 × 7581.",
+            "note": "Failure-mode prediction; needs no source. The memory-traffic and O(m^2) efficiency reasoning is a plan assumption; nothing on the pages contradicts it. The Jäkel page confirms the largest matrices are 7581 × 7581."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "The only thing left to say is that we run the algorithm on Nvidia A100 GPUs. 5311 GPU hours and 4257682565 matrix multiplications later, we got the following value for the ninth Dedekind number: 286386577668298411128469151667598498812366.",
+            "note": "Describes what the plan will build and measure; needs no source. Premises (Jäkel's FP64 cuBLAS path exists; a published D(9) value exists to compare residues against) are confirmed on the Jäkel page."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "The only thing left to say is that we run the algorithm on Nvidia A100 GPUs. 5311 GPU hours and 4257682565 matrix multiplications later, we got the following value for the ninth Dedekind number",
+            "note": "Jäkel claim fully verified: A100 GPUs, 5311 GPU hours, 'cublasDgemmStridedBatched' batched FP64 DGEMM. Ootomo claim verified in substance: title 'DGEMM on Integer Matrix Multiplication Unit', abstract 'The experiment using integer Tensor Cores shows that we can compute double-precision matrix multiplication faster than cuBLAS'. The recorded ootomo quote is a paraphrase, not verbatim (see src:ootomo)."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "The experiment using integer Tensor Cores shows that we can compute double-precision matrix multiplication faster than cuBLAS and an existing Ozaki scheme implementation on FP16 Tensor Cores on NVIDIA consumer GPUs.",
+            "note": "Statement of the gap the plan will measure; needs no source. 'No measured cost for this is known' is a negative claim that cannot be verified from pages, but neither the Jäkel page (FP64 only) nor the Ootomo page (DGEMM emulation, not modular D(9)) reports a cost for modular INT8 tensor-core residue checks, so nothing contradicts it."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "d9 ≡ 0 (mod 2), d9 ≡ 0 (mod 3), d9 ≡ 1 (mod 5), d9 ≡ 6 (mod 7). By the Chinese remainder theorem, we have d9 ≡ 6 (mod 210).",
+            "page_value": 6,
+            "note": "Pawelski page states the four congruences and d9 ≡ 6 (mod 210); abstract: 'We show that the ninth Dedekind number is congruent to 6 modulo 210.' The published value on the Jäkel page, 286386577668298411128469151667598498812366, reduces to 6 mod 210 with residues 0, 0, 1, 6 (checked arithmetically; Pawelski predates Jäkel so does not itself make that comparison). Jäkel's Fig. 1 lists d(4)..d(8) for the small-n reproduction requirement. The recorded quote is a condensed paraphrase of four separate lines, not verbatim."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "The only thing left to say is that we run the algorithm on Nvidia A100 GPUs. 5311 GPU hours and 4257682565 matrix multiplications later",
+            "note": "Scope and process statement; carries no factual claim checkable against the pages, and nothing on the pages contradicts it. The 'Jäkel's efficiency' the cost estimates lean on is the 5311 GPU-hour figure on the Jäkel page."
+          },
+          {
+            "ref": "src:pawelski",
+            "status": "PARTIAL",
+            "page_quote": "d9 ≡ 0 (mod 2), d9 ≡ 0 (mod 3), d9 ≡ 1 (mod 5), d9 ≡ 6 (mod 7). By the Chinese remainder theorem, we have d9 ≡ 6 (mod 210).",
+            "note": "The recorded quote does not appear verbatim; the page gives the four congruences as separate display lines followed by the mod-210 conclusion. Substance fully supports the d9 ≡ 6 mod 210 anchor. Fetched as PDF; text extracted from the fetched file."
+          },
+          {
+            "ref": "src:jakel",
+            "status": "SUPPORTED",
+            "page_quote": "The only thing left to say is that we run the algorithm on Nvidia A100 GPUs. 5311 GPU hours and 4257682565 matrix multiplications later, we got the following value for the ninth Dedekind number: 286386577668298411128469151667598498812366.",
+            "note": "Quote appears verbatim. Page also carries the Theorem 9 algorithm (per pair class: build α, β; GEMM; trace of γ^2), class counts ('for D5 9919 equivalence classes', '7828354 intervals of D5', 'D5 : 8646896880 → 4257682565'), and the cuBLAS FP64 method ('cublasDgemmStridedBatched', double precision bound 2^53). Fetched as PDF; text extracted from the fetched file."
+          },
+          {
+            "ref": "src:ootomo",
+            "status": "PARTIAL",
+            "page_quote": "The experiment using integer Tensor Cores shows that we can compute double-precision matrix multiplication faster than cuBLAS and an existing Ozaki scheme implementation on FP16 Tensor Cores on NVIDIA consumer GPUs.",
+            "note": "The recorded quote 'DGEMM emulated on integer Tensor Cores' does not appear on the page; 'DGEMM' occurs only in the title 'DGEMM on Integer Matrix Multiplication Unit', and the abstract describes the Ozaki scheme on integer Tensor Cores. Substance supports the prior-art claim (integer tensor cores for high-precision work, FP64 accuracy)."
+          },
+          {
+            "ref": "num:n_interval_classes",
+            "status": "PARTIAL",
+            "page_quote": "For D2 we compute 6, for D3 18, for D4 134 and for D5 9919 equivalence classes. Due to nauty's efficiency, the last computation can be performed within just a couple of seconds on a 2.4 GHz desktop PC. Note that according to Theorem 2 there are 7828354 intervals of D5.",
+            "page_value": 9919,
+            "note": "Page states 9919 equivalence classes for D5, reduced by nauty from 7828354 intervals, matching the value and setting. The recorded quote ('5311 GPU hours and 4257682565 matrix multiplications') is a different sentence that does not contain or support the 9919 figure; replace it with the sentence quoted here."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:sequential_part",
+            "status": "PARTIAL",
+            "page_quote": "We get the reductions D2 : 56 → 33, D3 : 1127 → 446, D4 : 274409 → 80741 and D5 : 8646896880 → 4257682565.",
+            "note": "Content verified on the Jäkel page but the item cites no source. The page's algorithm does, per pair class [(a,b)], 'compute the matrix product γab = αab · βab; compute the trace of γab^2; multiply the trace with ω(a,b) and #[(a,b)]', then sums, so each pair class is an independent GEMM-then-trace. 4257682565 pair classes = 4.26e9 (and '4257682565 matrix multiplications'). Add [jakel] as the source."
+          },
+          {
+            "ref": "card:method",
+            "status": "PARTIAL",
+            "page_quote": "For D2 we compute 6, for D3 18, for D4 134 and for D5 9919 equivalence classes. Due to nauty's efficiency, the last computation can be performed within just a couple of seconds on a 2.4 GHz desktop PC. Note that according to Theorem 2 there are 7828354 intervals of D5.",
+            "note": "9,919 interval classes verified on the Jäkel page, and the page's algorithm is an outer sum 'for [I] ∈ Int(Dn)/≡' with each class's result multiplied by #[I], so interval classes are independent summands. The item cites no source for these facts. Prime-residue independence, the shared 8-GPU queue, and building matrices once for all primes are design choices the plan will build and need no source."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "PARTIAL",
+            "page_quote": "5311 GPU hours and 4257682565 matrix multiplications later, we got the following value for the ninth Dedekind number: 286386577668298411128469151667598498812366.",
+            "note": "'At most about 5 primes fit' is a cost prediction and needs no source. '19 primes would rebuild D(9) exactly by CRT' is a factual claim with no source and appears on no fetched page. Checked against the published value on the Jäkel page (D(9) ≈ 2.86e41): it holds only if the primes are the 19 largest below 256 (product ≈ 4.3e43, and 19 is exactly the minimum); the 19 smallest primes (≈ 7.9e24) or the 19 largest below 128 (≈ 5.4e35) do not suffice. The item does not say which primes."
+          },
+          {
+            "ref": "src:pawelski",
+            "status": "PARTIAL",
+            "page_quote": "d9 ≡ 0 (mod 2), d9 ≡ 0 (mod 3), d9 ≡ 1 (mod 5), d9 ≡ 6 (mod 7). By the Chinese remainder theorem, we have d9 ≡ 6 (mod 210).",
+            "note": "The recorded quote does not appear verbatim; the page gives the four congruences as separate display lines followed by the mod-210 conclusion. Substance fully supports the d9 ≡ 6 mod 210 anchor. Fetched as PDF; text extracted from the fetched file."
+          },
+          {
+            "ref": "src:ootomo",
+            "status": "PARTIAL",
+            "page_quote": "The experiment using integer Tensor Cores shows that we can compute double-precision matrix multiplication faster than cuBLAS and an existing Ozaki scheme implementation on FP16 Tensor Cores on NVIDIA consumer GPUs.",
+            "note": "The recorded quote 'DGEMM emulated on integer Tensor Cores' does not appear on the page; 'DGEMM' occurs only in the title 'DGEMM on Integer Matrix Multiplication Unit', and the abstract describes the Ozaki scheme on integer Tensor Cores. Substance supports the prior-art claim (integer tensor cores for high-precision work, FP64 accuracy)."
+          },
+          {
+            "ref": "num:n_interval_classes",
+            "status": "PARTIAL",
+            "page_quote": "For D2 we compute 6, for D3 18, for D4 134 and for D5 9919 equivalence classes. Due to nauty's efficiency, the last computation can be performed within just a couple of seconds on a 2.4 GHz desktop PC. Note that according to Theorem 2 there are 7828354 intervals of D5.",
+            "page_value": 9919,
+            "note": "Page states 9919 equivalence classes for D5, reduced by nauty from 7828354 intervals, matching the value and setting. The recorded quote ('5311 GPU hours and 4257682565 matrix multiplications') is a different sentence that does not contain or support the 9919 figure; replace it with the sentence quoted here."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R4:physical:F",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Does the number of vetted FATE-X algebra statements proved by an open-weight Lean prover keep rising as the per-problem token budget doubles, or does it flatten?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Search on vetted statements is compute-bound with log-linear returns [seed15], but FATE-X may flatten because Mathlib coverage, not compute, binds.",
+          "sources": [
+            {
+              "id": "seed15",
+              "url": "https://arxiv.org/html/2512.17260",
+              "quote": "limitations in Mathlib support"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "FATE-X solved count keeps gaining about b problems per doubling up to the top budget, with no bend.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "FATE-X solved count flattens (last two doublings each add under half of b) and failures show missing-library symptoms.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Run Leanstral 1.5 on FATE-H and FATE-X at token budgets doubling from 125k to 4M per problem on one 8x H100 node under $1,000. Check proofs with Comparator, calibrate on PutnamBench, and fit solved count against log budget [mistral].",
+          "sources": [
+            {
+              "id": "mistral",
+              "url": "https://mistral.ai/news/leanstral-1-5/",
+              "quote": "must either prove or disprove it"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Mistral reports a Leanstral 1.5 PutnamBench curve (44 at 50k to 587 at 4M tokens, pass@8) and FATE-X 34% with no stated budget [mistral]; Seed-Prover 1.5 reached 33% at 10 H20-days.",
+          "sources": [
+            {
+              "id": "mistral",
+              "url": "https://mistral.ai/news/leanstral-1-5/",
+              "quote": "must either prove or disprove it"
+            }
+          ],
+          "value": 4000000
+        },
+        {
+          "ref": "card:left_open",
+          "text": "A FATE-X curve of solved count against token budget with known units, plus costs per extra solve and disproof of unsolved statements, is not published.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Reproduce Mistral's published PutnamBench point for this model: 244 of 672 solved at 200k tokens per attempt, pass@8, on a 24-problem seeded slice [mistral].",
+          "sources": [
+            {
+              "id": "mistral",
+              "url": "https://mistral.ai/news/leanstral-1-5/",
+              "quote": "must either prove or disprove it"
+            }
+          ],
+          "value": "244/672 = 36.3%"
+        },
+        {
+          "ref": "card:limits",
+          "text": "One model on one node; a flat curve may reflect this test setup, not missing library coverage. With 100 problems per set, gains of 2-3 problems are noise. Absolute scores may be inflated by training-data contamination.",
+          "sources": []
+        },
+        {
+          "ref": "src:seed15",
+          "url": "https://arxiv.org/html/2512.17260",
+          "quote": "limitations in Mathlib support",
+          "supports": "Seed-Prover 1.5 FATE results and log-linear compute claim; library coverage reading"
+        },
+        {
+          "ref": "src:mistral",
+          "url": "https://mistral.ai/news/leanstral-1-5/",
+          "quote": "must either prove or disprove it",
+          "supports": "Leanstral 1.5 FATE scores, PutnamBench budget curve, training environments"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is the plan's own question and carries no factual claim)",
+            "note": "Pure research question about what the plan will measure; nothing to verify against a page."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "However, the system still faces challenges with PhD-level problems and beyond, primarily due to the increased complexity and limitations in Mathlib support.",
+            "note": "Quote appears verbatim on the seed15 page. Log-linear claim is supported by the paper: 'The number of solved problems on PutnamBench increases log-linearly with respect to the computational budget.' Two caveats: the log-linear result is stated for PutnamBench only, and the paper never calls PutnamBench/FATE statements 'vetted' (that word is the plan's gloss). The FATE-X-may-flatten part is a prediction and needs no source."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is a prediction and carries no factual claim)",
+            "note": "Outcome prediction for the plan's own experiment; nothing to verify."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is a prediction and carries no factual claim)",
+            "note": "Outcome prediction; 'missing-library symptoms' is consistent with the seed15 Mathlib-limitation reading but needs no source as a prediction."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "In the multiturn environment, the model is given a theorem statement and must either prove or disprove it.",
+            "note": "Quote appears verbatim on the Mistral page. The item is plan design (budgets, node, cost, Comparator, PutnamBench calibration) and carries no factual claim about the source. Note the cited quote describes the RL training environment, not the token-budget curve; 'Comparator' and 'H100' do not appear on the page but are the plan's tooling, not claims about it."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "page_value": 4000000,
+            "note": "Mistral page confirms: Pass@8 on PutnamBench as token budget per attempt rises (figure sweep stated as 'from 25k to 4M', first cited number is 44 at 50k), '34% on FATE-X' (page also has a '%87 on FATE-H' typo), no token/compute budget or pass@k stated for FATE results, and 'Seed-Prover, whose high setting runs with a budget of 10 H20-days per problem.' However, the 33% Seed-Prover FATE-X figure does not appear anywhere on the Mistral page; it is on the seed15 page (Table 2: 'Seed-Prover 1.5 | 10 H20 days / problem | 580/87.9% | 80% | 33% | 48%'), which this item does not cite. Add [seed15] for the 33% claim."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "The article gives no token budget, compute budget, or pass@k for the FATE-H or FATE-X results.",
+            "note": "Claim of absence with no source cited. Consistent with both fetched pages: the Mistral page states no FATE-X budget, and the seed15 paper's only test-time scaling curve (Figure 6) is for PutnamBench, with FATE-X reported only as single points. Neither page publishes cost-per-extra-solve or disproof counts. Marked PARTIAL because the claim is uncited though it matches what both pages show."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "The figure below tracks Pass@8 on PutnamBench as we raise the token budget per attempt from 25k to 4M ... from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "note": "Page states 244 solved at 200k tokens per attempt, pass@8, and 'PutnamBench consists of 672 problems'; 244/672 = 36.3% checks. The '24-problem seeded slice' is the plan's own design, not a page claim. The cited quote ('must either prove or disprove it') is on the page but is about the RL environment, not this number; the number itself is supported by the page prose."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "FATE-H contains 100 problems at the level of honors course exams or graduate-level difficulty. FATE-X contains 100 problems at the level of PhD qualifying exams or beyond.",
+            "note": "The one factual claim, '100 problems per set', is confirmed on the seed15 page but the item cites no source for it. The rest (one model/one node, noise band, contamination caveat) is plan-level limitation and needs no source. Add [seed15] for the 100-problem figure."
+          },
+          {
+            "ref": "src:seed15",
+            "status": "SUPPORTED",
+            "page_quote": "However, the system still faces challenges with PhD-level problems and beyond, primarily due to the increased complexity and limitations in Mathlib support.",
+            "note": "Paper 'Seed-Prover 1.5: Mastering Undergraduate-Level Theorem Proving via Learning from Experience'. Quote appears verbatim. Page also supports the stated uses: FATE results (80% Fate-H, 33% Fate-X; Table 2 budget 10 H20 days/problem), log-linear compute claim ('The number of solved problems on PutnamBench increases log-linearly with respect to the computational budget'), and the library-coverage reading ('Fate relies heavily on Mathlib search to derive proofs'). Note: the paper also gives 20 H20-days/problem in the IMO text, inconsistent with Table 2's 10."
+          },
+          {
+            "ref": "src:mistral",
+            "status": "SUPPORTED",
+            "page_quote": "In the multiturn environment, the model is given a theorem statement and must either prove or disprove it.",
+            "note": "Quote appears verbatim. Page supports the stated uses: FATE scores ('new state-of-the-art of %87 on FATE-H and 34% on FATE-X'), PutnamBench budget curve ('from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M', Pass@8, figure sweep from 25k to 4M), and training environments ('leverages extensive training on two RL environments'). Curve data is in an image; the numbers come from prose. No FATE-X budget is stated on the page."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "page_value": 4000000,
+            "note": "Mistral page confirms: Pass@8 on PutnamBench as token budget per attempt rises (figure sweep stated as 'from 25k to 4M', first cited number is 44 at 50k), '34% on FATE-X' (page also has a '%87 on FATE-H' typo), no token/compute budget or pass@k stated for FATE results, and 'Seed-Prover, whose high setting runs with a budget of 10 H20-days per problem.' However, the 33% Seed-Prover FATE-X figure does not appear anywhere on the Mistral page; it is on the seed15 page (Table 2: 'Seed-Prover 1.5 | 10 H20 days / problem | 580/87.9% | 80% | 33% | 48%'), which this item does not cite. Add [seed15] for the 33% claim."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "The article gives no token budget, compute budget, or pass@k for the FATE-H or FATE-X results.",
+            "note": "Claim of absence with no source cited. Consistent with both fetched pages: the Mistral page states no FATE-X budget, and the seed15 paper's only test-time scaling curve (Figure 6) is for PutnamBench, with FATE-X reported only as single points. Neither page publishes cost-per-extra-solve or disproof counts. Marked PARTIAL because the claim is uncited though it matches what both pages show."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "FATE-H contains 100 problems at the level of honors course exams or graduate-level difficulty. FATE-X contains 100 problems at the level of PhD qualifying exams or beyond.",
+            "note": "The one factual claim, '100 problems per set', is confirmed on the seed15 page but the item cites no source for it. The rest (one model/one node, noise band, contamination caveat) is plan-level limitation and needs no source. Add [seed15] for the 100-problem figure."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R4:physical:B",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:if_not",
+            "reason": "Outcome decides whether to spend on INT8 residue runs, but D(9) is already known; value is a cost curve, not a pending choice."
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "plan:compute_axis.levels",
+            "reason": "Deterministic noise and held_fixed are fine, but the 1-19 prime axis exceeds the budget (about 5 primes), so the full span is not run."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Exact published D(9) residues and d(4)..d(8) serve as truth independent of the method, and small cases reproduce published numbers first."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:left_open",
+            "reason": "Jäkel used FP64 and Ootomo emulates DGEMM; neither measures modular INT8 D(9) cost, and the gap is stated."
+          },
+          {
+            "criterion": "reshape",
+            "value": 2,
+            "ref": "card:method",
+            "reason": "Pair classes were already independent; the plan lowers precision and regroups independent work, removing no sequential dependency."
+          },
+          {
+            "criterion": "baseline",
+            "value": 4,
+            "ref": "plan:arms",
+            "reason": "Tuned FP64 cuBLAS path on same GPU and sample, exact anchor, p1b times both; baseline_copies is only vaguely stated."
+          }
+        ],
+        "decides_by": "p1b",
+        "decides_by_reason": "The decision rule needs measured cost per prime c1, which p1b benchmarks; p0 only counts classes and work, and p2 is the spend."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R4:physical:F",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 4,
+            "ref": "card:if_not",
+            "reason": "Either curve shape changes whether to buy compute or invest in library coverage; single model and one node limit generalization.",
+            "ref_note": ""
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Range is 32x, tokens are compute, controls fixed; but b is unspecified and 2-3 problem noise on 100 may swamp the bend test."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Comparator and Lean kernel give exact truth; anchor reproduces Mistral's PutnamBench point with stated binomial tolerance."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:left_open",
+            "reason": "Prior gives a PutnamBench curve and an unbudgeted FATE-X point; a FATE-X budget curve is stated as unpublished."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:method",
+            "reason": "Method is none; only independent attempts run side by side, and no sequential dependency is removed."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so baseline timing does not apply."
+          }
+        ],
+        "decides_by": "p4",
+        "decides_by_reason": "The log-linear fit and bend rule need the FATE-X budget ladder, which is first completed in p4; earlier phases only calibrate."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R4:physical:random: dramaturg: card:anchor: 0 findings; degenerate: card:if_lever; degenerate: card:if_not"
+  ]
+}

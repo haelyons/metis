@@ -1,0 +1,98 @@
+{
+ "run_dir": "/home/hal/stage/runs-idea/R4_interp_I1/20261017-194549",
+ "card": "R4:interp:I1",
+ "models": {
+  "research": "opencode-go/kimi-k3",
+  "dramaturg": [
+   "opencode-go/glm-5.3",
+   "opencode-go/deepseek-v4-pro"
+  ],
+  "critic": [
+   "opencode-go/kimi-k3",
+   "opencode-go/qwen3.8-max",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-17T19:45:49.996Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/kimi-k3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 133459,
+   "cost_usd": 0.37698719999999997,
+   "tokens": 64312,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 452849,
+   "cost_usd": 0.33038304,
+   "tokens": 147260,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 237751,
+   "cost_usd": 0.10500485600000001,
+   "tokens": 127862,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/kimi-k3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 66327,
+   "cost_usd": 0.140232,
+   "tokens": 11744,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-max",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 281948,
+   "cost_usd": 0.07582,
+   "tokens": 11369,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 15270,
+   "cost_usd": 0.00369798,
+   "tokens": 5269,
+   "errors": []
+  }
+ ],
+ "cost_usd": 1.032125076,
+ "tokens": 367816,
+ "done": true,
+ "updated": "2026-10-17T20:00:18.293Z",
+ "best": {
+  "name": "Goedel-Prover (Goedel-LM: Princeton Language and Intelligence with Tsinghua, Amazon, Meta FAIR, Numina)",
+  "step": "The 'Statement Formalization' quality-assessment gate: after two trained formalizers produce 16 candidate Lean 4 formalizations per informal problem, each surviving candidate must pass a Faithfulness-and-Completeness (FC) check that the formal statement preserves the informal problem's meaning, before the surviving 1.64M statements enter expert-iteration proof training.",
+  "sum": 12,
+  "fit": 3,
+  "change": 4,
+  "new": 5
+ }
+}

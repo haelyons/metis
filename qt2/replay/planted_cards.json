@@ -1,0 +1,61 @@
+{
+ "planted_cards": [
+  {
+   "id": "a_quote_W11",
+   "card_text": "**W11 · Ensemble data assimilation of fault stress (boundary case).** R3 · physical · random pick · compute tested: yes · plan expects: not the lever\n\n**Question.** On a synthetic benchmark fault, does earthquake-forecast skill keep rising as the assimilation ensemble grows, or does it level off early while model error and sensor depth decide?\n\n**What is known.** van Dinther et al. 2019 ran an ensemble Kalman filter with 150 members on a 2-D subduction analogue; Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model. Forecast skill versus ensemble size beyond 150 members, under model error, on a depth-resolved rate-and-state fault, with EnKF compared against a large particle filter.\n\n**Hypothesis.** Skill levels off at tens to hundreds of members, because model error and depth of data limit it first, as the one perfect-model study [van_dinther] suggests.\n\n**Restructuring.** Each member's adaptive time stepping through earthquakes: thousands of steps per event, up to about 8,050 accepted steps per cycle. Thousands of independent members run as columns of one batched matrix on GPU; finished members are gathered into smaller batches every 32 steps so slow ruptures do not stall the rest.\n\n**If compute is the lever.** Skill is still rising beyond 1,024 members in the model-error or particle-filter arms, by more than the gain from deep stress data.\n\n**If not.** Skill plateaus at 256 members or fewer in every ensemble Kalman filter arm; model error or deep data changes skill more than going from 32 members to the largest.\n\n**Test.** Run thousands of copies of a benchmark earthquake fault on GPUs inside ensemble Kalman and particle filters. Measure forecast skill against ensemble size, with and without model error and deep sensors, against simple baselines [van_dinther].\n\n*Compute axis.* Ensemble size M (members per ensemble Kalman filter or particle filter run): 16–16,384 members, 10 levels. Closest prior: 150 [van_dinther], beyond it. Prior art checked without web search.\n\n**Check first.** A single-member run of the first benchmark fault at 25 m reproduces an independent code, QDYN: recurrence interval and first-event time within 1%, slip-rate series overlay at benchmark stations. Tolerance: within 1% on recurrence interval and first-event time.\n\n**Would not show.** A plateau would confirm the hypothesis only for synthetic data from a known model class, not the real Earth. GPU timings are assumptions until Phase 0b; truth noise amplitude is tuned, not observed.\n\n*Cost.* Plans $684.14 of the $1,000 budget over 26 machine-hours, leaving $315.86. Main guess: Wall time on 8x H100, main truth [g], measured after $25.74 of spend; the budget is reached if it is 1.9× higher. 2 cost flags in the block.",
+   "sources": [
+    {
+     "id": "van_dinther",
+     "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+     "quote": "as little as 60 ensemble members"
+    }
+   ],
+   "expected": "REJECT",
+   "defect": "source van_dinther: quote altered so it is not on the page (20 -> 60)"
+  },
+  {
+   "id": "b_number_W13",
+   "card_text": "**W13 · Training robot foundation models and video world models.** R2 · physical · random pick · compute tested: yes · plan expects: not the lever · halted: cost record broken\n\n**Question.** With data held fixed, does more fine-tuning compute raise task success of a small robot vision-language-action model in simulation, or does data limit it?\n\n**What is known.** SmolVLA paper reports LIBERO results at 0.24B/0.45B/2.25B sizes and says it can train for far fewer steps without significant loss, but gives no step or data grid [smolvla_paper]. Whether, at fixed data, more fine-tuning steps help SmolVLA on LIBERO, and how steps trade against data fraction, capacity and a removed camera.\n\n**Hypothesis.** At fixed data, 15k to 50k steps shifts success under 3 points; more data adds 10 or more points [arXiv 2506.01844].\n\n**If compute is the lever.** At fixed data, 15k to 50k steps (3.3x compute) raises average success by 3 points or more, so compute still buys success.\n\n**If not.** At each data level, 15k to 50k steps moves success under 3 points; at 50k steps, 100% data beats 25% by 10 or more points.\n\n**Test.** Fine-tune SmolVLA on LIBERO in 25 runs, varying steps (5k, 15k, 50k) and data (10 to 100%) independently, plus capacity, camera removal and pretraining arms. Score 27 checkpoints on 2,000 rollouts each against a published 87.3% baseline.\n\n*Compute axis.* Training steps per run (with fixed cosine schedule per run), crossed with data fraction; also trainable parameters in arm C: 5,000–50,000 steps, 3 levels. Closest prior: 100,000 [smolvla_paper], not beyond it. Prior art checked without web search.\n\n*Restructuring.* none.\n\n**Check first.** Harness gate: LeRobot's published pi0.5 LIBERO checkpoint scored by our evaluator on 1200 episodes must reach at least 94%; published value 97.5%. Tolerance: pass at 94% or above (binomial 95% band +/-1.5 points at 400 episodes); arm A replication mean within +/-5 points of 87.3.\n\n**Would not show.** Small simulated benchmark, one model family; may not transfer to larger models or real robots. Training and evaluation speed unmeasured, so cost may rise. 87.3% replication may miss; schedule unpublished.\n\n*Cost.* Plans $557.20 of the $1,000 budget over 35 machine-hours, leaving $442.80. Full scale: Cosmos world-model training on 10,000 H100 GPUs for three months; file says $1,000 is about 1/86,000 of it, $86M, 86,000× the budget. 5 cost flags in the block.",
+   "sources": [
+    {
+     "id": "smolvla_paper",
+     "url": "https://arxiv.org/html/2506.01844",
+     "quote": "can be trained for a much smaller number of steps without sacrificing significant performance levels"
+    },
+    {
+     "id": "lerobot_libero",
+     "url": "https://huggingface.co/docs/lerobot/libero",
+     "quote": "may vary by a few percent across evaluation seeds"
+    }
+   ],
+   "expected": "REJECT",
+   "defect": "anchor.what: 400 changed to 1200, against its source"
+  },
+  {
+   "id": "c_url_I1",
+   "card_text": "**I1 · Entity-hallucination probes on the reviewer.** R1 · interp · top pick · compute tested: no · plan expects: unsure · halted: G-plan\n\n**Question.** Do released entity-hallucination probes flag invented entities in an open model's paper reviews better than cheap baselines, especially where citation lookup cannot settle the case?\n\n**What is known.** Obeso et al. trained entity-hallucination probes on LongFact-style long-form generation, with Llama-3.3-70B linear AUC 0.8667 and LoRA 0.9048; they did not test paper reviews [obeso]. Whether the probes transfer to long-context paper reviews and add value over lookups on entities that lookups cannot settle.\n\n**Hypothesis.** Probes help only on entities that are hard to look up; the released 70B probe should reach AUC 0.80 on review entities and beat the best cheap baseline by 0.05 there.\n\n**If the hypothesis holds.** Released 70B probe reaches AUC at least 0.80 on hard-to-look-up entities and beats the best cheap baseline by at least 0.05, with a confidence interval excluding 0.\n\n**If not.** Probe falls below 0.80 or beats the best baseline by under 0.05; or retrieval leaves under 1% fabricated citations, so lookup suffices [AAAI-26].\n\n**Test.** Generate about 2,800 reviews per model of 1,200 2025 ML papers with Llama-3.3-70B and 3.1-8B, label entities, then compare released and retrained probes with four cheap baselines, gated by replication, audits and controls.\n\n*Compute axis.* Reviewer model size (Llama 8B vs 70B), the only axis the plan varies; the claim concerns probe quality, not compute: 8–70 billion parameters, 2 levels. Closest prior: 70 [obeso], not beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Released probes on Obeso's LongFact test split must reproduce reported AUC: 70B linear 0.8667, 70B LoRA 0.9048, 8B linear 0.8535, 8B LoRA 0.8938 [obeso]. Tolerance: within +/-0.02 AUC.\n\n**Would not show.** Labels come from automatic lookups and an open-weight judge, audited on only 300 entities, so label noise caps measurable AUC. Retrieval-equipped reviewers rarely fabricate, so fabricated entities may be too few. Only Llama 8B and 70B reviewers on 2025 ML papers are tested.\n\n*Cost.* Plans $440.23 of the $1,000 budget over 23 machine-hours, leaving $559.77. Full scale: Obeso-style labelling (Claude Sonnet 4 with web search) of all 5,600 reviews at about $0.70 each, $3,900, 3.9× the budget. 17 cost flags in the block.",
+   "sources": [
+    {
+     "id": "obeso",
+     "url": "https://arxiv.org.invalid/html/2509.03531v2",
+     "quote": "linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062"
+    }
+   ],
+   "expected": "REJECT",
+   "defect": "source obeso: URL host made unresolvable (UNREACHABLE)"
+  },
+  {
+   "id": "d_clean_W11",
+   "card_text": "**W11 · Ensemble data assimilation of fault stress (boundary case).** R3 · physical · random pick · compute tested: yes · plan expects: not the lever\n\n**Question.** On a synthetic benchmark fault, does earthquake-forecast skill keep rising as the assimilation ensemble grows, or does it level off early while model error and sensor depth decide?\n\n**What is known.** van Dinther et al. 2019 ran an ensemble Kalman filter with 150 members on a 2-D subduction analogue; Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model. Forecast skill versus ensemble size beyond 150 members, under model error, on a depth-resolved rate-and-state fault, with EnKF compared against a large particle filter.\n\n**Hypothesis.** Skill levels off at tens to hundreds of members, because model error and depth of data limit it first, as the one perfect-model study [van_dinther] suggests.\n\n**Restructuring.** Each member's adaptive time stepping through earthquakes: thousands of steps per event, up to about 8,050 accepted steps per cycle. Thousands of independent members run as columns of one batched matrix on GPU; finished members are gathered into smaller batches every 32 steps so slow ruptures do not stall the rest.\n\n**If compute is the lever.** Skill is still rising beyond 1,024 members in the model-error or particle-filter arms, by more than the gain from deep stress data.\n\n**If not.** Skill plateaus at 256 members or fewer in every ensemble Kalman filter arm; model error or deep data changes skill more than going from 32 members to the largest.\n\n**Test.** Run thousands of copies of a benchmark earthquake fault on GPUs inside ensemble Kalman and particle filters. Measure forecast skill against ensemble size, with and without model error and deep sensors, against simple baselines [van_dinther].\n\n*Compute axis.* Ensemble size M (members per ensemble Kalman filter or particle filter run): 16–16,384 members, 10 levels. Closest prior: 150 [van_dinther], beyond it. Prior art checked without web search.\n\n**Check first.** A single-member run of the first benchmark fault at 25 m reproduces an independent code, QDYN: recurrence interval and first-event time within 1%, slip-rate series overlay at benchmark stations. Tolerance: within 1% on recurrence interval and first-event time.\n\n**Would not show.** A plateau would confirm the hypothesis only for synthetic data from a known model class, not the real Earth. GPU timings are assumptions until Phase 0b; truth noise amplitude is tuned, not observed.\n\n*Cost.* Plans $684.14 of the $1,000 budget over 26 machine-hours, leaving $315.86. Main guess: Wall time on 8x H100, main truth [g], measured after $25.74 of spend; the budget is reached if it is 1.9× higher. 2 cost flags in the block.",
+   "sources": [
+    {
+     "id": "van_dinther",
+     "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+     "quote": "as little as 20 ensemble members"
+    }
+   ],
+   "expected": "PASS",
+   "defect": "none"
+  }
+ ]
+}

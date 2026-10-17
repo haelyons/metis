@@ -1,0 +1,560 @@
+{
+  "phase": "B",
+  "slice": 6,
+  "dramaturg": [
+    {
+      "key": "R3:interp:O6",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Do pretrained seismic models hold lab fault stress, friction and time to failure beyond what raw signal power gives, and does this grow with model size?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Pretrained seismic models will hold fault-state information beyond signal power that grows with model size, though signal power alone already gives lab stress R² 0.82 [rouet2018].",
+          "sources": [
+            {
+              "id": "rouet2018",
+              "url": "https://arxiv.org/abs/1710.04172",
+              "quote": "Variance (power) alone gave R² 0.82"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "R² left after removing signal power rises steadily from smallest to largest model in both seeds, with smallest and largest confidence intervals not overlapping.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "The size curve is flat, or pretrained probes sit within the confidence interval of random-init copies or the power baseline [rouet2018].",
+          "sources": [
+            {
+              "id": "rouet2018",
+              "url": "https://arxiv.org/abs/1710.04172",
+              "quote": "Variance (power) alone gave R² 0.82"
+            }
+          ]
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Probe frozen SeisLM models and random-init copies on Penn State lab stick-slip data for stress, friction and time to failure, beyond a power baseline. Check Norcia field data, and pretrain four model sizes in-domain to see if the signal grows.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Rouet-Leduc et al. read lab fault state from window statistics with a random forest (time-to-failure R² 0.89, stress >0.9) [rouet2017]; Li et al. probed Othello networks against randomised ones [li2022]. No probing of seismic foundation models found.",
+          "sources": [
+            {
+              "id": "rouet2017",
+              "url": "https://arxiv.org/abs/1702.05774",
+              "quote": "R² 0.89"
+            },
+            {
+              "id": "li2022",
+              "url": "https://arxiv.org/pdf/2210.13382",
+              "quote": "The key comparison is between the randomized network and the trained network"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether pretrained seismic models represent fault state beyond signal power, and whether this grows with model size at fixed lab data. Coverage is limited since no web search was available.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Random forest on window statistics reproduces time-to-failure R² about 0.89 on experiment p2394 (periodicity-only about 0.3) [rouet2017]",
+          "sources": [
+            {
+              "id": "rouet2017",
+              "url": "https://arxiv.org/abs/1702.05774",
+              "quote": "R² 0.89"
+            }
+          ],
+          "value": 0.89
+        },
+        {
+          "ref": "card:limits",
+          "text": "Lab data at 3.968 MHz and 40 kHz does not physically match SeisLM's 100 Hz, so sample index is treated as time. Small in-domain pretraining says nothing about full-scale SeisLM or field transfer. A positive Norcia field-data result could still come from event location.",
+          "sources": []
+        },
+        {
+          "ref": "src:rouet2018",
+          "url": "https://arxiv.org/abs/1710.04172",
+          "quote": "Variance (power) alone gave R² 0.82",
+          "supports": "Power-only baseline for shear stress; stress R² > 0.9 with full statistics."
+        },
+        {
+          "ref": "src:rouet2017",
+          "url": "https://arxiv.org/abs/1702.05774",
+          "quote": "R² 0.89",
+          "supports": "Random forest TTF R² 0.89 vs periodicity-only 0.3 on p2394; anchor and baselines B0, B2."
+        },
+        {
+          "ref": "src:li2022",
+          "url": "https://arxiv.org/pdf/2210.13382",
+          "quote": "The key comparison is between the randomized network and the trained network",
+          "supports": "Random-init twin baseline standard of evidence."
+        },
+        {
+          "ref": "num:fs_cost",
+          "name": "Shared filesystem about 200 GiB for 14 days",
+          "value": 19,
+          "unit": "USD",
+          "basis": "PROXY",
+          "quote": "applicable sales tax/VAT/GST",
+          "page_setting": "Billing docs example rate of $0.20/GiB-month; real rate shown at filesystem creation",
+          "differs_in": [
+            "example rate rather than the actual rate"
+          ],
+          "url": "https://docs.lambda.ai/public-cloud/billing/"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; the item is the question the plan will test and carries no factual claim)",
+            "note": "Pure research question about what the plan will measure. Nothing to check against a page."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "From solely the instantaneous seismic power emitted by the fault, the ML model can make precise estimations of the stress for all individual stress cycles (colored dashed lines) with an R2 of 0.82.",
+            "note": "The factual claim (power alone gives lab stress R² 0.82) is correct per the full paper, but the cited page https://arxiv.org/abs/1710.04172 contains neither the recorded quote nor '0.82'. The sentence above is the Fig. 2 caption of the PDF at https://arxiv.org/pdf/1710.04172; the text also says 'the key feature of the seismic signal is its variance' and that a power-only model stays accurate (R2 > 0.8). Recorded quote is a paraphrase. The rest of the item is the hypothesis and needs no source."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; the item is a prediction about the planned measurement)",
+            "note": "Describes the expected result pattern; no factual claim to verify."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "PARTIAL",
+            "page_quote": "From solely the instantaneous seismic power emitted by the fault, the ML model can make precise estimations of the stress for all individual stress cycles (colored dashed lines) with an R2 of 0.82.",
+            "note": "Only factual content is that rouet2018 provides a 'power baseline'. The cited abstract page does support a power-friction relation ('relating the seismic signal power and the friction on the fault') but does not contain the recorded quote or the 0.82 figure; those are in the full PDF (Fig. 2 caption, quoted above). The falsification conditions themselves need no source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; the item describes what the plan will build and measure)",
+            "note": "Plan description (SeisLM probes, random-init copies, Penn State stick-slip data, Norcia field data, four in-domain model sizes). No sourced factual claim. Incidentally, rouet2017 acknowledges 'Chris Marone at Penn State' for the experiments."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "A naïve model based exclusively on the periodicity of the events only achieves an R2 performance of 0.3. In comparison, the time to failure predictions from the RF model are highly accurate, with an R2 value of 0.89.",
+            "note": "Random forest on window statistical features with TTF R2 0.89 is confirmed in the full PDF of 1702.05774 ('Each decision tree predicts the time remaining before the next failure using a sequence of decisions based on statistical features derived from the time windows'), not on the cited abstract page. 'stress >0.9' is NOT in rouet2017; it is in the rouet2018 PDF ('The frictional state determined by the ML model from the seismic data is highly accurate (R2 > 0.9)'), so it is misattributed. Li et al. claim is supported: PDF says 'As a baseline, we have included probes trained on a randomly initialized network' and the recorded li2022 quote appears verbatim in footnote 6. 'No probing of seismic foundation models found' is an unsourced negative literature claim that cannot be verified from the cited pages."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; the item states the open question and a note about search coverage)",
+            "note": "Restates the gap the plan addresses plus a process caveat; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "A naïve model based exclusively on the periodicity of the events only achieves an R2 performance of 0.3. In comparison, the time to failure predictions from the RF model are highly accurate, with an R2 value of 0.89. [...] Data from experiment number p2394.",
+            "page_value": 0.89,
+            "note": "All three facts (RF TTF R2 0.89, periodicity-only R2 0.3, experiment p2394 in the Fig. 3 caption) are confirmed in the full PDF at https://arxiv.org/pdf/1702.05774. The cited page https://arxiv.org/abs/1702.05774 contains none of them, and the recorded quote 'R² 0.89' is not verbatim (paper writes 'R2 value of 0.89'). Value 0.89 matches the page."
+          },
+          {
+            "ref": "card:limits",
+            "status": "UNSUPPORTED",
+            "page_quote": "(no source cited; the sampling rates 3.968 MHz, 40 kHz and 100 Hz do not appear on any fetched page, including the full text of both Rouet-Leduc papers)",
+            "note": "'Lab data at 3.968 MHz and 40 kHz' and 'SeisLM's 100 Hz' are factual claims with no source; a grep of both Rouet-Leduc PDFs for MHz/kHz/Hz/sampling returned nothing, so they are not sourceable from the plan's existing citations either. The remaining sentences (sample index treated as time, small pretraining says nothing about full-scale SeisLM, Norcia result could come from event location) describe the plan's scope and need no source."
+          },
+          {
+            "ref": "src:rouet2018",
+            "status": "PARTIAL",
+            "page_quote": "From solely the instantaneous seismic power emitted by the fault, the ML model can make precise estimations of the stress for all individual stress cycles (colored dashed lines) with an R2 of 0.82.",
+            "note": "Cited URL https://arxiv.org/abs/1710.04172 ('Estimating Fault Friction from Seismic Signals in the Laboratory', Rouet-Leduc et al.) contains neither the recorded quote nor any R² value; its abstract only says the work relates 'the seismic signal power and the friction on the fault'. The full PDF (https://arxiv.org/pdf/1710.04172) supports both halves of 'supports': Fig. 2 caption gives R2 of 0.82 for stress from power alone, and the text says 'The frictional state determined by the ML model from the seismic data is highly accurate (R2 > 0.9)' and 'the key feature of the seismic signal is its variance'. Recorded quote is a paraphrase, not page text; cite the PDF and the verbatim sentence."
+          },
+          {
+            "ref": "src:rouet2017",
+            "status": "PARTIAL",
+            "page_quote": "A naïve model based exclusively on the periodicity of the events only achieves an R2 performance of 0.3. In comparison, the time to failure predictions from the RF model are highly accurate, with an R2 value of 0.89.",
+            "note": "Cited URL https://arxiv.org/abs/1702.05774 ('Machine Learning Predicts Laboratory Earthquakes', Rouet-Leduc et al.) does not contain 'R² 0.89', 'random forest', 'periodicity' or 'p2394'. The full PDF (https://arxiv.org/pdf/1702.05774) supports everything in 'supports': RF TTF R2 0.89, periodicity-only R2 0.3, and Fig. 3 caption 'Data from experiment number p2394.' Quote should be the verbatim sentence above and the URL the PDF."
+          },
+          {
+            "ref": "src:li2022",
+            "status": "SUPPORTED",
+            "page_quote": "But that performance is not a surprise, since it makes sense that some information about moves is preserved even by a random network. The key comparison is between the randomized network and the trained network.",
+            "note": "Verbatim in footnote 6 of the PDF at https://arxiv.org/pdf/2210.13382 (Li, Hopkins, Bau, Viégas, Pfister, Wattenberg, 'Emergent World Representations', ICLR 2023). Main text: 'As a baseline, we have included probes trained on a randomly initialized network'. Supports the random-init twin baseline standard. (WebFetch could not parse the PDF; text extracted with pdftotext from the fetched file.)"
+          },
+          {
+            "ref": "num:fs_cost",
+            "status": "PARTIAL",
+            "page_quote": "Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: [...] The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.",
+            "note": "The page states the example rate for the page_setting given ($0.20/GiB-month, actual price shown at filesystem creation), and 200 GiB x $0.20 x 14/30 months (or 336/720 h per the page's own hourly method) = $18.67, consistent with the recorded 19 USD. However the recorded quote 'applicable sales tax/VAT/GST' does not appear anywhere on https://docs.lambda.ai/public-cloud/billing/; the page only says 'Charges include sales tax, which is based on the location provided in your billing information.' and never mentions VAT or GST. Quote should be replaced with the rate sentence above."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "From solely the instantaneous seismic power emitted by the fault, the ML model can make precise estimations of the stress for all individual stress cycles (colored dashed lines) with an R2 of 0.82.",
+            "note": "The factual claim (power alone gives lab stress R² 0.82) is correct per the full paper, but the cited page https://arxiv.org/abs/1710.04172 contains neither the recorded quote nor '0.82'. The sentence above is the Fig. 2 caption of the PDF at https://arxiv.org/pdf/1710.04172; the text also says 'the key feature of the seismic signal is its variance' and that a power-only model stays accurate (R2 > 0.8). Recorded quote is a paraphrase. The rest of the item is the hypothesis and needs no source."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "PARTIAL",
+            "page_quote": "From solely the instantaneous seismic power emitted by the fault, the ML model can make precise estimations of the stress for all individual stress cycles (colored dashed lines) with an R2 of 0.82.",
+            "note": "Only factual content is that rouet2018 provides a 'power baseline'. The cited abstract page does support a power-friction relation ('relating the seismic signal power and the friction on the fault') but does not contain the recorded quote or the 0.82 figure; those are in the full PDF (Fig. 2 caption, quoted above). The falsification conditions themselves need no source."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "A naïve model based exclusively on the periodicity of the events only achieves an R2 performance of 0.3. In comparison, the time to failure predictions from the RF model are highly accurate, with an R2 value of 0.89.",
+            "note": "Random forest on window statistical features with TTF R2 0.89 is confirmed in the full PDF of 1702.05774 ('Each decision tree predicts the time remaining before the next failure using a sequence of decisions based on statistical features derived from the time windows'), not on the cited abstract page. 'stress >0.9' is NOT in rouet2017; it is in the rouet2018 PDF ('The frictional state determined by the ML model from the seismic data is highly accurate (R2 > 0.9)'), so it is misattributed. Li et al. claim is supported: PDF says 'As a baseline, we have included probes trained on a randomly initialized network' and the recorded li2022 quote appears verbatim in footnote 6. 'No probing of seismic foundation models found' is an unsourced negative literature claim that cannot be verified from the cited pages."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "A naïve model based exclusively on the periodicity of the events only achieves an R2 performance of 0.3. In comparison, the time to failure predictions from the RF model are highly accurate, with an R2 value of 0.89. [...] Data from experiment number p2394.",
+            "page_value": 0.89,
+            "note": "All three facts (RF TTF R2 0.89, periodicity-only R2 0.3, experiment p2394 in the Fig. 3 caption) are confirmed in the full PDF at https://arxiv.org/pdf/1702.05774. The cited page https://arxiv.org/abs/1702.05774 contains none of them, and the recorded quote 'R² 0.89' is not verbatim (paper writes 'R2 value of 0.89'). Value 0.89 matches the page."
+          },
+          {
+            "ref": "card:limits",
+            "status": "UNSUPPORTED",
+            "page_quote": "(no source cited; the sampling rates 3.968 MHz, 40 kHz and 100 Hz do not appear on any fetched page, including the full text of both Rouet-Leduc papers)",
+            "note": "'Lab data at 3.968 MHz and 40 kHz' and 'SeisLM's 100 Hz' are factual claims with no source; a grep of both Rouet-Leduc PDFs for MHz/kHz/Hz/sampling returned nothing, so they are not sourceable from the plan's existing citations either. The remaining sentences (sample index treated as time, small pretraining says nothing about full-scale SeisLM, Norcia result could come from event location) describe the plan's scope and need no source."
+          },
+          {
+            "ref": "src:rouet2018",
+            "status": "PARTIAL",
+            "page_quote": "From solely the instantaneous seismic power emitted by the fault, the ML model can make precise estimations of the stress for all individual stress cycles (colored dashed lines) with an R2 of 0.82.",
+            "note": "Cited URL https://arxiv.org/abs/1710.04172 ('Estimating Fault Friction from Seismic Signals in the Laboratory', Rouet-Leduc et al.) contains neither the recorded quote nor any R² value; its abstract only says the work relates 'the seismic signal power and the friction on the fault'. The full PDF (https://arxiv.org/pdf/1710.04172) supports both halves of 'supports': Fig. 2 caption gives R2 of 0.82 for stress from power alone, and the text says 'The frictional state determined by the ML model from the seismic data is highly accurate (R2 > 0.9)' and 'the key feature of the seismic signal is its variance'. Recorded quote is a paraphrase, not page text; cite the PDF and the verbatim sentence."
+          },
+          {
+            "ref": "src:rouet2017",
+            "status": "PARTIAL",
+            "page_quote": "A naïve model based exclusively on the periodicity of the events only achieves an R2 performance of 0.3. In comparison, the time to failure predictions from the RF model are highly accurate, with an R2 value of 0.89.",
+            "note": "Cited URL https://arxiv.org/abs/1702.05774 ('Machine Learning Predicts Laboratory Earthquakes', Rouet-Leduc et al.) does not contain 'R² 0.89', 'random forest', 'periodicity' or 'p2394'. The full PDF (https://arxiv.org/pdf/1702.05774) supports everything in 'supports': RF TTF R2 0.89, periodicity-only R2 0.3, and Fig. 3 caption 'Data from experiment number p2394.' Quote should be the verbatim sentence above and the URL the PDF."
+          },
+          {
+            "ref": "num:fs_cost",
+            "status": "PARTIAL",
+            "page_quote": "Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: [...] The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.",
+            "note": "The page states the example rate for the page_setting given ($0.20/GiB-month, actual price shown at filesystem creation), and 200 GiB x $0.20 x 14/30 months (or 336/720 h per the page's own hourly method) = $18.67, consistent with the recorded 19 USD. However the recorded quote 'applicable sales tax/VAT/GST' does not appear anywhere on https://docs.lambda.ai/public-cloud/billing/; the page only says 'Charges include sales tax, which is based on the location provided in your billing information.' and never mentions VAT or GST. Quote should be replaced with the rate sentence above."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R3:interp:O7",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Can sparse autoencoders on a pretrained seismic waveform model recover known signal classes and hidden events better than spectrogram clustering or single neurons?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Sparse autoencoder features on SeisLM-large will find known signal classes and missed examples of them, beating spectrogram clustering and random-start autoencoders; a truly new class is unlikely.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Autoencoder features cost less to inspect than spectrogram clustering and single neurons, and beat the random-start autoencoder; rare classes get their own feature at 1% prevalence or below.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "The pretrained autoencoder is about equal to the random-start one, or spectrogram clustering and single neurons match it; no class gets its own feature at 1% prevalence or below.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Train sparse autoencoders on three layers of SeisLM-large, score features against known labels, measure how rare a class can be and still get a feature, then scan Cascadia and Parkfield data, all on one H100 for about $700.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Goodfire's Evo 2 SAE work and InterPLM on protein models; no seismic SAE result was found, but no web search was run, so one may exist.",
+          "sources": [
+            {
+              "id": "goodfire",
+              "url": "https://www.goodfire.com/blog/interpreting-evo-2",
+              "quote": "Goodfire's Evo 2 post describes features aligned with known biology."
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether SAEs on a seismic foundation model give latents that beat spectrogram clustering, and how rare a class can be and still get its own latent.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "SeisLM repo regression check reports exact equality between portable bundles and original checkpoints; paper's noise-vs-earthquake separation (pretrained vs random-init) reproduces on STEAD.",
+          "sources": []
+        },
+        {
+          "ref": "card:limits",
+          "text": "No web search was run, so earlier seismic SAE work cannot be ruled out. Data-size and token-count figures are the file's inferences, not measured. Gate 6 depends on human reviewers outside the budget.",
+          "sources": []
+        },
+        {
+          "ref": "src:goodfire",
+          "url": "https://www.goodfire.com/blog/interpreting-evo-2",
+          "quote": "Goodfire's Evo 2 post describes features aligned with known biology.",
+          "supports": "Evo 2 SAE template"
+        },
+        {
+          "ref": "num:fs_usd",
+          "name": "Filesystem, about 200 GiB for one month",
+          "value": 40,
+          "unit": "usd",
+          "basis": "PROXY",
+          "quote": "The docs use $0.20/GiB-month as an example and say the actual rate is shown when the filesystem is created.",
+          "page_setting": "Lambda docs' example rate of $0.20/GiB-month; actual rate shown at filesystem creation",
+          "differs_in": [
+            "example rate, not the actual rate"
+          ],
+          "url": "https://docs.lambda.ai/public-cloud/billing/"
+        },
+        {
+          "ref": "num:pretrain_rerun",
+          "name": "Cost to re-run SeisLM-large pretraining on 8x A100-80GB",
+          "value": 2140,
+          "unit": "usd",
+          "basis": "PROXY",
+          "quote": "Large: four A100-80G GPUs for about 8 days",
+          "page_setting": "Paper reports four A100-80G GPUs for about 8 days; file prices it at $2.79/GPU-hr",
+          "differs_in": [
+            "file's inference of 768 A100-hours at Lambda's 8x A100-80GB rate"
+          ],
+          "url": "https://arxiv.org/abs/2410.15765"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "We introduce the Seismic Language Model (SeisLM), a foundational model designed to analyze seismic waveforms",
+            "note": "Research question, not a factual claim; nothing to source. Its only premise, that a pretrained seismic waveform model exists, is confirmed by the SeisLM arXiv abstract."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "trained SeisLM-large with a global batch size of 192 on four A100-80G GPUs.",
+            "note": "Prediction; needs no source. The only embedded fact, that a SeisLM-large model exists, is confirmed in the paper body (arxiv.org/html/2410.15765)."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "n/a: predicted outcome, no source cited or needed",
+            "note": "Statement of what the plan predicts if the lever works; contains no checkable factual claim."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "n/a: predicted outcome, no source cited or needed",
+            "note": "Statement of what the plan predicts if the lever fails; contains no checkable factual claim."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "n/a: description of what the plan will build and measure",
+            "note": "Describes what the plan will do; no external factual claim. The 'about $700' total is the plan's own budget and cannot be checked against any cited page (no H100 rate was among the items sent); the two cost inputs sent ($40 filesystem, $2140 pretraining re-run) do not sum to it, so it must rest on inputs not sent to me."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "In our collaboration with Arc, we trained BatchTopK sparse autoencoders (SAEs) on layer 26 of Evo 2",
+            "note": "Goodfire Evo 2 SAE work is confirmed by the cited page. 'InterPLM on protein models' is a factual claim with no source cited, so that part is unsupported. 'No seismic SAE result was found, but no web search was run' describes the producer's process and is not checkable."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "n/a: statement of what the plan will measure",
+            "note": "Frames the open question the plan addresses; no external factual claim to check. Whether it is truly unanswered in prior work is unverified, which the limits field itself admits (no web search run)."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "UNSUPPORTED",
+            "page_quote": "the separation between the embeddings of noise and earthquake traces gets greatly improved",
+            "note": "No source cited for either claim. The paper body does contain a noise-vs-earthquake embedding experiment ('a self-supervised SeisLM-base (right panel) separate the embeddings of earthquake and noise waveforms more effectively'), so the premise exists, but note the paper's figure is for SeisLM-base, not large, and the paper's STEAD mention concerns fine-tuning ('all SeisLM models—whether randomly initialized or pretrained—perform the task near perfect'), not the embedding plot. The claims that the repo regression check reports exact equality and that the separation 'reproduces on STEAD' are the producer's own results with nothing cited; the repo URL (https://github.com/liutianlin0121/seisLM) is given in the paper but no regression-check page was cited."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "n/a: self-description of the plan's limits",
+            "note": "Describes the producer's own process and plan constraints (no web search, inferred figures, Gate 6 reviewers); no external factual claim to check."
+          },
+          {
+            "ref": "src:goodfire",
+            "status": "PARTIAL",
+            "page_quote": "We discovered a wide range of features corresponding to sophisticated biological concepts.",
+            "note": "The recorded quote is a paraphrase, not verbatim page text. The page does support the item: it states SAEs were trained on Evo 2 ('we trained BatchTopK sparse autoencoders (SAEs) on layer 26 of Evo 2'; 'We trained SAEs on multiple layers of the model'), reports 'biologically relevant features', and describes 'a large-scale alignment analysis'. Supports the Evo 2 SAE template."
+          },
+          {
+            "ref": "num:fs_usd",
+            "status": "SUPPORTED",
+            "page_quote": "Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00. ... The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.",
+            "note": "Page states $0.20 per GiB per month as an example rate and says the actual price is shown at filesystem creation, exactly as the item's (paraphrased, non-verbatim) quote says. 200 GiB x $0.20 = $40, matching the value; the page itself states only the rate and a 1,000 GiB example ($200), not $40. Caveat on the page: the example rate 'might not reflect current pricing'."
+          },
+          {
+            "ref": "num:pretrain_rerun",
+            "status": "PARTIAL",
+            "page_quote": "We trained SeisLM-base on four A100-40G GPUs and trained SeisLM-large on four A100-80G GPUs. ... With these settings, the pretraining of SeisLM-base and SeisLM-large takes approximately 5 and 8 days, respectively.",
+            "note": "The cited URL (arXiv abstract page) contains no GPU or training-time figures; they appear in the paper body at arxiv.org/html/2410.15765. The recorded quote is a condensation, not verbatim. The paper confirms the setting (4 x A100-80G, ~8 days = 768 GPU-hours) but states no dollar figure; the $2.79/GPU-hr rate is not on this page and is the file's own inference, as the item admits. 768 x $2.79 = $2,143, consistent with $2,140. No page_value given because the page states no USD number."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "REJECT",
+        "blocking": [
+          {
+            "ref": "card:anchor",
+            "status": "UNSUPPORTED",
+            "page_quote": "the separation between the embeddings of noise and earthquake traces gets greatly improved",
+            "note": "No source cited for either claim. The paper body does contain a noise-vs-earthquake embedding experiment ('a self-supervised SeisLM-base (right panel) separate the embeddings of earthquake and noise waveforms more effectively'), so the premise exists, but note the paper's figure is for SeisLM-base, not large, and the paper's STEAD mention concerns fine-tuning ('all SeisLM models—whether randomly initialized or pretrained—perform the task near perfect'), not the embedding plot. The claims that the repo regression check reports exact equality and that the separation 'reproduces on STEAD' are the producer's own results with nothing cited; the repo URL (https://github.com/liutianlin0121/seisLM) is given in the paper but no regression-check page was cited."
+          }
+        ],
+        "listed": [
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "In our collaboration with Arc, we trained BatchTopK sparse autoencoders (SAEs) on layer 26 of Evo 2",
+            "note": "Goodfire Evo 2 SAE work is confirmed by the cited page. 'InterPLM on protein models' is a factual claim with no source cited, so that part is unsupported. 'No seismic SAE result was found, but no web search was run' describes the producer's process and is not checkable."
+          },
+          {
+            "ref": "src:goodfire",
+            "status": "PARTIAL",
+            "page_quote": "We discovered a wide range of features corresponding to sophisticated biological concepts.",
+            "note": "The recorded quote is a paraphrase, not verbatim page text. The page does support the item: it states SAEs were trained on Evo 2 ('we trained BatchTopK sparse autoencoders (SAEs) on layer 26 of Evo 2'; 'We trained SAEs on multiple layers of the model'), reports 'biologically relevant features', and describes 'a large-scale alignment analysis'. Supports the Evo 2 SAE template."
+          },
+          {
+            "ref": "num:pretrain_rerun",
+            "status": "PARTIAL",
+            "page_quote": "We trained SeisLM-base on four A100-40G GPUs and trained SeisLM-large on four A100-80G GPUs. ... With these settings, the pretraining of SeisLM-base and SeisLM-large takes approximately 5 and 8 days, respectively.",
+            "note": "The cited URL (arXiv abstract page) contains no GPU or training-time figures; they appear in the paper body at arxiv.org/html/2410.15765. The recorded quote is a condensation, not verbatim. The paper confirms the setting (4 x A100-80G, ~8 days = 768 GPU-hours) but states no dollar figure; the $2.79/GPU-hr rate is not on this page and is the file's own inference, as the item admits. 768 x $2.79 = $2,143, consistent with $2,140. No page_value given because the page states no USD number."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R3:interp:O6",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Lab stand-in and small in-domain pretraining; outcomes bear on full-scale SeisLM and field decisions only through unchecked steps."
+          },
+          {
+            "criterion": "lever",
+            "value": 4,
+            "ref": "plan:compute_axis",
+            "reason": "Axis spans about 100x with data, probes and tokens fixed and CI rules; whether the predicted gap exceeds noise is not stated."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 4,
+            "ref": "card:anchor",
+            "reason": "Measured lab stress and time to failure are independent truth, with reproduction of 0.89 first, but no numeric tolerance is given."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:closest_prior",
+            "reason": "Closest prior reads fault state with random forests and does not probe seismic foundation models; the gap is stated in left_open."
+          },
+          {
+            "criterion": "internals",
+            "value": 3,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "Margin 0.05 is against random-init twins; power and random-forest baselines are compared without a numeric margin."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:method",
+            "reason": "Method is none; pretraining stays sequential and the only parallelism is independent runs across sizes and seeds."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so the criterion does not apply."
+          }
+        ],
+        "decides_by": "p_probe",
+        "decides_by_reason": "The scaling half of decision_rule needs probes on the pretrained size checkpoints, which happen only in p_probe; earlier phases cover the lab-state half only."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R3:interp:O7",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 2,
+            "ref": "card:question",
+            "reason": "Outcomes affect whether to use SAEs for waveform monitoring, but scope_gap says nothing tests precursors; link to prediction choices is weak."
+          },
+          {
+            "criterion": "lever",
+            "value": 2,
+            "ref": "plan:compute_axis",
+            "reason": "Dictionary width 4x only (<10x); varied quantity is method comparison, not compute; noise margin unspecified. Question not about compute scaling."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 4,
+            "ref": "card:anchor",
+            "reason": "Held-out labels, injected artifacts and spike-ins are planted truth, and the anchor reproduces SeisLM checks; hidden-event and blind-review parts rely on human or model labels."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:left_open",
+            "reason": "No seismic SAE prior found, gap stated; but no web search was run, so prior is uncertain."
+          },
+          {
+            "criterion": "internals",
+            "value": 3,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "Compares SAE to spectrogram clustering, neurons, and random-init, but rule has no numeric margin except F1 0.5; no strongest supervised-detector comparison on same items."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "No sequential dependency removed; only independent SAE sweep parallelism, judged not worth it."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "card:method",
+            "reason": "restructuring.method is none, so baseline timing criterion does not apply."
+          }
+        ],
+        "decides_by": "s2",
+        "decides_by_reason": "Decision_rule's first stop condition is evaluated after Stage 2; Stage 3 only refines the rare-class outcome, so Stage 2 can already decide if the SAE equals baselines."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": []
+}

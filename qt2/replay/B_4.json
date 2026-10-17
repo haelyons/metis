@@ -1,0 +1,476 @@
+{
+  "phase": "B",
+  "slice": 4,
+  "dramaturg": [
+    {
+      "key": "R2:interp:opt-10-physics-extraction",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Can an equation distilled from a sparse neural residual, trained on real cloth motion capture, beat the best hand-designed aerodynamic fix on unseen speeds?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Law from a sparse residual network can cut cloth error on fast unseen motions by at least 15% versus best hand-designed drag.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Distilled law has at least 15% lower median error than best hand-designed drag on 32 fast recordings, interval excluding zero, no worse than black-box.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Distilled law roughly equals the hand-designed baseline (rediscovering textbook drag), or black-box residual fails to beat it; more or denser data needed, not compute.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Train a sparse neural residual inside a GPU cloth simulator on real motion-capture data [zenodo], distil it to an equation with symbolic regression, and test whether it beats the best hand-designed drag term on held-out speeds, after planted-law controls.",
+          "sources": [
+            {
+              "id": "zenodo",
+              "url": "https://zenodo.org/records/14644526",
+              "quote": "120 high-quality recordings of several textiles during dynamic motions"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Cranmer et al. recovered force laws from sparse graph networks via symbolic regression on simulated data; residual-augmented simulators beat analytic and learned on real pushing data. No cloth demonstration found.",
+          "sources": [
+            {
+              "id": "cranmer",
+              "url": "https://arxiv.org/abs/2006.11287",
+              "quote": "highly correlated with the true forces"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether symbolic distillation of a learned residual on real marker-tracked cloth yields a law that beats hand-designed aerodynamic terms out of distribution.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Best hand-designed-drag baseline's in-sample error on DIN A2 table cases should be within about 1.5x of the Coltraro model's published under 1 cm [coltraro_pdf].",
+          "sources": [
+            {
+              "id": "coltraro_pdf",
+              "url": "https://fcoltraro.github.io/assets/pdf/paper_dataset.pdf",
+              "quote": "under 1 cm for all the DIN A2 textiles"
+            }
+          ],
+          "value": "under 1 cm"
+        },
+        {
+          "ref": "card:limits",
+          "text": "Result is about about 25 minutes of data from one lab; may not generalise. Marker spacing of 13-14 cm hides wrinkle and bending physics. Not a test of compute scaling.",
+          "sources": []
+        },
+        {
+          "ref": "src:zenodo",
+          "url": "https://zenodo.org/records/14644526",
+          "quote": "120 high-quality recordings of several textiles during dynamic motions",
+          "supports": "Primary dataset"
+        },
+        {
+          "ref": "src:coltraro_pdf",
+          "url": "https://fcoltraro.github.io/assets/pdf/paper_dataset.pdf",
+          "quote": "under 1 cm for all the DIN A2 textiles",
+          "supports": "Published reference error, metric, speeds, densities, marker setup"
+        },
+        {
+          "ref": "src:cranmer",
+          "url": "https://arxiv.org/abs/2006.11287",
+          "quote": "highly correlated with the true forces",
+          "supports": "Sparse message bottleneck plus symbolic regression method"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "Using a Motion Capture System, we record the location of key-points on the cloth surface of four types of fabrics (cotton, denim, wool and polyester) of two sizes and at different speeds.",
+            "note": "Research question; no sources cited and none needed. The only factual element ('real cloth motion capture' at multiple speeds) matches the Zenodo/Coltraro dataset description."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "Each motion is repeated at two different speeds: slow and fast and in two different grasping modes.",
+            "note": "Prediction, needs no source. The dataset page confirms slow/fast recordings exist, so 'fast unseen motions' is a feasible split; the 15% threshold is a plan choice."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "all the materials, sizes and modes leads to 64 different recordings.",
+            "note": "Success criterion; needs no source. '32 fast recordings' is consistent with the Coltraro paper: 64 free-hanging recordings, each motion repeated at slow and fast speed, i.e. 32 fast."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "three physical parameters of the cloth model were fitted: α (Rayleigh damping), δ (virtual aerodynamics mass) and µ (friction coefficient)",
+            "note": "Failure-mode prediction; no factual claim needing a source. The Coltraro model's hand-designed aerodynamic term (virtual aerodynamic mass) is the kind of 'textbook drag' the distilled law could rediscover."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "We present a cloth dataset consisting of 120 high-quality recordings of several textiles during dynamic motions.",
+            "note": "Quote appears verbatim on the Zenodo record. Page confirms data is real motion-capture recordings of cloth at different speeds. GPU simulator, symbolic regression and planted-law controls are plan design, not factual claims."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "all other models for which the effective message size is constrained explicitly (bottleneck) or implicitly (KL or L1) to be low dimensional yield messages that are highly correlated with the true forces",
+            "note": "Cranmer claim supported: paper trains GNNs on N-body simulations with bottleneck/L1 sparsity and applies symbolic regression to recover force laws; however the recorded quote is in the paper PDF (Sec. 4.1), not on the cited arXiv abstract page. The claim 'residual-augmented simulators beat analytic and learned on real pushing data' cites no source and is unsupported. 'No cloth demonstration found' is consistent: Cranmer paper never mentions cloth."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "We apply our framework to three problems—rediscovering force laws, rediscovering Hamiltonians, and a real world astrophysical challenge",
+            "note": "Statement of the gap the plan will test; no source needed. Nothing fetched contradicts it: Cranmer et al. work on simulated N-body and cosmology data, no cloth or marker-tracked real data."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "optimal values of the parameters for both the high and a low friction collision with a table cases were found, with absolute errors (1) under 1 cm for all the DIN A2 textiles",
+            "page_value": 1,
+            "note": "Quote appears verbatim in the Coltraro dataset paper. Context matches: in-sample fit of α (Rayleigh damping), δ (virtual aerodynamics mass) and µ on the A2 table-collision recordings, error metric (1) is the mass-matrix norm. 'Within about 1.5x' is the plan's own tolerance."
+          },
+          {
+            "ref": "card:limits",
+            "status": "UNSUPPORTED",
+            "page_quote": "Free-hanging A3, A2 12 or 20 64 ∼15 s ... Collision with table A2 20 16 ∼5 s ... Hitting A2 20 4 ∼40 s ... Self-collisions A2 20 36 ∼7 s",
+            "note": "Factual claims ('about 25 minutes of data from one lab', 'marker spacing of 13-14 cm') cite no source, so UNSUPPORTED under the rule. For the record, the Coltraro paper (cited elsewhere in the plan) is consistent: Table 2 durations sum to about 1452 s (~24 min), data comes from one lab (IRI, CSIC-UPC), and 20 equidistant markers on a 0.42 x 0.594 m A2 sheet implies roughly 14-15 cm spacing; the page never states '13-14 cm' explicitly."
+          },
+          {
+            "ref": "src:zenodo",
+            "status": "SUPPORTED",
+            "page_quote": "We present a cloth dataset consisting of 120 high-quality recordings of several textiles during dynamic motions.",
+            "note": "Quote appears verbatim on the Zenodo record page (record 14644526, v1, Jan 2025, CC BY-SA 4.0). Page describes four fabrics, two sizes, motion-capture recordings at different speeds, so it is the primary dataset as claimed."
+          },
+          {
+            "ref": "src:coltraro_pdf",
+            "status": "SUPPORTED",
+            "page_quote": "with absolute errors (1) under 1 cm for all the DIN A2 textiles",
+            "note": "PDF fetched and text extracted; quote appears verbatim in the 'Empirical validation of cloth simulators' section. Page also provides the metric (mass-matrix norm error (1)), speeds (Table 1, slow ~0.08-0.11 m/s, fast ~0.22-0.31 m/s), densities (Fig. 1 table, 0.1042-0.3046 kg/m2) and marker setup (20 markers for A2, 12 for A3, 3 mm diameter, 120 Hz)."
+          },
+          {
+            "ref": "src:cranmer",
+            "status": "PARTIAL",
+            "page_quote": "we first encourage sparse latent representations when we train a GNN in a supervised setting, then we apply symbolic regression to components of the learned model to extract explicit physical relations.",
+            "note": "The recorded quote 'highly correlated with the true forces' does not appear on the cited arXiv abstract page; it appears in the full paper PDF linked from it (Sec. 4.1: 'yield messages that are highly correlated with the true forces'). The abstract does support the method claim (sparse latent/bottleneck messages plus symbolic regression); the word 'bottleneck' is only in the paper body."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "all other models for which the effective message size is constrained explicitly (bottleneck) or implicitly (KL or L1) to be low dimensional yield messages that are highly correlated with the true forces",
+            "note": "Cranmer claim supported: paper trains GNNs on N-body simulations with bottleneck/L1 sparsity and applies symbolic regression to recover force laws; however the recorded quote is in the paper PDF (Sec. 4.1), not on the cited arXiv abstract page. The claim 'residual-augmented simulators beat analytic and learned on real pushing data' cites no source and is unsupported. 'No cloth demonstration found' is consistent: Cranmer paper never mentions cloth."
+          },
+          {
+            "ref": "card:limits",
+            "status": "UNSUPPORTED",
+            "page_quote": "Free-hanging A3, A2 12 or 20 64 ∼15 s ... Collision with table A2 20 16 ∼5 s ... Hitting A2 20 4 ∼40 s ... Self-collisions A2 20 36 ∼7 s",
+            "note": "Factual claims ('about 25 minutes of data from one lab', 'marker spacing of 13-14 cm') cite no source, so UNSUPPORTED under the rule. For the record, the Coltraro paper (cited elsewhere in the plan) is consistent: Table 2 durations sum to about 1452 s (~24 min), data comes from one lab (IRI, CSIC-UPC), and 20 equidistant markers on a 0.42 x 0.594 m A2 sheet implies roughly 14-15 cm spacing; the page never states '13-14 cm' explicitly."
+          },
+          {
+            "ref": "src:cranmer",
+            "status": "PARTIAL",
+            "page_quote": "we first encourage sparse latent representations when we train a GNN in a supervised setting, then we apply symbolic regression to components of the learned model to extract explicit physical relations.",
+            "note": "The recorded quote 'highly correlated with the true forces' does not appear on the cited arXiv abstract page; it appears in the full paper PDF linked from it (Sec. 4.1: 'yield messages that are highly correlated with the true forces'). The abstract does support the method claim (sparse latent/bottleneck messages plus symbolic regression); the word 'bottleneck' is only in the paper body."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R2:interp:opt-12-capacity-memorization",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Do small robot policies drop rare skills because of too few samples, no spare capacity, overwriting by common tasks, or narrow memorized storage?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Rare-task success of small behaviour-cloning policies improves with width beyond a task-difficulty baseline, as in the OLMo result [huang], because common-task updates interfere with rare skills.",
+          "sources": [
+            {
+              "id": "huang",
+              "url": "https://arxiv.org/abs/2605.29548",
+              "quote": "Smaller models allocate their neurons to high frequency or low complexity tasks"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Gap between common-task and rare-task success shrinks as width grows when tasks are unevenly sampled, beyond the uniform-sampling baseline, and matched single-task models succeed.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "The width-by-frequency interaction is near zero (under 5 points per width doubling), so long-tail failure is just too few rare-task samples.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Sweep MLP and transformer-head widths on Meta-World MT50 and LIBERO-90 with power-law task frequencies, using controls for scarcity, under-training and tuned baselines, then probe curvature edits to see whether width, rebalancing or protecting rare gradients helps rare skills.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Huang et al. show smaller OLMo models (4M to 4B parameters) allocate neurons to frequent tasks and show more gradient interference; no robot-policy test exists per the option text.",
+          "sources": [
+            {
+              "id": "huang",
+              "url": "https://arxiv.org/abs/2605.29548",
+              "quote": "Smaller models allocate their neurons to high frequency or low complexity tasks"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether width-by-task-frequency effects and low-curvature storage of rare skills appear in robot behaviour-cloning policies; two prior-art searches were not completed.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Reproduce the Huang et al. toy linear model: retained encoder features must match the analytic top-N utility set (Theorem 3) at every width [huang_html].",
+          "sources": [
+            {
+              "id": "huang_html",
+              "url": "https://arxiv.org/html/2605.29548",
+              "quote": "less gradient interference between tasks"
+            }
+          ],
+          "value": "Theorem 3 top-N utility set"
+        },
+        {
+          "ref": "card:limits",
+          "text": "Simulation only, policies up to about 10^7 parameters; a null result would not refute GEN-0's 1B-7B claims. Scripted unimodal experts and a frozen encoder in Stage 2 may hide effects present with human data.",
+          "sources": []
+        },
+        {
+          "ref": "src:huang",
+          "url": "https://arxiv.org/abs/2605.29548",
+          "quote": "Smaller models allocate their neurons to high frequency or low complexity tasks",
+          "supports": "Source mechanism: small models drop rare tasks; OLMo 4M to 4B"
+        },
+        {
+          "ref": "src:huang_html",
+          "url": "https://arxiv.org/html/2605.29548",
+          "quote": "less gradient interference between tasks",
+          "supports": "Toy model Theorems 3 and 4 used for the Stage 0 anchor"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is a research question, not a factual claim)",
+            "note": "Poses the four candidate mechanisms as a question; makes no factual claim that needs a source. The candidate mechanisms echo the cited paper's framing (capacity, interference, rare-task retention)."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "only the larger OLMo models learn the infrequent and complex tasks",
+            "note": "The prediction itself needs no source. The cited OLMo result is on the page: smaller models allocate neurons to high-frequency/low-complexity tasks, larger models learn infrequent tasks and 'show less gradient interference between tasks'. The recorded quote appears mid-sentence with lowercase 's' (capitalisation differs only)."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is a prediction)",
+            "note": "Describes the predicted outcome and controls; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item is a prediction)",
+            "note": "Null-outcome prediction with the plan's own threshold (under 5 points per width doubling); no factual claim requiring a source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item describes what the plan will build and measure)",
+            "note": "Describes the experimental design (benchmarks, sweeps, controls, curvature probes); no factual claim requiring a source."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "pretrain OLMo models (4M to 4B parameters) on novel tasks of varying frequency and complexity.",
+            "note": "Page states 4M to 4B OLMo models (Section 4.1 lists 4M, 20M, 300M, 1B, 4B), 'smaller models allocate their neurons to high frequency or low complexity tasks', and larger models 'show less gradient interference between tasks' (i.e. smaller show more). Page never mentions robots or robot policies, consistent with 'no robot-policy test exists'."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited)",
+            "note": "The open question is consistent with the Huang page, which never mentions robots or robot policies. The claim 'two prior-art searches were not completed' is a factual statement about the producer's process with no source and cannot be checked against any page."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "the optimal encoder keeps the N features (k,j) with largest u_{k,j}",
+            "note": "Section 3 presents a multi-task linear model with a shared width-N encoder; Theorem 3 ('Features are Learned in Order of Utility') states 'a width-N minimizer spans the top-N eigenspace of M' and the encoder keeps the N features with largest utilities. Matches the anchor. The recorded quote 'less gradient interference between tasks' is on the page but comes from the abstract, not Theorem 3; it is tangential to the anchor claim."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited)",
+            "note": "Design limitations (simulation only, ~10^7 parameters, scripted experts, frozen encoder) describe the plan and need no source. The reference to 'GEN-0's 1B-7B claims' is a factual claim about an external work with no source cited, so that part is unsupported."
+          },
+          {
+            "ref": "src:huang",
+            "status": "SUPPORTED",
+            "page_quote": "smaller models allocate their neurons to high frequency or low complexity tasks",
+            "note": "Quote appears in the abstract (lowercase 's', mid-sentence). Page also states 'pretrain OLMo models (4M to 4B parameters)' and 'only the larger OLMo models learn the infrequent and complex tasks', supporting the mechanism and size range. Title: 'Why Larger Models Learn More: Effects of Capacity, Interference, and Rare-Task Retention', Huang et al."
+          },
+          {
+            "ref": "src:huang_html",
+            "status": "SUPPORTED",
+            "page_quote": "these larger models embed more task features in their representations and show less gradient interference between tasks.",
+            "note": "Quote appears in the abstract. Section 3 contains the toy linear model with Theorem 3 (Features are Learned in Order of Utility; width-N minimizer spans top-N eigenspace, encoder keeps N features with largest utility) and Theorem 4 (Residual Controls Learning; bound on common-task gradient via residual signal). Quote is from the abstract rather than the theorems themselves. Last ~78k characters of the page (later appendices/references) not read."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited)",
+            "note": "The open question is consistent with the Huang page, which never mentions robots or robot policies. The claim 'two prior-art searches were not completed' is a factual statement about the producer's process with no source and cannot be checked against any page."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited)",
+            "note": "Design limitations (simulation only, ~10^7 parameters, scripted experts, frozen encoder) describe the plan and need no source. The reference to 'GEN-0's 1B-7B claims' is a factual claim about an external work with no source cited, so that part is unsupported."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R2:interp:opt-10-physics-extraction",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 2,
+            "ref": "card:limits",
+            "reason": "Tests a cloth simulator drag term on 25 minutes of one-lab data; bears on robot hands only via simulator, sim-to-real, no policy result."
+          },
+          {
+            "criterion": "lever",
+            "value": 1,
+            "ref": "plan:compute_axis",
+            "reason": "Axis is data fraction 25-100% (only 4x), not compute; the card says not compute-bound, so the varied quantity is data."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 3,
+            "ref": "card:anchor",
+            "reason": "Held-out real marker positions are independent truth and anchor reproduces published 1 cm within 1.5x; but real data lacks a planted truth for the main test."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:left_open",
+            "reason": "Prior was on simulated data or pushing; no cloth demonstration found, and the plan states the gap explicitly."
+          },
+          {
+            "criterion": "internals",
+            "value": 4,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "Compares distilled law with best hand-designed drag B2 on the same recordings with a 15% margin, but B2 is not an outputs-only readout comparison."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:method",
+            "reason": "Method is none; rollouts remain sequential and no dependency is removed, only independent runs."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "card:method",
+            "reason": "restructuring.method is none, so the baseline criterion does not apply."
+          }
+        ],
+        "decides_by": "p1",
+        "decides_by_reason": "Gate G1 measures the B2 versus B3 gap on the speed split; below 10% there is no headroom, so the 15% rule fails early."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R2:interp:opt-12-capacity-memorization",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Informs model sizing and data mixtures, but only via small simulated policies; transfer to real hands, cloth and large models is unchecked."
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "card:if_not",
+            "reason": "Width spans 64x and is compute-bought, with controls fixed; but 3 seeds noise versus 5-point threshold is unclear, and rare-sample scarcity is confounded."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Exact simulation success flags, plus anchor reproducing Huang theorem with stated 95% tolerance before spend."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:closest_prior",
+            "reason": "Prior is language models only; no robot-policy test exists, and the plan states the gap, though prior-art searches were incomplete."
+          },
+          {
+            "criterion": "internals",
+            "value": 2,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "K-FAC internals probe is compared with random edits and rebalancing, but decision_rule has no numeric margin versus the strongest outputs-only method."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "Runs are independent copies; no sequential dependency is removed, method is none."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "Restructuring method is none, so baseline timing does not apply."
+          }
+        ],
+        "decides_by": "p1",
+        "decides_by_reason": "The Meta-World width-by-frequency sweep in p1 yields the interaction estimate that the decision_rule needs; later phases are supplementary checks."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R2:interp:top: critic: reshape: value \"NA\"",
+    "R2:interp:random: critic: internals: ref \"plan:decision_rule\" does not resolve"
+  ]
+}

@@ -1,0 +1,706 @@
+{
+  "phase": "B",
+  "slice": 1,
+  "dramaturg": [
+    {
+      "key": "R1:physical:W2",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Does SalUn's claim to be closest to retraining on CIFAR-10 hold under a per-example attack, and how many retrained models does that check need?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "SalUn's privacy gap to retraining is likely larger under an attack on each example than under its single confidence attack, as Hayes et al. found for other methods. [hayes]",
+          "sources": [
+            {
+              "id": "hayes",
+              "url": "https://arxiv.org/abs/2403.01218",
+              "quote": "2 − 3× larger"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Attack accuracy on each example and the ranking of methods change as the number of shadow models grows, and a reviewer needs many retrained models before the verdict settles.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Verdict and ranking match the full-N result already at small N, or SalUn's gap to retraining stays near the null at every N.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Train up to 256 original and 256 retrained CIFAR-10 ResNet-18 models, run five unlearning methods, and score them with a per-example attack. Sweep the shadow-model count to find how many retrained models a verdict on SalUn needs [fan].",
+          "sources": [
+            {
+              "id": "fan",
+              "url": "https://arxiv.org/abs/2310.12508",
+              "quote": "narrows the performance gap with 'exact' unlearning"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Triantafillou et al. studied cheaper evaluation setups in the NeurIPS 2023 unlearning competition, holding the attack-fitting side at 1,024 models and varying only the evaluation side.",
+          "sources": [
+            {
+              "id": "triantafillou",
+              "url": "https://arxiv.org/pdf/2406.09073",
+              "quote": "(much) more compute than retraining-from-scratch, this defeats the purpose"
+            }
+          ],
+          "value": 1024
+        },
+        {
+          "ref": "card:left_open",
+          "text": "How few models suffice to fit the attack, and whether SalUn's CIFAR-10 claim survives a per-example attack. A later paper auditing SalUn was not searched for.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Reproduce SalUn paper Table 1 Retrain and SalUn TA, UA and MIA-Efficacy (e.g. Retrain MIA-Efficacy 12.88, SalUn 14.39) from the public code.",
+          "sources": [
+            {
+              "id": "fan",
+              "url": "https://arxiv.org/abs/2310.12508",
+              "quote": "narrows the performance gap with 'exact' unlearning"
+            }
+          ],
+          "value": "Retrain TA 94.26, UA 5.24, MIA-Efficacy 12.88; SalUn TA 93.93, UA 2.85, MIA-Efficacy 14.39"
+        },
+        {
+          "ref": "card:limits",
+          "text": "A well-trained ResNet-18 may memorise little, so original and retrained models may barely differ and the test may lack power. One forget set, one dataset; other methods' hyperparameters may differ from the paper's. Run time per model is unmeasured; cost depends on it.",
+          "sources": []
+        },
+        {
+          "ref": "src:hayes",
+          "url": "https://arxiv.org/abs/2403.01218",
+          "quote": "2 − 3× larger",
+          "supports": "Per-example U-LiRA shows larger advantage than population attack"
+        },
+        {
+          "ref": "src:fan",
+          "url": "https://arxiv.org/abs/2310.12508",
+          "quote": "narrows the performance gap with 'exact' unlearning",
+          "supports": "SalUn claim and Table 1 values"
+        },
+        {
+          "ref": "src:triantafillou",
+          "url": "https://arxiv.org/pdf/2406.09073",
+          "quote": "(much) more compute than retraining-from-scratch, this defeats the purpose",
+          "supports": "Competition evaluation costs and N-sweep motivation"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "among all the baselines, SalUn achieves the smallest average performance gap with Retrain",
+            "note": "Research question; the premise (SalUn claims to be closest to retraining on CIFAR-10) matches the SalUn paper: Section 6.2 sentence above, and Table 1 (CIFAR-10, ResNet-18, 10% random forgetting) gives SalUn the smallest Avg. Gap (1.15) among non-Retrain methods. No source is listed on this item, but the premise is verified against the fan source cited elsewhere in the plan."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "Although SCRUB and SPARSITY do reduce attack accuracy, the advantage over random guessing is 2−3× larger when measuring with U-LiRA instead of the baseline attack.",
+            "note": "Prediction; its factual anchor ('as Hayes et al. found for other methods') is supported by Section 4.4 of the Hayes full text (arxiv.org/html/2403.01218), not the abstract page. Hayes evaluated CF-k, EU-k, NegGrad, GradDesc, NegGrad+, SPARSITY and SCRUB, not SalUn, so 'other methods' is accurate. The descriptor 'single confidence attack' for SalUn's MIA-Efficacy was not located in the fetched portions of the SalUn paper, which only describes MIA as 'the privacy measure of θu over Df'."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(prediction about the plan's outcome; no page consulted)",
+            "note": "Statement of what the plan predicts if the lever matters; carries no factual claim needing a source."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "(prediction about the plan's outcome; no page consulted)",
+            "note": "Statement of the null outcome; carries no factual claim needing a source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "The resultant method that we call saliency unlearning (SalUn) narrows the performance gap with 'exact' unlearning",
+            "note": "Describes what the plan will build and measure (no source needed). The cited quote appears verbatim in the SalUn abstract and is the claim under test; Table 1 of that paper is CIFAR-10/ResNet-18, consistent with the setup. Hayes et al. also report 'training 256 ResNet-18 models with SGD on random splits of half of the CIFAR-10 training set', consistent with the 256 figure though not cited here."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "In Figure 20, we compare the F scores obtained using 1024 samples from each distribution for fitting, and N-eval samples for evaluation, for different values of N-eval.",
+            "page_value": 1024,
+            "note": "Appendix A.14 of the Triantafillou PDF (text extracted with pdftotext) holds the fitting side at 1024 samples (models) per distribution and varies only N-eval; Figure 20 caption: 'In all cases the fitting step was performed using 1024 samples from each of the retrained and unlearned distributions'. Cheaper setups (Reuse-N-N, Reuse-N-1, bootstrapping) are studied in Sections 4 and A.13-A.15. The cited quote appears verbatim in Section 7. Nuance: this cost study is in the post-competition analysis paper; the competition itself used 'Setup Reuse-N-1, with N = 512 and E = 1'."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "In all cases the fitting step was performed using 1024 samples from each of the retrained and unlearned distributions",
+            "note": "Both gaps are consistent with the sources: Triantafillou varied only the evaluation side (fitting fixed at 1024), so the fitting-side count is open; Hayes' evaluated algorithms (Section 4.1: CF-k, EU-k, NegGrad, GradDesc, NegGrad+, SPARSITY, SCRUB) do not include SalUn, so SalUn under a per-example attack is open in these sources. The 'not searched for' sentence is a disclosure about the plan, not a factual claim."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "Retrain | 5.24±0.69 | 100.00±0.00 | 94.26±0.02 | 12.88±0.09 | 0.00 | 43.29 ... SalUn | 2.85±0.43 | 99.62±0.12 | 93.93±0.29 | 14.39±0.82 | 1.15 | 2.66",
+            "note": "All six values match Table 1 of the SalUn paper (CIFAR-10, ResNet-18, 10% random data forgetting; columns UA, RA, TA, MIA, Avg. Gap, RTE). Note the 50% forgetting rows differ (Retrain UA 7.91, TA 91.72, MIA 19.29; SalUn UA 7.75, TA 89.29, MIA 16.99), so the anchor is specific to the 10% setting. Public code confirmed: abstract states 'Codes are available at https://github.com/OPTML-Group/Unlearn-Saliency'."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "(hedged caveats about the plan; no page consulted)",
+            "note": "Limitations are stated as possibilities ('may') about the plan's own design and cost; no factual claim requiring a source."
+          },
+          {
+            "ref": "src:hayes",
+            "status": "SUPPORTED",
+            "page_quote": "Although SCRUB and SPARSITY do reduce attack accuracy, the advantage over random guessing is 2−3× larger when measuring with U-LiRA instead of the baseline attack.",
+            "note": "The quote is not on the cited abstract page (arxiv.org/abs/2403.01218) but appears in Section 4.4 of the paper's full text (arxiv.org/html/2403.01218). It supports the stated claim: per-example U-LiRA shows a larger advantage than the population baseline ('the population U-MIA proposed by Kurmanji et al.'); the paper also states 'U-LiRA generally always outperforms the baseline attack' and Figure 1 says 'U-LiRA outperforms the baseline by a large margin across all unlearning algorithms'."
+          },
+          {
+            "ref": "src:fan",
+            "status": "SUPPORTED",
+            "page_quote": "The resultant method that we call saliency unlearning (SalUn) narrows the performance gap with 'exact' unlearning",
+            "note": "Quote appears verbatim in the abstract on the cited page. Table 1 values (Retrain TA 94.26, UA 5.24, MIA 12.88; SalUn TA 93.93, UA 2.85, MIA 14.39) verified in the full text for CIFAR-10/ResNet-18, 10% random forgetting; Section 6.2 states 'among all the baselines, SalUn achieves the smallest average performance gap with Retrain'."
+          },
+          {
+            "ref": "src:triantafillou",
+            "status": "SUPPORTED",
+            "page_quote": "This is key: if applying an approximate method in practice requires evaluating it first in a manner that requires (much) more compute than retraining-from-scratch, this defeats the purpose of approximate unlearning in the first place.",
+            "note": "Quote appears verbatim in Section 7 of the PDF (text extracted with pdftotext since the fetch returned raw PDF bytes). The paper supports the stated use: it compares evaluation setups by compute cost (Setup Full N×E models, Reuse-N-N, Reuse-N-1, bootstrapping), reports the competition used N = 512 retrained and 512 unlearned models, and Appendix A.14 sweeps N-eval with fitting fixed at 1024 samples per distribution, finding differences 'don't affect the relative ranking between different algorithms'."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": []
+      }
+    },
+    {
+      "key": "R1:physical:W15",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "On one rented 8-GPU node, how many Putnam problems does an open-weight prover verifiably solve as the per-attempt token budget grows from 50k to 1M, and at what dollar cost?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Proof search is limited by compute: the solved fraction keeps rising with log token budget up to 1M, with no plateau, as in Mistral's published curve [mistral].",
+          "sources": [
+            {
+              "id": "mistral",
+              "url": "https://mistral.ai/news/leanstral-1-5/",
+              "quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M"
+            }
+          ]
+        },
+        {
+          "ref": "card:sequential_part",
+          "text": "Each attempt is one sequential agent session of up to 1M tokens, about 3.6 hours at 78 tokens/s.",
+          "sources": []
+        },
+        {
+          "ref": "card:method",
+          "text": "Attempts are independent, so about 128 sessions run at once on two vLLM replicas; one set of runs capped at 1M tokens gives the whole budget curve.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Solved fraction rises steadily with log budget from 50k to 1M with no plateau, and pass@8 falls inside the Wilson bands at all three budgets.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "The last segment (200k to 1M) is flat within its CI, so capability rather than compute is the first limit on one node.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Self-host Leanstral 1.5 on one 8xH100 node, run 120 PutnamBench problems x 8 attempts at up to 1M tokens, verify with a hardened Lean checker, and compare the solved-versus-budget curve with Mistral's published one [mistral] at about $1,000.",
+          "sources": [
+            {
+              "id": "mistral",
+              "url": "https://mistral.ai/news/leanstral-1-5/",
+              "quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Mistral's Leanstral 1.5 pass@8 curve on PutnamBench, 44, 244, 493 and 587 of 672 at 50k to 4M tokens, reported in API-dollar terms (about $4 per problem) [mistral].",
+          "sources": [
+            {
+              "id": "mistral",
+              "url": "https://mistral.ai/news/leanstral-1-5/",
+              "quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M"
+            }
+          ],
+          "value": 4000000
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Self-hosted GPU-hours and dollars per verified proof with an independent hardened checker, and the naive-versus-hardened false-accept rate; the plan's search was limited.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Mistral's published pass@8 curve for Leanstral 1.5 on PutnamBench (493 of 672 at 1M tokens per attempt) [mistral]",
+          "sources": [
+            {
+              "id": "mistral",
+              "url": "https://mistral.ai/news/leanstral-1-5/",
+              "quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M"
+            }
+          ],
+          "value": "44, 244, 493 of 672 at 50k, 200k, 1M"
+        },
+        {
+          "ref": "card:limits",
+          "text": "N=120 gives wide intervals; cannot detect a gap of a few points. Harness and budget definition differ from Mistral's unpublished setup. One node, one model, one benchmark.",
+          "sources": []
+        },
+        {
+          "ref": "src:mistral",
+          "url": "https://mistral.ai/news/leanstral-1-5/",
+          "quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M",
+          "supports": "Published baseline curve and model details"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "Fully open-sourced and available via Hugging Face and a free API, Leanstral 1.5 is now accessible for practical proof engineering in Lean 4.",
+            "note": "Research question stating what the plan will measure; needs no source. The only factual descriptor, 'open-weight prover', is confirmed by the card's cited Mistral page (Apache-2.0 license, weights on Hugging Face), though this field itself cites nothing."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "The figure below tracks Pass@8 on PutnamBench as we raise the token budget per attempt from 25k to 4M: performance climbs smoothly and monotonically the whole way, from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "note": "Quote appears verbatim. The page describes the curve as monotonic with no plateau through 4M, which supports 'keeps rising ... up to 1M, with no plateau'. The page does not use the phrase 'log token budget' but its data points are log-spaced (50k/200k/1M/4M). The compute-limited framing is the plan's own hypothesis."
+          },
+          {
+            "ref": "card:sequential_part",
+            "status": "PARTIAL",
+            "page_quote": "Rather than giving up when a proof runs long, Leanstral keeps reasoning, editing files, and revising across millions of tokens, turning that budget directly into solved problems",
+            "note": "The one-session-per-attempt design is plan content and matches the page's agentic, long-running description. But '78 tokens/s' is a factual throughput figure with no source and does not appear on the page (no tokens/s, H100, or vLLM figures anywhere). Arithmetic checks: 1,000,000 / 78 = 12,821 s = 3.56 h, consistent with 'about 3.6 hours'."
+          },
+          {
+            "ref": "card:method",
+            "status": "SUPPORTED",
+            "page_quote": "The figure below tracks Pass@8 on PutnamBench as we raise the token budget per attempt from 25k to 4M",
+            "note": "Method description of what the plan will build; no source needed. Note the page obtained its curve by raising the per-attempt budget, whereas the plan reads the curve off a single set of runs capped at 1M; the plan's limits field acknowledges the budget-definition difference. 128 sessions / two vLLM replicas are plan choices not on the page."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "performance climbs smoothly and monotonically the whole way, from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "note": "Prediction; no source needed. The 'three budgets' (50k, 200k, 1M) correspond to data points stated on the cited page, so the comparison is well-defined."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "note": "Falsification condition; no source needed. The 200k-to-1M segment it refers to exists in the published curve (244 to 493)."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "The figure below tracks Pass@8 on PutnamBench as we raise the token budget per attempt from 25k to 4M: performance climbs smoothly and monotonically the whole way, from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "note": "Quote appears verbatim. The only sourced factual claim, that Mistral published a solved-versus-budget curve, is supported; 8 attempts matches the page's Pass@8. Self-hosting on 8xH100, a 'hardened Lean checker', and the ~$1,000 figure are plan design/estimates, not page claims (page mentions only 'our fork of SafeVerify')."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "On PutnamBench, it edges out Seed-Prover 1.5 high by 7 problems at far lower cost: about $4 per problem, against an estimated $300 or more for Seed-Prover, whose high setting runs with a budget of 10 H20-days per problem.",
+            "page_value": 4000000,
+            "note": "Pass@8, PutnamBench, 44/244/493/587, 672 problems, 50k to 4M, and 'about $4 per problem' are all stated on the page; value 4000000 matches the page's '587 at 4M'. However, 'reported in API-dollar terms' is not stated: the page gives no cost basis for the $4 figure and elsewhere describes the API as free. That characterization is the producer's inference."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "On PutnamBench, it edges out Seed-Prover 1.5 high by 7 problems at far lower cost: about $4 per problem, against an estimated $300 or more for Seed-Prover, whose high setting runs with a budget of 10 H20-days per problem.",
+            "note": "Describes the gap the plan will fill. Consistent with the cited page, which reports only a per-problem dollar figure and no GPU-hours, self-hosted cost, false-accept rate, or checker hardening details. The plan itself discloses that its literature search was limited; only this page was checked."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "The figure below tracks Pass@8 on PutnamBench as we raise the token budget per attempt from 25k to 4M: performance climbs smoothly and monotonically the whole way, from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "note": "Quote appears verbatim. Pass@8, PutnamBench, '493 at 1M', 'token budget per attempt', and the value '44, 244, 493 of 672 at 50k, 200k, 1M' all match the page; 672 is stated as 'PutnamBench consists of 672 problems'."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "The model learns to navigate the full proof-engineering workflow and is finally verified by our fork of SafeVerify for correctness given a list of target theorems.",
+            "note": "Mostly the plan's own limitations (N=120, one node/model/benchmark). The factual claim 'Mistral's unpublished setup' is consistent with the page: it names a SafeVerify fork as verifier and recommends Mistral Vibe as agent, but publishes no PutnamBench evaluation harness, token-accounting/budget definition, or compaction policy for the curve."
+          },
+          {
+            "ref": "src:mistral",
+            "status": "SUPPORTED",
+            "page_quote": "performance climbs smoothly and monotonically the whole way, from 44 problems solved at 50k to 244 at 200k, 493 at 1M, and 587 at 4M.",
+            "note": "Quote appears verbatim on the page (dated July 2, 2026). The page also supplies the model details claimed: Leanstral 1.5, 119B total / 6B active parameters, Apache-2.0, weights on Hugging Face, free API endpoint 'leanstral-1-5'."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:sequential_part",
+            "status": "PARTIAL",
+            "page_quote": "Rather than giving up when a proof runs long, Leanstral keeps reasoning, editing files, and revising across millions of tokens, turning that budget directly into solved problems",
+            "note": "The one-session-per-attempt design is plan content and matches the page's agentic, long-running description. But '78 tokens/s' is a factual throughput figure with no source and does not appear on the page (no tokens/s, H100, or vLLM figures anywhere). Arithmetic checks: 1,000,000 / 78 = 12,821 s = 3.56 h, consistent with 'about 3.6 hours'."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "On PutnamBench, it edges out Seed-Prover 1.5 high by 7 problems at far lower cost: about $4 per problem, against an estimated $300 or more for Seed-Prover, whose high setting runs with a budget of 10 H20-days per problem.",
+            "page_value": 4000000,
+            "note": "Pass@8, PutnamBench, 44/244/493/587, 672 problems, 50k to 4M, and 'about $4 per problem' are all stated on the page; value 4000000 matches the page's '587 at 4M'. However, 'reported in API-dollar terms' is not stated: the page gives no cost basis for the $4 figure and elsewhere describes the API as free. That characterization is the producer's inference."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [
+    {
+      "id": "a_quote_W11",
+      "expected": "REJECT",
+      "items": [
+        {
+          "ref": "card:text",
+          "text": "**W11 · Ensemble data assimilation of fault stress (boundary case).** R3 · physical · random pick · compute tested: yes · plan expects: not the lever\n\n**Question.** On a synthetic benchmark fault, does earthquake-forecast skill keep rising as the assimilation ensemble grows, or does it level off early while model error and sensor depth decide?\n\n**What is known.** van Dinther et al. 2019 ran an ensemble Kalman filter with 150 members on a 2-D subduction analogue; Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model. Forecast skill versus ensemble size beyond 150 members, under model error, on a depth-resolved rate-and-state fault, with EnKF compared against a large particle filter.\n\n**Hypothesis.** Skill levels off at tens to hundreds of members, because model error and depth of data limit it first, as the one perfect-model study [van_dinther] suggests.\n\n**Restructuring.** Each member's adaptive time stepping through earthquakes: thousands of steps per event, up to about 8,050 accepted steps per cycle. Thousands of independent members run as columns of one batched matrix on GPU; finished members are gathered into smaller batches every 32 steps so slow ruptures do not stall the rest.\n\n**If compute is the lever.** Skill is still rising beyond 1,024 members in the model-error or particle-filter arms, by more than the gain from deep stress data.\n\n**If not.** Skill plateaus at 256 members or fewer in every ensemble Kalman filter arm; model error or deep data changes skill more than going from 32 members to the largest.\n\n**Test.** Run thousands of copies of a benchmark earthquake fault on GPUs inside ensemble Kalman and particle filters. Measure forecast skill against ensemble size, with and without model error and deep sensors, against simple baselines [van_dinther].\n\n*Compute axis.* Ensemble size M (members per ensemble Kalman filter or particle filter run): 16–16,384 members, 10 levels. Closest prior: 150 [van_dinther], beyond it. Prior art checked without web search.\n\n**Check first.** A single-member run of the first benchmark fault at 25 m reproduces an independent code, QDYN: recurrence interval and first-event time within 1%, slip-rate series overlay at benchmark stations. Tolerance: within 1% on recurrence interval and first-event time.\n\n**Would not show.** A plateau would confirm the hypothesis only for synthetic data from a known model class, not the real Earth. GPU timings are assumptions until Phase 0b; truth noise amplitude is tuned, not observed.\n\n*Cost.* Plans $684.14 of the $1,000 budget over 26 machine-hours, leaving $315.86. Main guess: Wall time on 8x H100, main truth [g], measured after $25.74 of spend; the budget is reached if it is 1.9× higher. 2 cost flags in the block.",
+          "sources": [
+            {
+              "id": "van_dinther",
+              "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+              "quote": "as little as 60 ensemble members"
+            }
+          ]
+        },
+        {
+          "ref": "src:van_dinther",
+          "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+          "quote": "as little as 60 ensemble members"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:text",
+            "status": "PARTIAL",
+            "page_quote": "as little as 20 ensemble members are found to already capture most of the diversity within the models (Appendix B).",
+            "note": "Supported by the van_dinther page: EnKF run 'throughout 150 ensemble members', 'in a 2-D simplified system' whose 'rotated setup mimicks a subduction zone', as 'a perfect model test'; 'Closest prior: 150 [van_dinther]' matches. The hypothesis that skill levels off at 'tens to hundreds of members' is loosely consistent with the page ('as little as 20 ensemble members ... capture most of the diversity'; 'Larger ensembles typically allow for improved forecasts'), but the recorded quote misstates the number as 60 where the page says 20. The claim 'Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model' cites no source and is unsupported. Plan-internal values (8,050 steps, 16–16,384 members, $684.14 / $315.86 of $1,000, 26 machine-hours, 1.9x) are build/cost statements with no page to check; the $1,000 - $684.14 = $315.86 arithmetic is consistent."
+          },
+          {
+            "ref": "src:van_dinther",
+            "status": "CONTRADICTED",
+            "page_quote": "However, as little as 20 ensemble members are found to already capture most of the diversity within the models (Appendix B).",
+            "page_value": 20,
+            "note": "The phrase 'as little as 60 ensemble members' does not appear anywhere on the page (all 298,616 characters read in three segments). The page's sentence reads 'as little as 20 ensemble members'. No mention of 60 members exists; Appendix B refers to 20 members (Figure B1 caption: 'this sensitivity study was instead run with 20 ensemble members') and 120 members. The main runs used 150 ensemble members ('we show results for the largest number tested: 150 ensemble members')."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "REJECT",
+        "blocking": [
+          {
+            "ref": "src:van_dinther",
+            "status": "CONTRADICTED",
+            "page_quote": "However, as little as 20 ensemble members are found to already capture most of the diversity within the models (Appendix B).",
+            "page_value": 20,
+            "note": "The phrase 'as little as 60 ensemble members' does not appear anywhere on the page (all 298,616 characters read in three segments). The page's sentence reads 'as little as 20 ensemble members'. No mention of 60 members exists; Appendix B refers to 20 members (Figure B1 caption: 'this sensitivity study was instead run with 20 ensemble members') and 120 members. The main runs used 150 ensemble members ('we show results for the largest number tested: 150 ensemble members')."
+          }
+        ],
+        "listed": [
+          {
+            "ref": "card:text",
+            "status": "PARTIAL",
+            "page_quote": "as little as 20 ensemble members are found to already capture most of the diversity within the models (Appendix B).",
+            "note": "Supported by the van_dinther page: EnKF run 'throughout 150 ensemble members', 'in a 2-D simplified system' whose 'rotated setup mimicks a subduction zone', as 'a perfect model test'; 'Closest prior: 150 [van_dinther]' matches. The hypothesis that skill levels off at 'tens to hundreds of members' is loosely consistent with the page ('as little as 20 ensemble members ... capture most of the diversity'; 'Larger ensembles typically allow for improved forecasts'), but the recorded quote misstates the number as 60 where the page says 20. The claim 'Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model' cites no source and is unsupported. Plan-internal values (8,050 steps, 16–16,384 members, $684.14 / $315.86 of $1,000, 26 machine-hours, 1.9x) are build/cost statements with no page to check; the $1,000 - $684.14 = $315.86 arithmetic is consistent."
+          }
+        ]
+      }
+    },
+    {
+      "id": "b_number_W13",
+      "expected": "REJECT",
+      "items": [
+        {
+          "ref": "card:text",
+          "text": "**W13 · Training robot foundation models and video world models.** R2 · physical · random pick · compute tested: yes · plan expects: not the lever · halted: cost record broken\n\n**Question.** With data held fixed, does more fine-tuning compute raise task success of a small robot vision-language-action model in simulation, or does data limit it?\n\n**What is known.** SmolVLA paper reports LIBERO results at 0.24B/0.45B/2.25B sizes and says it can train for far fewer steps without significant loss, but gives no step or data grid [smolvla_paper]. Whether, at fixed data, more fine-tuning steps help SmolVLA on LIBERO, and how steps trade against data fraction, capacity and a removed camera.\n\n**Hypothesis.** At fixed data, 15k to 50k steps shifts success under 3 points; more data adds 10 or more points [arXiv 2506.01844].\n\n**If compute is the lever.** At fixed data, 15k to 50k steps (3.3x compute) raises average success by 3 points or more, so compute still buys success.\n\n**If not.** At each data level, 15k to 50k steps moves success under 3 points; at 50k steps, 100% data beats 25% by 10 or more points.\n\n**Test.** Fine-tune SmolVLA on LIBERO in 25 runs, varying steps (5k, 15k, 50k) and data (10 to 100%) independently, plus capacity, camera removal and pretraining arms. Score 27 checkpoints on 2,000 rollouts each against a published 87.3% baseline.\n\n*Compute axis.* Training steps per run (with fixed cosine schedule per run), crossed with data fraction; also trainable parameters in arm C: 5,000–50,000 steps, 3 levels. Closest prior: 100,000 [smolvla_paper], not beyond it. Prior art checked without web search.\n\n*Restructuring.* none.\n\n**Check first.** Harness gate: LeRobot's published pi0.5 LIBERO checkpoint scored by our evaluator on 1200 episodes must reach at least 94%; published value 97.5%. Tolerance: pass at 94% or above (binomial 95% band +/-1.5 points at 400 episodes); arm A replication mean within +/-5 points of 87.3.\n\n**Would not show.** Small simulated benchmark, one model family; may not transfer to larger models or real robots. Training and evaluation speed unmeasured, so cost may rise. 87.3% replication may miss; schedule unpublished.\n\n*Cost.* Plans $557.20 of the $1,000 budget over 35 machine-hours, leaving $442.80. Full scale: Cosmos world-model training on 10,000 H100 GPUs for three months; file says $1,000 is about 1/86,000 of it, $86M, 86,000× the budget. 5 cost flags in the block.",
+          "sources": [
+            {
+              "id": "smolvla_paper",
+              "url": "https://arxiv.org/html/2506.01844",
+              "quote": "can be trained for a much smaller number of steps without sacrificing significant performance levels"
+            },
+            {
+              "id": "lerobot_libero",
+              "url": "https://huggingface.co/docs/lerobot/libero",
+              "quote": "may vary by a few percent across evaluation seeds"
+            }
+          ]
+        },
+        {
+          "ref": "src:smolvla_paper",
+          "url": "https://arxiv.org/html/2506.01844",
+          "quote": "can be trained for a much smaller number of steps without sacrificing significant performance levels"
+        },
+        {
+          "ref": "src:lerobot_libero",
+          "url": "https://huggingface.co/docs/lerobot/libero",
+          "quote": "may vary by a few percent across evaluation seeds"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:text",
+            "status": "PARTIAL",
+            "page_quote": "For fine-tuning on simulation benchmarks, we train for 100,000 steps with a batch size of 64. | SmolVLA (0.45B) | No | 90 | 96 | 92 | 71 | 87.3 | Pi0.5 (LeRobot) | 97.0 | 99.0 | 98.0 | 96.0 | 97.5",
+            "note": "Supported by the cited pages: Table 2 reports LIBERO at 0.24B/0.45B/2.25B (avg 82.75/87.3/88.75), so the 87.3% baseline is the 0.45B model; the 'far fewer steps' quote appears verbatim in Sec 4.3; no steps-vs-data grid exists anywhere on the page (main text and appendix checked); simulation fine-tuning is 100,000 steps, matching 'Closest prior: 100,000'. LeRobot page gives Pi0.5 (LeRobot) average 97.5 for lerobot/pi05_libero_finetuned, 10 episodes/task = 400 episodes, 'averaging over 3 seeds' (consistent with 1200 episodes); binomial 95% band at n=400, p=0.975 is +/-1.53 points, matching +/-1.5. Arithmetic checks: 1000-557.20=442.80; 50k/15k=3.3x; 86,000 x $1,000 = $86M. Caveat: 'schedule unpublished' is true only for fine-tuning; the paper does publish a pretraining schedule ('After a 100-step warmup, we use a cosine learning rate schedule starting at 1e-4 and decaying to a minimum of 2.5e-6', AdamW). UNSUPPORTED: the full-scale cost claim 'Cosmos world-model training on 10,000 H100 GPUs for three months ... $86M' cites no source in the card ('file says' is not a listed source), and neither fetched page mentions Cosmos, world models, or H100."
+          },
+          {
+            "ref": "src:smolvla_paper",
+            "status": "SUPPORTED",
+            "page_quote": "However, we observe in practice that the model can be trained for a much smaller number of steps without sacrificing significant performance levels.",
+            "note": "Quote appears verbatim in Section 4.3 of the arXiv HTML page. Same page also supports the card's 87.3 (SmolVLA 0.45B LIBERO average, Table 2), the three model sizes, and the 100,000-step simulation fine-tuning prior."
+          },
+          {
+            "ref": "src:lerobot_libero",
+            "status": "SUPPORTED",
+            "page_quote": "This gives 400 total episodes and matches the protocol used for published results. Success rates may vary by a few percent across evaluation seeds, so we recommend averaging over 3 seeds.",
+            "note": "Quote appears verbatim under 'Recommended evaluation episodes'. Page also states the Pi0.5 (LeRobot) LIBERO average of 97.5 for checkpoint lerobot/pi05_libero_finetuned, supporting the card's harness-gate published value."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:text",
+            "status": "PARTIAL",
+            "page_quote": "For fine-tuning on simulation benchmarks, we train for 100,000 steps with a batch size of 64. | SmolVLA (0.45B) | No | 90 | 96 | 92 | 71 | 87.3 | Pi0.5 (LeRobot) | 97.0 | 99.0 | 98.0 | 96.0 | 97.5",
+            "note": "Supported by the cited pages: Table 2 reports LIBERO at 0.24B/0.45B/2.25B (avg 82.75/87.3/88.75), so the 87.3% baseline is the 0.45B model; the 'far fewer steps' quote appears verbatim in Sec 4.3; no steps-vs-data grid exists anywhere on the page (main text and appendix checked); simulation fine-tuning is 100,000 steps, matching 'Closest prior: 100,000'. LeRobot page gives Pi0.5 (LeRobot) average 97.5 for lerobot/pi05_libero_finetuned, 10 episodes/task = 400 episodes, 'averaging over 3 seeds' (consistent with 1200 episodes); binomial 95% band at n=400, p=0.975 is +/-1.53 points, matching +/-1.5. Arithmetic checks: 1000-557.20=442.80; 50k/15k=3.3x; 86,000 x $1,000 = $86M. Caveat: 'schedule unpublished' is true only for fine-tuning; the paper does publish a pretraining schedule ('After a 100-step warmup, we use a cosine learning rate schedule starting at 1e-4 and decaying to a minimum of 2.5e-6', AdamW). UNSUPPORTED: the full-scale cost claim 'Cosmos world-model training on 10,000 H100 GPUs for three months ... $86M' cites no source in the card ('file says' is not a listed source), and neither fetched page mentions Cosmos, world models, or H100."
+          }
+        ]
+      }
+    },
+    {
+      "id": "c_url_I1",
+      "expected": "REJECT",
+      "items": [
+        {
+          "ref": "card:text",
+          "text": "**I1 · Entity-hallucination probes on the reviewer.** R1 · interp · top pick · compute tested: no · plan expects: unsure · halted: G-plan\n\n**Question.** Do released entity-hallucination probes flag invented entities in an open model's paper reviews better than cheap baselines, especially where citation lookup cannot settle the case?\n\n**What is known.** Obeso et al. trained entity-hallucination probes on LongFact-style long-form generation, with Llama-3.3-70B linear AUC 0.8667 and LoRA 0.9048; they did not test paper reviews [obeso]. Whether the probes transfer to long-context paper reviews and add value over lookups on entities that lookups cannot settle.\n\n**Hypothesis.** Probes help only on entities that are hard to look up; the released 70B probe should reach AUC 0.80 on review entities and beat the best cheap baseline by 0.05 there.\n\n**If the hypothesis holds.** Released 70B probe reaches AUC at least 0.80 on hard-to-look-up entities and beats the best cheap baseline by at least 0.05, with a confidence interval excluding 0.\n\n**If not.** Probe falls below 0.80 or beats the best baseline by under 0.05; or retrieval leaves under 1% fabricated citations, so lookup suffices [AAAI-26].\n\n**Test.** Generate about 2,800 reviews per model of 1,200 2025 ML papers with Llama-3.3-70B and 3.1-8B, label entities, then compare released and retrained probes with four cheap baselines, gated by replication, audits and controls.\n\n*Compute axis.* Reviewer model size (Llama 8B vs 70B), the only axis the plan varies; the claim concerns probe quality, not compute: 8–70 billion parameters, 2 levels. Closest prior: 70 [obeso], not beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Released probes on Obeso's LongFact test split must reproduce reported AUC: 70B linear 0.8667, 70B LoRA 0.9048, 8B linear 0.8535, 8B LoRA 0.8938 [obeso]. Tolerance: within +/-0.02 AUC.\n\n**Would not show.** Labels come from automatic lookups and an open-weight judge, audited on only 300 entities, so label noise caps measurable AUC. Retrieval-equipped reviewers rarely fabricate, so fabricated entities may be too few. Only Llama 8B and 70B reviewers on 2025 ML papers are tested.\n\n*Cost.* Plans $440.23 of the $1,000 budget over 23 machine-hours, leaving $559.77. Full scale: Obeso-style labelling (Claude Sonnet 4 with web search) of all 5,600 reviews at about $0.70 each, $3,900, 3.9× the budget. 17 cost flags in the block.",
+          "sources": [
+            {
+              "id": "obeso",
+              "url": "https://arxiv.org.invalid/html/2509.03531v2",
+              "quote": "linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062"
+            }
+          ]
+        },
+        {
+          "ref": "src:obeso",
+          "url": "https://arxiv.org.invalid/html/2509.03531v2",
+          "quote": "linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:text",
+            "status": "UNREACHABLE",
+            "page_quote": "",
+            "note": "The card's only listed source [obeso] (https://arxiv.org.invalid/html/2509.03531v2) could not be fetched: DNS lookup failed (getaddrinfo ENOTFOUND arxiv.org.invalid; '.invalid' is a reserved TLD that never resolves). None of the factual claims attributed to [obeso] (70B linear AUC 0.8667, LoRA 0.9048, 8B linear 0.8535, 8B LoRA 0.8938, LongFact-style training, no test on paper reviews, 70B as closest prior) could be checked. Further gaps visible from the text alone even if the page were reachable: (1) the 'If not' clause cites [AAAI-26] for 'retrieval leaves under 1% fabricated citations', but no source with that id is listed, so that claim is unsupported as given; (2) the 8B AUC values (0.8535, 0.8938) in 'Check first' and the claim that Obeso did not test paper reviews are not covered by the recorded quote, which only mentions the 70B linear/LoRA, semantic entropy and perplexity figures; (3) the 'Obeso-style labelling (Claude Sonnet 4 with web search) ... about $0.70 each' cost input has no quote supporting it."
+          },
+          {
+            "ref": "src:obeso",
+            "status": "UNREACHABLE",
+            "page_quote": "",
+            "note": "Fetch failed with 'getaddrinfo ENOTFOUND arxiv.org.invalid'. The hostname uses the reserved '.invalid' TLD and cannot resolve, so the page could not be retrieved and the quote ('linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062') could not be verified."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "REJECT",
+        "blocking": [
+          {
+            "ref": "card:text",
+            "status": "UNREACHABLE",
+            "page_quote": "",
+            "note": "The card's only listed source [obeso] (https://arxiv.org.invalid/html/2509.03531v2) could not be fetched: DNS lookup failed (getaddrinfo ENOTFOUND arxiv.org.invalid; '.invalid' is a reserved TLD that never resolves). None of the factual claims attributed to [obeso] (70B linear AUC 0.8667, LoRA 0.9048, 8B linear 0.8535, 8B LoRA 0.8938, LongFact-style training, no test on paper reviews, 70B as closest prior) could be checked. Further gaps visible from the text alone even if the page were reachable: (1) the 'If not' clause cites [AAAI-26] for 'retrieval leaves under 1% fabricated citations', but no source with that id is listed, so that claim is unsupported as given; (2) the 8B AUC values (0.8535, 0.8938) in 'Check first' and the claim that Obeso did not test paper reviews are not covered by the recorded quote, which only mentions the 70B linear/LoRA, semantic entropy and perplexity figures; (3) the 'Obeso-style labelling (Claude Sonnet 4 with web search) ... about $0.70 each' cost input has no quote supporting it."
+          },
+          {
+            "ref": "src:obeso",
+            "status": "UNREACHABLE",
+            "page_quote": "",
+            "note": "Fetch failed with 'getaddrinfo ENOTFOUND arxiv.org.invalid'. The hostname uses the reserved '.invalid' TLD and cannot resolve, so the page could not be retrieved and the quote ('linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062') could not be verified."
+          }
+        ],
+        "listed": []
+      }
+    },
+    {
+      "id": "d_clean_W11",
+      "expected": "PASS",
+      "items": [
+        {
+          "ref": "card:text",
+          "text": "**W11 · Ensemble data assimilation of fault stress (boundary case).** R3 · physical · random pick · compute tested: yes · plan expects: not the lever\n\n**Question.** On a synthetic benchmark fault, does earthquake-forecast skill keep rising as the assimilation ensemble grows, or does it level off early while model error and sensor depth decide?\n\n**What is known.** van Dinther et al. 2019 ran an ensemble Kalman filter with 150 members on a 2-D subduction analogue; Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model. Forecast skill versus ensemble size beyond 150 members, under model error, on a depth-resolved rate-and-state fault, with EnKF compared against a large particle filter.\n\n**Hypothesis.** Skill levels off at tens to hundreds of members, because model error and depth of data limit it first, as the one perfect-model study [van_dinther] suggests.\n\n**Restructuring.** Each member's adaptive time stepping through earthquakes: thousands of steps per event, up to about 8,050 accepted steps per cycle. Thousands of independent members run as columns of one batched matrix on GPU; finished members are gathered into smaller batches every 32 steps so slow ruptures do not stall the rest.\n\n**If compute is the lever.** Skill is still rising beyond 1,024 members in the model-error or particle-filter arms, by more than the gain from deep stress data.\n\n**If not.** Skill plateaus at 256 members or fewer in every ensemble Kalman filter arm; model error or deep data changes skill more than going from 32 members to the largest.\n\n**Test.** Run thousands of copies of a benchmark earthquake fault on GPUs inside ensemble Kalman and particle filters. Measure forecast skill against ensemble size, with and without model error and deep sensors, against simple baselines [van_dinther].\n\n*Compute axis.* Ensemble size M (members per ensemble Kalman filter or particle filter run): 16–16,384 members, 10 levels. Closest prior: 150 [van_dinther], beyond it. Prior art checked without web search.\n\n**Check first.** A single-member run of the first benchmark fault at 25 m reproduces an independent code, QDYN: recurrence interval and first-event time within 1%, slip-rate series overlay at benchmark stations. Tolerance: within 1% on recurrence interval and first-event time.\n\n**Would not show.** A plateau would confirm the hypothesis only for synthetic data from a known model class, not the real Earth. GPU timings are assumptions until Phase 0b; truth noise amplitude is tuned, not observed.\n\n*Cost.* Plans $684.14 of the $1,000 budget over 26 machine-hours, leaving $315.86. Main guess: Wall time on 8x H100, main truth [g], measured after $25.74 of spend; the budget is reached if it is 1.9× higher. 2 cost flags in the block.",
+          "sources": [
+            {
+              "id": "van_dinther",
+              "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+              "quote": "as little as 20 ensemble members"
+            }
+          ]
+        },
+        {
+          "ref": "src:van_dinther",
+          "url": "https://academic.oup.com/gji/article/217/3/1453/5307884",
+          "quote": "as little as 20 ensemble members"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:text",
+            "status": "PARTIAL",
+            "page_quote": "as little as 20 ensemble members are found to already capture most of the diversity within the models",
+            "note": "Source: van Dinther, Künsch & Fichtner, GJI 217(3), 2019, 'Ensemble data assimilation for earthquake sequences: probabilistic estimation and forecasting of fault stresses'. Supported by the page: EnKF with 150 members ('for the largest number tested: 150 ensemble members') on a 2-D seismo-thermo-mechanical model adapted from a scaled laboratory subduction analogue; perfect-model test ('Since the true solution is known in this perfect model test'); 150 as closest prior, so 16-16,384 is beyond it; simple baselines exist ('The EnKF was shown to significantly outperform a periodic recurrence model', random forecast used as reference). Not supported: (1) 'Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model' cites no source and Diab-Montero is not mentioned on the page or in its reference list, so this factual claim is UNSUPPORTED. (2) The hypothesis attributes to [van_dinther] the suggestion that skill levels off at tens to hundreds of members; the cited quote concerns ensemble diversity, not forecast skill, and the page's only size-vs-error result (Appendix B) says 'increasing the number of ensemble members N, decreases the L1 norm' with 1/sqrt(N) scaling and no plateau; the page also says 'Larger ensembles typically allow for improved forecasts'. So the attribution is a loose inference, not a stated finding. Plan content (test design, compute axis, QDYN check, cost figures) needs no source and was not judged."
+          },
+          {
+            "ref": "src:van_dinther",
+            "status": "SUPPORTED",
+            "page_quote": "as little as 20 ensemble members are found to already capture most of the diversity within the models",
+            "note": "Quote appears verbatim in Section 2.5 of van Dinther et al. 2019 (GJI 217(3):1453), followed by a reference to Appendix B. Page confirms a 150-member EnKF perfect-model test on a 2-D subduction analogue. Note the sentence is about ensemble diversity, not forecast skill versus ensemble size."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:text",
+            "status": "PARTIAL",
+            "page_quote": "as little as 20 ensemble members are found to already capture most of the diversity within the models",
+            "note": "Source: van Dinther, Künsch & Fichtner, GJI 217(3), 2019, 'Ensemble data assimilation for earthquake sequences: probabilistic estimation and forecasting of fault stresses'. Supported by the page: EnKF with 150 members ('for the largest number tested: 150 ensemble members') on a 2-D seismo-thermo-mechanical model adapted from a scaled laboratory subduction analogue; perfect-model test ('Since the true solution is known in this perfect model test'); 150 as closest prior, so 16-16,384 is beyond it; simple baselines exist ('The EnKF was shown to significantly outperform a periodic recurrence model', random forecast used as reference). Not supported: (1) 'Diab-Montero et al. 2023 used 50 members on a single-point 1-D fault model with perfect model' cites no source and Diab-Montero is not mentioned on the page or in its reference list, so this factual claim is UNSUPPORTED. (2) The hypothesis attributes to [van_dinther] the suggestion that skill levels off at tens to hundreds of members; the cited quote concerns ensemble diversity, not forecast skill, and the page's only size-vs-error result (Appendix B) says 'increasing the number of ensemble members N, decreases the L1 norm' with 1/sqrt(N) scaling and no plateau; the page also says 'Larger ensembles typically allow for improved forecasts'. So the attribution is a loose inference, not a stated finding. Plan content (test design, compute axis, QDYN check, cost figures) needs no source and was not judged."
+          }
+        ]
+      }
+    }
+  ],
+  "critic": [
+    {
+      "key": "R1:physical:W2",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:left_open",
+            "reason": "Tells reviewers how many retrained models an unlearning verdict needs, but only for one forget set, one dataset, and one model."
+          },
+          {
+            "criterion": "lever",
+            "value": 4,
+            "ref": "plan:compute_axis.levels",
+            "reason": "N spans 1 to 256, bought with compute, and held_fixed is thorough. Expected effect size against bootstrap noise is not quantified."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Retraining is an independent reference, controls are planted, and Table 1 values are reproduced within a stated tolerance first."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:closest_prior",
+            "reason": "Prior held the fitting side at 1,024 models and varied evaluation only. Gap is stated, though a later SalUn audit was not searched."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "Models train independently, one per GPU job. No step-after-step dependency is removed, and method is none."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "card:method",
+            "reason": "restructuring.method is none, so there is no parallel method to time against a baseline."
+          }
+        ],
+        "decides_by": "p3",
+        "decides_by_reason": "N* and the verdict need the full N-sweep bootstrap, applied in p3 analysis. p1 covers only N=32 controls, and p2 only generates models."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R1:physical:W15",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:hypothesis",
+            "reason": "Informs compute-vs-capability for proof search, but single model, benchmark and node; the result bears on the root question (paper review) only indirectly, and the published curve makes the outcome likely."
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "card:if_lever",
+            "reason": "Axis spans 20x and the held-fixed list is good, but the bands are wide at N=120 and truncation substitutes for true caps. Plateau detection is weak."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "The Lean checker is a formal check, and the plan first reproduces Mistral's published pass@8 within stated Wilson bands."
+          },
+          {
+            "criterion": "open",
+            "value": 3,
+            "ref": "card:closest_prior",
+            "reason": "Mistral already publishes the curve to 4M tokens; the gap is self-hosted cost and checker false-accepts, which is only partial novelty."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:method",
+            "reason": "Independent attempts run side by side on replicas; there is no dependency removal, and the prior already reports this curve."
+          },
+          {
+            "criterion": "baseline",
+            "value": 1,
+            "ref": "card:closest_prior",
+            "reason": "No timed sequential baseline or baseline copies, and no arm-timing phase. The plan compares only to the published curve, so at least two conditions fail."
+          }
+        ],
+        "decides_by": "p2",
+        "decides_by_reason": "Only the main run yields the solved-versus-budget curve, from which the 200k-to-1M plateau test and the decision rule follow; p0 and p1 are gates, and p3 only checks truncation."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R1:physical:random: dramaturg: degenerate: card:method; degenerate: card:if_not"
+  ]
+}

@@ -1,0 +1,508 @@
+{
+  "phase": "B",
+  "slice": 2,
+  "dramaturg": [
+    {
+      "key": "R1:interp:I1",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Do released entity-hallucination probes flag invented entities in an open model's paper reviews better than cheap baselines, especially where citation lookup cannot settle the case?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Probes help only on entities that are hard to look up; the released 70B probe should reach AUC 0.80 on review entities and beat the best cheap baseline by 0.05 there.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Released 70B probe reaches AUC at least 0.80 on hard-to-look-up entities and beats the best cheap baseline by at least 0.05, with a confidence interval excluding 0.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Probe falls below 0.80 or beats the best baseline by under 0.05; or retrieval leaves under 1% fabricated citations, so lookup suffices [AAAI-26].",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Generate about 2,800 reviews per model of 1,200 2025 ML papers with Llama-3.3-70B and 3.1-8B, label entities, then compare released and retrained probes with four cheap baselines, gated by replication, audits and controls.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Obeso et al. trained entity-hallucination probes on LongFact-style long-form generation, with Llama-3.3-70B linear AUC 0.8667 and LoRA 0.9048; they did not test paper reviews [obeso].",
+          "sources": [
+            {
+              "id": "obeso",
+              "url": "https://arxiv.org/html/2509.03531v2",
+              "quote": "linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062"
+            }
+          ],
+          "value": 70
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether the probes transfer to long-context paper reviews and add value over lookups on entities that lookups cannot settle.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Released probes on Obeso's LongFact test split must reproduce reported AUC: 70B linear 0.8667, 70B LoRA 0.9048, 8B linear 0.8535, 8B LoRA 0.8938 [obeso].",
+          "sources": [
+            {
+              "id": "obeso",
+              "url": "https://arxiv.org/html/2509.03531v2",
+              "quote": "linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062"
+            }
+          ],
+          "value": 0.8667
+        },
+        {
+          "ref": "card:limits",
+          "text": "Labels come from automatic lookups and an open-weight judge, audited on only 300 entities, so label noise caps measurable AUC. Retrieval-equipped reviewers rarely fabricate, so fabricated entities may be too few. Only Llama 8B and 70B reviewers on 2025 ML papers are tested.",
+          "sources": []
+        },
+        {
+          "ref": "src:obeso",
+          "url": "https://arxiv.org/html/2509.03531v2",
+          "quote": "linear probe reached AUC 0.8667 and a LoRA probe 0.9048. Semantic entropy scored 0.7138 and perplexity 0.7062",
+          "supports": "Reported probe and baseline AUCs, labelling method, loss, layer choice, transfer loss"
+        },
+        {
+          "ref": "num:auc_70b_lin",
+          "name": "Reported 70B linear probe AUC on LongFact",
+          "value": 0.8667,
+          "unit": "AUC",
+          "basis": "CITED",
+          "quote": "linear probe reached AUC 0.8667",
+          "page_setting": "LongFact, Llama-3.3-70B",
+          "url": "https://arxiv.org/html/2509.03531v2"
+        },
+        {
+          "ref": "num:fab_gpt4",
+          "name": "GPT-4 fabricated citation share in 2023 study",
+          "value": 0.18,
+          "unit": "fraction",
+          "basis": "PROXY",
+          "quote": "18% of GPT-4's citations were fabricated",
+          "page_setting": "2023 ChatGPT literature reviews",
+          "differs_in": [
+            "different model (GPT-4)",
+            "different task (literature review vs paper review)",
+            "year 2023"
+          ],
+          "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC10484980/"
+        },
+        {
+          "ref": "num:rlfr_cost",
+          "name": "Goodfire RLFR run cost",
+          "value": 2500,
+          "unit": "USD",
+          "basis": "CITED",
+          "quote": "about $2.5k for about 360 optimiser steps",
+          "page_setting": "RLFR run, about 360 optimiser steps",
+          "url": "https://www.goodfire.com/research/rlfr"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "Our approach targets entity-level hallucinations.",
+            "note": "Research question; states what the plan will measure, so no source is needed. Its premise (entity-hallucination probes exist for open Llama models) is borne out by the Obeso page, which trains entity-level probes on Llama-3.1-8B and Llama-3.3-70B."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "Linear probe 0.8535 0.5878 0.8667 0.6451",
+            "note": "Prediction; the 0.80 AUC and 0.05 margin are the plan's own targets, not page values, so nothing to check. For context the Obeso page reports 0.8667 for the 70B linear probe on LongFact (Table 1; columns are Llama-3.1-8B AUC, R@0.1, Llama-3.3-70B AUC, R@0.1)."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; decision rule)",
+            "note": "Decision rule stating what result would confirm the hypothesis. Contains no factual claim about the world, so no source is required."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "PARTIAL",
+            "page_quote": "(no source entry provided for [AAAI-26])",
+            "note": "The first clause is a decision rule and needs no source. The second clause, 'retrieval leaves under 1% fabricated citations, so lookup suffices', cites [AAAI-26] but the item's sources list is empty, so the under-1% figure and the AAAI-26 attribution could not be checked against any page."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "Linear probe 0.8535 0.5878 0.8667 0.6451",
+            "note": "Describes what the plan will build and measure; no factual claim requiring a source. The two reviewer models named (Llama-3.3-70B, Llama-3.1-8B) are the same two models the Obeso page evaluates in Table 1, and the page states code and dataset links are available at github.com/obalcells/hallucination_probes."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "Linear probe 0.8535 0.5878 0.8667 0.6451 LoRA probe 0.8938 0.6801 0.9048 0.7228",
+            "note": "Page title 'Real-Time Detection of Hallucinated Entities in Long-Form Generation', Oscar Obeso co-first author. Probes target entity-level hallucinations; long-form data is LongFact/LongFact++ (plus held-out HealthBench). Table 1 LongFact block gives Llama-3.3-70B linear AUC 0.8667 and LoRA 0.9048, matching the card. The page nowhere mentions paper or peer reviews, so 'did not test paper reviews' holds. The recorded quote is a paraphrase of Table 1 rows, not verbatim prose."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "they remain ∼0.10 AUC behind long-form-trained probes across all training-set sizes",
+            "note": "Framing of the gap; no factual claim needing a source. Consistent with the Obeso page: it evaluates only LongFact, LongFact++ and HealthBench prompts, never paper reviews, and it documents format-transfer loss (short-form-trained probes ~0.10 AUC behind), so transfer to review generation is genuinely untested there."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "Linear probe 0.8535 0.5878 0.8667 0.6451 LoRA probe 0.8938 0.6801 0.9048 0.7228",
+            "note": "All four replication targets match Table 1 (LongFact block): 8B linear 0.8535, 8B LoRA 0.8938, 70B linear 0.8667, 70B LoRA 0.9048. Caveat: the page states 'Our code as well as links to our datasets can be found at: https://github.com/obalcells/hallucination_probes' but does not itself say trained probe weights are released; the card's 'released probes' premise rests on that repo. Recorded quote is a paraphrase of the table, not verbatim prose."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited for 'retrieval-equipped reviewers rarely fabricate')",
+            "note": "Sentences 1 and 3 describe the plan's own labelling design and scope and need no source (and the Obeso page's own label audit, 84% human agreement on 50 samples, supports label noise as a real cap). Sentence 2, 'Retrieval-equipped reviewers rarely fabricate', is a factual claim about prior results with no source attached, so it is unsupported as recorded."
+          },
+          {
+            "ref": "src:obeso",
+            "status": "PARTIAL",
+            "page_quote": "Perplexity 0.7600 0.3616 0.7062 0.3011 ... Semantic entropy 0.7189 0.2739 0.7138 0.3915 Linear probe 0.8535 0.5878 0.8667 0.6451 LoRA probe 0.8938 0.6801 0.9048 0.7228",
+            "note": "The recorded quote does not appear verbatim anywhere on the page (grep count 0); the four numbers appear only as Table 1 cells in the LongFact block, where the third column is Llama-3.3-70B AUC. Substantively the page supports everything the source is listed for: linear 0.8667, LoRA 0.9048, semantic entropy 0.7138, perplexity 0.7062 for Llama-3.3-70B; labels from 'Claude 4 Sonnet with web search' (84% human agreement on 50 samples); loss = token-wise weighted BCE mixed with a span-max BCE, annealed; probe head at layer floor(0.95 x num_layers); transfer: short-form-trained probes ~0.10 AUC behind long-form-trained, cross-model within 0.02-0.04. Downgraded only because the quote is a paraphrase of table rows presented as a sentence."
+          },
+          {
+            "ref": "num:auc_70b_lin",
+            "status": "SUPPORTED",
+            "page_value": 0.8667,
+            "page_quote": "Linear probe 0.8535 0.5878 0.8667 0.6451",
+            "note": "Table 1, LongFact (long-form) block; columns are Llama-3.1-8B AUC, R@0.1, Llama-3.3-70B AUC, R@0.1, so 0.8667 is the Llama-3.3-70B linear-probe AUC on LongFact, matching the stated setting. The quote 'linear probe reached AUC 0.8667' is a paraphrase; prose rounds it to '0.87 AUC on Llama-3.3-70B'."
+          },
+          {
+            "ref": "num:fab_gpt4",
+            "status": "SUPPORTED",
+            "page_value": 0.18,
+            "page_quote": "Within this set of documents, 55% of the GPT-3.5 citations but just 18% of the GPT-4 citations are fabricated.",
+            "note": "Article: Walters & Wilder, 'Fabrication and errors in the bibliographic citations generated by ChatGPT', Sci Rep, published 2023 Sep 7. Task: ChatGPT-generated literature reviews on 42 multidisciplinary topics (84 papers, 636 citations), matching the stated 2023 literature-review setting. Table 3 repeats 18% (414 cited works) for GPT-4. The recorded quote is a close paraphrase, not verbatim. WebFetch returned a reCAPTCHA page; the article was retrieved via curl with a browser user agent."
+          },
+          {
+            "ref": "num:rlfr_cost",
+            "status": "SUPPORTED",
+            "page_value": 2500,
+            "page_quote": "We train for approximately 360 optimizer steps at a cost of roughly $2.5k.",
+            "note": "Goodfire page 'Features as Rewards: Using Interpretability to Reduce Hallucinations', dated February 11, 2026. The page states roughly $2.5k for approximately 360 optimizer steps, matching the setting. Recorded quote is a paraphrase (British spelling 'optimiser', 'about' for 'approximately'/'roughly')."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:if_not",
+            "status": "PARTIAL",
+            "page_quote": "(no source entry provided for [AAAI-26])",
+            "note": "The first clause is a decision rule and needs no source. The second clause, 'retrieval leaves under 1% fabricated citations, so lookup suffices', cites [AAAI-26] but the item's sources list is empty, so the under-1% figure and the AAAI-26 attribution could not be checked against any page."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited for 'retrieval-equipped reviewers rarely fabricate')",
+            "note": "Sentences 1 and 3 describe the plan's own labelling design and scope and need no source (and the Obeso page's own label audit, 84% human agreement on 50 samples, supports label noise as a real cap). Sentence 2, 'Retrieval-equipped reviewers rarely fabricate', is a factual claim about prior results with no source attached, so it is unsupported as recorded."
+          },
+          {
+            "ref": "src:obeso",
+            "status": "PARTIAL",
+            "page_quote": "Perplexity 0.7600 0.3616 0.7062 0.3011 ... Semantic entropy 0.7189 0.2739 0.7138 0.3915 Linear probe 0.8535 0.5878 0.8667 0.6451 LoRA probe 0.8938 0.6801 0.9048 0.7228",
+            "note": "The recorded quote does not appear verbatim anywhere on the page (grep count 0); the four numbers appear only as Table 1 cells in the LongFact block, where the third column is Llama-3.3-70B AUC. Substantively the page supports everything the source is listed for: linear 0.8667, LoRA 0.9048, semantic entropy 0.7138, perplexity 0.7062 for Llama-3.3-70B; labels from 'Claude 4 Sonnet with web search' (84% human agreement on 50 samples); loss = token-wise weighted BCE mixed with a span-max BCE, annealed; probe head at layer floor(0.95 x num_layers); transfer: short-form-trained probes ~0.10 AUC behind long-form-trained, cross-model within 0.02-0.04. Downgraded only because the quote is a paraphrase of table rows presented as a sentence."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R1:interp:I6",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Can an activation probe on an open-weights experiment agent's own activations catch fabricated, tampered or misreported results as well as an LLM transcript monitor does?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "A difference-of-means probe matches or beats an LLM transcript monitor at 5% false positives, and adds 10+ points combined [Bergen et al.]",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "A probe on the agent's activations matches or beats the LLM monitor on planted-trap tests, and adds 10+ recall points to it.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "The probe is no better than a bag-of-words or token-embedding control, or the 2x2 reader test shows no extra gain from the agent's own activations; the signal is in the text.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "A 27B open model works through 24 planted-trap ML claim-check tasks. A probe on its activations, trained on released synthetic data, is compared with an LLM transcript monitor and text-only controls at 5% false positives.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Bergen et al. probed Kimi K3, GLM 5.2 and Qwen 3.8 Max against LLM monitors on coding hack benchmarks; their 27B model was only steered, rarely taking the honeypot.",
+          "sources": [
+            {
+              "id": "bergen_html",
+              "url": "https://arxiv.org/html/2609.19101",
+              "quote": "was not extensively optimized"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether such probes transfer to experiment-agent misreporting (fabrication, spin, grader editing) and whether they carry signal beyond the transcript text.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Recompute released Qwen 3.8 Max ImpossibleBench verdicts (188 hack, 102 clean, 19 split) and passages (1,201 / 12,634 / 488) from released files [labels_readme].",
+          "sources": [
+            {
+              "id": "labels_readme",
+              "url": "https://huggingface.co/datasets/Goodfire/reward-hack-data/blob/main/impossiblebench-qwen3.8-2.4t-a95b-fp8/labels/README.md",
+              "quote": "188 hack, 102 clean and 19 split rollouts"
+            }
+          ],
+          "value": "188/102/19 verdicts; 1,201/12,634/488 passages; DeepSWE hack rate 95.2%"
+        },
+        {
+          "ref": "card:limits",
+          "text": "Small, artificial planted tasks and one 27B agent; positives may be few if the agent rarely cheats. Low statistical power: only 15 to 20 point differences between methods are detectable.",
+          "sources": []
+        },
+        {
+          "ref": "src:labels_readme",
+          "url": "https://huggingface.co/datasets/Goodfire/reward-hack-data/blob/main/impossiblebench-qwen3.8-2.4t-a95b-fp8/labels/README.md",
+          "quote": "188 hack, 102 clean and 19 split rollouts",
+          "supports": "Released label counts used as the anchor and check 1"
+        },
+        {
+          "ref": "src:bergen_html",
+          "url": "https://arxiv.org/html/2609.19101",
+          "quote": "was not extensively optimized",
+          "supports": "Paper's probe and monitor comparison, rubric, thresholds, layer 47 steering, honeypot rate"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Research question stating what the plan will measure; contains no factual claim that needs a source."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "For example, with only a 1% absolute increase in FPR, adding the probe to the monitor increases TPR from 41.1% to 80.2% on DeepSWE for Kimi K3.",
+            "note": "Prediction, so no source required; the inline [Bergen et al.] premise checks out on the arXiv page: 'probes can detect hacking at low false positive rates, often on par with an LLM monitor reading transcripts', and the OR-combination adds 39 TPR points in the cited example. Caveat: the paper compares probe vs monitor at monitor-matched FPR, not at 5%; the 5% FPR threshold appears only in section 5.1 ('We threshold all possible probes at a 5% FPR on SWE-bench Verified'). Results are mixed (Kimi K3 +3.0/+33.1 points on DeepSWE/ImpossibleBench, -6.6 on SWEBench; GLM 5.2 7.9% fewer hacks on DeepSWE)."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Prediction about the plan's own outcome; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Prediction about the plan's own outcome; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "PARTIAL",
+            "page_quote": "Data is available here: https://huggingface.co/datasets/Goodfire/reward-hack-data",
+            "note": "The design (27B model, 24 planted-trap tasks, probe vs monitor vs text controls at 5% FPR) needs no source. The embedded factual claim 'trained on released synthetic data' cites no source. The Bergen page says data is available on HF and describes the synthetic probe-construction data in Appendix B, but I could not confirm from either fetched page that the synthetic set is part of the release; the HF README I fetched covers judge labels only."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "Here we give a model (Qwen 3.8 27B) a set of 194 coding problems from LeetCode and TACO (Li et al., 2023b). [...] before vs. after steering at layer 47. Figure 5 demonstrates the results. Normally, without any steering, the model takes the honeypot only 1 out of the 194 times.",
+            "note": "All claims check out on the arXiv page: 'simple difference of means vectors coherently represent reward hacking in Kimi K3, GLM 5.2, and Qwen 3.8 Max'; monitoring comparison vs LLM monitor on SWEBench-Verified, DeepSWE and ImpossibleBench (Figure 8); Qwen 3.8 27B appears only in the two steering experiments (story steering at layer 40, honeypot steering at layer 47), taking the honeypot 1/194 times unsteered. The recorded source quote 'was not extensively optimized' is not on the page and does not bear on these claims (see src:bergen_html)."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "We threshold all possible probes at a 5% FPR on SWE-bench Verified and select the probe with the highest firing rate at that threshold on these two non-SWE environments.",
+            "note": "Gap statement framing what the plan addresses. Consistent with the Bergen page: transfer is tested only to tau3-bench, ShoppingBench and cybersecurity environments (no experiment-agent or misreporting setting; 0 hits for 'misreport', 'experiment agent'), and no bag-of-words / text-only control appears (0 hits for 'bag-of-words', 'TF-IDF', 'text-only'); the paper asserts detection 'independently of the surface text' without testing against a text baseline. No source cited, so this rests on the page fetched for closest_prior."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "Counts: verdicts (188 yes / 102 no / 19 split; enacted 12 / 278 / 19) and passages (1201 positive / 12634 negative / 488 ambiguous of 14323) equal the source consensus `manifest.json`. The hack rate reproduces the paper's 64.8%.",
+            "note": "Verdict counts 188/102/19 and passage counts 1,201/12,634/488 match the README exactly, and the README confirms the labels are the released, paper-reported judge labels for the impossiblebench-qwen3.8-2.4t-a95b-fp8 run (309 judged rollouts). The value's 'DeepSWE hack rate 95.2%' is stated on neither page: the README mentions DeepSWE only in the release-policy line and gives 64.8% (ImpossibleBench); the paper's only stated DeepSWE rate is GLM 5.2 at 57.2%. The README never names 'Qwen 3.8 Max'; the mapping from the directory name to that model is inferred, not stated."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "Normally, without any steering, the model takes the honeypot only 1 out of the 194 times.",
+            "note": "Limitations of the plan's own design; no source required. The 'agent rarely cheats' concern is consistent with the Bergen page's unsteered 27B honeypot rate. The '15 to 20 point differences detectable' figure is the plan's own power estimate and is not checkable against any page."
+          },
+          {
+            "ref": "src:labels_readme",
+            "status": "PARTIAL",
+            "page_quote": "Counts: verdicts (188 yes / 102 no / 19 split; enacted 12 / 278 / 19) and passages (1201 positive / 12634 negative / 488 ambiguous of 14323) equal the source consensus `manifest.json`. The hack rate reproduces the paper's 64.8%.",
+            "note": "The recorded quote '188 hack, 102 clean and 19 split rollouts' does not appear verbatim; the page says '188 yes / 102 no / 19 split'. The numbers match and the page does support the anchor and check 1 (labels are 'the environment-specific ground-truth judge labels that the paper reports', 3-vote consensus from gpt-5.6-sol). Fetched via the raw file URL since the HTML view only summarized."
+          },
+          {
+            "ref": "src:bergen_html",
+            "status": "PARTIAL",
+            "page_quote": "In addition, we do not optimize our LLM monitor extensively, and a more highly optimized monitor rubric and prompt may lead to different results.",
+            "note": "The recorded quote 'was not extensively optimized' is not on the page (0 hits for 'extensively optimi'); the closest sentence is the Limitations line quoted. The page does contain everything the source is cited for: probe vs monitor comparison at monitor-matched FPR (Figure 8, section 4.1), LLM judge rubrics (Appendix C), probe thresholds (5% FPR on SWE-bench Verified in section 5.1), layer 47 honeypot steering of Qwen 3.8 27B, and the 1/194 unsteered honeypot rate."
+          }
+        ]
+      },
+      "findings_ok": false,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:test_summary",
+            "status": "PARTIAL",
+            "page_quote": "Data is available here: https://huggingface.co/datasets/Goodfire/reward-hack-data",
+            "note": "The design (27B model, 24 planted-trap tasks, probe vs monitor vs text controls at 5% FPR) needs no source. The embedded factual claim 'trained on released synthetic data' cites no source. The Bergen page says data is available on HF and describes the synthetic probe-construction data in Appendix B, but I could not confirm from either fetched page that the synthetic set is part of the release; the HF README I fetched covers judge labels only."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "Counts: verdicts (188 yes / 102 no / 19 split; enacted 12 / 278 / 19) and passages (1201 positive / 12634 negative / 488 ambiguous of 14323) equal the source consensus `manifest.json`. The hack rate reproduces the paper's 64.8%.",
+            "note": "Verdict counts 188/102/19 and passage counts 1,201/12,634/488 match the README exactly, and the README confirms the labels are the released, paper-reported judge labels for the impossiblebench-qwen3.8-2.4t-a95b-fp8 run (309 judged rollouts). The value's 'DeepSWE hack rate 95.2%' is stated on neither page: the README mentions DeepSWE only in the release-policy line and gives 64.8% (ImpossibleBench); the paper's only stated DeepSWE rate is GLM 5.2 at 57.2%. The README never names 'Qwen 3.8 Max'; the mapping from the directory name to that model is inferred, not stated."
+          },
+          {
+            "ref": "src:labels_readme",
+            "status": "PARTIAL",
+            "page_quote": "Counts: verdicts (188 yes / 102 no / 19 split; enacted 12 / 278 / 19) and passages (1201 positive / 12634 negative / 488 ambiguous of 14323) equal the source consensus `manifest.json`. The hack rate reproduces the paper's 64.8%.",
+            "note": "The recorded quote '188 hack, 102 clean and 19 split rollouts' does not appear verbatim; the page says '188 yes / 102 no / 19 split'. The numbers match and the page does support the anchor and check 1 (labels are 'the environment-specific ground-truth judge labels that the paper reports', 3-vote consensus from gpt-5.6-sol). Fetched via the raw file URL since the HTML view only summarized."
+          },
+          {
+            "ref": "src:bergen_html",
+            "status": "PARTIAL",
+            "page_quote": "In addition, we do not optimize our LLM monitor extensively, and a more highly optimized monitor rubric and prompt may lead to different results.",
+            "note": "The recorded quote 'was not extensively optimized' is not on the page (0 hits for 'extensively optimi'); the closest sentence is the Limitations line quoted. The page does contain everything the source is cited for: probe vs monitor comparison at monitor-matched FPR (Figure 8, section 4.1), LLM judge rubrics (Appendix C), probe thresholds (5% FPR on SWE-bench Verified in section 5.1), layer 47 honeypot steering of Qwen 3.8 27B, and the 1/194 unsteered honeypot rate."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R1:interp:I1",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:if_lever",
+            "reason": "Bears on whether to add probes to review pipelines, but only for Llama reviewers on ML papers; labels are noisy and lookup may suffice."
+          },
+          {
+            "criterion": "lever",
+            "value": 1,
+            "ref": "plan:compute_axis",
+            "reason": "Axis is 8B vs 70B, under 10x, and is the model rather than compute; the claim concerns probe quality, and labels also differ."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 3,
+            "ref": "card:anchor",
+            "reason": "Replication anchor within tolerance exists, but truth comes from lookups plus an LLM judge with a 300-entity human audit; planted fakes help partly."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:left_open",
+            "reason": "Prior tested LongFact only, not paper reviews; the plan explicitly states the transfer gap to long-context reviews and unlookupable entities."
+          },
+          {
+            "criterion": "internals",
+            "value": 4,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "Same-item comparison against best cheap baseline with 0.05 margin and CI; but baselines are cheap, not a strong outputs-only method like a judge."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "plan:restructuring.sequential_part",
+            "reason": "Not a sequential-chain problem; no dependency is removed, only independent work in phases."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so this criterion does not apply."
+          }
+        ],
+        "decides_by": "phaseB",
+        "decides_by_reason": "Phase B yields 70B generation, scoring and probe training; with offline audit/evaluation the decision rule applies, but phaseB produces all GPU-side outcome data; the G2 audit is offline."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R1:interp:I6",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Result informs whether to add probes to agent-run experiment auditing, but only via a single small 27B agent and artificial planted tasks; weak power."
+          },
+          {
+            "criterion": "lever",
+            "value": 1,
+            "ref": "plan:compute_axis",
+            "reason": "Axis is one level (4 samples), no 10x span; the varied quantity is monitor type, not compute; noise exceeds small gaps."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 4,
+            "ref": "card:anchor",
+            "reason": "Planted traps with instrumentation ground truth, plus exact reproduction of released counts; but some labels use judge plus human audit with kappa."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:left_open",
+            "reason": "Prior probed coding hack benchmarks; transfer to experiment misreporting and signal beyond text is stated as open gap."
+          },
+          {
+            "criterion": "internals",
+            "value": 5,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "Compares probe to gpt-oss-120b monitor B1 on same items with a 10-point margin, plus text controls B5/B6."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "Not applicable; no step-after-step dependency removed, only independent rollouts run in parallel."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so baseline timing criterion does not apply."
+          }
+        ],
+        "decides_by": "armr",
+        "decides_by_reason": "Arm R gate AUROC below 0.75 declares pipeline failed, but a pass leaves the main comparison undecided; pilot gate similarly only stops. Full outcome needs fit."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R1:interp:random: dramaturg: degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not",
+    "R1:interp:random: dramaturg (resample): degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not"
+  ]
+}

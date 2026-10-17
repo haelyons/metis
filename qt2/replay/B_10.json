@@ -1,0 +1,476 @@
+{
+  "phase": "B",
+  "slice": 10,
+  "dramaturg": [
+    {
+      "key": "R5:interp:I3",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Can equations distilled from a learned correction to an analytic pushing model generalize as well as the neural correction, and recover known friction physics?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "A sparse neural friction correction, replaced by closed-form equations, should generalize at least as well as the network, matching [cranmer]'s dark-matter result.",
+          "sources": [
+            {
+              "id": "cranmer",
+              "url": "https://arxiv.org/html/2006.11287",
+              "quote": "the greatest prediction performance in most cases"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Not a compute-lever test; more compute would only shorten wall-clock, not change the equations found.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Equations recover the known friction signatures and beat the analytic model out of distribution, matching the neural hybrid [ajay]; gains come from structure, not GPUs.",
+          "sources": [
+            {
+              "id": "ajay",
+              "url": "https://arxiv.org/pdf/1808.03246",
+              "quote": "can predict outcomes that are physically impossible"
+            }
+          ]
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Build an analytic pushing model plus a sparse neural friction correction, distill it to equations with PySR, and check it against baselines, synthetic controls, force-sensor readings and independent friction measurements. Cloth follows only if friction passes.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "[cranmer] distilled graph-network messages into equations and generalized better out of distribution on dark matter simulations; [ajay] showed analytic plus neural residual beats either alone for pushing.",
+          "sources": [
+            {
+              "id": "cranmer",
+              "url": "https://arxiv.org/html/2006.11287",
+              "quote": "the greatest prediction performance in most cases"
+            },
+            {
+              "id": "ajay",
+              "url": "https://arxiv.org/pdf/1808.03246",
+              "quote": "can predict outcomes that are physically impossible"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether symbolic distillation of a friction residual on real pushing data recovers known friction signatures and matches the neural hybrid out of distribution; cloth untested.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Reproduce the analytic model's position error on rect1 on ABS from [ajay]; neural 2.81 mm and hybrid 2.04 mm also checked.",
+          "sources": [
+            {
+              "id": "ajay",
+              "url": "https://arxiv.org/pdf/1808.03246",
+              "quote": "can predict outcomes that are physically impossible"
+            }
+          ],
+          "value": 6.91
+        },
+        {
+          "ref": "card:limits",
+          "text": "Deterministic models cannot capture the multimodal repeat-push spread. Cost figures are unmeasured estimates until Phase 0. Push dataset license is unstated. 2025-2026 related work may have been missed.",
+          "sources": []
+        },
+        {
+          "ref": "src:cranmer",
+          "url": "https://arxiv.org/html/2006.11287",
+          "quote": "the greatest prediction performance in most cases",
+          "supports": "Method: sparse graph network messages, symbolic regression, and the dark-matter generalization result"
+        },
+        {
+          "ref": "src:ajay",
+          "url": "https://arxiv.org/pdf/1808.03246",
+          "quote": "can predict outcomes that are physically impossible",
+          "supports": "Baseline numbers for analytic, neural and hybrid pushing models"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "States the research question the plan will answer; no factual claim that needs a source. Its two parts (generalize as well as the neural correction; recover friction physics) are the measurements the test_summary sets up."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "The symbolic expressions extracted from the GNN using our technique also generalized to out-of-distribution-data better than the GNN itself.",
+            "note": "Cranmer page confirms the dark-matter result the hypothesis leans on: sparse (L1/bottleneck) messages, symbolic regression on components, and symbolic expressions generalizing OOD better than the GNN ('discover a new analytic formula which can predict the concentration of dark matter'). The recorded quote ('greatest prediction performance in most cases') is on the page but is about L1 regularization vs other sparsity schemes, not the generalization claim; the sentence above is the load-bearing one."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "A statement of the plan's own framing/prediction about compute; carries no sourced factual claim to check. Note only that it asserts more compute would not change the equations found, which is a prediction the plan itself would need to bear out."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "Our model outperforms both purely analytical and purely learned simulators consistently on real, standard benchmarks.",
+            "note": "Predicted outcome; the one factual hook is that ajay's neural hybrid beats the analytic model and generalizes. Ajay page: Table I test pos error Physics 6.91 mm vs Hybrid 2.04 mm, and Fig. 7 'Our method generalizes well to different materials and to a new shape (rect2 in the push dataset).' The recorded quote ('can predict outcomes that are physically impossible') is present on the page but describes a drawback of residual models and does not support this claim."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Describes what the plan will build and measure; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "we first encourage sparse latent representations when we train a GNN in a supervised setting, then we apply symbolic regression to components of the learned model.",
+            "note": "Cranmer: abstract confirms symbolic regression on GNN components, the dark-matter example ('discover a new analytic formula which can predict the concentration of dark matter'), and 'The symbolic expressions extracted from the GNN using our technique also generalized to out-of-distribution-data better than the GNN itself.' Ajay: 'Our model outperforms both purely analytical and purely learned simulators consistently on real, standard benchmarks.' and Table I (Physics 6.91 / Neural 2.81 / Hybrid 2.04 mm). Both halves check out."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Frames the gap the plan will address; no sourced factual claim. Neither fetched paper applies symbolic distillation to a friction residual on real pushing data or tests cloth, consistent with the stated gap."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_value": 6.91,
+            "page_quote": "Table I shows the main results on the MIT Push data-set, using the rect1 object, a 837g square with a side length of 9cm, on the ABS surface.",
+            "note": "Table I (test set, pos in mm): Physics 6.91, Neural 2.81, Hybrid 2.04. All three values match. These are test-set numbers; the Physics row has N/A on the training set. The recorded quote is unrelated to the numbers; the Table I row and the sentence above are the evidence."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "The motion of an object being pushed appears stochastic and possibly multi-modal due to imperfections in contact surfaces, non-uniform coefficient of friction, stick/slip transitions, and micro surface interactions.",
+            "note": "Field cites no source. The multimodal repeat-push claim is consistent with the ajay page (Fig. 1 caption above; Sec. V collects 'the ground truth distribution of the position of the object (rect1) after being pushed' from repeated pushes), but ajay says 'possibly multi-modal', and this field does not cite it. 'Push dataset license is unstated' is a factual claim with no source; the ajay page attributes the dataset to Yu et al. [5] and mentions no license, but [5] was not fetched. Cost-estimate and missed-related-work lines are self-descriptions."
+          },
+          {
+            "ref": "src:cranmer",
+            "status": "SUPPORTED",
+            "page_quote": "We find that the model with L1 regularization has the greatest prediction performance in most cases (see table 3).",
+            "note": "Quote appears verbatim. Page is 'Discovering Symbolic Models from Deep Learning with Inductive Biases' (Cranmer et al.). The quote directly covers the sparse-messages part of the supports claim; symbolic regression on components and the dark-matter OOD result are stated elsewhere on the same page ('The symbolic expressions extracted from the GNN using our technique also generalized to out-of-distribution-data better than the GNN itself.'). Consider swapping the recorded quote to that sentence since it is the one the plan actually relies on."
+          },
+          {
+            "ref": "src:ajay",
+            "status": "PARTIAL",
+            "page_quote": "Given that the residual model is data-driven, it can predict outcomes that are physically impossible, because there is no mechanism to enforce basic physics principles (e.g., the conservation of energy) at the output level.",
+            "note": "Quote appears verbatim (Sec. VI drawbacks). Page is 'Augmenting Physical Simulators with Stochastic Neural Networks: Case Study of Planar Pushing and Bouncing' (Ajay et al., arXiv 1808.03246v1). The page does carry the baseline numbers this source is cited for (Table I, rect1 on ABS, test pos mm: Physics 6.91, Neural 2.81, Hybrid 2.04), but the recorded quote does not support them; it is about a limitation of residual models. Replace the quote with the Table I sentence or 'Our model outperforms both purely analytical and purely learned simulators consistently on real, standard benchmarks.'"
+          }
+        ]
+      },
+      "findings_ok": false,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "The motion of an object being pushed appears stochastic and possibly multi-modal due to imperfections in contact surfaces, non-uniform coefficient of friction, stick/slip transitions, and micro surface interactions.",
+            "note": "Field cites no source. The multimodal repeat-push claim is consistent with the ajay page (Fig. 1 caption above; Sec. V collects 'the ground truth distribution of the position of the object (rect1) after being pushed' from repeated pushes), but ajay says 'possibly multi-modal', and this field does not cite it. 'Push dataset license is unstated' is a factual claim with no source; the ajay page attributes the dataset to Yu et al. [5] and mentions no license, but [5] was not fetched. Cost-estimate and missed-related-work lines are self-descriptions."
+          },
+          {
+            "ref": "src:ajay",
+            "status": "PARTIAL",
+            "page_quote": "Given that the residual model is data-driven, it can predict outcomes that are physically impossible, because there is no mechanism to enforce basic physics principles (e.g., the conservation of energy) at the output level.",
+            "note": "Quote appears verbatim (Sec. VI drawbacks). Page is 'Augmenting Physical Simulators with Stochastic Neural Networks: Case Study of Planar Pushing and Bouncing' (Ajay et al., arXiv 1808.03246v1). The page does carry the baseline numbers this source is cited for (Table I, rect1 on ABS, test pos mm: Physics 6.91, Neural 2.81, Hybrid 2.04), but the recorded quote does not support them; it is about a limitation of residual models. Replace the quote with the Table I sentence or 'Our model outperforms both purely analytical and purely learned simulators consistently on real, standard benchmarks.'"
+          }
+        ]
+      }
+    },
+    {
+      "key": "R5:interp:I1",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Can a cheap activation probe on a diffusion policy rank robot demonstrations as well as gradient-based CUPID influence, at far lower scoring cost?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "A difference-of-means probe on policy activations (ActProbe) may match gradient influence at about a tenth of the cost, as in language models [goodfire_probe].",
+          "sources": [
+            {
+              "id": "goodfire_probe",
+              "url": "https://www.goodfire.com/research/probe-based-data-attribution",
+              "quote": "about 12 H100-hours, against about 128 for a gradient-based method (LESS)"
+            }
+          ]
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "ActProbe within 3 points of CUPID, at least 5 above Random; StateProbe, Demo-SCORE at least 3 lower; cost at most 1/10 TRAK's.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "ActProbe about equals Demo-SCORE and StateProbe (gain comes from rollout labels), or about equals Random while CUPID beats Random (gradients carry more information).",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "On RoboMimic Square, score demonstrations by an activation probe, CUPID gradient influence, Demo-SCORE and random, filter 25/50/75%, retrain with 3 seeds x 500 rollouts, and compare success and scoring cost; then check detection on real Franka quality labels.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "Goodfire's probe-based data attribution on language models: 150-vector mean direction, about 12 H100-hours vs about 128 for LESS, worse at small interventions [goodfire_probe].",
+          "sources": [
+            {
+              "id": "goodfire_probe",
+              "url": "https://www.goodfire.com/research/probe-based-data-attribution",
+              "quote": "about 12 H100-hours, against about 128 for a gradient-based method (LESS)"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether an activation probe on a robot diffusion policy matches CUPID's gradient influence in closed-loop retraining, beyond Demo-SCORE-style state classifiers.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Official Diffusion Policy Square MH low-dim checkpoint on 500 fresh initial states needs at least 0.75 success; paper: 0.97 best, 0.82 last-10 average [dp_paper].",
+          "sources": [
+            {
+              "id": "dp_paper",
+              "url": "https://arxiv.org/html/2303.04137v5",
+              "quote": "0.97 at the best checkpoint and 0.82 averaged over the last 10"
+            }
+          ],
+          "value": 0.82
+        },
+        {
+          "ref": "card:limits",
+          "text": "Simulation-only closed loop; one primary task (Square MH), 3 seeds. Web search ran out after two searches; recent robot attribution papers may be missed. Throughput numbers unpublished, assumed until pilot.",
+          "sources": []
+        },
+        {
+          "ref": "src:goodfire_probe",
+          "url": "https://www.goodfire.com/research/probe-based-data-attribution",
+          "quote": "about 12 H100-hours, against about 128 for a gradient-based method (LESS)",
+          "supports": "Cost-ratio motivation and the 1/10 threshold."
+        },
+        {
+          "ref": "src:dp_paper",
+          "url": "https://arxiv.org/html/2303.04137v5",
+          "quote": "0.97 at the best checkpoint and 0.82 averaged over the last 10",
+          "supports": "G0 stack-check reference."
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; plan statement)",
+            "note": "Research question framing what the plan will measure; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "Once built, the probe runs at one tenth the cost of the alternatives. It takes roughly 12 H100-hours (~$30 at $2.50/H100-hour) on the full training set, compared to 128 H100-hours (~$320) for the gradient-based method and $500 in API costs for the LLM judge (GPT-5-mini).",
+            "note": "The LM precedent is on the page: ~12 vs 128 H100-hours, 'one tenth the cost', and the gradient-based method is LESS ('Gradient-based method. We adapt LESS [4] ..., a gradient-based influence approximation method, to DPO'). Probe is built from mean-pooled activation differences (DPO-response minus SFT-response) averaged over 150 prompts, consistent with 'difference-of-means'. Caveat: the 1/10 ratio is 'once the probe is trained' (excludes probe construction cost). The recorded quote is a paraphrase, not verbatim on the page."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; plan statement)",
+            "note": "Success thresholds the plan will measure; no factual claim requiring a source. The 1/10 cost threshold echoes the Goodfire 'one tenth the cost' figure, which is on that page."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; plan statement)",
+            "note": "Predicted failure outcomes; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; plan statement)",
+            "note": "Describes what the plan will build and measure; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "We compute the behavior difference vector for each of the 150 prompts and average them into a single probe vector. ... It takes roughly 12 H100-hours (~$30 at $2.50/H100-hour) on the full training set, compared to 128 H100-hours (~$320) for the gradient-based method ... For the smallest intervention size the LLM judge and gradient-based method are ahead (plot below).",
+            "note": "All three facts are on the page: 150 prompts averaged into one probe vector; ~12 vs 128 H100-hours with LESS identified as the gradient-based method; the probe trails the gradient method at the smallest intervention size (page says 'smallest intervention size', singular). The recorded quote is a paraphrase, not verbatim."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited; plan statement)",
+            "note": "The question itself is what the plan will measure and needs no source, but the implicit novelty claim (that no prior work has compared an activation probe to CUPID on a robot diffusion policy, and that Demo-SCORE is a state classifier) is a factual claim about the literature with no source; the limits field itself admits the literature search was cut short."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "DiffusionPolicy-C 1.00/0.98 1.00/0.97 1.00/0.96 1.00/0.96 1.00/0.93 0.97/0.82 ... Table 1: Behavior Cloning Benchmark (State Policy) We present success rates with different checkpoint selection methods in the format of (max performance) / (average of last 10 checkpoints), with each averaged across 3 training seeds and 50 different environment initial conditions (150 in total).",
+            "page_value": 0.82,
+            "note": "Table 1 (State Policy = low-dim) Square mh cell for DiffusionPolicy-C is 0.97/0.82, format (max performance)/(average of last 10 checkpoints), matching 0.97 best and 0.82 last-10 average. Note the figure is for the CNN variant; DiffusionPolicy-T is 0.95/0.81. Paper evaluated 3 seeds x 50 initial conditions (footnote: only 22 for robomimic due to a bug), not 500. The '500 fresh initial states' and '0.75' threshold are plan choices, not page claims. The recorded quote is a paraphrase, not verbatim."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; plan statement)",
+            "note": "Self-reported scope and limitations of the plan; no external factual claim requiring a source."
+          },
+          {
+            "ref": "src:goodfire_probe",
+            "status": "PARTIAL",
+            "page_quote": "It takes roughly 12 H100-hours (~$30 at $2.50/H100-hour) on the full training set, compared to 128 H100-hours (~$320) for the gradient-based method and $500 in API costs for the LLM judge (GPT-5-mini).",
+            "note": "The recorded quote does not appear verbatim. The page sentence gives 'roughly 12 H100-hours' vs '128 H100-hours ... for the gradient-based method' without naming LESS in that sentence; LESS is identified as the gradient-based method in an earlier paragraph ('Gradient-based method. We adapt LESS [4] ..., a gradient-based influence approximation method, to DPO'). The substance (cost ratio, 'one tenth the cost') supports the stated use; the quote should be replaced with the verbatim sentence. Caveat: 12 H100-hours is the scoring cost 'once built', excluding probe construction."
+          },
+          {
+            "ref": "src:dp_paper",
+            "status": "PARTIAL",
+            "page_quote": "We present success rates with different checkpoint selection methods in the format of (max performance) / (average of last 10 checkpoints), with each averaged across 3 training seeds and 50 different environment initial conditions (150 in total).",
+            "note": "The recorded quote does not appear verbatim; it is a reading of Table 1 (State Policy), where the DiffusionPolicy-C Square mh cell is '0.97 / 0.82' and the caption defines the format as (max performance)/(average of last 10 checkpoints). The numbers are correct and support the G0 reference; the quote should cite the table cell and caption rather than a constructed sentence."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:left_open",
+            "status": "PARTIAL",
+            "page_quote": "(no source cited; plan statement)",
+            "note": "The question itself is what the plan will measure and needs no source, but the implicit novelty claim (that no prior work has compared an activation probe to CUPID on a robot diffusion policy, and that Demo-SCORE is a state classifier) is a factual claim about the literature with no source; the limits field itself admits the literature search was cut short."
+          },
+          {
+            "ref": "src:goodfire_probe",
+            "status": "PARTIAL",
+            "page_quote": "It takes roughly 12 H100-hours (~$30 at $2.50/H100-hour) on the full training set, compared to 128 H100-hours (~$320) for the gradient-based method and $500 in API costs for the LLM judge (GPT-5-mini).",
+            "note": "The recorded quote does not appear verbatim. The page sentence gives 'roughly 12 H100-hours' vs '128 H100-hours ... for the gradient-based method' without naming LESS in that sentence; LESS is identified as the gradient-based method in an earlier paragraph ('Gradient-based method. We adapt LESS [4] ..., a gradient-based influence approximation method, to DPO'). The substance (cost ratio, 'one tenth the cost') supports the stated use; the quote should be replaced with the verbatim sentence. Caveat: 12 H100-hours is the scoring cost 'once built', excluding probe construction."
+          },
+          {
+            "ref": "src:dp_paper",
+            "status": "PARTIAL",
+            "page_quote": "We present success rates with different checkpoint selection methods in the format of (max performance) / (average of last 10 checkpoints), with each averaged across 3 training seeds and 50 different environment initial conditions (150 in total).",
+            "note": "The recorded quote does not appear verbatim; it is a reading of Table 1 (State Policy), where the DiffusionPolicy-C Square mh cell is '0.97 / 0.82' and the caption defines the format as (max performance)/(average of last 10 checkpoints). The numbers are correct and support the G0 reference; the quote should cite the table cell and caption rather than a constructed sentence."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R5:interp:I3",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:left_open",
+            "reason": "Outcomes bear on the root question only through a friction stand-in; cloth is untested, and the choice depends on a step this test does not check."
+          },
+          {
+            "criterion": "lever",
+            "value": 1,
+            "ref": "card:if_lever",
+            "reason": "Card says it is not a compute-lever test; the compute axis has a single level (1080) and so spans no range, and structure is varied."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Planted synthetic terms, force-sensor readings and independent friction measurements serve as truth, and Gate 0 reproduces published 6.91/2.81/2.04 mm within 25%."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:left_open",
+            "reason": "Cranmer was on dark matter and Ajay used a neural residual; symbolic distillation on real friction is untested, and the plan states the gap."
+          },
+          {
+            "criterion": "internals",
+            "value": 3,
+            "ref": "plan:predictions.decision_rule",
+            "reason": "Compares to neural hybrid B3 on the same splits, but the margin is only 'no worse than', and no outputs-only symbolic baseline margin is given."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "No sequential dependency is removed; runs are independent sweeps."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "card:method",
+            "reason": "restructuring.method is none, so this criterion does not apply."
+          }
+        ],
+        "decides_by": "phase0",
+        "decides_by_reason": "Phase 0 Gate 1 failure stops the test (not testable), but Gate 4 needs Phase 1; Phase 0 alone cannot apply the decision rule."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R5:interp:I1",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Informs curation choice, but simulation-only, one rigid task, and the fleet is still needed; it doesn't touch the root deformable or sim-to-real question."
+          },
+          {
+            "criterion": "lever",
+            "value": 1,
+            "ref": "plan:compute_axis",
+            "reason": "Axis is percent of data filtered, spans 3x, and is a data budget, not compute; so conditions b and c fail."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Simulator success flags over 500 rollouts are exact, and G0 first reproduces the published 0.82 with a 0.75 tolerance."
+          },
+          {
+            "criterion": "open",
+            "value": 5,
+            "ref": "card:left_open",
+            "reason": "Closest prior is on language models; the plan states the gap of robot diffusion policy closed-loop retraining versus CUPID."
+          },
+          {
+            "criterion": "internals",
+            "value": 5,
+            "ref": "card:if_lever",
+            "reason": "Same items compared with Demo-SCORE, a strong outputs-only baseline, and Random, with numeric margins (3 and 5 points) in decision_rule."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "plan:restructuring.method",
+            "reason": "Method is none; independent runs are packed across GPUs, and no sequential dependency is removed."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so this criterion does not apply."
+          }
+        ],
+        "decides_by": "stage_a",
+        "decides_by_reason": "The decision rule needs the Square 50% retrain results, first produced in stage_a; pilot and setup only measure throughput and reproduce the published number."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R5:interp:top: dramaturg: degenerate: card:question; degenerate: card:if_lever; degenerate: card:test_summary; degenerate: card:left_open",
+    "R5:interp:top: dramaturg (resample): degenerate: card:question; degenerate: card:if_lever; degenerate: card:test_summary; degenerate: card:left_open"
+  ]
+}

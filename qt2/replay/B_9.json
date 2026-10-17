@@ -1,0 +1,439 @@
+{
+  "phase": "B",
+  "slice": 9,
+  "dramaturg": [
+    {
+      "key": "R5:physical:W1",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "On one rented GPU node, does the cost of direct simulation grow as Reynolds number to the sixth power, and does finer resolution remove the error a turbulence model leaves?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Compute buys fidelity for small-scale statistics that closures discard, while cheap closures stay cheaper for large-scale quantities at modest Reynolds number.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Fully resolved simulation matches the published 1024^3 statistics within tolerance. Unmodeled simulation error in velocity-gradient statistics falls as grid size N grows, while large-eddy simulation keeps an error floor.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Smagorinsky LES matches gradient statistics at equal cost, or resolved DNS misses the published statistics, so extra resolution does not remove closure error.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Build a GPU spectral turbulence solver, reproduce the published 1024^3 Johns Hopkins statistics, then measure cost per turnover versus Reynolds number and compare no-model DNS against Smagorinsky LES at fixed viscosity [jhtdb_readme].",
+          "sources": [
+            {
+              "id": "jhtdb_readme",
+              "url": "https://turbulence.pha.jhu.edu/docs/README-isotropic.pdf",
+              "quote": "about five large-eddy turnover times"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "JHTDB published 1024^3, 4096^3 and 8192^3 forced isotropic DNS statistics; largest reproduction here is 2048^3 versus their 8192^3 [jhtdb_readme]. No cost-versus-closure measurement on rented GPUs is cited.",
+          "sources": [
+            {
+              "id": "jhtdb_readme",
+              "url": "https://turbulence.pha.jhu.edu/docs/README-isotropic.pdf",
+              "quote": "about five large-eddy turnover times"
+            }
+          ],
+          "value": 8192
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Dollar cost per turnover on rented GPUs and whether Smagorinsky LES keeps an error floor in gradient statistics against the same-viscosity DNS.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Reproduce the published 1024^3 forced isotropic run: Taylor-scale Reynolds number 418, averaged over at least 10 turnover times [jhtdb_readme]",
+          "sources": [
+            {
+              "id": "jhtdb_readme",
+              "url": "https://turbulence.pha.jhu.edu/docs/README-isotropic.pdf",
+              "quote": "about five large-eddy turnover times"
+            }
+          ],
+          "value": 418
+        },
+        {
+          "ref": "card:limits",
+          "text": "Reaches Taylor-scale Reynolds number about 420, perhaps 660 briefly; cannot move the research frontier. Cost figures are model estimates until the benchmark phase measures them. The reference describes the forcing in one sentence, so box size and large-eddy turnover time may differ by a few percent.",
+          "sources": []
+        },
+        {
+          "ref": "src:jhtdb_readme",
+          "url": "https://turbulence.pha.jhu.edu/docs/README-isotropic.pdf",
+          "quote": "about five large-eddy turnover times",
+          "supports": "JHTDB 1024^3 parameters, forcing, truncation, time scheme and averaged statistics"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Research question only (cost scaling with Reynolds number; whether resolution removes closure error). It asserts no fact and cites nothing; a question the plan will test needs no source."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Pure prediction (what the plan expects to find). No factual claim requiring a source; no sources cited, none needed."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "The data is from a direct numerical simulation of forced isotropic turbulence on a 1024^3 periodic grid, using a pseudo-spectral parallel code.",
+            "note": "Predicted outcome if the hypothesis holds; needs no source. Its one factual reference, 'published 1024^3 statistics', is consistent with the jhtdb_readme page fetched for the other items (1024^3 grid, time-averaged statistics table)."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Predicted negative outcome; no factual claim requiring a source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "The duration of the stored data is about five large-eddy turnover times.",
+            "note": "Recorded quote appears verbatim on the page. The factual claim that Johns Hopkins published 1024^3 statistics is stated directly: 'direct numerical simulation of forced isotropic turbulence on a 1024^3 periodic grid' followed by a table of time-averaged statistics. The rest (build solver, measure cost per turnover, compare DNS vs Smagorinsky LES) is plan."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "The data is from a direct numerical simulation of forced isotropic turbulence on a 1024^3 periodic grid, using a pseudo-spectral parallel code.",
+            "note": "Quote appears verbatim, but the page only supports the 1024^3 claim. It never mentions a 4096^3 or 8192^3 dataset; the numbers 4096 and 8192 do not appear anywhere on the page, so the carried value 8192 and the 'versus their 8192^3' comparison are unsupported by the cited source (not contradicted; the page is simply silent). 'No cost-versus-closure measurement on rented GPUs is cited' is a statement about the plan's own citations and needs no source."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "",
+            "note": "Describes what the plan will measure (dollar cost per turnover; LES error floor). No factual claim requiring a source."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "CONTRADICTED",
+            "page_quote": "Statistical characteristics of turbulence, time averaged over t=0 and 10.056: ... Taylor-scale Reynolds #, Rλ = u'λ/ν : Rλ = 418 ... Large eddy turnover time: T_L = L/u' : T_L = 1.99",
+            "page_value": 418,
+            "note": "Rλ = 418 and the 1024^3 grid are confirmed on the page. But 'averaged over at least 10 turnover times' is contradicted: the published statistics are time-averaged over t = 0 to 10.056 simulation time units with T_L = 1.99, i.e. about 5 large-eddy turnover times, and the item's own recorded quote says 'The duration of the stored data is about five large-eddy turnover times.' The '10' appears to be the 10.056 time units mistaken for turnover times. If the plan instead means its own reproduction will average over >= 10 turnover times, that is a plan choice, but as written with the citation it misdescribes the published run."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "Energy is injected by keeping constant the total energy in modes such that their wave-number magnitude is less or equal to 2.",
+            "note": "No source cited. 'About 420' matches the page's Rλ = 418; 660 is a plan projection; cost-figure caveat is plan. The factual claim 'the reference describes the forcing in one sentence' is uncited, though the fetched jhtdb_readme page does confirm it (forcing is the single quoted sentence). Caveat: the page explicitly states box size (2π cube, 'range of x1, x2 and x3 is [0,2π]') and large-eddy turnover time (T_L = 1.99), so those are pinned for the published run; any few-percent difference would be in the plan's own reproduction, which is a prediction."
+          },
+          {
+            "ref": "src:jhtdb_readme",
+            "status": "SUPPORTED",
+            "page_quote": "The duration of the stored data is about five large-eddy turnover times.",
+            "note": "Quote appears verbatim. Page states everything the entry claims to support: 1024^3 grid, viscosity 0.000185, dt 0.0002, 2π domain (parameters); constant energy in modes |k| <= 2 (forcing); phase-shift de-aliasing with 2√2/3 truncation; integrating factor for viscous term plus second-order Adams-Bashforth (time scheme); and a table of time-averaged statistics (Etot 0.705, ε 0.103, u' 0.686, λ 0.113, Rλ 418, η 0.00280, L 1.364, T_L 1.99). Fetched via WebFetch (PDF); text extracted with pdftotext from the saved download."
+          }
+        ]
+      },
+      "findings_ok": false,
+      "decision": {
+        "result": "REJECT",
+        "blocking": [
+          {
+            "ref": "card:anchor",
+            "status": "CONTRADICTED",
+            "page_quote": "Statistical characteristics of turbulence, time averaged over t=0 and 10.056: ... Taylor-scale Reynolds #, Rλ = u'λ/ν : Rλ = 418 ... Large eddy turnover time: T_L = L/u' : T_L = 1.99",
+            "page_value": 418,
+            "note": "Rλ = 418 and the 1024^3 grid are confirmed on the page. But 'averaged over at least 10 turnover times' is contradicted: the published statistics are time-averaged over t = 0 to 10.056 simulation time units with T_L = 1.99, i.e. about 5 large-eddy turnover times, and the item's own recorded quote says 'The duration of the stored data is about five large-eddy turnover times.' The '10' appears to be the 10.056 time units mistaken for turnover times. If the plan instead means its own reproduction will average over >= 10 turnover times, that is a plan choice, but as written with the citation it misdescribes the published run."
+          }
+        ],
+        "listed": [
+          {
+            "ref": "card:closest_prior",
+            "status": "PARTIAL",
+            "page_quote": "The data is from a direct numerical simulation of forced isotropic turbulence on a 1024^3 periodic grid, using a pseudo-spectral parallel code.",
+            "note": "Quote appears verbatim, but the page only supports the 1024^3 claim. It never mentions a 4096^3 or 8192^3 dataset; the numbers 4096 and 8192 do not appear anywhere on the page, so the carried value 8192 and the 'versus their 8192^3' comparison are unsupported by the cited source (not contradicted; the page is simply silent). 'No cost-versus-closure measurement on rented GPUs is cited' is a statement about the plan's own citations and needs no source."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "Energy is injected by keeping constant the total energy in modes such that their wave-number magnitude is less or equal to 2.",
+            "note": "No source cited. 'About 420' matches the page's Rλ = 418; 660 is a plan projection; cost-figure caveat is plan. The factual claim 'the reference describes the forcing in one sentence' is uncited, though the fetched jhtdb_readme page does confirm it (forcing is the single quoted sentence). Caveat: the page explicitly states box size (2π cube, 'range of x1, x2 and x3 is [0,2π]') and large-eddy turnover time (T_L = 1.99), so those are pinned for the published run; any few-percent difference would be in the plan's own reproduction, which is a prediction."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R5:physical:W5",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "At 1.5 degrees on a $1,000 budget, does GraphCast-style forecast skill improve more from 4 times the training compute or from 4 times the years of reanalysis data?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Quadrupling compute at 40 years improves day-5 Z500 RMSE more than quadrupling data from 10 to 40 years, because the 40-year record is near saturation [arXiv 2212.12794].",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "The day-5 Z500 RMSE gain from 4x compute at 40 years exceeds the gain from 4x data at full compute by more than twice the seed noise.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "D exceeds C by more than twice the seed noise (data-bound), or neither exceeds the other by that margin (inconclusive).",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Train ten GraphCast-style models at 1.5 degrees on one 8x H100 machine, varying years of ERA5 data (5 to 40) and compute (1/4 to 1x). Compare day-5 Z500 error gains from compute and data against seed noise and WB2 baselines.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "GraphCast's authors found adding 1959-1978 data had little benefit, and ArchesWeather found older ERA5 harder to fit; neither varied years of data against compute under one setup [arXiv 2212.12794, 2405.14527].",
+          "sources": [
+            {
+              "id": "graphcast",
+              "url": "https://arxiv.org/pdf/2212.12794",
+              "quote": "roughly four weeks on 32 Cloud TPU v4 devices"
+            }
+          ]
+        },
+        {
+          "ref": "card:left_open",
+          "text": "A matched comparison of years of reanalysis versus training compute, same architecture and evaluation, at 1.5 degrees. The file found none, but its web search was exhausted.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Our evaluation code run on WB2's stored 2020 forecasts reproduces published scores: GraphCast T2M day 5 = 1.252, HRES T2M = 1.334, HRES Z500 = 304.35.",
+          "sources": [
+            {
+              "id": "wb2_results",
+              "url": "https://storage.googleapis.com/weatherbench2/benchmark_results/graphcast_vs_era5_240x121_2020.nc",
+              "quote": "WB2 published result file (netCDF), global region"
+            }
+          ],
+          "value": "GraphCast T2M 1.252; HRES T2M 1.334; HRES Z500 304.35"
+        },
+        {
+          "ref": "card:limits",
+          "text": "Single resolution (1.5 degrees) and one architecture family. Fixed small budget; day-10 RMSE differences may reflect blur, not skill. Only two seeds, at one configuration; a 2025-2026 reproduction may exist unfound.",
+          "sources": []
+        },
+        {
+          "ref": "src:wb2_results",
+          "url": "https://storage.googleapis.com/weatherbench2/benchmark_results/graphcast_vs_era5_240x121_2020.nc",
+          "quote": "WB2 published result file (netCDF), global region",
+          "supports": "Baseline scores and the G0 anchor values"
+        },
+        {
+          "ref": "src:graphcast",
+          "url": "https://arxiv.org/pdf/2212.12794",
+          "quote": "roughly four weeks on 32 Cloud TPU v4 devices",
+          "supports": "GraphCast training cost, data-versus-recency findings, recipe, test discipline"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; item states what the plan will measure)",
+            "note": "The question only names what the plan will measure (compute vs years of ERA5 at 1.5 degrees on a fixed budget) and carries no external factual claim. The framing is consistent with the GraphCast page: 'During model development, we used 39 years (1979-2017) of historical data from ECMWF's ERA5 [10] reanalysis archive.'"
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "In preliminary work, we also explored training on earlier data from 1959–1978, but found it had little benefit on performance, so in the final phases of our work we excluded 1959–1978 for simplicity.",
+            "note": "The prediction itself needs no source. The rationale 'the 40-year record is near saturation' is a factual claim cited in-text to arXiv 2212.12794 (sources array empty). The GraphCast page supports diminishing return from adding 20 older years (at 0.25 degrees, full compute) but never says the record is 'near saturation', and it also reports that adding more recent years improves skill: 'training it up to before 2021 further improves its skill scores'. Saturation is the producer's extrapolation, not a page statement."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; decision rule for the plan's own measurements)",
+            "note": "A decision rule over the plan's own measured quantities (day-5 Z500 RMSE gains vs seed noise); no factual claim requiring a source."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; decision rule for the plan's own measurements)",
+            "note": "Complementary decision rule (data-bound or inconclusive); no factual claim requiring a source."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; describes what the plan will build and measure)",
+            "note": "Describes the planned runs (ten models, 1.5 degrees, 8x H100, 5-40 years ERA5, 1/4x-1x compute, day-5 Z500 vs seed noise and WB2 baselines). No external factual claim. The WB2 file fetched is at 240x121 (1.5 degrees) with 'global' region and a 120 h lead time, so the comparison target exists."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "In preliminary work, we also explored training on earlier data from 1959–1978, but found it had little benefit on performance, so in the final phases of our work we excluded 1959–1978 for simplicity.",
+            "note": "GraphCast claim verified verbatim (Supplements 4.1). ArchesWeather (arXiv 2405.14527, named in the text though absent from the sources array; fetched at arxiv.org/html/2405.14527) says: 'we find that forecasting models have a larger error in the first half of the training period 1979-2018, which we attribute to ERA5 being less constrained in the past due to a lack of observation data' - a fair basis for 'older ERA5 harder to fit'. Neither paper varies years of data against compute: GraphCast varies only the end year ('training data that always began in 1979, but ended in 2017, 2018, 2019, and 2020'); ArchesWeather trains on 1979-2018 and fine-tunes on 2007-2018."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "we trained four variants of GraphCast, with training data that always began in 1979, but ended in 2017, 2018, 2019, and 2020, respectively",
+            "note": "The stated gap (matched years-vs-compute comparison, same architecture/evaluation, 1.5 degrees) is consistent with both fetched papers: GraphCast varies only recency at 0.25 degrees; ArchesWeather (1.5 degrees) trains on a fixed 1979-2018 window. The remark that the producer's web search was exhausted is a process note, not checkable against any page."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "rmse.2m_temperature[region='global', lead_time=120 h] = 1.251719 (graphcast_vs_era5_240x121_2020.nc)",
+            "page_value": 1.251719,
+            "note": "The cited netCDF (HTTP 200, 1,433,484 bytes, NetCDF 64-bit offset) gives GraphCast global day-5 2m_temperature RMSE = 1.251719, matching 1.252. It also gives GraphCast global day-5 Z500 RMSE = 274.25 (not claimed). The file contains only GraphCast-vs-ERA5 metrics (rmse/mse/bias/acc/prediction_activity/vector_rmse/seeps over 34 regions, 40 lead times, levels 500/700/850); the HRES T2M = 1.334 and HRES Z500 = 304.35 values are not in it, so two of the three anchor numbers are unverifiable from the cited source. The claim that 'our evaluation code reproduces' these is about the producer's own run and cannot be checked against a page."
+          },
+          {
+            "ref": "card:limits",
+            "status": "SUPPORTED",
+            "page_quote": "encourages it to express its uncertainty by predicting spatially smoothed outputs, leading to blurrier forecasts at longer lead times",
+            "note": "Mostly self-description of the plan's scope (one resolution, one architecture family, small budget, two seeds). The one hedged external statement - day-10 RMSE differences 'may reflect blur, not skill' - is corroborated by the GraphCast page (fetched for this plan), which reports blurrier forecasts at longer lead times and devotes Supplements 7.4 to 'Optimal blurring'. The possible unfound 2025-2026 reproduction is a caveat, not a claim."
+          },
+          {
+            "ref": "src:wb2_results",
+            "status": "SUPPORTED",
+            "page_quote": "region = ['global', 'tropics', 'northern-hemisphere', ...]; lead_time (hours) = [6, 12, ..., 120, ..., 240]; level = [500, 700, 850]; variables rmse.2m_temperature, rmse.geopotential, ...",
+            "note": "URL reachable (HTTP 200). The file is a WB2 benchmark_results netCDF (classic 64-bit offset) for GraphCast vs ERA5 at 240x121 for 2020, with a 'global' region (index 0), 40 lead times to 240 h and levels 500/700/850. It supports the G0 anchor: rmse.2m_temperature global 120 h = 1.251719; rmse.geopotential global 120 h 500 hPa = 274.25. It contains no HRES data, so HRES 'baseline scores' must come from a different WB2 file."
+          },
+          {
+            "ref": "src:graphcast",
+            "status": "SUPPORTED",
+            "page_quote": "Training GraphCast took roughly four weeks on 32 Cloud TPU v4 devices using batch parallelism.",
+            "note": "Quote appears verbatim in the main text (Methods) of arXiv 2212.12794; Supplements 4.7 repeats 'training GraphCast took about four weeks on 32 TPU devices.' The page also covers the other things this source is cited for: data recency (Section 7.1.3, four variants ending 2017-2020), the 1959-1978 'little benefit' finding, training recipe (autoregressive-step ramp 1 to 12, bfloat16, gradient checkpointing) and test discipline (causal split, 'Neither the researchers, nor the model training software, were allowed to view data from the test set'). PDF exceeded WebFetch size; downloaded and extracted with pdftotext."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "In preliminary work, we also explored training on earlier data from 1959–1978, but found it had little benefit on performance, so in the final phases of our work we excluded 1959–1978 for simplicity.",
+            "note": "The prediction itself needs no source. The rationale 'the 40-year record is near saturation' is a factual claim cited in-text to arXiv 2212.12794 (sources array empty). The GraphCast page supports diminishing return from adding 20 older years (at 0.25 degrees, full compute) but never says the record is 'near saturation', and it also reports that adding more recent years improves skill: 'training it up to before 2021 further improves its skill scores'. Saturation is the producer's extrapolation, not a page statement."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "PARTIAL",
+            "page_quote": "rmse.2m_temperature[region='global', lead_time=120 h] = 1.251719 (graphcast_vs_era5_240x121_2020.nc)",
+            "page_value": 1.251719,
+            "note": "The cited netCDF (HTTP 200, 1,433,484 bytes, NetCDF 64-bit offset) gives GraphCast global day-5 2m_temperature RMSE = 1.251719, matching 1.252. It also gives GraphCast global day-5 Z500 RMSE = 274.25 (not claimed). The file contains only GraphCast-vs-ERA5 metrics (rmse/mse/bias/acc/prediction_activity/vector_rmse/seeps over 34 regions, 40 lead times, levels 500/700/850); the HRES T2M = 1.334 and HRES Z500 = 304.35 values are not in it, so two of the three anchor numbers are unverifiable from the cited source. The claim that 'our evaluation code reproduces' these is about the producer's own run and cannot be checked against a page."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R5:physical:W1",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 2,
+            "ref": "card:question",
+            "reason": "Turbulence DNS cost and closure error say little about robot manipulation; contact and cloth physics are not tested, so the root choice barely changes."
+          },
+          {
+            "criterion": "lever",
+            "value": 4,
+            "ref": "plan:compute_axis",
+            "reason": "Grid 128 to 2048 is 16x, resolution is bought with compute, and viscosity and forcing are fixed. Noise-versus-effect margin is only partly stated."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Reproduces the published JHTDB 1024^3 Re_lambda 418 within 4%, plus exact Taylor-Green solutions as truth independent of the method."
+          },
+          {
+            "criterion": "open",
+            "value": 3,
+            "ref": "card:closest_prior",
+            "reason": "JHTDB publishes DNS up to 8192^3, so the prior covers more range; the cost-versus-closure gap on rented GPUs is stated."
+          },
+          {
+            "criterion": "reshape",
+            "value": 2,
+            "ref": "card:sequential_part",
+            "reason": "Method is none; multi-GPU slab decomposition only splits state within each step, leaving time stepping in order."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so baseline does not apply."
+          }
+        ],
+        "decides_by": "p5",
+        "decides_by_reason": "The decision_rule needs the reproduction (p3) and the no-model DNS versus LES error comparison across N, which is first complete at p5. p4 alone lacks LES."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R5:physical:W5",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 2,
+            "ref": "plan:scope_gap",
+            "reason": "Weather emulator at 1.5 degrees; says nothing direct about robotics contact data. Outcomes bear on the robotics choice only by analogy."
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "card:test_summary",
+            "reason": "Compute spans 4x, not 10x; data is also varied, so compute is not the only change. Noise rule and held_fixed are fine."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Scored against ERA5 truth, and the anchor reproduces published WB2 scores within a stated 0.5% tolerance."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:left_open",
+            "reason": "Closest prior varied data only, not against compute; gap is stated, though a search may have missed a reproduction."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "plan:restructuring.method",
+            "reason": "Method is none; one job per GPU runs independent copies side by side, with no dependency removed."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "plan:restructuring.method",
+            "reason": "restructuring.method is none, so baseline timing does not apply."
+          }
+        ],
+        "decides_by": "main",
+        "decides_by_reason": "C, D and N all come from the main grid's runs. Staging and pilot only check gates and throughput, and scoring is CPU analysis afterward."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R5:physical:top: dramaturg: degenerate: card:question; degenerate: card:hypothesis; degenerate: card:if_not; degenerate: card:left_open",
+    "R5:physical:top: dramaturg (resample): degenerate: card:question; degenerate: card:hypothesis; degenerate: card:if_not; degenerate: card:left_open"
+  ]
+}

@@ -1,0 +1,503 @@
+{
+  "phase": "B",
+  "slice": 3,
+  "dramaturg": [
+    {
+      "key": "R2:physical:W3",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "Does a validated GPU spectral turbulence simulation on one rented 8-GPU node show cost per large-eddy turnover rising with Reynolds number, as the claimed Re³ law predicts?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "Cost per large-eddy turnover will scale roughly as N⁴, i.e. Rλ⁶, so 100× compute buys only about 2.15× in Rλ [wiki_dns].",
+          "sources": [
+            {
+              "id": "wiki_dns",
+              "url": "https://en.wikipedia.org/wiki/Direct_numerical_simulation",
+              "quote": "the number of operations grows as Re³"
+            }
+          ]
+        },
+        {
+          "ref": "card:sequential_part",
+          "text": "Time stepping: about 50,280 sequential steps at 1024³, each depending on the previous one.",
+          "sources": []
+        },
+        {
+          "ref": "card:method",
+          "text": "Each 3D FFT is split across 8 GPUs in slabs, with an NCCL all-to-all transpose, so the transforms within one time step run in parallel.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "Fitted exponents near a≈2/3 (Rλ∝N^a), b≈4 (dollars per T_L∝N^b), c≈6 (∝Rλ^c): extra compute buys little Reynolds number.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "Fitted exponents differ clearly from 2/3, 4 and 6 with confidence intervals excluding them, e.g. because u′ and ε do not stay fixed across rungs.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Build a GPU spectral turbulence solver, check it against the public JHTDB 1024³ run (Rλ 418), then run a 128³ to 1024³ ladder on rented H100 nodes to measure how dollars per turnover grow with Rλ, comparing with the Re³ law [wiki_dns].",
+          "sources": [
+            {
+              "id": "wiki_dns",
+              "url": "https://en.wikipedia.org/wiki/Direct_numerical_simulation",
+              "quote": "the number of operations grows as Re³"
+            }
+          ]
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "JHTDB isotropic1024 is a published 1024³ pseudo-spectral DNS at Rλ 418 with stored fields; Wikipedia states DNS operations grow as Re³. Neither gives measured dollars per turnover on rented GPUs.",
+          "sources": [
+            {
+              "id": "jhtdb_readme",
+              "url": "https://turbulence.pha.jhu.edu/docs/README-isotropic.pdf",
+              "quote": "Rλ = 418"
+            }
+          ],
+          "value": 1024
+        },
+        {
+          "ref": "card:left_open",
+          "text": "A measured dollars-versus-Rλ curve on rented hardware, with fitted exponents and an open validated solver, is not given by the cited sources.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Reproduce JHTDB isotropic1024 time-averaged Rλ of 418 with our 1024³ solver [jhtdb_readme]",
+          "sources": [
+            {
+              "id": "jhtdb_readme",
+              "url": "https://turbulence.pha.jhu.edu/docs/README-isotropic.pdf",
+              "quote": "Rλ = 418"
+            }
+          ],
+          "value": 418
+        },
+        {
+          "ref": "card:limits",
+          "text": "Cost per step is only bandwidth arithmetic until the bake-off measures it. Only one node and one forcing scheme; JHTDB scheme details may leave a mismatch floor. JHTDB cutout access was unconfirmed (HTTP 503).",
+          "sources": []
+        },
+        {
+          "ref": "src:wiki_dns",
+          "url": "https://en.wikipedia.org/wiki/Direct_numerical_simulation",
+          "quote": "the number of operations grows as Re³",
+          "supports": "W3's cost scaling claim, N³ ≥ Re^(9/4), L/η ∼ Re^(3/4), Courant condition"
+        },
+        {
+          "ref": "src:jhtdb_readme",
+          "url": "https://turbulence.pha.jhu.edu/docs/README-isotropic.pdf",
+          "quote": "Rλ = 418",
+          "supports": "Baseline scheme, parameters (ν=0.000185, Δt=0.0002) and time-averaged statistics"
+        },
+        {
+          "ref": "num:fs_usd",
+          "name": "Filesystem cost, ~500 GiB for 2 weeks at example $0.20/GiB-month",
+          "value": 47,
+          "unit": "USD",
+          "basis": "PROXY",
+          "quote": "$0.20",
+          "page_setting": "example rate; real rate shown at filesystem creation",
+          "differs_in": [
+            "example rate rather than actual rate"
+          ],
+          "url": "https://docs.lambda.ai/public-cloud/billing/"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "and in conclusion, the number of operations grows as Re³",
+            "note": "The question states what the plan will measure (cost per turnover vs Reynolds number on one rented 8-GPU node); the only factual element, that an Re³ operation-count law is claimed, appears verbatim on the Wikipedia DNS page fetched for the other items. The item itself cites no source."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "and in conclusion, the number of operations grows as Re³",
+            "note": "Quote present. Page also gives N³ ≥ Re^(9/4) and time steps ∝ L/(Cη), so N⁴ (Re³ with N ∝ Re^(3/4)) follows from the page. But the page defines Re = u′L/ν (integral-scale) and never mentions the Taylor-microscale Rλ or the Rλ ∝ Re^(1/2) relation needed for the 'i.e. Rλ⁶' step and the 100^(1/6) ≈ 2.15 figure; those rest on an unstated conversion. The prediction itself needs no source."
+          },
+          {
+            "ref": "card:sequential_part",
+            "status": "PARTIAL",
+            "page_quote": "Simulation time-step Δt = 0.0002 … Time stored: between t=0 and 10.056 (5028 time samples … every 10 DNS time-steps is stored)",
+            "note": "No source cited on the item. The figure 50,280 is not stated on any page but is exactly what the JHTDB README implies (5028 stored frames × every 10 DNS steps = 50,280; 10.056 / 0.0002 = 50,280). The 1024³ grid is stated on the README ('Grid: 1024³'). Sequential dependence of steps is a description of the plan's computation, not a sourced claim."
+          },
+          {
+            "ref": "card:method",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; describes what the plan will build)",
+            "note": "Slab-decomposed 3D FFT across 8 GPUs with an NCCL all-to-all transpose is a design choice for the solver the plan will build; no factual claim requiring a source. Nothing on the named pages contradicts it."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "the previous relations imply that a three-dimensional DNS requires a number of mesh points N³ satisfying N³ ≥ Re^(9/4)",
+            "note": "A prediction of fitted exponents; needs no source. For reference, b≈4 follows from the Wikipedia page (Re³ with N ∝ Re^(3/4)); a≈2/3 and c≈6 additionally assume Rλ ∝ Re^(1/2), which the page does not state but is standard."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "(no source cited; states the falsifying outcome)",
+            "note": "Describes the alternative outcome (fitted exponents with confidence intervals excluding 2/3, 4, 6, e.g. because u′ and ε drift across rungs). This is what the plan will test, not a factual claim; no source needed."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "SUPPORTED",
+            "page_quote": "and in conclusion, the number of operations grows as Re³",
+            "note": "Wikipedia quote present. The JHTDB claims (1024³ run, Rλ 418) are not cited in this item but are stated verbatim on the JHTDB README fetched for other items: 'Grid: 1024³' and 'Taylor-scale Reynolds #, Rλ = u′λ/ν : Rλ = 418'. The ladder, rented H100 nodes and dollars-per-turnover measurement describe what the plan will build and measure."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_value": 1024,
+            "page_quote": "The data is from a direct numerical simulation of forced isotropic turbulence on a 1024³ periodic grid, using a pseudo-spectral parallel code.",
+            "note": "README states 1024³ grid, pseudo-spectral code, Rλ = 418 (time averaged over t=0 to 10.056), and that 5028 frames of velocity and pressure are ingested into the database (stored fields). Wikipedia states 'the number of operations grows as Re³'. Neither page mentions dollars, GPUs or measured cost per turnover, so the 'neither gives' claim holds. The dataset name 'isotropic1024' is not literally on the README (title: 'FORCED ISOTROPIC TURBULENCE DATA SET (EXTENDED)')."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "the computational cost of DNS is very high",
+            "note": "Negative claim about the cited sources. Wikipedia mentions only that cost is 'very high' and gives scaling laws, with no dollars, GPUs or fitted exponents; the JHTDB README gives simulation parameters and statistics but no cost, hardware pricing or open solver. Neither page gives a measured dollars-versus-Rλ curve."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_value": 418,
+            "page_quote": "Statistical characteristics of turbulence, time averaged over t=0 and 10.056: … Taylor-scale Reynolds #, Rλ = u′λ/ν : Rλ = 418",
+            "note": "Value matches the README's time-averaged (t=0 to 10.056) Rλ = 418 on the 1024³ grid. Note the README also lists a second averaging window (t=0 to 2.048) with Rλ = 433; the plan's 418 corresponds to the full stored window. Reproduction is what the plan will do."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "Time integration of the viscous term is done analytically using integrating factor. The other terms are integrated using a second-order Adams-Bashforth scheme … Energy is injected by keeping constant the total energy in modes such that their wave-number magnitude is less or equal to 2.",
+            "note": "Most of this is the plan's own caveats (bandwidth-only cost estimate, one node, one forcing scheme) and needs no source. The README does document the scheme (integrating factor, AB2, vorticity form, phase-shift and 2√2/3 dealiasing, forcing on k ≤ 2), so a 'mismatch floor' from scheme details is plausible but not something the page asserts. The 'HTTP 503' cutout-access claim is a statement about the producer's own attempt and cannot be checked from the named pages; it carries no source."
+          },
+          {
+            "ref": "src:wiki_dns",
+            "status": "SUPPORTED",
+            "page_quote": "and in conclusion, the number of operations grows as Re³",
+            "note": "Quote present verbatim. The page also contains the other claimed support: 'N³ ≥ Re^(9/4)', 'L/η ∼ Re^(3/4)', the Courant condition C = u′Δt/h < 1 ('C is here the Courant number'), and 'the number of time-integration steps must be proportional to L/(Cη)'. Re on the page is the integral-scale u′L/ν, not Rλ."
+          },
+          {
+            "ref": "src:jhtdb_readme",
+            "status": "SUPPORTED",
+            "page_quote": "Taylor-scale Reynolds #, Rλ = u′λ/ν : Rλ = 418",
+            "note": "PDF fetched and text extracted. Quote present (rendered 'Rλ =418'). The page also states the baseline scheme (pseudo-spectral, integrating factor, second-order Adams-Bashforth, phase-shift dealiasing, forcing on wavenumbers ≤ 2), the parameters 'Viscosity (ν) = 0.000185' and 'Simulation time-step Δt = 0.0002', and time-averaged statistics (Etot = 0.705, ε = 0.103, u′ = 0.686, λ = 0.113, η = 0.00280, L = 1.364, T_L = 1.99)."
+          },
+          {
+            "ref": "num:fs_usd",
+            "status": "SUPPORTED",
+            "page_quote": "For example, at a rate of $0.20 per GiB per month: … The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.",
+            "note": "Page states the $0.20 per GiB per month figure explicitly as an example rate, matching the item's setting ('example rate; real rate shown at filesystem creation'). It also states 'Filesystems are billed per GiB used per month in one-hour increments' and the worked example '1,000 GiB continuously for a full day (24 hours), you'll be billed $6.67'. The item's 47 USD is not stated on the page but is the derived total: 500 GiB × $0.20 × (14/30) ≈ $46.67, consistent with the page's own example ($6.67/1000 GiB-day × 500 GiB × 14 days ≈ $46.7)."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "and in conclusion, the number of operations grows as Re³",
+            "note": "Quote present. Page also gives N³ ≥ Re^(9/4) and time steps ∝ L/(Cη), so N⁴ (Re³ with N ∝ Re^(3/4)) follows from the page. But the page defines Re = u′L/ν (integral-scale) and never mentions the Taylor-microscale Rλ or the Rλ ∝ Re^(1/2) relation needed for the 'i.e. Rλ⁶' step and the 100^(1/6) ≈ 2.15 figure; those rest on an unstated conversion. The prediction itself needs no source."
+          },
+          {
+            "ref": "card:sequential_part",
+            "status": "PARTIAL",
+            "page_quote": "Simulation time-step Δt = 0.0002 … Time stored: between t=0 and 10.056 (5028 time samples … every 10 DNS time-steps is stored)",
+            "note": "No source cited on the item. The figure 50,280 is not stated on any page but is exactly what the JHTDB README implies (5028 stored frames × every 10 DNS steps = 50,280; 10.056 / 0.0002 = 50,280). The 1024³ grid is stated on the README ('Grid: 1024³'). Sequential dependence of steps is a description of the plan's computation, not a sourced claim."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "Time integration of the viscous term is done analytically using integrating factor. The other terms are integrated using a second-order Adams-Bashforth scheme … Energy is injected by keeping constant the total energy in modes such that their wave-number magnitude is less or equal to 2.",
+            "note": "Most of this is the plan's own caveats (bandwidth-only cost estimate, one node, one forcing scheme) and needs no source. The README does document the scheme (integrating factor, AB2, vorticity form, phase-shift and 2√2/3 dealiasing, forcing on k ≤ 2), so a 'mismatch floor' from scheme details is plausible but not something the page asserts. The 'HTTP 503' cutout-access claim is a statement about the producer's own attempt and cannot be checked from the named pages; it carries no source."
+          }
+        ]
+      }
+    },
+    {
+      "key": "R2:physical:W13",
+      "items": [
+        {
+          "ref": "card:question",
+          "text": "With data held fixed, does more fine-tuning compute raise task success of a small robot vision-language-action model in simulation, or does data limit it?",
+          "sources": []
+        },
+        {
+          "ref": "card:hypothesis",
+          "text": "At fixed data, 15k to 50k steps shifts success under 3 points; more data adds 10 or more points [arXiv 2506.01844].",
+          "sources": []
+        },
+        {
+          "ref": "card:if_lever",
+          "text": "At fixed data, 15k to 50k steps (3.3x compute) raises average success by 3 points or more, so compute still buys success.",
+          "sources": []
+        },
+        {
+          "ref": "card:if_not",
+          "text": "At each data level, 15k to 50k steps moves success under 3 points; at 50k steps, 100% data beats 25% by 10 or more points.",
+          "sources": []
+        },
+        {
+          "ref": "card:test_summary",
+          "text": "Fine-tune SmolVLA on LIBERO in 25 runs, varying steps (5k, 15k, 50k) and data (10 to 100%) independently, plus capacity, camera removal and pretraining arms. Score 27 checkpoints on 2,000 rollouts each against a published 87.3% baseline.",
+          "sources": []
+        },
+        {
+          "ref": "card:closest_prior",
+          "text": "SmolVLA paper reports LIBERO results at 0.24B/0.45B/2.25B sizes and says it can train for far fewer steps without significant loss, but gives no step or data grid [smolvla_paper].",
+          "sources": [
+            {
+              "id": "smolvla_paper",
+              "url": "https://arxiv.org/html/2506.01844",
+              "quote": "can be trained for a much smaller number of steps without sacrificing significant performance levels"
+            }
+          ],
+          "value": 100000
+        },
+        {
+          "ref": "card:left_open",
+          "text": "Whether, at fixed data, more fine-tuning steps help SmolVLA on LIBERO, and how steps trade against data fraction, capacity and a removed camera.",
+          "sources": []
+        },
+        {
+          "ref": "card:anchor",
+          "text": "Harness gate: LeRobot's published pi0.5 LIBERO checkpoint scored by our evaluator on 400 episodes must reach at least 94%; published value 97.5%.",
+          "sources": [
+            {
+              "id": "lerobot_libero",
+              "url": "https://huggingface.co/docs/lerobot/libero",
+              "quote": "may vary by a few percent across evaluation seeds"
+            }
+          ],
+          "value": 97.5
+        },
+        {
+          "ref": "card:limits",
+          "text": "Small simulated benchmark, one model family; may not transfer to larger models or real robots. Training and evaluation speed unmeasured, so cost may rise. 87.3% replication may miss; schedule unpublished.",
+          "sources": []
+        },
+        {
+          "ref": "src:smolvla_paper",
+          "url": "https://arxiv.org/html/2506.01844",
+          "quote": "can be trained for a much smaller number of steps without sacrificing significant performance levels",
+          "supports": "Baseline 87.3% on LIBERO, model sizes, n_action_steps ablation, 30k GPU hours"
+        },
+        {
+          "ref": "src:lerobot_libero",
+          "url": "https://huggingface.co/docs/lerobot/libero",
+          "quote": "may vary by a few percent across evaluation seeds",
+          "supports": "pi0.5 harness baseline 97.5%, evaluation protocol, dataset pinning"
+        }
+      ],
+      "findings": {
+        "items": [
+          {
+            "ref": "card:question",
+            "status": "SUPPORTED",
+            "page_quote": "n/a — no source cited; the field states the research question and carries no factual claim.",
+            "note": "Research question only (what the plan will measure). Nothing to verify against a page."
+          },
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "However, we observe in practice that the model can be trained for a much smaller number of steps without sacrificing significant performance levels.",
+            "note": "The field is a prediction, which needs no source, but it attributes itself to arXiv 2506.01844. That page only says qualitatively that fewer steps cost little; it gives no step counts, no point deltas, and no fine-tuning data-fraction experiment, so neither the 'under 3 points' nor the 'more data adds 10 or more points' figure is stated there."
+          },
+          {
+            "ref": "card:if_lever",
+            "status": "SUPPORTED",
+            "page_quote": "n/a — no source cited; decision rule for the plan's own result.",
+            "note": "Decision rule / prediction; no factual claim to check. Arithmetic is internally consistent (50k/15k = 3.33x)."
+          },
+          {
+            "ref": "card:if_not",
+            "status": "SUPPORTED",
+            "page_quote": "n/a — no source cited; decision rule for the plan's own result.",
+            "note": "Decision rule / prediction; no factual claim to check."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "PARTIAL",
+            "page_quote": "SmolVLA (0.45B) No 90 96 92 71 87.3",
+            "note": "Design details (25 runs, 5k/15k/50k steps, 10-100% data, 27 checkpoints, 2,000 rollouts) are plan content and need no source. The one factual claim, 'a published 87.3% baseline', cites no source in this field; the figure does match Table 2 of the SmolVLA paper (0.45B model, LIBERO average 87.3) fetched for src:smolvla_paper."
+          },
+          {
+            "ref": "card:closest_prior",
+            "status": "SUPPORTED",
+            "page_quote": "For fine-tuning on simulation benchmarks, we train for 100,000 steps with a batch size of 64, while for real-world tasks, we fine-tune for 200,000 steps. However, we observe in practice that the model can be trained for a much smaller number of steps without sacrificing significant performance levels.",
+            "page_value": 100000,
+            "note": "Quote appears verbatim. Table 2 reports LIBERO averages for SmolVLA 0.24B (82.75), 0.45B (87.3) and 2.25B (88.75). No sweep over training steps or fine-tuning data fraction appears anywhere on the page (main text or appendix). Value 100000 matches the stated 100,000 simulation fine-tuning steps."
+          },
+          {
+            "ref": "card:left_open",
+            "status": "SUPPORTED",
+            "page_quote": "However, we observe in practice that the model can be trained for a much smaller number of steps without sacrificing significant performance levels.",
+            "note": "Statement of the gap the plan will fill. Consistent with the SmolVLA page, which makes only this unquantified claim and reports no step/data/capacity/camera grid on LIBERO."
+          },
+          {
+            "ref": "card:anchor",
+            "status": "SUPPORTED",
+            "page_quote": "Pi0.5 (LeRobot) | 97.0 | 99.0 | 98.0 | 96.0 | 97.5 ... For reproducible benchmarking, use 10 episodes per task across all four standard suites (Spatial, Object, Goal, Long). This gives 400 total episodes and matches the protocol used for published results. Success rates may vary by a few percent across evaluation seeds, so we recommend averaging over 3 seeds.",
+            "page_value": 97.5,
+            "note": "Quote appears verbatim. Page reports lerobot/pi05_libero_finetuned at 97.5 average over the four suites with the 400-episode protocol (the original OpenPI figure is 96.85). The 94% gate is the plan's own threshold."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "After a 100-step warmup, we use a cosine learning rate schedule starting at 1e-4 and decaying to a minimum of 2.5e-6. We use the AdamW optimizer with β1=0.9, β2=0.95.",
+            "note": "Risk statements (transfer, unmeasured speed, replication may miss) need no source. The factual claim 'schedule unpublished' cites no source and is at odds with the SmolVLA page, which publishes a warmup + cosine learning-rate schedule and optimizer for pretraining; the page does not state a separate schedule for the 100,000-step simulation fine-tuning, so the claim is only partly unsupported, not fully contradicted."
+          },
+          {
+            "ref": "src:smolvla_paper",
+            "status": "SUPPORTED",
+            "page_quote": "However, we observe in practice that the model can be trained for a much smaller number of steps without sacrificing significant performance levels. ... Overall, the project consumed approximately 30k GPU hours. ... SmolVLA (0.24B) No 87 93 88 63 82.75 / SmolVLA (0.45B) No 90 96 92 71 87.3 / SmolVLA (2.25B) No 93 94 91 77 88.75",
+            "note": "Quote appears verbatim. Page supports all listed claims: 87.3 LIBERO average for the 0.45B model (Table 2), three model sizes, an action-execution-steps ablation (Table 13: 1/10/30/50 steps) alongside a chunk-size ablation (Table 12), and approximately 30k GPU hours."
+          },
+          {
+            "ref": "src:lerobot_libero",
+            "status": "SUPPORTED",
+            "page_quote": "Success rates may vary by a few percent across evaluation seeds, so we recommend averaging over 3 seeds. ... Pin `--dataset.revision=<commit-sha>` when reporting results — Hub datasets can be re-uploaded, and success rates are only comparable against the same data revision. ... Pi0.5 (LeRobot) | 97.0 | 99.0 | 98.0 | 96.0 | 97.5",
+            "note": "Quote appears verbatim. Page supports the pi0.5 97.5 baseline (lerobot/pi05_libero_finetuned), the 10-episodes-per-task / 400-episode evaluation protocol with hard resets, and dataset-revision pinning."
+          }
+        ]
+      },
+      "findings_ok": true,
+      "decision": {
+        "result": "PASS",
+        "blocking": [],
+        "listed": [
+          {
+            "ref": "card:hypothesis",
+            "status": "PARTIAL",
+            "page_quote": "However, we observe in practice that the model can be trained for a much smaller number of steps without sacrificing significant performance levels.",
+            "note": "The field is a prediction, which needs no source, but it attributes itself to arXiv 2506.01844. That page only says qualitatively that fewer steps cost little; it gives no step counts, no point deltas, and no fine-tuning data-fraction experiment, so neither the 'under 3 points' nor the 'more data adds 10 or more points' figure is stated there."
+          },
+          {
+            "ref": "card:test_summary",
+            "status": "PARTIAL",
+            "page_quote": "SmolVLA (0.45B) No 90 96 92 71 87.3",
+            "note": "Design details (25 runs, 5k/15k/50k steps, 10-100% data, 27 checkpoints, 2,000 rollouts) are plan content and need no source. The one factual claim, 'a published 87.3% baseline', cites no source in this field; the figure does match Table 2 of the SmolVLA paper (0.45B model, LIBERO average 87.3) fetched for src:smolvla_paper."
+          },
+          {
+            "ref": "card:limits",
+            "status": "PARTIAL",
+            "page_quote": "After a 100-step warmup, we use a cosine learning rate schedule starting at 1e-4 and decaying to a minimum of 2.5e-6. We use the AdamW optimizer with β1=0.9, β2=0.95.",
+            "note": "Risk statements (transfer, unmeasured speed, replication may miss) need no source. The factual claim 'schedule unpublished' cites no source and is at odds with the SmolVLA page, which publishes a warmup + cosine learning-rate schedule and optimizer for pretraining; the page does not state a separate schedule for the 100,000-step simulation fine-tuning, so the claim is only partly unsupported, not fully contradicted."
+          }
+        ]
+      }
+    }
+  ],
+  "planted": [],
+  "critic": [
+    {
+      "key": "R2:physical:W3",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 1,
+            "ref": "plan:question",
+            "reason": "Root question is about robot hands; DNS cost scaling for turbulence bears on no robot-manipulation choice, and Re³ is already well known."
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "card:hypothesis",
+            "reason": "Compute axis spans 8x in N (about 4000x cost) and held_fixed is good, but exponent fits on four rungs may not separate cleanly; noise treatment is loose."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Scored against published JHTDB Rλ 418 with stated tolerances, reproduced first; the truth is independent of the method under test."
+          },
+          {
+            "criterion": "open",
+            "value": 2,
+            "ref": "card:closest_prior",
+            "reason": "Re³ scaling is textbook and already answers the scaling question; only dollars on rented GPUs is new, and the plan states that gap."
+          },
+          {
+            "criterion": "reshape",
+            "value": 2,
+            "ref": "card:method",
+            "reason": "Slab-split FFTs parallelise only within each time step; the 50,280 sequential steps stay in order."
+          },
+          {
+            "criterion": "baseline",
+            "value": 2,
+            "ref": "plan:restructuring.baseline_copies",
+            "reason": "Baseline copies are none and single-GPU baseline is not tuned or timed to one answer; anchor checks against published values, not a sequential run."
+          }
+        ],
+        "decides_by": "none",
+        "decides_by_reason": "Exponents are fitted only after the ladder and the 1024³ run (P6). No earlier phase lets decision_rule be applied for either outcome."
+      },
+      "critique_ok": true
+    },
+    {
+      "key": "R2:physical:W13",
+      "critique": {
+        "scores": [
+          {
+            "criterion": "stakes",
+            "value": 3,
+            "ref": "card:limits",
+            "reason": "Result bears on scale-vs-collect choice only via a small simulated model, one family, in-distribution; no touch or real-robot step checked."
+          },
+          {
+            "criterion": "lever",
+            "value": 3,
+            "ref": "card:hypothesis",
+            "reason": "Steps span 10x and are held fixed well, noise is stated, but 15k to 50k is 3.3x and data varies jointly; the 3-point threshold sits near the 2.1-point noise."
+          },
+          {
+            "criterion": "verifiable",
+            "value": 5,
+            "ref": "card:anchor",
+            "reason": "Exact simulator success flags, with a harness gate reproducing the published pi0.5 97.5% within a stated tolerance before training."
+          },
+          {
+            "criterion": "open",
+            "value": 4,
+            "ref": "card:closest_prior",
+            "reason": "Prior gives sizes and says fewer steps suffice, but no step-by-data grid; the plan states the gap. Partial overlap on the steps claim."
+          },
+          {
+            "criterion": "reshape",
+            "value": 1,
+            "ref": "card:sequential_part",
+            "reason": "Runs are independent copies one per GPU; training steps stay sequential and method is none, so no dependency is removed."
+          },
+          {
+            "criterion": "baseline",
+            "value": "NA",
+            "ref": "card:method",
+            "reason": "restructuring.method is none, so the baseline criterion does not apply."
+          }
+        ],
+        "decides_by": "pilot",
+        "decides_by_reason": "Decision rule needs 15k and 50k scores, which only wave1 produces for the first cells; the pilot only gates the harness. Earliest sufficient phase is wave1."
+      },
+      "critique_ok": true
+    }
+  ],
+  "log": [
+    "R2:physical:random: dramaturg: degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not"
+  ]
+}
