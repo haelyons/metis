@@ -7,10 +7,20 @@ const path = require('node:path')
 
 const OCX = path.join(__dirname, 'ocx')
 
-function run({ model, agent, prompt, cwd, session, timeoutMs, rawPath }) {
+// httpLogDir: route OpenCode Go traffic through a logging proxy for this call (httplog.js)
+async function run(o) {
+  if (!o.httpLogDir || !o.model.startsWith('opencode-go/')) return runOnce(o)
+  const proxy = await require('./httplog.js').start(o.httpLogDir)
+  const extra = JSON.stringify({ provider: { 'opencode-go': { options: { baseURL: proxy.baseURL } } } })
+  try { return await runOnce({ ...o, env: { OPENCODE_CONFIG_CONTENT: extra } }) } finally { await proxy.close() }
+}
+
+function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, title }) {
   return new Promise(resolve => {
     const args = ['run', '--pure', '--format', 'json', '-m', model, '--agent', agent]
     if (session) args.push('--session', session)
+    // a given title skips OpenCode's extra title-generation call (seen in the proxy logs)
+    args.push('--title', title || 'qt')
     // argv strings stop at 128 KiB on Linux: a long prompt goes in an attached file
     if (Buffer.byteLength(prompt) > 100000) {
       const f = path.join(cwd, `.prompt-${process.pid}-${Date.now()}.md`)
@@ -20,7 +30,7 @@ function run({ model, agent, prompt, cwd, session, timeoutMs, rawPath }) {
     const t0 = Date.now()
     // OpenCode takes its project directory from --dir and PWD, not only the process cwd
     args.splice(1, 0, '--dir', cwd)
-    const child = spawn('opencode', args, { cwd, env: { ...process.env, PWD: cwd, XDG_CONFIG_HOME: OCX }, stdio: ['ignore', 'pipe', 'pipe'] })
+    const child = spawn('opencode', args, { cwd, env: { ...process.env, ...env, PWD: cwd, XDG_CONFIG_HOME: OCX }, stdio: ['ignore', 'pipe', 'pipe'] })
     const raw = rawPath ? fs.createWriteStream(rawPath, { flags: 'a' }) : null
     let buf = '', err = '', sessionID = session || null, steps = [], cur = [], tools = 0, errors = []
     const tokens = { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }

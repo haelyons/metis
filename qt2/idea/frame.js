@@ -117,7 +117,7 @@ async function call(stage, model, agent, prompt, check, timeoutMin, cwd) {
   for (let attempt = 1; attempt <= 2; attempt++) {
     rec.attempts = attempt
     const p = attempt === 1 ? prompt : `Your reply could not be used: ${errors.join('; ')}. Reply again with only the JSON asked for.`
-    res = await oc.run({ model, agent, prompt: p, cwd: cwd || RUN, session, timeoutMs: timeoutMin * MIN, rawPath: path.join(RUN, 'raw', `${id.replace('#', '-')}.jsonl`) })
+    res = await oc.run({ model, agent, prompt: p, cwd: cwd || RUN, session, timeoutMs: timeoutMin * MIN, rawPath: path.join(RUN, 'raw', `${id.replace('#', '-')}.jsonl`), httpLogDir: `${base}.http`, title: id })
     const tok = res.tokens.input + res.tokens.output + res.tokens.reasoning
     rec.ms += res.ms; rec.cost_usd += res.cost; rec.tokens += tok; status.cost_usd += res.cost; status.tokens += tok
     fs.appendFileSync(path.join(RUN, 'ledger.jsonl'), JSON.stringify({ ts: new Date().toISOString(), id, stage, model, agent, attempt, session: res.sessionID, ms: res.ms, tokens: res.tokens, cost_usd: res.cost, tools: res.tools, errors: res.errors }) + '\n')

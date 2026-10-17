@@ -13,7 +13,8 @@
 //   status.json    live progress (node status.js reads it)
 //   agents/NNNN-<label>/  prompt.md (exact text sent, schema included), events.jsonl (OpenCode event stream),
 //                  export.json (full session: messages, reasoning, tool calls with input and output, tokens, cost),
-//                  reply.txt (final text), meta.json (role, model, cwd, attempts, errors, tokens, cost)
+//                  reply.txt (final text), meta.json (role, model, cwd, attempts, errors, tokens, cost),
+//                  http/NNN.request.json + .response.txt (exact provider requests: system prompt, tools, messages; key redacted)
 //   result.json, RESULT.md   the script's return value and its result_md
 const fs = require('node:fs')
 const path = require('node:path')
@@ -21,6 +22,8 @@ const crypto = require('node:crypto')
 const { execFileSync } = require('node:child_process')
 const oc = require('./oc.js')
 const { validate, promptSuffix } = require('./schema.js')
+const { mergeCritique } = require('./panel.js')
+const MERGE = { critique: mergeCritique }
 
 const argv = process.argv.slice(2)
 const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d }
@@ -76,10 +79,19 @@ const FILE_ROLES = new Set(['qt-research', 'qt-producer', 'qt-extract'])
 let counter = 0
 
 async function agent(prompt, opts = {}) {
+  const label = opts.label || `agent-${counter + 1}`
+  // label rules (config.workflow.label_rules): a panel runs the call on several models and merges the replies;
+  // a model rule sends that call to another model (e.g. the second dramaturg to another family)
+  const rule = (CFG.label_rules || []).find(r => new RegExp(r.match).test(label))
+  if (rule && rule.panel) {
+    const replies = await Promise.all(rule.panel.map(m => agent(prompt, { ...opts, label: `${label}@${m.split('/').pop()}`, _model: m })))
+    const merged = MERGE[rule.merge](replies)
+    journal({ type: 'panel', label, members: rule.panel, ok: replies.map(Boolean), value: merged })
+    return merged
+  }
   const n = ++counter
-  const label = opts.label || `agent-${n}`
   const role = opts.agentType || 'qt-bare'
-  const model = CFG.by_role[role] || (opts.model && SMALL.has(opts.model) ? CHEAP : MAIN)
+  const model = opts._model || (rule && rule.model) || CFG.by_role[role] || (opts.model && SMALL.has(opts.model) ? CHEAP : MAIN)
   const full = opts.schema ? prompt + promptSuffix(opts.schema) : String(prompt)
   const key = sha(JSON.stringify({ full, role, model }))
   const rec = { id: `${String(n).padStart(4, '0')} ${label}`, stage: opts.phase || '', model, state: 'queued', attempts: 0, ms: 0, cost_usd: 0, tokens: 0 }
@@ -101,7 +113,7 @@ async function agent(prompt, opts = {}) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       rec.attempts = attempt
       const p = attempt === 1 ? full : `Your reply could not be used: ${errors.slice(0, 15).join('; ')}. Reply again with only the JSON value asked for, complete.`
-      res = await oc.run({ model, agent: role, prompt: p, cwd, session, timeoutMs: (CFG.timeouts_min[role] || 20) * 60000, rawPath: path.join(dir, 'events.jsonl') })
+      res = await oc.run({ model, agent: role, prompt: p, cwd, session, timeoutMs: (CFG.timeouts_min[role] || 20) * 60000, rawPath: path.join(dir, 'events.jsonl'), httpLogDir: path.join(dir, 'http'), title: label })
       session = res.sessionID
       const tok = res.tokens.input + res.tokens.output + res.tokens.reasoning
       rec.ms += res.ms; rec.cost_usd += res.cost; rec.tokens += tok

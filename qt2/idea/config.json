@@ -31,7 +31,22 @@
       "qt-producer": 60,
       "qt-extract": 15
     },
-    "runs_dir": "/home/hal/dev/interp/latent_open/runs/oc"
+    "runs_dir": "/home/hal/dev/interp/latent_open/runs/oc",
+    "label_rules": [
+      {
+        "match": ":critic(-resample)?$",
+        "panel": [
+          "opencode-go/qwen3.8-flash",
+          "opencode-go/mimo-v2.6-flash",
+          "opencode-go/minimax-m3"
+        ],
+        "merge": "critique"
+      },
+      {
+        "match": ":dramaturg-2(-resample)?$",
+        "model": "opencode-go/glm-5.3-flash"
+      }
+    ]
   },
   "go_monthly_caps_usd": {
     "kimi-k3": 15,
@@ -44,5 +59,14 @@
     "minimax-m3": 60,
     "mimo-v2.6-flash": 60
   },
-  "go_caps_note": "OpenCode Go plan, read 2026-10-17 from https://opencode.ai/docs/go/: monthly dollar cap per model; 5-hour window 20%, weekly 50%."
+  "go_caps_note": "OpenCode Go plan, read 2026-10-17 from https://opencode.ai/docs/go/: monthly dollar cap per model; 5-hour window 20%, weekly 50%.",
+  "loop": {
+    "runs_dir": "/home/hal/dev/interp/latent_open/runs/loop",
+    "generator": "opencode-go/deepseek-v4.1-flash",
+    "screen": [
+      "opencode-go/qwen3.8-flash",
+      "opencode-go/mimo-v2.6-flash",
+      "opencode-go/minimax-m3"
+    ]
+  }
 }

@@ -42,4 +42,6 @@ Each `runs/oc/<name>/<stamp>/` holds `run.json` (script hash, args, models, vers
 `result.json`, `RESULT.md`, and per call `agents/NNNN-<label>/` with `prompt.md` (exact text sent), `events.jsonl`
 (OpenCode event stream), `export.json` (`opencode export`: messages, reasoning, tool calls with input and output,
 tokens, cost), `reply.txt` and `meta.json`. Frame runs keep `ledger.jsonl`, `raw/` and `research/notes.md` likewise.
-Not recorded yet: the OpenCode base system prompt and tool definitions sent to the provider (needs a logging proxy).
+Each call also goes through a local logging proxy (`qt2/idea/httplog.js`), so `http/NNN.request.json` holds the exact
+provider request (OpenCode's system prompt, tool definitions, messages; credentials redacted) and `NNN.response.txt`
+the streamed reply. Passing a session title skips OpenCode's extra title-generation request.
