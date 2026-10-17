@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-17T21:57:29.442Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 123284,
+   "cost_usd": 0.07472744399999999,
+   "tokens": 72787,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 96444,
+   "cost_usd": 0.025553088,
+   "tokens": 135058,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 166944,
+   "cost_usd": 0.0349339,
+   "tokens": 122323,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 129840,
+   "cost_usd": 0.00489397,
+   "tokens": 9367,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 58782,
+   "cost_usd": 0.00122542,
+   "tokens": 5588,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 30724,
+   "cost_usd": 0.00266568,
+   "tokens": 3937,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.143999502,
+ "tokens": 349060,
+ "by_model": {
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.07472744399999999,
+   "tokens": 72787
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.025553088,
+   "tokens": 135058
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.0349339,
+   "tokens": 122323
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00266568,
+   "tokens": 3937
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.00122542,
+   "tokens": 5588
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.00489397,
+   "tokens": 9367
+  }
+ },
+ "done": true,
+ "updated": "2026-10-17T22:04:35.430Z",
+ "best": {
+  "name": "Microsoft Research AI for Science — MatterGen / Azure Quantum Elements (with PNNL battery collaboration)",
+  "step": "The candidate-proposal front-end of the battery-materials discovery pipeline: turning a design target (high ionic conductivity) directly into new candidate structures. Today Azure Quantum Elements proposes battery electrolytes by screening 32 million enumerated candidates, and MatterGen generates structures conditioned only on chemistry/symmetry/stability and properties like magnetic density, band gap, and bulk modulus — not ionic conductivity.",
+  "sum": 15,
+  "fit": 5,
+  "change": 5,
+  "new": 5
+ }
+}

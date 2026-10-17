@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-17T21:55:18.096Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 134679,
+   "cost_usd": 0.08687905600000001,
+   "tokens": 87530,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 64629,
+   "cost_usd": 0.015653406,
+   "tokens": 70364,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 215056,
+   "cost_usd": 0.0369024,
+   "tokens": 145745,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 69046,
+   "cost_usd": 0.00191775,
+   "tokens": 3061,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 89466,
+   "cost_usd": 0.00107912,
+   "tokens": 5034,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 21924,
+   "cost_usd": 0.00407628,
+   "tokens": 5060,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.146508012,
+ "tokens": 316794,
+ "by_model": {
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.08687905600000001,
+   "tokens": 87530
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.015653406,
+   "tokens": 70364
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.0369024,
+   "tokens": 145745
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00407628,
+   "tokens": 5060
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.00191775,
+   "tokens": 3061
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.00107912,
+   "tokens": 5034
+  }
+ },
+ "done": true,
+ "updated": "2026-10-17T22:02:43.480Z",
+ "best": {
+  "name": "Meta AI (FAIR) — GISMo / Recipe1MSubs (facebookresearch/gismo)",
+  "step": "The GISMo ingredient encoder (IE): the GIN-based node encoder whose embedding width (the `emb_d`/`hidden` dimensions) is exactly the capacity axis the card sweeps (64–512) before the ingredient-substitution decoder ranks candidate substitutes.",
+  "sum": 15,
+  "fit": 5,
+  "change": 5,
+  "new": 5
+ }
+}

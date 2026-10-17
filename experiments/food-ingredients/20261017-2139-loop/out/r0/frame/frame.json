@@ -1,0 +1,239 @@
+{
+ "card": "card",
+ "root": "Industrial food ingredient replacement for sustainability? Industrial food recipe replacement for sustainability?",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "run_dir": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/frame",
+ "wall_min": 7.4,
+ "cost_usd": 0.1465,
+ "tokens": 316794,
+ "research_ok": true,
+ "research_errors": [],
+ "no_programme_reason": "",
+ "gaps": [
+  "No programme connects this home-recipe ranking metric to industrial formulation or environmental footprint: the card itself notes it 'Shows ranking accuracy on home recipes, not industrial formulations, and never measures actual environmental footprint,' so no industrial ingredient-replacement-for-sustainability programme (e.g., plant-based formulation companies) would change practice purely on a Hit@1 number from Recipe1MSubs.",
+  "The Meta GISMo repository is archived and read-only (Nov 1, 2024), so the primary pipeline the card targets is no longer actively maintained; the result would feed the research literature more than a live product.",
+  "Unresolved discrepancy: Rita et al.'s GISMo reimplementation reports Hit@1 34.53 ± 0.10% on the original Recipe1MSubs, while Meta's published GISMo test Hit@1 is 20.56 ± 0.14% — the card's 'reproduce 20.56 within 2 MRR points' check will have to explain this gap before any width-scaling conclusion transfers between the two programmes."
+ ],
+ "programmes": [
+  {
+   "n": 1,
+   "name": "Meta AI (FAIR) — GISMo / Recipe1MSubs (facebookresearch/gismo)",
+   "url": "https://github.com/facebookresearch/gismo",
+   "step": "The GISMo ingredient encoder (IE): the GIN-based node encoder whose embedding width (the `emb_d`/`hidden` dimensions) is exactly the capacity axis the card sweeps (64–512) before the ingredient-substitution decoder ranks candidate substitutes.",
+   "claims": [
+    {
+     "claim": "The reference GISMo training command fixes the ingredient-encoder width at 300 dimensions (`hidden=300 emb_d=300`), with 2 GIN layers, 400 epochs and regular negative sampling — the single width the card would vary.",
+     "url": "https://github.com/facebookresearch/gismo/blob/main/gismo/README.md",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "GISMo's published Recipe1MSubs test result — MRR 31.51 and Hit@1 20.56, averaged over 5 runs — is the exact baseline the card's 'Check first' reproduction targets.",
+     "url": "https://ar5iv.labs.arxiv.org/html/2302.07960",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The model is implemented in PyTorch with the Deep Graph Library (DGL) for sparse graph operations, over a 6,653-ingredient FlavorGraph-derived vocabulary and the ~49k-pair Recipe1MSubs training split — the scale and tooling the card would reuse.",
+     "url": "https://ar5iv.labs.arxiv.org/html/2302.07960",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The project is an archived, read-only open-source benchmark (Meta AI authors), not an actively developed product, and GISMo feeds a personalized inverse-cooking (image-to-recipe) pipeline.",
+     "url": "https://github.com/facebookresearch/gismo",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "It would overturn the project's fixed-width default: the archived 300-dim GIN ingredient encoder would be shown to leave ranking quality on the table, so any future GISMo-style substitution ranker (including the personalized inverse-cooking integration) should scale the ingredient-encoder width; width would become a published scaling curve rather than an untested hyperparameter.",
+   "if_not_changes": "It would confirm GISMo's 300-dim ingredient encoder was already at the plateau, validating the original fixed-width configuration and telling future work to seek gains from graph structure, context, or training data (the paper's own ablations) rather than from model capacity.",
+   "already_done": {
+    "status": "partly",
+    "claim": "Meta only ever trained and evaluated GISMo at a single ingredient-encoder width (hidden=300, emb_d=300); the paper's 5-run average is at that one width and no 64–512 sweep exists in the paper or repo.",
+    "checks": [
+     "CONTRADICTED",
+     "CONTRADICTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Card directly measures GISMo ingredient-encoder width effect on Recipe1MSubs Hit@1, exactly the quantity its fixed-width baseline step depends on.",
+      "opencode-go/mimo-v2.6-flash: Card measures Hit@1 versus encoder width on GISMo itself, the exact system and metric the reference command and published baseline depend on.",
+      "opencode-go/minimax-m3: Card directly measures GISMo encoder width (64-512) versus Hit@1 on Recipe1MSubs, the exact axis this step sweeps."
+     ]
+    },
+    "change": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Either scaling-up or plateauing would decide whether future GISMo rankers should scale encoder width or pursue graph/data gains.",
+      "opencode-go/mimo-v2.6-flash: Both outcomes alter a build choice: publish a width scaling curve or validate the fixed 300-dim default for future rankers.",
+      "opencode-go/minimax-m3: Either outcome changes the GISMo fixed-width default: validates or replaces the 300-dim encoder configuration."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      3,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Supported claims show current GISMo practice uses only width 300; no verified width-sweep measurement feeds that step.",
+      "opencode-go/mimo-v2.6-flash: Both checkers contradicted the no-sweep claim; supported claims show only a fixed 300-dim default, leaving whether it's answered unclear.",
+      "opencode-go/minimax-m3: Supported practice shows GISMo only evaluated at 300 dim; the width scaling curve has never been measured."
+     ]
+    }
+   },
+   "sum": 15
+  },
+  {
+   "n": 2,
+   "name": "Imperial College London — Veselkov Lab / Hyperfoods (Rita et al. 2024, iAnalytica)",
+   "url": "https://www.mdpi.com/2504-4990/6/4/131",
+   "step": "The GISMo baseline/reimplementation step of their ingredient-substitution pipeline: they re-run GISMo as the benchmark ranker against which fine-tuned LLMs (DaVinci, TinyLlama, GPT-3.5) are compared, so the card's width axis targets this baseline ranker's ingredient-encoder width.",
+   "claims": [
+    {
+     "claim": "They re-implemented and re-ran GISMo as their benchmark, fixing the ingredient embedding dimension at 300 with two 300-hidden-unit graph convolutional layers, a dropout of 0.25, and 400 epochs with negative sampling.",
+     "url": "https://www.mdpi.com/2504-4990/6/4/131",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "Their reimplemented GISMo baseline scores Hit@1 34.53 ± 0.10% on the original Recipe1MSubs, and fine-tuned GPT-3.5-Turbo-1106 lifts this to 38.03 ± 0.28%, while TinyLlama-1.1B reaches only 20.93 ± 0.29%.",
+     "url": "https://www.mdpi.com/2504-4990/6/4/131",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The work sits inside the Hyperfoods ERC programme (coordinated by Imperial College London), which applies graph-based ML to computationally design personalised nutrition and which funded Rita et al.",
+     "url": "https://cordis.europa.eu/project/id/899932",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The re-run GISMo and fine-tuned models (plus the dataset-filtering and fine-tuning scripts) are released on the iAnalytica Bitbucket repository, so the card's width-sweep could be reproduced against their released baseline.",
+     "url": "https://www.mdpi.com/2504-4990/6/4/131",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "Their headline comparison would be confounded: they conclude LLMs beat GISMo (38.03 vs 34.53 Hit@1) against a GISMo baseline fixed at 300 dim, so if a wider GISMo keeps climbing that baseline is under-parameterized and they would need to re-benchmark GPT-3.5/TinyLlama against a width-scaled GISMo before attributing the gain to LLM capability; their phytochemically-enriched recipe-generation step would inherit whichever ranker actually wins.",
+   "if_not_changes": "Their 300-dim GISMo baseline stands as a fair reference, so the LLM advantage (GPT-3.5-Turbo's 38.03 Hit@1) is a real model effect rather than a capacity artifact; this strengthens their choice of fine-tuned LLMs for generating phytochemically enriched substitutions and lets them skip a wider GISMo.",
+   "already_done": {
+    "status": "no",
+    "claim": "Rita et al. re-implemented GISMo at a single 300-dim embedding width (averaged over 5 runs) and swept model families (DaVinci/TinyLlama/GPT-3.5), but never swept the GISMo encoder width across 64–512.",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 5,
+     "values": [
+      5,
+      4,
+      5
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Card measures GISMo encoder-width Hit@1 effects, exactly the fixed-300 GISMo baseline step Rita et al. compare fine-tuned LLMs against.",
+      "opencode-go/mimo-v2.6-flash: Card measures the baseline ranker's Hit@1 versus width, but its 20.56 reproduction target differs from their 34.53 re-run, needing reconciliation.",
+      "opencode-go/minimax-m3: Card measures their reimplemented GISMo baseline's encoder width scaling on Recipe1MSubs; same system and metric they use."
+     ]
+    },
+    "change": {
+     "median": 5,
+     "values": [
+      5,
+      4,
+      5
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: A width gain would force re-benchmarking LLMs against scaled GISMo; a plateau would validate the 300-dim comparison.",
+      "opencode-go/mimo-v2.6-flash: Either outcome bears on the LLM-vs-GISMo confound, but applying it requires re-benchmarking under their protocol, work the card does not do.",
+      "opencode-go/minimax-m3: Lever would confound LLM-vs-GISMo comparison; no-lever validates baseline—either outcome changes their current practice."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Supported claims say Rita et al. never swept GISMo encoder width, only fixed 300 while comparing LLM families.",
+      "opencode-go/mimo-v2.6-flash: Supported claims confirm they swept model families but never the GISMo encoder width 64-512, so the question is unanswered.",
+      "opencode-go/minimax-m3: Supported claim confirms no 64-512 width sweep exists; they only swept model families, never encoder width."
+     ]
+    }
+   },
+   "sum": 15
+  }
+ ],
+ "best": {
+  "name": "Meta AI (FAIR) — GISMo / Recipe1MSubs (facebookresearch/gismo)",
+  "step": "The GISMo ingredient encoder (IE): the GIN-based node encoder whose embedding width (the `emb_d`/`hidden` dimensions) is exactly the capacity axis the card sweeps (64–512) before the ingredient-substitution decoder ranks candidate substitutes.",
+  "sum": 15,
+  "fit": 5,
+  "change": 5,
+  "new": 5
+ },
+ "failed_calls": []
+}

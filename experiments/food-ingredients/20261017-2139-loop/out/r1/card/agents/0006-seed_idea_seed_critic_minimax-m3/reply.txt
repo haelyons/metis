@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 1,
+      "ref": "plan:scope_gap",
+      "reason": "Recipe1MSubs is unlabeled for sustainability; both if_lever/if_not bear on general substitution ranking, not a sustainability choice."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:compute_axis.levels",
+      "reason": "Width span 64→512 = 8×, short of 10×; other three conditions (signal > noise, compute-only, held_fixed) hold."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "plan:anchor",
+      "reason": "Reproduction step hits Meta 20.56±0.14 within ±0.5 pt first; but trend truth comes from the method's own evaluation, not an external oracle."
+    },
+    {
+      "criterion": "open",
+      "value": 3,
+      "ref": "card:left_open",
+      "reason": "Prior tuned width 200-600 (overlapping range) but didn't publish a trend; plan states gap, but partial prior coverage prevents a 5."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "Plan adds an ordered reconciliation before the sweep rather than removing a dependency; no parallelization is introduced."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "restructuring.method is none, so baseline criterion does not apply."
+    }
+  ],
+  "decides_by": "C",
+  "decides_by_reason": "Phase C runs the width sweep needed for the decision_rule (512 vs 300); A/B only reproduce published baselines, not the lever comparison."
+}
+```

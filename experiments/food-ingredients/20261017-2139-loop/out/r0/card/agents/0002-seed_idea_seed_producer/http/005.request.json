@@ -1,0 +1,396 @@
+{
+ "ts": "2026-10-17T21:40:36.595Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e635804b0fe929d2ed556701e94990a108996451",
+  "x-opencode-request": "msg_14bcef8d4001HdbHMyv7xviEcQ",
+  "x-opencode-session": "ses_eb431079afferp8NnBlls07q9m",
+  "x-opencode-session-id": "ses_eb431079afferp8NnBlls07q9m",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:41355",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "52436"
+ },
+ "body": {
+  "model": "deepseek-v4-pro",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.\nYou are powered by the model named deepseek-v4-pro. The exact model ID is opencode-go/deepseek-v4-pro\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work\n  Workspace root folder: /home/hal/dev/interp/latent_open\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Sat Oct 17 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Read option FD1 \\\"Industrial food ingredient replacement for sustainability\\\" in the option record below. I'm thinking about running something on this with up to $1,000 of GPU credit at Lambda's on-demand prices (https://lambda.ai/pricing). Make it concrete: what to build, the baseline, how to check it's right, and the cost. Cite a URL for every factual claim. Write to /home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work/seed-1/seed/idea/5adf8c42/producer.md. Option record: {\\\"id\\\":\\\"FD1\\\",\\\"title\\\":\\\"Industrial food ingredient replacement for sustainability\\\",\\\"summary\\\":\\\"Industrial food ingredient replacement for sustainability? Industrial food recipe replacement for sustainability? (from the user's notes; no further detail given)\\\",\\\"root_link\\\":\\\"is the root question\\\",\\\"compute_open\\\":\\\"not given (seed idea from notes)\\\",\\\"sequential\\\":\\\"not given (seed idea from notes)\\\",\\\"source_urls\\\":[]}. Root question: Industrial food ingredient replacement for sustainability? Industrial food recipe replacement for sustainability?. Read only pages you fetch and what you write under /home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work/seed-1/seed/idea/5adf8c42; write only under /home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work/seed-1/seed/idea/5adf8c42. When the plan is written, return it as the record in your output schema; producer.md stays your working file. In the record, put every number the cost or the size of the test depends on in numbers, each with a basis: CITED (a page states this number for this same setting; give the page text that shows it), PROXY (a page states it for a different model, GPU, dataset, size or component; give the page text and say what differs), MEASURED (you ran code: save the script and its output under /home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work/seed-1/seed/idea/5adf8c42/pilot/ and give the output line and the machine), DERIVED (an expression over other ids), DESIGN (your choice), or GUESS (no source; say what it rests on). Give each rate as the per-GPU price and the GPU count, and each line's hours as an expression. The default line is a time box: DESIGN hours at a rate from the prices below, ended by a timer or stop rule; it needs no estimate of the work inside it, but if you have one, put it in need. Use GUESS only where a number drives the plan. For each PROXY or GUESS the cost or result depends on, name the phase that measures it in measured_by, and give that phase's threshold as gate if your plan changes on it. Optional: scenarios (pessimistic or sensitivity cases, as values for the inputs they change), optional lines for stretch work, instead_of for fallbacks, and yields (the number ids that say what the money buys: cases, samples, primes). Refer to the budget as budget_usd and to the price sheet's filesystem price as fs_usd_gib_month. List human time and money outside Lambda in outside_budget. predictions.if_lever and predictions.if_not are the outcomes you expect, on the same measured quantity, if more compute does or does not change the answer. predictions.noise_rule says how you will tell a real difference from run-to-run noise. predictions.expected is the outcome you expect, if_lever, if_not or unsure, with one sentence why. scored_against says what the measured outcome is compared with to decide it is correct. Each source carries the exact sentence from the page that you rely on. In restructuring, sequential_part is the part of this computation that one answer waits on step after step, and how many steps; method is why those steps need not run in order and how your plan computes them at the same time instead, or \\\"none\\\" if the plan only runs independent work side by side or splits each step across GPUs. If method is not none, also give condition, what must be true of this system for the method to pay off and the cheap measurement that checks it; condition_phase, the id of the phase that makes that measurement before the main spend; baseline_sequential, the fastest sequential implementation you will time and how it is tuned; and baseline_copies, independent copies run side by side on the same GPUs, which you will also time. Then compute_axis is the length of the chain or the number of runs the answer needs; predictions.if_lever and predictions.if_not say where on that axis, as numbers, the parallel version does or does not reach the same answer sooner than each baseline, and if_not says how you expect it to fail if it does; anchor checks the parallel result against the sequential one within a stated tolerance; test_summary names both baselines; and novelty.closest_prior is the nearest published parallel version of this computation. Write the record's card fields (question, hypothesis, predictions.if_lever, predictions.if_not, test_summary, novelty.closest_prior, novelty.left_open, anchor.what, limits, restructuring.sequential_part, restructuring.method) for a reader who has not seen your files: plain words, at most 25 words each (hypothesis and predictions.if_lever 22, anchor.what 24, novelty.closest_prior, novelty.left_open and limits 30, test_summary 45, restructuring.sequential_part 18, restructuring.method 22), no labels from your files or from the branch and framer files (write what C2 or E2 stands for, not the label), and keep every number the decision depends on. You may cite a source in any card field as [source id]. novelty.closest_prior is the published result that comes nearest to deciding between if_lever and if_not: what it measured and the largest amount of the compute quantity it used. novelty.prior_max_level is that amount in compute_axis.unit, or null if it is not on the same axis. novelty.decides says whether closest_prior already decides the outcome at your compute levels: no, partly or yes. novelty.searched says whether web search returned results while you planned. Run every local command under timeout. Start no new local run 45 minutes after you begin; if a run you need is unfinished by then, give its inputs basis GUESS with measured_by naming the phase that measures it. Local runs share a 4-core machine with other producers. Lambda's prices as read at the start of this run: {\\\"read_at\\\":\\\"2026-10-17\\\",\\\"instances\\\":[{\\\"gpu\\\":\\\"NVIDIA B200 SXM6\\\",\\\"gpu_memory_gb\\\":180,\\\"n_gpus\\\":8,\\\"per_gpu_usd_h\\\":6.69,\\\"page_text\\\":\\\"8x GPUs — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | 208 vCPUs | 2900 GiB RAM | 22 TiB SSD | PRICE/GPU/HR $6.69\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA H100 SXM\\\",\\\"gpu_memory_gb\\\":80,\\\"n_gpus\\\":8,\\\"per_gpu_usd_h\\\":3.99,\\\"page_text\\\":\\\"8x GPUs — NVIDIA H100 SXM | VRAM/GPU 80 GB | 208 vCPUs | 1800 GiB RAM | 22 TiB SSD | PRICE/GPU/HR $3.99\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A100 SXM\\\",\\\"gpu_memory_gb\\\":80,\\\"n_gpus\\\":8,\\\"per_gpu_usd_h\\\":2.79,\\\"page_text\\\":\\\"8x GPUs — NVIDIA A100 SXM | VRAM/GPU 80 GB | 240 vCPUs | 1800 GiB RAM | 19.5 TiB SSD | PRICE/GPU/HR $2.79\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A100 SXM\\\",\\\"gpu_memory_gb\\\":40,\\\"n_gpus\\\":8,\\\"per_gpu_usd_h\\\":1.99,\\\"page_text\\\":\\\"8x GPUs — NVIDIA A100 SXM | VRAM/GPU 40 GB | 124 vCPUs | 1800 GiB RAM | 5.8 TiB SSD | PRICE/GPU/HR $1.99\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA Tesla V100\\\",\\\"gpu_memory_gb\\\":16,\\\"n_gpus\\\":8,\\\"per_gpu_usd_h\\\":0.79,\\\"page_text\\\":\\\"8x GPUs — NVIDIA Tesla V100 | VRAM/GPU 16 GB | 88 vCPUs | 448 GiB RAM | 5.8 TiB SSD | PRICE/GPU/HR $0.79\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA B200 SXM6\\\",\\\"gpu_memory_gb\\\":180,\\\"n_gpus\\\":4,\\\"per_gpu_usd_h\\\":6.79,\\\"page_text\\\":\\\"4x GPUs — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | 104 vCPUs | 1440 GiB RAM | 11 TiB SSD | PRICE/GPU/HR $6.79\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA H100 SXM\\\",\\\"gpu_memory_gb\\\":80,\\\"n_gpus\\\":4,\\\"per_gpu_usd_h\\\":4.09,\\\"page_text\\\":\\\"4x GPUs — NVIDIA H100 SXM | VRAM/GPU 80 GB | 104 vCPUs | 900 GiB RAM | 11 TiB SSD | PRICE/GPU/HR $4.09\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A100 PCIe\\\",\\\"gpu_memory_gb\\\":40,\\\"n_gpus\\\":4,\\\"per_gpu_usd_h\\\":1.99,\\\"page_text\\\":\\\"4x GPUs — NVIDIA A100 PCIe | VRAM/GPU 40 GB | 120 vCPUs | 900 GiB RAM | 1 TiB SSD | PRICE/GPU/HR $1.99\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A6000\\\",\\\"gpu_memory_gb\\\":48,\\\"n_gpus\\\":4,\\\"per_gpu_usd_h\\\":1.09,\\\"page_text\\\":\\\"4x GPUs — NVIDIA A6000 | VRAM/GPU 48 GB | 56 vCPUs | 400 GiB RAM | 1 TiB SSD | PRICE/GPU/HR $1.09\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA B200 SXM6\\\",\\\"gpu_memory_gb\\\":180,\\\"n_gpus\\\":2,\\\"per_gpu_usd_h\\\":6.89,\\\"page_text\\\":\\\"2x GPUs — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | 52 vCPUs | 720 GiB RAM | 5.5 TiB SSD | PRICE/GPU/HR $6.89\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA H100 SXM\\\",\\\"gpu_memory_gb\\\":80,\\\"n_gpus\\\":2,\\\"per_gpu_usd_h\\\":4.19,\\\"page_text\\\":\\\"2x GPUs — NVIDIA H100 SXM | VRAM/GPU 80 GB | 52 vCPUs | 450 GiB RAM | 5.5 TiB SSD | PRICE/GPU/HR $4.19\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A100 PCIe\\\",\\\"gpu_memory_gb\\\":40,\\\"n_gpus\\\":2,\\\"per_gpu_usd_h\\\":1.99,\\\"page_text\\\":\\\"2x GPUs — NVIDIA A100 PCIe | VRAM/GPU 40 GB | 60 vCPUs | 450 GiB RAM | 1 TiB SSD | PRICE/GPU/HR $1.99\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A6000\\\",\\\"gpu_memory_gb\\\":48,\\\"n_gpus\\\":2,\\\"per_gpu_usd_h\\\":1.09,\\\"page_text\\\":\\\"2x GPUs — NVIDIA A6000 | VRAM/GPU 48 GB | 28 vCPUs | 200 GiB RAM | 1 TiB SSD | PRICE/GPU/HR $1.09\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA B200 SXM6\\\",\\\"gpu_memory_gb\\\":180,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":6.99,\\\"page_text\\\":\\\"1x GPUs — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | 26 vCPUs | 360 GiB RAM | 2.75 TiB SSD | PRICE/GPU/HR $6.99\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA GH200\\\",\\\"gpu_memory_gb\\\":96,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":2.29,\\\"page_text\\\":\\\"1x GPUs — NVIDIA GH200 | VRAM/GPU 96 GB | 64 vCPUs | 432 GiB RAM | 4 TiB SSD | PRICE/GPU/HR $2.29\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA H100 SXM\\\",\\\"gpu_memory_gb\\\":80,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":4.29,\\\"page_text\\\":\\\"1x GPUs — NVIDIA H100 SXM | VRAM/GPU 80 GB | 26 vCPUs | 225 GiB RAM | 2.75 TiB SSD | PRICE/GPU/HR $4.29\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA H100 PCIe\\\",\\\"gpu_memory_gb\\\":80,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":3.29,\\\"page_text\\\":\\\"1x GPUs — NVIDIA H100 PCIe | VRAM/GPU 80 GB | 26 vCPUs | 225 GiB RAM | 1 TiB SSD | PRICE/GPU/HR $3.29\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A100 SXM\\\",\\\"gpu_memory_gb\\\":40,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":1.99,\\\"page_text\\\":\\\"1x GPUs — NVIDIA A100 SXM | VRAM/GPU 40 GB | 30 vCPUs | 220 GiB RAM | 512 GiB SSD | PRICE/GPU/HR $1.99\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A100 PCIe\\\",\\\"gpu_memory_gb\\\":40,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":1.99,\\\"page_text\\\":\\\"1x GPUs — NVIDIA A100 PCIe | VRAM/GPU 40 GB | 30 vCPUs | 225 GiB RAM | 512 GiB SSD | PRICE/GPU/HR $1.99\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A10\\\",\\\"gpu_memory_gb\\\":24,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":1.29,\\\"page_text\\\":\\\"1x GPUs — NVIDIA A10 | VRAM/GPU 24 GB | 30 vCPUs | 226 GiB RAM | 1.3 TiB SSD | PRICE/GPU/HR $1.29\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA A6000\\\",\\\"gpu_memory_gb\\\":48,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":1.09,\\\"page_text\\\":\\\"1x GPUs — NVIDIA A6000 | VRAM/GPU 48 GB | 14 vCPUs | 100 GiB RAM | 512 GiB SSD | PRICE/GPU/HR $1.09\\\\* (* plus applicable sales tax/VAT/GST)\\\"},{\\\"gpu\\\":\\\"NVIDIA Quadro RTX 6000\\\",\\\"gpu_memory_gb\\\":24,\\\"n_gpus\\\":1,\\\"per_gpu_usd_h\\\":0.69,\\\"page_text\\\":\\\"1x GPUs — NVIDIA Quadro RTX 6000 | VRAM/GPU 24 GB | 14 vCPUs | 46 GiB RAM | 512 GiB SSD | PRICE/GPU/HR $0.69\\\\* (* plus applicable sales tax/VAT/GST)\\\"}],\\\"filesystem\\\":{\\\"usd_gib_month\\\":0.2,\\\"page_text\\\":\\\"Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00. Important — The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\\\",\\\"example\\\":true}}.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"option_title\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The picked option's title, copied as given.\\\"},\\\"question\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One sentence. Card field: plain words for a reader who has not seen your files, at most 25 words, no labels from your files; may cite a source as [source id].\\\"},\\\"hypothesis\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One sentence: the claim and its reason. Card field: plain words for a reader who has not seen your files, at most 22 words, no labels from your files; may cite a source as [source id].\\\"},\\\"compute_axis\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"quantity\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The quantity this test varies that more parallel compute buys. If restructuring.method is not none: the chain length or the number of runs the answer needs.\\\"},\\\"unit\\\":{\\\"type\\\":\\\"string\\\"},\\\"levels\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"number\\\"},\\\"description\\\":\\\"The values tested, in unit.\\\"}},\\\"required\\\":[\\\"quantity\\\",\\\"unit\\\",\\\"levels\\\"]},\\\"held_fixed\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"Inputs kept the same across levels.\\\"},\\\"predictions\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"if_lever\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The measured outcome if compute is the lever. Card field: plain words for a reader who has not seen your files, at most 22 words, no labels from your files; may cite a source as [source id].\\\"},\\\"if_not\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The measured outcome if it is not. Card field: plain words for a reader who has not seen your files, at most 25 words, no labels from your files; may cite a source as [source id].\\\"},\\\"decision_rule\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"How the measured result decides between if_lever and if_not, with its threshold as a number.\\\"},\\\"noise_rule\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"How a real difference is told from run-to-run noise (seeds, a confidence interval, paired evaluation).\\\"},\\\"expected\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"if_lever\\\",\\\"if_not\\\",\\\"unsure\\\"],\\\"description\\\":\\\"The outcome you expect.\\\"},\\\"expected_why\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One sentence.\\\"}},\\\"required\\\":[\\\"if_lever\\\",\\\"if_not\\\",\\\"decision_rule\\\",\\\"noise_rule\\\",\\\"expected\\\",\\\"expected_why\\\"]},\\\"compute_tested\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"yes\\\",\\\"partly\\\",\\\"no\\\"],\\\"description\\\":\\\"Does the test vary a quantity that more parallel compute buys?\\\"},\\\"compute_tested_why\\\":{\\\"type\\\":\\\"string\\\"},\\\"scored_against\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"What the measured outcome is compared with to decide it is correct.\\\"},\\\"arms\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"what\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"id\\\",\\\"what\\\"]}},\\\"baseline\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"what\\\":{\\\"type\\\":\\\"string\\\"},\\\"value\\\":{\\\"type\\\":[\\\"number\\\",\\\"string\\\"]},\\\"source_id\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"what\\\"]},\\\"anchor\\\":{\\\"description\\\":\\\"A published number or an independent code the setup reproduces first, with its tolerance; or why there is none.\\\",\\\"anyOf\\\":[{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"what\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"Card field: plain words for a reader who has not seen your files, at most 24 words, no labels from your files; may cite a source as [source id].\\\"},\\\"published_value\\\":{\\\"type\\\":[\\\"number\\\",\\\"string\\\"]},\\\"tolerance\\\":{\\\"type\\\":\\\"string\\\"},\\\"source_id\\\":{\\\"type\\\":\\\"string\\\"},\\\"independent_code\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"An independent code the result is checked against, if any.\\\"}},\\\"required\\\":[\\\"what\\\",\\\"tolerance\\\"]},{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"absent_reason\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"absent_reason\\\"]}]},\\\"checks\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"}},\\\"phases\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"what\\\":{\\\"type\\\":\\\"string\\\"},\\\"stop_rule\\\":{\\\"type\\\":\\\"string\\\"},\\\"gate\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"on\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"A number id.\\\"},\\\"op\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\">=\\\",\\\"<=\\\"]},\\\"value\\\":{\\\"type\\\":\\\"number\\\"},\\\"else\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"What happens if the condition fails.\\\"}},\\\"required\\\":[\\\"on\\\",\\\"op\\\",\\\"value\\\",\\\"else\\\"],\\\"description\\\":\\\"Continue only if the measured number `on` satisfies `op value`.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"what\\\"]},\\\"description\\\":\\\"In execution order.\\\"},\\\"numbers\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"Lowercase letters, digits and _, starting with a letter, at most 31 characters. budget_usd and fs_usd_gib_month are reserved.\\\"},\\\"name\\\":{\\\"type\\\":\\\"string\\\"},\\\"unit\\\":{\\\"type\\\":\\\"string\\\"},\\\"basis\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"CITED\\\",\\\"PROXY\\\",\\\"MEASURED\\\",\\\"DERIVED\\\",\\\"DESIGN\\\",\\\"GUESS\\\"],\\\"description\\\":\\\"CITED: a source states it for this setting. PROXY: a source states it for a different setting. MEASURED: you ran it. DERIVED: computed by expr. DESIGN: a choice of this plan. GUESS: an estimate.\\\"},\\\"value\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"Required unless DERIVED.\\\"},\\\"expr\\\":{\\\"anyOf\\\":[{\\\"type\\\":\\\"string\\\"},{\\\"type\\\":\\\"number\\\"}],\\\"description\\\":\\\"DERIVED only. An expression: numbers, ids of numbers, rates and lines, budget_usd, fs_usd_gib_month (the price sheet's filesystem price per GiB-month), + - * / ^ ( ), ceil floor min max pow.\\\"},\\\"source_id\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"CITED, PROXY.\\\"},\\\"quote\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"CITED, PROXY: the exact source text that shows the value.\\\"},\\\"page_setting\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"CITED, PROXY: the setting the source's number is for.\\\"},\\\"differs_in\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"PROXY (required), MEASURED (optional): how the source's or the pilot's setting differs from this plan's.\\\"},\\\"command\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"MEASURED: the command run.\\\"},\\\"output\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"MEASURED: the output file, under <dir>/pilot/.\\\"},\\\"output_line\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"MEASURED: the output line that holds the value.\\\"},\\\"machine\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"MEASURED: where it ran.\\\"},\\\"rests_on\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"GUESS: what the guess is based on, in words; no URLs or source ids.\\\"},\\\"measured_by\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The id of the phase that measures this number.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"name\\\",\\\"unit\\\",\\\"basis\\\"]}},\\\"cost\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"rates\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"gpu\\\":{\\\"type\\\":\\\"string\\\"},\\\"gpu_memory_gb\\\":{\\\"type\\\":\\\"number\\\"},\\\"n_gpus\\\":{\\\"type\\\":\\\"integer\\\"},\\\"per_gpu_usd_h\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"From the price sheet.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"gpu\\\",\\\"n_gpus\\\",\\\"per_gpu_usd_h\\\"]}},\\\"lines\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"phase\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"A phase id.\\\"},\\\"what\\\":{\\\"type\\\":\\\"string\\\"},\\\"kind\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"work\\\",\\\"allotment\\\",\\\"storage\\\"],\\\"description\\\":\\\"work: hours on a rate. allotment: time or dollars set aside for a stated purpose. storage: dollars.\\\"},\\\"rate\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"A rate id (work, allotment).\\\"},\\\"hours\\\":{\\\"anyOf\\\":[{\\\"type\\\":\\\"string\\\"},{\\\"type\\\":\\\"number\\\"}],\\\"description\\\":\\\"Hours on the rate (work, allotment); a time box when need is given. An expression: numbers, ids of numbers, rates and lines, budget_usd, fs_usd_gib_month (the price sheet's filesystem price per GiB-month), + - * / ^ ( ), ceil floor min max pow.\\\"},\\\"need\\\":{\\\"anyOf\\\":[{\\\"type\\\":\\\"string\\\"},{\\\"type\\\":\\\"number\\\"}],\\\"description\\\":\\\"The estimated work in hours when hours is a time box. An expression: numbers, ids of numbers, rates and lines, budget_usd, fs_usd_gib_month (the price sheet's filesystem price per GiB-month), + - * / ^ ( ), ceil floor min max pow.\\\"},\\\"usd\\\":{\\\"anyOf\\\":[{\\\"type\\\":\\\"string\\\"},{\\\"type\\\":\\\"number\\\"}],\\\"description\\\":\\\"Dollars (storage, or an allotment given in dollars). An expression: numbers, ids of numbers, rates and lines, budget_usd, fs_usd_gib_month (the price sheet's filesystem price per GiB-month), + - * / ^ ( ), ceil floor min max pow.\\\"},\\\"optional\\\":{\\\"type\\\":\\\"boolean\\\"},\\\"instead_of\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"Line ids this line is an alternative to.\\\"},\\\"condition\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"When this line runs.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"phase\\\",\\\"what\\\",\\\"kind\\\"]}},\\\"scenarios\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"what\\\":{\\\"type\\\":\\\"string\\\"},\\\"set\\\":{\\\"type\\\":\\\"object\\\",\\\"additionalProperties\\\":{\\\"type\\\":\\\"number\\\"},\\\"description\\\":\\\"Number id to the value it takes in this scenario.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"what\\\",\\\"set\\\"]}},\\\"yields\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"Ids of numbers that say what the money buys.\\\"},\\\"spend_cap_usd\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"Your hard stop in dollars.\\\"},\\\"total_stated\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"Your own total in dollars.\\\"}},\\\"required\\\":[\\\"rates\\\",\\\"lines\\\",\\\"total_stated\\\"]},\\\"full_scale\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"what\\\":{\\\"type\\\":\\\"string\\\"},\\\"usd\\\":{\\\"anyOf\\\":[{\\\"type\\\":\\\"string\\\"},{\\\"type\\\":\\\"number\\\"}],\\\"description\\\":\\\"Dollars. An expression: numbers, ids of numbers, rates and lines, budget_usd, fs_usd_gib_month (the price sheet's filesystem price per GiB-month), + - * / ^ ( ), ceil floor min max pow.\\\"},\\\"ratio_to\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"A number id to compare this run with.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"what\\\",\\\"usd\\\"]},\\\"description\\\":\\\"Runs the budget cannot buy.\\\"},\\\"outside_budget\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"what\\\":{\\\"type\\\":\\\"string\\\"},\\\"qty\\\":{\\\"type\\\":\\\"number\\\"},\\\"unit\\\":{\\\"type\\\":\\\"string\\\"}},\\\"required\\\":[\\\"what\\\",\\\"qty\\\",\\\"unit\\\"]},\\\"description\\\":\\\"Resources used that the budget does not pay for.\\\"},\\\"restructuring\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"sequential_part\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"What one answer waits on step after step, and how many steps. Card field: plain words for a reader who has not seen your files, at most 18 words, no labels from your files; may cite a source as [source id].\\\"},\\\"method\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"Why those steps need not run in order and how the plan computes them at the same time; or \\\\\"none\\\\\". Card field: plain words for a reader who has not seen your files, at most 22 words, no labels from your files; may cite a source as [source id].\\\"},\\\"condition\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"What must hold about this system for the method to pay off, and the cheap measurement that checks it.\\\"},\\\"condition_phase\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The id of the phase that makes that measurement before the main spend.\\\"},\\\"baseline_sequential\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The fastest sequential implementation the plan times, and how it is tuned.\\\"},\\\"baseline_copies\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"Independent copies run side by side on the same GPUs, which the plan also times.\\\"}},\\\"required\\\":[\\\"sequential_part\\\",\\\"method\\\"]},\\\"scope_gap\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"What the budget cannot test about the option's claim.\\\"},\\\"novelty\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"closest_prior\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The published result that comes nearest to deciding between if_lever and if_not: what it measured and the largest amount of the compute quantity it used. Card field: plain words for a reader who has not seen your files, at most 30 words, no labels from your files; may cite a source as [source id].\\\"},\\\"closest_source_id\\\":{\\\"type\\\":\\\"string\\\"},\\\"prior_max_level\\\":{\\\"type\\\":[\\\"number\\\",\\\"null\\\"],\\\"description\\\":\\\"That largest amount in compute_axis.unit, or null if it is not on the same axis.\\\"},\\\"left_open\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"Card field: plain words for a reader who has not seen your files, at most 30 words, no labels from your files; may cite a source as [source id].\\\"},\\\"decides\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"no\\\",\\\"partly\\\",\\\"yes\\\"],\\\"description\\\":\\\"Does closest_prior already decide the outcome at your compute levels?\\\"},\\\"searched\\\":{\\\"type\\\":\\\"boolean\\\",\\\"description\\\":\\\"Did web search return results while you planned?\\\"}},\\\"required\\\":[\\\"closest_prior\\\",\\\"left_open\\\",\\\"decides\\\",\\\"searched\\\"]},\\\"limits\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"What the result would not show. Card field: plain words, at most 30 words in all, no labels from your files.\\\"},\\\"test_summary\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"Card field: plain words for a reader who has not seen your files, at most 45 words, no labels from your files; may cite a source as [source id].\\\"},\\\"sources\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\"},\\\"url\\\":{\\\"type\\\":\\\"string\\\"},\\\"quote\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The exact sentence relied on.\\\"},\\\"supports\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"What it supports in this plan.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"url\\\",\\\"quote\\\",\\\"supports\\\"]}},\\\"files_read\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"}}},\\\"required\\\":[\\\"option_title\\\",\\\"question\\\",\\\"hypothesis\\\",\\\"compute_axis\\\",\\\"held_fixed\\\",\\\"predictions\\\",\\\"compute_tested\\\",\\\"compute_tested_why\\\",\\\"scored_against\\\",\\\"arms\\\",\\\"baseline\\\",\\\"anchor\\\",\\\"checks\\\",\\\"phases\\\",\\\"numbers\\\",\\\"cost\\\",\\\"full_scale\\\",\\\"outside_budget\\\",\\\"restructuring\\\",\\\"scope_gap\\\",\\\"novelty\\\",\\\"limits\\\",\\\"test_summary\\\",\\\"sources\\\",\\\"files_read\\\"]}\""
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_00_braS5W6U1lK3ouWajsRg5180",
+      "type": "function",
+      "function": {
+       "name": "read",
+       "arguments": "{\"filePath\":\"/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work/seed-1/seed/idea/5adf8c42\"}"
+      }
+     },
+     {
+      "id": "call_01_ro6shrf4ZbAsHAg1IMoc7611",
+      "type": "function",
+      "function": {
+       "name": "read",
+       "arguments": "{\"filePath\":\"/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work\"}"
+      }
+     }
+    ],
+    "reasoning_content": "Let me understand the task. I need to:\n\n1. Read the option record FD1 \"Industrial food ingredient replacement for sustainability\".\n2. Think about running something on this with up to $1,000 of GPU credit at Lambda's on-demand prices.\n3. Make it concrete: what to build, the baseline, how to check it's right, and the cost.\n4. Cite a URL for every factual claim.\n5. Write to /home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work/seed-1/seed/idea/5adf8c42/producer.md\n6. Return a JSON value matching the schema.\n\nThe option is \"Industrial food ingredient replacement for sustainability\" - the root question is vague. I need to make it concrete. This is about ML for food ingredient replacement.\n\nLet me think about what concrete thing to build. The option is about \"industrial food ingredient replacement for sustainability\" - this suggests replacing unsustainable food ingredients (e.g., palm oil, dairy, eggs, meat) with sustainable alternatives using ML. This could involve:\n- Formulation optimization: find ingredient substitutions that match functional properties (taste, texture, nutrition) while being more sustainable.\n- A model that maps ingredient → replacement.\n\nI should search the web for relevant facts: palm oil environmental impact, ingredient replacement ML, food formulation, etc. Then build a concrete plan.\n\nLet me first check my environment and the filesystem. Let me look at the working directory structure.\n\nLet me start by reading the directory and searching the web.\n\nThe key outputs I need:\n- A producer.md file (working file)\n- A JSON record\n\nLet me think about what a concrete, checkable ML project would be here with $1,000 budget.\n\nThe most concrete, checkable thing: Train/evaluate a model that predicts functionally equivalent ingredient substitutions (e.g., replace palm oil with alternatives in recipes) and measure its performance against a baseline. The \"how to check it's right\" = evaluate on held-out substitution pairs, with an anchor being a published benchmark.\n\nActually, let me think about the compute angle. The schema has a lot about \"restructuring\" - parallel vs sequential compute. This is the \"latent_open\" interp framework. The question is whether compute is the lever.\n\nLet me think about what makes sense. The idea of \"industrial food ingredient replacement for sustainability\" — a natural ML framing: given a recipe/ingredient, predict a sustainable replacement that preserves functional properties. The compute axis could be number of candidate replacements screened, or the size of the training data, or the number of model parameters.\n\nActually, let me think more carefully about what \"more parallel compute buys\". The restructuring section asks about sequential_part (chain of steps one answer waits on), method (parallelization), etc. For a food ingredient replacement task, the \"computation\" might be: screen many candidate ingredient replacements via simulation/prediction. That's embarrassingly parallel (each candidate is independent). So method = \"none\" (independent work side by side), or splitting each step.\n\nLet me settle on a concrete, defensible plan:\n\n**Concrete project**: Build a text-to-text model (fine-tune a small LLM, or use an embedding-based retrieval) that, given an industrial food ingredient in a recipe context, proposes a more sustainable replacement that preserves functional role. Evaluate on a held-out set of expert substitution pairs (e.g., palm oil → sunflower/rapeseed oil with similar smoke point, or egg → aquafaba).\n\nBaseline: a simple retrieval/knowledge-graph baseline or a rule-based dictionary. Or \"random/one-hot embedding\" baseline.\n\nActually, a cleaner, checkable setup with clear numbers:\n- Dataset: There are datasets of food ingredient substitutions. E.g., the \"FoodSubs\" or \"Substitute\" dataset from Kaggle. Also \"RecipeDB\" has substitution relations.\n\nLet me search the web to find:\n1. Lambda pricing (already given).\n2. Palm oil / food sustainability facts (for the \"why it matters\").\n3. Existing datasets for ingredient substitution (FoodKG, Recipe1M+, RecipeDB).\n4. Model sizes and fine-tuning costs.\n\nLet me do web searches.\n\nActually, I should be efficient. Let me plan the searches:\n- \"food ingredient substitution dataset\" \n- \"RecipeDB ingredient substitution\"\n- \"palm oil replacement sustainability emissions\"\n- \"food formulation machine learning\"\n- \"fine-tune small language model cost\"\n\nLet me also check the environment files to understand context (framer files, etc.). The prompt mentions \"the branch and framer files\" - maybe there are files I should read. Let me look at the working directory and workspace.\n\nLet me start with reading the directory structure and doing web searches in parallel.\n\nLet me first explore the filesystem."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_00_braS5W6U1lK3ouWajsRg5180",
+    "content": "File not found: /home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work/seed-1/seed/idea/5adf8c42"
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_01_ro6shrf4ZbAsHAg1IMoc7611",
+    "content": "<path>/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r0/card/work</path>\n<type>directory</type>\n<entries>\n\n\n(0 entries)\n</entries>"
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_00_ZFmXjRHxGgZMlr4Qsspd7902",
+      "type": "function",
+      "function": {
+       "name": "read",
+       "arguments": "{\"filePath\":\"/home/hal/dev/interp/latent_open\"}"
+      }
+     },
+     {
+      "id": "call_01_ShLjd2vDTOm4l6by0NWh2917",
+      "type": "function",
+      "function": {
+       "name": "glob",
+       "arguments": "{\"pattern\":\"runs/loop/food/20261017-213943/**/*\"}"
+      }
+     }
+    ],
+    "reasoning_content": "The work directory is empty. I need to create the directory structure and the producer.md file. Let me also check the workspace root for context (framer files, etc.)."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_00_ZFmXjRHxGgZMlr4Qsspd7902",
+    "content": "<path>/home/hal/dev/interp/latent_open</path>\n<type>directory</type>\n<entries>\n.git/\n.gitignore\nqt2/\nREADME.md\nruns/\n\n(5 entries)\n</entries>"
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_01_ShLjd2vDTOm4l6by0NWh2917",
+    "content": "No files found"
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_00_ET_H6GTUesJGEUkdOwpdv0b9581",
+      "type": "function",
+      "function": {
+       "name": "read",
+       "arguments": "{\"filePath\":\"/home/hal/dev/interp/latent_open/README.md\"}"
+      }
+     },
+     {
+      "id": "call_01_ET_qxr2943CQgD8oJL5QcJA9373",
+      "type": "function",
+      "function": {
+       "name": "glob",
+       "arguments": "{\"pattern\":\"qt2/**/*\"}"
+      }
+     }
+    ],
+    "reasoning_content": ""
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_00_ET_H6GTUesJGEUkdOwpdv0b9581",
+    "content": "<path>/home/hal/dev/interp/latent_open/README.md</path>\n<type>file</type>\n<content>\n1: # latent_open\n2: \n3: Question-tree research pipeline: generate research cards from root questions, check them, and place them in existing\n4: research or industrial programmes. Two runtimes share one script and one set of prompts and gates.\n5: \n6: ## Layout\n7: \n8: - `qt2/src/` pipeline modules (text, schemas, cost, pick, gates, render, prompts, main, replay); `qt2/build.js`\n9:   concatenates them into `qt2/dist/question_tree_v2.js` and `qt2/dist/replay_v2.js`. `qt2/CONTRACT.md` is the spec,\n10:   `qt2/PROMPTS.md` the generated prompt listing, `qt2/tests/` (`node qt2/tests/run.js`).\n11: - `qt2/replay/` args and outputs of the replay and run-F launches (Claude Workflow runtime).\n12: - `qt2/idea/` OpenCode runtime:\n13:   - `wf.js` runs a dist script with every agent call served by an OpenCode model (card generation, full tree, replay).\n14:   - `frame.js` frame check for one card: existing programmes, checked citations, fit scores.\n15:   - `status.js` progress and spend of either kind of run; `oc.js` one OpenCode call; `schema.js` reply checks.\n16:   - `ocx/opencode/opencode.json` the isolated OpenCode config every call runs under (no MCP, deny by default).\n17:   - `config.json` models, timeouts, run directories, OpenCode Go caps.\n18: - `runs/idea/`, `runs/oc/` full logs of OpenCode runs (see below).\n19: \n20: ## Deployment links\n21: \n22: The files live here; the places that load them are symlinks:\n23: - `/home/hal/stage/qt2` -> `qt2/` (Claude Workflow launches and operator prompts use this path)\n24: - `/home/hal/stage/runs-idea`, `/home/hal/stage/runs-oc` -> `runs/idea`, `runs/oc`\n25: - `~/.config/opencode/commands/idea-status.md` -> `qt2/idea/commands/idea-status.md` (`/idea-status` in OpenCode)\n26: \n27: Git stores a symlink inside a repo as a link, not the file it points to, so the real file is always the one in this repo.\n28: \n29: ## Running on OpenCode\n30: \n31: ```\n32: cd qt2/idea\n33: node wf.js --args seed-I1.json --name I1-card   # card generation (or any dist script via --script)\n34: node frame.js --card R4:interp:I1               # frame check of a run-F card; --card-file for any card\n35: node status.js --latest [--watch]\n36: ```\n37: \n38: ## What a run records\n39: \n40: Each `runs/oc/<name>/<stamp>/` holds `run.json` (script hash, args, models, versions, git commit, totals),\n41: `journal.jsonl` (every agent call: started, result with its value, failed, cached; every log line), `status.json`,\n42: `result.json`, `RESULT.md`, and per call `agents/NNNN-<label>/` with `prompt.md` (exact text sent), `events.jsonl`\n43: (OpenCode event stream), `export.json` (`opencode export`: messages, reasoning, tool calls with input and output,\n44: tokens, cost), `reply.txt` and `meta.json`. Frame runs keep `ledger.jsonl`, `raw/` and `research/notes.md` likewise.\n45: Each call also goes through a local logging proxy (`qt2/idea/httplog.js`), so `http/NNN.request.json` holds the exact\n46: provider request (OpenCode's system prompt, tool definitions, messages; credentials redacted) and `NNN.response.txt`\n47: the streamed reply. Passing a session title skips OpenCode's extra title-generation request.\n\n(End of file - total 47 lines)\n</content>"
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_01_ET_qxr2943CQgD8oJL5QcJA9373",
+    "content": "No files found"
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_00_tOyPs5OGVDQoMd7c4j1u7991",
+      "type": "function",
+      "function": {
+       "name": "glob",
+       "arguments": "{\"pattern\":\"qt2/**/*.md\"}"
+      }
+     },
+     {
+      "id": "call_01_UWa5hM1RerxCyx78UV3I3920",
+      "type": "function",
+      "function": {
+       "name": "glob",
+       "arguments": "{\"pattern\":\"qt2/**/*.js\"}"
+      }
+     }
+    ],
+    "reasoning_content": "Let me look at the qt2 directory for context - especially the schemas and prompts to understand what's expected. Also check the \"framer files\" and \"branch\" files mentioned in the prompt.\n\nLet me look at qt2 directory structure."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_00_tOyPs5OGVDQoMd7c4j1u7991",
+    "content": "No files found"
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_01_UWa5hM1RerxCyx78UV3I3920",
+    "content": "No files found"
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "edit",
+     "description": "Performs exact string replacements in files. \n\nUsage:\n- You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file. \n- When editing text from Read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. The line number prefix format is: line number + colon + space (e.g., `1: `). Everything after that space is the actual file content to match. Never include any part of the line number prefix in the oldString or newString.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.\n- The edit will FAIL if `oldString` is not found in the file with an error \"oldString not found in content\".\n- The edit will FAIL if `oldString` is found multiple times in the file with an error \"Found multiple matches for oldString. Provide more surrounding lines in oldString to identify the correct match.\" Either provide a larger string with more surrounding context to make it unique or use `replaceAll` to change every instance of `oldString`. \n- Use `replaceAll` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to modify"
+       },
+       "oldString": {
+        "type": "string",
+        "description": "The text to replace"
+       },
+       "newString": {
+        "type": "string",
+        "description": "The text to replace it with (must be different from oldString)"
+       },
+       "replaceAll": {
+        "type": "boolean",
+        "description": "Replace all occurrences of oldString (default false)"
+       }
+      },
+      "required": [
+       "filePath",
+       "oldString",
+       "newString"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "glob",
+     "description": "- Fast file pattern matching tool that works with any codebase size\n- Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\"\n- Returns matching file paths\n- Use this tool when you need to find files by name patterns\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n- You have the capability to call multiple tools in a single response. It is always better to speculatively perform multiple searches as a batch that are potentially useful.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The glob pattern to match files against"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter \"undefined\" or \"null\" - simply omit it for the default behavior. Must be a valid directory path if provided."
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "grep",
+     "description": "- Fast content search tool that works with any codebase size\n- Searches file contents using regular expressions\n- Supports full regex syntax (eg. \"log.*Error\", \"function\\s+\\w+\", etc.)\n- Filter files by pattern with the include parameter (eg. \"*.js\", \"*.{ts,tsx}\")\n- Returns file paths and line numbers with matching lines\n- Use this tool when you need to find files containing specific patterns\n- If you need to identify/count the number of matches within files, use the Bash tool with `rg` (ripgrep) directly. Do NOT use `grep`.\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The regex pattern to search for in file contents"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. Defaults to the current working directory."
+       },
+       "include": {
+        "type": "string",
+        "description": "File pattern to include in the search (e.g. \"*.js\", \"*.{ts,tsx}\")"
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "read",
+     "description": "Read a file or directory from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter should be an absolute path.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Use the grep tool to find specific content in large files or files with long lines.\n- If you are unsure of the correct file path, use the glob tool to look up filenames by glob pattern.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\". For directories, entries are returned one per line (without line numbers) with a trailing `/` for subdirectories.\n- Any line longer than 2000 characters is truncated.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.\n- This tool can read image files and PDFs and return them as file attachments.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file or directory to read"
+       },
+       "offset": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The line number to start reading from (1-indexed)"
+       },
+       "limit": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The maximum number of lines to read (defaults to 2000)"
+       }
+      },
+      "required": [
+       "filePath"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "write",
+     "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the Read tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "content": {
+        "type": "string",
+        "description": "The content to write to the file"
+       },
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to write (must be absolute, not relative)"
+       }
+      },
+      "required": [
+       "content",
+       "filePath"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

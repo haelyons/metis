@@ -1,0 +1,154 @@
+{
+ "name": "battery-r0",
+ "run_dir": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/card",
+ "script": "/home/hal/dev/interp/latent_open/qt2/dist/question_tree_v2.js",
+ "script_sha256": "b7d451cf548e526458359e6ea5f1e4ad8e9a63b0b027088dc619e07984d0490a",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "B1",
+    "title": "Battery crystal discovery",
+    "text": "Battery crystal discovery? Crystal foundation models: there's hella, for battery generation, transport properties are different. (from the user's notes; no further detail given)",
+    "root_question": "Battery crystal discovery? Crystal foundation models: there's hella, for battery generation, transport properties are different.",
+    "kind": "physical",
+    "root_link": "is the root question",
+    "compute_open": "not given (seed idea from notes)",
+    "sequential": "not given (seed idea from notes)",
+    "source_urls": []
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/deepseek-v4-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/latent_open",
+  "commit": "b7e41a194334b7d05600a0b8c7a9dbda12d84bc4",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-17T21:39:44.617Z",
+ "finished": "2026-10-17T21:57:29.360Z",
+ "totals": {
+  "cost_usd": 0.3535377999999999,
+  "tokens": 342902,
+  "calls": 13,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 4,
+    "cost_usd": 0.01964205,
+    "tokens": 74639
+   },
+   "opencode-go/deepseek-v4-pro": {
+    "calls": 3,
+    "cost_usd": 0.289125936,
+    "tokens": 188618
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 2,
+    "cost_usd": 0.00385308,
+    "tokens": 21868
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 2,
+    "cost_usd": 0.01505856,
+    "tokens": 23888
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 2,
+    "cost_usd": 0.025858174,
+    "tokens": 33889
+   }
+  }
+ }
+}

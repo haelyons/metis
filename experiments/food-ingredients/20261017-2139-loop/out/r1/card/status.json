@@ -1,0 +1,105 @@
+{
+ "card": "food-r1",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r1/card",
+ "stage": "start",
+ "started": "2026-10-17T22:06:05.811Z",
+ "calls": [
+  {
+   "id": "0001 run:price-sheet",
+   "stage": "Frame",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 76033,
+   "cost_usd": 0.0057919,
+   "tokens": 19907,
+   "errors": []
+  },
+  {
+   "id": "0002 seed:idea:seed:producer",
+   "stage": "Produce",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 2,
+   "ms": 400493,
+   "cost_usd": 0.22680530399999999,
+   "tokens": 175426,
+   "errors": []
+  },
+  {
+   "id": "0003 seed:idea:seed:dramaturg",
+   "stage": "Check",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "running",
+   "attempts": 1,
+   "ms": 0,
+   "cost_usd": 0,
+   "tokens": 0
+  },
+  {
+   "id": "0004 seed:idea:seed:critic@qwen3.8-flash",
+   "stage": "Check",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 136175,
+   "cost_usd": 0.00565193,
+   "tokens": 9255,
+   "errors": []
+  },
+  {
+   "id": "0005 seed:idea:seed:critic@mimo-v2.6-flash",
+   "stage": "Check",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 72844,
+   "cost_usd": 0.0016569,
+   "tokens": 9148,
+   "errors": []
+  },
+  {
+   "id": "0006 seed:idea:seed:critic@minimax-m3",
+   "stage": "Check",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 35199,
+   "cost_usd": 0.00652968,
+   "tokens": 9938,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.24643571399999997,
+ "tokens": 223674,
+ "by_model": {
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.0057919,
+   "tokens": 19907
+  },
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.22680530399999999,
+   "tokens": 175426
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00652968,
+   "tokens": 9938
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.0016569,
+   "tokens": 9148
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.00565193,
+   "tokens": 9255
+  }
+ },
+ "done": false,
+ "updated": "2026-10-17T22:16:25.080Z"
+}

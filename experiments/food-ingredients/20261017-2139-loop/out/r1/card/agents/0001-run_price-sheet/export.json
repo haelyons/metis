@@ -1,0 +1,453 @@
+{
+  "info": {
+    "id": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+    "slug": "lucky-tiger",
+    "projectID": "e635804b0fe929d2ed556701e94990a108996451",
+    "directory": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r1/card/agents/0001-run_price-sheet/cwd",
+    "path": "runs/loop/food/20261017-213943/r1/card/agents/0001-run_price-sheet/cwd",
+    "title": "run:price-sheet",
+    "agent": "qt-web",
+    "model": {
+      "id": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.0057919,
+    "tokens": {
+      "input": 12384,
+      "output": 7523,
+      "reasoning": 0,
+      "cache": {
+        "read": 5760,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792274768199,
+      "updated": 1792274841822
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792274768356
+        },
+        "agent": "qt-web",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "glm-5.3-flash"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14be6a1e4001lyBfQe87vF7wtk",
+        "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Fetch https://lambda.ai/pricing and https://docs.lambda.ai/public-cloud/billing/. List every on-demand instance as {gpu, gpu_memory_gb, n_gpus, per_gpu_usd_h, page_text}, where page_text is the text that shows that price for that instance size; and the filesystem price with page_text and whether the page calls it an example. Decide only from these two pages.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"read_at\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The date the pages were fetched, ISO format.\\\"},\\\"instances\\\":{\\\"type\\\":\\\"array\\\",\\\"description\\\":\\\"Every on-demand instance size listed.\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"gpu\\\":{\\\"type\\\":\\\"string\\\"},\\\"gpu_memory_gb\\\":{\\\"type\\\":\\\"number\\\"},\\\"n_gpus\\\":{\\\"type\\\":\\\"integer\\\"},\\\"per_gpu_usd_h\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"US dollars per GPU per hour.\\\"},\\\"page_text\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The text on the page that shows this price for this instance size.\\\"}},\\\"required\\\":[\\\"gpu\\\",\\\"gpu_memory_gb\\\",\\\"n_gpus\\\",\\\"per_gpu_usd_h\\\",\\\"page_text\\\"]}},\\\"filesystem\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"usd_gib_month\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"US dollars per GiB per month.\\\"},\\\"page_text\\\":{\\\"type\\\":\\\"string\\\"},\\\"example\\\":{\\\"type\\\":\\\"boolean\\\",\\\"description\\\":\\\"True if the page presents this price as an example.\\\"}},\\\"required\\\":[\\\"usd_gib_month\\\",\\\"page_text\\\",\\\"example\\\"]}},\\\"required\\\":[\\\"read_at\\\",\\\"instances\\\",\\\"filesystem\\\"]}\"",
+          "id": "prt_14be6a1f0001ZkIkmLeS6dnin1",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6a1e4001lyBfQe87vF7wtk"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14be6a1e4001lyBfQe87vF7wtk",
+        "role": "assistant",
+        "mode": "qt-web",
+        "agent": "qt-web",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r1/card/agents/0001-run_price-sheet/cwd",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00024365,
+        "tokens": {
+          "total": 1454,
+          "input": 1381,
+          "output": 73,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "glm-5.3-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792274769177,
+          "completed": 1792274771916
+        },
+        "finish": "tool-calls",
+        "id": "msg_14be6a519001SyipKsrA4fnzV9",
+        "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4"
+      },
+      "parts": [
+        {
+          "snapshot": "b25bb659c1afae40d59ac675c95fef92916ecd0e",
+          "type": "step-start",
+          "id": "prt_14be6acea001NRTd1VNIpPRJzM",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6a519001SyipKsrA4fnzV9"
+        },
+        {
+          "type": "reasoning",
+          "text": "The user wants me to fetch two pages and extract pricing data. Let me fetch both pages in parallel since they're independent.",
+          "time": {
+            "start": 1792274771183,
+            "end": 1792274771626
+          },
+          "id": "prt_14be6acef0013pV6wgkf6oQ90R",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6a519001SyipKsrA4fnzV9"
+        },
+        {
+          "type": "tool",
+          "tool": "webfetch",
+          "callID": "5b4f7190-ff0c-4ebf-96a6-b21cd1fd2de8",
+          "state": {
+            "status": "completed",
+            "input": {
+              "url": "https://lambda.ai/pricing",
+              "format": "text"
+            },
+            "output": "GPU cloud pricing: rent NVIDIA H100, H200, and B200 | Lambda\n  \n  \n  \n  \n  \n  \n  \n\n  \n  \n\n  \n\n  \n  \n\n  \n\n    \n    \n    \n    \n    \n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n  \n  \n  \n  \n\n\n\n\n  \n  Skip to main content\n  \n  \n  \n\n  \n\n  \n  \n\n  AI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our teamAI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our team\n    \n      \n  \n  \n  \n      \n  \n\n  \n    \n    \n\n\n\n\n\n\n\n\n\n\n\nAI cloud pricingClear, straightforward pricing for Instances, 1-Click Clusters™, and Superclusters.\nContact us for reserved capacity at our lowest prices.Launch GPU instanceTalk to our team\n    \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\n1-Click ClusterspricingProduction-ready clusters from 16 to 2,000+ NVIDIA B200 or H100 GPUs.Learn moreNVIDIA HGX B200NVIDIA H100NVIDIA HGX B200 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA HGX B2002 weeks – 1 year16$9.86Talk to our teamNVIDIA HGX B2002 weeks – 1 year64$9.36Talk to our teamNVIDIA HGX B2002 weeks – 1 year256+$8.87Talk to our teamNVIDIA HGX B2001 year+16+—Talk to our team* plus applicable sales tax/VAT/GSTNVIDIA H100 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA H1002 weeks – 1 year16$6.16Talk to our teamNVIDIA H1002 weeks – 1 year64$5.85Talk to our teamNVIDIA H1002 weeks – 1 year256$5.54Talk to our teamNVIDIA H1001 year+16+—Talk to our team* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\nInstances pricingDeploy NVIDIA B200, H100, A100, or GH200 instances in minutes with self-serve, first-come access.Launch GPU instance8x4x2x1xPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB1041440 GiB11 TiB SSD$6.79NVIDIA H100 SXM80 GB104900 GiB11 TiB SSD$4.09NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB52720 GiB5.5 TiB SSD$6.89NVIDIA H100 SXM80 GB52450 GiB5.5 TiB SSD$4.19NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB26360 GiB2.75 TiB SSD$6.99NVIDIA GH20096 GB64432 GiB4 TiB SSD$2.29NVIDIA H100 SXM80 GB26225 GiB2.75 TiB SSD$4.29NVIDIA H100 PCIe80 GB26225 GiB1 TiB SSD$3.29NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99NVIDIA A1024 GB30226 GiB1.3 TiB SSD$1.29NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09NVIDIA Quadro RTX 600024 GB1446 GiB512 GiB SSD$0.69* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n\n  \n  \n\n\nFOOTERAI FACTORIESFor every mission Superintelligence Enterprise Government Startups and researchersFoundations AI infrastructure Trust and security Customer storiesProductsProducts Superclusters 1-Click Clusters InstancesFeatures AI infrastructure Orchestration Lambda Stack Trust and securityDocs Documentation Blog ResearchCompanyInside LambdaAboutCareersLeadershipInvestorsResourcesResearchCustomer storiesBlogPartnersBrand guidelinesPrivacy PolicyTerms of ServiceCookie preferencesCookie management is unavailable because your browser is blocking third-party scripts.© 2026 Lambda. All rights reserved.",
+            "metadata": {
+              "truncated": false
+            },
+            "title": "https://lambda.ai/pricing (text/html; charset=UTF-8)",
+            "time": {
+              "start": 1792274771643,
+              "end": 1792274771742
+            }
+          },
+          "id": "prt_14be6aeae001CoZLDe2KryaxSr",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6a519001SyipKsrA4fnzV9"
+        },
+        {
+          "type": "tool",
+          "tool": "webfetch",
+          "callID": "64932e10-fa6b-4bea-b37f-c7c9c0d85dd1",
+          "state": {
+            "status": "completed",
+            "input": {
+              "url": "https://docs.lambda.ai/public-cloud/billing/",
+              "format": "text"
+            },
+            "output": "Billing overview - Lambda Docs\n      \n    \n    \n      \n      \n        \n        \n      \n      \n\n\n    \n    \n      \n    \n    \n      \n        \n        \n        \n        \n        \n      \n    \n    \n      \n    \n      \n    \n      \n    \n      \n    \n    \n    \n      \n  \n\n\n  \n\n\n  \n    \n  \n\n    \n    \n  \n\n  \n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n  \n    \n    \n      \n    \n    \n    \n    \n    \n  \n    \n    \n    \n    \n    \n      \n        \n        \n          Skip to content\n        \n      \n    \n    \n      \n    \n    \n    \n      \n\n\n\n\n\n\n\n  \n\n    \n    \n      \n  \n\n    \n\n    \n    \n      \n      \n    \n\n    \n    \n      \n        \n          \n            \n          \n        \n        \n          \n            \n          \n        \n      \n    \n\n    \n    \n      \n        \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n\n      \n    \n\n    \n    \n      \n    \n\n    \n    \n\n    \n    \n      \n        \n        \n      \n\n      \n      \n  \n  \n    \n      \n      \n        \n        \n        \n        \n      \n      \n        \n        \n          \n          \n        \n      \n      \n    \n    \n      \n        \n          \n            Initializing search\n          \n          \n        \n      \n    \n  \n\n    \n\n    \n    \n  \n\n  \n  \n\n    \n    \n      \n      \n        \n          \n            \n\n  \n    \n      \n        \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    \n  \n  Home\n\n      \n    \n  \n\n      \n        \n  \n  \n  \n    \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Public Cloud\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Private Cloud\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Managed Kubernetes\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Managed Slurm\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Education\n\n        \n      \n    \n  \n\n      \n    \n  \n\n          \n        \n      \n      \n        \n          \n            \n              \n              \n                \n                  \n                    \n\n\n  \n\n\n\n  \n    \n      \n  \n\n    \n    Lambda Docs\n  \n  \n  \n    \n      \n      \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Home\n  \n  \n\n      \n    \n  \n\n    \n      \n      \n  \n  \n    \n  \n  \n  \n    \n    \n    \n      \n        \n          \n          \n        \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n        \n        \n          \n          \n            \n  \n  \n    Public Cloud\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Public Cloud\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Cloud Console\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Resource management\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Resource management\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Resource hierarchy\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your account\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your workspaces\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Access and security\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Access and security\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Access and security overview\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Firewalls\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Enabling single sign-on (SSO)\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Data management\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Data management\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Filesystems\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Filesystem S3 Adapter\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Importing and exporting data\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Logging and monitoring\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Logging and monitoring\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Guest Agent\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n    \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n        \n        \n          \n          \n            \n  \n  \n    Billing\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Billing\n          \n          \n            \n              \n                \n  \n  \n    \n  \n  \n  \n    \n      \n      \n      \n      \n        \n      \n      \n        \n          \n  \n  \n    Billing overview\n  \n  \n\n          \n        \n      \n      \n        \n  \n  \n    Billing overview\n  \n  \n\n      \n      \n        \n\n\n\n\n\n\n\n\n\n  \n  \n    \n  \n\n  \n  \n    \n      \n      Table of contents\n    \n    \n      \n        \n  \n    \n      \n        Billable resources\n      \n    \n  \n  \n    \n      \n        \n          \n  \n    \n      \n        On-Demand Cloud (ODC) instances\n      \n    \n  \n  \n\n        \n          \n  \n    \n      \n        1-Click Clusters (1CCs)\n      \n    \n  \n  \n\n        \n          \n  \n    \n      \n        Filesystems\n      \n    \n  \n  \n\n        \n      \n    \n  \n\n      \n        \n  \n    \n      \n        Credits and refunds\n      \n    \n  \n  \n\n      \n        \n  \n    \n      \n        Next steps\n      \n    \n  \n  \n\n      \n    \n  \n\n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing billing\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Cloud API\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    On-Demand\n  \n  \n\n            \n          \n        \n        \n          \n            \n            On-Demand\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Overview\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Connecting to an instance\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Creating and managing instances\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your system environment\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Troubleshooting\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    1-Click Clusters\n  \n  \n\n            \n          \n        \n        \n          \n            \n            1-Click Clusters\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    How to serve the Llama 3.1 405B model using a Lambda 1-Click Cluster\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Security posture\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Support\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Additional resources\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Additional resources\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Forum\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Blog\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    YouTube\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Main site\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Tags index\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n    \n      \n      \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Private Cloud\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Private Cloud\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Accessing your Lambda Private Cloud cluster\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Security posture\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Additional resources\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Additional resources\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Forum\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Blog\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    YouTube\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Main site\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Tags index\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n    \n      \n      \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Managed Kubernetes\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Managed Kubernetes\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Continuous validation\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Auto-remediation system\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n\n...1698 lines truncated...\n\nThe tool call succeeded but the output was truncated. Full output saved to: /home/hal/.local/share/opencode/tool-output/tool_14be6af6d001JU5MyyE0REProJ\nUse Grep to search the full content or Read with offset/limit to view specific sections.",
+            "metadata": {
+              "truncated": true,
+              "outputPath": "/home/hal/.local/share/opencode/tool-output/tool_14be6af6d001JU5MyyE0REProJ"
+            },
+            "title": "https://docs.lambda.ai/public-cloud/billing/ (text/html; charset=utf-8)",
+            "time": {
+              "start": 1792274771699,
+              "end": 1792274771825
+            }
+          },
+          "id": "prt_14be6aeeb001DaqsfwtgHlJvFP",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6a519001SyipKsrA4fnzV9"
+        },
+        {
+          "reason": "tool-calls",
+          "snapshot": "b25bb659c1afae40d59ac675c95fef92916ecd0e",
+          "type": "step-finish",
+          "tokens": {
+            "total": 1454,
+            "input": 1381,
+            "output": 73,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.00024365,
+          "id": "prt_14be6af970015XxMiPchmxkUpC",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6a519001SyipKsrA4fnzV9"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14be6a1e4001lyBfQe87vF7wtk",
+        "role": "assistant",
+        "mode": "qt-web",
+        "agent": "qt-web",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r1/card/agents/0001-run_price-sheet/cwd",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.0006853,
+        "tokens": {
+          "total": 4515,
+          "input": 4492,
+          "output": 23,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "glm-5.3-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792274771920,
+          "completed": 1792274772956
+        },
+        "finish": "tool-calls",
+        "id": "msg_14be6afd000167TXmJz0gDjIkx",
+        "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4"
+      },
+      "parts": [
+        {
+          "snapshot": "b25bb659c1afae40d59ac675c95fef92916ecd0e",
+          "type": "step-start",
+          "id": "prt_14be6b34b001yQNWEbMBuhToZD",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6afd000167TXmJz0gDjIkx"
+        },
+        {
+          "type": "tool",
+          "tool": "webfetch",
+          "callID": "75cc413a-cef7-47bb-a545-545a53d8142c",
+          "state": {
+            "status": "completed",
+            "input": {
+              "format": "text",
+              "url": "https://lambda.ai/pricing"
+            },
+            "output": "GPU cloud pricing: rent NVIDIA H100, H200, and B200 | Lambda\n  \n  \n  \n  \n  \n  \n  \n\n  \n  \n\n  \n\n  \n  \n\n  \n\n    \n    \n    \n    \n    \n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n  \n  \n  \n  \n\n\n\n\n  \n  Skip to main content\n  \n  \n  \n\n  \n\n  \n  \n\n  AI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our teamAI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our team\n    \n      \n  \n  \n  \n      \n  \n\n  \n    \n    \n\n\n\n\n\n\n\n\n\n\n\nAI cloud pricingClear, straightforward pricing for Instances, 1-Click Clusters™, and Superclusters.\nContact us for reserved capacity at our lowest prices.Launch GPU instanceTalk to our team\n    \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\n1-Click ClusterspricingProduction-ready clusters from 16 to 2,000+ NVIDIA B200 or H100 GPUs.Learn moreNVIDIA HGX B200NVIDIA H100NVIDIA HGX B200 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA HGX B2002 weeks – 1 year16$9.86Talk to our teamNVIDIA HGX B2002 weeks – 1 year64$9.36Talk to our teamNVIDIA HGX B2002 weeks – 1 year256+$8.87Talk to our teamNVIDIA HGX B2001 year+16+—Talk to our team* plus applicable sales tax/VAT/GSTNVIDIA H100 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA H1002 weeks – 1 year16$6.16Talk to our teamNVIDIA H1002 weeks – 1 year64$5.85Talk to our teamNVIDIA H1002 weeks – 1 year256$5.54Talk to our teamNVIDIA H1001 year+16+—Talk to our team* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\nInstances pricingDeploy NVIDIA B200, H100, A100, or GH200 instances in minutes with self-serve, first-come access.Launch GPU instance8x4x2x1xPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB1041440 GiB11 TiB SSD$6.79NVIDIA H100 SXM80 GB104900 GiB11 TiB SSD$4.09NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB52720 GiB5.5 TiB SSD$6.89NVIDIA H100 SXM80 GB52450 GiB5.5 TiB SSD$4.19NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB26360 GiB2.75 TiB SSD$6.99NVIDIA GH20096 GB64432 GiB4 TiB SSD$2.29NVIDIA H100 SXM80 GB26225 GiB2.75 TiB SSD$4.29NVIDIA H100 PCIe80 GB26225 GiB1 TiB SSD$3.29NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99NVIDIA A1024 GB30226 GiB1.3 TiB SSD$1.29NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09NVIDIA Quadro RTX 600024 GB1446 GiB512 GiB SSD$0.69* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n\n  \n  \n\n\nFOOTERAI FACTORIESFor every mission Superintelligence Enterprise Government Startups and researchersFoundations AI infrastructure Trust and security Customer storiesProductsProducts Superclusters 1-Click Clusters InstancesFeatures AI infrastructure Orchestration Lambda Stack Trust and securityDocs Documentation Blog ResearchCompanyInside LambdaAboutCareersLeadershipInvestorsResourcesResearchCustomer storiesBlogPartnersBrand guidelinesPrivacy PolicyTerms of ServiceCookie preferencesCookie management is unavailable because your browser is blocking third-party scripts.© 2026 Lambda. All rights reserved.",
+            "metadata": {
+              "truncated": false
+            },
+            "title": "https://lambda.ai/pricing (text/html; charset=UTF-8)",
+            "time": {
+              "start": 1792274772823,
+              "end": 1792274772861
+            }
+          },
+          "id": "prt_14be6b34f001MbM7qj7E4x8gil",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6afd000167TXmJz0gDjIkx"
+        },
+        {
+          "reason": "tool-calls",
+          "snapshot": "b25bb659c1afae40d59ac675c95fef92916ecd0e",
+          "type": "step-finish",
+          "tokens": {
+            "total": 4515,
+            "input": 4492,
+            "output": 23,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.0006853,
+          "id": "prt_14be6b3b8001ZppvXDrLOFSpin",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6afd000167TXmJz0gDjIkx"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14be6a1e4001lyBfQe87vF7wtk",
+        "role": "assistant",
+        "mode": "qt-web",
+        "agent": "qt-web",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r1/card/agents/0001-run_price-sheet/cwd",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.0007334,
+        "tokens": {
+          "total": 5820,
+          "input": 4500,
+          "output": 40,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 1280
+          }
+        },
+        "modelID": "glm-5.3-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792274772960,
+          "completed": 1792274775965
+        },
+        "finish": "tool-calls",
+        "id": "msg_14be6b3e00010xrBdD8OMJNb6P",
+        "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4"
+      },
+      "parts": [
+        {
+          "snapshot": "b25bb659c1afae40d59ac675c95fef92916ecd0e",
+          "type": "step-start",
+          "id": "prt_14be6b976001w6Qyss1qiH22rL",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6b3e00010xrBdD8OMJNb6P"
+        },
+        {
+          "type": "tool",
+          "tool": "websearch",
+          "callID": "28a6cc63-20da-4402-b085-b7c4319e9829",
+          "state": {
+            "status": "completed",
+            "input": {
+              "numResults": 3,
+              "query": "docs.lambda.ai billing \"Filesystems\" billing \"$0.65\" OR filesystem pricing site:docs.lambda.ai"
+            },
+            "output": "Title: Billing overview - Lambda Docs\nURL: https://docs.lambda.ai/public-cloud/billing/\nPublished: N/A\nAuthor: N/A\nHighlights:\n## Billable resources#\n\nLambda Cloud charges for the following resources:\n\n- On-Demand Cloud (ODC) instances\n- 1-Click Clusters (1CCs)\n- Filesystems\n\nCharges include sales tax, which is based on the location provided in your billing information.\n\n...\n\n### Filesystems#\n\nFilesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month:\n\n- If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00.\n- If you use 1,000 GiB continuously for a full day (24 hours), you'll be billed $6.67.\n\nImportant\n\nThe rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\n\nBilling continues as long as a filesystem exists, even if it's not mounted to an instance. There is no minimum storage period, and you are not charged for ingress or egress.\n\n---\n\nTitle: Filesystems - Lambda Docs\nURL: https://docs.lambda.ai/public-cloud/filesystems/\nPublished: N/A\nAuthor: N/A\nHighlights:\n# Filesystems#\n\nA filesystem is a high-capacity regional file store you can attach to your instance to store datasets and back up system state. In most regions, each filesystem has a capacity of 8 EB (8,000,000 TB), and you can create up to 24 total filesystems. In the Texas, USA (us-south-1) region, filesystems are currently limited to 10 TB of capacity.\n\nFor information on how filesystems are billed, see the Billing overview.\n\n...\n\n### Viewing filesystem usage#\n\nTo view your monthly usage, navigate to the Usage page in the Lambda Cloud console and then click the Filesystems tab.\n\n...\n\n### Setting usage limits#\n\nCurrently, you can't set a limit (quota) on your filesystem usage. You can see the usage of a filesystem from within an instance by running `df -h -BG`. This command produces output similar to:\n\n...\n\n### Managing auto-generated application data#\n\nApplications that follow the Freedesktop.org Trash Specification, such as JupyterLab, might create hidden `.Trash-*` directories on your mounted filesystems. Files moved to these directories are not automatically deleted and will count towards your billed storage usage until you permanently delete them. For guidance on managing your `.Trash-*` directories, see Emptying `.Trash-*` directories.\n\n---\n\nTitle: Managing billing - Lambda Docs\nURL: https://docs.lambda.ai/public-cloud/manage-billing/\nPublished: N/A\nAuthor: N/A\nHighlights:\n## Setting up\n\n...\n\nBefore you can launch Lambda Cloud services, you must visit the Billing page in the Lambda Cloud console and add a credit card to your account. Lambda makes a $10 pre-authorization charge to make sure the card is valid. The charge will be refunded in a few days.\n\n...\n\ncosts\n\n...\n\nYou can monitor the cost of your Lambda Cloud resource usage by visiting the Usage page in the Lambda Cloud console.",
+            "metadata": {
+              "provider": "exa",
+              "truncated": false
+            },
+            "title": "Exa Web Search: docs.lambda.ai billing \"Filesystems\" billing \"$0.65\" OR filesystem pricing site:docs.lambda.ai",
+            "time": {
+              "start": 1792274774398,
+              "end": 1792274775914
+            }
+          },
+          "id": "prt_14be6b979001UpROxlK3FOtWPS",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6b3e00010xrBdD8OMJNb6P"
+        },
+        {
+          "reason": "tool-calls",
+          "snapshot": "b25bb659c1afae40d59ac675c95fef92916ecd0e",
+          "type": "step-finish",
+          "tokens": {
+            "total": 5820,
+            "input": 4500,
+            "output": 40,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 1280
+            }
+          },
+          "cost": 0.0007334,
+          "id": "prt_14be6bf79001hvFiaM0YoZ8WP4",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6b3e00010xrBdD8OMJNb6P"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14be6a1e4001lyBfQe87vF7wtk",
+        "role": "assistant",
+        "mode": "qt-web",
+        "agent": "qt-web",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/food/20261017-213943/r1/card/agents/0001-run_price-sheet/cwd",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00412955,
+        "tokens": {
+          "total": 13878,
+          "input": 2011,
+          "output": 7387,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 4480
+          }
+        },
+        "modelID": "glm-5.3-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792274775970,
+          "completed": 1792274841811
+        },
+        "finish": "stop",
+        "id": "msg_14be6bfa2001eOUmeMxG5fmOPB",
+        "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4"
+      },
+      "parts": [
+        {
+          "snapshot": "b25bb659c1afae40d59ac675c95fef92916ecd0e",
+          "type": "step-start",
+          "id": "prt_14be6c328001tKAd79MshC1jOe",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6bfa2001eOUmeMxG5fmOPB"
+        },
+        {
+          "type": "reasoning",
+          "text": "The websearch confirms the billing docs content: filesystems billed at example rate of $0.20 per GiB per month, with explicit note: \"The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\" So example: true.\n\nNow the on-demand instances from the pricing page. The Instances pricing section has tabs 8x, 4x, 2x, 1x (number of GPUs). Prices per GPU/hour:\n\n8x:\n- NVIDIA B200 SXM, 180 GB, $6.69\n- NVIDIA H100 SXM, 80 GB, $3.99\n- NVIDIA A100 SXM, 80 GB, $2.79\n- NVIDIA A100 SXM, 40 GB, $1.99\n- NVIDIA Tesla V100, 16 GB, $0.79\n\n4x:\n- NVIDIA B200 SXM, 180 GB, $6.79\n- NVIDIA H100 SXM, 80 GB, $4.09\n- NVIDIA A100 PCIe, 40 GB, $1.99\n- NVIDIA A6000, 48 GB, $1.09\n\n2x:\n- NVIDIA B200 SXM, 180 GB, $6.89\n- NVIDIA H100 SXM, 80 GB, $4.19\n- NVIDIA A100 PCIe, 40 GB, $1.99\n- NVIDIA A6000, 48 GB, $1.09\n\n1x:\n- NVIDIA B200 SXM, 180 GB, $6.99\n- NVIDIA GH200, 96 GB, $2.29\n- NVIDIA H100 SXM, 80 GB, $4.29\n- NVIDIA H100 PCIe, 80 GB, $3.29\n- NVIDIA A100 SXM, 40 GB, $1.99\n- NVIDIA A100 PCIe, 40 GB, $1.99\n- NVIDIA A10, 24 GB, $1.29\n- NVIDIA A6000, 48 GB, $1.09\n- NVIDIA Quadro RTX 6000, 24 GB, $0.69\n\nWait — those 1x prices seem too high for single GPUs ($6.99 for 1x B200? Lambda's actual single B200 on-demand was around $3.29... hmm, actually Lambda's on-demand single-GPU H100 was $2.49 historically, but current prices have risen. Actually wait, looking at the numbers: 1x prices higher than 8x prices is unusual... but actually yes, for Lambda, larger GPU counts get discounts. Hmm, but $6.99/GPU/hr for a 1x B200 seems off — actually no, wait. Let me re-check the tab ordering. The tabs are \"8x 4x 2x 1x\" appearing before the first table. The first table follows \"8x\". Hmm, but $6.69 per GPU for 8x B200 vs $6.99 for 1x B200 — that means one B200 GPU costs $6.99 and 8-GPU instance costs $6.69 per GPU = $53.52 total. Hmm, that seems inconsistent with Lambda's known pricing where 8x B200 was ~$4.99/GPU... but prices change; October 2026, B200 has gone up. Actually per-GPU pricing: single B200 at $6.99/GPU/hr = $6.99/hr for the instance. Hmm, historically Lambda 1x B200 was listed... I recall B200 8x at $4.49 and 1x higher? Not sure. Anyway, task says decide only from these two pages, so I'll report what the page shows. The page text shows the tab structure as 8x, 4x, 2x, 1x in order before tables, so the grouping maps accordingly.\n\nNow the page_text for each instance should be the text that shows the price for that instance size. The flattened text: \"PlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69...\" So for each row, the page_text would be e.g. \"NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\". The \"8\" after plan name is vCPU count. E.g., \"NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\" — parse: Plan=B200 SXM, vCPUs=8, VRAM=180 GB, RAM=2900 GiB, Storage=22 TiB SSD, Price=$6.69. Hmm wait: \"SXM6180 GB\" = SXM + \"8\" + \"180 GB\"? That gives plan \"NVIDIA B200 SXM\", vCPUs 8, VRAM/GPU 180 GB. But for 8x row, \"NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\": after SXM6, \"180 GB\", then \"208\" = vCPUs 208, then \"2900 GiB\" RAM. Yes. Second: \"NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99\": SXM + \"80 GB\" then \"208\" vCPUs, \"1800 GiB\". Yes, vCPUs 208. \"NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79\": 240 vCPUs. \"NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99\": 124 vCPUs. \"NVIDIA Tesla V10016 GB88448 GiB\": 88 vCPUs.\n\npage_text: I'll provide the contiguous run showing price, e.g. \"NVIDIA B200 SXM180 GB2900 GiB22 TiB SSD$6.69\" — hmm, but instructions say page_text is \"the text that shows that price for that instance size\". I'll give the row text as it appears (with the flattened numbers). Better to keep fidelity: use the exact flattened string for the row including the price. E.g. \"NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\". Including the vCPU digits may confuse but it's the actual page text. Alternatively mark clearly. I'll use exact rows.\n\nGPU memory values: B200 SXM 180 GB (that's VRAM/GPU per page). GH200 96 GB. A10 24 GB. Quadro RTX 6000 24 GB. A6000 48 GB.\n\nn_gpus from tab: 8, 4, 2, 1.\n\nNote: the 1x table: \"NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99\" — vCPUs 302? Hmm, A100 SXM 40GB 1x with 302... wait \"30220 GiB\" could be vCPUs=302, RAM=220 GiB? Hmm wait let me re-parse: \"NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99\": plan A100 SXM, VRAM 40 GB, then \"30\" = 30 vCPUs, RAM \"220 GiB\", storage \"512 GiB SSD\", price $1.99. Yes: 30220 GiB = 30 vCPUs + 220 GiB. Similarly \"NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99\": 30 vCPUs, 225 GiB. \"NVIDIA A1024 GB30226 GiB\": 30 vCPUs, 226 GiB. \"NVIDIA A600048 GB14100 GiB\": 14 vCPUs, 100 GiB. \"NVIDIA Quadro RTX 600024 GB1446 GiB\": 14 vCPUs, 46 GiB. \"NVIDIA GH20096 GB64432 GiB\": 64 vCPUs, 432 GiB. \"NVIDIA H100 SXM80 GB26225 GiB\": 26 vCPUs, 225 GiB. \"NVIDIA H100 PCIe80 GB26225 GiB\": 26 vCPUs, 225 GiB. 2x: \"NVIDIA B200 SXM6180 GB52720 GiB\": 52 vCPUs, 720 GiB. \"NVIDIA H100 SXM80 GB52450 GiB\": 52 vCPUs, 450 GiB. \"NVIDIA A100 PCIe40 GB60450 GiB\": 60 vCPUs, 450 GiB. \"NVIDIA A600048 GB28200 GiB\": 28 vCPUs, 200 GiB. 4x: \"NVIDIA B200 SXM6180 GB1041440 GiB\": 104 vCPUs. \"NVIDIA H100 SXM80 GB104900 GiB\": 104. \"NVIDIA A100 PCIe40 GB120900 GiB\": 120. \"NVIDIA A600048 GB56400 GiB\": 56.\n\nAlso, note B200 \"SXM6\" — hmm, that might be \"SXM\" followed by vCPU count 6? For 1x B200: \"NVIDIA B200 SXM6180 GB26360 GiB\": \"SXM\" + \"6180 GB\"? If SXM6 parsing is odd. Wait: is it \"B200 SXM6\" or \"B200 SXM\" with 6 vCPUs? Hmm. Actually there could be a GPU name \"B200 SXM6\" (SXM6 socket)? Not standard; B200 uses SXM6 actually! The B200 module is SXM6 form factor. But in the pricing rows, \"NVIDIA B200 SXM6180 GB2082900 GiB\" — VRAM/GPU column says 180 GB. If plan name is \"B200 SXM6\", then VRAM 180 GB, vCPUs 208 for 8x. If plan is \"B200 SXM\", vCPUs 6180?? No. Hmm, wait, compare with H100: \"NVIDIA H100 SXM80 GB2081800 GiB\": plan \"H100 SXM\", VRAM 80 GB, vCPUs 208. So B200: \"SXM6180 GB\" — if pattern plan then VRAM: \"SXM6\" + \"180 GB\"? Or \"SXM\" + \"6180 GB\" (nonsense VRAM). VRAM 180 GB is plausible for B200 (192GB nominal, some listing 180GB). Hmm, actually NVIDIA B200 has 192 GB, but Lambda might list 180 GB. Whereas 6180 GB VRAM is absurd. So plan is \"NVIDIA B200 SXM6\"? Hmm, but wait — could be \"SXM\" and vCPUs=6, VRAM=180 GB? For 1x B200 row: \"NVIDIA B200 SXM6180 GB26360 GiB\" — if vCPUs=6, then VRAM 180 GB, then remaining \"26360 GiB\" = RAM... \"2\" leftovers? No: pattern per row: PLAN, VRAM/GPU, vCPUs, RAM, STORAGE, PRICE. Row: B200 SXM | 6180 GB?? no.\n\nTry: PLAN \"NVIDIA B200 SXM6\", VRAM 180 GB, vCPUs 26, RAM 360 GiB for 1x row. That works: 26 vCPUs for 1x B200. And 8x row: \"SXM6180 GB2082900 GiB\": plan SXM6, VRAM 180 GB, vCPUs 208, RAM 2900 GiB. Works. 4x: \"SXM6180 GB1041440 GiB\": 104 vCPUs, 1440 GiB. Hmm wait that reads \"1041440\" = 104 + 1440. Yes. 2x: \"SXM6180 GB52720 GiB\" = 52 + 720. Works. So plan name is \"NVIDIA B200 SXM6\"? Hmm, but actually SXM6 vs \"SXM 6\"? Hmm, could there be \"B200 SXM6\"? Hmm, hmm. Actually maybe the plan name is \"NVIDIA B200 SXM-6\"? Unclear. But hmm — wait, maybe Lambda lists \"NVIDIA B200 SXM6\"? Hmm. Actually 180 GB VRAM suggests B200 SXM6 with 180GB. Hmm. But wait, actually maybe vCPU for 1x B200 is 26? That seems plausible (H100 1x has 26).\n\nHmm, actually, could it be \"SXM\" + vCPUs \"6180\"? No, 6180 vCPUs is absurd. So B200 plan = \"NVIDIA B200 SXM6\". Hmm, wait — but what about \"A100 SXM80 GB2401800 GiB\": plan \"A100 SXM\", VRAM \"80 GB\", vCPUs \"240\", RAM \"1800 GiB\". Yes. And \"A100 SXM40 GB1241800 GiB\": plan \"A100 SXM\", VRAM 40 GB, vCPUs 124, RAM 1800 GiB. Yes. So B200 = SXM6 reading consistent. Hmm, but is B200's VRAM 180 GB on Lambda's page? Yes, Lambda lists \"180 GB\" for B200. OK.\n\nHmm, one more check: \"Tesla V10016 GB88448 GiB\" — plan \"Tesla V100\", VRAM 16 GB, vCPUs 88, RAM 448 GiB. Yes (\"V100)\" — hmm \"V10016 GB88448 GiB\" = V100 + 16 GB + 88 + 448 GiB. Yes).\n\nNow n_gpus per tab. Tabs: \"8x4x2x1x\" → 8x, 4x, 2x, 1x in order. Four tables in that order matching tab order. Reasonable assumption.\n\nNow, on-demand instances: the pricing page lists \"Instances pricing\". The 1-Click Clusters section is a different product (reserved, duration-based). Task asks only on-demand instances. So include 22 instance rows (5+4+4+9).\n\nLet me count: 8x: B200 SXM6 180GB $6.69; H100 SXM 80GB $3.99; A100 SXM 80GB $2.79; A100 SXM 40GB $1.99; V100 16GB $0.79 → 5\n4x: B200 SXM6 180GB $6.79; H100 SXM 80GB $4.09; A100 PCIe 40GB $1.99; A6000 48GB $1.09 → 4\n2x: B200 SXM6 180GB $6.89; H100 SXM 80GB $4.19; A100 PCIe 40GB $1.99; A6000 48GB $1.09 → 4\n1x: B200 SXM6 180GB $6.99; GH200 96GB $2.29; H100 SXM 80GB $4.29; H100 PCIe 80GB $3.29; A100 SXM 40GB $1.99; A100 PCIe 40GB $1.99; A10 24GB $1.29; A6000 48GB $1.09; Quadro RTX 6000 24GB $0.69 → 9\nTotal 22.\n\nNote the 1x table lacks V100. OK.\n\nGPU names per page: \"NVIDIA B200 SXM6\" — hmm, wait. Let me reconsider: maybe it's \"NVIDIA B200 SXM\" and VRAM/GPU column \"6180 GB\"? No. Actually, wait, could the plan column for 8x B200 be \"NVIDIA B200 SXM6\" — hmm, but is it plausible that Lambda calls it \"B200 SXM6\"? Hmm, hmm. Actually, I recall Lambda's pricing page lists \"NVIDIA B200 SXM6\" hmm... I'm fairly confident Lambda lists \"NVIDIA B200 SXM6\" hmm. Hmm, actually let me think about \"A100 SXM80 GB2401800 GiB\" — could be \"A100 SXM\" + \"80 GB\" + \"240\"... The alternative \"A100 SXM8\" (SXM8)? No. OK.\n\nAlso confirm VRAM for B200 per page: 180 GB. GH200: 96 GB.\n\nread_at: yesterday's date. I don't know exact date; env says date not provided. Today Oct 17, 2026 mentioned in system for search guidance (\"current year is 2026\"). Hmm, that's a hint. Actually the instruction block says use current year 2026. So today ~2026-10-17. I'll use \"2026-10-17\" as read_at (approximation). Hmm, risky but fine.\n\npage_text for filesytem: from billing docs: \"Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: ...\" plus the Important note. I'll include the key sentence: \"For example, at a rate of $0.20 per GiB per month:\" and the note \"The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\"\n\nexample: true.\n\nNow build page_text for instances. To be faithful and unambiguous, I'll include the tab header plus the row. E.g. for 8x rows, page_text could be \"8x — NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\". Hmm, but fabricating the \"8x —\" prefix isn't literal page text. Better to give exactly the row string. But ambiguity between A100 PCIe 1x and 2x ($1.99 both, same text \"NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99\" vs \"NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99\") — different configs so distinguishable. For 4x A6000 \"NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09\" vs 2x \"NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09\" vs 1x \"NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09\" — different. 2x A100 PCIe vs 1x A100 PCIe: \"NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99\" (2x) vs \"NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99\" (1x). Different. Good, rows are distinguishable.\n\nI'll craft page_text strings mirroring the flattened page, e.g., \"NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\". Hmm, but wait—should I denote GPU count context? The schema allows just page_text; the n_gpus field captures it. I could include the tab label for clarity since the page shows tabs \"8x/4x/2x/1x\". I'll keep the exact row text and rely on the row content. Actually, to make each page_text uniquely identifying, including tab context would help disambiguate identical rows (none identical though). Fine.\n\nLet me double-check GPU counts and price per GPU: the column is \"PRICE/GPU/HR*\", so these are per-GPU prices. Good, matches per_gpu_usd_h.\n\nNow produce JSON. read_at date: I'll use 2026-10-17. Hmm, could be 2026-10-16 for the fetch... The fetches happened \"now\". I'll use 2026-10-17. Format: \"Sat Oct 17 2026\" given in env description. Actually env says \"Today's date: Sat Oct 17 2026\". So read_at = \"2026-10-17\". Good.\n\nConstruct instances array:\n\n1. {gpu:\"NVIDIA B200 SXM6\", gpu_memory_gb:180, n_gpus:8, per_gpu_usd_h:6.69, page_text:\"NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\"}\n2. {gpu:\"NVIDIA H100 SXM\", 80, 8, 3.99, \"NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99\"}\n3. {gpu:\"NVIDIA A100 SXM\", 80, 8, 2.79, \"NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79\"}\n4. {gpu:\"NVIDIA A100 SXM\", 40, 8, 1.99, \"NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99\"}\n5. {gpu:\"NVIDIA Tesla V100\", 16, 8, 0.79, \"NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79\"}\n6. {gpu:\"NVIDIA B200 SXM6\", 180, 4, 6.79, \"NVIDIA B200 SXM6180 GB1041440 GiB11 TiB SSD$6.79\"}\n7. {gpu:\"NVIDIA H100 SXM\", 80, 4, 4.09, \"NVIDIA H100 SXM80 GB104900 GiB11 TiB SSD$4.09\"}\n8. {gpu:\"NVIDIA A100 PCIe\", 40, 4, 1.99, \"NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99\"}\n9. {gpu:\"NVIDIA A6000\", 48, 4, 1.09, \"NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09\"}\n10. {gpu:\"NVIDIA B200 SXM6\", 180, 2, 6.89, \"NVIDIA B200 SXM6180 GB52720 GiB5.5 TiB SSD$6.89\"}\n11. {gpu:\"NVIDIA H100 SXM\", 80, 2, 4.19, \"NVIDIA H100 SXM80 GB52450 GiB5.5 TiB SSD$4.19\"}\n12. {gpu:\"NVIDIA A100 PCIe\", 40, 2, 1.99, \"NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99\"}\n13. {gpu:\"NVIDIA A6000\", 48, 2, 1.09, \"NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09\"}\n14. {gpu:\"NVIDIA B200 SXM6\", 180, 1, 6.99, \"NVIDIA B200 SXM6180 GB26360 GiB2.75 TiB SSD$6.99\"}\n15. {gpu:\"NVIDIA GH200\", 96, 1, 2.29, \"NVIDIA GH20096 GB64432 GiB4 TiB SSD$2.29\"}\n16. {gpu:\"NVIDIA H100 SXM\", 80, 1, 4.29, \"NVIDIA H100 SXM80 GB26225 GiB2.75 TiB SSD$4.29\"}\n17. {gpu:\"NVIDIA H100 PCIe\", 80, 1, 3.29, \"NVIDIA H100 PCIe80 GB26225 GiB1 TiB SSD$3.29\"}\n18. {gpu:\"NVIDIA A100 SXM\", 40, 1, 1.99, \"NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99\"}\n19. {gpu:\"NVIDIA A100 PCIe\", 40, 1, 1.99, \"NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99\"}\n20. {gpu:\"NVIDIA A10\", 24, 1, 1.29, \"NVIDIA A1024 GB30226 GiB1.3 TiB SSD$1.29\"}\n21. {gpu:\"NVIDIA A6000\", 48, 1, 1.09, \"NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09\"}\n22. {gpu:\"NVIDIA Quadro RTX 6000\", 24, 1, 0.69, \"NVIDIA Quadro RTX 600024 GB1446 GiB512 GiB SSD$0.69\"}\n\nFilesystem: {usd_gib_month:0.20, page_text:\"Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: ... The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\", example:true}\n\nI should trim page_text to the relevant sentences. Include the important note.\n\nOutput only JSON.",
+          "time": {
+            "start": 1792274776874,
+            "end": 1792274834760
+          },
+          "id": "prt_14be6c32a001ORozpQ5K47jDGS",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6bfa2001eOUmeMxG5fmOPB"
+        },
+        {
+          "type": "text",
+          "text": "```json\n{\n  \"read_at\": \"2026-10-17\",\n  \"instances\": [\n    {\n      \"gpu\": \"NVIDIA B200 SXM6\",\n      \"gpu_memory_gb\": 180,\n      \"n_gpus\": 8,\n      \"per_gpu_usd_h\": 6.69,\n      \"page_text\": \"NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69\"\n    },\n    {\n      \"gpu\": \"NVIDIA H100 SXM\",\n      \"gpu_memory_gb\": 80,\n      \"n_gpus\": 8,\n      \"per_gpu_usd_h\": 3.99,\n      \"page_text\": \"NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99\"\n    },\n    {\n      \"gpu\": \"NVIDIA A100 SXM\",\n      \"gpu_memory_gb\": 80,\n      \"n_gpus\": 8,\n      \"per_gpu_usd_h\": 2.79,\n      \"page_text\": \"NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79\"\n    },\n    {\n      \"gpu\": \"NVIDIA A100 SXM\",\n      \"gpu_memory_gb\": 40,\n      \"n_gpus\": 8,\n      \"per_gpu_usd_h\": 1.99,\n      \"page_text\": \"NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99\"\n    },\n    {\n      \"gpu\": \"NVIDIA Tesla V100\",\n      \"gpu_memory_gb\": 16,\n      \"n_gpus\": 8,\n      \"per_gpu_usd_h\": 0.79,\n      \"page_text\": \"NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79\"\n    },\n    {\n      \"gpu\": \"NVIDIA B200 SXM6\",\n      \"gpu_memory_gb\": 180,\n      \"n_gpus\": 4,\n      \"per_gpu_usd_h\": 6.79,\n      \"page_text\": \"NVIDIA B200 SXM6180 GB1041440 GiB11 TiB SSD$6.79\"\n    },\n    {\n      \"gpu\": \"NVIDIA H100 SXM\",\n      \"gpu_memory_gb\": 80,\n      \"n_gpus\": 4,\n      \"per_gpu_usd_h\": 4.09,\n      \"page_text\": \"NVIDIA H100 SXM80 GB104900 GiB11 TiB SSD$4.09\"\n    },\n    {\n      \"gpu\": \"NVIDIA A100 PCIe\",\n      \"gpu_memory_gb\": 40,\n      \"n_gpus\": 4,\n      \"per_gpu_usd_h\": 1.99,\n      \"page_text\": \"NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99\"\n    },\n    {\n      \"gpu\": \"NVIDIA A6000\",\n      \"gpu_memory_gb\": 48,\n      \"n_gpus\": 4,\n      \"per_gpu_usd_h\": 1.09,\n      \"page_text\": \"NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09\"\n    },\n    {\n      \"gpu\": \"NVIDIA B200 SXM6\",\n      \"gpu_memory_gb\": 180,\n      \"n_gpus\": 2,\n      \"per_gpu_usd_h\": 6.89,\n      \"page_text\": \"NVIDIA B200 SXM6180 GB52720 GiB5.5 TiB SSD$6.89\"\n    },\n    {\n      \"gpu\": \"NVIDIA H100 SXM\",\n      \"gpu_memory_gb\": 80,\n      \"n_gpus\": 2,\n      \"per_gpu_usd_h\": 4.19,\n      \"page_text\": \"NVIDIA H100 SXM80 GB52450 GiB5.5 TiB SSD$4.19\"\n    },\n    {\n      \"gpu\": \"NVIDIA A100 PCIe\",\n      \"gpu_memory_gb\": 40,\n      \"n_gpus\": 2,\n      \"per_gpu_usd_h\": 1.99,\n      \"page_text\": \"NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99\"\n    },\n    {\n      \"gpu\": \"NVIDIA A6000\",\n      \"gpu_memory_gb\": 48,\n      \"n_gpus\": 2,\n      \"per_gpu_usd_h\": 1.09,\n      \"page_text\": \"NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09\"\n    },\n    {\n      \"gpu\": \"NVIDIA B200 SXM6\",\n      \"gpu_memory_gb\": 180,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 6.99,\n      \"page_text\": \"NVIDIA B200 SXM6180 GB26360 GiB2.75 TiB SSD$6.99\"\n    },\n    {\n      \"gpu\": \"NVIDIA GH200\",\n      \"gpu_memory_gb\": 96,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 2.29,\n      \"page_text\": \"NVIDIA GH20096 GB64432 GiB4 TiB SSD$2.29\"\n    },\n    {\n      \"gpu\": \"NVIDIA H100 SXM\",\n      \"gpu_memory_gb\": 80,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 4.29,\n      \"page_text\": \"NVIDIA H100 SXM80 GB26225 GiB2.75 TiB SSD$4.29\"\n    },\n    {\n      \"gpu\": \"NVIDIA H100 PCIe\",\n      \"gpu_memory_gb\": 80,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 3.29,\n      \"page_text\": \"NVIDIA H100 PCIe80 GB26225 GiB1 TiB SSD$3.29\"\n    },\n    {\n      \"gpu\": \"NVIDIA A100 SXM\",\n      \"gpu_memory_gb\": 40,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 1.99,\n      \"page_text\": \"NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99\"\n    },\n    {\n      \"gpu\": \"NVIDIA A100 PCIe\",\n      \"gpu_memory_gb\": 40,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 1.99,\n      \"page_text\": \"NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99\"\n    },\n    {\n      \"gpu\": \"NVIDIA A10\",\n      \"gpu_memory_gb\": 24,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 1.29,\n      \"page_text\": \"NVIDIA A1024 GB30226 GiB1.3 TiB SSD$1.29\"\n    },\n    {\n      \"gpu\": \"NVIDIA A6000\",\n      \"gpu_memory_gb\": 48,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 1.09,\n      \"page_text\": \"NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09\"\n    },\n    {\n      \"gpu\": \"NVIDIA Quadro RTX 6000\",\n      \"gpu_memory_gb\": 24,\n      \"n_gpus\": 1,\n      \"per_gpu_usd_h\": 0.69,\n      \"page_text\": \"NVIDIA Quadro RTX 600024 GB1446 GiB512 GiB SSD$0.69\"\n    }\n  ],\n  \"filesystem\": {\n    \"usd_gib_month\": 0.2,\n    \"page_text\": \"Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00. ... The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\",\n    \"example\": true\n  }\n}\n```",
+          "time": {
+            "start": 1792274834766,
+            "end": 1792274841736
+          },
+          "id": "prt_14be7a54e001nJeM4CkiX5OBH4",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6bfa2001eOUmeMxG5fmOPB"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "25faa7ce823340b270adb1544c6a39c2c81d83d9",
+          "type": "step-finish",
+          "tokens": {
+            "total": 13878,
+            "input": 2011,
+            "output": 7387,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 4480
+            }
+          },
+          "cost": 0.00412955,
+          "id": "prt_14be7c0ac001w148b1Wuef2vR9",
+          "sessionID": "ses_eb4195eb8ffe5P2wYJVM5JEZk4",
+          "messageID": "msg_14be6bfa2001eOUmeMxG5fmOPB"
+        }
+      ]
+    }
+  ]
+}

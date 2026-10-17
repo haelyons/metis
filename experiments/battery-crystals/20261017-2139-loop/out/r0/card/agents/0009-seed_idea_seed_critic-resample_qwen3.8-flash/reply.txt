@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "The choice depends on measured conductivity and synthesis; the test only checks model-predicted rankings."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:arms[2].what",
+      "reason": "Arm C is fixed at 6,972 compositions, so candidate-count equality and compute-only scaling cannot be confirmed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Hit labels come from the conductivity predictor and NEB simulations, with published anchors but no exact measured truth."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Ferrogen conditions on ferroelectric polarization, not battery transport; the plan states this gap."
+    },
+    {
+      "criterion": "reshape",
+      "value": 2,
+      "ref": "card:method",
+      "reason": "It only splits independent candidates across GPUs within each step; the sequential generate-screen-validate chain remains."
+    },
+    {
+      "criterion": "baseline",
+      "value": 1,
+      "ref": "card:method",
+      "reason": "Method only parallelizes candidates; no tuned sequential/copies baseline, parallel-vs-sequential anchor, or per-arm timing."
+    }
+  ],
+  "decides_by": "p_validate",
+  "decides_by_reason": "Decision needs 100k hit rates and top-10 CHGNet-NEB barriers, both available only after validation."
+}

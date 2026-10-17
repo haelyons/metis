@@ -1,0 +1,176 @@
+{
+  "info": {
+    "id": "ses_eb43588b8ffeBzxuERgTjntqEv",
+    "slug": "crisp-circuit",
+    "projectID": "e635804b0fe929d2ed556701e94990a108996451",
+    "directory": "/home/hal/dev/interp/latent_open/runs/loop/I1/test-reuse-r0/calls",
+    "path": "runs/loop/I1/test-reuse-r0/calls",
+    "title": "neighbours",
+    "agent": "qt-bare",
+    "model": {
+      "id": "deepseek-v4.1-flash",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.002055612,
+    "tokens": {
+      "input": 106,
+      "output": 1437,
+      "reasoning": 1951,
+      "cache": {
+        "read": 2304,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792272922440,
+      "updated": 1792272941362
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792272922535
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "deepseek-v4.1-flash"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14bca77a7001lEM36CAsklsFqZ",
+        "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Here is a research idea, the card a planner wrote for it, and a check of which existing research or industrial programmes would use its result, with the gaps that check found.\n\nRoot question: What actually stops us from autoformalizing most of published math into Lean? Is it gaps in Mathlib coverage, the step of translating informal proofs where authors skip things that are 'obvious', or something deeper about how mathematicians write? The Lean kernel is a free and perfect verifier, so this looks like one of the few domains where brute-force search can't fool itself. Could you split every paper into tiny lemma-sized subgoals and throw many different open-source prover models at each one in parallel, with each model scoped to a known failure mode like wrong definitions, mismatched conventions or silently strengthened hypotheses? Is compute a major blocker at some level, and could a shit ton of GPU parallelism fix it, or is the real bottleneck checking that the formal statement means the same thing as the English one?\nIdea: {\\\"title\\\":\\\"Drift probes on the autoformalizer\\\",\\\"text\\\":\\\"Probe the autoformalizer's activations while it writes definitions and statements, to flag when it has quietly strengthened a hypothesis or guessed a convention. In math, generators often 'know' they are wrong: a linear probe predicts trace correctness at 0.953 AUROC on MATH-500, against 0.674 for verbalized confidence. But transfer to other domains is weak (0.54/0.55 from MATH to ARC), the signal is 'diagnostic, not causal', and the only interp study of autoformalization (SMT-LIB, not Lean) gets 0.960 against a solver oracle but 0.679 against an LLM proxy for intent. No one has measured this on Lean, and the labels it needs are the human audit itself.\\\",\\\"root_link\\\":\\\"B4 / framer 4.3: whether a misformalization of the root statement or its definitions, which the kernel cannot see, leaves a readable trace inside the generator, which would shrink the human audit set.\\\",\\\"compute_open\\\":\\\"Quantity is models and labelled statements analysed. The most reported is nine models up to 72B on 100 training and 200 held-out math problems (https://arxiv.org/html/2605.09502v1) and 950 SMT-LIB encodings (https://arxiv.org/html/2609.11085v2). Unknown above that: whether Lean statement drift is linearly readable in any model at all, and how a probe scores against human rather than solver or LLM-proxy intent labels.\\\",\\\"sequential\\\":\\\"The chain is: expert-labelled faithful/unfaithful pairs, then one forward pass per statement to cache activations, then a probe fit (minutes on a fraction of one GPU), then held-out evaluation. That is about 4 steps, with one run per model and realistically per subfield. Only the labelling step is serial (it is the expert audit). Labels could arrive in parallel if faithful statements were perturbed synthetically in targeted directions, as BPF's counterfactual probe generation does (https://arxiv.org/abs/2606.16541). That pays off only if probes trained on synthetic drift transfer to natural misformalizations. The nearest precedent is Goodfire's Rakuten SAE probes, trained on synthetic data, which held up on real production data (https://www.goodfire.com/research/rakuten-sae-probes-for-pii-detection).\\\"}\nCard:\n<a id=\\\"card-seed-idea-1\\\"></a>**I1 · Drift probes on the autoformalizer.** seed pick · compute tested: yes · plan expects: unsure · REJECT\n\n**Question.** Can a linear probe read Lean autoformalization drift from generator activations, and does synthetic-drift training transfer to human-audited natural misformalizations?\n\n**What is known.** A linear SAE probe reached 0.960 AUROC against an SMT-LIB solver oracle but 0.679 against intent labels; largest compute: 950 encodings, one 27B verifier. No one has measured drift readability in Lean (only SMT-LIB), scored a probe against human audit labels, or tested synthetic-to-natural drift transfer.\n\n**Hypothesis.** Generators encode drift they cannot verbalize: a linear probe predicts trace correctness at 0.953, so Lean misformalizations should be linearly readable.\n\n**Restructuring.** Expert-labelled faithful/drifted pairs, one forward pass per statement, probe fit, held-out evaluation — four steps. Synthetic drift is generated in parallel by counterfactual perturbation, and forward passes over many statements run side-by-side on separate GPUs.\n\n**If compute is the lever.** Synthetic-drift probes transfer to natural Lean misformalizations: parallel GPUs reach AUROC ≥ 0.80 at 5,000 statement-runs, sooner than one sequential GPU.\n\n**If not.** Drift is weakly readable in Lean: probe AUROC on natural misformalizations stays near 0.679 even at 150,000 statement-runs, so it never crosses the flagging threshold.\n\n**Test.** Cache a 7B Lean autoformalizer's hidden states over 100k+ runs; train logistic probes on synthetic drift, test on 200 human-audited natural misformalizations; time parallel 4-GPU vs sequential and sharded-copy baselines; compare AUROC to SMT-LIB 0.960/0.679.\n\n*Compute axis.* Statement-runs (forward passes whose activations are cached and probed): 2,000–150,000 statement-runs, 3 levels. Closest prior: 950 [s_genv_oracle], beyond it.\n\n**Check first.** Planted synthetic-drift probe hits AUROC ≥ 0.90; 4-shard parallel caching matches single-GPU sequential caching within ±0.05 AUROC; shuffle control 0.50.\n\n**Would not show.** Shows readability, not a causal fix, and only within Lean. Cannot prove synthetic-to-natural transfer beyond the audited 200 pairs.\n\n*Cost.* Plans $489.21 of the $1,000 budget over 198 machine-hours, leaving $510.79. Main guess: 7B generation throughput [g], measured after $2.18 of spend; the budget is reached if it is 3.2× lower.\n\nCard verdict: REJECT (1 blocking)\nProgramme check: [{\\\"name\\\":\\\"Goedel-Prover (Goedel-LM: Princeton Language and Intelligence with Tsinghua, Amazon, Meta FAIR, Numina)\\\",\\\"step\\\":\\\"The 'Statement Formalization' quality-assessment gate: after two trained formalizers produce 16 candidate Lean 4 formalizations per informal problem, each surviving candidate must pass a Faithfulness-and-Completeness (FC) check that the formal statement preserves the informal problem's meaning, before the surviving 1.64M statements enter expert-iteration proof training.\\\",\\\"sum\\\":12},{\\\"name\\\":\\\"Project Numina / Kimina (Numina & Moonshot AI Kimi team — Kimina-Autoformalizer-7B, Kimina-Prover, NuminaMath-Lean)\\\",\\\"step\\\":\\\"The semantic-correctness gate inside the Kimina-Autoformalizer expert-iteration loop, which produces the autoformalized half (~100k of ~200k problems) of Kimina-Prover's RL problem set and the released NuminaMath-Lean dataset: candidate formalizations that compile are judged for meaning, because, as the team states, 'there is no straightforward way to verify the correctness of a generated formal problem statement with respect to the natural language input.'\\\",\\\"sum\\\":12},{\\\"name\\\":\\\"Google DeepMind AlphaProof (including the 2026 AlphaProof-Nexus research-level proof-search programme)\\\",\\\"step\\\":\\\"The formalizer network — a fine-tuned Gemini model that translates ~1M informal problems into Lean statements to build AlphaProof's reinforcement-learning library — and, in the 2026 follow-up, Gemini autoformalization of open research questions (OEIS, Erdős problems) where a misformalized statement means the agent proves the wrong theorem.\\\",\\\"sum\\\":11}]\nGaps found: [\\\"None of the three programmes publishes an expert-labelled real-misformalization test set; Kimina's ~1,000-problem human-curated set (used to tune its judge prompt) is the closest artefact but is private, so the card's held-out real-error set must be built independently.\\\",\\\"DeepMind's formalizer is a closed Gemini model: the card's probe methodology requires activation access, so results on open 7B/8B/32B formalizers transfer to AlphaProof only if run internally.\\\",\\\"FormalAlign is the only hidden-state-based alignment work found, and it is a separately fine-tuned 7B evaluator trained on a contrastive loss over synthetic misalignments — not frozen-model linear probes; the card's cross-model probe-transfer arm ('copied across models') is untested by any programme.\\\",\\\"The card is scoped to competition and conjecture statements; the research-level definition formalization in the 2026 AlphaProof-Nexus programme (OEIS/Erdős problems) is at or beyond the card's stated test distribution, so the lever outcome there is extrapolation, not evidence.\\\",\\\"Goedel-Prover and Kimina both use external LLM judges (Qwen2.5-72B, QwQ-32B) plus ad-hoc safeguards (negation-proving, triviality filters); the card's comparison is against expert-label probes and text-only baselines, not against these production judge ensembles, so adoption decisions would need a head-to-head with the judges they actually run.\\\"]\n\nPropose three close variants of the idea. Each changes one thing (the system studied, the quantity more compute buys, the comparison it is judged against, or the programme it is aimed at) so that its result would matter more to a named programme or close a named gap. Keep the rest of the idea. Name only systems, tools and programmes that appear above or that you are sure exist. Decide only from the text above; do not use tools.\nReturn only JSON: {\\\"variants\\\": [{\\\"id\\\": \\\"V1\\\", \\\"title\\\": \\\"\\\", \\\"text\\\": \\\"the idea in three to five sentences, in the form of the original\\\", \\\"root_link\\\": \\\"\\\", \\\"compute_open\\\": \\\"\\\", \\\"sequential\\\": \\\"\\\", \\\"changes\\\": \\\"what differs from the original and which gap or programme it answers\\\"}]}\"",
+          "id": "prt_14bca77af001NGEknvGvy5pzX6",
+          "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv",
+          "messageID": "msg_14bca77a7001lEM36CAsklsFqZ"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14bca77a7001lEM36CAsklsFqZ",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/I1/test-reuse-r0/calls",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.002055612,
+        "tokens": {
+          "total": 5798,
+          "input": 106,
+          "output": 1437,
+          "reasoning": 1951,
+          "cache": {
+            "write": 0,
+            "read": 2304
+          }
+        },
+        "modelID": "deepseek-v4.1-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792272923240,
+          "completed": 1792272941341
+        },
+        "finish": "stop",
+        "id": "msg_14bca7a680015sI8NUfHSO5Z35",
+        "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv"
+      },
+      "parts": [
+        {
+          "snapshot": "170152f6cd00401a93f982f85bbb90f18055e397",
+          "type": "step-start",
+          "id": "prt_14bca837a001FFYnowB1pLbn7l",
+          "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv",
+          "messageID": "msg_14bca7a680015sI8NUfHSO5Z35"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me work through the gaps and programmes.\n\nOriginal idea: probe autoformalizer activations for Lean statement drift, trained on synthetic drift, tested on human-audited natural misformalizations.\n\nGaps:\n1. No programme publishes expert-labelled real-misformalization test set; Kimina's ~1,000-problem human-curated set is private. Held-out real-error set must be built independently.\n2. DeepMind's formalizer is closed Gemini — probe needs activation access; open 7B/8B/32B transfer to AlphaProof only internally.\n3. FormalAlign is only hidden-state-based alignment work — a separately fine-tuned 7B evaluator on contrastive loss over synthetic misalignments, not frozen linear probes; cross-model probe transfer untested.\n4. Card scoped to competition/conjecture statements; research-level definition formalization in 2026 AlphaProof-Nexus (OEIS/Erdős) at/beyond test distribution.\n5. Goedel-Prover and Kimina use external LLM judges — card compares against expert-label probes and text-only baselines, not production judge ensembles.\n\nThree variants, each changing one thing:\n\nV1: Change the comparison — head-to-head against production judge ensembles (Qwen2.5-72B, QwQ-32B judges) used by Goedel-Prover/Kimina, and measure whether probe+judge ensemble beats judge alone on natural misformalizations. Aimed at Kimina/Goedel-Prover. Closes gap 5.\n\nV2: Change the system studied — instead of frozen linear probes on a 7B, study FormalAlign-style fine-tuned evaluator hidden states / directly compare frozen linear probe vs fine-tuned evaluator, and test cross-model probe transfer across open 7B/8B/32B formalizers (e.g., Kimina-Autoformalizer-7B, Goedel-Prover's formalizer, Qwen-based). Closes gap 3 and addresses gap 2 partly (open models only). Hmm but changing one thing. Maybe focus on cross-model transfer.\n\nV3: Change the programme aimed at / test distribution — target research-level definition formalization in AlphaProof-Nexus (OEIS/Erdős), building the expert-labelled real-misformalization test set at research level, which closes gap 4 and gap 1. But gap 2 says closed model. Hmm, we can't get activations from Gemini. So maybe instead target the held-out real-error set being built independently — aim at building a public expert-labelled Lean misformalization benchmark. That closes gap 1.\n\nLet me pick three distinct axes:\n\nV1: comparison axis → judge-ensemble head-to-head (gap 5, programme: Kimina/Goedel-Prover).\nV2: system studied → frozen linear probe vs fine-tuned FormalAlign-style evaluator, plus cross-model transfer among open formalizers (gap 3, gap 2).\nV3: programme/test-distribution → research-level definition drift in OEIS/Erdős statements (gap 4, AlphaProof-Nexus), and/or building public expert-labelled benchmark (gap 1).\n\nActually maybe combine gap 1 with a variant: change the quantity compute buys — from probe AUROC to building the human-audited label set itself. Hmm. Each variant changes one thing.\n\nLet me be careful: \"the quantity more compute buys\" is one axis option. The original compute axis is statement-runs. Could change what compute buys: e.g., more audited human labels rather than more statement-runs.\n\nI'll write three variants with root_link and compute_open, sequential, changes fields, matching format of the original card.\n\nLet me draft.\n\nV1 title: \"Probe vs production judge ensembles on natural Lean drift.\"\nText: Probe the autoformalizer's activations as in the original, but judge the probe against the external LLM judges Goedel-Prover and Kimina actually run (Qwen2.5-72B, QwQ-32B) plus their safeguards (negation-proving, triviality filters), not against text-only baselines. Train probes on synthetic drift, test on the same held-out human-audited natural misformalizations, and ask whether probe scores add anything over the judge ensemble (complementary flagging set, ensemble AUROC). This makes the result an adoption decision for Kimina's semantic-correctness gate and Goedel-Prover's Faithfulness-and-Completeness check rather than an interp demonstration.\nchanges: comparison axis — head-to-head with production judge ensembles; answers gap 5.\n\nV2: \"Frozen linear probes vs fine-tuned evaluator hidden states, across open formalizers.\"\nText: Keep the synthetic-drift-to-natural-drift test but compare frozen-model linear probes (7B) against FormalAlign-style fine-tuned hidden-state evaluators trained on contrastive synthetic misalignment, and copy probes across open formalizers only (Kimina-Autoformalizer-7B, Goedel-Prover's formalizer, 8B/32B Qwen-based models). Measure cross-model probe transfer AUROC and whether fine-tuning buys transfer that linear probing doesn't. Result matters because gap 3 says the cross-model arm is untested and gap 2 says closed Gemini is unreachable.\nchanges: system studied — frozen linear probe vs fine-tuned evaluator, cross-open-model transfer; answers gaps 2 and 3.\n\nV3: \"Drift probes on research-level definitions (OEIS/Erdős).\"\nText: Move the test distribution from competition/conjecture statements to the research-level definition formalization that AlphaProof-Nexus targets (OEIS sequences, Erdős problems), where a misformalized definition means the agent proves the wrong theorem. Build the expert-labelled faithful/drifted pairs at research level independently (since no programme publishes one) and ask whether synthetic drift perturbation still transfers when the drift is definitional rather than hypothesis-strengthening. This directly tests the card's stated boundary and gives AlphaProof-Nexus evidence, acknowledging Gemini is closed so open formalizers are the proxy.\nchanges: programme/test distribution — research-level definition drift, plus independent label set; answers gaps 1 and 4.\n\nHmm, V3 changes two things (programme and test distribution, and label set). It's fine-ish but \"each changes one thing\". Let me keep it focused: change the programme aimed at → AlphaProof-Nexus research-level definitions. Gap 1 and 4 both mentioned... Actually V3 can address gap 4 primarily and note it needs the independent label set (gap 1). It's acceptable.\n\nAlternatively V3: change the programme to Project Numina/Kimina and build the public expert-labelled benchmark (gap 1). Hmm.\n\nLet me maybe do V3 on compute quantity: what more compute buys — the human audit set size rather than statement-runs. But the gaps are about labels being private. Actually the lever \"if compute is the lever\" is about statement-runs. Changing the quantity compute buys: scale the human-audited natural misformalization set (expert audit hours) instead of synthetic statement-runs, measuring whether probe transfer follows audit-set size. That answers gap 1 (build it independently). And programme: Kimina / NuminaMath-Lean. Hmm.\n\nI think three good ones: V1 comparison (judges), V2 system (frozen vs fine-tuned / cross-model), V3 distribution/programme (research-level definitions). Those map to gaps 5, 3+2, 4+1. Good coverage.\n\nNow format each with root_link, compute_open, sequential fields in the original's voice.\n\nOriginal root_link: \"B4 / framer 4.3: whether a misformalization of the root statement or its definitions, which the kernel cannot see, leaves a readable trace inside the generator, which would shrink the human audit set.\"\n\ncompute_open: \"Quantity is models and labelled statements analysed...\" naming limits.\n\nsequential: chain description.\n\nLet me write them concisely.\n\nV1 root_link: same B4/framer 4.3 but framed as whether the probe trace is usable in the gate where judges already sit.\ncompute_open: models and labelled statements; the judged comparison adds the judge ensemble's inference cost; unknown whether probe AUROC on 200 audited pairs beats Qwen2.5-72B/QwQ-32B judge AUROC or is complementary.\nsequential: expert labels → forward pass → probe fit → held-out eval → add judge scoring on same pairs. 5 steps.\n\nV2 compute_open: models compared × labelled statements; unknown whether fine-tuned evaluators transfer across formalizer families where frozen probes don't.\nsequential: labels → cache activations across open formalizers → fit frozen linear probes + fine-tune FormalAlign-style evaluators → cross-model held-out eval. 4-5 steps.\n\nV3 compute_open: research-level labelled definitions are far scarcer than competition problems; unknown how many expert-audited OEIS/Erdős formalizations exist publicly.\nsequential: audit research-level faithful/drifted pairs (serial, expert) → cache → probe fit → held-out eval on held-out conjectures.\n\nLet me write final JSON.\n\nKeep text 3-5 sentences.\n\nLet me produce.",
+          "time": {
+            "start": 1792272925567,
+            "end": 1792272934892
+          },
+          "id": "prt_14bca837f001duom7nJ2Q4QLlr",
+          "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv",
+          "messageID": "msg_14bca7a680015sI8NUfHSO5Z35"
+        },
+        {
+          "type": "text",
+          "text": "{\"variants\": [{\"id\": \"V1\", \"title\": \"Probe vs the production judge ensembles\", \"text\": \"Probe the autoformalizer's activations for quietly strengthened hypotheses and guessed conventions, as in the original, but judge the probe against the external LLM judges that Goedel-Prover and Kimina actually run — Qwen2.5-72B and QwQ-32B plus their negation-proving and triviality safeguards — rather than against text-only baselines. Train logistic probes on synthetic drift and test on the same 200 human-audited natural misformalizations, reporting whether probe scores beat the judge ensemble's AUROC or flag a complementary error set the judges miss. This turns the result into an adoption decision for Goedel-Prover's Faithfulness-and-Completeness gate and Kimina's semantic-correctness gate instead of an interp demonstration. It keeps the synthetic-to-natural transfer question and the 7B frozen-model probe methodology, changing only the comparator.\", \"root_link\": \"B4 / framer 4.3: whether a misformalization the kernel cannot see leaves a readable trace inside the generator — here tested in the gate where the programmes already deploy LLM judges, so the trace must add value over those judges to shrink the human audit set.\", \"compute_open\": \"Quantity is models, labelled statements, and judge-ensemble inference on the same pairs. Known: nine models up to 72B on 100 training and 200 held-out math problems; 950 SMT-LIB encodings. Unknown: whether a 7B linear probe reaches or exceeds the Qwen2.5-72B/QwQ-32B judge AUROC on the same held-out natural pairs, or is only complementary.\", \"sequential\": \"The chain is: expert-labelled faithful/unfaithful pairs, one forward pass per statement to cache activations, probe fit, judge-ensemble scoring on the same pairs, held-out evaluation. That is about 5 steps, with one run per model and per subfield. Only the expert labelling is serial; judge scoring and forward passes parallelise.\", \"changes\": \"Changes the comparison axis: head-to-head against the production judge ensembles (Qwen2.5-72B, QwQ-32B, negation-proving, triviality filters) rather than text-only baselines. Answers gap 5 and aims the result at Goedel-Prover and Project Numina / Kimina.\"}, {\"id\": \"V2\", \"title\": \"Frozen linear probes vs fine-tuned hidden-state evaluators across open formalizers\", \"text\": \"Keep the synthetic-drift-to-natural-drift test but compare a frozen 7B model's linear probes against FormalAlign-style fine-tuned hidden-state evaluators trained on a contrastive loss over synthetic misalignments. Copy the probes and evaluators across open formalizers only — Kimina-Autoformalizer-7B, Goedel-Prover's formalizer, and 8B/32B Qwen-based formalizers — measuring cross-model transfer AUROC and whether fine-tuning buys transfer that frozen linear probing does not. This matters because the only hidden-state alignment work found is a separately fine-tuned evaluator, not frozen probes, and the cross-model arm has never been tested. It deliberately excludes closed Gemini, since the probe methodology needs activation access.\", \"root_link\": \"B4 / framer 4.3: whether the drift trace is readable and, crucially, whether it is a property of the generator family or of one fine-tuned evaluator — which decides if the human audit set can be shrunk by a reusable probe.\", \"compute_open\": \"Quantity is models and labelled statements analysed, now doubled by training evaluators as well as fitting probes. Known: nine models up to 72B on 200 held-out problems; 950 SMT-LIB encodings. Unknown: whether cross-model probe transfer beats chance among open formalizers, and whether a fine-tuned evaluator transfers where a frozen linear probe does not.\", \"sequential\": \"The chain is: expert-labelled faithful/unfaithful pairs, one forward pass per statement per model to cache activations, frozen probe fit plus fine-tuned evaluator training, held-out transfer evaluation. That is about 4 steps, with one run per model and per subfield. Only the expert labelling is serial; caching across formalizers runs on separate GPUs.\", \"changes\": \"Changes the system studied: frozen linear probes vs Fine-tuned FormalAlign-style evaluators, restricted to open formalizers with an explicit cross-model transfer arm. Answers gap 3 and, by proxy, the activation-access half of gap 2.\"}, {\"id\": \"V3\", \"title\": \"Drift probes on research-level definitions (OEIS / Erdős)\", \"text\": \"Move the test distribution from competition and conjecture statements to the research-level definition formalization that the 2026 AlphaProof-Nexus programme targets: OEIS sequences and Erdős problems where a misformalized definition means the agent proves the wrong theorem. Because no programme publishes an expert-labelled real-misformalization set, build the faithful/drifted pairs at research level independently, then ask whether synthetic drift perturbation still transfers when the drift is definitional rather than a strengthened hypothesis. Open 7B/8B/32B formalizers act as the probed proxy, with the closed Gemini formalizer reachable only internally. This tests the card's stated boundary instead of extrapolating to it.\", \"root_link\": \"B4 / framer 4.3: whether misformalization of the root statement or its definitions leaves a readable trace — now at the research-level definitions that AlphaProof-Nexus formalizes, where the kernel cannot see the error and the wrong theorem gets proved.\", \"compute_open\": \"Quantity is models and labelled statements, but research-level expert-audited faithful/drifted definition pairs are far scarcer than competition problems. Known: nine models up to 72B on 200 held-out math problems; 950 SMT-LIB encodings. Unknown: how many expert-audited OEIS/Erdős formalizations exist publicly, and whether a probe trained on synthetic definitional drift transfers to them.\", \"sequential\": \"The chain is: expert audit of research-level faithful/drifted definition pairs, one forward pass per statement to cache activations, probe fit, held-out evaluation on further conjectures. That is about 4 steps, with one run per model and per subfield, and the expert audit is the serial bottleneck. Synthetic definitional perturbations are generated in parallel to relieve it.\", \"changes\": \"Changes the programme and test distribution: research-level definition formalization for AlphaProof-Nexus (OEIS/Erdős), with an independently built expert-labelled set. Answers gap 4 and the label-availability half of gap 1.\"}]}",
+          "time": {
+            "start": 1792272934898,
+            "end": 1792272941182
+          },
+          "id": "prt_14bcaa7f2001qc6IIR66N0NOTl",
+          "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv",
+          "messageID": "msg_14bca7a680015sI8NUfHSO5Z35"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "f3f591698e47424572bcd1c07cd52ebbbc2049eb",
+          "type": "step-finish",
+          "tokens": {
+            "total": 5798,
+            "input": 106,
+            "output": 1437,
+            "reasoning": 1951,
+            "cache": {
+              "write": 0,
+              "read": 2304
+            }
+          },
+          "cost": 0.002055612,
+          "id": "prt_14bcac0e1001sA2eLrpNmSKuGO",
+          "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv",
+          "messageID": "msg_14bca7a680015sI8NUfHSO5Z35"
+        },
+        {
+          "type": "patch",
+          "hash": "170152f6cd00401a93f982f85bbb90f18055e397",
+          "files": [
+            "/home/hal/dev/interp/latent_open/runs/loop/I1/test-reuse-r0/calls/01-neighbours.events.jsonl",
+            "/home/hal/dev/interp/latent_open/runs/loop/I1/test-reuse-r0/calls/01-neighbours.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/runs/loop/I1/test-reuse-r0/calls/01-neighbours.http/001.response.txt"
+          ],
+          "id": "prt_14bcac1170015dP5e90gIM8kse",
+          "sessionID": "ses_eb43588b8ffeBzxuERgTjntqEv",
+          "messageID": "msg_14bca7a680015sI8NUfHSO5Z35"
+        }
+      ]
+    }
+  ]
+}

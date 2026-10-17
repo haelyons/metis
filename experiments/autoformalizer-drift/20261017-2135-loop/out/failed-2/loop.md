@@ -1,0 +1,18 @@
+# Idea loop: Drift probes on the autoformalizer
+
+Root question: What actually stops us from autoformalizing most of published math into Lean? Is it gaps in Mathlib coverage, the step of translating informal proofs where authors skip things that are 'obvious', or something deeper about how mathematicians write? The Lean kernel is a free and perfect verifier, so this looks like one of the few domains where brute-force search can't fool itself. Could you split every paper into tiny lemma-sized subgoals and throw many different open-source prover models at each one in parallel, with each model scoped to a known failure mode like wrong definitions, mismatched conventions or silently strengthened hypotheses? Is compute a major blocker at some level, and could a shit ton of GPU parallelism fix it, or is the real bottleneck checking that the formal statement means the same thing as the English one?
+
+## Screen (option-critic panel, medians)
+
+| Option | stakes | open | internals | reshape | total | changes |
+|---|---|---|---|---|---|---|
+| O Drift probes on the autoformalizer | — | — | — | — | 0 |  |
+| V1 Drift probes against Kimina's statement judge, with a public audit set | — | — | — | — | 0 | Changes the comparison it is judged against (production judge ensembles rather than text-only baselines) and the programme aimed at (Kimina/Numina), while also creating the independent expert-labelled real-error set the programme check found no programme publishes. Answers gaps 1 and 5. |
+| V2 Frozen linear probes versus a FormalAlign-style evaluator, with cross-model transfer | — | — | — | — | 0 | Changes the system studied — frozen-model linear probes benchmarked against a FormalAlign-style fine-tuned evaluator, and tested for cross-model transfer. Answers gap 3, and by producing cross-size transfer evidence it strengthens the case for validating probes inside closed formalizers such as DeepMind's. |
+| V3 Definition-level drift probes for AlphaProof-Nexus research problems | — | — | — | — | 0 | Changes the programme aimed at and the distribution — AlphaProof-Nexus research-level definition formalization rather than competition and conjecture statements — so the lever outcome is evidence rather than extrapolation, and it confronts the closed-model access gap directly. Answers gaps 2 and 4. |
+
+No variant scored higher than the original; no second card.
+
+## Rounds
+
+**r0:** card REJECT (1 blocking), critic sum 23/25 (lever 5, open 5, stakes 5, verifiable 3, internals —, reshape 5, baseline 3), $7 at transfer-gate · plan $489 · 5 GUESS. Frame: Goedel-Prover (Goedel-LM: Princeton Language and Intelligence with Tsinghua, Amazon, Meta FAIR, Numina), fit 3, change 4, new 5 (12/15).

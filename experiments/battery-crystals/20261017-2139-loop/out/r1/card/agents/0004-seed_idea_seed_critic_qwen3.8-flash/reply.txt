@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Outcomes measure MLIP-predicted conductivity, not DFT/measured fast-ion conductors, so choice changes via unchecked surrogate-to-reality step."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:held_fixed",
+      "reason": "Compute spans 100x, but label count and sampling hyperparameters could explain arm differences and are not explicitly held_fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "card:test_summary",
+      "reason": "Hit rates derive from MACE/MD surrogate labels, not planted or DFT truth, though calibration checks exist."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior conditions bulk modulus; no published conductivity-conditioned disordered-halide generation or candidate-scaling gap test exists."
+    },
+    {
+      "criterion": "reshape",
+      "value": 2,
+      "ref": "card:method",
+      "reason": "Independent structures run side by side within steps; labels→adapter→generation→screening→NEB remains sequential dependency."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "plan:restructuring.method",
+      "reason": "Method is none; no parallel speedup versus a sequential baseline is claimed or timed."
+    }
+  ],
+  "decides_by": "p6_analyze",
+  "decides_by_reason": "Bootstrap intervals and decision rule are computed only in p6_analyze, after screened hit rates."
+}

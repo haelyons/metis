@@ -1,0 +1,111 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Research question stating what the plan will measure; no factual claim to verify and no source required."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "Finally, we target structures with high bulk modulus—an important property for superhard materials. We fine-tune the model on only 5,000 labeled structures, and sample with a target value of 400 GPa.",
+      "note": "Quote appears verbatim in §2.5. The page confirms property conditioning on bulk modulus succeeded with only 5,000 labels (it found 277 S.U.N. structures), supporting the cited 'property conditioning already worked for bulk modulus'. The 'shifts halides toward fast Li conductors' part is the plan's prediction."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Description of the plan's own pipeline (what it will build); no external factual claim to source."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Description of the plan's own parallelization method; no external factual claim to source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "While the number of structures found by screening saturates with increasing budget, MatterGen keeps discovering S.U.N.structures at an almost constant rate.",
+      "note": "Quote appears in §2.5. It supports the cited 'gap widens with candidate count' (showing a generative approach keeps discovering at a constant rate while screening saturates). The 100k conditioned-vs-unconditioned outcome is the plan's prediction, which needs no source. The source is an analogy (MatterGen vs screening) rather than a direct conditioned-vs-unconditioned measurement."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Prediction of the null outcome; no factual claim to source."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Description of the plan's procedure (what it will build); no external factual claim to source."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Finally, we target structures with high bulk modulus—an important property for superhard materials. We fine-tune the model on only 5,000 labeled structures, and sample with a target value of 400 GPa.",
+      "note": "Quote appears verbatim in §2.5; supports fine-tuning on 5,000 labels shifting generation toward extreme bulk-modulus values (target 400 GPa, only 2 such structures in the labeled set). The 'never conditioned on ionic conductivity or disordered halides' part is consistent with the page, which conditions only on magnetic density, band gap, bulk modulus, symmetry, chemistry and HHI (no ionic conductivity or halide conditioning appears)."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "",
+      "note": "Factual claim about the state of prior work ('no one has conditioned crystal generation on ionic conductivity for disordered halides...') with no source cited; a factual claim with no source is unsupported."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "MatterGen achieves 38.57 % S.U.N. rate among generated structures, and the average RMSD of its samples is 0.021 Angstrom.",
+      "note": "Quote appears in MODEL_CARD.md Results; the model card also states the metric is the S.U.N. percentage among 1,024 unconditional generated samples, matching the anchor's 38.57% value and 1,024-sample setting."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Self-described scope/limits of the plan; no external factual claim to source."
+    },
+    {
+      "ref": "src:s_mattergen_5000",
+      "status": "SUPPORTED",
+      "page_quote": "Finally, we target structures with high bulk modulus—an important property for superhard materials. We fine-tune the model on only 5,000 labeled structures, and sample with a target value of 400 GPa.",
+      "note": "Quote appears verbatim in §2.5 of arXiv:2312.03687v2; supports 'property conditioning works with few labels' (fine-tuned on only 5,000 labeled structures and successfully steered generation toward 400 GPa bulk modulus)."
+    },
+    {
+      "ref": "src:s_mattergen_saturate",
+      "status": "SUPPORTED",
+      "page_quote": "While the number of structures found by screening saturates with increasing budget, MatterGen keeps discovering S.U.N.structures at an almost constant rate.",
+      "note": "Quote appears in §2.5 of arXiv:2312.03687v2 (rendered as 'S.U.N.structures' without a space). Supports 'the gap widens with candidate count', showing MatterGen's discovery rate stays constant while screening saturates, so the gap grows with budget."
+    },
+    {
+      "ref": "src:s_mattergen_sun",
+      "status": "SUPPORTED",
+      "page_quote": "MatterGen achieves 38.57 % S.U.N. rate among generated structures, and the average RMSD of its samples is 0.021 Angstrom.",
+      "note": "Quote appears in MODEL_CARD.md Results; supports anchor sun_rate = 38.57% (S.U.N. rate among 1,024 unconditional samples)."
+    },
+    {
+      "ref": "num:gen_rate",
+      "status": "SUPPORTED",
+      "page_quote": "Sampling 1,000 structures takes around two hours using a single NVIDIA V100 GPU",
+      "note": "Quote appears in MODEL_CARD.md 'Speeds, Sizes, Times'. 1,000 structures / ~2 hours = 500 structures/GPU-hour, matching the recorded value of 500 structure/GPU-hour.",
+      "page_value": 500
+    },
+    {
+      "ref": "num:mace_step_ms",
+      "status": "SUPPORTED",
+      "page_quote": "MACE (large) | 2,139,152 | 1UAO | 6.3 ms/step | 11.6 ms/step | 44.2 ms/step",
+      "note": "Row appears in Table 2 of arXiv:2505.22397v1; the 44.2 ms/step value is the 'Torch + ASE' column for MACE (large) on 1UAO (138 atoms), and the table caption states all tests ran on a single NVIDIA H100 GPU, matching the recorded page_setting.",
+      "page_value": 44.2
+    },
+    {
+      "ref": "num:sun_rate",
+      "status": "SUPPORTED",
+      "page_quote": "MatterGen achieves 38.57 % S.U.N. rate among generated structures, and the average RMSD of its samples is 0.021 Angstrom.",
+      "note": "Quote appears in MODEL_CARD.md Results; the page states 38.57% S.U.N. rate for unconditional generation among 1,024 samples, matching the recorded value of 38.57 percent.",
+      "page_value": 38.57
+    }
+  ]
+}
+```

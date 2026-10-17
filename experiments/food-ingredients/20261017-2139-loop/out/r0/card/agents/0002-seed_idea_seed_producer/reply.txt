@@ -1,0 +1,169 @@
+The plan is written. Here is the record:
+
+```json
+{
+  "option_title": "Industrial food ingredient replacement for sustainability",
+  "question": "Does increasing the capacity of a neural ingredient-substitution model measurably improve its ranking of sustainable replacements, measured as Hit@1 on Recipe1MSubs [src_gismo_sizes]?",
+  "hypothesis": "More capacity in a substitution ranker improves substitution ranking because larger encoders capture finer ingredient context, as LLM results suggest [src_llm].",
+  "compute_axis": {
+    "quantity": "substitution-ranker capacity (ingredient-encoder embedding width)",
+    "unit": "dimension",
+    "levels": [64, 128, 256, 512]
+  },
+  "held_fixed": [
+    "Recipe1MSubs benchmark and its 10,747-sample test split",
+    "FlavorGraph graph and the 6,653-ingredient vocabulary",
+    "Contrastive loss, Adam optimizer, early stopping on validation MRR",
+    "5 seeds per width, ranking over the full vocabulary, MRR and Hit@k metrics"
+  ],
+  "predictions": {
+    "if_lever": "Hit@1 rises with width, reaching at least 22 percent at width 512, above GISMo's 20.56, and still climbing.",
+    "if_not": "Hit@1 plateaus near GISMo's 20.56 at every width; extra capacity adds nothing, so wider models are not the lever.",
+    "decision_rule": "Compute is the lever if Hit@1 at width 512 minus Hit@1 at width 64 is at least 2.0 points and exceeds twice the pooled standard error; otherwise it is not.",
+    "noise_rule": "Five seeds per width, mean and standard deviation reported; a real effect must exceed twice the pooled standard deviation, and GISMo's reported Hit@1 spread is 0.14 points.",
+    "expected": "if_lever",
+    "expected_why": "Published LLM fine-tuning lifted Hit@1 on this benchmark family from 34.53 to 38.03, so larger encoders should lift it here too [src_llm]."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "The test varies the ranker's embedding width, which sets model size and per-step FLOPs; wider models need more GPU memory and compute, so more GPUs buy the larger widths.",
+  "scored_against": "Measured Hit@1 and MRR at each width are compared with GISMo's published 20.56 and 31.51 and the LT+Freq baseline's 18.10 and 27.66; a correct setup reproduces them within tolerance first.",
+  "arms": [
+    {"id": "arm_gnn", "what": "GISMo-style GIN ranker trained at embedding widths 64, 128, 256, 512 (the compute axis)"},
+    {"id": "arm_llm", "what": "Optional stretch: a small pretrained transformer encoder with the GISMo scoring head, if the width sweep plateaus"}
+  ],
+  "baseline": {
+    "what": "LT+Freq statistical baseline (strongest non-neural): test MRR 27.66, Hit@1 18.10",
+    "value": "27.66",
+    "source_id": "src_gismo_ltfreq"
+  },
+  "anchor": {
+    "what": "Reproduce GISMo's published test-set MRR of 31.51 and Hit@1 of 20.56 using the official code, within 2 MRR points [src_gismo_gismo].",
+    "published_value": 31.51,
+    "tolerance": "plus or minus 2.0 MRR points (mean over 5 seeds)",
+    "source_id": "src_gismo_gismo",
+    "independent_code": "facebookresearch/gismo reference implementation"
+  },
+  "checks": [
+    "Downloaded splits contain 49,044 / 10,729 / 10,747 samples as published.",
+    "Ranking is over the 6,653-ingredient vocabulary, matching GISMo.",
+    "Anchor mean MRR lands within 2 points of 31.51 before the sweep starts.",
+    "Per-width results averaged over 5 seeds; a real gap exceeds twice the pooled standard deviation.",
+    "Best width re-evaluated on the high-footprint source-ingredient subset."
+  ],
+  "phases": [
+    {
+      "id": "setup",
+      "what": "Download Recipe1MSubs, FlavorGraph, and the gismo code; verify split counts; build the high-footprint ingredient list.",
+      "stop_rule": "Stop if the test split does not contain 10,747 samples."
+    },
+    {
+      "id": "anchor",
+      "what": "Reproduce GISMo: 5 training runs on one A100, timed.",
+      "stop_rule": "Stop after 5 runs or 12 GPU-hours, whichever comes first.",
+      "gate": {"on": "t_run_h", "op": "<=", "value": 2.0, "else": "halve the sweep to widths 64 and 128 with 3 seeds each and re-check the budget"}
+    },
+    {
+      "id": "sweep",
+      "what": "Train the ranker at widths 64, 128, 256, 512 with 5 seeds each (20 runs) on 4 A100s; measure Hit@1 and MRR.",
+      "stop_rule": "Stop after 20 runs or 10 wall-clock hours."
+    },
+    {
+      "id": "sustain",
+      "what": "Evaluate the best width on test tuples whose source ingredient is high-footprint (butter, egg, milk, cream, beef, pork, chicken, cheese, oil).",
+      "stop_rule": "2 GPU-hours.",
+      "gate": {"on": "n_high_fp_test", "op": ">=", "value": 100, "else": "skip the sustainability evaluation"}
+    },
+    {
+      "id": "stretch",
+      "what": "Optional: fine-tune a small pretrained transformer encoder with the GISMo scoring head, if the width sweep plateaus.",
+      "stop_rule": "24 GPU-hours."
+    }
+  ],
+  "numbers": [
+    {"id": "n_train", "name": "training substitution samples", "unit": "samples", "basis": "CITED", "value": 49044, "source_id": "src_gismo_sizes", "quote": "we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.", "page_setting": "Recipe1MSubs benchmark split sizes"},
+    {"id": "n_val", "name": "validation substitution samples", "unit": "samples", "basis": "CITED", "value": 10729, "source_id": "src_gismo_sizes", "quote": "we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.", "page_setting": "Recipe1MSubs benchmark split sizes"},
+    {"id": "n_test", "name": "test substitution samples", "unit": "samples", "basis": "CITED", "value": 10747, "source_id": "src_gismo_sizes", "quote": "we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.", "page_setting": "Recipe1MSubs benchmark split sizes"},
+    {"id": "n_vocab", "name": "ingredient vocabulary size", "unit": "ingredients", "basis": "CITED", "value": 6653, "source_id": "src_gismo_vocab", "quote": "our ingredient vocabulary contains 6,653 ingredients.", "page_setting": "GISMo ingredient vocabulary"},
+    {"id": "mr_r_gismo", "name": "GISMo test MRR", "unit": "percent", "basis": "CITED", "value": 31.51, "source_id": "src_gismo_gismo", "quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19", "page_setting": "Recipe1MSubs test results, Table 1"},
+    {"id": "hit1_gismo", "name": "GISMo test Hit@1", "unit": "percent", "basis": "CITED", "value": 20.56, "source_id": "src_gismo_gismo", "quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19", "page_setting": "Recipe1MSubs test results, Table 1"},
+    {"id": "hit3_gismo", "name": "GISMo test Hit@3", "unit": "percent", "basis": "CITED", "value": 35.89, "source_id": "src_gismo_gismo", "quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19", "page_setting": "Recipe1MSubs test results, Table 1"},
+    {"id": "hit10_gismo", "name": "GISMo test Hit@10", "unit": "percent", "basis": "CITED", "value": 54.27, "source_id": "src_gismo_gismo", "quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19", "page_setting": "Recipe1MSubs test results, Table 1"},
+    {"id": "mr_r_ltfreq", "name": "LT+Freq baseline MRR", "unit": "percent", "basis": "CITED", "value": 27.66, "source_id": "src_gismo_ltfreq", "quote": "LT+Freq 27.66±0.00 18.10±0.00 32.26±0.00 47.50±0.00", "page_setting": "Recipe1MSubs test results, Table 1"},
+    {"id": "hit1_ltfreq", "name": "LT+Freq baseline Hit@1", "unit": "percent", "basis": "CITED", "value": 18.10, "source_id": "src_gismo_ltfreq", "quote": "LT+Freq 27.66±0.00 18.10±0.00 32.26±0.00 47.50±0.00", "page_setting": "Recipe1MSubs test results, Table 1"},
+    {"id": "hit1_llm", "name": "LLM fine-tuned Hit@1", "unit": "percent", "basis": "CITED", "value": 38.03, "source_id": "src_llm", "quote": "Our approach improved Hit@1 accuracy on ingredient substitution tasks, from the baseline 34.53 ± 0.10% to 38.03 ± 0.28% on the original GISMo dataset, and from 40.24 ± 0.36% to 54.46 ± 0.29% on a refined version of the same dataset.", "page_setting": "LLM ingredient substitution study, GISMo dataset"},
+    {"id": "hit1_llm_base", "name": "LLM study baseline Hit@1", "unit": "percent", "basis": "CITED", "value": 34.53, "source_id": "src_llm", "quote": "Our approach improved Hit@1 accuracy on ingredient substitution tasks, from the baseline 34.53 ± 0.10% to 38.03 ± 0.28% on the original GISMo dataset, and from 40.24 ± 0.36% to 54.46 ± 0.29% on a refined version of the same dataset.", "page_setting": "LLM ingredient substitution study, GISMo dataset"},
+    {"id": "d_min", "name": "smallest embedding width", "unit": "dimension", "basis": "DESIGN", "value": 64},
+    {"id": "d_max", "name": "largest embedding width", "unit": "dimension", "basis": "DESIGN", "value": 512},
+    {"id": "n_widths", "name": "widths in the sweep", "unit": "count", "basis": "DESIGN", "value": 4},
+    {"id": "n_seeds", "name": "seeds per width", "unit": "count", "basis": "DESIGN", "value": 5},
+    {"id": "n_gpus_sweep", "name": "GPUs for the sweep", "unit": "count", "basis": "DESIGN", "value": 4},
+    {"id": "delta_min", "name": "minimum Hit@1 gap to call the lever", "unit": "points", "basis": "DESIGN", "value": 2.0},
+    {"id": "t_run_h", "name": "wall-clock per training run on one A100 40GB", "unit": "hours", "basis": "GUESS", "value": 1.0, "rests_on": "one GISMo run trains 49,044 tuples over a 6,653-node graph with two GIN layers and a contrastive loss; small-GNN runs of this size typically finish in under an hour on an A100", "measured_by": "anchor"},
+    {"id": "n_runs_sweep", "name": "sweep training runs", "unit": "runs", "basis": "DERIVED", "expr": "n_widths * n_seeds"},
+    {"id": "anchor_need_h", "name": "anchor phase estimated work", "unit": "hours", "basis": "DERIVED", "expr": "n_seeds * t_run_h"},
+    {"id": "sweep_wall_h", "name": "sweep estimated wall-clock", "unit": "hours", "basis": "DERIVED", "expr": "ceil(n_runs_sweep / n_gpus_sweep) * t_run_h"},
+    {"id": "n_high_fp_test", "name": "high-footprint source ingredients in the test split", "unit": "samples", "basis": "GUESS", "value": 2000, "rests_on": "high-impact ingredients (butter, egg, milk, cream, beef, pork, chicken, cheese, oil) are common in home recipes, so roughly 15 to 25 percent of the 10,747 test tuples likely have one as the source", "measured_by": "setup"}
+  ],
+  "cost": {
+    "rates": [
+      {"id": "r_a100_1", "gpu": "NVIDIA A100 SXM", "gpu_memory_gb": 40, "n_gpus": 1, "per_gpu_usd_h": 1.99},
+      {"id": "r_a100_4", "gpu": "NVIDIA A100 PCIe", "gpu_memory_gb": 40, "n_gpus": 4, "per_gpu_usd_h": 1.99}
+    ],
+    "lines": [
+      {"id": "line_anchor", "phase": "anchor", "what": "Reproduce GISMo: 5 training runs on one A100", "kind": "work", "rate": "r_a100_1", "hours": 12, "need": "anchor_need_h"},
+      {"id": "line_sweep", "phase": "sweep", "what": "Capacity sweep: 20 runs across 4 A100s", "kind": "work", "rate": "r_a100_4", "hours": 10, "need": "sweep_wall_h"},
+      {"id": "line_storage", "phase": "setup", "what": "Dataset and checkpoint filesystem, 5 GiB for a month", "kind": "storage", "usd": "5 * fs_usd_gib_month"},
+      {"id": "line_sustain", "phase": "sustain", "what": "Evaluate the best width on the high-footprint subset", "kind": "work", "rate": "r_a100_1", "hours": 2, "need": 1, "optional": true},
+      {"id": "line_llm", "phase": "stretch", "what": "Optional stretch: fine-tune a small pretrained transformer encoder", "kind": "work", "rate": "r_a100_1", "hours": 24, "need": 8, "optional": true, "condition": "run only if Hit@1 plateaus before width 512"}
+    ],
+    "scenarios": [
+      {"id": "sc_pess", "what": "pessimistic: each training run takes 2 hours", "set": {"t_run_h": 2.0}},
+      {"id": "sc_fast", "what": "optimistic: each training run takes 0.5 hours", "set": {"t_run_h": 0.5}}
+    ],
+    "yields": ["n_runs_sweep", "n_test", "n_high_fp_test"],
+    "spend_cap_usd": 1000,
+    "total_stated": 104.48
+  },
+  "full_scale": [
+    {"id": "fs_llm", "what": "Fine-tune a 7B LLM on Recipe1MSubs plus Recipe1M instructions for substitution ranking", "usd": "6 * budget_usd", "ratio_to": "n_train"},
+    {"id": "fs_all", "what": "Rank substitutes across all 1,029,720 Recipe1M recipes, not just the benchmark tuples", "usd": "2 * budget_usd", "ratio_to": "n_train"}
+  ],
+  "outside_budget": [
+    {"what": "researcher time to wire the benchmark, run seeds, and read results", "qty": 30, "unit": "hours"},
+    {"what": "free 4-core CPU host for dataset download and checks", "qty": 2, "unit": "hours"}
+  ],
+  "restructuring": {
+    "sequential_part": "Each training run waits on its own gradient epochs, roughly 30 per run; the runs themselves are independent.",
+    "method": "none"
+  },
+  "scope_gap": [
+    "The benchmark is home cooking, not industrial formulations; a real replacement needs a lifecycle footprint model and sensory validation, which this test does not buy.",
+    "Correct substitution ranking is not the same as a sustainable replacement; the test never measures emissions or production cost."
+  ],
+  "novelty": {
+    "closest_prior": "Rita 2024 fine-tuned GPT-3.5 and TinyLlama on Recipe1MSubs, lifting Hit@1 from 34.53 to 38.03; no capacity sweep within one protocol exists [src_llm].",
+    "closest_source_id": "src_llm",
+    "prior_max_level": null,
+    "left_open": "Whether ranking quality keeps rising with model capacity inside one fixed protocol on Recipe1MSubs is unmeasured; the only scaling evidence is cross-protocol.",
+    "decides": "no",
+    "searched": true
+  },
+  "limits": [
+    "Shows ranking accuracy on home recipes, not industrial formulations, and never measures actual environmental footprint or sensory quality of the substitute."
+  ],
+  "test_summary": "Reproduce GISMo's Recipe1MSubs result, then train the ranker at four widths 64, 128, 256, 512 with five seeds each on four GPUs; if Hit@1 climbs past the 20.56 baseline with width, compute is the lever.",
+  "sources": [
+    {"id": "src_gismo_sizes", "url": "https://arxiv.org/html/2302.07960v1", "quote": "we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.", "supports": "Recipe1MSubs split sizes used by the plan"},
+    {"id": "src_gismo_vocab", "url": "https://arxiv.org/html/2302.07960v1", "quote": "our ingredient vocabulary contains 6,653 ingredients.", "supports": "the 6,653-ingredient ranking vocabulary"},
+    {"id": "src_gismo_gismo", "url": "https://arxiv.org/html/2302.07960v1", "quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19", "supports": "the GISMo MRR and Hit@k anchor the plan reproduces"},
+    {"id": "src_gismo_ltfreq", "url": "https://arxiv.org/html/2302.07960v1", "quote": "LT+Freq 27.66±0.00 18.10±0.00 32.26±0.00 47.50±0.00", "supports": "the LT+Freq non-neural baseline the plan must beat"},
+    {"id": "src_llm", "url": "https://arxiv.org/abs/2409.08792", "quote": "Our approach improved Hit@1 accuracy on ingredient substitution tasks, from the baseline 34.53 ± 0.10% to 38.03 ± 0.28% on the original GISMo dataset, and from 40.24 ± 0.36% to 54.46 ± 0.29% on a refined version of the same dataset.", "supports": "the closest prior and the direction that larger models help"},
+    {"id": "src_palm", "url": "https://www.ran.org/palm_oil_fact_sheet", "quote": "Palm oil is a globally traded agricultural commodity that is used in 50 percent of all consumer goods, from lipstick and packaged food to body lotion and biofuels.", "supports": "the stakes: industrial ingredient replacement matters"},
+    {"id": "src_foodshare", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC3728220/", "quote": "Ninety % of the palm oil is used in food products such as margarine, shortening, and vegetable cooking oil, while the remaining 10% is used by various industries [5].", "supports": "food is the dominant use of palm oil, so food ingredient replacement is the lever"}
+  ],
+  "files_read": [
+    "/home/hal/dev/interp/latent_open/README.md",
+    "/home/hal/dev/interp/latent_open/qt2/CONTRACT.md"
+  ]
+}
+```

@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Choice to scale conditioned generation depends on measured sigma, but test only checks predicted conductivity and NEB barriers; simulation-to-reality gap."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:compute_axis",
+      "reason": "Compute spans 100x (1k-100k); 2x hit-rate gap exceeds within-arm seed noise; predictor, threshold, and protocol held fixed across arms."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "card:anchor",
+      "reason": "Primary metric (hit rate) is predictor-labeled; NEB barriers and MAE anchor reproduce published 0.85 MAE and 0.41/0.19 eV barriers."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Ferrogen targeted ferroelectric polarization, not ionic conductivity; no prior fine-tunes crystal foundation model on Li-ion transport proxy."
+    },
+    {
+      "criterion": "reshape",
+      "value": 2,
+      "ref": "plan:restructuring.method",
+      "reason": "Method is None: parallelism only splits each step across GPUs; fine-tune→generate→screen→validate loop chain is left in order."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "plan:restructuring.method",
+      "reason": "Restructuring method is None; baseline criterion does not apply."
+    }
+  ],
+  "decides_by": "p_validate",
+  "decides_by_reason": "Decision requires both 100k hit-rate gap and top-10 median CHGNet-NEB barrier; barrier only available after p_validate."
+}
+```

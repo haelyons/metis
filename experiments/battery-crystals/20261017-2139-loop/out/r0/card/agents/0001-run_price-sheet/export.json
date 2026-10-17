@@ -1,0 +1,406 @@
+{
+  "info": {
+    "id": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+    "slug": "sunny-cabin",
+    "projectID": "e635804b0fe929d2ed556701e94990a108996451",
+    "directory": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/card/agents/0001-run_price-sheet/cwd",
+    "path": "runs/loop/battery/20261017-213943/r0/card/agents/0001-run_price-sheet/cwd",
+    "title": "run:price-sheet",
+    "agent": "qt-web",
+    "model": {
+      "id": "glm-5.3-flash",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.0035395,
+    "tokens": {
+      "input": 16190,
+      "output": 1780,
+      "reasoning": 442,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792273187036,
+      "updated": 1792273204673
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792273187131
+        },
+        "agent": "qt-web",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "glm-5.3-flash"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14bce813a001LWMxikzH0N3s5y",
+        "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Fetch https://lambda.ai/pricing and https://docs.lambda.ai/public-cloud/billing/. List every on-demand instance as {gpu, gpu_memory_gb, n_gpus, per_gpu_usd_h, page_text}, where page_text is the text that shows that price for that instance size; and the filesystem price with page_text and whether the page calls it an example. Decide only from these two pages.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"read_at\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The date the pages were fetched, ISO format.\\\"},\\\"instances\\\":{\\\"type\\\":\\\"array\\\",\\\"description\\\":\\\"Every on-demand instance size listed.\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"gpu\\\":{\\\"type\\\":\\\"string\\\"},\\\"gpu_memory_gb\\\":{\\\"type\\\":\\\"number\\\"},\\\"n_gpus\\\":{\\\"type\\\":\\\"integer\\\"},\\\"per_gpu_usd_h\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"US dollars per GPU per hour.\\\"},\\\"page_text\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The text on the page that shows this price for this instance size.\\\"}},\\\"required\\\":[\\\"gpu\\\",\\\"gpu_memory_gb\\\",\\\"n_gpus\\\",\\\"per_gpu_usd_h\\\",\\\"page_text\\\"]}},\\\"filesystem\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"usd_gib_month\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"US dollars per GiB per month.\\\"},\\\"page_text\\\":{\\\"type\\\":\\\"string\\\"},\\\"example\\\":{\\\"type\\\":\\\"boolean\\\",\\\"description\\\":\\\"True if the page presents this price as an example.\\\"}},\\\"required\\\":[\\\"usd_gib_month\\\",\\\"page_text\\\",\\\"example\\\"]}},\\\"required\\\":[\\\"read_at\\\",\\\"instances\\\",\\\"filesystem\\\"]}\"",
+          "id": "prt_14bce81440018luTnliVISfpUg",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce813a001LWMxikzH0N3s5y"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14bce813a001LWMxikzH0N3s5y",
+        "role": "assistant",
+        "mode": "qt-web",
+        "agent": "qt-web",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/card/agents/0001-run_price-sheet/cwd",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00025565,
+        "tokens": {
+          "total": 1478,
+          "input": 1381,
+          "output": 97,
+          "reasoning": 0,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "glm-5.3-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792273188000,
+          "completed": 1792273190496
+        },
+        "finish": "tool-calls",
+        "id": "msg_14bce84a0001gNCUCYMcXA9z6p",
+        "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O"
+      },
+      "parts": [
+        {
+          "snapshot": "49fa86e4330e09dc1158d990a197b5ef132b3939",
+          "type": "step-start",
+          "id": "prt_14bce8c1d001z41leikZETBVc5",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce84a0001gNCUCYMcXA9z6p"
+        },
+        {
+          "type": "reasoning",
+          "text": "The user wants me to fetch two pages: https://lambda.ai/pricing and https://docs.lambda.ai/public-cloud/billing/, and extract on-demand instance pricing info and filesystem pricing. Let me fetch both pages in parallel since they're independent.",
+          "time": {
+            "start": 1792273189922,
+            "end": 1792273190165
+          },
+          "id": "prt_14bce8c22001ube3zhkyR4owH2",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce84a0001gNCUCYMcXA9z6p"
+        },
+        {
+          "type": "tool",
+          "tool": "webfetch",
+          "callID": "5e6dc32f-8171-4ff9-8ee9-6479770de04a",
+          "state": {
+            "status": "completed",
+            "input": {
+              "url": "https://lambda.ai/pricing",
+              "format": "text"
+            },
+            "output": "GPU cloud pricing: rent NVIDIA H100, H200, and B200 | Lambda\n  \n  \n  \n  \n  \n  \n  \n\n  \n  \n\n  \n\n  \n  \n\n  \n\n    \n    \n    \n    \n    \n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n  \n  \n  \n  \n\n\n\n\n  \n  Skip to main content\n  \n  \n  \n\n  \n\n  \n  \n\n  AI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our teamAI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our team\n    \n      \n  \n  \n  \n      \n  \n\n  \n    \n    \n\n\n\n\n\n\n\n\n\n\n\nAI cloud pricingClear, straightforward pricing for Instances, 1-Click Clusters™, and Superclusters.\nContact us for reserved capacity at our lowest prices.Launch GPU instanceTalk to our team\n    \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\n1-Click ClusterspricingProduction-ready clusters from 16 to 2,000+ NVIDIA B200 or H100 GPUs.Learn moreNVIDIA HGX B200NVIDIA H100NVIDIA HGX B200 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA HGX B2002 weeks – 1 year16$9.86Talk to our teamNVIDIA HGX B2002 weeks – 1 year64$9.36Talk to our teamNVIDIA HGX B2002 weeks – 1 year256+$8.87Talk to our teamNVIDIA HGX B2001 year+16+—Talk to our team* plus applicable sales tax/VAT/GSTNVIDIA H100 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA H1002 weeks – 1 year16$6.16Talk to our teamNVIDIA H1002 weeks – 1 year64$5.85Talk to our teamNVIDIA H1002 weeks – 1 year256$5.54Talk to our teamNVIDIA H1001 year+16+—Talk to our team* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\nInstances pricingDeploy NVIDIA B200, H100, A100, or GH200 instances in minutes with self-serve, first-come access.Launch GPU instance8x4x2x1xPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB1041440 GiB11 TiB SSD$6.79NVIDIA H100 SXM80 GB104900 GiB11 TiB SSD$4.09NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB52720 GiB5.5 TiB SSD$6.89NVIDIA H100 SXM80 GB52450 GiB5.5 TiB SSD$4.19NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB26360 GiB2.75 TiB SSD$6.99NVIDIA GH20096 GB64432 GiB4 TiB SSD$2.29NVIDIA H100 SXM80 GB26225 GiB2.75 TiB SSD$4.29NVIDIA H100 PCIe80 GB26225 GiB1 TiB SSD$3.29NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99NVIDIA A1024 GB30226 GiB1.3 TiB SSD$1.29NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09NVIDIA Quadro RTX 600024 GB1446 GiB512 GiB SSD$0.69* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n\n  \n  \n\n\nFOOTERAI FACTORIESFor every mission Superintelligence Enterprise Government Startups and researchersFoundations AI infrastructure Trust and security Customer storiesProductsProducts Superclusters 1-Click Clusters InstancesFeatures AI infrastructure Orchestration Lambda Stack Trust and securityDocs Documentation Blog ResearchCompanyInside LambdaAboutCareersLeadershipInvestorsResourcesResearchCustomer storiesBlogPartnersBrand guidelinesPrivacy PolicyTerms of ServiceCookie preferencesCookie management is unavailable because your browser is blocking third-party scripts.© 2026 Lambda. All rights reserved.",
+            "metadata": {
+              "truncated": false
+            },
+            "title": "https://lambda.ai/pricing (text/html; charset=UTF-8)",
+            "time": {
+              "start": 1792273190185,
+              "end": 1792273190277
+            }
+          },
+          "id": "prt_14bce8d1a001PiledM4sLEzEMJ",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce84a0001gNCUCYMcXA9z6p"
+        },
+        {
+          "type": "tool",
+          "tool": "webfetch",
+          "callID": "f13001a2-28fa-478c-b9a8-aece3d73bab7",
+          "state": {
+            "status": "completed",
+            "input": {
+              "format": "text",
+              "url": "https://docs.lambda.ai/public-cloud/billing/"
+            },
+            "output": "Billing overview - Lambda Docs\n      \n    \n    \n      \n      \n        \n        \n      \n      \n\n\n    \n    \n      \n    \n    \n      \n        \n        \n        \n        \n        \n      \n    \n    \n      \n    \n      \n    \n      \n    \n      \n    \n    \n    \n      \n  \n\n\n  \n\n\n  \n    \n  \n\n    \n    \n  \n\n  \n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n  \n    \n    \n      \n    \n    \n    \n    \n    \n  \n    \n    \n    \n    \n    \n      \n        \n        \n          Skip to content\n        \n      \n    \n    \n      \n    \n    \n    \n      \n\n\n\n\n\n\n\n  \n\n    \n    \n      \n  \n\n    \n\n    \n    \n      \n      \n    \n\n    \n    \n      \n        \n          \n            \n          \n        \n        \n          \n            \n          \n        \n      \n    \n\n    \n    \n      \n        \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n\n      \n    \n\n    \n    \n      \n    \n\n    \n    \n\n    \n    \n      \n        \n        \n      \n\n      \n      \n  \n  \n    \n      \n      \n        \n        \n        \n        \n      \n      \n        \n        \n          \n          \n        \n      \n      \n    \n    \n      \n        \n          \n            Initializing search\n          \n          \n        \n      \n    \n  \n\n    \n\n    \n    \n  \n\n  \n  \n\n    \n    \n      \n      \n        \n          \n            \n\n  \n    \n      \n        \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    \n  \n  Home\n\n      \n    \n  \n\n      \n        \n  \n  \n  \n    \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Public Cloud\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Private Cloud\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Managed Kubernetes\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Managed Slurm\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Education\n\n        \n      \n    \n  \n\n      \n    \n  \n\n          \n        \n      \n      \n        \n          \n            \n              \n              \n                \n                  \n                    \n\n\n  \n\n\n\n  \n    \n      \n  \n\n    \n    Lambda Docs\n  \n  \n  \n    \n      \n      \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Home\n  \n  \n\n      \n    \n  \n\n    \n      \n      \n  \n  \n    \n  \n  \n  \n    \n    \n    \n      \n        \n          \n          \n        \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n        \n        \n          \n          \n            \n  \n  \n    Public Cloud\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Public Cloud\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Cloud Console\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Resource management\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Resource management\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Resource hierarchy\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your account\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your workspaces\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Access and security\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Access and security\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Access and security overview\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Firewalls\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Enabling single sign-on (SSO)\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Data management\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Data management\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Filesystems\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Filesystem S3 Adapter\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Importing and exporting data\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Logging and monitoring\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Logging and monitoring\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Guest Agent\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n    \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n        \n        \n          \n          \n            \n  \n  \n    Billing\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Billing\n          \n          \n            \n              \n                \n  \n  \n    \n  \n  \n  \n    \n      \n      \n      \n      \n        \n      \n      \n        \n          \n  \n  \n    Billing overview\n  \n  \n\n          \n        \n      \n      \n        \n  \n  \n    Billing overview\n  \n  \n\n      \n      \n        \n\n\n\n\n\n\n\n\n\n  \n  \n    \n  \n\n  \n  \n    \n      \n      Table of contents\n    \n    \n      \n        \n  \n    \n      \n        Billable resources\n      \n    \n  \n  \n    \n      \n        \n          \n  \n    \n      \n        On-Demand Cloud (ODC) instances\n      \n    \n  \n  \n\n        \n          \n  \n    \n      \n        1-Click Clusters (1CCs)\n      \n    \n  \n  \n\n        \n          \n  \n    \n      \n        Filesystems\n      \n    \n  \n  \n\n        \n      \n    \n  \n\n      \n        \n  \n    \n      \n        Credits and refunds\n      \n    \n  \n  \n\n      \n        \n  \n    \n      \n        Next steps\n      \n    \n  \n  \n\n      \n    \n  \n\n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing billing\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Cloud API\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    On-Demand\n  \n  \n\n            \n          \n        \n        \n          \n            \n            On-Demand\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Overview\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Connecting to an instance\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Creating and managing instances\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your system environment\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Troubleshooting\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    1-Click Clusters\n  \n  \n\n            \n          \n        \n        \n          \n            \n            1-Click Clusters\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    How to serve the Llama 3.1 405B model using a Lambda 1-Click Cluster\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Security posture\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Support\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Additional resources\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Additional resources\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Forum\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Blog\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    YouTube\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Main site\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Tags index\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n    \n      \n      \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Private Cloud\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Private Cloud\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Accessing your Lambda Private Cloud cluster\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Security posture\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Additional resources\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Additional resources\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Forum\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Blog\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    YouTube\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Main site\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Tags index\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n    \n      \n      \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Managed Kubernetes\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Managed Kubernetes\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Continuous validation\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Auto-remediation system\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n\n...1698 lines truncated...\n\nThe tool call succeeded but the output was truncated. Full output saved to: /home/hal/.local/share/opencode/tool-output/tool_14bce8de1001fQglBXcWv8YLHp\nUse Grep to search the full content or Read with offset/limit to view specific sections.",
+            "metadata": {
+              "truncated": true,
+              "outputPath": "/home/hal/.local/share/opencode/tool-output/tool_14bce8de1001fQglBXcWv8YLHp"
+            },
+            "title": "https://docs.lambda.ai/public-cloud/billing/ (text/html; charset=utf-8)",
+            "time": {
+              "start": 1792273190244,
+              "end": 1792273190374
+            }
+          },
+          "id": "prt_14bce8d56001ioGhNlejdE3dCI",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce84a0001gNCUCYMcXA9z6p"
+        },
+        {
+          "reason": "tool-calls",
+          "snapshot": "49fa86e4330e09dc1158d990a197b5ef132b3939",
+          "type": "step-finish",
+          "tokens": {
+            "total": 1478,
+            "input": 1381,
+            "output": 97,
+            "reasoning": 0,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.00025565,
+          "id": "prt_14bce8e22001DauNj2X1Vz72fw",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce84a0001gNCUCYMcXA9z6p"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14bce813a001LWMxikzH0N3s5y",
+        "role": "assistant",
+        "mode": "qt-web",
+        "agent": "qt-web",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/card/agents/0001-run_price-sheet/cwd",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.0007366,
+        "tokens": {
+          "total": 4647,
+          "input": 4534,
+          "output": 76,
+          "reasoning": 37,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "glm-5.3-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792273190502,
+          "completed": 1792273193057
+        },
+        "finish": "tool-calls",
+        "id": "msg_14bce8e66001KBr26ayjF6Uy4g",
+        "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O"
+      },
+      "parts": [
+        {
+          "snapshot": "49fa86e4330e09dc1158d990a197b5ef132b3939",
+          "type": "step-start",
+          "id": "prt_14bce93070016gmdVtMaOHHsE8",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce8e66001KBr26ayjF6Uy4g"
+        },
+        {
+          "type": "reasoning",
+          "text": "The docs billing page was truncated and mostly nav. I need the actual billing content — prices for on-demand instances and filesystem. Let me search the saved file for price/file system text.",
+          "time": {
+            "start": 1792273191690,
+            "end": 1792273192041
+          },
+          "id": "prt_14bce930a001E8zboe9FzAABCP",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce8e66001KBr26ayjF6Uy4g"
+        },
+        {
+          "type": "tool",
+          "tool": "websearch",
+          "callID": "chatcmpl-tool-b85cdc17c24881eb",
+          "state": {
+            "status": "completed",
+            "input": {
+              "contextMaxCharacters": 8000,
+              "numResults": 3,
+              "query": "docs.lambda.ai billing overview \"Filesystems\" \"$\" per GiB per month on-demand",
+              "type": "fast"
+            },
+            "output": "{\n  \"search_id\": \"search_9dec6b1336b8912b5ab0c2bec7d44078\",\n  \"results\": [\n    {\n      \"url\": \"https://docs.lambda.ai/public-cloud/billing/\",\n      \"title\": \"Billing overview - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"Billing #\\nThis page explains how Lambda bills each of its public cloud resources.\\nBillable resources #\\nLambda Cloud charges for the following resources:\\n* On-Demand Cloud (ODC) instances\\n* 1-Click Clusters (1CCs)\\n* Filesystems\\n  Charges include sales tax, which is based on the location provided in your billing information.\\nOn-Demand Cloud (ODC) instances #\\nODC prices instances by hourly usage and bills in one-minute increments. Billing begins the moment you launch an instance and the instance passes health checks, and ends the moment you terminate the instance. Instances are billed for as long as they're running, regardless if they're actively being used.\\nYou receive weekly invoices for the previous week's usage.\\nTo view current ODC instance pricing, see the pricing table on the On-Demand Cloud page.\\n1-Click Clusters (1CCs) #\\n1CCs are priced per GPU per hour and billed in weekly increments according to the terms of your reservation. You receive a billing summary during the 1CC reservation process and an invoice by email when your reservation is approved. After receiving the invoice, you have ten days to pay for your reservation.\\nTo view current 1CC pricing, see the pricing table on the 1-Click Clusters page.\\nFilesystems #\\nFilesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month:\\n* If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00.\\n* If you use 1,000 GiB continuously for a full day (24 hours), you'll be billed $6.67.\\nImportant\\nThe rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\\nBilling continues as long as a filesystem exists, even if it's not mounted to an instance. There is no minimum storage period, and you are not charged for ingress or egress.\"\n      ]\n    },\n    {\n      \"url\": \"https://test-docs.lambda.ai/public-cloud/filesystems\",\n      \"title\": \"Filesystems - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"How are filesystems billed? #\\nFilesystems are billed based on actual usage, measured per GiB per month, in 1-hour increments. Billing continues as long as a filesystem exists, even if it's not mounted to an instance.\\nFor example, at a rate of $0.20 per GiB per month:\\n* If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00.\\n* If you use 1,000 GiB continuously for a full day (24 hours), you'll be billed $6.67.\\n  Note\\n  The actual price of persistent storage will be displayed when you create your filesystem.\\n.Trash-* directories #\"\n      ]\n    },\n    {\n      \"url\": \"https://docs.lambda.ai/public-cloud/on-demand/\",\n      \"title\": \"Overview - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"* Access and security overview\\n* Firewalls\\n* Enabling single sign-on (SSO)\\n* Data management\\nData management\\n* Filesystems\\n* Filesystem S3 Adapter\\n* Importing and exporting data\\n* Logging and monitoring\\nLogging and monitoring\\n* Guest Agent\\n* Billing\\nBilling\\n* Billing overview\\n* Managing billing\\n* Cloud API\\n* On-Demand\\nOn-Demand\\n* Overview Overview\\nOverview #\\nOn-Demand Cloud (ODC) provides on-demand access to Linux-based, GPU-backed virtual machine instances.\\nInstance types #\\n* GPU | Number of GPUs | VRAM per GPU | vCPU cores | RAM | Root volume size\\n* B200 | 8 | 180 GB | 208 | 2900 GiB | 22 TiB\\n* | 4 | 180 GB | 104 | 1440 GiB | 11 TiB\\n* | 2 | 180 GB | 52 | 720 GiB | 5.5 TiB\\n* | 1 | 180 GB | 26 | 360 GiB | 2.75 TiB\\n* GH200 1 | 1 | 96 GB | 64 | 432 GiB | 4 TiB\\n* H100 SXM | 8 | 80 GB | 208 | 1800 GiB | 22 TiB\\nFilesystems are billed per GB used per month, in increments of one hour. If you delete an instance but not its associated filesystem, you'll continue to be billed for the filesystem. For more details on filesystem pricing, see Filesystems .\\nSize limits #\"\n      ]\n    },\n    {\n      \"url\": \"https://docs.lambda.ai/public-cloud/filesystems/\",\n      \"title\": \"Filesystems - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"* Deleting a filesystem\\n* Managing cost\\n* Viewing filesystem usage\\n* Setting usage limits\\n* Managing auto-generated application data\\n* Next steps\\n* Filesystem S3 Adapter\\n* Importing and exporting data\\n* Logging and monitoring\\nLogging and monitoring\\n* Guest Agent\\n* Billing\\nBilling\\n* Billing overview\\n* Managing billing\\n* Cloud API\\n* On-Demand\\nA filesystem is a high-capacity regional file store you can attach to your instance to store datasets and back up system state. In most regions, each filesystem has a capacity of 8 EB (8,000,000 TB), and you can create up to 24 total filesystems. In the Texas, USA (us-south-1) region, filesystems are currently limited to 10 TB of capacity.\\nFor information on how filesystems are billed, see the Billing overview .\"\n      ]\n    },\n    {\n      \"url\": \"https://test-docs.lambda.ai/public-cloud/manage-billing\",\n      \"title\": \"Managing billing - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"* Home\\n* Public Cloud\\n* Private Cloud\\n* Hardware\\n* Education\\nlogo Lambda Docs\\n* Home\\n* Public Cloud\\nPublic Cloud\\n* Introduction\\n* Cloud Console\\n* Data management\\nData management\\n* Filesystems\\n* Filesystem S3 Adapter\\n* Importing and exporting data\\n* Logging and monitoring\\nLogging and monitoring\\n* Guest Agent\\n* Access and security\\nAccess and security\\n* Access and security overview\\n* Teams\\n* Firewalls\\n* Billing\\nBilling\\n* Billing overview\\n* Managing billing Managing billing\\nTable of contents\\n* Setting up billing\\n* Paying an open invoice\\n* Monitoring your costs\\n* Updating your billing information\\n* Viewing your payment history\\n* Troubleshooting billing issues\\n* My card is being declined\\n* I'm being prompted to update my billing information\\n* I didn't receive an invoice this week\\n* I received two invoices this week\\n* Next steps\\n* Cloud API\\n* On-Demand\\nOn-Demand\\n* Overview\\n* Getting started\\n* Connecting to an instance\\n* Creating and managing instances\\n* Managing your system environment\\n* Troubleshooting\\n* 1-Click Clusters\\nWhen Lambda migrated to a new billing system in October of 2025, a small set of accounts on mid-week billing cycles received two invoices for that week. These invoices represented distinct billing periods and had no overlap between them.\\nNext steps #\\nFor an overview of how Lambda bills each of its public cloud resources, see Billing .\"\n      ]\n    },\n    {\n      \"url\": \"https://docs.lambda.ai/\",\n      \"title\": \"Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"Lambda Docs\\nLambda GPU Cloud documentation. Billing Billing Billing overview Managing billing Cloud API On-Demand On-Demand Overview Connecting. Creating and managing\"\n      ]\n    },\n    {\n      \"url\": \"https://docs.lambda.ai/public-cloud/\",\n      \"title\": \"Introduction - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"* Access and security overview\\n* Firewalls\\n* Enabling single sign-on (SSO)\\n* Data management\\nData management\\n* Filesystems\\n* Filesystem S3 Adapter\\n* Importing and exporting data\\n* Logging and monitoring\\nLogging and monitoring\\n* Guest Agent\\n* Billing\\nBilling\\n* Billing overview\\n* Managing billing\\n* Cloud API\\n* On-Demand\\nOn-Demand\\n* Overview\"\n      ]\n    },\n    {\n      \"url\": \"https://docs.lambda.ai/public-cloud/on-demand/creating-managing-instances/\",\n      \"title\": \"Creating and managing instances - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"* Access and security overview\\n* Firewalls\\n* Enabling single sign-on (SSO)\\n* Data management\\nData management\\n* Filesystems\\n* Filesystem S3 Adapter\\n* Importing and exporting data\\n* Logging and monitoring\\nLogging and monitoring\\n* Guest Agent\\n* Billing\\nBilling\\n* Billing overview\\n* Managing billing\\n* Cloud API\\n* On-Demand\\nOn-Demand\\n* Overview\\nTo view a list of your running instances, visit the Instances page in the Lambda Cloud console.\\nYou can also retrieve more detailed information about your instances, including their IDs, private IPs, and attached filesystems, by using the Lambda Cloud API. For details, see List running instances in the Lambda Cloud API browser.\"\n      ]\n    },\n    {\n      \"url\": \"https://docs.lambda.ai/public-cloud/manage-billing/\",\n      \"title\": \"Managing billing - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"* Access and security overview\\n* Firewalls\\n* Enabling single sign-on (SSO)\\n* Data management\\nData management\\n* Filesystems\\n* Filesystem S3 Adapter\\n* Importing and exporting data\\n* Logging and monitoring\\nLogging and monitoring\\n* Guest Agent\\n* Billing\\nBilling\\n* Billing overview\\n* Managing billing Managing billing\\nTable of contents\\n* Setting up billing\\n* Paying an open invoice\\n* Monitoring your costs\\n* Updating your billing information\\n* Viewing your payment history\\n* Viewing your credit balance\\n* Troubleshooting billing issues\\n* My card is being declined\\n* I didn't receive an invoice this week\\n* Next steps\\n* Cloud API\\n* On-Demand\\nOn-Demand\\n* Overview\"\n      ]\n    },\n    {\n      \"url\": \"https://docs.lambda.ai/public-cloud/resource-hierarchy\",\n      \"title\": \"Resource hierarchy - Lambda Docs\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"* Workspace administration and management\\n* Next steps\\n* Managing your account\\n* Managing your workspaces\\n* Access and security\\nAccess and security\\n* Access and security overview\\n* Firewalls\\n* Enabling single sign-on (SSO)\\n* Data management\\nData management\\n* Filesystems\\n* Filesystem S3 Adapter\\n* Importing and exporting data\\n* Logging and monitoring\\nLogging and monitoring\\n* Guest Agent\\n* Billing\\nBilling\\n* Billing overview\\n* Managing billing\\n* Cloud API\\n* On-Demand\\nOn-Demand\\n* Overview\\n* Connecting to an instance\\n* Creating and managing instances\\n* Managing your system environment\\n* Troubleshooting\\n* 1-Click Clusters\\n1-Click Clusters\\n* Introduction\\n* A top-level account .\\n* One or more workspaces within that account.\\n* One or more Lambda Cloud resources , such as instances or filesystems, within each workspace.\\nAccounts #\\nAccounts serve as the top-level nodes in the Lambda Cloud resource hierarchy. Each account provides a secure, isolated administrative boundary with its own users, policies, resources, quotas, billing, and governance. Lambda bills resource usage at the account level.\\nAccount membership #\\nAccount administration #\\nYou manage IAM, workspaces, and billing at the account level. You must have the Admin role to perform account-level tasks. For more information, see Managing your account .\\nWorkspaces #\"\n      ]\n    }\n  ],\n  \"warnings\": null,\n  \"metadata\": null,\n  \"session_id\": \"ses_eb4317f23ffeHC4eYd9uyFzQ4O\"\n}",
+            "metadata": {
+              "provider": "parallel",
+              "truncated": false
+            },
+            "title": "Parallel Web Search: docs.lambda.ai billing overview \"Filesystems\" \"$\" per GiB per month on-demand",
+            "time": {
+              "start": 1792273192393,
+              "end": 1792273192984
+            }
+          },
+          "id": "prt_14bce9470001elProUhfFl5mgs",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce8e66001KBr26ayjF6Uy4g"
+        },
+        {
+          "type": "tool",
+          "tool": "webfetch",
+          "callID": "chatcmpl-tool-9c908bbe53df984b",
+          "state": {
+            "status": "completed",
+            "input": {
+              "format": "markdown",
+              "url": "https://docs.lambda.ai/public-cloud/billing/"
+            },
+            "output": "        Billing overview - Lambda Docs                             \n\n[Skip to content](#billing)\n\n[![logo](../../assets/images/lambda/lambda-docs-logo-light-mode.svg)](../.. \"Lambda Docs\")\n\n  \n\nInitializing search\n\n-   [Home](../..)\n-   [Public Cloud](../)\n-   [Private Cloud](../../private-cloud/)\n-   [Managed Kubernetes](../../managed-kubernetes/)\n-   [Managed Slurm](../../managed-slurm/)\n-   [Education](../../education/)\n\n [![logo](../../assets/images/lambda/lambda-docs-logo-light-mode.svg)](../.. \"Lambda Docs\")Lambda Docs\n\n-   [Home](../..)\n-    Public Cloud\n    \n    Public Cloud\n    \n    -   [Introduction](../)\n    -   [Cloud Console](../console/)\n    -    Resource management\n        \n        Resource management\n        \n        -   [Resource hierarchy](../resource-hierarchy/)\n        -   [Managing your account](../managing-account/)\n        -   [Managing your workspaces](../managing-workspaces/)\n        \n    -    Access and security\n        \n        Access and security\n        \n        -   [Access and security overview](../access-security/)\n        -   [Firewalls](../firewalls/)\n        -   [Enabling single sign-on (SSO)](../enabling-sso/)\n        \n    -    Data management\n        \n        Data management\n        \n        -   [Filesystems](../filesystems/)\n        -   [Filesystem S3 Adapter](../s3-adapter-filesystems/)\n        -   [Importing and exporting data](../importing-exporting-data/)\n        \n    -    Logging and monitoring\n        \n        Logging and monitoring\n        \n        -   [Guest Agent](../guest-agent/)\n        \n    -    Billing\n        \n        Billing\n        \n        -    Billing overview [Billing overview](./)\n            \n            Table of contents\n            \n            -   [Billable resources](#billable-resources)\n                \n                -   [On-Demand Cloud (ODC) instances](#on-demand-cloud-odc-instances)\n                -   [1-Click Clusters (1CCs)](#1-click-clusters-1ccs)\n                -   [Filesystems](#filesystems)\n                \n            -   [Credits and refunds](#credits-and-refunds)\n            -   [Next steps](#next-steps)\n            \n        -   [Managing billing](../manage-billing/)\n        \n    -   [Cloud API](https://docs.lambda.ai/api/cloud)\n    -    On-Demand\n        \n        On-Demand\n        \n        -   [Overview](../on-demand/)\n        -   [Connecting to an instance](../on-demand/connecting-instance/)\n        -   [Creating and managing instances](../on-demand/creating-managing-instances/)\n        -   [Managing your system environment](../on-demand/managing-system-environment/)\n        -   [Troubleshooting](../on-demand/troubleshooting/)\n        \n    -    1-Click Clusters\n        \n        1-Click Clusters\n        \n        -   [Introduction](../1-click-clusters/)\n        -   [How to serve the Llama 3.1 405B model using a Lambda 1-Click Cluster](../1-click-clusters/serving-llama-3_1-405b/)\n        -   [Security posture](../1-click-clusters/security-posture/)\n        -   [Support](../1-click-clusters/support/)\n        \n    -    Additional resources\n        \n        Additional resources\n        \n        -   [Forum](https://deeptalk.lambda.ai/)\n        -   [Blog](https://lambda.ai/blog)\n        -   [YouTube](https://www.youtube.com/@lambda-ai)\n        -   [Main site](https://lambda.ai/)\n        -   [Tags index](../../tags/)\n        \n    \n-    Private Cloud\n    \n    Private Cloud\n    \n    -   [Introduction](../../private-cloud/)\n    -   [Accessing your Lambda Private Cloud cluster](../../private-cloud/accessing-private-cloud/)\n    -   [Security posture](../../private-cloud/security-posture/)\n    -    Additional resources\n        \n        Additional resources\n        \n        -   [Forum](https://deeptalk.lambda.ai/)\n        -   [Blog](https://lambda.ai/blog)\n        -   [YouTube](https://www.youtube.com/@lambda-ai)\n        -   [Main site](https://lambda.ai/)\n        -   [Tags index](../../tags/)\n        \n    \n-    Managed Kubernetes\n    \n    Managed Kubernetes\n    \n    -   [Introduction](../../managed-kubernetes/)\n    -   [Continuous validation](../../managed-kubernetes/continuous-validation/)\n    -   [Auto-remediation system](../../managed-kubernetes/auto-remediation/)\n    -   [Cluster upgrades](../../managed-kubernetes/cluster-upgrades/)\n    -    Additional resources\n        \n        Additional resources\n        \n        -   [Forum](https://deeptalk.lambda.ai/)\n        -   [Blog](https://lambda.ai/blog)\n        -   [YouTube](https://www.youtube.com/@lambda-ai)\n        -   [Main site](https://lambda.ai/)\n        -   [Tags index](../../tags/)\n        \n    \n-    Managed Slurm\n    \n    Managed Slurm\n    \n    -   [Overview](../../managed-slurm/)\n    -   [Quickstart](../../managed-slurm/quickstart/)\n    -   [Using Managed Slurm](../../managed-slurm/using-mslurm/)\n    -   [Health checks](../../managed-slurm/health-checks/)\n    -   [Auto-remediation system](../../managed-slurm/auto-remediation/)\n    -   [Slurm console](../../managed-slurm/slurm-console/)\n    -    Additional resources\n        \n        Additional resources\n        \n        -   [Forum](https://deeptalk.lambda.ai/)\n        -   [Blog](https://lambda.ai/blog)\n        -   [YouTube](https://www.youtube.com/@lambda-ai)\n        -   [Main site](https://lambda.ai/)\n        -   [Tags index](../../tags/)\n        \n    \n-    Education\n    \n    Education\n    \n    -   [Introduction](../../education/)\n    -   [Using Multi-Instance GPU (MIG)](../../education/using-mig/)\n    -    Generative AI (GAI)\n        \n        Generative AI (GAI)\n        \n        -   [How to serve the FLUX.1 prompt-to-image models using Lambda Cloud on-demand instances](../../education/generative-ai/flux-prompt-to-image/)\n        -   [Fine-tuning the Mochi video generation model on GH200](../../education/fine-tune-mochi-gh200/)\n        \n    -    Large language models (LLMs)\n        \n        Large language models (LLMs)\n        \n        -   [Deploying a Llama 3 inference endpoint](../../education/large-language-models/deploying-a-llama-3-inference-endpoint/)\n        -   [Deploying Llama 3.2 3B in a Kubernetes (K8s) cluster](../../education/large-language-models/k8s-ollama-llama-3-2/)\n        -   [Using KubeAI to deploy Nous Research's Hermes 3 and other LLMs](../../education/large-language-models/kubeai-hermes-3/)\n        -   [Serving Llama 3.1 405B on a Lambda 1-Click Cluster](../../education/large-language-models/serving-llama-3-1-405b/)\n        -   [Serving the Llama 3.1 8B and 70B models using Lambda Cloud on-demand instances](../../education/large-language-models/serving-llama-3-1-docker/)\n        -   [Running DeepSeek-R1 70B using Ollama](../../education/large-language-models/deepseek-r1-ollama/)\n        -   [Deploying NVIDIA Nemotron 3 Nano using vLLM](../../education/large-language-models/deploying-nemotron-3-nano/)\n        \n    -    Linux usage and system administration\n        \n        Linux usage and system administration\n        \n        -   [Basic Linux commands and system administration](../../education/linux-usage/basic-linux-commands-and-system-administration/)\n        -   [Configuring Software RAID](../../education/linux-usage/configuring-software-raid/)\n        -   [Lambda Stack and recovery images](../../education/linux-usage/lambda-stack-and-recovery-images/)\n        -   [Troubleshooting and debugging](../../education/linux-usage/troubleshooting-and-debugging/)\n        -   [Using the Lambda bug report to troubleshoot your system](../../education/linux-usage/using-the-lambda-bug-report-to-troubleshoot-your-system/)\n        -   [Using the nvidia-bug-report.log file to troubleshoot your system](../../education/linux-usage/using-the-nvidia-bug-report.log-file-to-troubleshoot-your-system/)\n        \n    -    Programming\n        \n        Programming\n        \n        -   [Virtual environments and Docker containers](../../education/programming/virtual-environments-containers/)\n        -   [Running Hugging Face Transformers and Diffusers on an NVIDIA GH200 instance](../../education/running-huggingface-diffusers-transformers-gh200/)\n        \n    -    Scheduling and orchestration\n        \n        Scheduling and orchestration\n        \n        -   [Orchestrating AI workloads with dstack](../../education/scheduling-and-orchestration/orchestrating-workloads-with-dstack/)\n        -   [Using SkyPilot to deploy a Kubernetes cluster](../../education/scheduling-and-orchestration/skypilot-deploy-kubernetes/)\n        \n    -    Benchmarking\n        \n        Benchmarking\n        \n        -   [Running a PyTorch®-based benchmark on an NVIDIA GH200 instance](../../education/running-benchmark-gh200/)\n        \n    -    Additional resources\n        \n        Additional resources\n        \n        -   [Forum](https://deeptalk.lambda.ai/)\n        -   [Blog](https://lambda.ai/blog)\n        -   [YouTube](https://www.youtube.com/@lambda-ai)\n        -   [Main site](https://lambda.ai/)\n        -   [Tags index](../../tags/)\n        \n    \n\nTable of contents\n\n-   [Billable resources](#billable-resources)\n    \n    -   [On-Demand Cloud (ODC) instances](#on-demand-cloud-odc-instances)\n    -   [1-Click Clusters (1CCs)](#1-click-clusters-1ccs)\n    -   [Filesystems](#filesystems)\n    \n-   [Credits and refunds](#credits-and-refunds)\n-   [Next steps](#next-steps)\n\n[billing](../../tags/#tag:billing) [public cloud](../../tags/#tag:public-cloud)\n\n# Billing[#](#billing \"Permanent link\")\n\nThis page explains how Lambda bills each of its public cloud resources.\n\n## Billable resources[#](#billable-resources \"Permanent link\")\n\nLambda Cloud charges for the following resources:\n\n-   On-Demand Cloud (ODC) instances\n-   1-Click Clusters (1CCs)\n-   Filesystems\n\nCharges include sales tax, which is based on the location provided in your billing information.\n\n### On-Demand Cloud (ODC) instances[#](#on-demand-cloud-odc-instances \"Permanent link\")\n\nODC prices instances by hourly usage and bills in one-minute increments. Billing begins the moment you launch an instance and the instance passes health checks, and ends the moment you terminate the instance. Instances are billed for as long as they're running, regardless if they're actively being used. You receive weekly invoices for the previous week's usage.\n\nTo view current ODC instance pricing, see the pricing table on the [On-Demand Cloud](https://lambda.ai/pricing#instances) page.\n\n### 1-Click Clusters (1CCs)[#](#1-click-clusters-1ccs \"Permanent link\")\n\n1CCs are priced per GPU per hour and billed in weekly increments according to the terms of your reservation. You receive a billing summary during the 1CC reservation process and an invoice by email when your reservation is approved. After receiving the invoice, you have ten days to pay for your reservation.\n\nTo view current 1CC pricing, see the pricing table on the [1-Click Clusters](https://lambda.ai/pricing#1-click-clusters) page.\n\n### Filesystems[#](#filesystems \"Permanent link\")\n\nFilesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month:\n\n-   If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00.\n-   If you use 1,000 GiB continuously for a full day (24 hours), you'll be billed $6.67.\n\nImportant\n\nThe rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\n\nBilling continues as long as a filesystem exists, even if it's not mounted to an instance. There is no minimum storage period, and you are not charged for ingress or egress.\n\n## Credits and refunds[#](#credits-and-refunds \"Permanent link\")\n\nLambda issues refunds in the form of service credits toward future Lambda Cloud usage. These credits can't be redeemed for cash and can't be used toward purchases of other Lambda products or services. The credits expire 12 months after they've been issued, and are subject to the [Lambda Cloud Terms of Service](https://lambda.ai/legal/terms-of-service#cloud-terms-of-service).\n\n## Next steps[#](#next-steps \"Permanent link\")\n\nFor guidance on managing billing for your account, see [Managing billing](../manage-billing/).\n\n \n\nBack to top\n\n[](https://x.com/LambdaAPI \"x.com\")[](https://www.linkedin.com/company/lambda-cloud \"www.linkedin.com\")",
+            "metadata": {
+              "truncated": false
+            },
+            "title": "https://docs.lambda.ai/public-cloud/billing/ (text/html; charset=utf-8)",
+            "time": {
+              "start": 1792273192505,
+              "end": 1792273192661
+            }
+          },
+          "id": "prt_14bce95d5001M437pOvKfSS6p0",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce8e66001KBr26ayjF6Uy4g"
+        },
+        {
+          "reason": "tool-calls",
+          "snapshot": "49fa86e4330e09dc1158d990a197b5ef132b3939",
+          "type": "step-finish",
+          "tokens": {
+            "total": 4647,
+            "input": 4534,
+            "output": 76,
+            "reasoning": 37,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.0007366,
+          "id": "prt_14bce983d001K5VfvEZwgZigFj",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce8e66001KBr26ayjF6Uy4g"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14bce813a001LWMxikzH0N3s5y",
+        "role": "assistant",
+        "mode": "qt-web",
+        "agent": "qt-web",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/card/agents/0001-run_price-sheet/cwd",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00254725,
+        "tokens": {
+          "total": 12287,
+          "input": 10275,
+          "output": 1607,
+          "reasoning": 405,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "glm-5.3-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792273193061,
+          "completed": 1792273204662
+        },
+        "finish": "stop",
+        "id": "msg_14bce986500190hpP1dnMWpnqw",
+        "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O"
+      },
+      "parts": [
+        {
+          "snapshot": "49fa86e4330e09dc1158d990a197b5ef132b3939",
+          "type": "step-start",
+          "id": "prt_14bce9ba7001MQTuFAQtOO7tmB",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce986500190hpP1dnMWpnqw"
+        },
+        {
+          "type": "reasoning",
+          "text": "Build instances list from pricing page. Instance sizes with per-GPU prices.\n\n8x: B200 180GB 8x $6.69; H100 SXM 80GB 8x $3.99; A100 SXM 80GB 8x $2.79; A100 SXM 40GB 8x $1.99 (VRAM/GPU 40 GB, 30 vCPUs? Nvidia A100 SXM 40GB row \"40 GB 30 220 GiB\" — that's 4x? Wait 8x table: B200 208/2900, H100 208/1800, A100 SXM 80GB 240/1800 (8x, 30/GPU), A100 SXM 40GB 124/1800 (8x, 15.5? Actually 124 vCpus 8x), V100 16GB 88/448 (8x). Yes.\n\n4x: B200 104, H100 104, A100 PCIe 40GB 120 (4x, 30/GPU), A6000 48GB 56 (4x,14/GPU).\n\n2x: B200 52, H100 52, A100 PCIe 40GB 60 (2x30), A6000 28 (2x14).\n\n1x: B200 26, GH200 96GB 1x $2.29, H100 SXM 26 $4.29, H100 PCIe 80GB 26 $3.29, A100 SXM 40GB 30 $1.99, A100 PCIe 40GB 30 $1.99, A10 24GB 30 $1.29, A6000 48GB 14 $1.09, RTX 6000 24GB 14 $0.69.\n\nTotal 23 instances.",
+          "time": {
+            "start": 1792273193910,
+            "end": 1792273197240
+          },
+          "id": "prt_14bce9bb60015r6q97o2Qqml2r",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce986500190hpP1dnMWpnqw"
+        },
+        {
+          "type": "text",
+          "text": "```json\n{\n  \"read_at\": \"2026-10-17\",\n  \"instances\": [\n    {\"gpu\": \"NVIDIA B200 SXM\", \"gpu_memory_gb\": 180, \"n_gpus\": 8, \"per_gpu_usd_h\": 6.69, \"page_text\": \"NVIDIA B200 SXM 6180 GB2082900 GiB22 TiB SSD$6.69\"},\n    {\"gpu\": \"NVIDIA H100 SXM\", \"gpu_memory_gb\": 80, \"n_gpus\": 8, \"per_gpu_usd_h\": 3.99, \"page_text\": \"NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99\"},\n    {\"gpu\": \"NVIDIA A100 SXM\", \"gpu_memory_gb\": 80, \"n_gpus\": 8, \"per_gpu_usd_h\": 2.79, \"page_text\": \"NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79\"},\n    {\"gpu\": \"NVIDIA A100 SXM\", \"gpu_memory_gb\": 40, \"n_gpus\": 8, \"per_gpu_usd_h\": 1.99, \"page_text\": \"NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99\"},\n    {\"gpu\": \"NVIDIA Tesla V100\", \"gpu_memory_gb\": 16, \"n_gpus\": 8, \"per_gpu_usd_h\": 0.79, \"page_text\": \"NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79\"},\n    {\"gpu\": \"NVIDIA B200 SXM\", \"gpu_memory_gb\": 180, \"n_gpus\": 4, \"per_gpu_usd_h\": 6.79, \"page_text\": \"NVIDIA B200 SXM6180 GB1041440 GiB11 TiB SSD$6.79\"},\n    {\"gpu\": \"NVIDIA H100 SXM\", \"gpu_memory_gb\": 80, \"n_gpus\": 4, \"per_gpu_usd_h\": 4.09, \"page_text\": \"NVIDIA H100 SXM80 GB104900 GiB11 TiB SSD$4.09\"},\n    {\"gpu\": \"NVIDIA A100 PCIe\", \"gpu_memory_gb\": 40, \"n_gpus\": 4, \"per_gpu_usd_h\": 1.99, \"page_text\": \"NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99\"},\n    {\"gpu\": \"NVIDIA A6000\", \"gpu_memory_gb\": 48, \"n_gpus\": 4, \"per_gpu_usd_h\": 1.09, \"page_text\": \"NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09\"},\n    {\"gpu\": \"NVIDIA B200 SXM\", \"gpu_memory_gb\": 180, \"n_gpus\": 2, \"per_gpu_usd_h\": 6.89, \"page_text\": \"NVIDIA B200 SXM6180 GB52720 GiB5.5 TiB SSD$6.89\"},\n    {\"gpu\": \"NVIDIA H100 SXM\", \"gpu_memory_gb\": 80, \"n_gpus\": 2, \"per_gpu_usd_h\": 4.19, \"page_text\": \"NVIDIA H100 SXM80 GB52450 GiB5.5 TiB SSD$4.19\"},\n    {\"gpu\": \"NVIDIA A100 PCIe\", \"gpu_memory_gb\": 40, \"n_gpus\": 2, \"per_gpu_usd_h\": 1.99, \"page_text\": \"NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99\"},\n    {\"gpu\": \"NVIDIA A6000\", \"gpu_memory_gb\": 48, \"n_gpus\": 2, \"per_gpu_usd_h\": 1.09, \"page_text\": \"NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09\"},\n    {\"gpu\": \"NVIDIA B200 SXM\", \"gpu_memory_gb\": 180, \"n_gpus\": 1, \"per_gpu_usd_h\": 6.99, \"page_text\": \"NVIDIA B200 SXM6180 GB26360 GiB2.75 TiB SSD$6.99\"},\n    {\"gpu\": \"NVIDIA GH200\", \"gpu_memory_gb\": 96, \"n_gpus\": 1, \"per_gpu_usd_h\": 2.29, \"page_text\": \"NVIDIA GH20096 GB64432 GiB4 TiB SSD$2.29\"},\n    {\"gpu\": \"NVIDIA H100 SXM\", \"gpu_memory_gb\": 80, \"n_gpus\": 1, \"per_gpu_usd_h\": 4.29, \"page_text\": \"NVIDIA H100 SXM80 GB26225 GiB2.75 TiB SSD$4.29\"},\n    {\"gpu\": \"NVIDIA H100 PCIe\", \"gpu_memory_gb\": 80, \"n_gpus\": 1, \"per_gpu_usd_h\": 3.29, \"page_text\": \"NVIDIA H100 PCIe80 GB26225 GiB1 TiB SSD$3.29\"},\n    {\"gpu\": \"NVIDIA A100 SXM\", \"gpu_memory_gb\": 40, \"n_gpus\": 1, \"per_gpu_usd_h\": 1.99, \"page_text\": \"NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99\"},\n    {\"gpu\": \"NVIDIA A100 PCIe\", \"gpu_memory_gb\": 40, \"n_gpus\": 1, \"per_gpu_usd_h\": 1.99, \"page_text\": \"NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99\"},\n    {\"gpu\": \"NVIDIA A10\", \"gpu_memory_gb\": 24, \"n_gpus\": 1, \"per_gpu_usd_h\": 1.29, \"page_text\": \"NVIDIA A1024 GB30226 GiB1.3 TiB SSD$1.29\"},\n    {\"gpu\": \"NVIDIA A6000\", \"gpu_memory_gb\": 48, \"n_gpus\": 1, \"per_gpu_usd_h\": 1.09, \"page_text\": \"NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09\"},\n    {\"gpu\": \"NVIDIA Quadro RTX 6000\", \"gpu_memory_gb\": 24, \"n_gpus\": 1, \"per_gpu_usd_h\": 0.69, \"page_text\": \"NVIDIA Quadro RTX 600024 GB1446 GiB512 GiB SSD$0.69\"}\n  ],\n  \"filesystem\": {\n    \"usd_gib_month\": 0.2,\n    \"page_text\": \"For example, at a rate of $0.20 per GiB per month: If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00. ... Important: The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.\",\n    \"example\": true\n  }\n}\n```",
+          "time": {
+            "start": 1792273197243,
+            "end": 1792273204583
+          },
+          "id": "prt_14bcea8bb001TIirMRRf9xXZBe",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce986500190hpP1dnMWpnqw"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "49fa86e4330e09dc1158d990a197b5ef132b3939",
+          "type": "step-finish",
+          "tokens": {
+            "total": 12287,
+            "input": 10275,
+            "output": 1607,
+            "reasoning": 405,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.00254725,
+          "id": "prt_14bcec58b001elrc9WwHW2WFzR",
+          "sessionID": "ses_eb4317f23ffeHC4eYd9uyFzQ4O",
+          "messageID": "msg_14bce986500190hpP1dnMWpnqw"
+        }
+      ]
+    }
+  ]
+}

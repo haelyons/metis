@@ -1,0 +1,28 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "V1",
+   "title": "Reconcile the GISMo Hit@1 discrepancy across the two protocols before any width sweep",
+   "text": "Industrial food ingredient replacement for sustainability? Industrial food recipe replacement for sustainability? Does the capacity of a neural ingredient-substitution ranker improve its ranking of sustainable replacements, measured as Hit@1 on Recipe1MSubs — once the 20.56 versus 34.53 baseline gap between Meta's GISMo and Rita et al.'s GISMo reimplementation is explained? First reproduce both numbers in one harness: Meta's official GISMo code against the Rita et al. protocol, isolating the difference (data split, candidate set, preprocessing). Then run the width sweep 64–512 only inside whichever protocol reproduces, and report the width trend under both.",
+   "root_link": "is the root question, tested on the same ranker-capacity lever but only after the cross-protocol baseline is reconciled",
+   "compute_open": "the sweep budget stays as before; the new cost is a one-off reproduction of both baselines, roughly a few machine-hours, before the 4-width by 5-seed sweep",
+   "sequential": "yes: baseline reconciliation must finish before the width sweep means anything",
+   "source_urls": [],
+   "root_question": "Industrial food ingredient replacement for sustainability? Industrial food recipe replacement for sustainability?",
+   "kind": "physical"
+  }
+ ]
+}

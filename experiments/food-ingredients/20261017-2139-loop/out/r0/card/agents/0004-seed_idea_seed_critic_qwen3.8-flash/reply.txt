@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Outcomes only affect scaling a recipe ranker; sustainability choice depends on unmeasured footprint and sensory validation."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:compute_axis.levels",
+      "reason": "Width 64 to 512 spans 8x, not 10x; data held fixed and predicted gap exceeds noise, but one condition fails."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "card:anchor",
+      "reason": "Anchor reproduces GISMo Hit@1/MRR within tolerance; Hit@1 scores against Recipe1MSubs targets independent of the trained ranker."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:closest_prior",
+      "reason": "Prior reports cross-protocol LLM Hit@1, not a one-protocol width sweep; card explicitly states the unmeasured range gap."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "Runs are independent copies batched across GPUs; method is none, so no step-after-step dependency is removed."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "restructuring.method is none, so baseline criterion not applicable."
+    }
+  ],
+  "decides_by": "sweep",
+  "decides_by_reason": "Sweep yields Hit@1 at widths 64 and 512 with seeds, allowing the decision rule; anchor only reproduces baseline."
+}

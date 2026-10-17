@@ -1,0 +1,80 @@
+{
+  "programmes": [
+    {
+      "name": "Microsoft Research AI for Science — MatterGen / Azure Quantum Elements (with PNNL battery collaboration)",
+      "url": "https://github.com/microsoft/mattergen",
+      "step": "The candidate-proposal front-end of the battery-materials discovery pipeline: turning a design target (high ionic conductivity) directly into new candidate structures. Today Azure Quantum Elements proposes battery electrolytes by screening 32 million enumerated candidates, and MatterGen generates structures conditioned only on chemistry/symmetry/stability and properties like magnetic density, band gap, and bulk modulus — not ionic conductivity.",
+      "practice": [
+        {
+          "claim": "MatterGen is a fine-tunable crystal foundation model, and its released fine-tuned checkpoints cover only chemistry, symmetry, magnetic density, band gap, and bulk modulus — there is no ionic-conductivity or transport-property checkpoint, so the card's conductivity-conditioned adapter is not yet built.",
+          "url": "https://github.com/microsoft/mattergen",
+          "quote": "We provide checkpoints of an unconditional base version of MatterGen as well as fine-tuned models for these properties: * `mattergen_base`: unconditional base model trained on Alex-MP-20 * `mp_20_base`: unconditional base model trained on MP-20 * `chemical_system`: fine-tuned model conditioned on chemical system * `space_group`: fine-tuned model conditioned on space group * `dft_mag_density`: fine-tuned model conditioned on magnetic density from DFT * `dft_band_gap`: fine-tuned model conditioned on band gap from DFT * `ml_bulk_modulus`: fine-tuned model conditioned on bulk modulus from ML predictor * `dft_mag_density_hhi_score`: fine-tuned model jointly conditioned on magnetic density from DFT and HHI score * `chemical_system_energy_above_hull`: fine-tuned model jointly conditioned on chemical system and energy above hull from DFT"
+        },
+        {
+          "claim": "Their battery solid-electrolyte discovery today is large-scale screening (32.6M candidates filtered down), not conductivity-conditioned generation, and it ends with synthesis plus a measured conductivity check of the top NaxLi3-xYCl6 candidates.",
+          "url": "https://doi.org/10.48550/arxiv.2401.04070",
+          "quote": "By focusing on solid-state electrolytes for battery applications, our discovery pipeline further identified 18 promising candidates with new compositions, and 1 rediscovered a decade's worth of collective knowledge in the field as a byproduct. By employing around one thousand virtual machines (VMs) in the cloud, this process took less than 80 hours."
+        },
+        {
+          "claim": "The programme has explicitly stated that the next step beyond screening is direct property-conditioned generation of materials (pointing to MatterGen), which is exactly the step this card targets.",
+          "url": "https://doi.org/10.48550/arxiv.2401.04070",
+          "quote": "Future optimization of the workflow beyond screening will be based on the direct generation of materials with given properties, such as the method recently demonstrated by MatterGen [41]."
+        },
+        {
+          "claim": "The Azure Quantum Elements product leader describes the team's stated ambition as generative battery-materials discovery from property prompts.",
+          "url": "https://news.microsoft.com/source/features/innovation/how-ai-and-hpc-are-speeding-up-scientific-discovery/",
+          "quote": "The vision we are working toward is generative materials where I can ask for list of new battery compounds with my desired attributes, Baker says."
+        }
+      ],
+      "if_lever_changes": "If conditioning on predicted conductivity beats unconditioned generation and ICSD screening at 100k candidates, it validates and supplies the recipe for the 'direct generation of materials with given properties' step their own paper names as the future; Azure Quantum Elements could swap or front-load its 32M-candidate screening funnel with a conductivity-conditioned MatterGen generator, with a quantified hit-rate-vs-scale tradeoff and NEB-validated low-barrier electrolyte candidates to hand to PNNL for synthesis.",
+      "if_not_changes": "If the hit-rate gap stays within seed noise at every level, it tells them conditioning a generator on a transport proxy adds nothing over screening at any budget, so their screening-first Azure Quantum Elements battery workflow stays as-is and MatterGen remains used for stability/chemistry/property constraints other than transport.",
+      "already_done": {
+        "status": "no",
+        "claim": "MatterGen has been fine-tuned on magnetic density, band gap, and bulk modulus (never ionic conductivity), and their battery electrolyte result came from screening 32M candidates rather than conductivity-conditioned generation — their own future-tense plan confirms the generative-transport step is not yet done.",
+        "url": "https://doi.org/10.48550/arxiv.2401.04070",
+        "quote": "Future optimization of the workflow beyond screening will be based on the direct generation of materials with given properties, such as the method recently demonstrated by MatterGen [41]."
+      }
+    },
+    {
+      "name": "DTU Energy — Bhowmik / García Lastra group, 'Deep Generative Models for Inverse Design of Solid Electrolytes' (MatterGen for battery materials)",
+      "url": "https://orbit.dtu.dk/en/publications/deep-generative-models-for-inverse-design-of-solid-electrolytes/",
+      "step": "The generative structure-sampling step of their MatterGen -> MatterSim -> DFT battery-discovery pipeline, and specifically their stated 'inverse design of solid electrolytes' ambition. They sample MatterGen conditioned on stability (energy above hull) and Li chemistry, then screen with MatterSim/DFT; their electrolyte-specific ML (the 400k-structure halide database) is used to fine-tune a foundation model for property prediction and MD, not for conductivity-conditioned generation.",
+      "practice": [
+        {
+          "claim": "Their battery workflow uses MatterGen for structure sampling plus MatterSim/DFT screening, and generation is conditioned on thermodynamic stability (convex-hull energy), not on ionic conductivity.",
+          "url": "https://doi.org/10.1002/batt.202500309",
+          "quote": "Our LIB material discovery workflow uses MatterGen for structure sampling, [12] MatterSim for initial screening of stable materials, [4] and DFT for final validation."
+        },
+        {
+          "claim": "The scale of their generative campaign is tens of thousands of samples (32,600), narrowed to 91 stable Li-containing materials and finally two cathode candidates — so the card's 1k-100k candidate axis sits directly on their scale but targets electrolytes/conductivity, which they did not.",
+          "url": "https://doi.org/10.1002/batt.202500309",
+          "quote": "Here, we first conditionally sample structures with a target convex hull energy of 0.03 eV/atom with respect to MP data within the MatterGen framework, and 32,600 structures are generated in this process."
+        },
+        {
+          "claim": "Their electrolyte-specific use of a foundation model is property PREDICTION (fine-tuning MACE-MP-0b2-large on a ~400k halide database), not generation — the inverse-design generation they did produced cathodes, leaving conductivity-conditioned electrolyte generation unclaimed.",
+          "url": "https://orbit.dtu.dk/en/publications/domain-specific-dataset-enable-accurate-mlips-for-disordered-hali/",
+          "quote": "We demonstrate the utility of the database by fine-tuning the MACE-MP-0b2-large foundation model: the energy root-mean-square error (RMSE) decreased from 154.8 to 10.0 meV atom -1 and the all-force-component RMSE from 168.3 to 39.0 meV Å-1 on a held-out test set, confirming that domain-specific training data is necessary for structurally disordered halide configurations."
+        },
+        {
+          "claim": "The generative chapter of their 'inverse design of solid electrolytes' thesis delivers cathode candidates, not conductivity-conditioned electrolytes — confirming the card's step is the unfilled gap in their own programme.",
+          "url": "https://orbit.dtu.dk/en/publications/deep-generative-models-for-inverse-design-of-solid-electrolytes/",
+          "quote": "The third contribution moves from screening known materials to inventing new ones. A generative AI model designed for crystals is used to propose tens of thousands of new candidate structures, which are then filtered through a multi-step pipeline combining a universal machine-learning potential and density functional theory. Starting from 32,600 generated structures, the pipeline narrows the field to 91 stable, novel, lithium-containing materials and ultimately identifies two previously unreported candidates that look promising as cathodes."
+        }
+      ],
+      "if_lever_changes": "If the conditioned generator wins, it supplies the missing half of their programme: they could fine-tune MatterGen's adapter on predicted ionic conductivity and generate halide/oxide/sulfide electrolyte candidates directly (their thesis title is 'inverse design of solid electrolytes' but only produced cathodes), and the quantified hit-rate-vs-scale result would justify the larger generation campaigns they say their MatterSim/DFT screening budget currently cannot afford.",
+      "if_not_changes": "If conditioning adds nothing over screening, they would keep their current split — MatterGen for stability/chemistry-conditioned sampling plus MatterSim/DFT screening, and the 400k halide database fine-tuning confined to prediction/MD of known structure families rather than generative electrolyte design.",
+      "already_done": {
+        "status": "partly",
+        "claim": "They have run MatterGen generation for battery materials (cathodes, conditioned on stability) and fine-tuned foundation models for halide electrolyte property prediction, but have not fine-tuned a generative model on ionic conductivity to generate electrolytes — that exact experiment is absent from both their paper and thesis.",
+        "url": "https://orbit.dtu.dk/en/publications/deep-generative-models-for-inverse-design-of-solid-electrolytes/",
+        "quote": "Chapter 5 - Generative Design of Li-Ion Cathodes This chapter reports the generative discovery of cathode materials for lithium-"
+      }
+    }
+  ],
+  "gaps": [
+    "The card's cited prior 'Ferrogen (NeurIPS 2026)' could not be located; the nearest published analog (KIST / Jung-Hoon Lee, diffusion-model discovery of ferroelectrics with MatterGen) targets ferroelectric polarization, not battery electrolytes, so the transport-conditioning precedent the card leans on is unverified.",
+    "MatterGen's <=20-atom unit-cell limit and its stable, ordered-crystal training set conflict with the disordered, partially-occupied structures where fast Li conductors actually live (DTU explicitly states domain-specific training data is necessary for structurally disordered halide configurations), so both programmes would still need a disorder-aware generation step beyond this card.",
+    "The card validates with NEB migration barriers and predicted log-conductivity, not the measured conductivity that both PNNL (synthesized and measured NaxLi3-xYCl6) and DTU ultimately need, leaving a label/validation gap between the card's outcome and programme practice."
+  ],
+  "no_programme_reason": ""
+}

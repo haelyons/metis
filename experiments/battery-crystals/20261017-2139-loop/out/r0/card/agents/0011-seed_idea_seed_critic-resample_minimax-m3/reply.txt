@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "plan:scope_gap",
+      "reason": "Outcomes feed choice of generation strategy, but only through CHGNet-NEB/predictor proxies; real synthesis/impedance measurement is out of scope."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.noise_rule",
+      "reason": "Compute spans 100x; noise rule defines real gap vs seed spread; only compute varies; held_fixed covers predictor, threshold, seeds, validation."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Outcomes are model predictions (CHGNet-NEB, conductivity regressor) anchored to published barriers, not exact truth for novel candidates."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Ferrogen targeted polarization, not ionic transport; plan explicitly states the gap and closest prior."
+    },
+    {
+      "criterion": "reshape",
+      "value": 2,
+      "ref": "card:method",
+      "reason": "Method is None; costly steps parallelised across GPUs within each step, loop order unchanged, no dependency removed."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring method is None; criterion does not apply."
+    }
+  ],
+  "decides_by": "p_validate",
+  "decides_by_reason": "Decision rule requires top-10 median CHGNet-NEB barrier comparison; only p_validate computes those barriers."
+}
+```

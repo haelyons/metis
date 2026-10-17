@@ -1,0 +1,39 @@
+HTTP 200
+{"date":"Sat, 17 Oct 2026 21:58:17 GMT","content-type":"text/event-stream","transfer-encoding":"chunked","connection":"keep-alive","cache-control":"no-cache","cf-placement":"remote-IAD","x-opencode-endpoint-id":"pareto-glm","x-opencode-log-id":"90b44afb-ac9d-4aad-8222-6b32d194fe45","x-opencode-upstream-model-id":"z-ai/glm-5.3-flash","x-zen-model":"glm-5.3-flash","server":"cloudflare","cf-ray":"a4c28f8f0e7b020a-CLT"}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"role":"assistant","content":""}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":"Direct"}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" MDPI is 403. Try an alternative: PubMed Central version? The"}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" article \"Optimizing Ingredient Substitution Using Large Language Models to Enhance Phyto"}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":"chemical Content in Recipes\" — journal 2504-4990 is \""}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":"Standards\" (MDPI journal \"Standards\", ISSN 2504-4"}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":"990). Might be on PMC or Europe PMC. But the instruction says \""}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":"Decide only from the pages you fetch\" — fetching an alternate copy of the same"}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" article seems acceptable since it's the source's content. However safer to try alternative"}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" fetches of mdpi: maybe the html version via doi.org redirect also 403"}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"content":"MDPI is blocking direct fetches. Let me","reasoning_content":". Try europepmc search."}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"content":" look for an open-access mirror of the same article.","tool_calls":[{"index":0,"id":"chatcmpl-tool-964585efbbef41e1","type":"function","function":{"name":"websearch"}}]}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"{\"numResults\": 5, \"query\": \"\\\"Optimizing Ingredient Substitution Using Large Language"}}]}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"function":{"arguments":" Models to Enhance Phytochemical Content in Recipes\\\" Rita full text\"}"}}]}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":1,"id":"chatcmpl-tool-b67513d27365e720","type":"function","function":{"name":"webfetch","arguments":"{\"timeout\": 60, \"url\": \"https://doi.org/"}}]}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":"tool_calls","logprobs":null,"delta":{"tool_calls":[{"index":1,"function":{"arguments":"10.3390/standards6040131\"}"}}]}}]}
+
+data: {"id":"chatcmpl-5a6f796faef8f72175a9939ec88b934c","object":"chat.completion.chunk","created":1792274297,"model":"glm-5.3-flash","choices":[],"usage":{"prompt_tokens":29318,"completion_tokens":237,"total_tokens":29555,"prompt_tokens_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":141}}}
+
+data: [DONE]
+

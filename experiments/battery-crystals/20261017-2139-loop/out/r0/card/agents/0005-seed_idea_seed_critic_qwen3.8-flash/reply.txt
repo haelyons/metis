@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Outcomes change candidate choices only via unmeasured real conductivity/synthesis step; measured proxies do not settle final battery-material choice."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:arms",
+      "reason": "Arm C has only 6,972 ICSD compositions, so equal 100k candidate counts cannot be compute-scaled; database baseline comparison is ambiguous."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "card:test_summary",
+      "reason": "Hit-rate labels come from the same conductivity predictor and NEB proxies; published anchors and agreement checks give model-based verification, not exact truth."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior Ferrogen targets polarization, never battery ionic-conductivity conditioning; left_open states this transport-property gap."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:method",
+      "reason": "Only embarrassingly parallel independent sampling/screening is used; sequential fine-tune-generate-validate chain remains, so no step-after-step dependency is removed."
+    },
+    {
+      "criterion": "baseline",
+      "value": 1,
+      "ref": "plan:baseline",
+      "reason": "Baselines lack optimized sequential/copies comparisons, same-GPU timing, parallel-vs-sequential anchor, and explicit per-arm time-to-answer."
+    }
+  ],
+  "decides_by": "p_validate",
+  "decides_by_reason": "Decision needs 100k hit rates from p_generate plus top-10 CHGNet-NEB barriers only obtained after p_validate."
+}

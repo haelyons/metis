@@ -1,0 +1,185 @@
+{
+  "info": {
+    "id": "ses_eb41cc0b8ffeLu828aEpk3oAj2",
+    "slug": "quick-comet",
+    "projectID": "e635804b0fe929d2ed556701e94990a108996451",
+    "directory": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame",
+    "path": "runs/loop/battery/20261017-213943/r0/frame",
+    "title": "critic#5",
+    "agent": "qt-bare",
+    "model": {
+      "id": "mimo-v2.6-flash",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.00122542,
+    "tokens": {
+      "input": 2423,
+      "output": 345,
+      "reasoning": 2820,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792274546504,
+      "updated": 1792274602385
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792274546705
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "mimo-v2.6-flash"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14be34011001UI0S9SOHs4app1",
+        "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Score how well this research card fits each existing programme below. Each programme lists claims about its current practice; two checkers fetched each source and marked each claim SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE. Rely only on claims that at least one checker marked SUPPORTED or PARTIAL. Score each programme 1-5 on each criterion, with a reason of at most 25 words. Decide only from the text below; do not use tools.\nRoot question: Battery crystal discovery? Crystal foundation models: there's hella, for battery generation, transport properties are different.\nCard:\n**B1 · Battery crystal discovery.** seed pick · compute tested: yes · plan expects: the lever · PASS\n\n**Question.** Can a crystal foundation model fine-tuned on a transport proxy generate Li-ion solid electrolytes with higher conductivity than unconditioned generation or database screening?\n\n**What is known.** Ferrogen (NeurIPS 2026) fine-tuned MatterGen on a polarization proxy with ML labels, achieving ~80x search efficiency over exhaustive screening; it never targeted ionic conductivity. No published result fine-tunes a crystal foundation model to generate battery materials conditioned on a transport property like ionic conductivity.\n\n**Hypothesis.** Conditioning MatterGen's adapter on predicted ionic conductivity gives low-barrier candidates at higher hit rate than screening; transport labels are scarce but learnable.\n\n**Restructuring.** The fine-tune, generate, screen, validate loop, ~3 rounds; each diffusion sample's ~1,000 sequential denoising timesteps. None: the loop's costly steps (generating, screening, NEB-validating thousands of candidates) are embarrassingly parallel; the plan splits each across GPUs, no reordering.\n\n**If compute is the lever.** Scaling candidates to 100,000 makes the conditioned generator's hit-rate advantage over both baselines significant; at 1,000 it is within noise.\n\n**If not.** Scaling candidates does not separate conditioned from baseline hit rates; the gap stays within seed noise at every level, so fine-tuning adds nothing.\n\n**Test.** Fine-tune the adapter of the open-source MatterGen crystal model on predicted log conductivity; generate and screen 1k-100k candidates in each arm; NEB-validate the top ten; compare hit rate against unconditioned generation and screening of the ICSD database (about $576).\n\n*Compute axis.* Generated candidate crystal structures screened per arm: 1,000–100,000 candidates, 3 levels. Closest prior: not on this axis.\n\n**Check first.** Reproduce MatterGen's 38.57% S.U.N. and 0.021 Angstrom RMSD on 1,024 samples; reproduce the npj predictor's 0.85 log10 sigma MAE. Tolerance: S.U.N. within +/-3 percentage points; RMSD <= 0.1 Angstrom; predictor MAE within +/-0.1 log10 sigma..\n\n**Would not show.** Shows predicted-conductivity and migration-barrier rankings, not measured sigma; Li conductors only; no synthesis, cycle-life, or interface data.\n\n*Cost.* Plans $575.76 of the $1,000 budget over 174 machine-hours, leaving $424.24. Main guess: DFT-NEB cost per material [g], measured after $575.76 of spend; the budget is reached if it is 1.0× higher. 7 cost flags in the block.\nProgrammes:\n{\\\"programme\\\":1,\\\"name\\\":\\\"Microsoft Research AI for Science — MatterGen / Azure Quantum Elements (with PNNL battery collaboration)\\\",\\\"step\\\":\\\"The candidate-proposal front-end of the battery-materials discovery pipeline: turning a design target (high ionic conductivity) directly into new candidate structures. Today Azure Quantum Elements proposes battery electrolytes by screening 32 million enumerated candidates, and MatterGen generates structures conditioned only on chemistry/symmetry/stability and properties like magnetic density, band gap, and bulk modulus — not ionic conductivity.\\\",\\\"practice\\\":[\\\"MatterGen is a fine-tunable crystal foundation model, and its released fine-tuned checkpoints cover only chemistry, symmetry, magnetic density, band gap, and bulk modulus — there is no ionic-conductivity or transport-property checkpoint, so the card's conductivity-conditioned adapter is not yet built. [SUPPORTED, PARTIAL]\\\",\\\"Their battery solid-electrolyte discovery today is large-scale screening (32.6M candidates filtered down), not conductivity-conditioned generation, and it ends with synthesis plus a measured conductivity check of the top NaxLi3-xYCl6 candidates. [SUPPORTED, SUPPORTED]\\\",\\\"The programme has explicitly stated that the next step beyond screening is direct property-conditioned generation of materials (pointing to MatterGen), which is exactly the step this card targets. [SUPPORTED, SUPPORTED]\\\",\\\"The Azure Quantum Elements product leader describes the team's stated ambition as generative battery-materials discovery from property prompts. [SUPPORTED, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"If conditioning on predicted conductivity beats unconditioned generation and ICSD screening at 100k candidates, it validates and supplies the recipe for the 'direct generation of materials with given properties' step their own paper names as the future; Azure Quantum Elements could swap or front-load its 32M-candidate screening funnel with a conductivity-conditioned MatterGen generator, with a quantified hit-rate-vs-scale tradeoff and NEB-validated low-barrier electrolyte candidates to hand to PNNL for synthesis.\\\",\\\"if_not_changes\\\":\\\"If the hit-rate gap stays within seed noise at every level, it tells them conditioning a generator on a transport proxy adds nothing over screening at any budget, so their screening-first Azure Quantum Elements battery workflow stays as-is and MatterGen remains used for stability/chemistry/property constraints other than transport.\\\",\\\"already_done\\\":{\\\"status\\\":\\\"no\\\",\\\"claim\\\":\\\"MatterGen has been fine-tuned on magnetic density, band gap, and bulk modulus (never ionic conductivity), and their battery electrolyte result came from screening 32M candidates rather than conductivity-conditioned generation — their own future-tense plan confirms the generative-transport step is not yet done.\\\",\\\"checks\\\":[\\\"SUPPORTED\\\",\\\"SUPPORTED\\\"]}}\n{\\\"programme\\\":2,\\\"name\\\":\\\"DTU Energy — Bhowmik / García Lastra group, 'Deep Generative Models for Inverse Design of Solid Electrolytes' (MatterGen for battery materials)\\\",\\\"step\\\":\\\"The generative structure-sampling step of their MatterGen -> MatterSim -> DFT battery-discovery pipeline, and specifically their stated 'inverse design of solid electrolytes' ambition. They sample MatterGen conditioned on stability (energy above hull) and Li chemistry, then screen with MatterSim/DFT; their electrolyte-specific ML (the 400k-structure halide database) is used to fine-tune a foundation model for property prediction and MD, not for conductivity-conditioned generation.\\\",\\\"practice\\\":[\\\"Their battery workflow uses MatterGen for structure sampling plus MatterSim/DFT screening, and generation is conditioned on thermodynamic stability (convex-hull energy), not on ionic conductivity. [SUPPORTED, SUPPORTED]\\\",\\\"The scale of their generative campaign is tens of thousands of samples (32,600), narrowed to 91 stable Li-containing materials and finally two cathode candidates — so the card's 1k-100k candidate axis sits directly on their scale but targets electrolytes/conductivity, which they did not. [SUPPORTED, SUPPORTED]\\\",\\\"Their electrolyte-specific use of a foundation model is property PREDICTION (fine-tuning MACE-MP-0b2-large on a ~400k halide database), not generation — the inverse-design generation they did produced cathodes, leaving conductivity-conditioned electrolyte generation unclaimed. [SUPPORTED, SUPPORTED]\\\",\\\"The generative chapter of their 'inverse design of solid electrolytes' thesis delivers cathode candidates, not conductivity-conditioned electrolytes — confirming the card's step is the unfilled gap in their own programme. [SUPPORTED, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"If the conditioned generator wins, it supplies the missing half of their programme: they could fine-tune MatterGen's adapter on predicted ionic conductivity and generate halide/oxide/sulfide electrolyte candidates directly (their thesis title is 'inverse design of solid electrolytes' but only produced cathodes), and the quantified hit-rate-vs-scale result would justify the larger generation campaigns they say their MatterSim/DFT screening budget currently cannot afford.\\\",\\\"if_not_changes\\\":\\\"If conditioning adds nothing over screening, they would keep their current split — MatterGen for stability/chemistry-conditioned sampling plus MatterSim/DFT screening, and the 400k halide database fine-tuning confined to prediction/MD of known structure families rather than generative electrolyte design.\\\",\\\"already_done\\\":{\\\"status\\\":\\\"partly\\\",\\\"claim\\\":\\\"They have run MatterGen generation for battery materials (cathodes, conditioned on stability) and fine-tuned foundation models for halide electrolyte property prediction, but have not fine-tuned a generative model on ionic conductivity to generate electrolytes — that exact experiment is absent from both their paper and thesis.\\\",\\\"checks\\\":[\\\"PARTIAL\\\",\\\"SUPPORTED\\\"]}}\nCriteria:\nfit: Does the card's measured outcome feed a named step of this programme? 5 = it measures the quantity that step's current practice depends on, on systems the programme uses; 3 = it feeds that step only through a stand-in (another model, system or scale) the programme would have to bridge; 1 = no step of the programme would use the outcome.\nchange: What would the card's outcomes change in this programme's practice? 5 = either outcome changes a choice the programme makes now (what to build, buy, label, check or scale), as its supported practice shows; 3 = only one outcome would change practice, or the change needs further work the card does not do; 1 = neither outcome would change what the programme does.\nnew: Has this programme, or work it relies on, already answered the card's question? 5 = supported claims show its current practice lacks this measurement; 3 = unclear, or partly answered; 1 = already answered.\nReturn only JSON: {\\\"scores\\\": [{\\\"programme\\\": 1, \\\"criterion\\\": \\\"fit | change | new\\\", \\\"value\\\": 1, \\\"reason\\\": \\\"\\\"}]}\"",
+          "id": "prt_14be3401d001p3cZcg6CKezvq1",
+          "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2",
+          "messageID": "msg_14be34011001UI0S9SOHs4app1"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14be34011001UI0S9SOHs4app1",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00122542,
+        "tokens": {
+          "total": 5588,
+          "input": 2423,
+          "output": 345,
+          "reasoning": 2820,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "mimo-v2.6-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792274548253,
+          "completed": 1792274602348
+        },
+        "finish": "stop",
+        "id": "msg_14be3461d001sAhusMwc0NL0M1",
+        "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2"
+      },
+      "parts": [
+        {
+          "snapshot": "0f295928b36c5bc6ddb35f0ea2062b767248b561",
+          "type": "step-start",
+          "id": "prt_14be35c55001ARsnRP5nSF2wCo",
+          "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2",
+          "messageID": "msg_14be3461d001sAhusMwc0NL0M1"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me score programme 1 and 2 on fit, change, new.\n\nProgramme 1: Microsoft Research AI for Science — MatterGen / AQE.\n\nFit: Card measures hit-rate advantage of conductivity-conditioned MatterGen generation vs screening — this directly feeds the \"direct property-conditioned generation\" step which programme names as future. Uses MatterGen, same system. But the card's measured outcome is predicted conductivity + NEB, not measured sigma — programme's current practice ends with measured conductivity check. Still, the step it targets is candidate-proposal front-end. I'd say fit 5 or 4. The outcome measures the quantity that the step depends on (hit rate of generation), on systems the programme uses (MatterGen). But \"measures the quantity that step's current practice depends on\" — current practice depends on screening funnel; the card targets the future step. Hmm, the criterion says \"feed a named step of this programme\" — the named step includes \"the next step beyond screening is direct property-conditioned generation\". So fit 5 seems reasonable. But could argue 4 because outcome is proxy (predicted conductivity, NEB) rather than measured sigma which their current practice depends on (they do measured conductivity check). I'll give 5 with reason about conditioning MatterGen at1k-100k scale feeding the named generation step.\n\nActually let's consider: card's outcome = hit rate of conditioned generation vs baselines at 1k-100k. Programme's front-end step: turning design target into candidate structures. The programme currently uses 32M screening. Card measures hit-rate-vs-scale tradeoff which is exactly what informs swapping front-end. Fit 5.\n\nChange: Both outcomes change practice — if_lever_changes: swap/front-load screening funnel; if_not: keep screening-first workflow. Both change a choice (what to build). Supported claims show the ambition and current screening. So change 5.\n\nNew: already_done status \"no\", checks SUPPORTED — current practice lacks this measurement. So new 5.\n\nProgramme 2: DTU Energy.\n\nFit: Card targets conductivity-conditioned electrolyte generation; programme's step is generative structure-sampling step of MatterGen→MatterSim→DFT pipeline, with stated inverse design of solid electrolytes ambition. Card uses MatterGen, 1k-100k scale sits on their scale (32,600 samples). But their generation conditioned on stability, and card targets electrolytes while they did cathodes. The card's outcome would feed their generative step — same system (MatterGen), same scale. Fit 5? Slight caveat: card tests Li conductors with proxy conductivity; programme's step is structure sampling for battery materials — fits. Maybe 5. Or 4 because their actual screening uses MatterSim/DFT and card uses NEB — but that's similar. I'd give 5, or 4 given the card targets electrolytes while their pipeline produced cathodes — but that's the gap it fills. Fit 5.\n\nHmm, \"3 = it feeds that step only through a stand-in (another model, system or scale)\". The card's scale matches; model matches (MatterGen). Their prediction model MACE vs card's npj predictor — but the outcome fed is generation step. I'll give 5.\n\nChange: if_lever: fine-tune adapter on conductivity, generate electrolytes — changes what they build. if_not: keep current split. Both outcomes change practice? The \"if not\" outcome means they'd keep current practice — but it would change a choice: it would foreclose/decide against generative electrolyte design, confirming the prediction-only use. That's still a change to a choice (whether to pursue conductivity-conditioned generation). Hmm — \"either outcome changes a choice the programme makes now (what to build, buy, label, check or scale)\". Their programme is stated as \"inverse design of solid electrolytes\" ambition — so the outcome would change whether they pursue that. Both outcomes informative. But arguably if-not = keep current split = no change to practice. Programme 1's if_not also = stays as-is. Yet the criteria say 5 = either outcome changes a choice. For programme 1, if-not would confirm screening-first — a choice confirmed rather than changed. Hmm.\n\nI think for both, the positive outcome clearly changes what they build; the negative outcome resolves a stated ambition (whether to invest in conductivity-conditioned generation). For programme 2, ambition is explicit (\"inverse design of solid electrolytes\" thesis title), so a negative result would redirect them to keep prediction-only — that's a decision change (don't build the generative half). I'd give change 5 for programme 1 and 5 for programme 2? Or 4 for programme 2 because their immediate practice (cathode generation + screening) doesn't directly depend on it.\n\nLet me be discriminating: Programme 1 change = 5 (their own paper names it as future step; both outcomes decide swap-or-keep of a 32M funnel). Programme 2 change = 4 — positive outcome supplies missing half and justifies larger campaigns; negative keeps current split, so mainly one outcome drives change, and the if-not outcome leaves practice unchanged. Actually the criterion: \"3 = only one outcome would change practice\". For programme 2, if-not → keep current split = no change; so only one outcome changes → 3? Hmm. But if-not does tell them not to invest — that's a change in plan? Their current stated ambition is inverse design of electrolytes; a negative result would change that plan. That's a real change: they'd stop pursuing it. So arguably both outcomes change choices.\n\nLet's think similarly for programme 1: if-not → screening stays as-is, MatterGen used for other properties. That's also confirming/deciding not to front-load. Both are decisions.\n\nGiven the framing where the card's question is a genuine fork for both programmes, I could give 5/5 for both change. But maybe differentiate: Programme 1's practice explicitly includes a screening funnel they could front-load or swap, and a stated ambition → both outcomes quantitatively inform scale choice (100k vs 32M). Programme 2's practice: generation conditioned on stability; the outcome would change whether they add conductivity conditioning — supported practice shows they did generation but for cathodes; the change requires them to fine-tune an adapter on conductivity, which the card does demonstrate. So change 5.\n\nI'll go: P1 fit 5, change 5, new 5. P2 fit 4, change 4, new 5.\n\nWhy P2 fit 4? The card's outcome (hit rate of conductivity-conditioned generation, Li conductors, proxy sigma + NEB) feeds their generative step, but their pipeline's screening stage uses MatterSim/DFT and their target outputs were cathodes; also their scale32,600 matches. Hmm — I think fit 5 is defensible. But criteria want a spread? No requirement. Let me reason: \"5 = it measures the quantity that step's current practice depends on, on systems the programme uses\". Their generative step's current practice depends on stability-conditioned sampling yield (91 stable of 32,600). The card measures hit rate of conductivity conditioning — a different quantity than what their current practice depends on (stability-conditioned stability yield). It would feed the step only by adding a new conditioning target... Actually the step is \"generative structure-sampling\" and the card measures a property of that step (hit rate vs scale) on the same model (MatterGen) at matching scale. I'd say 5? But it targets electrolytes whereas they did cathodes; the card's step targets the exact gap named in their thesis. I'll give fit 5 for programme 2 as well? Hmm.\n\nDistinguishing: programme 1's step explicitly names \"direct property-conditioned generation of materials\" as the next step, and MatterGen is theirs — the card literally builds the thing. Programme 2's step is generative sampling within a pipeline where the card's outcome (conductivity hit rate) would feed the sampling step but the pipeline's actual bottleneck/output was cathodes; the card's proxy conductivity + NEB vs their MatterSim/DFT screening is a partially different validation chain. I'll give P2 fit 4 with reason: same model and scale, but card's proxy-conductivity/NEB validation differs from their MatterSim/DFT screening chain and targets electrolytes not cathodes.\n\nChange P2: 4 — positive outcome changes what they build (conductivity adapter); negative keeps current split, and applying it requires adapter fine-tuning plus bridging to their DFT screening. Hmm, the card does the fine-tuning itself. I'd say 4: both outcomes inform but one requires further bridging (their screening uses MatterSim/DFT, card uses NEB; and electrolyte vs cathode focus).\n\nNew P2: supported claims show the exact experiment absent → 5. Status \"partly\" because they ran MatterGen generation for battery materials but not conductivity. The criterion: \"5 = supported claims show its current practice lacks this measurement\". The card's question — has a crystal foundation model been fine-tuned to generate with transport conditioning? Their practice lacks it → 5. But \"partly\" status and the fact they did run generation (stability-conditioned) — the card's question is specifically conductivity conditioning, absent. So 5. Could give 4 for P2 since partly answered (they answered generation-for-battery part). I'll give 5 for P1 and 4 for P2? Hmm.\n\nThe already_done status for P1 = \"no\" with checks SUPPORTED → 5. For P2 = \"partly\" with checks PARTIAL/SUPPORTED → 3-4. The question of the card: \"Can a crystal foundation model fine-tuned on a transport proxy generate Li-ion solid electrolytes with higher conductivity...\". P2 has done MatterGen generation for battery materials (cathodes, stability-conditioned) — so part of the machinery answered, but the transport-proxy conditioning not. Given status \"partly\", new = 4 for P2.\n\nReasons ≤25 words.\n\nLet me write:\n\nP1 fit: \"Card builds the conductivity-conditioned MatterGen adapter their paper names as the future front-end, measuring hit-rate-vs-scale on their own model.\" (~21 words)\n\nCount: Card(1) builds2 the3 conductivity-conditioned4 MatterGen5 adapter6 their7 paper8 names9 as10 the11 future12 front-end13, measuring14 hit-rate-vs-scale15 on16 their17 own18 model19. 19 words. Good.\n\nP1 change: \"Both outcomes decide whether Azure's 32M screening funnel is front-loaded or replaced, or stays as-is — a direct build-or-keep choice.\" Count: Both1 outcomes2 decide3 whether4 Azure's5 32M6 screening7 funnel8 is9 front-loaded10 or11 replaced12, or13 stays14 as-is15 — a16 direct17 build-or-keep18 choice19. 19. Good.\n\nP1 new: \"Supported claims confirm no conductivity-conditioned checkpoint exists and their battery result came from screening; the future-tense plan marks it undone.\" Count: Supported1 claims2 confirm3 no4 conductivity-conditioned5 checkpoint6 exists7 and8 their9 battery10 result11 came12 from13 screening14; the15 future-tense16 plan17 marks18 it19 undone20. 20. Good.\n\nP2 fit (4): \"Same MatterGen model and matching 1k-100k scale, but the card's proxy-conductivity/NEB validation differs from their MatterSim/DFT chain and electrolyte target.\" Count: Same1 MatterGen2 model3 and4 matching5 1k-100k6 scale7, but8 the9 card's10 proxy-conductivity/NEB11 validation12 differs13 from14 their15 MatterSim/DFT16 chain17 and18 electrolyte19 target20. 20. Good.\n\nP2 change (4): \"A win supplies their thesis's missing generative-electrolyte half and justifies bigger campaigns; a loss keeps the current split, needing MatterSim/DFT bridging.\" Count: A1 win2 supplies3 their4 thesis's5 missing6 generative-electrolyte7 half8 and9 justifies10 bigger11 campaigns12; a13 loss14 keeps15 the16 current17 split18, needing19 MatterSim/DFT20 bridging21. 21. Good.\n\nP2 new (4): \"They have run MatterGen battery generation and halide property fine-tuning, so partly answered; conductivity-conditioned electrolyte generation itself remains untested.\" Count: They1 have2 run3 MatterGen4 battery5 generation6 and7 halide8 property9 fine-tuning10, so11 partly12 answered13; conductivity-conditioned14 electrolyte15 generation16 itself17 remains18 untested19. 19. Good.\n\nOutput JSON only.",
+          "time": {
+            "start": 1792274553992,
+            "end": 1792274599984
+          },
+          "id": "prt_14be35c88001fxZw1Iwfjm8yoy",
+          "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2",
+          "messageID": "msg_14be3461d001sAhusMwc0NL0M1"
+        },
+        {
+          "type": "text",
+          "text": "{\"scores\": [{\"programme\": 1, \"criterion\": \"fit\", \"value\": 5, \"reason\": \"Card builds the conductivity-conditioned MatterGen adapter their paper names as the future front-end, measuring hit-rate-vs-scale on their own model.\"}, {\"programme\": 1, \"criterion\": \"change\", \"value\": 5, \"reason\": \"Both outcomes decide whether Azure's 32M screening funnel is front-loaded or replaced, or stays as-is — a direct build-or-keep choice.\"}, {\"programme\": 1, \"criterion\": \"new\", \"value\": 5, \"reason\": \"Supported claims confirm no conductivity checkpoint exists and their battery result came from screening; their future-tense plan marks it undone.\"}, {\"programme\": 2, \"criterion\": \"fit\", \"value\": 4, \"reason\": \"Same MatterGen model and matching 1k-100k scale, but the card's proxy-conductivity/NEB validation differs from their MatterSim/DFT chain and electrolyte target.\"}, {\"programme\": 2, \"criterion\": \"change\", \"value\": 4, \"reason\": \"A win supplies their thesis's missing generative-electrolyte half and justifies bigger campaigns; a loss keeps the current split, needing MatterSim/DFT bridging.\"}, {\"programme\": 2, \"criterion\": \"new\", \"value\": 4, \"reason\": \"They have run MatterGen battery generation and halide property fine-tuning, so partly answered; conductivity-conditioned electrolyte generation itself remains untested.\"}]}",
+          "time": {
+            "start": 1792274599992,
+            "end": 1792274602073
+          },
+          "id": "prt_14be41038001H86X2cQOfyA3Tx",
+          "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2",
+          "messageID": "msg_14be3461d001sAhusMwc0NL0M1"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "008155b3e8b3ec1ee44bc1f665749d9e4493d46b",
+          "type": "step-finish",
+          "tokens": {
+            "total": 5588,
+            "input": 2423,
+            "output": 345,
+            "reasoning": 2820,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.00122542,
+          "id": "prt_14be418cf001srTEOLRwwa9Djc",
+          "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2",
+          "messageID": "msg_14be3461d001sAhusMwc0NL0M1"
+        },
+        {
+          "type": "patch",
+          "hash": "0f295928b36c5bc6ddb35f0ea2062b767248b561",
+          "files": [
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/ledger.jsonl",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-4.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-4.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-4.jsonl",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-5.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-5.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-5.jsonl",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-6.export.json",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-6.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-6.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/raw/critic-6.jsonl",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/r0/frame/status.json"
+          ],
+          "id": "prt_14be4195c001PNeVOJnaxu9knv",
+          "sessionID": "ses_eb41cc0b8ffeLu828aEpk3oAj2",
+          "messageID": "msg_14be3461d001sAhusMwc0NL0M1"
+        }
+      ]
+    }
+  ]
+}

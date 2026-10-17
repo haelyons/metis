@@ -1,0 +1,176 @@
+{
+  "info": {
+    "id": "ses_eb41ac09fffee3hUD5KMHglXYp",
+    "slug": "calm-knight",
+    "projectID": "e635804b0fe929d2ed556701e94990a108996451",
+    "directory": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/calls",
+    "path": "runs/loop/battery/20261017-213943/calls",
+    "title": "neighbours",
+    "agent": "qt-bare",
+    "model": {
+      "id": "deepseek-v4.1-flash",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.00265185,
+    "tokens": {
+      "input": 1583,
+      "output": 908,
+      "reasoning": 3116,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792274677600,
+      "updated": 1792274699020
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792274677704
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "deepseek-v4.1-flash"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14be53fc8001W4KKAkqitQ0CFA",
+        "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Here is a research idea, the card a planner wrote for it, and a check of which existing research or industrial programmes would use its result, with the gaps that check found.\n\nRoot question: Battery crystal discovery? Crystal foundation models: there's hella, for battery generation, transport properties are different.\nIdea: {\\\"title\\\":\\\"Battery crystal discovery\\\",\\\"text\\\":\\\"Battery crystal discovery? Crystal foundation models: there's hella, for battery generation, transport properties are different. (from the user's notes; no further detail given)\\\",\\\"root_link\\\":\\\"is the root question\\\",\\\"compute_open\\\":\\\"not given (seed idea from notes)\\\",\\\"sequential\\\":\\\"not given (seed idea from notes)\\\"}\nCard:\n<a id=\\\"card-seed-idea-1\\\"></a>**B1 · Battery crystal discovery.** seed pick · compute tested: yes · plan expects: the lever · PASS\n\n**Question.** Can a crystal foundation model fine-tuned on a transport proxy generate Li-ion solid electrolytes with higher conductivity than unconditioned generation or database screening?\n\n**What is known.** Ferrogen (NeurIPS 2026) fine-tuned MatterGen on a polarization proxy with ML labels, achieving ~80x search efficiency over exhaustive screening; it never targeted ionic conductivity. No published result fine-tunes a crystal foundation model to generate battery materials conditioned on a transport property like ionic conductivity.\n\n**Hypothesis.** Conditioning MatterGen's adapter on predicted ionic conductivity gives low-barrier candidates at higher hit rate than screening; transport labels are scarce but learnable.\n\n**Restructuring.** The fine-tune, generate, screen, validate loop, ~3 rounds; each diffusion sample's ~1,000 sequential denoising timesteps. None: the loop's costly steps (generating, screening, NEB-validating thousands of candidates) are embarrassingly parallel; the plan splits each across GPUs, no reordering.\n\n**If compute is the lever.** Scaling candidates to 100,000 makes the conditioned generator's hit-rate advantage over both baselines significant; at 1,000 it is within noise.\n\n**If not.** Scaling candidates does not separate conditioned from baseline hit rates; the gap stays within seed noise at every level, so fine-tuning adds nothing.\n\n**Test.** Fine-tune the adapter of the open-source MatterGen crystal model on predicted log conductivity; generate and screen 1k-100k candidates in each arm; NEB-validate the top ten; compare hit rate against unconditioned generation and screening of the ICSD database (about $576).\n\n*Compute axis.* Generated candidate crystal structures screened per arm: 1,000–100,000 candidates, 3 levels. Closest prior: not on this axis.\n\n**Check first.** Reproduce MatterGen's 38.57% S.U.N. and 0.021 Angstrom RMSD on 1,024 samples; reproduce the npj predictor's 0.85 log10 sigma MAE. Tolerance: S.U.N. within +/-3 percentage points; RMSD <= 0.1 Angstrom; predictor MAE within +/-0.1 log10 sigma..\n\n**Would not show.** Shows predicted-conductivity and migration-barrier rankings, not measured sigma; Li conductors only; no synthesis, cycle-life, or interface data.\n\n*Cost.* Plans $575.76 of the $1,000 budget over 174 machine-hours, leaving $424.24. Main guess: DFT-NEB cost per material [g], measured after $575.76 of spend; the budget is reached if it is 1.0× higher. 7 cost flags in the block.\n\nCard verdict: PASS 1/2\nProgramme check: [{\\\"name\\\":\\\"Microsoft Research AI for Science — MatterGen / Azure Quantum Elements (with PNNL battery collaboration)\\\",\\\"step\\\":\\\"The candidate-proposal front-end of the battery-materials discovery pipeline: turning a design target (high ionic conductivity) directly into new candidate structures. Today Azure Quantum Elements proposes battery electrolytes by screening 32 million enumerated candidates, and MatterGen generates structures conditioned only on chemistry/symmetry/stability and properties like magnetic density, band gap, and bulk modulus — not ionic conductivity.\\\",\\\"sum\\\":15},{\\\"name\\\":\\\"DTU Energy — Bhowmik / García Lastra group, 'Deep Generative Models for Inverse Design of Solid Electrolytes' (MatterGen for battery materials)\\\",\\\"step\\\":\\\"The generative structure-sampling step of their MatterGen -> MatterSim -> DFT battery-discovery pipeline, and specifically their stated 'inverse design of solid electrolytes' ambition. They sample MatterGen conditioned on stability (energy above hull) and Li chemistry, then screen with MatterSim/DFT; their electrolyte-specific ML (the 400k-structure halide database) is used to fine-tune a foundation model for property prediction and MD, not for conductivity-conditioned generation.\\\",\\\"sum\\\":12}]\nGaps found: [\\\"The card's cited prior 'Ferrogen (NeurIPS 2026)' could not be located; the nearest published analog (KIST / Jung-Hoon Lee, diffusion-model discovery of ferroelectrics with MatterGen) targets ferroelectric polarization, not battery electrolytes, so the transport-conditioning precedent the card leans on is unverified.\\\",\\\"MatterGen's <=20-atom unit-cell limit and its stable, ordered-crystal training set conflict with the disordered, partially-occupied structures where fast Li conductors actually live (DTU explicitly states domain-specific training data is necessary for structurally disordered halide configurations), so both programmes would still need a disorder-aware generation step beyond this card.\\\",\\\"The card validates with NEB migration barriers and predicted log-conductivity, not the measured conductivity that both PNNL (synthesized and measured NaxLi3-xYCl6) and DTU ultimately need, leaving a label/validation gap between the card's outcome and programme practice.\\\"]\n\nPropose three close variants of the idea. Each changes one thing (the system studied, the quantity more compute buys, the comparison it is judged against, or the programme it is aimed at) so that its result would matter more to a named programme or close a named gap. Keep the rest of the idea. Name only systems, tools and programmes that appear above or that you are sure exist. Decide only from the text above; do not use tools.\nReturn only JSON: {\\\"variants\\\": [{\\\"id\\\": \\\"V1\\\", \\\"title\\\": \\\"\\\", \\\"text\\\": \\\"the idea in three to five sentences, in the form of the original\\\", \\\"root_link\\\": \\\"\\\", \\\"compute_open\\\": \\\"\\\", \\\"sequential\\\": \\\"\\\", \\\"changes\\\": \\\"what differs from the original and which gap or programme it answers\\\"}]}\"",
+          "id": "prt_14be53fd1001e5v7Xf5LKrCUP7",
+          "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp",
+          "messageID": "msg_14be53fc8001W4KKAkqitQ0CFA"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14be53fc8001W4KKAkqitQ0CFA",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/calls",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00265185,
+        "tokens": {
+          "total": 5607,
+          "input": 1583,
+          "output": 908,
+          "reasoning": 3116,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "deepseek-v4.1-flash",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792274678380,
+          "completed": 1792274698998
+        },
+        "finish": "stop",
+        "id": "msg_14be5426c001RpidmaRry39Jr3",
+        "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp"
+      },
+      "parts": [
+        {
+          "snapshot": "580554c026cf088bccf34e7783b7651eca1952f8",
+          "type": "step-start",
+          "id": "prt_14be5489a001oZHLBXgDJh3ZpQ",
+          "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp",
+          "messageID": "msg_14be5426c001RpidmaRry39Jr3"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me parse the task. I need to propose three close variants of the seed idea, each changing one thing (system studied, quantity compute buys, comparison judged against, or programme aimed at), so the result matters more to a named programme or closes a named gap. Use only systems/tools/programmes that appear above or that I'm sure exist. Decide only from the text.\n\nLet me gather the named things:\n- MatterGen (Microsoft, open-source crystal foundation model)\n- MatterSim\n- Azure Quantum Elements (screens 32M enumerated candidates)\n- PNNL battery collaboration — NaxLi3-xYCl6 synthesized and measured\n- DTU Energy — Bhowmik / García Lastra group, \"Deep Generative Models for Inverse Design of Solid Electrolytes\", 400k-structure halide database, MatterGen -> MatterSim -> DFT pipeline, disordered halide configurations\n- KIST / Jung-Hoon Lee — diffusion-model discovery of ferroelectrics with MatterGen (ferroelectric polarization)\n- npj predictor (conductivity predictor, 0.85 log10 sigma MAE)\n- ICSD database screening\n- NEB validation\n- Ferrogen (unverified, ~80x search efficiency, polarization proxy)\n\nGaps:\n1. Ferrogen unverified; nearest published analog KIST ferroelectrics.\n2. MatterGen <=20-atom unit-cell limit and stable ordered-crystal training set conflict with disordered, partially-occupied structures where fast Li conductors live (DTU says domain-specific training data needed for disordered halide configs). Both programmes need disorder-aware generation step beyond this card.\n3. Card validates with NEB barriers and predicted log-conductivity, not measured conductivity that PNNL and DTU need.\n\nOriginal idea: fine-tune MatterGen adapter on predicted ionic conductivity, generate 1k-100k candidates per arm, screen, NEB validate top ten, compare hit rate vs unconditioned generation and vs ICSD screening. Compute axis: candidates screened per arm.\n\nNow variants, each changes one thing:\n\nV1: Change system studied → disordered halide Li conductors, e.g. chlorides/halides (NaxLi3-xYCl6 from PNNL, or the DTU 400k-structure halide database). Fine-tune on the DTU halide database (400k structures) rather than generic, addressing gap 2 (disorder). Or target a specific system. Aimed at DTU and PNNL. Changes: system studied → Li halide solid electrolytes with partial occupancy/disorder, using DTU's 400k halide database for fine-tuning labels. Closes gap 2.\n\nV2: Change the quantity more compute buys / comparison judged against → validate against measured ionic conductivity rather than predicted, i.e., increase compute to buy more NEB/DFT or aim at a measured-conductivity benchmark. Hmm, \"quantity more compute buys\" — the compute axis in the original is candidates screened per arm. Change it to, e.g., number of NEB-validated candidates (compute buys deeper validation) rather than number of generated candidates. Or change so compute buys measured conductivity validation against PNNL's measured NaxLi3-xYCl6. That closes gap 3.\n\nActually two options: V2 could change the comparison it is judged against: instead of comparing to ICSD database screening, compare to Azure Quantum Elements' 32M-candidate screening (the programme's current front-end). That matters to Microsoft/Pnnl programme — showing conditioned generation beats their enumeration screening. That addresses programme relevance, but not a gap per se. Hmm.\n\nLet me design three distinct changes:\n\nV1 — system studied: disordered Li halide solid electrolytes (DTU halide database; PNNL NaxLi3-xYCl6 family as the target chemistry). Fine-tune MatterGen on DTU's 400k-structure halide data (or add disorder-aware conditioning). Closes gap 2.\n\nV2 — comparison judged against: compare the conductivity-conditioned generator not against unconditioned MatterGen and ICSD screening, but against Azure Quantum Elements' 32-million-candidate enumerated screening, and score by measured/predicted conductivity of top candidates validated with NEB + MatterSim against PNNL's measured NaxLi3-xYCl6. Hmm this mixes. Let me pick: change comparison → benchmark against the 32M enumeration screening used by Azure Quantum Elements, judged by hit rate per candidate generated. Answers Microsoft Research programme, gap re: whether new front-end beats their screening. That's a named programme.\n\nBut the gap 3 (measured conductivity) might be better as: V2 — change quantity compute buys: instead of scaling generated candidates 1k–100k, spend the compute on transitioning top candidates to measured validation (synthesis + EIS) — no, that changes test too much and would need fabrication. Hmm, but the card says \"Would not show: measured sigma\". A variant that includes measured conductivity via PNNL's synthesized NaxLi3-xYCl6 would close gap 3 but is more than compute axis.\n\nBetter: V2 — change the quantity more compute buys: from candidate count screened to number of NEB-validated candidates (deep validation), and judge against measured conductivity of PNNL's NaxLi3-xYCl6. Hmm, that's two changes.\n\nKeep it clean: one thing per variant.\n\nV1: system studied → Li halide solid electrolytes with partial occupancy/disorder (DTU's 400k halide database; PNNL's NaxLi3-xYCl6 measured family). Aimed at DTU + PNNL, closes gap 2.\n\nV2: quantity more compute buys → instead of generating more candidates, compute buys finer conditioning: more conductivity-label DFT/ML labels (train a better transport proxy) — or compute buys deeper validation (NEB on more candidates) so the comparison uses migration barriers not just predicted conductivity. Change: compute buys NEB-validated candidates per arm (e.g., 100 NEB validations) instead of raw generated candidate count; judged against measured conductivity trend of PNNL's NaxLi3-xYCl6. This closes gap 3 (validation gap). Aimed at PNNL/DTU.\n\nV3: comparison judged against → benchmark against the KIST/Jung-Hoon Lee ferroelectric MatterGen precedent, i.e., replicate the 80x-search-efficiency methodology on ionic conductivity instead of polarization, and compare to Ferrogen's protocol. Hmm, Ferrogen is unverified so can't rely. Alternative: aim at Microsoft's Azure Quantum Elements programme: change comparison from ICSD screening to Azure Quantum Elements' 32M-candidate enumeration screening. This matters to Microsoft programme. Closes gap... well, addresses named programme.\n\nAlternatively V3: change programme aimed at: Microsoft Research AI for Science — MatterGen/AQE; change the target property to something AQE actually conditions... hmm.\n\nLet me pick:\nV3 — comparison it is judged against: replace the ICSD screening baseline with Azure Quantum Elements' 32-million enumerated-candidate screen as the baseline, so the result says whether conductivity-conditioned generation beats the enumeration front-end Microsoft/PNNL actually use. Named programme: Microsoft Research AI for Science / AQE. Closes the programme-fit gap about candidate-proposal front-end.\n\nWait, but the gaps list is three specific gaps. The instruction says \"so that its result would matter more to a named programme or close a named gap.\" So each variant should either matter to a named programme or close a gap. Good.\n\nV1 closes gap 2, aimed at DTU + PNNL.\nV2 closes gap 3 (validation gap), aimed at PNNL/DTU.\nV3 addresses gap 1 — the unverified Ferrogen precedent. Change the comparison: instead of comparing to unconditioned generation + ICSD screening, benchmark against the closest verified precedent (KIST/Jung-Hoon Lee ferroelectric MatterGen discovery), i.e., replicate that method's conditioning approach but for transport. Hmm, that would test the unverified precedent? Actually gap 1 says the transport-conditioning precedent is unverified. A variant could substitute the verified KIST ferroelectric precedent as the methodological template (mattergen conditioned on a property proxy with ML labels). Hmm but the card's method already is that.\n\nMaybe V3: change the property/system to ferroelectrics too? No.\n\nAlternatively V3: aimed at Microsoft AQE comparing to their 32M screening — this matters to a named programme and indirectly addresses the unverified precedent by grounding in the actual programme. I think that's good and clearly one change (comparison).\n\nBut then gap 1 isn't addressed. That's fine — not required to address all.\n\nActually, could make a variant that addresses gap 1: change the \"prior\" the test rests on — re-verify the transport-conditioning claim by reproducing the KIST ferroelectric MatterGen result first. But that's a check, not a variant of the idea.\n\nLet me reconsider: The variants should keep the rest of the idea; each changes one thing. Changes can be: system studied, quantity compute buys, comparison judged against, programme aimed at.\n\nV1: system studied → disordered Li-halide solid electrolytes (partial occupancy), fine-tuned on DTU's 400k-structure halide database. Closes gap 2 (MatterGen ordered/≤20-atom limit). Programme: DTU Energy.\n\nV2: quantity more compute buys → NEB-validated migration barriers rather than generated candidate count; compute scales the number of candidates that get DFT-NEB validation and comparison to measured conductivity (PNNL's NaxLi3-xYCl6). Closes gap 3. Programme: PNNL / Microsoft collaboration.\n\nV3: comparison judged against → Azure Quantum Elements' 32M-candidate enumeration screening instead of ICSD; result says whether conductivity-conditioned MatterGen beats the front-end Microsoft/PNNL actually use. Programme: Microsoft Research AI for Science — MatterGen / AQE.\n\nGood, three variants. Each with the required JSON fields: id, title, text (3-5 sentences, in form of original), root_link, compute_open, sequential, changes.\n\nroot_link: original said \"is the root question\". Keep same for all probably, or rephrase. I'll say \"is the root question\" to keep consistent.\n\ncompute_open: original \"not given (seed idea from notes)\". I could fill: variants keep compute_open about... Actually card has \"compute tested: yes\". Hmm. The template: \"compute_open\": \"not given (seed idea from notes)\". I'll keep similar or note the open question. Let me keep it as the same phrasing or slightly adapted: \"not given (seed idea from notes)\". I think it's fine to keep them as the original, but maybe better to state what's open. The field in idea was \"compute_open\": \"not given (seed idea from notes)\". I'll keep that consistent, or make it descriptive. I'll write \"candidates per arm vs NEB-validated candidates per arm\" etc. Hmm, safer to keep consistent with original structure: \"not given (seed idea from notes)\". But that loses info. I'll provide a short honest value.\n\nActually the fields root_link, compute_open, sequential in the idea mirror: \"root_link\":\"is the root question\", \"compute_open\":\"not given (seed idea from notes)\", \"sequential\":\"not given (seed idea from notes)\". So these describe properties of the idea. I'll keep them but adapt: compute_open = whether compute is the lever/axis; sequential = whether serial. I'll write values accordingly.\n\nLet me write.\n\nV1 text (3-5 sentences, in form of original):\n\"Battery crystal discovery, restricted to disordered Li-halide solid electrolytes. Crystal foundation models: there's hella, but MatterGen's ≤20-atom ordered-cell training set does not cover the partially-occupied structures where fast Li conduction lives. Fine-tune MatterGen's adapter on predicted ionic conductivity using DTU's 400k-structure halide database as the transport label source, generate 1k–100k candidates per arm, screen, NEB-validate the top ten, and compare hit rate against unconditioned generation and ICSD screening, all in the halide family. Compute: candidate crystals screened per arm, 1,000–100,000, 3 levels.\"\n\nchanges: \"System studied: generic Li conductors → disordered Li-halide solid electrolytes with partial occupancy, fine-tuned on DTU's 400k-structure halide database. Answers gap 2 (MatterGen's ordered, ≤20-atom unit-cell limit vs disordered fast-ion structures) and aims the result at DTU Energy's MatterGen → MatterSim → DFT electrolyte pipeline.\"\n\nV2 text:\n\"Battery crystal discovery, with compute spent on deeper validation rather than more generation. Fine-tune MatterGen's adapter on predicted log conductivity, generate candidates, then scale the number that receive DFT-NEB migration-barrier validation (top 10 → top 100–1,000) per arm, and compare against unconditioned generation and ICSD screening. Judge candidates by NEB barriers and predicted conductivity calibrated to measured conductivity of PNNL's synthesized NaxLi3-xYCl6 family. Compute axis: NEB-validated candidates per arm, 10–1,000, 3 levels.\"\n\nchanges: \"Quantity more compute buys: generated-and-screened candidate count → DFT-NEB-validated candidates per arm, with the top candidates scored against PNNL's measured NaxLi3-xYCl6 conductivity. Closes gap 3 (NEB/predicted labels vs measured conductivity) and aims at the PNNL–Microsoft battery collaboration.\"\n\nV3 text:\n\"Battery crystal discovery, judged against the front-end Microsoft actually uses. Fine-tune MatterGen's adapter on predicted ionic conductivity, generate 1k–100k candidates per arm, screen, NEB-validate the top ten, and compare hit rate not against ICSD screening but against Azure Quantum Elements' 32-million enumerated-candidate screen. Compute axis: candidates screened per arm, 1,000–100,000, 3 levels.\"\n\nchanges: \"Comparison judged against: ICSD database screening → Azure Quantum Elements' 32-million-candidate enumeration screen. Makes the result speak to Microsoft Research AI for Science's MatterGen / Azure Quantum Elements battery programme (with PNNL), testing whether conductivity-conditioned generation beats the enumeration front-end they use today.\"\n\nGood. Ensure only named things. Azure Quantum Elements, MatterGen, MatterSim, PNNL, DTU, 400k halide database, NaxLi3-xYCl6, ICSD, NEB, npj predictor. All appear above. KIST Jung-Hoon Lee not used. Fine.\n\nReturn only JSON.",
+          "time": {
+            "start": 1792274679967,
+            "end": 1792274694604
+          },
+          "id": "prt_14be5489f001bPA7m6IpJqyYu8",
+          "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp",
+          "messageID": "msg_14be5426c001RpidmaRry39Jr3"
+        },
+        {
+          "type": "text",
+          "text": "{\n  \"variants\": [\n    {\n      \"id\": \"V1\",\n      \"title\": \"Conductivity-conditioned generation of disordered Li-halide solid electrolytes\",\n      \"text\": \"Battery crystal discovery, restricted to the disordered Li-halide solid electrolytes where fast Li conduction actually lives. Crystal foundation models: there's hella, but MatterGen's <=20-atom unit-cell limit and stable ordered-crystal training set do not cover the partially-occupied configurations that fast Li conductors need. Fine-tune MatterGen's adapter on predicted ionic conductivity using DTU's 400k-structure halide database as the domain-specific transport label source, generate and screen 1k-100k candidates per arm, NEB-validate the top ten, and compare hit rate against unconditioned generation and ICSD screening, all within the halide family. Compute axis: generated candidate crystal structures screened per arm, 1,000-100,000 candidates, 3 levels.\",\n      \"root_link\": \"is the root question\",\n      \"compute_open\": \"whether halide-domain fine-tuning shifts the hit-rate gap outside seed noise\",\n      \"sequential\": \"not given (seed idea from notes)\",\n      \"changes\": \"System studied: generic Li conductors -> disordered, partially-occupied Li-halide solid electrolytes fine-tuned on DTU's 400k-structure halide database. Closes gap 2 (MatterGen's ordered <=20-atom training set vs the structurally disordered halides where fast conduction lives) and aims the result at DTU Energy's MatterGen -> MatterSim -> DFT electrolyte pipeline.\"\n    },\n    {\n      \"id\": \"V2\",\n      \"title\": \"Spend the compute on NEB-validated candidates, scored against measured conductivity\",\n      \"text\": \"Battery crystal discovery, with the compute spent on deeper validation rather than more generation. Fine-tune MatterGen's adapter on predicted log conductivity, generate candidates, then scale the number per arm that receive DFT-NEB migration-barrier validation from the top ten up to the top 100-1,000, comparing against unconditioned generation and ICSD screening. Score candidates by NEB barriers and predicted conductivity calibrated against the measured conductivity of PNNL's synthesized NaxLi3-xYCl6 family rather than predicted sigma alone. Compute axis: NEB-validated candidates per arm, 10-1,000 candidates, 3 levels.\",\n      \"root_link\": \"is the root question\",\n      \"compute_open\": \"whether the conditioned generator's ranking survives NEB validation against measured halide conductivity data\",\n      \"sequential\": \"not given (seed idea from notes)\",\n      \"changes\": \"Quantity more compute buys: generated-and-screened candidate count -> DFT-NEB-validated candidates per arm, with top candidates scored against PNNL's measured NaxLi3-xYCl6 conductivity. Closes gap 3 (NEB barriers and predicted log-conductivity vs the measured conductivity the programmes need) and aims at the PNNL-Microsoft battery collaboration.\"\n    },\n    {\n      \"id\": \"V3\",\n      \"title\": \"Benchmark conditioned generation against Azure Quantum Elements' 32-million-candidate screen\",\n      \"text\": \"Battery crystal discovery, judged against the front-end Microsoft actually uses. Fine-tune MatterGen's adapter on predicted ionic conductivity, generate and screen 1k-100k candidates per arm, NEB-validate the top ten, and compare hit rate not against ICSD screening but against Azure Quantum Elements' 32-million enumerated-candidate screen. The question becomes whether conductivity-conditioned generation beats enumeration on hit rate per candidate proposed. Compute axis: generated candidate crystal structures screened per arm, 1,000-100,000 candidates, 3 levels.\",\n      \"root_link\": \"is the root question\",\n      \"compute_open\": \"whether conditioning beats the 32-million enumeration screen only at the 100,000-candidate level\",\n      \"sequential\": \"not given (seed idea from notes)\",\n      \"changes\": \"Comparison judged against: ICSD database screening -> Azure Quantum Elements' 32-million enumerated-candidate screen. Makes the result speak directly to Microsoft Research AI for Science's MatterGen / Azure Quantum Elements battery programme (with PNNL), testing whether conductivity-conditioned generation improves on the enumeration front-end they use today.\"\n    }\n  ]\n}",
+          "time": {
+            "start": 1792274694610,
+            "end": 1792274698844
+          },
+          "id": "prt_14be581d2001bLNJhNXaeQrpaj",
+          "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp",
+          "messageID": "msg_14be5426c001RpidmaRry39Jr3"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "0822e40cdcb5de048f1b1f65f2ad978a2981d846",
+          "type": "step-finish",
+          "tokens": {
+            "total": 5607,
+            "input": 1583,
+            "output": 908,
+            "reasoning": 3116,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.00265185,
+          "id": "prt_14be5929c001Nj2cKGVrdohZRl",
+          "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp",
+          "messageID": "msg_14be5426c001RpidmaRry39Jr3"
+        },
+        {
+          "type": "patch",
+          "hash": "580554c026cf088bccf34e7783b7651eca1952f8",
+          "files": [
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/calls/01-neighbours.events.jsonl",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/calls/01-neighbours.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/runs/loop/battery/20261017-213943/calls/01-neighbours.http/001.response.txt"
+          ],
+          "id": "prt_14be592f000118a0J749pF6nPj",
+          "sessionID": "ses_eb41ac09fffee3hUD5KMHglXYp",
+          "messageID": "msg_14be5426c001RpidmaRry39Jr3"
+        }
+      ]
+    }
+  ]
+}

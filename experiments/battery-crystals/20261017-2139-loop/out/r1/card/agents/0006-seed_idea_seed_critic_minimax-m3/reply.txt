@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "plan:scope_gap",
+      "reason": "Outcomes bear on the choice only through MLIP-predicted conductivity; scope_gap excludes DFT and measured validation, so a stand-in decides."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:predictions.noise_rule",
+      "reason": "With 3 seeds and binary hit/no-hit, whether the claimed 2x ratio exceeds bootstrap noise cannot be told from the plan."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "plan:checks",
+      "reason": "Hit rate is scored against a GNN surrogate whose only agreement check is Pearson r >= 0.6 versus MLIP-MD, itself a model."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "plan:novelty.left_open",
+      "reason": "Closest prior is bulk-modulus conditioning; plan states no one conditioned on conductivity for disordered halides or scaled candidate count."
+    },
+    {
+      "criterion": "reshape",
+      "value": 2,
+      "ref": "card:method",
+      "reason": "Method is None; only per-structure parallelism within each step. The five dependent phases still run in order."
+    },
+    {
+      "criterion": "baseline",
+      "value": 3,
+      "ref": "plan:anchor",
+      "reason": "Arms run on same GPUs with published optimized codes; anchor reproduces a published number rather than checking parallel vs sequential."
+    }
+  ],
+  "decides_by": "p4_screen",
+  "decides_by_reason": "Per-seed per-level hit rates are produced in p4_screen; the decision rule needs only hit rates and bootstrap CIs, not NEB."
+}
+```

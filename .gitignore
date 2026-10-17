@@ -1,8 +1,10 @@
 node_modules/
-qt2/idea/ocx/opencode/node_modules/
-qt2/idea/ocx/opencode/package-lock.json
-qt2/idea/ocx/opencode/bun.lock
-qt2/idea/last-run.log
+**/ocx/opencode/node_modules
+**/ocx/opencode/package-lock.json
+**/ocx/opencode/bun.lock
 *.tmp
-qt2/idea/wf-last.log
-qt2/idea/loop-*.log
+*.log
+!**/console.log
+experiments/_scratch/
+# Claude-era transcripts: on disk, not committed (committing was blocked as a possible credential leak); decide first
+experiments/question-tree/claude/

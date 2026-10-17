@@ -1,0 +1,85 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "N/A - this item is the plan's own research question; it states no external fact to source.",
+      "note": "A question setting the plan's target needs no source; no factual claim to check against a page."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "Besides unconditional generation of material candidates, MatterGen can also be trained or fine-tuned for conditional generation based on target property values, e.g., bulk modulus, chemical system, or magnetic density.",
+      "note": "Predictive claim (higher hit rate, labels scarce but learnable) is what the plan predicts, needing no source; the model card confirms MatterGen supports adapter fine-tuning for conditional generation on user-defined target properties, so the mechanism invoked is real."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "PARTIAL",
+      "page_quote": "N/A - no fetched page (github.com/microsoft/mattergen MODEL_CARD.md or the NeurIPS Ferrogen page) mentions the number of diffusion denoising timesteps.",
+      "note": "The fine-tune/generate/screen/validate loop and ~3 rounds are plan design and need no source; but 'each diffusion sample's ~1,000 sequential denoising timesteps' is a factual claim about MatterGen with no cited source and no fetched page stating it, so that part is UNSUPPORTED."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "N/A - this item is the plan's parallelization decision, an internal design judgment.",
+      "note": "No external factual claim to source; no fetched page contradicts that generating/screening/NEB steps are split across GPUs with no reordering."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "N/A - this is the plan's stated lever/prediction about significance at 100,000 vs 1,000 candidates.",
+      "note": "A prediction about the plan's own experiment needs no source; it states no checkable external fact."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "N/A - this is the plan's stated failure mode (negative prediction about its own experiment).",
+      "note": "Plan-predicted outcome needs no source; no external factual claim to verify."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "PARTIAL",
+      "page_quote": "Fine-tune the base model on user-provided data with property-labeled materials. Generate inorganic materials candidates with target property ... after fine-tuning. (License: MIT)",
+      "note": "'Fine-tune the adapter of the open-source MatterGen model' is supported: the model card (public GitHub repo, MIT license) lists fine-tuning on user property labels as intended use. The generate/screen 1k-100k, NEB-validate top ten, and hit-rate comparison are plan protocol needing no source. But 'screening of the ICSD database (about $576)' is a factual cost claim with no cited source and no fetched page states it - UNSUPPORTED, hence PARTIAL."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "We present Ferrogen, a generative pipeline for the targeted discovery of novel ferroelectric materials for memory by fine-tuning the diffusion-based crystal structure generator Mattergen on ferroelectric-relevant properties. To enable property-conditioned generation, we construct a ML-labeled dataset using a suite of fast machine learning estimators, including a novel two-stage ensemble polarization predictor. ... Against the ML screens, Ferrogen achieves a roughly $80 \\times$ improvement in search efficiency over exhaustive database search.",
+      "note": "Page confirms: NeurIPS 2026 poster; fine-tunes MatterGen via lightweight adapter layers with an ML-labeled dataset; ~80x search efficiency over exhaustive database search (matches quote, modulo LaTeX rendering of '80 x'). The abstract conditions on polarization, switching energy and metal-probability only - ionic conductivity is never mentioned, consistent with 'never targeted ionic conductivity'."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "We present Ferrogen ... by fine-tuning the diffusion-based crystal structure generator Mattergen on ferroelectric-relevant properties. (target property: polarization, switching energy, metal-probability - ionic conductivity/transport never mentioned)",
+      "note": "Verified only against the fetched pages: the closest published prior (Ferrogen, NeurIPS 2026) fine-tunes a crystal foundation model on polarization for ferroelectrics, not on a transport property for battery materials. No fetched page shows a transport-conditioned result, so the gap claim is not contradicted; an absence claim cannot be proven beyond the pages fetched."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "PARTIAL",
+      "page_quote": "The percentage of stable, novel, and unique (S.U.N.) structures among 1,024 generated samples. ... MatterGen achieves 38.57 % S.U.N. rate among generated structures, and the average RMSD of its samples is 0.021 Angstrom.",
+      "note": "The cited model card sentence supports 38.57% S.U.N. and 0.021 Angstrom RMSD, and the metrics section fixes the sample count at 1,024 (value 38.57 matches the page). However, 'the npj predictor's 0.85 log10 sigma MAE' is a factual claim with no cited source and no fetched page states it - UNSUPPORTED, hence PARTIAL."
+    },
+    {
+      "ref": "src:s_modelcard_sun",
+      "status": "SUPPORTED",
+      "page_quote": "MatterGen achieves 38.57 % S.U.N. rate among generated structures, and the average RMSD of its samples is 0.021 Angstrom.",
+      "note": "Quote appears verbatim in the Results section of microsoft/mattergen MODEL_CARD.md and supports the S.U.N./RMSD anchor values."
+    },
+    {
+      "ref": "src:s_ferrogen",
+      "status": "SUPPORTED",
+      "page_quote": "Against the ML screens, Ferrogen achieves a roughly $80 \\times$ improvement in search efficiency over exhaustive database search.",
+      "note": "Sentence appears in the NeurIPS 2026 Ferrogen poster abstract with the multiplication typeset as LaTeX math ($80 \\times$, rendered '80 x'); content matches the recorded quote and supports 'closest prior' use."
+    },
+    {
+      "ref": "num:sample_v100_h_per_1k",
+      "status": "SUPPORTED",
+      "page_quote": "Sampling 1,000 structures takes around two hours using a single NVIDIA V100 GPU",
+      "page_value": 2,
+      "note": "Model card's Speeds, Sizes, Times section states exactly this for MatterGen sampling; 'around two hours' on one V100 matches value 2 V100-hours per 1,000 samples, matching the cited page setting."
+    }
+  ]
+}
+```

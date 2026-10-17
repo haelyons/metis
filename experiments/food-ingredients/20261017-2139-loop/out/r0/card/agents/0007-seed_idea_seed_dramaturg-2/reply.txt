@@ -1,0 +1,92 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "Using the recipe IDs and following the Recipe1M dataset ID splits, we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.",
+      "note": "Cited quote appears verbatim on the GISMo page and confirms Recipe1MSubs is the ingredient-substitution benchmark with these splits; the same page defines Hit@k and Table 1 reports Hit@1 (GISMo 20.56±0.14), so Hit@1 on Recipe1MSubs is a real measure. The benchmark is framed on the page around dietary needs/allergens/culinary exploration, not sustainability specifically, but 'sustainable replacements' is the plan's own framing of its question, not a factual claim about the dataset."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "PARTIAL",
+      "page_quote": "Our approach improved Hit@1 accuracy on ingredient substitution tasks, from the baseline 34.53 plus-minus 0.10% to 38.03 plus-minus 0.28% on the original GISMo dataset, and from 40.24 plus-minus 0.36% to 54.46 plus-minus 0.29% on a refined version of the same dataset.",
+      "note": "Quote appears in the abstract (± rendered as 'plus-minus') and shows fine-tuned LLMs improved Hit@1 on the GISMo dataset, which is consistent with 'as LLM results suggest'. However, the page attributes the gain to the fine-tuned LLM approach for optimizing phytochemical content (GPT-3.5 over the GISMo baseline), never to model capacity, and the paper's other fine-tuned LLMs (DaVinci-002 20.09±0.31%, TinyLlama-1.1B 20.93±0.29% on the original dataset) underperformed the 34.53 baseline, so 'larger encoders capture finer ingredient context' is the plan's causal interpretation not carried by the source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19",
+      "note": "Conditional prediction of the experiment, which needs no source; the only external value it carries, GISMo's Hit@1 baseline of 20.56, matches Table 1 test results on Recipe1MSubs."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19",
+      "note": "Conditional prediction of the experiment, which needs no source; the referenced GISMo Hit@1 baseline of 20.56 matches Table 1 test results."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19",
+      "note": "Plan-internal experiment design (four widths, five seeds, four GPUs) needs no source and carries no page-checkable claims; the 20.56 Hit@1 baseline it references matches Table 1 on Recipe1MSubs."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "PARTIAL",
+      "page_quote": "Our approach improved Hit@1 accuracy on ingredient substitution tasks, from the baseline 34.53 plus-minus 0.10% to 38.03 plus-minus 0.28% on the original GISMo dataset, and from 40.24 plus-minus 0.36% to 54.46 plus-minus 0.29% on a refined version of the same dataset.",
+      "note": "Quote appears (± rendered as 'plus-minus') and confirms Rita 2024 (arXiv 2409.08792, 13 Sep 2024) fine-tuned GPT-3.5 and TinyLlama and improved Hit@1 from 34.53 to 38.03 on the original GISMo dataset, which the paper's results table labels 'Recipe1MSubs Dataset'. The clause 'no capacity sweep within one protocol exists' is an absence claim the cited abstract never states or evidences, so that part is unverified; the paper's model comparison across sizes is attributed to the fine-tuning approach, not presented as a capacity sweep."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "We fine-tuned models, including OpenAI's GPT-3.5, DaVinci, and Meta's TinyLlama, using an ingredient substitution dataset.",
+      "note": "Gap statement carrying no sources; it is consistent with the fetched pages: the GISMo paper's ablations vary modules, context and input features, not model capacity or width, and Rita et al.'s reported gains are attributed to their fine-tuned LLM approach across the original vs refined datasets rather than a within-protocol capacity sweep."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19",
+      "note": "Quote appears in Table 1, test results on Recipe1MSubs: MRR 31.51±0.10 and Hit@1 20.56±0.14, matching both the card and its value field (31.51). 'Using the official code' is supported on the same page: 'Code for the personalized inverse cooking pipeline and the benchmark Recipe1MSubs available at https://github.com/facebookresearch/gismo.'"
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "We follow the literature on recommender systems and link predictors on graphs and evaluate the ingredient substitution task with Mean Reciprocal Rank (MRR) and Hit@k, k∈{1,3,10}.",
+      "note": "Although the card cites no source, I checked it against the fetched GISMo page the plan anchors on: it evaluates only ranking metrics (MRR/Hit@k) on Recipe1M recipes 'scraped from mostly US-centric food webpages' (home cooking websites), and nowhere in its sections or tables (MRR, Hit@1/3/10, PPL, GPT2 PPL, IoU, F1) does it measure environmental footprint or sensory quality, nor discuss industrial formulations. All three limitation statements check out."
+    },
+    {
+      "ref": "src:src_gismo_sizes",
+      "status": "SUPPORTED",
+      "page_quote": "Using the recipe IDs and following the Recipe1M dataset ID splits, we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.",
+      "note": "Quote appears verbatim on https://arxiv.org/html/2302.07960v1 and establishes the Recipe1MSubs split sizes the plan uses."
+    },
+    {
+      "ref": "src:src_llm",
+      "status": "SUPPORTED",
+      "page_quote": "Our approach improved Hit@1 accuracy on ingredient substitution tasks, from the baseline 34.53 plus-minus 0.10% to 38.03 plus-minus 0.28% on the original GISMo dataset, and from 40.24 plus-minus 0.36% to 54.46 plus-minus 0.29% on a refined version of the same dataset.",
+      "note": "Quote appears in the abstract of 2409.08792 (± symbols rendered as 'plus-minus'). It supports the paper as closest prior showing LLM approaches beat the GISMo baselines. Caveat: the gains are attributed to the phytochemical-guided fine-tuning approach, not to model capacity per se, and smaller fine-tuned LLMs underperformed the baseline (DaVinci-002 20.09±0.31%, TinyLlama-1.1B 20.93±0.29% on the original dataset)."
+    },
+    {
+      "ref": "src:src_gismo_gismo",
+      "status": "SUPPORTED",
+      "page_quote": "GISMo (Ours) 31.51±0.10 20.56±0.14 35.89±0.16 54.27±0.19",
+      "note": "Quote appears exactly in Table 1 (Test results on Recipe1MSubs): MRR 31.51±0.10, Hit@1 20.56±0.14, Hit@3 35.89±0.16, Hit@10 54.27±0.19, matching the anchor the plan reproduces."
+    },
+    {
+      "ref": "num:n_train",
+      "status": "SUPPORTED",
+      "page_quote": "Using the recipe IDs and following the Recipe1M dataset ID splits, we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.",
+      "note": "Page states 49,044 training substitution samples for the Recipe1MSubs split, matching the recorded value for the stated setting.",
+      "page_value": 49044
+    },
+    {
+      "ref": "num:n_test",
+      "status": "SUPPORTED",
+      "page_quote": "Using the recipe IDs and following the Recipe1M dataset ID splits, we get 49,044, 10,729 and 10,747 substitution samples for training, validation, and test sets respectively.",
+      "note": "Page states 10,747 test substitution samples for the Recipe1MSubs split, matching the recorded value for the stated setting.",
+      "page_value": 10747
+    }
+  ]
+}
+```

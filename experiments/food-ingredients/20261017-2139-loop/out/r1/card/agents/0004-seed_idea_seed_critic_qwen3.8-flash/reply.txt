@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "General substitution Hit@1 is a stand-in for sustainable replacements; sustainability labels are not measured."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:compute_axis.levels",
+      "reason": "Width axis spans only 8× (64–512), below 10×, so compute-lever condition fails."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "card:anchor",
+      "reason": "Hit@1 exact dataset ground-truth match; setup reproduces published 20.56 within tolerance."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior tuned 200–600 but no trend; lower widths remain open, stated by plan."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "Plan keeps reconciliation before sweep; no step dependency is removed, only ordered phases."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring method is none, so baseline is not applicable."
+    }
+  ],
+  "decides_by": "C",
+  "decides_by_reason": "A only reproduces anchor; C produces width-512 Hit@1 needed for the decision rule."
+}

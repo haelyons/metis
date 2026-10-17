@@ -1,0 +1,28 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "V1",
+   "title": "Conductivity-conditioned generation of disordered Li-halide solid electrolytes",
+   "text": "Battery crystal discovery, restricted to the disordered Li-halide solid electrolytes where fast Li conduction actually lives. Crystal foundation models: there's hella, but MatterGen's <=20-atom unit-cell limit and stable ordered-crystal training set do not cover the partially-occupied configurations that fast Li conductors need. Fine-tune MatterGen's adapter on predicted ionic conductivity using DTU's 400k-structure halide database as the domain-specific transport label source, generate and screen 1k-100k candidates per arm, NEB-validate the top ten, and compare hit rate against unconditioned generation and ICSD screening, all within the halide family. Compute axis: generated candidate crystal structures screened per arm, 1,000-100,000 candidates, 3 levels.",
+   "root_link": "is the root question",
+   "compute_open": "whether halide-domain fine-tuning shifts the hit-rate gap outside seed noise",
+   "sequential": "not given (seed idea from notes)",
+   "source_urls": [],
+   "root_question": "Battery crystal discovery? Crystal foundation models: there's hella, for battery generation, transport properties are different.",
+   "kind": "physical"
+  }
+ ]
+}

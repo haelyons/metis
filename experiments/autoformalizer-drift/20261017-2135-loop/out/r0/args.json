@@ -1,0 +1,32 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "I1",
+   "title": "Drift probes on the autoformalizer",
+   "text": "Probe the autoformalizer's activations while it writes definitions and statements, to flag when it has quietly strengthened a hypothesis or guessed a convention. In math, generators often 'know' they are wrong: a linear probe predicts trace correctness at 0.953 AUROC on MATH-500, against 0.674 for verbalized confidence. But transfer to other domains is weak (0.54/0.55 from MATH to ARC), the signal is 'diagnostic, not causal', and the only interp study of autoformalization (SMT-LIB, not Lean) gets 0.960 against a solver oracle but 0.679 against an LLM proxy for intent. No one has measured this on Lean, and the labels it needs are the human audit itself.",
+   "root_question": "What actually stops us from autoformalizing most of published math into Lean? Is it gaps in Mathlib coverage, the step of translating informal proofs where authors skip things that are 'obvious', or something deeper about how mathematicians write? The Lean kernel is a free and perfect verifier, so this looks like one of the few domains where brute-force search can't fool itself. Could you split every paper into tiny lemma-sized subgoals and throw many different open-source prover models at each one in parallel, with each model scoped to a known failure mode like wrong definitions, mismatched conventions or silently strengthened hypotheses? Is compute a major blocker at some level, and could a shit ton of GPU parallelism fix it, or is the real bottleneck checking that the formal statement means the same thing as the English one?",
+   "kind": "interp",
+   "root_link": "B4 / framer 4.3: whether a misformalization of the root statement or its definitions, which the kernel cannot see, leaves a readable trace inside the generator, which would shrink the human audit set.",
+   "compute_open": "Quantity is models and labelled statements analysed. The most reported is nine models up to 72B on 100 training and 200 held-out math problems (https://arxiv.org/html/2605.09502v1) and 950 SMT-LIB encodings (https://arxiv.org/html/2609.11085v2). Unknown above that: whether Lean statement drift is linearly readable in any model at all, and how a probe scores against human rather than solver or LLM-proxy intent labels.",
+   "sequential": "The chain is: expert-labelled faithful/unfaithful pairs, then one forward pass per statement to cache activations, then a probe fit (minutes on a fraction of one GPU), then held-out evaluation. That is about 4 steps, with one run per model and realistically per subfield. Only the labelling step is serial (it is the expert audit). Labels could arrive in parallel if faithful statements were perturbed synthetically in targeted directions, as BPF's counterfactual probe generation does (https://arxiv.org/abs/2606.16541). That pays off only if probes trained on synthetic drift transfer to natural misformalizations. The nearest precedent is Goodfire's Rakuten SAE probes, trained on synthetic data, which held up on real production data (https://www.goodfire.com/research/rakuten-sae-probes-for-pii-detection).",
+   "source_urls": [
+    "https://arxiv.org/html/2605.09502v1",
+    "https://arxiv.org/html/2609.11085v2",
+    "https://arxiv.org/html/2504.05419v1"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,23 @@
+HTTP 200
+{"date":"Sat, 17 Oct 2026 21:58:36 GMT","content-type":"text/event-stream","transfer-encoding":"chunked","connection":"keep-alive","cache-control":"no-cache","cf-placement":"remote-IAD","x-opencode-endpoint-id":"pareto-glm","x-opencode-log-id":"ba073e10-eba5-41a9-8f5b-5f10800a3f75","x-opencode-upstream-model-id":"z-ai/glm-5.3-flash","x-zen-model":"glm-5.3-flash","server":"cloudflare","cf-ray":"a4c290bd5a06020a-CLT"}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"role":"assistant","content":""}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":"No"}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" HTML version on arXiv (submitted Sep 2024, HTML only for"}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" newer submissions). Fetch the PDF? webfetch of PDF may not parse, but try."}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" Or use arxiv abs page (already have partial abstract). Try fetching the PDF text"}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":".","tool_calls":[{"index":0,"id":"chatcmpl-tool-aec1f249573c359b","type":"function","function":{"name":"webfetch","arguments":"{\"format\": \"text\", \"timeout\": "}}]}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"90, \"url\": \"https://arxiv.org/pdf/2409.08792\"}"}}]}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":"tool_calls","logprobs":null,"delta":{}}]}
+
+data: {"id":"chatcmpl-e588691fed7fb50fa0815d57188be90e","object":"chat.completion.chunk","created":1792274316,"model":"glm-5.3-flash","choices":[],"usage":{"prompt_tokens":33519,"completion_tokens":89,"total_tokens":33608,"prompt_tokens_details":{"cached_tokens":32640},"completion_tokens_details":{"reasoning_tokens":53}}}
+
+data: [DONE]
+
