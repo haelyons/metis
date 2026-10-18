@@ -1,0 +1,105 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — no source cited",
+      "note": "Pure research question; carries no factual claim or value that needs a source."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "UNSUPPORTED",
+      "page_quote": "N/A — no source cited",
+      "note": "The prediction ('MD will reorder...') needs no source, but the factual premise 'machine-learning viscosity error (22.5% MAPE)' has no cited source and no fetched page states a 22.5% MAPE (the article lists MAPE only as a metric definition, giving R2/MAE for viscosity, not 22.5%)."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — plan description",
+      "note": "Describes the sequential baseline (one long trajectory per candidate; ranking resolved at 100/300/1000 candidates); no factual claim requiring a source."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — plan method",
+      "note": "Methodological plan (parallel short replicas on separate GPUs, block-averaged Green-Kubo integrals); no factual claim requiring a source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — prediction",
+      "note": "Conditional prediction of what the plan will measure; needs no source."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — prediction",
+      "note": "Conditional prediction (null/alternative outcome); needs no source."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "PARTIAL",
+      "page_quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.",
+      "note": "The plan steps (8-GPU A100, OPLS-AA Green-Kubo, 100 then 300 candidates, 45 ns vs 5 ns, rank correlation) need no source. However, the factual claim 'Org-Mol's 461 monoesters' is not cited by any source in this item; it happens to match the nature.com page ('461 monoesters are finally filtered out')."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Monoesters with dielectric constants lower than 3.20 are then fed to the kinetic viscosity model and then the thermal conductivity model. ... Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out. By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured.",
+      "note": "s1 quote appears verbatim. Supports 'screened 461 monoester candidates' (461 filtered out), 'transformer' (article: '3D transformer-based molecular representation learning... Org-Mol'), and 'measured only two by synthesis' ('select two candidates for synthesis, and their physical properties are experimentally measured'). No MD verification of the shortlist is described, consistent with 'none were MD-verified'. value 0 is an internal novelty score, not a page number."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "N/A — no source cited",
+      "note": "Negative literature claim ('No published work runs Green-Kubo viscosity and thermal conductivity over a 100-to-1000 candidate ester shortlist') has no cited source and cannot be confirmed from the fetched pages."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "Ester 1: 2.80 | 3.13 | 6.41 | 7.18 | 1.98 | 2.23 | 0.141 | 0.144",
+      "note": "Table 4 columns are ε (Exp/Pred), ν at 40°C (cSt) (Exp/Pred), ν at 100°C (Exp/Pred), κ (W/m·K) (Exp/Pred); Ester 1's measured ν at 40°C = 6.41 cSt, matching the card value 6.41. The 'Green-Kubo MD reproduces' part is the plan's validation target, not a page claim."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — plan scope",
+      "note": "States the plan's own scope and exclusions (single-phase, one force field, 15 ns sampling; no synthesis/dielectric/flammability/compatibility/stability checks); no factual claim requiring a source."
+    },
+    {
+      "ref": "src:s1",
+      "status": "SUPPORTED",
+      "page_quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.",
+      "note": "Quote appears verbatim on the article page; supports the 461-candidate monoester shortlist (baseline)."
+    },
+    {
+      "ref": "src:s3",
+      "status": "SUPPORTED",
+      "page_quote": "Ester 1 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144",
+      "note": "Table 4 row for Ester 1: ε 2.80/3.13, ν40 6.41/7.18, ν100 1.98/2.23, κ 0.141/0.144. All eight numbers match; Ester 1 measured ν at 40°C = 6.41 cSt and κ = 0.141 W/m·K, exactly as the source claims."
+    },
+    {
+      "ref": "num:a100_ns_day",
+      "status": "SUPPORTED",
+      "page_quote": "A100 267.5 691.7 265.8 129.1 38.8 23.2",
+      "note": "NHR@FAU GROMACS 2024.1 benchmark: A100 row, System 1 = 267.5 ns/day. Page describes System 1 as 'R-143a in hexane (20,248 atoms) with very high output rate'. Page states 267.5 for this setting.",
+      "page_value": 267.5
+    },
+    {
+      "ref": "num:a100_usd_gpu_h",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A100 SXM | 40 GB | 124 | 1800 GiB | 5.8 TiB SSD | $1.99",
+      "note": "Lambda instances pricing, 8x tab: NVIDIA A100 SXM 40 GB with 124 vCPUs, 1800 GiB RAM, 5.8 TiB SSD is listed at $1.99/GPU/hr. Page states 1.99 for this setting.",
+      "page_value": 1.99
+    },
+    {
+      "ref": "num:node_gpus",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A100 SXM | 40 GB | 124 | 1800 GiB | 5.8 TiB SSD | $1.99",
+      "note": "This A100 SXM 40 GB plan appears under Lambda's '8x' instances tab, i.e., 8 GPUs per instance, matching the value 8.",
+      "page_value": 8
+    }
+  ]
+}
+```

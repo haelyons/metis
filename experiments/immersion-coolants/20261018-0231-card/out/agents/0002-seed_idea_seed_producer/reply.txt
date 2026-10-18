@@ -1,0 +1,177 @@
+{
+  "option_title": "MD verification inserted into Org-Mol's ester shortlist before synthesis",
+  "question": "Does molecular-dynamics verification of viscosity and thermal conductivity reorder a machine-learning ester shortlist, or merely confirm it, and does the best coolant keep improving?",
+  "hypothesis": "Molecular dynamics will reorder the shortlist because the machine-learning viscosity error (22.5% MAPE) exceeds MD's, so better esters appear only after verification.",
+  "compute_axis": {
+    "quantity": "MD-verified monoester candidates",
+    "unit": "candidates",
+    "levels": [100, 300, 1000]
+  },
+  "held_fixed": [
+    "force field OPLS-AA",
+    "temperature 40 C (313.15 K), pressure 1 atm",
+    "system size ~20,000 atoms (~500 molecules)",
+    "protocol: 3 ns equilibration + 3 x 5 ns Green-Kubo production",
+    "cooling figure of merit = Mouromtseff number (turbulent-forced-convection exponents)",
+    "candidate pool = Org-Mol's 461 monoesters"
+  ],
+  "predictions": {
+    "if_lever": "By 100 candidates the replica ranking matches the sequential baseline and diverges from ML; the best figure keeps improving through 1000.",
+    "if_not": "Replicas only match the sequential baseline by 300 candidates, and MD then merely confirms the ML ranking, unchanged from 100 through 1000.",
+    "decision_rule": "At 300 candidates, call if_lever when the Spearman correlation between ML and MD cooling-figure ranks is below 0.7 and the best MD figure rises at least 5% from 100 to 300 candidates; otherwise if_not.",
+    "noise_rule": "Per-candidate figure uncertainty is the standard error across its 3 replicas; bootstrap the Spearman correlation over candidates; rerun 10 candidates at 3x length with new seeds and require the ranking to be unchanged.",
+    "expected": "if_lever",
+    "expected_why": "The machine-learning model's 22.5% viscosity error is far larger than molecular dynamics' expected error, so verification must reshuffle the list."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "Verifying more candidates is bought directly with more GPU-hours; the number of candidates is the axis, and wall-clock is compressed by running 8 candidates at once on the 8-GPU node.",
+  "scored_against": "MD viscosity and thermal conductivity are compared with Org-Mol's measured values for Ester 1 (6.41 cSt, 0.141 W/m K) and Ester 2 (9.67 cSt, 0.138 W/m K); the best candidates' Mouromtseff number is compared with 3M Novec 649 (0.40 cSt, 0.059 W/m K). Never against the predictors.",
+  "arms": [
+    {"id": "arm_ml", "what": "Org-Mol ML-predicted ranking of the 461 monoesters (baseline)"},
+    {"id": "arm_100", "what": "MD-verified top 100 candidates"},
+    {"id": "arm_300", "what": "MD-verified top 300 candidates"},
+    {"id": "arm_1000", "what": "MD-verified top 1000 candidates (full-scale, outside budget)"}
+  ],
+  "baseline": {
+    "what": "Org-Mol ML shortlist: 461 monoesters ranked by predicted kinematic viscosity at 40 C (MAE 0.568 cSt, MAPE 22.5%) and thermal conductivity (MAE 0.00388 W/m K), validated on only 2 synthesized esters",
+    "value": "461",
+    "source_id": "s1"
+  },
+  "anchor": {
+    "what": "Green-Kubo MD (OPLS-AA) reproduces Org-Mol Ester 1's measured 40 C viscosity 6.41 cSt",
+    "published_value": 6.41,
+    "tolerance": "±25% on viscosity; ±20% on thermal conductivity 0.141 W/m K",
+    "source_id": "s3"
+  },
+  "checks": [
+    "MD viscosity and thermal conductivity of Ester 1 and Ester 2 fall within ±25% and ±20% of the published measured values (Table 4).",
+    "Each candidate's Green-Kubo running integral reaches a plateau within the 5 ns window, or the candidate is re-run.",
+    "Split each candidate's 3 replicas into two halves; the two half-estimates must rank candidates the same.",
+    "Top candidates' Mouromtseff number is compared with 3M Novec 649 (0.40 cSt, 0.059 W/m K) to confirm competitiveness.",
+    "Spearman rank correlation between ML-predicted and MD-computed figures is bootstrapped over candidates and replicas."
+  ],
+  "phases": [
+    {"id": "build", "what": "Extract the 461 Org-Mol monoesters, rank by ML figure, build ~20,000-atom boxes, assign OPLS-AA, energy-minimize (CPU only).", "stop_rule": "stop when top-300 boxes are built or 4 CPU-hours elapse."},
+    {"id": "anchor", "what": "Run Ester 1 and Ester 2 (5 replicas x 10 ns Green-Kubo) and benchmark real ns/day on the ~20,000-atom box.", "stop_rule": "stop when both esters' viscosity standard error is under 15% or 2 wall-clock hours elapse."},
+    {"id": "verify_100", "what": "Run top-100 candidates (3 ns equilibration + 3 x 5 ns Green-Kubo) on the 8-GPU A100 node.", "stop_rule": "stop at 100 candidates done.", "gate": {"on": "md_mape_anchor", "op": "<=", "value": 22.467, "else": "stop: MD is no more accurate than the ML viscosity model, so verification adds nothing."}},
+    {"id": "verify_300", "what": "Run candidates 101-300 on the 8-GPU A100 node.", "stop_rule": "stop at 300 candidates done or when spend reaches budget_usd.", "gate": {"on": "ns_day_measured", "op": ">=", "value": 150, "else": "throughput too low to afford 300 candidates in budget; run top-100 only and stop."}},
+    {"id": "verify_1000", "what": "Run candidates 301-1000 (full-scale, outside the $1,000 budget).", "stop_rule": "stop at 1000 candidates or budget exhausted.", "gate": {"on": "fom_climb_ratio", "op": ">=", "value": 1.05, "else": "the best figure already plateaued at 300 candidates; the 1000-candidate run is not justified."}}
+  ],
+  "numbers": [
+    {"id": "shortlist_n", "name": "Org-Mol monoester shortlist size", "unit": "candidates", "basis": "CITED", "value": 461, "source_id": "s1", "quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out."},
+    {"id": "ml_nu_mae", "name": "Org-Mol kinematic viscosity 40 C test MAE", "unit": "cSt", "basis": "CITED", "value": 0.568, "source_id": "s2", "quote": "our work 0.726 0.568 0.190 8.794 3.878E−03", "page_setting": "Org-Mol Table 2 MAE row, column for kinematic viscosity at 40 C."},
+    {"id": "ml_nu_mape", "name": "Org-Mol kinematic viscosity 40 C test MAPE", "unit": "%", "basis": "CITED", "value": 22.467, "source_id": "s2m", "quote": "our work 9.233 22.467 12.528 3.978 2.911", "page_setting": "Org-Mol Table 2 MAPE row, column for kinematic viscosity at 40 C."},
+    {"id": "ml_k_mae", "name": "Org-Mol thermal conductivity test MAE", "unit": "W/m·K", "basis": "CITED", "value": 0.003878, "source_id": "s2", "quote": "our work 0.726 0.568 0.190 8.794 3.878E−03", "page_setting": "Org-Mol Table 2 MAE row, column for thermal conductivity."},
+    {"id": "anchor_e1_nu", "name": "Ester 1 measured kinematic viscosity at 40 C", "unit": "cSt", "basis": "CITED", "value": 6.41, "source_id": "s3", "quote": "Ester 1 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144", "page_setting": "Org-Mol Table 4, Ester 1 experimental kinematic viscosity at 40 C."},
+    {"id": "anchor_e1_k", "name": "Ester 1 measured thermal conductivity", "unit": "W/m·K", "basis": "CITED", "value": 0.141, "source_id": "s3", "quote": "Ester 1 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144", "page_setting": "Org-Mol Table 4, Ester 1 experimental thermal conductivity."},
+    {"id": "anchor_e2_nu", "name": "Ester 2 measured kinematic viscosity at 40 C", "unit": "cSt", "basis": "CITED", "value": 9.67, "source_id": "s3b", "quote": "Ester 2 2.70 2.87 9.67 10.84 2.59 2.98 0.138 0.141", "page_setting": "Org-Mol Table 4, Ester 2 experimental kinematic viscosity at 40 C."},
+    {"id": "anchor_e2_k", "name": "Ester 2 measured thermal conductivity", "unit": "W/m·K", "basis": "CITED", "value": 0.138, "source_id": "s3b", "quote": "Ester 2 2.70 2.87 9.67 10.84 2.59 2.98 0.138 0.141", "page_setting": "Org-Mol Table 4, Ester 2 experimental thermal conductivity."},
+    {"id": "novec_nu", "name": "Novec 649 kinematic viscosity", "unit": "cSt", "basis": "CITED", "value": 0.40, "source_id": "s7", "quote": "Kinematic Viscosity (cSt) 0.40", "page_setting": "3M Novec 649 engineered fluid datasheet, 25 C."},
+    {"id": "novec_k", "name": "Novec 649 thermal conductivity", "unit": "W/m·K", "basis": "CITED", "value": 0.059, "source_id": "s7b", "quote": "Thermal Conductivity (W/m-K) 0.059", "page_setting": "3M Novec 649 engineered fluid datasheet."},
+    {"id": "a100_ns_day", "name": "GROMACS throughput on A100 for a 20,000-atom liquid", "unit": "ns/day", "basis": "PROXY", "value": 267.5, "source_id": "s5", "quote": "| A100 | 267.5 | 691.7 | 265.8 | 129.1 | 38.8 | 23.2 |", "page_setting": "NHR@FAU GROMACS 2024 benchmark, system 1 (a 20,248-atom liquid).", "differs_in": ["system: R-143a-in-hexane 20,248 atoms vs a ~20,000-atom saturated monoester box", "force field: benchmark AMBER-family vs my OPLS-AA", "benchmark has a very high output rate, which the NHR authors note lowers ns/day by ~2.6x vs a low-output run"], "measured_by": "anchor"},
+    {"id": "a100_usd_gpu_h", "name": "A100 SXM 40 GB price per GPU-hour", "unit": "USD/GPU/h", "basis": "CITED", "value": 1.99, "source_id": "s4", "quote": "8x — NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $1.99", "page_setting": "Lambda on-demand pricing, 8x NVIDIA A100 SXM 40 GB node."},
+    {"id": "node_gpus", "name": "GPUs per instance", "unit": "GPUs", "basis": "CITED", "value": 8, "source_id": "s4", "quote": "8x — NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $1.99", "page_setting": "Lambda on-demand pricing, 8x NVIDIA A100 SXM 40 GB node."},
+    {"id": "ns_per_candidate", "name": "simulated ns per candidate", "unit": "ns", "basis": "DESIGN", "value": 18},
+    {"id": "rep_count", "name": "production replicas per candidate", "unit": "replicas", "basis": "DESIGN", "value": 3},
+    {"id": "prod_ns_rep", "name": "production ns per replica", "unit": "ns", "basis": "DESIGN", "value": 5},
+    {"id": "equil_ns", "name": "equilibration ns per candidate", "unit": "ns", "basis": "DESIGN", "value": 3},
+    {"id": "gpu_h_per_candidate", "name": "GPU-hours per candidate", "unit": "h", "basis": "DERIVED", "expr": "ns_per_candidate / a100_ns_day * 24"},
+    {"id": "usd_per_candidate", "name": "cost per candidate", "unit": "USD", "basis": "DERIVED", "expr": "gpu_h_per_candidate * a100_usd_gpu_h"},
+    {"id": "n_100", "name": "top-100 tier size", "unit": "candidates", "basis": "DESIGN", "value": 100},
+    {"id": "n_300", "name": "cumulative candidates through top-300 tier", "unit": "candidates", "basis": "DESIGN", "value": 300},
+    {"id": "n_1000", "name": "cumulative candidates through top-1000 tier", "unit": "candidates", "basis": "DESIGN", "value": 1000},
+    {"id": "anchor_ns", "name": "anchor simulation ns", "unit": "ns", "basis": "DESIGN", "value": 112},
+    {"id": "usd_anchor", "name": "anchor phase cost", "unit": "USD", "basis": "DERIVED", "expr": "anchor_ns / a100_ns_day * 24 * a100_usd_gpu_h"},
+    {"id": "usd_100", "name": "top-100 tier cost", "unit": "USD", "basis": "DERIVED", "expr": "n_100 * usd_per_candidate"},
+    {"id": "usd_300_extra", "name": "candidates 101-300 cost", "unit": "USD", "basis": "DERIVED", "expr": "(n_300 - n_100) * usd_per_candidate"},
+    {"id": "usd_1000_extra", "name": "candidates 301-1000 cost (full-scale)", "unit": "USD", "basis": "DERIVED", "expr": "(n_1000 - n_300) * usd_per_candidate"},
+    {"id": "usd_storage", "name": "storage cost", "unit": "USD", "basis": "DERIVED", "expr": "2 * fs_usd_gib_month * 60 / 720"},
+    {"id": "ns_simulated_300", "name": "total production ns simulated through 300 candidates", "unit": "ns", "basis": "DERIVED", "expr": "n_300 * ns_per_candidate"},
+    {"id": "md_mape_anchor", "name": "MD viscosity MAPE on the two anchor esters", "unit": "%", "basis": "GUESS", "value": 15, "rests_on": "OPLS Green-Kubo viscosity errors run around 10% for organic liquids (Guevara-Carrion reports <8% for alcohols); flexible esters are harder, so ~15%.", "measured_by": "anchor"},
+    {"id": "md_mape_gate", "name": "gate: MD viscosity MAPE must not exceed Org-Mol MAPE", "unit": "%", "basis": "DERIVED", "expr": "ml_nu_mape"},
+    {"id": "ns_day_measured", "name": "measured A100 throughput on the real ester box", "unit": "ns/day", "basis": "GUESS", "value": 267.5, "rests_on": "same 20,000-atom size class as the NHR@FAU system-1 benchmark.", "measured_by": "anchor"},
+    {"id": "ns_day_min", "name": "minimum throughput to afford 300 candidates in budget", "unit": "ns/day", "basis": "DESIGN", "value": 150},
+    {"id": "fom_climb_ratio", "name": "best cooling figure at 300 vs 100 candidates", "unit": "ratio", "basis": "GUESS", "value": 1.08, "rests_on": "the 461-candidate pool spans a wide viscosity range and ML's 22.5% viscosity error should hide better candidates that MD uncovers.", "measured_by": "verify_300"},
+    {"id": "fom_climb_min", "name": "minimum best-figure improvement to justify the 1000 tier", "unit": "ratio", "basis": "DESIGN", "value": 1.05},
+    {"id": "rho_gate", "name": "Spearman threshold below which MD reorders", "unit": "correlation", "basis": "DESIGN", "value": 0.7},
+    {"id": "anchor_tol_nu", "name": "anchor viscosity tolerance", "unit": "fraction", "basis": "DESIGN", "value": 0.25}
+  ],
+  "cost": {
+    "rates": [
+      {"id": "r_a100_8", "gpu": "NVIDIA A100 SXM", "gpu_memory_gb": 40, "n_gpus": 8, "per_gpu_usd_h": 1.99}
+    ],
+    "lines": [
+      {"id": "l_anchor", "phase": "anchor", "what": "Green-Kubo run of Ester 1 and Ester 2 (5 replicas x 10 ns each) plus a 1 ns throughput benchmark of the ~20,000-atom box", "kind": "work", "rate": "r_a100_8", "hours": "anchor_ns / a100_ns_day * 24 / node_gpus", "need": "anchor_ns / a100_ns_day * 24 / node_gpus"},
+      {"id": "l_100", "phase": "verify_100", "what": "top-100 candidates, 3 ns equilibration + 3 x 5 ns Green-Kubo each, 8 candidates at a time", "kind": "work", "rate": "r_a100_8", "hours": "n_100 * ns_per_candidate / a100_ns_day * 24 / node_gpus", "need": "n_100 * ns_per_candidate / a100_ns_day * 24 / node_gpus"},
+      {"id": "l_300", "phase": "verify_300", "what": "candidates 101-300, same protocol", "kind": "work", "rate": "r_a100_8", "hours": "(n_300 - n_100) * ns_per_candidate / a100_ns_day * 24 / node_gpus", "need": "(n_300 - n_100) * ns_per_candidate / a100_ns_day * 24 / node_gpus"},
+      {"id": "l_storage", "phase": "verify_300", "what": "box files, Green-Kubo autocorrelations and logs (~2 GiB kept ~60 h)", "kind": "storage", "usd": "2 * fs_usd_gib_month * 60 / 720"}
+    ],
+    "scenarios": [
+      {"id": "slow", "what": "the ester box runs at half the proxy throughput", "set": {"a100_ns_day": 130}},
+      {"id": "md_no_better", "what": "MD viscosity MAPE on the anchors equals Org-Mol's 22.5%", "set": {"md_mape_anchor": 22.467}}
+    ],
+    "yields": ["n_100", "n_300", "ns_simulated_300", "anchor_ns"],
+    "spend_cap_usd": 1000,
+    "total_stated": 984.16
+  },
+  "full_scale": [
+    {"id": "fs_1000", "what": "MD-verify the full top-1000 candidates (301-1000 extra)", "usd": "usd_1000_extra", "ratio_to": "n_300"},
+    {"id": "fs_1000_long", "what": "top-1000 candidates at 100 ns each (5x longer sampling per candidate)", "usd": "n_1000 * 100 / a100_ns_day * 24 * a100_usd_gpu_h", "ratio_to": "n_1000"}
+  ],
+  "outside_budget": [
+    {"what": "computational chemist time: pipeline build, OPLS parameter assignment, Green-Kubo analysis, result review", "qty": 60, "unit": "person-hours"}
+  ],
+  "restructuring": {
+    "sequential_part": "Each candidate's viscosity waits on one long trajectory; the ranking waits on 100, 300, then 1000 candidates.",
+    "method": "Run each candidate as parallel short replicas on separate GPUs and block-average the Green-Kubo integrals, so wall-clock shrinks by the replica count.",
+    "condition": "Independent replicas must sample the same equilibrium liquid, so block-average uncertainty falls as 1/sqrt(replicas); cheap check: viscosity from 3 versus 6 replicas on the anchor esters must agree within the standard error.",
+    "condition_phase": "anchor",
+    "baseline_sequential": "One 45 ns trajectory per candidate on a single A100 (three 15 ns segments concatenated, same total sampling), tuned with gmx mdrun -nb gpu -pme gpu -bonded gpu -update gpu -ntmpi 1; timed in the anchor phase.",
+    "baseline_copies": "Independent 5 ns replica runs of the same candidate side by side on separate GPUs of the 8-GPU node; also timed in the anchor phase."
+  },
+  "scope_gap": [
+    "the 1000-candidate run and 100 ns-per-candidate sampling exceed the $1,000 budget",
+    "no synthesis, dielectric-constant, flammability, material-compatibility, or long-term-stability testing"
+  ],
+  "novelty": {
+    "closest_prior": "Org-Mol screened 461 monoester cooling candidates with a transformer and measured only two by synthesis; none were molecular-dynamics-verified for viscosity or thermal conductivity [s1].",
+    "closest_source_id": "s1",
+    "prior_max_level": 0,
+    "left_open": "No published work runs Green-Kubo viscosity and thermal conductivity over a 100-to-1000 candidate ester shortlist, so whether MD reorders the ML ranking is untested.",
+    "decides": "no",
+    "searched": true
+  },
+  "limits": [
+    "Shows single-phase ranking only, under one force field and 15 ns sampling; no synthesis, dielectric, flammability, compatibility, or stability checks."
+  ],
+  "test_summary": "Rent an 8-GPU A100 node; run OPLS-AA Green-Kubo viscosity and thermal conductivity for the top 100 then 300 of Org-Mol's 461 monoesters; compare ML-vs-MD rank correlation and whether the best cooling figure keeps climbing; time a 45 ns single-trajectory baseline against parallel 5 ns replicas.",
+  "sources": [
+    {"id": "s1", "url": "https://www.nature.com/articles/s41524-025-01720-4", "quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.", "supports": "the 461-candidate shortlist the MD step is inserted into (baseline)."},
+    {"id": "s2", "url": "https://www.nature.com/articles/s41524-025-01720-4/tables/2", "quote": "our work 0.726 0.568 0.190 8.794 3.878E−03", "supports": "Org-Mol test MAE: kinematic viscosity at 40 C = 0.568 cSt (3rd column), thermal conductivity = 3.878E-03 W/m K (6th column)."},
+    {"id": "s2m", "url": "https://www.nature.com/articles/s41524-025-01720-4/tables/2", "quote": "our work 9.233 22.467 12.528 3.978 2.911", "supports": "Org-Mol test MAPE: kinematic viscosity at 40 C = 22.467% (3rd column), thermal conductivity = 2.911% (6th column)."},
+    {"id": "s3", "url": "https://www.nature.com/articles/s41524-025-01720-4/tables/4", "quote": "Ester 1 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144", "supports": "anchor: Ester 1 measured kinematic viscosity at 40 C = 6.41 cSt and thermal conductivity = 0.141 W/m K."},
+    {"id": "s3b", "url": "https://www.nature.com/articles/s41524-025-01720-4/tables/4", "quote": "Ester 2 2.70 2.87 9.67 10.84 2.59 2.98 0.138 0.141", "supports": "anchor: Ester 2 measured kinematic viscosity at 40 C = 9.67 cSt and thermal conductivity = 0.138 W/m K."},
+    {"id": "s4", "url": "https://lambda.ai/pricing", "quote": "8x — NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $1.99", "supports": "rate and GPU count: 8-GPU A100 SXM 40 GB node at $1.99 per GPU-hour."},
+    {"id": "s5", "url": "https://hpc.fau.de/2024/08/13/gromacs-2024-1-on-brand-new-gpgpus/", "quote": "| A100 | 267.5 | 691.7 | 265.8 | 129.1 | 38.8 | 23.2 |", "supports": "throughput proxy: GROMACS 2024 = 267.5 ns/day on A100 for benchmark system 1 (a 20,248-atom liquid)."},
+    {"id": "s5b", "url": "https://hpc.fau.de/files/2024/07/2024-07-09_NHR@FAU_HPC-Cafe_Gromacs-Benchmarks.pdf", "quote": "1 | R-143a in hexane | 20.248 | n.a. | Material Sciences | very high output rate!", "supports": "benchmark system 1 is a 20,248-atom material-sciences liquid, the closest published system to a 20,000-atom ester box."},
+    {"id": "s6", "url": "https://pubs.aip.org/aip/jcp/article/162/9/094502/3338865/Insights-from-virtual-chemistry-Shear-and-bulk", "quote": "we split the time series into M = 10 non-overlapping blocks of equal size and the integral of the autocorrelation function was computed for each block.", "supports": "block-averaged Green-Kubo viscosity protocol; 10 blocks of ~10 ns ≈ 100 ns total sampling per liquid."},
+    {"id": "s6b", "url": "https://pubs.aip.org/aip/jcp/article/162/9/094502/3338865/Insights-from-virtual-chemistry-Shear-and-bulk", "quote": "Our findings confirm the robustness of the OPLS force field in accurately predicting shear viscosity, demonstrating a strong linear correlation with literature data and, on average, slightly better performance compared to GAFF.", "supports": "choosing OPLS-AA over GAFF for viscosity; MD viscosity tracks measured values."},
+    {"id": "s7", "url": "https://multimedia.3m.com/mws/media/569865O/3m-novec-engineered-fluid-649.pdf", "quote": "Kinematic Viscosity (cSt) 0.40", "supports": "commercial single-phase fluid reference: Novec 649 kinematic viscosity 0.40 cSt at 25 C."},
+    {"id": "s7b", "url": "https://multimedia.3m.com/mws/media/569865O/3m-novec-engineered-fluid-649.pdf", "quote": "Thermal Conductivity (W/m-K) 0.059", "supports": "commercial single-phase fluid reference: Novec 649 thermal conductivity 0.059 W/m K."},
+    {"id": "s8", "url": "https://www.electronics-cooling.com/2006/05/comparing-heat-transfer-rates-of-liquid-coolants-using-the-mouromtseff-number/", "quote": "For single phase forced convection, Mouromtseff found this figure of merit, Mo, to follow the form ... the liquid coolant with the largest Mouromtseff number will provide the highest heat transfer rate.", "supports": "the cooling figure of merit is the Mouromtseff number; largest Mo = best single-phase coolant."},
+    {"id": "s9", "url": "https://arxiv.org/abs/0906.1717", "quote": "the self-diffusion coefficient and the shear viscosity are predicted with average deviations of less 8% for the pure alcohols and 12% for the mixture.", "supports": "achievable Green-Kubo viscosity accuracy (upper bound), informing the anchor tolerance."},
+    {"id": "s10", "url": "https://www.nature.com/articles/s41524-025-01720-4", "quote": "It can be seen that predicting these physical properties via MD is time-consuming for a single system and becomes unaffordable in a high-throughput screening scenario with thousands of candidates.", "supports": "why MD verification is the expensive step and the number of candidates is the compute axis."}
+  ],
+  "files_read": [
+    "https://www.nature.com/articles/s41524-025-01720-4",
+    "https://www.nature.com/articles/s41524-025-01720-4/tables/2",
+    "https://www.nature.com/articles/s41524-025-01720-4/tables/4",
+    "https://hpc.fau.de/2024/08/13/gromacs-2024-1-on-brand-new-gpgpus/",
+    "https://hpc.fau.de/files/2024/07/2024-07-09_NHR@FAU_HPC-Cafe_Gromacs-Benchmarks.pdf",
+    "https://pubs.aip.org/aip/jcp/article/162/9/094502/3338865/Insights-from-virtual-chemistry-Shear-and-bulk",
+    "https://multimedia.3m.com/mws/media/569865O/3m-novec-engineered-fluid-649.pdf",
+    "https://www.electronics-cooling.com/2006/05/comparing-heat-transfer-rates-of-liquid-coolants-using-the-mouromtseff-number/",
+    "https://arxiv.org/abs/0906.1717",
+    "https://lambda.ai/pricing"
+  ]
+}

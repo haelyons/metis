@@ -1,0 +1,373 @@
+{
+ "card": "card",
+ "root": "generative pipeline for discovery of single phase immersion coolants",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "run_dir": "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0303-frame/out",
+ "wall_min": 11.6,
+ "cost_usd": 0.1591,
+ "tokens": 413699,
+ "research_ok": true,
+ "research_errors": [],
+ "no_programme_reason": "",
+ "gaps": [
+  "No published work runs Green-Kubo viscosity and thermal conductivity over a 100–1000 candidate ester shortlist; the closest prior (Imperial/Dini-Ewen) covers only eight molecules, two of which are esters.",
+  "Nobody has MD-verified the Org-Mol 461-monoester ranking, so the card's check-first (OPLS-AA reproducing Ester 1's 6.41 cSt within ±25%) is untested.",
+  "LG AI Research validates immersion-coolant candidates by TGA/DSC and literature only, leaving viscosity/thermal conductivity of the ~92,861 shortlist physically unverified before selection.",
+  "LOPLS-AA's systematic under-prediction of viscosity for oxygen-containing (ester) molecules is documented at n=8 but unquantified at shortlist scale, so whether MD actually reorders a large ester ranking is genuinely open."
+ ],
+ "programmes": [
+  {
+   "n": 1,
+   "name": "Org-Mol — SINOPEC Research Institute of Petroleum Processing / DP Technology / AI for Science Institute",
+   "url": "https://www.nature.com/articles/s41524-025-01720-4",
+   "step": "The hand-off from the Org-Mol machine-learning shortlist to synthesis: after screening over 6 million esters and filtering 461 monoesters on predicted dielectric constant, viscosity and thermal conductivity, they pick candidates for synthesis manually. This is exactly the slot where the card inserts Green-Kubo MD verification of viscosity and thermal conductivity before synthesis.",
+   "step_url": "https://www.nature.com/articles/s41524-025-01720-4",
+   "step_checks": [
+    "SUPPORTED",
+    "SUPPORTED"
+   ],
+   "activity": {
+    "state": "active",
+    "claim": "The Org-Mol paper (the source of the 461-monoester shortlist) was published in npj Computational Materials on 11 July 2025; no later release from this collaboration was found.",
+    "url": "https://www.nature.com/articles/s41524-025-01720-4",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "flags": {
+    "inactive": false,
+    "done_contradicted": false,
+    "step_restates_card": true
+   },
+   "claims": [
+    {
+     "claim": "The shortlist-to-synthesis step is handled today with machine-learning property models only — the kinetic viscosity model then the thermal conductivity model — with no molecular-dynamics verification in between.",
+     "url": "https://www.nature.com/articles/s41524-025-01720-4",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The working shortlist is 461 monoesters, of which only two are actually synthesized and measured; the rest are never independently verified.",
+     "url": "https://www.nature.com/articles/s41524-025-01720-4",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The team's stated reason for not running MD is cost at screening scale — a claim the card directly tests by parallelising Green-Kubo runs.",
+     "url": "https://www.nature.com/articles/s41524-025-01720-4",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "If MD reorders the shortlist, the team would stop selecting two candidates by manual synthetic feasibility from an unverified ML ranking: they would run Green-Kubo viscosity/thermal conductivity over the top 100–300 (or all 461) monoesters and synthesize MD-verified leaders, likely surfacing esters better than the two they measured, and the MD-verified points would become training data to correct the 22.5% MAPE viscosity model.",
+   "if_not_changes": "If MD merely confirms the ML ranking unchanged from 100 through 1000 candidates, the published ML-only screening stays as-is and MD is demoted to an optional spot-check, so their practice changes nothing beyond a one-off validation of the pipeline.",
+   "already_done": {
+    "status": "no",
+    "claim": "This team has not run the card's experiment: the 461 monoesters were ranked by ML models and only two were verified, experimentally by synthesis rather than by MD; no Green-Kubo viscosity/thermal conductivity verification of the shortlist was performed.",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 5,
+     "values": [
+      3,
+      5,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Outcome feeds ML-to-synthesis shortlist, but step framed via card terms; capped at three.",
+      "opencode-go/mimo-v2.6-flash: Card measures MD viscosity/thermal conductivity on Org-Mol's exact 461-monoester shortlist, the quantity their ML models use at the shortlist-to-synthesis step.",
+      "opencode-go/minimax-m3: Card measures Green-Kubo viscosity/thermal conductivity on Org-Mol's exact 461 monoester system, feeding the shortlist-to-synthesis step directly."
+     ]
+    },
+    "change": {
+     "median": 5,
+     "values": [
+      3,
+      5,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Reordering would change synthesis choice; confirmation leaves ML-only practice unchanged, so only one outcome.",
+      "opencode-go/mimo-v2.6-flash: Reordering changes which esters get synthesized and adds MD training data; confirming demotes MD to spot-check — either outcome alters a current choice.",
+      "opencode-go/minimax-m3: Both outcomes change which two candidates get synthesized and whether ML training data gets corrected from 22.5% MAPE."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Supported practice lacks Green-Kubo verification; Org-Mol has not tested MD-vs-ML shortlist reordering.",
+      "opencode-go/mimo-v2.6-flash: Both checkers supported that no Green-Kubo verification of the 461-monoester shortlist was performed; only two candidates verified by synthesis.",
+      "opencode-go/minimax-m3: Supported claims confirm no Green-Kubo MD was run on this shortlist; only two of 461 esters were ever verified."
+     ]
+    }
+   },
+   "sum": 15,
+   "caps": []
+  },
+  {
+   "n": 2,
+   "name": "LG AI Research — GATE (Geometrically Aligned Transfer Encoder)",
+   "url": "https://arxiv.org/abs/2510.23371",
+   "step": "The final validation stage (Fig. 2f) of their five-stage AI-enabled high-throughput screening workflow for single-phase immersion cooling fluids: after GATE screens billions of candidates down to a shortlist, the chosen few are validated before deployment. The card's MD verification of viscosity and thermal conductivity targets this validation step.",
+   "step_url": "https://arxiv.org/html/2510.23371v2",
+   "step_checks": [
+    "SUPPORTED",
+    "SUPPORTED"
+   ],
+   "activity": {
+    "state": "active",
+    "claim": "LG AI Research's GATE immersion-coolant paper was posted to arXiv on 27 October 2025 and last revised 31 October 2025 (v2), the most recent release found.",
+    "url": "https://arxiv.org/abs/2510.23371",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "flags": {
+    "inactive": false,
+    "done_contradicted": false,
+    "step_restates_card": true
+   },
+   "claims": [
+    {
+     "claim": "Validation today is experimental (TGA, DSC) plus literature values; transport properties like viscosity and thermal conductivity that their instruments cannot measure are taken from the literature rather than computed by MD.",
+     "url": "https://arxiv.org/html/2510.23371v2",
+     "checks": [
+      "PARTIAL",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The screening operates at billion-molecule scale but narrows to only four experimentally verified candidates, so most shortlisted molecules never get a physics-based check of their viscosity/thermal conductivity.",
+     "url": "https://arxiv.org/html/2510.23371v2",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "Four finalists are the extent of their verification stage; the pipeline is run by LG AI Research with Kyonggi University.",
+     "url": "https://arxiv.org/html/2510.23371v2",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "If MD reorders a 100–1000 candidate shortlist, LG AI Research would gain a physics-based verification stage to insert between GATE's 92,861-molecule shortlist and its 4-candidate experimental validation — re-ranking viscosity/thermal conductivity by Green-Kubo before purchase/synthesis and catching candidates GATE mis-orders, rather than relying on literature values.",
+   "if_not_changes": "If MD only confirms GATE's ranking, the existing literature-plus-TGA/DSC validation remains sufficient and MD verification would not earn a permanent place in their pipeline, so their practice would be unchanged.",
+   "already_done": {
+    "status": "no",
+    "claim": "LG AI Research has not run MD verification of viscosity/thermal conductivity on their shortlist; their validation stage is experimental measurement and literature survey only.",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 4,
+     "values": [
+      3,
+      4,
+      4
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Card validates Org-Mol esters, not LG candidates; LG would bridge molecules, scale, and validation stage.",
+      "opencode-go/mimo-v2.6-flash: Card measures exactly the transport properties LG takes from literature at validation, but on Org-Mol esters, not LG's shortlist — a bridgeable stand-in system.",
+      "opencode-go/minimax-m3: Card measures the exact property pair (viscosity, thermal conductivity) GATE's validation stage needs, but on esters not GATE's broader organic space."
+     ]
+    },
+    "change": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Reorder adds physics-based verification stage; confirmation leaves literature/TGA-DSC validation unchanged, so only one outcome.",
+      "opencode-go/mimo-v2.6-flash: Only a reordering outcome would justify inserting an MD stage; if MD merely confirms, their literature-plus-TGA/DSC validation stays, so one outcome changes practice.",
+      "opencode-go/minimax-m3: If MD reorders, physics-based verification replaces literature-based validation; if not, MD is demoted to spot-check — practice changes either way."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      5
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Supported practice uses literature and experiments, not MD; it has not answered shortlist reordering.",
+      "opencode-go/mimo-v2.6-flash: Both checkers supported that LG's validation is experimental and literature-based, with no MD verification of viscosity or thermal conductivity performed.",
+      "opencode-go/minimax-m3: Supported claims confirm LG has not run MD viscosity/thermal conductivity verification; their validation is experimental and literature-only."
+     ]
+    }
+   },
+   "sum": 12,
+   "caps": []
+  },
+  {
+   "n": 3,
+   "name": "Imperial College London Tribology Group (Dini) / Ewen (Bath) — MD-vs-ML thermophysical benchmarking",
+   "url": "https://doi.org/10.1039/d6dd00260a",
+   "step": "Their head-to-head benchmark of machine-learning models against equilibrium molecular-dynamics (Green-Kubo) simulations for density, viscosity and thermal conductivity of organic liquids (lubricant- and cooling-fluid-sized molecules) — the exact property pair and force-field family the card deploys at shortlist scale.",
+   "step_url": "https://spiral.imperial.ac.uk/entities/publication/9423c271-1953-481c-8e8d-88eeb67e2535",
+   "step_checks": [
+    "SUPPORTED",
+    "SUPPORTED"
+   ],
+   "activity": {
+    "state": "active",
+    "claim": "The paper was published in Digital Discovery (RSC) with version of record dated 29 September 2026, a few weeks before this search.",
+    "url": "https://pubs.rsc.org/dd/article/doi/10.1039/D6DD00260A/1362876/Benchmarking-Machine-Learning-and-Molecular",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "flags": {
+    "inactive": false,
+    "done_contradicted": false,
+    "step_restates_card": true
+   },
+   "claims": [
+    {
+     "claim": "Their MD practice today is Green-Kubo equilibrium MD on only eight molecules — two each from four chemical families including esters — at 40 and 100 °C, i.e. n=8 rather than the card's 100–1000.",
+     "url": "https://spiral.imperial.ac.uk/server/api/core/bitstreams/fa07c113-8958-4f1e-a010-0ef2bfc39e17/content",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "They use the same OPLS-family force field the card specifies, run in LAMMPS.",
+     "url": "https://spiral.imperial.ac.uk/server/api/core/bitstreams/fa07c113-8958-4f1e-a010-0ef2bfc39e17/content",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "They already found chemistry-dependent force-field error for the property pair the card targets: viscosity is under-predicted for oxygen-containing (ester/ether) molecules, though the reference ranking is largely preserved.",
+     "url": "https://spiral.imperial.ac.uk/server/api/core/bitstreams/fa07c113-8958-4f1e-a010-0ef2bfc39e17/content",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "If MD measurably reorders a 100–1000 candidate shortlist, their current conclusion that ML alone is 'well suited to high-throughput screening' would need revision: they would have to recommend MD as a verification stage before synthesis for immersion coolants, contradicting their n=8 finding that MD adds little over ML for ranking.",
+   "if_not_changes": "If MD merely confirms the ML ranking, it corroborates their existing result that 'the reference ranking of the fluids is nonetheless largely preserved' by MD — so their practice stays as published: ML for screening, MD only as an extrapolation/force-field sanity check.",
+   "already_done": {
+    "status": "partly",
+    "claim": "This group has already run a smaller version of the card's experiment — Green-Kubo EMD viscosity and thermal conductivity of organic liquids (including esters) benchmarked against ML — but on eight molecules, not a 100–1000 candidate shortlist and not the Org-Mol 461 esters; their finding that LOPLS-AA under-predicts ester viscosity bears directly on the card's OPLS-AA check-first tolerance.",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 4,
+     "values": [
+      3,
+      4,
+      4
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Outcome directly feeds their MD-vs-ML benchmark, but step is card-framed, so capped at three.",
+      "opencode-go/mimo-v2.6-flash: Same Green-Kubo/OPLS-family property pair the card deploys, but on eight molecules vs 100–1000 shortlist scale and different specific esters — a scale bridge.",
+      "opencode-go/minimax-m3: Card uses identical property pair, Green-Kubo method, and OPLS-family force field on ester-containing molecules — direct extension of their benchmark."
+     ]
+    },
+    "change": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      4
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Reordering would revise their screening recommendation; confirmation merely corroborates their published ranking result.",
+      "opencode-go/mimo-v2.6-flash: Reordering would force revising their 'ML well suited to screening' conclusion; confirmation only corroborates their published ranking-preserved finding, changing nothing.",
+      "opencode-go/minimax-m3: If MD reorders, their 'ML well-suited' conclusion needs revision; if not, it corroborates — either way, published recommendation changes."
+     ]
+    },
+    "new": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      3
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Partly answered: they benchmarked Green-Kubo and ML, but only eight molecules, not shortlist scale.",
+      "opencode-go/mimo-v2.6-flash: Partly answered: they already ran Green-Kubo vs ML on eight molecules including esters, finding preserved ranking and ester viscosity under-prediction — smaller scale.",
+      "opencode-go/minimax-m3: Already partly answered: they ran Green-Kubo on n=8 organics including esters; card extends question to n=100–1000 and Org-Mol shortlist."
+     ]
+    }
+   },
+   "sum": 10,
+   "caps": []
+  }
+ ],
+ "best": {
+  "name": "Org-Mol — SINOPEC Research Institute of Petroleum Processing / DP Technology / AI for Science Institute",
+  "step": "The hand-off from the Org-Mol machine-learning shortlist to synthesis: after screening over 6 million esters and filtering 461 monoesters on predicted dielectric constant, viscosity and thermal conductivity, they pick candidates for synthesis manually. This is exactly the slot where the card inserts Green-Kubo MD verification of viscosity and thermal conductivity before synthesis.",
+  "sum": 15,
+  "fit": 5,
+  "change": 5,
+  "new": 5
+ },
+ "failed_calls": []
+}

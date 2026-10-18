@@ -1,0 +1,135 @@
+{
+ "card": "immersion-coolants",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0231-card/out",
+ "stage": "done",
+ "started": "2026-10-18T02:31:05.715Z",
+ "calls": [
+  {
+   "id": "0001 run:price-sheet",
+   "stage": "Frame",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 27198,
+   "cost_usd": 0.0032830100000000003,
+   "tokens": 11397,
+   "errors": []
+  },
+  {
+   "id": "0002 seed:idea:seed:producer",
+   "stage": "Produce",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 1163569,
+   "cost_usd": 0.27856862,
+   "tokens": 240161,
+   "errors": []
+  },
+  {
+   "id": "0003 seed:idea:seed:dramaturg",
+   "stage": "Check",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 262806,
+   "cost_usd": 0.077577764,
+   "tokens": 79377,
+   "errors": []
+  },
+  {
+   "id": "0004 seed:idea:seed:critic@qwen3.8-flash",
+   "stage": "Check",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 340567,
+   "cost_usd": 0.01156982,
+   "tokens": 21002,
+   "errors": []
+  },
+  {
+   "id": "0005 seed:idea:seed:critic@mimo-v2.6-flash",
+   "stage": "Check",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 74573,
+   "cost_usd": 0.00180838,
+   "tokens": 10695,
+   "errors": []
+  },
+  {
+   "id": "0006 seed:idea:seed:critic@minimax-m3",
+   "stage": "Check",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 27726,
+   "cost_usd": 0.00604098,
+   "tokens": 10799,
+   "errors": []
+  },
+  {
+   "id": "0007 seed:idea:seed:dramaturg-2",
+   "stage": "Check",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 180716,
+   "cost_usd": 0.02187416,
+   "tokens": 71432,
+   "errors": []
+  },
+  {
+   "id": "0008 seed:idea:seed:dramaturg-2-resample",
+   "stage": "Check",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 100632,
+   "cost_usd": 0.01369165,
+   "tokens": 46144,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.4144143839999999,
+ "tokens": 491007,
+ "by_model": {
+  "opencode-go/glm-5.3-flash": {
+   "calls": 3,
+   "cost_usd": 0.03884882,
+   "tokens": 128973
+  },
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 2,
+   "cost_usd": 0.356146384,
+   "tokens": 319538
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00604098,
+   "tokens": 10799
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.00180838,
+   "tokens": 10695
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.01156982,
+   "tokens": 21002
+  }
+ },
+ "done": true,
+ "updated": "2026-10-18T03:01:27.283Z",
+ "go": [
+  "opencode-go/glm-5.3-flash: $0.039 over 3 calls = 0.1% of its $60 monthly cap, 0.3% of a 5-hour window",
+  "opencode-go/deepseek-v4-pro: $0.356 over 2 calls = 2.4% of its $15 monthly cap, 11.9% of a 5-hour window",
+  "opencode-go/minimax-m3: $0.006 over 1 calls = 0.0% of its $60 monthly cap, 0.1% of a 5-hour window",
+  "opencode-go/mimo-v2.6-flash: $0.002 over 1 calls = 0.0% of its $60 monthly cap, 0.0% of a 5-hour window",
+  "opencode-go/qwen3.8-flash: $0.012 over 1 calls = 0.0% of its $30 monthly cap, 0.2% of a 5-hour window"
+ ]
+}

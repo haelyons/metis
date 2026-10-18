@@ -1,0 +1,121 @@
+{
+ "ts": "2026-10-18T03:07:29.435Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_14cfa7fbd001M315VCdCDnFfFv",
+  "x-opencode-session": "ses_eb30580d9ffeAsTd0K1w9DAoj6",
+  "x-opencode-session-id": "ses_eb30580d9ffeAsTd0K1w9DAoj6",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:33089",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "14327"
+ },
+ "body": {
+  "model": "glm-5.3-flash",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.\nYou are powered by the model named glm-5.3-flash. The exact model ID is opencode-go/glm-5.3-flash\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0303-frame/out\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Sun Oct 18 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"For each item below, fetch its source and check that the recorded quote appears on the page and supports the item. A card item is a field of the plan in the producer's words, with the sources it cites: check each factual claim in it against those sources, and any value it carries against the page; what the plan will build, measure or predict needs no source, but a factual claim with no source is UNSUPPORTED. For a cost input, check that the page states the number for the setting given; whether it applies to this plan is not yours to judge. When the page states a different number for a num or rate item, give it as page_value. Decide only from the pages you fetch and the text below; do not read files. Return one status per item, under its ref: SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE, with the page sentence you relied on.\nItems, one per line:\np1:step: Org-Mol — SINOPEC Research Institute of Petroleum Processing / DP Technology / AI for Science Institute has this step in its pipeline: The hand-off from the Org-Mol machine-learning shortlist to synthesis: after screening over 6 million esters and filtering 461 monoesters on predicted dielectric constant, viscosity and thermal conductivity, they pick candidates for synthesis manually. This is exactly the slot where the card inserts Green-Kubo MD verification of viscosity and thermal conductivity before synthesis. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured.\\\"\np1:activity: The Org-Mol paper (the source of the 461-monoester shortlist) was published in npj Computational Materials on 11 July 2025; no later release from this collaboration was found. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"Published: 11 July 2025\\\"\np1:c1: The shortlist-to-synthesis step is handled today with machine-learning property models only — the kinetic viscosity model then the thermal conductivity model — with no molecular-dynamics verification in between. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"Monoesters with dielectric constants lower than 3.20 are then fed to the kinetic viscosity model and then the thermal conductivity model.\\\"\np1:c2: The working shortlist is 461 monoesters, of which only two are actually synthesized and measured; the rest are never independently verified. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.\\\"\np1:c3: The team's stated reason for not running MD is cost at screening scale — a claim the card directly tests by parallelising Green-Kubo runs. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"It can be seen that predicting these physical properties via MD is time-consuming for a single system and becomes unaffordable in a high-throughput screening scenario with thousands of candidates\\\"\np1:done: This team has not run the card's experiment: the 461 monoesters were ranked by ML models and only two were verified, experimentally by synthesis rather than by MD; no Green-Kubo viscosity/thermal conductivity verification of the shortlist was performed. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured.\\\"\np2:step: LG AI Research — GATE (Geometrically Aligned Transfer Encoder) has this step in its pipeline: The final validation stage (Fig. 2f) of their five-stage AI-enabled high-throughput screening workflow for single-phase immersion cooling fluids: after GATE screens billions of candidates down to a shortlist, the chosen few are validated before deployment. The card's MD verification of viscosity and thermal conductivity targets this validation step. | source: https://arxiv.org/html/2510.23371v2 | recorded quote: \\\"Finally, experimental and literature validation confirm the physicochemical properties of selected candidates (Fig. 2 f), ensuring their suitability as single-phase immersion cooling fluids.\\\"\np2:activity: LG AI Research's GATE immersion-coolant paper was posted to arXiv on 27 October 2025 and last revised 31 October 2025 (v2), the most recent release found. | source: https://arxiv.org/abs/2510.23371 | recorded quote: \\\"[Submitted on 27 Oct 2025 (v1), last revised 31 Oct 2025 (this version, v2)]\\\"\np2:c1: Validation today is experimental (TGA, DSC) plus literature values; transport properties like viscosity and thermal conductivity that their instruments cannot measure are taken from the literature rather than computed by MD. | source: https://arxiv.org/html/2510.23371v2 | recorded quote: \\\"Decomposition temperature was measured using thermogravimetric analysis (TGA, onset point) and specific heat using differential scanning calorimetry (DSC, 20℃). For other properties that could not be measured with our available instrumentation, we surveyed the literature and incorporated reported values into Fig. 3 d.\\\"\np2:c2: The screening operates at billion-molecule scale but narrows to only four experimentally verified candidates, so most shortlisted molecules never get a physics-based check of their viscosity/thermal conductivity. | source: https://arxiv.org/html/2510.23371v2 | recorded quote: \\\"Across the 41 million purchasable compounds and 2.54 billion in-silico reaction products examined, this screening yielded 356 candidates satisfying Criterion 1, and a total of 92,861 compounds meeting at least one of Criteria 1–6.\\\"\np2:c3: Four finalists are the extent of their verification stage; the pipeline is run by LG AI Research with Kyonggi University. | source: https://arxiv.org/html/2510.23371v2 | recorded quote: \\\"From these, we selected four final candidates for experimental verification.\\\"\np2:done: LG AI Research has not run MD verification of viscosity/thermal conductivity on their shortlist; their validation stage is experimental measurement and literature survey only. | source: https://arxiv.org/html/2510.23371v2 | recorded quote: \\\"Decomposition temperature was measured using thermogravimetric analysis (TGA, onset point) and specific heat using differential scanning calorimetry (DSC, 20℃). For other properties that could not be measured with our available instrumentation, we surveyed the literature and incorporated reported values into Fig. 3 d.\\\"\np3:step: Imperial College London Tribology Group (Dini) / Ewen (Bath) — MD-vs-ML thermophysical benchmarking has this step in its pipeline: Their head-to-head benchmark of machine-learning models against equilibrium molecular-dynamics (Green-Kubo) simulations for density, viscosity and thermal conductivity of organic liquids (lubricant- and cooling-fluid-sized molecules) — the exact property pair and force-field family the card deploys at shortlist scale. | source: https://spiral.imperial.ac.uk/entities/publication/9423c271-1953-481c-8e8d-88eeb67e2535 | recorded quote: \\\"In this study, we benchmark ML models for the prediction of the density, viscosity, and thermal conductivity of lubricant-relevant organic liquids, and use MD simulations on a representative subset as an independent, physics-based assessment of the same properties.\\\"\np3:activity: The paper was published in Digital Discovery (RSC) with version of record dated 29 September 2026, a few weeks before this search. | source: https://pubs.rsc.org/dd/article/doi/10.1039/D6DD00260A/1362876/Benchmarking-Machine-Learning-and-Molecular | recorded quote: \\\"Received: 05 May 2026 Accepted: 18 September 2026 First published: 29 September 2026\\\"\np3:c1: Their MD practice today is Green-Kubo equilibrium MD on only eight molecules — two each from four chemical families including esters — at 40 and 100 °C, i.e. n=8 rather than the card's 100–1000. | source: https://spiral.imperial.ac.uk/server/api/core/bitstreams/fa07c113-8958-4f1e-a010-0ef2bfc39e17/content | recorded quote: \\\"Finally, we apply Green–Kubo MD simulations to eight molecules, two from each of the four principal chemical families of the dataset, at 40 °C and 100 °C.\\\"\np3:c2: They use the same OPLS-family force field the card specifies, run in LAMMPS. | source: https://spiral.imperial.ac.uk/server/api/core/bitstreams/fa07c113-8958-4f1e-a010-0ef2bfc39e17/content | recorded quote: \\\"All simulations were performed using the LOPLS-AA force field.\\\"\np3:c3: They already found chemistry-dependent force-field error for the property pair the card targets: viscosity is under-predicted for oxygen-containing (ester/ether) molecules, though the reference ranking is largely preserved. | source: https://spiral.imperial.ac.uk/server/api/core/bitstreams/fa07c113-8958-4f1e-a010-0ef2bfc39e17/content | recorded quote: \\\"Viscosity errors are small for the pure hydrocarbons with LOPLS, but this property is consistently under-predicted for the oxygen-containing molecules; the reference ranking of the fluids is nonetheless largely preserved.\\\"\np3:done: This group has already run a smaller version of the card's experiment — Green-Kubo EMD viscosity and thermal conductivity of organic liquids (including esters) benchmarked against ML — but on eight molecules, not a 100–1000 candidate shortlist and not the Org-Mol 461 esters; their finding that LOPLS-AA under-predicts ester viscosity bears directly on the card's OPLS-AA check-first tolerance. | source: https://spiral.imperial.ac.uk/server/api/core/bitstreams/fa07c113-8958-4f1e-a010-0ef2bfc39e17/content | recorded quote: \\\"Finally, we apply Green–Kubo MD simulations to eight molecules, two from each of the four principal chemical families of the dataset, at 40 °C and 100 °C.\\\"\nReturn only JSON: {\\\"items\\\": [{\\\"ref\\\": \\\"\\\", \\\"status\\\": \\\"SUPPORTED | PARTIAL | UNSUPPORTED | CONTRADICTED | UNREACHABLE\\\", \\\"page_quote\\\": \\\"\\\", \\\"note\\\": \\\"\\\"}]}\""
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

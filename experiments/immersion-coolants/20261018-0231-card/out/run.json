@@ -1,0 +1,156 @@
+{
+ "name": "immersion-coolants",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0231-card/out",
+ "script": "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0231-card/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "2dde169831b4a6c725cbbe5caf100201cec04bde7075c4404b0cef1859891c89",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0231-card/out/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "IC-V3",
+    "title": "MD verification inserted into Org-Mol's ester shortlist before synthesis",
+    "text": "Data-centre immersion cooling needs dielectric liquids with low viscosity, high thermal conductivity and heat capacity, and PFAS rules are pushing the field towards PFAS-free esters. Restrict the generative search to synthetically accessible PFAS-free esters of the kind already ML-screened at scale, filter to a ranked shortlist, and MD-verify the top 100, 300 then 1000 candidates' viscosity and thermal conductivity before any synthesis decision. Score against measured data for known esters and commercial single-phase fluids held out of training, never against the predictors. More compute buys more MD-verified candidates and longer simulations per candidate, testing whether the best cooling figure of merit keeps climbing beyond the 461-candidate shortlist stage.",
+    "root_question": "generative pipeline for discovery of single phase immersion coolants",
+    "kind": "physical",
+    "root_link": "SAME: ester discovery kept on transport properties and on the down-selection step where prior work stops.",
+    "compute_open": "MD-verified candidates (100–1000, anchored to a ~461-candidate shortlist) and simulation length per candidate. Unknown: whether MD meaningfully reorders an ML shortlist or merely confirms it.",
+    "sequential": "not given",
+    "source_urls": [],
+    "variant_of": "seed.json",
+    "changes": "Changes the system studied: esters only, inside a synthetically accessible space, instead of esters plus hydrocarbons, with the candidate count anchored to the existing 461-candidate shortlist. Answers the gap that the Org-Mol/SINOPEC team ML-filtered millions of esters but manually picked only two to synthesise and never MD-verified the shortlist; also partially probes whether the best figure of merit still improves from ~100 to ~1000 verified candidates."
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/deepseek-v4-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "764de44ba78bef9141164b97d6537a7971661ded",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-18T02:31:05.715Z",
+ "finished": "2026-10-18T03:01:27.284Z",
+ "totals": {
+  "cost_usd": 0.4144143839999999,
+  "tokens": 491007,
+  "calls": 8,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 3,
+    "cost_usd": 0.03884882,
+    "tokens": 128973
+   },
+   "opencode-go/deepseek-v4-pro": {
+    "calls": 2,
+    "cost_usd": 0.356146384,
+    "tokens": 319538
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 1,
+    "cost_usd": 0.00604098,
+    "tokens": 10799
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 1,
+    "cost_usd": 0.00180838,
+    "tokens": 10695
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 1,
+    "cost_usd": 0.01156982,
+    "tokens": 21002
+   }
+  }
+ }
+}

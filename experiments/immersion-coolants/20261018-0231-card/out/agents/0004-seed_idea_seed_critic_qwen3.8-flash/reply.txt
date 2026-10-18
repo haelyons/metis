@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Choice to synthesize or scale depends on unchecked dielectric, flammability, compatibility, stability and real testing."
+    },
+    {
+      "criterion": "lever",
+      "value": 1,
+      "ref": "plan:compute_axis.levels",
+      "reason": "1000-candidate level exceeds fixed 461 pool, so not compute-only; noise threshold not shown to exceed predicted difference."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "plan:scored_against",
+      "reason": "Main metric compares MD to ML model ranking, not independent exact truth; anchor reproduces measured Ester 1."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Org-Mol ML-screened 461 candidates and synthesized two; no Green-Kubo MD reorder test over this range; plan states gap."
+    },
+    {
+      "criterion": "reshape",
+      "value": 5,
+      "ref": "plan:restructuring.method",
+      "reason": "Long trajectory dependency replaced by concurrent replicas; block-average condition checked in anchor before GPU spend."
+    },
+    {
+      "criterion": "baseline",
+      "value": 3,
+      "ref": "plan:anchor",
+      "reason": "Anchor times sequential and replica baselines but lacks stated tolerance comparing parallel accuracy to sequential result."
+    }
+  ],
+  "decides_by": "verify_300",
+  "decides_by_reason": "Decision rule uses ML-vs-MD Spearman and 100-to-300 figure climb; verify_300 produces both."
+}

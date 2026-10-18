@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0303-frame/out",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-18T03:03:19.823Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 243574,
+   "cost_usd": 0.071622716,
+   "tokens": 71755,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 111469,
+   "cost_usd": 0.022090877999999998,
+   "tokens": 91892,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 275385,
+   "cost_usd": 0.056965039999999995,
+   "tokens": 232848,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 170664,
+   "cost_usd": 0.00461128,
+   "tokens": 8560,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 45301,
+   "cost_usd": 0.00071638,
+   "tokens": 4015,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 13806,
+   "cost_usd": 0.00306138,
+   "tokens": 4629,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.15906767399999996,
+ "tokens": 413699,
+ "by_model": {
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.071622716,
+   "tokens": 71755
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.022090877999999998,
+   "tokens": 91892
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.056965039999999995,
+   "tokens": 232848
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00306138,
+   "tokens": 4629
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.00071638,
+   "tokens": 4015
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.00461128,
+   "tokens": 8560
+  }
+ },
+ "done": true,
+ "updated": "2026-10-18T03:14:55.021Z",
+ "best": {
+  "name": "Org-Mol — SINOPEC Research Institute of Petroleum Processing / DP Technology / AI for Science Institute",
+  "step": "The hand-off from the Org-Mol machine-learning shortlist to synthesis: after screening over 6 million esters and filtering 461 monoesters on predicted dielectric constant, viscosity and thermal conductivity, they pick candidates for synthesis manually. This is exactly the slot where the card inserts Green-Kubo MD verification of viscosity and thermal conductivity before synthesis.",
+  "sum": 15,
+  "fit": 5,
+  "change": 5,
+  "new": 5
+ }
+}

@@ -1,0 +1,105 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "none — the item is the plan's research question, not a factual claim; no source cited and none required.",
+      "note": "No external factual claim to verify; nothing on the fetched pages bears on or contradicts the question."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "MAPE(%) our work 9.233 22.467 12.528 3.978 2.911 (Table 2 columns: ε, ν at 40°C, ν at 100°C, Cp, κ)",
+      "note": "The embedded factual figure checks out on the fetched s1 paper: Org-Mol's MAPE for kinematic viscosity at 40°C is 22.467%, i.e. ~22.5% as stated (the item itself lists no source; s1 carries the number). 'Exceeds MD's' and 'MD will reorder the shortlist' are the plan's hypothesis/prediction and need no source."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "none — plan content: design of the sequential baseline (one long trajectory per candidate; ranking read out at 100, 300, then 1000 candidates).",
+      "note": "No external factual claim; nothing on the fetched pages contradicts it."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "none — plan content: parallel short replicas on separate GPUs with block-averaged Green-Kubo integrals.",
+      "note": "Describes what the plan will run; no source required and none contradicted."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "none — stated success-branch prediction of the plan.",
+      "note": "Prediction about the plan's own experiment (replica ranking vs sequential baseline vs ML at 100–1000 candidates); needs no source."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "none — stated failure-branch prediction of the plan.",
+      "note": "Prediction about the plan's own experiment; needs no source."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.",
+      "note": "The only external factual figure — Org-Mol's 461-monoester shortlist — matches s1 verbatim on the fetched page. The rest (renting an 8-GPU A100 node, OPLS-AA Green-Kubo runs on the top 100 then 300, ML-vs-MD rank correlation, 45 ns single-trajectory vs 5 ns replica timing) is what the plan will do and needs no source."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out. ... we select two candidates for synthesis, and their physical properties are experimentally measured. ... We employed a 3D transformer-based molecular representation learning algorithm to create the Org-Mol pre-trained model",
+      "note": "Quote appears verbatim. Transformer-based Org-Mol, the 461-monoester shortlist, and exactly two synthesized/validated candidates all confirmed; the paper reports no MD verification of viscosity or thermal conductivity (it notes MD 'becomes unaffordable in a high-throughput screening scenario with thousands of candidates'), consistent with value 0 MD-verified candidates."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "predicting these physical properties via MD is time-consuming for a single system and becomes unaffordable in a high-throughput screening scenario with thousands of candidates ... 461 monoesters are finally filtered out ... two candidates for synthesis",
+      "note": "The universal negative ('no published work') cannot be proven from fetched pages, but the fetched closest prior (s1) performed no MD verification of any candidate, so the operative gap — whether MD reorders the ML ranking is untested — stands; nothing fetched contradicts it."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "Table 4 (columns ε, ν at 40°C (cSt), ν at 100°C (cSt), κ (W/m·K), Exp./Pred.): Ester 1 — 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144 (page renders 'Ester 12.803.136.417.181.982.230.1410.144')",
+      "note": "Measured (Exp.) kinematic viscosity at 40°C = 6.41 cSt and thermal conductivity = 0.141 W/m·K for Ester 1; the item's value 6.41 matches the page. The Green-Kubo/OPLS-AA reproduction is the plan's verification target and needs no source."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "none — plan content: scope and omissions of the planned study (single-phase ranking, one force field, 15 ns sampling; no synthesis, dielectric, flammability, compatibility, or stability checks).",
+      "note": "No external factual claim; describes what the plan will and will not cover."
+    },
+    {
+      "ref": "src:s1",
+      "status": "SUPPORTED",
+      "page_quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.",
+      "note": "Quote found verbatim in the 'Experimental validation for the discovery of immersion cooling candidates' section; supports the 461-candidate shortlist the MD step is inserted into."
+    },
+    {
+      "ref": "src:s3",
+      "status": "SUPPORTED",
+      "page_quote": "Table 4: Ester 1 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144 (page renders 'Ester 12.803.136.417.181.982.230.1410.144')",
+      "note": "Row for Ester 1 under the Exp./Pred. columns for ε, ν at 40°C, ν at 100°C, κ: measured ν(40°C) = 6.41 cSt and κ = 0.141 W/m·K, matching the claimed anchor values."
+    },
+    {
+      "ref": "num:a100_ns_day",
+      "status": "SUPPORTED",
+      "page_quote": "[ns/day] System 1 System 2 System 3 System 4 System 5 System 6 — A100 267.5 691.7 265.8 129.1 38.8 23.2 (System 1 = 'R-143a in hexane (20,248 atoms) with very high output rate')",
+      "note": "Page states 267.5 ns/day for the A100 on the 20,248-atom liquid (System 1) in the NHR@FAU GROMACS 2024.1 benchmark, and notes the high output rate costs a factor of 2.6 ('loses performance by a factor of 2.6'), matching the item's differs_in note. PROXY basis acknowledged; the page states the number for the setting given.",
+      "page_value": 267.5
+    },
+    {
+      "ref": "num:a100_usd_gpu_h",
+      "status": "SUPPORTED",
+      "page_quote": "8x plan: NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $1.99 (page renders 'NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99')",
+      "note": "Lambda on-demand Instances pricing lists the 8x A100 SXM 40 GB node at $1.99 per GPU-hour, matching the recorded quote and value.",
+      "page_value": 1.99
+    },
+    {
+      "ref": "num:node_gpus",
+      "status": "SUPPORTED",
+      "page_quote": "Instance sizes '8x 4x 2x 1x'; the 8x table row: NVIDIA A100 SXM 40 GB | 124 vCPUs | 1800 GiB | 5.8 TiB SSD | $1.99",
+      "note": "The priced configuration with 124 vCPUs / 1800 GiB / 5.8 TiB SSD at $1.99 is under the 8x (8-GPU) instance tab, matching the quote's '8x — NVIDIA A100 SXM ... $1.99'.",
+      "page_value": 8
+    }
+  ]
+}
+```

@@ -11,3 +11,7 @@ as fluorinated coolants are phased out. `seed.json` is the memo's option record;
 |---|---|---|
 | `20261018-0037-loop` | loop | card done ($0.37); frame check crashed on a frame.js bug (fixed in 5360255) |
 | `20261018-0100-loop` | loop, reusing that card | card REJECT (2 sources unreachable, 3 claims uncited), critic 18/25, plan $874; frame: Ewen group 11, Sinton Lab 11, Org-Mol 11 of 15; variant V1 (force-field error floor against measured data) won the screen but its card halted on a broken cost record ($7,654 computed against $967 stated) |
+| `20261018-0230-card` | card for variant V1 (`seeds/V1.json`: force-field error floor against measured data) | no card: DeepSeek V4 Pro's provider blocked the producer's reply twice ("content filter"); halted |
+| `20261018-0231-card` | card for variant V3 (`seeds/V3.json`: MD check of Org-Mol's ester shortlist before synthesis) | REJECT on one uncited premise (an ML viscosity error of 22.5%, not on the cited page); otherwise lever 5, verifiable 5, open 5, reshape 5, stakes 3; anchor is Org-Mol's measured Ester 1 (6.41 cSt, 0.141 W/m K); plan $984 |
+| `20261018-0303-frame` | frame check of the V3 card | Org-Mol (SINOPEC, DP Technology) 15/15, LG AI Research GATE 12, Imperial/Bath MD benchmarking 11 |
+

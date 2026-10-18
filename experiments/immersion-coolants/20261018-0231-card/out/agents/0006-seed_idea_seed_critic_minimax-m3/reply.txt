@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "plan:scope_gap",
+      "reason": "Outcomes rank candidates for synthesis, but scope_gap excludes synthesis/dielectric/stability; the downstream choice depends on a step this test does not measure."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:compute_axis",
+      "reason": "Compute spans 10x (100→300→1000), varied only by GPU-hours, MD-vs-ML Spearman gap exceeds replica noise rule, all inputs in held_fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "card:anchor",
+      "reason": "Anchor reproduces published Ester 1 viscosity 6.41 cSt within ±25%; MD scored against measured Ester 1/2 values and Novec 649, never against ML."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Org-Mol prior screened 461 esters without MD verification; plan states the 100-1000 candidate MD verification gap explicitly."
+    },
+    {
+      "criterion": "reshape",
+      "value": 5,
+      "ref": "plan:restructuring.sequential_part",
+      "reason": "Names the long-trajectory dependency, replaces it with parallel block-averaged replicas, condition set, measured in anchor phase; Org-Mol did not do this."
+    },
+    {
+      "criterion": "baseline",
+      "value": 3,
+      "ref": "plan:restructuring.baseline_sequential",
+      "reason": "Sequential tuned with GROMACS GPU flags and copies timed on same GPUs in anchor, but no explicit parallel-vs-sequential viscosity agreement tolerance check."
+    }
+  ],
+  "decides_by": "verify_300",
+  "decides_by_reason": "Decision rule needs Spearman at 300 candidates and ≥5% best-figure climb from 100→300; both are produced only after verify_300 completes."
+}
+```
