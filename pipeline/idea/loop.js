@@ -43,7 +43,7 @@ async function call(name, model, prompt, check, agent = 'qt-bare', cwd = path.jo
     res = await oc.run({ model, agent, prompt: p, cwd, session, timeoutMs: 10 * 60000, rawPath: `${base}.events.jsonl`, httpLogDir: `${base}.http`, title: name })
     session = res.sessionID; spend += res.cost
     fs.appendFileSync(path.join(LOOP, 'ledger.jsonl'), JSON.stringify({ ts: new Date().toISOString(), name, model, attempt, tokens: res.tokens, cost_usd: res.cost, ms: res.ms, errors: res.errors }) + '\n')
-    errors = res.errors.length ? res.errors : res.json == null ? ['no JSON found in the reply'] : check(res.json)
+    errors = res.errors.length ? res.errors : res.json == null ? [res.jsonError || 'no JSON found in the reply'] : check(res.json)
     fs.appendFileSync(path.join(LOOP, 'ledger.jsonl'), JSON.stringify({ name, attempt, check_errors: errors.slice(0, 10) }) + '\n')
     if (!errors.length) break
   }

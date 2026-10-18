@@ -128,7 +128,7 @@ async function call(stage, model, agent, prompt, check, timeoutMin, cwd) {
     rec.ms += res.ms; rec.cost_usd += res.cost; rec.tokens += tok; status.cost_usd += res.cost; status.tokens += tok
     fs.appendFileSync(path.join(RUN, 'ledger.jsonl'), JSON.stringify({ ts: new Date().toISOString(), id, stage, model, agent, attempt, session: res.sessionID, ms: res.ms, tokens: res.tokens, cost_usd: res.cost, tools: res.tools, errors: res.errors }) + '\n')
     session = res.sessionID
-    errors = res.errors.length ? res.errors : res.json == null ? ['no JSON found in the reply'] : check(res.json)
+    errors = res.errors.length ? res.errors : res.json == null ? [res.jsonError || 'no JSON found in the reply'] : check(res.json)
     if (!errors.length) break
   }
   rec.state = errors.length ? 'failed' : 'ok'

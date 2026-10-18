@@ -63,9 +63,21 @@ function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, 
       raw && raw.end()
       if (code && !errors.length) errors.push(`exit ${code}: ${err.trim().split('\n').slice(-3).join(' | ').slice(0, 400)}`)
       const text = steps.length ? steps[steps.length - 1] : ''
-      resolve({ text, json: extractJSON(text), sessionID, tokens, cost, tools, ms: Date.now() - t0, errors })
+      // a reply that is meant to be one JSON value but does not parse reports the syntax error, never an inner fragment
+      const whole = text.trim(), meant = /^[[{]/.test(whole) && /[\]}]$/.test(whole)
+      let json = null, jsonError = null
+      if (meant) { try { json = JSON.parse(whole) } catch (e) { jsonError = parseError(e, whole) } }
+      else json = extractJSON(text)
+      resolve({ text, json, jsonError, sessionID, tokens, cost, tools, ms: Date.now() - t0, errors })
     })
   })
+}
+
+// "the JSON does not parse: <message>; near: <the text around the error>", so a repair turn can fix the exact spot
+function parseError(e, text) {
+  const at = Number((String(e.message).match(/position (\d+)/) || [])[1])
+  const near = Number.isFinite(at) ? ` near: ${JSON.stringify(text.slice(Math.max(0, at - 80), at + 40))}` : ''
+  return `the JSON does not parse: ${e.message};${near}`
 }
 
 // The last fenced ```json block, else the last balanced {...} or [...] that parses.

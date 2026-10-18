@@ -121,7 +121,7 @@ async function agent(prompt, opts = {}) {
       const bm = status.by_model[model] = status.by_model[model] || { calls: 0, cost_usd: 0, tokens: 0 }
       bm.calls += attempt === 1 ? 1 : 0; bm.cost_usd += res.cost; bm.tokens += tok
       if (res.errors.length) errors = res.errors
-      else if (opts.schema) errors = res.json == null ? ['no JSON value found in the reply'] : validate(opts.schema, res.json)
+      else if (opts.schema) errors = res.json == null ? [res.jsonError || 'no JSON value found in the reply'] : validate(opts.schema, res.json)
       else errors = []
       if (!errors.length) { value = opts.schema ? res.json : res.text; break }
     }
