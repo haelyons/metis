@@ -1,0 +1,202 @@
+{
+  "info": {
+    "id": "ses_eb176e7b9ffeTF0q4v9O6AwnT7",
+    "slug": "misty-knight",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls",
+    "path": "experiments/reframe-pilot/20261018-1021-reframe/calls",
+    "title": "vla-independent-judge",
+    "agent": "qt-bare",
+    "model": {
+      "id": "glm-5.3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.0209328,
+    "tokens": {
+      "input": 2671,
+      "output": 303,
+      "reasoning": 3604,
+      "cache": {
+        "read": 10,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792318969926,
+      "updated": 1792319015963
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792318970110
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "glm-5.3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14e8918fe001fGma1ulbMlcBYR",
+        "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Below are questions proposed for a research problem, each with the reframing behind it. Classify each one.\nkind: \\\"reframe\\\" if it changes what is computed, measured or ordered so that more compute buys something it did not before; \\\"copies\\\" if it only runs the same computation more times, on more items, or side by side; \\\"other\\\" otherwise.\nmeets_criterion: \\\"yes\\\" or \\\"no\\\" for this criterion: The question removes the closed-loop dependency: it scores steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, and confirms only the top candidates with closed-loop episodes.\nGive for each a quote from the proposal and a reason of at most 25 words. Decide only from the text below; do not use tools.\nProblem:\nInference-time steering of VLA internals (SAEs, FFN vectors, conceptors, linear observers)\nSteering a VLA's internal features can bring out behaviour the model already has, without retraining. On real DROID hardware, SAE steering of pi0.5 raised target-object grasps by +9 to +21 out of 25 trials, and ablating the top-4 general features cut success from 39/40 to 0/40. COAST conceptors raised pi0.5 on LIBERO-10 from 0.43 to 0.80, with about +40% on three real tasks. Grant et al. found motor programs bound to absolute coordinates (50/50 grasps at the recorded spot on a UR10e). All tests are rigid tabletop tasks; none is cloth or a dish rack. Goodfire markets steering for robotics but publishes no numbers.\nWhat more compute would buy: The quantity is closed-loop rollouts and SAEs swept; the largest is 420,000+ rollouts and 520+ SAEs across six VLAs (https://arxiv.org/abs/2603.19233), and above that it is unknown whether any feature controls contact-rich or deformable behaviour, because every sweep so far ran rigid pick-and-place or drawer tasks.\nWhat runs step after step: Each feature waits on an SAE fit (about 6,700 Adam steps, derived from https://arxiv.org/html/2603.19183; 'a few GPU-hours per SAE on one A100') and then on closed-loop rollouts of up to 300 steps, each waiting on a ~150 ms VLA forward pass and the next observation; the answer needed 150 rollouts × 135 features (20,250 episodes), and one unbatched rollout leaves the GPU idle while the simulator steps. Steps within a rollout must run in order, but rollouts are independent: batching hundreds of steered environments in a GPU-parallel simulator, with a separate hook per environment and simulation pipelined against inference, would run them together; this pays only if steering effects in simulation match the real robot (false for cloth). The nearest attempt is RLinf-VLA, 1.61-1.88x with 256 ManiSkill environments, for RL rather than interpretability (https://arxiv.org/html/2510.06710v2).\nProposals: [{\\\"index\\\":1,\\\"bottleneck\\\":\\\"The answer needed 150 rollouts x 135 features = 20,250 closed-loop episodes, each up to 300 sequential steps at ~150 ms per VLA forward pass, with the GPU idle while the simulator steps; every feature pays this full episode cost regardless of effect size.\\\",\\\"assumption\\\":\\\"A feature's value can only be measured by closed-loop task success, so every candidate feature must be paid for in full episodes before anything is known about it.\\\",\\\"reframe\\\":\\\"Change the measured quantity from closed-loop success to open-loop steered action divergence: record a fixed batch of states from the target domain (including cloth-folding and dish-rack demonstrations), and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass. This turns per-feature evaluation from a sequential 300-step episode into an embarrassingly parallel (state, steering) forward-pass job; closed-loop rollouts are then spent only on the top-k features by divergence.\\\",\\\"question\\\":\\\"Does the ranking of features by open-loop steered action-chunk divergence on recorded states match the ranking by closed-loop success-rate delta, measured as Spearman rho over ~30 features on 3 tasks?\\\",\\\"measure\\\":\\\"Reuse one existing pi0.5 SAE; compute L2 divergence of predicted action chunks for 30 steering directions over ~10k replay states (~2-5 GPU-hours on one A100), and get ground truth from 30 features x 50 rollouts = 1,500 episodes batched in a GPU simulator (~15-25 GPU-hours). Total roughly 1-2 GPU-days.\\\",\\\"compute_after\\\":\\\"If rho is high, screening 520+ SAEs and thousands of features becomes a pure forward-pass workload that splits perfectly across GPUs, and rollout budget concentrates on a handful of features; more compute buys feature coverage instead of repeated episodes.\\\",\\\"exact\\\":\\\"Spearman rho (with bootstrap CI) between the open-loop action-chunk divergence ranking and the closed-loop success-delta ranking across 30 features x 3 tasks.\\\",\\\"expected\\\":\\\"rho around 0.5-0.8: ablating just the top-4 general features already collapses success from 39/40 to 0/40, so large steering effects should be directly visible in action space.\\\",\\\"fails_if\\\":\\\"Steering effects are dominated by closed-loop contact feedback (compounding errors that only appear at step 200+), so open-loop divergence on replay states is uncorrelated with success; this failure is most likely exactly for cloth and dish-rack contact, the cases that matter.\\\",\\\"closest_prior\\\":\\\"Standard SAE feature-effect dashboards that measure activation-to-output effects without rollouts (Goodfire/Anthropic-style), and Grant et al.'s replay-based probe that found motor programs bound to absolute UR10e coordinates.\\\"},{\\\"index\\\":2,\\\"bottleneck\\\":\\\"A fixed 150 rollouts per feature spends most of the 20,250 episodes confirming null effects, and binary success at step 300 is the highest-variance measurable quantity, which forces the large n in the first place.\\\",\\\"assumption\\\":\\\"Every feature must receive an equal, pre-committed rollout budget, and the objective is to estimate each feature's success rate rather than to find the few features that matter.\\\",\\\"reframe\\\":\\\"Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero, and replace the binary yes/no outcome with a per-step progress score (distance-to-goal or grasp quality), which has lower variance per rollout and shrinks the n needed for each comparison.\\\",\\\"question\\\":\\\"How many episodes does successive-rejects allocation need to recover the same top-5 features as the fixed 150x135 sweep with probability at least 0.95, and what episode savings factor does the per-step progress score add?\\\",\\\"measure\\\":\\\"Answer offline: replay the existing 20,250-episode sweep outcomes (or run one 20k-episode sim sweep at RLinf-VLA-style throughput, tens of GPU-hours with 256 parallel envs) and simulate the bandit allocation and both outcome metrics on the recorded data; CPU-hours if logs exist, otherwise tens of GPU-hours once.\\\",\\\"compute_after\\\":\\\"Rollout compute concentrates on the informative tail instead of uniform confidence intervals on zeros; more compute then buys 10x deeper feature libraries rather than tighter estimates of features that do nothing.\\\",\\\"exact\\\":\\\"Episodes-to-top-5 at P(correct) >= 0.95 under successive rejects versus fixed allocation on recorded sweep data, plus the variance ratio of binary success versus per-step progress score.\\\",\\\"expected\\\":\\\"A 3-10x episode reduction, because the effect distribution appears bimodal (top-4 ablation alone kills behaviour; most features do nothing), which is exactly the regime where best-arm identification wins most.\\\",\\\"fails_if\\\":\\\"Steering effects are many, small, and uniform (+1-2% across dozens of features), so no arm can be eliminated early and adaptive allocation saves little over the fixed budget.\\\",\\\"closest_prior\\\":\\\"Successive-rejects and UCB best-arm identification (Audibert, Bubeck, Munos 2010); adaptive-subsampling LLM evaluation; RLinf-VLA's 256-environment 1.61-1.88x throughput as the batched-rollout substrate.\\\"},{\\\"index\\\":3,\\\"bottleneck\\\":\\\"Above 420,000 rollouts and 520 SAEs it is still unknown whether any feature controls contact-rich or deformable behaviour, because every sweep ran rigid pick-and-place or drawer tasks; and where sim steering does not match the real robot (stated false for cloth), each additional simulated rollout buys a tighter estimate of a quantity that does not transfer, i.e., more of the same.\\\",\\\"assumption\\\":\\\"The path to cloth and dish-rack steering is to scale simulation sweeps, meaning feature effects found in simulation are assumed to transfer to real hardware.\\\",\\\"reframe\\\":\\\"Change the measured quantity from success rate in sim to the transfer coefficient itself: for a small set of features, estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation. This is a small, decisive experiment that gates whether any large deformable sim sweep should be run at all.\\\",\\\"question\\\":\\\"What is the Spearman correlation between per-feature steering effects measured in a deformable simulator and on the real robot, over ~10 features on one cloth task (towel fold) and one dish-rack task?\\\",\\\"measure\\\":\\\"10 features x 30 episodes x 2 tasks x 2 domains: 600 batched sim episodes (a few GPU-hours with parallel environments) and 600 real episodes at ~3-5 minutes each with resets, about 40-50 robot-hours, i.e., roughly 1-2 weeks on one DROID-class arm and a few thousand dollars of operator time; real-robot time dominates.\\\",\\\"compute_after\\\":\\\"If rho is high, sim compute becomes worth scaling to thousands of features on deformable tasks; if rho is near 0, compute redirects to real-world rollouts with bandit allocation or real replay-state screening, and no large GPU sim sweep on cloth is run.\\\",\\\"exact\\\":\\\"Spearman rho (with bootstrap CI) between sim and real per-feature success deltas across 10 features x 2 tasks, reported per task.\\\",\\\"expected\\\":\\\"rho moderate-to-high for the rigid dish-rack components (consistent with the +9 to +21 real gains from sim-screened SAE steering on DROID hardware) and unknown, possibly near 0, for cloth.\\\",\\\"fails_if\\\":\\\"At 30 real episodes per feature the binomial standard error (~0.09) exceeds the true effect sizes, so the correlation estimate is noise-dominated; the measurement must then switch to a continuous per-step progress score or more episodes before any conclusion.\\\",\\\"closest_prior\\\":\\\"Sim2Real predictivity studies measuring sim-vs-real policy-rank correlation (Kadian et al., SIMPAR 2019); the problem statement's own note that steering effects in sim do not match real for cloth; RLinf-VLA as the batched-sim substrate.\\\"}]\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"items\\\"],\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"index\\\",\\\"kind\\\",\\\"meets_criterion\\\",\\\"quote\\\",\\\"reason\\\"],\\\"properties\\\":{\\\"index\\\":{\\\"type\\\":\\\"integer\\\"},\\\"kind\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"reframe\\\",\\\"copies\\\",\\\"other\\\"]},\\\"meets_criterion\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"yes\\\",\\\"no\\\",\\\"NA\\\"]},\\\"quote\\\":{\\\"type\\\":\\\"string\\\"},\\\"reason\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_14e891909001SE3DPylmZdVAdA",
+          "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7",
+          "messageID": "msg_14e8918fe001fGma1ulbMlcBYR"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14e8918fe001fGma1ulbMlcBYR",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.0209328,
+        "tokens": {
+          "total": 6588,
+          "input": 2671,
+          "output": 303,
+          "reasoning": 3604,
+          "cache": {
+            "write": 0,
+            "read": 10
+          }
+        },
+        "modelID": "glm-5.3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792318971057,
+          "completed": 1792319015936
+        },
+        "finish": "stop",
+        "id": "msg_14e891cb1001SCc5F5Vxr7yEjH",
+        "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7"
+      },
+      "parts": [
+        {
+          "snapshot": "117e09dfe8c2181230b740b35f334a07cfa8e19f",
+          "type": "step-start",
+          "id": "prt_14e89263c001paJ3dgRRj8tk92",
+          "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7",
+          "messageID": "msg_14e891cb1001SCc5F5Vxr7yEjH"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me analyze each proposal carefully.\n\nThe task: classify each proposal as:\n- \"reframe\": if it changes what is computed, measured or ordered so that more compute buys something it did not before\n- \"copies\": if it only runs the same computation more times, on more items, or side by side\n- \"other\": otherwise\n\nCriterion: The question removes the closed-loop dependency: it scores steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, and confirms only the top candidates with closed-loop episodes.\n\nCriterion components:\n1. Scores steering effects on fixed, recorded observations (open loop)\n2. Instead of full closed-loop episodes\n3. Confirms only the top candidates with closed-loop episodes\n\n**Proposal 1:**\n- Reframe: \"Change the measured quantity from closed-loop success to open-loop steered action divergence: record a fixed batch of states from the target domain... and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass. This turns per-feature evaluation from a sequential 300-step episode into an embarrassingly parallel (state, steering) forward-pass job; closed-loop rollouts are then spent only on the top-k features by divergence.\"\n- Question: \"Does the ranking of features by open-loop steered action-chunk divergence on recorded states match the ranking by closed-loop success-rate delta, measured as Spearman rho over ~30 features on 3 tasks?\"\n\nThis clearly changes what is measured (open-loop divergence on recorded states instead of closed-loop success). More compute buys feature coverage instead of repeated episodes. So \"kind\": \"reframe\".\n\nDoes it meet the criterion? Yes — it scores steering effects on fixed, recorded states (open loop) and spends closed-loop rollouts only on top-k features by divergence. So meets_criterion: \"yes\".\n\nQuote: \"record a fixed batch of states from the target domain ... and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass\" or \"closed-loop rollouts are then spent only on the top-k features by divergence.\"\n\nReason: \"Scores steering on recorded states in one batched forward pass; reserves closed-loop rollouts for top-k features only.\" — that's within 25 words.\n\nLet me count: \"Scores steering on recorded states in one batched forward pass; reserves closed-loop rollouts for top-k features only.\" = 16 words. Good.\n\n**Proposal 2:**\n- Reframe: \"Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero, and replace the binary yes/no outcome with a per-step progress score (distance-to-goal or grasp quality), which has lower variance per rollout...\"\n\nThis changes what is computed/ordered (allocation scheme and outcome measure) so that more compute buys deeper feature libraries rather than tighter estimates of nulls. Is this a reframe? It changes the objective from estimation to identification, changes the allocation, changes the measured outcome (per-step progress score instead of binary success). This changes what is computed and ordered so that more compute buys something new (10x deeper feature libraries). So \"kind\": \"reframe\".\n\nDoes it meet the criterion? The criterion requires scoring steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, confirming only top candidates with closed-loop episodes. Proposal 2 still uses closed-loop rollouts (episodes) but allocates them adaptively; it replaces binary success with a per-step progress score, but it still runs full episodes. It does not score on fixed, recorded observations (open loop). So meets_criterion: \"no\".\n\nQuote: \"replace the binary yes/no outcome with a per-step progress score (distance-to-goal or grasp quality), which has lower variance per rollout and shrinks the n needed for each comparison.\" Or the question: \"How many episodes does successive-rejects allocation need to recover the same top-5 features...\"\n\nReason: \"Still uses full closed-loop episodes, adaptively allocated; no open-loop scoring on recorded observations.\" — count words: \"Still uses full closed-loop episodes, adaptively allocated; no open-loop scoring on recorded observations.\" = 13 words. Good.\n\n**Proposal 3:**\n- Reframe: \"Change the measured quantity from success rate in sim to the transfer coefficient itself: for a small set of features, estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation.\"\n\nThis changes what is measured (sim-to-real transfer coefficient instead of success rate in sim) so that more compute can be redirected appropriately; it gates whether large sim sweeps should run. Is this a reframe? Yes — it changes what is computed/measured so that compute buys something new (a decisive gating measurement instead of more non-transferring sim rollouts). Actually, one could argue this is a small experiment that gates scaling rather than making more compute buy more. But the definition: \"reframe if it changes what is computed, measured or ordered so that more compute buys something it did not before\". The reframe here changes the measured quantity from success rate in sim to the transfer coefficient. Does more compute buy something it did not before? If rho is high, sim compute becomes worth scaling; if low, compute redirects. Hmm. The reframing changes what is measured — the transfer coefficient — which determines whether further compute is worth spending. I'd classify as \"reframe\" since it changes the measured quantity to gate compute allocation.\n\nAlternatively, one might argue it's \"other\" because it's a small decisive experiment that doesn't obviously make more compute buy something new — it's more of a decision experiment. But the schema says \"reframe\" if it changes what is computed, measured, or ordered so that more compute buys something it did not before. The change in measured quantity (transfer coefficient) means compute now buys knowledge about whether sim sweeps transfer — something it did not buy before (before, more compute bought tighter estimates of a quantity that doesn't transfer). So yes, more compute now buys a decisive gating measurement. I'll classify as \"reframe\".\n\nHmm, but let me think again. The three categories:\n- reframe: changes what is computed/measured/ordered so more compute buys something new\n- copies: runs same computation more times/on more items/side by side\n- other: otherwise\n\nProposal 3: The measure is 600 sim episodes + 600 real episodes estimating per-feature effects in both domains, then Spearman correlation. This is a new computation (cross-domain correlation) not previously done. It changes the measured quantity. More compute (if extended to more features/tasks) would buy better estimates of the transfer coefficient, which gates scaling. I think \"reframe\" is right.\n\nDoes it meet the criterion? The criterion: removes the closed-loop dependency by scoring steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, confirming only top candidates with closed-loop episodes. Proposal 3 uses full closed-loop episodes in both sim and real (success-rate deltas from episodes). It does not use open-loop scoring on recorded states. So meets_criterion: \"no\".\n\nQuote: \"estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation\" or \"Change the measured quantity from success rate in sim to the transfer coefficient itself\".\n\nReason: \"Measures sim-to-real correlation using full closed-loop episodes in both domains; no open-loop screening on recorded states.\" — count: \"Measures sim-to-real correlation using full closed-loop episodes in both domains; no open-loop screening on recorded states.\" = 16 words. Good.\n\nNow for kind classifications, let me double-check proposal 2. Is it a reframe or something else? The reframing changes the objective from rate estimation to best-arm identification and changes the outcome measure. The effect: \"more compute then buys 10x deeper feature libraries rather than tighter estimates of features that do nothing.\" That is more compute buying something it did not before (deeper feature libraries). So \"reframe\" seems right. Though the actual computation is still rollouts of episodes — but ordered/allocated differently (adaptive allocation changes what is computed/ordered). The definition includes \"ordered\" — best-arm identification changes the order/allocation of rollouts. So yes, reframe.\n\nCould proposal 2 be considered \"copies\"? No — it's not just running the same computation more times; it changes allocation and the outcome measure. Though the measure says \"replay the existing 20,250-episode sweep outcomes... and simulate the bandit allocation\" — that's answering offline by reusing recorded data. But the reframe itself is about allocation strategy. It changes how rollouts are ordered and what outcome is measured. I'll stick with \"reframe\".\n\nCould proposal 2 be \"other\"? The schema says \"other\" otherwise. Hmm. The reframe is: change objective from estimation to best-arm identification, change outcome from binary success to per-step progress score. Both change what is measured and ordered. The compute_after: \"more compute then buys 10x deeper feature libraries rather than tighter estimates of features that do nothing.\" That's more compute buying something new. So \"reframe\".\n\nNow let me finalize quotes. The quote should be from the proposal — probably from the reframe or question field. Let me pick concise quotes.\n\nProposal 1 quote: \"record a fixed batch of states from the target domain (including cloth-folding and dish-rack demonstrations), and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass\"\n\nThat's good. Or shorter: \"closed-loop rollouts are then spent only on the top-k features by divergence.\" Both capture the criterion. I'll use a combination? The quote field should be a single quote. I'll use: \"record a fixed batch of states from the target domain ... and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass; closed-loop rollouts are then spent only on the top-k features by divergence.\"\n\nHmm, using ellipsis within a quote might be fine. Or just pick one sentence. Let me use: \"Change the measured quantity from closed-loop success to open-loop steered action divergence: record a fixed batch of states from the target domain\" — actually the full sentence is long. Let me just use a key portion.\n\nQuote for 1: \"record a fixed batch of states from the target domain (including cloth-folding and dish-rack demonstrations), and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass\"\n\nReason for 1: \"Open-loop divergence on recorded states screens features; only top-k get closed-loop rollouts.\" — 12 words. Good.\n\nProposal 2 quote: \"replace the binary yes/no outcome with a per-step progress score (distance-to-goal or grasp quality), which has lower variance per rollout and shrinks the n needed for each comparison\"\n\nOr \"Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero\"\n\nI'll use the latter since it captures the reframe. Actually for the criterion decision, the relevant part is that it still uses closed-loop episodes. Maybe quote the reframe's core: \"Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero\". \n\nReason for 2: \"Adaptive rollout allocation and lower-variance score, but still full closed-loop episodes; no open-loop recorded-state screening.\" — count: Adaptive(1) rollout(2) allocation(3) and(4) lower-variance(5) score(6), but(7) still(8) full(9) closed-loop(10) episodes(11); no(12) open-loop(13) recorded-state(14) screening(15). 15 words. Good.\n\nProposal 3 quote: \"Change the measured quantity from success rate in sim to the transfer coefficient itself: for a small set of features, estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation.\"\n\nMaybe shorten: \"Change the measured quantity from success rate in sim to the transfer coefficient itself\". \n\nReason for 3: \"Measures sim-vs-real correlation from full closed-loop episodes in both domains; no open-loop recorded-state scoring.\" — count: Measures(1) sim-vs-real(2) correlation(3) from(4) full(5) closed-loop(6) episodes(7) in(8) both(9) domains(10); no(11) open-loop(12) recorded-state(13) scoring(14). 14 words. Good.\n\nNow double-check proposal 3's kind. Actually, let me reconsider whether proposal 3 is a \"reframe\" or \"other\". The definition of reframe: \"if it changes what is computed, measured or ordered so that more compute buys something it did not before.\"\n\nProposal 3's reframe changes the measured quantity from success rate in sim to the transfer coefficient. Compute after: \"If rho is high, sim compute becomes worth scaling to thousands of features on deformable tasks; if rho is near 0, compute redirects to real-world rollouts...\" So more compute (after the gate) buys scaling that transfers — something it did not buy before (before, more sim compute bought tighter estimates of a non-transferring quantity). The reframe itself is a small decisive experiment. It changes what is measured. I think \"reframe\" is appropriate.\n\nAlternatively, some might argue it's \"other\" because it's a gating experiment rather than a scaling reframe — it doesn't directly make more compute buy more; it decides whether to spend compute. But the change of measured quantity (transfer coefficient) is exactly a reframe: it changes what is computed so that compute buys decision-relevant information rather than non-transferring estimates. I'll go with \"reframe\".\n\nActually, hmm, let me think more carefully. The three-way classification. \"Copies\" is clearly for things like \"run more rollouts in parallel\" or \"batch more environments\". Proposal 3 is not copies. Between reframe and other: the reframe field explicitly says \"Change the measured quantity from success rate in sim to the transfer coefficient itself\". This changes what is measured. Does more compute buy something it did not before? Yes: previously more compute bought tighter estimates of sim success rates that don't transfer; now compute buys estimates of the transfer coefficient, which gates allocation and makes subsequent compute worthwhile. So \"reframe\".\n\nFinal answers:\n\n1: kind=reframe, meets_criterion=yes\n2: kind=reframe, meets_criterion=no\n3: kind=reframe, meets_criterion=no\n\nLet me reconsider proposal 2's kind once more. The reframe: \"Change the objective from per-feature rate estimation to best-arm identification... and replace the binary yes/no outcome with a per-step progress score\". The compute_after: \"Rollout compute concentrates on the informative tail... more compute then buys 10x deeper feature libraries rather than tighter estimates of features that do nothing.\" So more compute buys deeper feature libraries — something it did not before (before, more compute bought tighter estimates). Yes, reframe.\n\nOne could argue proposal 2 is closer to \"other\" because bandit allocation is about ordering compute, and the definition includes \"ordered\" — \"changes what is computed, measured or ordered so that more compute buys something it did not before\". Best-arm identification changes what is ordered (allocation of rollouts) and what is measured (per-step progress score). So definitely fits \"reframe\".\n\nNow let me write the JSON. Quotes should be reasonably short excerpts from the proposal text.\n\nFor proposal 1, I'll quote: \"record a fixed batch of states from the target domain (including cloth-folding and dish-rack demonstrations), and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass\"\n\nFor proposal 2: \"Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero, and replace the binary yes/no outcome with a per-step progress score\"\n\nHmm, that's two clauses. Fine as a quote from the reframe field.\n\nFor proposal 3: \"Change the measured quantity from success rate in sim to the transfer coefficient itself: for a small set of features, estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation\"\n\nReasons (≤25 words):\n1: \"Screens steering on recorded states via batched forward passes; closed-loop rollouts confirm only top-k features.\" (14 words)\n2: \"Adaptive allocation and lower-variance progress score, but every feature still needs full closed-loop episodes; no open-loop recorded-state scoring.\" (18 words)\n3: \"Correlates sim and real effects from full closed-loop episodes; no open-loop scoring on fixed recorded observations.\" (16 words)\n\nAll good. Return JSON only.",
+          "time": {
+            "start": 1792318973512,
+            "end": 1792319012994
+          },
+          "id": "prt_14e8926480012mhyicJ4EAur7a",
+          "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7",
+          "messageID": "msg_14e891cb1001SCc5F5Vxr7yEjH"
+        },
+        {
+          "type": "text",
+          "text": "{\"items\":[{\"index\":1,\"kind\":\"reframe\",\"meets_criterion\":\"yes\",\"quote\":\"record a fixed batch of states from the target domain (including cloth-folding and dish-rack demonstrations), and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass; closed-loop rollouts are then spent only on the top-k features by divergence\",\"reason\":\"Screens steering on recorded states via batched forward passes; closed-loop rollouts confirm only top-k features.\"},{\"index\":2,\"kind\":\"reframe\",\"meets_criterion\":\"no\",\"quote\":\"Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero, and replace the binary yes/no outcome with a per-step progress score\",\"reason\":\"Adaptive allocation and lower-variance progress score, but every feature still needs full closed-loop episodes; no open-loop recorded-state scoring.\"},{\"index\":3,\"kind\":\"reframe\",\"meets_criterion\":\"no\",\"quote\":\"Change the measured quantity from success rate in sim to the transfer coefficient itself: for a small set of features, estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation\",\"reason\":\"Correlates sim and real effects from full closed-loop episodes in both domains; no open-loop scoring on fixed recorded observations.\"}]}",
+          "time": {
+            "start": 1792319013002,
+            "end": 1792319015482
+          },
+          "id": "prt_14e89c08a001sd4tvigYQe8Bgx",
+          "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7",
+          "messageID": "msg_14e891cb1001SCc5F5Vxr7yEjH"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "c7e5da14a509837365bc488cf753356143ec5fef",
+          "type": "step-finish",
+          "tokens": {
+            "total": 6588,
+            "input": 2671,
+            "output": 303,
+            "reasoning": 3604,
+            "cache": {
+              "write": 0,
+              "read": 10
+            }
+          },
+          "cost": 0.0209328,
+          "id": "prt_14e89cb28001O47EwQpdX7XZhC",
+          "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7",
+          "messageID": "msg_14e891cb1001SCc5F5Vxr7yEjH"
+        },
+        {
+          "type": "patch",
+          "hash": "117e09dfe8c2181230b740b35f334a07cfa8e19f",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-independent.http/001.response.txt"
+          ],
+          "id": "prt_14e89cbfa001XQkpQ5X1SiZ4Rx",
+          "sessionID": "ses_eb176e7b9ffeTF0q4v9O6AwnT7",
+          "messageID": "msg_14e891cb1001SCc5F5Vxr7yEjH"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,397 @@
+{
+ "model": "opencode-go/kimi-k3",
+ "judge": "opencode-go/glm-5.3",
+ "cost_usd": 0.756,
+ "results": [
+  {
+   "case": "vla",
+   "lens": "harry",
+   "reframes": [
+    {
+     "bottleneck": "Per-feature cost is set by binary-success statistics: ~150 closed-loop rollouts x 300 serial steps to detect a +9/25 effect, so the 20,250-episode sweep mostly narrows error bars on rigid pick-and-place; beyond batching (RLinf-VLA's 1.61-1.88x), more GPUs buy more of the same number.",
+     "assumption": "That the answer to 'does this feature matter' must be an end-of-episode binary success rate, so one rollout yields one sample.",
+     "reframe": "Change what is measured: log per-step continuous proxies inside rollouts that already run (contact impulse, slip events, goal-distance slope, cloth-coverage delta), turning one episode into hundreds of correlated samples and shifting compute from episodes-per-feature to features-and-tasks covered, including deformable sims.",
+     "question": "Across ~10 known-effective and ~10 null features on rigid sim tasks, at what rollout count n does the Spearman correlation between proxy-estimated feature effects and the full 150-rollout success effects exceed 0.9?",
+     "measure": "Steer 20 features x 150 rollouts x 300 steps in a ManiSkill-class GPU sim, logging proxies every step; bootstrap Spearman(proxy@n, success@150) vs n. About 3,000 batched sim rollouts, ~1-2 A100-days.",
+     "compute_after": "If proxies rank-stabilize at n~10-30, the same budget screens 5-15x more features and tasks per GPU-hour, freeing budget for cloth/deformable sweeps instead of tighter CIs on rigid success.",
+     "exact": "Proxy = per-step contact-impulse integral plus goal-distance slope; report Spearman rho vs n with 95% bootstrap CI; decision rule: rho>0.9 sustained for 10 consecutive values of n; features drawn from the published sweep so ground-truth effects exist.",
+     "expected": "Proxies stabilize at n=10-30 because 300 steps per episode multiply effective samples and the known rigid-task effects (+9 to +21 of 25) are large.",
+     "fails_if": "Proxy ranking at small n disagrees with success ranking for features whose benefit is long-horizon (recovery after slip, multi-stage tasks) and rho plateaus below ~0.8; then full episodes are the irreducible unit and the reframe buys nothing.",
+     "closest_prior": "RLinf-VLA batched ManiSkill rollouts (arXiv:2510.06710) as harness; arXiv:2603.19233 (420k rollouts, 520 SAEs) as reference effects; off-policy-evaluation/variance-reduction literature as method.",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "no",
+      "quote": "Steer 20 features x 150 rollouts x 300 steps in a ManiSkill-class GPU sim, logging proxies every step",
+      "reason": "Reframes measurement to per-step proxies, buying broader coverage; but scoring still runs inside full closed-loop episodes, not on recorded observations."
+     }
+    },
+    {
+     "bottleneck": "The serial unit is the 300-step closed-loop rollout (~150 ms VLA pass per step, GPU idle while the simulator steps); steps cannot be parallelized, and if contact dynamics amplify small errors, parallel-in-time evaluation is ruled out, capping wall-clock per feature regardless of GPU count.",
+     "assumption": "That each evaluation must be an independent full-horizon episode starting from the initial state, so 150 rollouts means 150 x 300 serial steps.",
+     "reframe": "Change the unit of work: run a few long unsteered rollouts with state checkpoints, then branch steered vs unsteered copies from each checkpoint for short horizons; all branches are independent and batch massively, and perturbed unsteered pairs from the same checkpoints directly measure the system's forgetfulness, deciding whether parallel-in-time rollout is even legal.",
+     "question": "Do steered and unsteered branches from identical checkpointed states converge or drift apart with horizon h, and does the per-feature effect measured at h in {10,25,50} rank-match the full 300-step effect?",
+     "measure": "In rigid sim: 20 base rollouts, checkpoint every 25 steps (~240 states), branch steered/unsteered pairs plus 1e-3-perturbed unsteered pairs for each h; ~2x10^4 short segments, ~1 A100-day batched.",
+     "compute_after": "If effects are fixed by h<=50 and perturbations decay, evaluation becomes fully parallel short segments and parareal-style speculative rollout becomes viable, turning weeks of serial sweep wall-clock into hours and making cloth-sim sweeps cheap enough to attempt.",
+     "exact": "Per feature: Delta(h) = mean(proxy_steered(h) - proxy_unsteered(h)) over shared checkpoints; report (a) Spearman(Delta(h), Delta(300)) vs h and (b) median state divergence of 1e-3-perturbed unsteered pairs vs h; 'forgetful' = divergence decays or saturates below the decision-relevant effect size.",
+     "expected": "Rigid tabletop manipulation is damping-dominated between contacts; divergence saturates after each contact event and Delta(h) ranks match Delta(300) by h~25-50, giving 6-12x horizon shortening on top of batch parallelism.",
+     "fails_if": "Perturbed pairs diverge through stick-slip contact sequences (near-chaotic) and Spearman stays <0.7 up to h=300; then serial closed-loop rollouts are irreducible, parallel-in-time is dead for this system, and only cross-rollout batching remains.",
+     "closest_prior": "Parareal/parallel-in-time integration with its converge-or-drift-apart pre-test; RLinf-VLA batched environments (arXiv:2510.06710); tree-search/MPC branching used in manipulation planning.",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "no",
+      "quote": "run a few long unsteered rollouts with state checkpoints, then branch steered vs unsteered copies from each checkpoint for short horizons; all branches are independent and batch massively",
+      "reason": "Reframes the work unit into parallel short branches, buying wall-clock; branches still step the simulator closed-loop rather than scoring fixed recorded observations."
+     }
+    },
+    {
+     "bottleneck": "The pipeline fits then searches causally (~6,700 Adam steps per SAE, then 150 rollouts per feature), so almost all compute validates features that turn out null; and because every sweep ran rigid tasks, it is unknown whether any feature governs contact-rich or deformable behavior, so scaling the same sweep above 520 SAEs buys the same null result on the wrong tasks.",
+     "assumption": "That candidates must be generated bottom-up (fit SAE, then causally sweep each feature) and that the search tasks are rigid tabletop ones.",
+     "reframe": "Invert the order and retarget the objective: mine the already-collected 420k rollout logs (plus any recorded cloth episodes) for features whose activations separate success from failure or track contact events, spend rollouts only on verifying top correlational candidates, and aim verification at cloth/dish-rack contact metrics instead of rigid success.",
+     "question": "Measured against the published sweep's known causal effects, what is precision@20 of ranking features by success-minus-failure activation gap, and does a candidate found this way on a deformable sim task move a cloth metric when clamped?",
+     "measure": "Pure reanalysis: load stored activations/outcomes (or refit ~2 SAEs), rank all features by activation gap, compare to the sweep's causal ranking; a few A100-hours, zero new rollouts. Then one cloth-sim check: clamp top-5 features, 25 rollouts each, <1 GPU-day.",
+     "compute_after": "If precision@20 is high, causal-validation rollouts per confirmed feature drop ~100x, and the freed budget moves to deformable tasks and to a handful of real-robot verifications rather than exhaustive rigid sweeps; compute then changes the answer (which features control cloth) instead of reproducing the rigid one.",
+     "exact": "Gap = mean activation in success minus failure episodes (or correlation with per-step contact events); report precision@k and Kendall tau vs the sweep's causal ranking for k in {5,20,100}; cloth check: coverage delta vs unsteered baseline over 25 rollouts per feature, pre-registered effect threshold.",
+     "expected": "The ablation result (top-4 general features cutting 39/40 to 0/40) implies a few features carry large effects, so correlational screening should recover them well above chance; COAST's data-fitted conceptors (0.43 to 0.80 on LIBERO-10) show data-first steering can work.",
+     "fails_if": "Causal effects are thin and confounded (precision@20 near base rate), or sim-cloth candidates fail on real cloth, the sim-to-real ceiling no sim compute fixes; then the only remaining buy is real-robot rollouts, which do not batch, and the honest answer is that compute is not the blocker for cloth.",
+     "closest_prior": "arXiv:2603.19233 (420k rollouts, 520 SAEs) as data and ground truth; COAST conceptors (arXiv:2603.19183 lineage) as data-driven steering; Grant et al. coordinate-bound motor programs (50/50 on UR10e) as evidence features can be read off data; Goodfire's number-free robotics marketing as the null baseline.",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "yes",
+      "quote": "mine the already-collected 420k rollout logs (plus any recorded cloth episodes) for features whose activations separate success from failure or track contact events, spend rollouts only on verifying top correlational candidates",
+      "reason": "Inverts order: features scored open-loop on recorded logs, closed-loop episodes only confirm top candidates; compute then buys cloth answers, not repeated rigid sweeps."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  },
+  {
+   "case": "vla",
+   "lens": "independent",
+   "reframes": [
+    {
+     "bottleneck": "The answer needed 150 rollouts x 135 features = 20,250 closed-loop episodes, each up to 300 sequential steps at ~150 ms per VLA forward pass, with the GPU idle while the simulator steps; every feature pays this full episode cost regardless of effect size.",
+     "assumption": "A feature's value can only be measured by closed-loop task success, so every candidate feature must be paid for in full episodes before anything is known about it.",
+     "reframe": "Change the measured quantity from closed-loop success to open-loop steered action divergence: record a fixed batch of states from the target domain (including cloth-folding and dish-rack demonstrations), and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass. This turns per-feature evaluation from a sequential 300-step episode into an embarrassingly parallel (state, steering) forward-pass job; closed-loop rollouts are then spent only on the top-k features by divergence.",
+     "question": "Does the ranking of features by open-loop steered action-chunk divergence on recorded states match the ranking by closed-loop success-rate delta, measured as Spearman rho over ~30 features on 3 tasks?",
+     "measure": "Reuse one existing pi0.5 SAE; compute L2 divergence of predicted action chunks for 30 steering directions over ~10k replay states (~2-5 GPU-hours on one A100), and get ground truth from 30 features x 50 rollouts = 1,500 episodes batched in a GPU simulator (~15-25 GPU-hours). Total roughly 1-2 GPU-days.",
+     "compute_after": "If rho is high, screening 520+ SAEs and thousands of features becomes a pure forward-pass workload that splits perfectly across GPUs, and rollout budget concentrates on a handful of features; more compute buys feature coverage instead of repeated episodes.",
+     "exact": "Spearman rho (with bootstrap CI) between the open-loop action-chunk divergence ranking and the closed-loop success-delta ranking across 30 features x 3 tasks.",
+     "expected": "rho around 0.5-0.8: ablating just the top-4 general features already collapses success from 39/40 to 0/40, so large steering effects should be directly visible in action space.",
+     "fails_if": "Steering effects are dominated by closed-loop contact feedback (compounding errors that only appear at step 200+), so open-loop divergence on replay states is uncorrelated with success; this failure is most likely exactly for cloth and dish-rack contact, the cases that matter.",
+     "closest_prior": "Standard SAE feature-effect dashboards that measure activation-to-output effects without rollouts (Goodfire/Anthropic-style), and Grant et al.'s replay-based probe that found motor programs bound to absolute UR10e coordinates.",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "yes",
+      "quote": "record a fixed batch of states from the target domain (including cloth-folding and dish-rack demonstrations), and measure how much each steering direction changes the policy's predicted action chunk in one batched forward pass; closed-loop rollouts are then spent only on the top-k features by divergence",
+      "reason": "Screens steering on recorded states via batched forward passes; closed-loop rollouts confirm only top-k features."
+     }
+    },
+    {
+     "bottleneck": "A fixed 150 rollouts per feature spends most of the 20,250 episodes confirming null effects, and binary success at step 300 is the highest-variance measurable quantity, which forces the large n in the first place.",
+     "assumption": "Every feature must receive an equal, pre-committed rollout budget, and the objective is to estimate each feature's success rate rather than to find the few features that matter.",
+     "reframe": "Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero, and replace the binary yes/no outcome with a per-step progress score (distance-to-goal or grasp quality), which has lower variance per rollout and shrinks the n needed for each comparison.",
+     "question": "How many episodes does successive-rejects allocation need to recover the same top-5 features as the fixed 150x135 sweep with probability at least 0.95, and what episode savings factor does the per-step progress score add?",
+     "measure": "Answer offline: replay the existing 20,250-episode sweep outcomes (or run one 20k-episode sim sweep at RLinf-VLA-style throughput, tens of GPU-hours with 256 parallel envs) and simulate the bandit allocation and both outcome metrics on the recorded data; CPU-hours if logs exist, otherwise tens of GPU-hours once.",
+     "compute_after": "Rollout compute concentrates on the informative tail instead of uniform confidence intervals on zeros; more compute then buys 10x deeper feature libraries rather than tighter estimates of features that do nothing.",
+     "exact": "Episodes-to-top-5 at P(correct) >= 0.95 under successive rejects versus fixed allocation on recorded sweep data, plus the variance ratio of binary success versus per-step progress score.",
+     "expected": "A 3-10x episode reduction, because the effect distribution appears bimodal (top-4 ablation alone kills behaviour; most features do nothing), which is exactly the regime where best-arm identification wins most.",
+     "fails_if": "Steering effects are many, small, and uniform (+1-2% across dozens of features), so no arm can be eliminated early and adaptive allocation saves little over the fixed budget.",
+     "closest_prior": "Successive-rejects and UCB best-arm identification (Audibert, Bubeck, Munos 2010); adaptive-subsampling LLM evaluation; RLinf-VLA's 256-environment 1.61-1.88x throughput as the batched-rollout substrate.",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "no",
+      "quote": "Change the objective from per-feature rate estimation to best-arm identification: successive-rejects or UCB allocation that early-eliminates features whose effect is statistically bounded near zero, and replace the binary yes/no outcome with a per-step progress score",
+      "reason": "Adaptive allocation and lower-variance progress score, but every feature still needs full closed-loop episodes; no open-loop recorded-state scoring."
+     }
+    },
+    {
+     "bottleneck": "Above 420,000 rollouts and 520 SAEs it is still unknown whether any feature controls contact-rich or deformable behaviour, because every sweep ran rigid pick-and-place or drawer tasks; and where sim steering does not match the real robot (stated false for cloth), each additional simulated rollout buys a tighter estimate of a quantity that does not transfer, i.e., more of the same.",
+     "assumption": "The path to cloth and dish-rack steering is to scale simulation sweeps, meaning feature effects found in simulation are assumed to transfer to real hardware.",
+     "reframe": "Change the measured quantity from success rate in sim to the transfer coefficient itself: for a small set of features, estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation. This is a small, decisive experiment that gates whether any large deformable sim sweep should be run at all.",
+     "question": "What is the Spearman correlation between per-feature steering effects measured in a deformable simulator and on the real robot, over ~10 features on one cloth task (towel fold) and one dish-rack task?",
+     "measure": "10 features x 30 episodes x 2 tasks x 2 domains: 600 batched sim episodes (a few GPU-hours with parallel environments) and 600 real episodes at ~3-5 minutes each with resets, about 40-50 robot-hours, i.e., roughly 1-2 weeks on one DROID-class arm and a few thousand dollars of operator time; real-robot time dominates.",
+     "compute_after": "If rho is high, sim compute becomes worth scaling to thousands of features on deformable tasks; if rho is near 0, compute redirects to real-world rollouts with bandit allocation or real replay-state screening, and no large GPU sim sweep on cloth is run.",
+     "exact": "Spearman rho (with bootstrap CI) between sim and real per-feature success deltas across 10 features x 2 tasks, reported per task.",
+     "expected": "rho moderate-to-high for the rigid dish-rack components (consistent with the +9 to +21 real gains from sim-screened SAE steering on DROID hardware) and unknown, possibly near 0, for cloth.",
+     "fails_if": "At 30 real episodes per feature the binomial standard error (~0.09) exceeds the true effect sizes, so the correlation estimate is noise-dominated; the measurement must then switch to a continuous per-step progress score or more episodes before any conclusion.",
+     "closest_prior": "Sim2Real predictivity studies measuring sim-vs-real policy-rank correlation (Kadian et al., SIMPAR 2019); the problem statement's own note that steering effects in sim do not match real for cloth; RLinf-VLA as the batched-sim substrate.",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "no",
+      "quote": "Change the measured quantity from success rate in sim to the transfer coefficient itself: for a small set of features, estimate each one's steering effect (success-rate delta) in both a deformable-object simulator and on real hardware, and measure the cross-domain rank correlation",
+      "reason": "Correlates sim and real effects from full closed-loop episodes in both domains; no open-loop scoring on fixed recorded observations."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  },
+  {
+   "case": "weather",
+   "lens": "harry",
+   "reframes": [
+    {
+     "bottleneck": "Members are exchangeable draws of one afCRPS-trained distribution, so any score converges at Monte Carlo rate to that distribution's intrinsic skill; past a few hundred members the 6-level ladder mostly buys a tighter estimate of a number already reached, and 7 dates leave between-date variance untouched no matter how many members are added.",
+     "assumption": "The decision-relevant quantity is skill at particular member counts (10-1,000), so it must be measured by running and scoring every level of the ladder.",
+     "reframe": "Change what is measured: instead of skill-at-N, estimate the infinite-member skill S_inf and the convergence exponent per case by extrapolation across nested subsamples, plus a date-bootstrap confidence interval on the 50-to-1,000 gain. The deliverable becomes 'headroom to the shared-error cap' and 'is the gain even resolvable on 7 dates', which settles the root question with a fraction of the planned spend.",
+     "question": "For top-percentile 10 m wind at leads of 5-10 days, is the 500-to-1,000-member change in fair CRPS consistent with a fitted O(1/N) Monte Carlo decay, and does the across-date bootstrap CI of the 50-to-1,000 gain exclude zero?",
+     "measure": "Subsample the saved member fields from the cheap pilot stage (or the planned runs) at 50/100/200/400/800 members, score each nested subset, fit score(N) = S_inf - a*N^(-alpha) per date-variable-lead, and bootstrap the 7 dates for the 50-vs-1,000 difference. CPU-only on already-saved outputs, roughly $5-25, no new GPU inference.",
+     "compute_after": "If the gain is resolvable and S_inf sits well above the 50-member score, further compute should buy diversity (models, training seeds) rather than draws; if the CI includes zero, no member count on 7 dates can answer the root question and compute must buy dates. Either way, members past roughly 400 stop changing the answer.",
+     "exact": "Per date, variable (10 m wind, 2 m temperature, 24 h precipitation), and lead: fair CRPS and Brier score for exceedance of the ERA5 99th climatological percentile at N in {50,100,200,400,800,1000}; fitted S_inf and alpha; 95% percentile-bootstrap CI (1,000 resamples over the 7 dates) of delta = score(1000) - score(50).",
+     "expected": "alpha near 0.5-1 (textbook exchangeable-draw Monte Carlo, consistent with HENS-style convergence), S_inf within a few percent of the 1,000-member score, and a 7-date CI on delta wide enough that 'skill keeps rising past 50' is only weakly supported - the ladder mostly re-measures an asymptote already reached.",
+     "fails_if": "The fitted decay is clearly slower than O(1/N) or the 500-to-1,000 step breaks the fit, meaning members are not exchangeable draws (correlated tail structure); then more members genuinely buy new information and the original ladder is the right design.",
+     "closest_prior": "HENS Part 2 [s_hens] (7,424 SFNO members for tail sampling) and classical ensemble-size convergence results (Leutbecher 2019 on ensemble size; Richardson 2001 on ensemble-size effects in CRPS-type scores), which show scores approach an asymptote set by model error.",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change what is measured: instead of skill-at-N, estimate the infinite-member skill S_inf and the convergence exponent per case by extrapolation across nested subsamples, plus a date-bootstrap confidence interval on the 50-to-1,000 gain.",
+      "reason": "Measures new quantities—infinite-member asymptote, convergence exponent, resolvability—instead of repeatedly scoring skill-at-N ladder levels."
+     }
+    },
+    {
+     "bottleneck": "GPU inference per member is the cost driver ($963 for 7,000 rollouts), yet if members are exchangeable draws, the ensemble at each gridpoint-lead is just samples from one smooth distribution; beyond the count needed to estimate that distribution, every extra rollout adds literally zero new information.",
+     "assumption": "A 'member' must be produced by a 15-day autoregressive model rollout on a GPU - the unit of work is one forecast integration.",
+     "reframe": "Change the unit of work: estimate the predictive distribution per gridpoint-lead from about 100 members (parametric tail fit - Gaussian body plus generalized Pareto tail - or quantile interpolation on sorted members), then draw arbitrarily many virtual members on CPU. If virtual-10,000 reproduces real-1,000 extreme scores, the member-count question is answered at any size without further GPU time, and 'members per forecast' stops being a compute axis at all.",
+     "question": "Does a distribution fitted to 100 AIFS-ENS members, resampled to 10,000 virtual members, reproduce the real 1,000-member top-percentile Brier and fair-CRPS scores within the real run's own bootstrap noise?",
+     "measure": "On the cheapest pilot stage (the $19.90 check-first run, 1-2 dates with at least 100 saved members): fit per-gridpoint-lead distributions, draw 10,000 virtual members, score extremes, and compare against nested real-member subsamples. Hours of CPU, roughly $2-15, runnable before any of the main $963 is committed.",
+     "compute_after": "If the fit holds, infinite-member skill becomes a CPU calculation and the entire GPU budget redirects to more dates or more models; from then on, more compute changes the answer only through dates or diversity, never through member count.",
+     "exact": "Per gridpoint-lead, exceedance probability of the ERA5 99th percentile; report the maximum absolute difference and bootstrap CI between virtual-10,000 and real-1,000 Brier and fair-CRPS scores, plus tail-fit error (Anderson-Darling statistic on the top 5% of members).",
+     "expected": "The body fits well and 99th-percentile probabilities match within noise for wind and temperature; precipitation tails are heavier and need the Pareto component. Overall the fit reproduces the 50-to-1,000 curve, showing member counts beyond roughly 200 are a solved, GPU-free problem.",
+     "fails_if": "Tail-fit error at the 99th percentile exceeds the 100-to-1,000 Monte Carlo gain - e.g., multimodal or strongly spatially correlated tail structure that a per-gridpoint fit destroys - in which case real rollouts remain the only honest sampler and the original plan stands.",
+     "closest_prior": "HENS [s_hens] treats members as draws to be multiplied by GPU; the ensemble post-processing literature (EMOS, member-by-member statistical dressing, Scheuerer-Hamill-style resampling) already replaces extra members with fitted samplers at near-zero marginal cost.",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change the unit of work: estimate the predictive distribution per gridpoint-lead from about 100 members (parametric tail fit - Gaussian body plus generalized Pareto tail - or quantile interpolation on sorted members), then draw arbitrarily many virtual members on CPU.",
+      "reason": "Replaces GPU rollouts with distribution fitting, so cheap CPU compute buys arbitrarily many members it could not before."
+     }
+    },
+    {
+     "bottleneck": "The root question's second clause - shared model error caps skill - cannot be isolated by adding more draws of the same distribution: 1,000 AIFS-ENS members share every bias with 50, so the planned spend can measure the asymptote but never what lies beyond it. Compute buys more of the same error structure.",
+     "assumption": "The comparison that matters is N members of AIFS-ENS versus 50 members of AIFS-ENS, i.e., member count is the axis along which skill must be won or lost.",
+     "reframe": "Change the objective and comparison: hold total members fixed and vary the number of distinct model distributions they are drawn from - 150 members as 150xAIFS-ENS versus a pool of 50 AIFS-ENS + 50 GraphCast-family + 50 SFNO/HENS-family. If the mixed pool at 150 beats even 1,000 AIFS-ENS members on extremes, shared error is proven to be the cap and the real compute lever is diversity, not count.",
+     "question": "Does a 150-member pool drawn from three different ML model families beat 1,000 exchangeable AIFS-ENS members on top-percentile wind Brier skill for the same 7 dates?",
+     "measure": "Download open-archive forecasts for the same 7 dates (ECMWF open data for AIFS-ENS; open GraphCast/Pangu/SFNO outputs, or re-run small open models on the existing GPUs), pool members, and re-score with the identical pipeline. Roughly $20-80 dominated by data movement and scoring, using 0-2 of the planned GPU-days if open archives cover the dates.",
+     "compute_after": "If diversity wins, the scale-up path changes: the $3,980 full-scale spend buys 3 model families at roughly 330 members each across 30 dates instead of 1,000 members of one model - more compute then buys genuinely new information per dollar rather than re-sampling one distribution.",
+     "exact": "Brier skill score and fair CRPS for 99th-percentile exceedance (wind, temperature, rain versus ERA5), pooled over leads of 3-10 days, for AIFS-ENS-150, AIFS-ENS-1000, and MIX-150 (50 per model family); report pairwise deltas with date-bootstrap CIs.",
+     "expected": "MIX-150 clearly beats AIFS-ENS-150 and matches or beats AIFS-ENS-1000 on wind and temperature extremes, because member error decorrelates across model families - demonstrating that the cap is shared error and that roughly 950 of the planned 1,000 members buy almost nothing.",
+     "fails_if": "AIFS-ENS-1000 beats MIX-150 on all three variables, meaning one well-trained afCRPS distribution dominates and cross-model diversity adds noise rather than skill; then member count (or single-model quality) really is the lever and the original design is right.",
+     "closest_prior": "HENS [s_hens] shows huge single-model ensembles sample 4-sigma tails but cannot remove shared bias; multi-model and grand-ensemble results in NWP, and ML multi-model comparisons around AIFS/GraphCast/Pangu, consistently show diversity beating raw size at fixed cost.",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change the objective and comparison: hold total members fixed and vary the number of distinct model distributions they are drawn from - 150 members as 150xAIFS-ENS versus a pool of 50 AIFS-ENS + 50 GraphCast-family + 50 SFNO/HENS-family.",
+      "reason": "Redirects compute from more draws to model-family diversity, buying decorrelated errors that member count cannot provide."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  },
+  {
+   "case": "weather",
+   "lens": "independent",
+   "reframes": [
+    {
+     "bottleneck": "All 1,000 members are exchangeable draws of one afCRPS-trained distribution, so past some N extra compute only shrinks the Monte Carlo error of the same (possibly wrong) distribution; the skill asymptote is a property of the model, not of N, and the run largely measures estimator convergence.",
+     "assumption": "Ensemble members must all come from a single trained model; the axis of variation is member count.",
+     "reframe": "Change the axis from member count to member diversity: first split the observed skill-vs-N curve into its Monte-Carlo-convergence part (estimable by resampling, no new forecasts) and its irreducible shared-model part; only if the latter dominates, spend compute on members drawn from different training seeds or checkpoints, so extra compute buys a different distribution rather than more samples of the same one.",
+     "question": "At what member count does the Monte Carlo share of top-1% fair-CRPS skill (the fitted gap S_infinity minus S(N)) fall below 10% of the score spread between two independently trained model seeds?",
+     "measure": "Resample the already-archived HENS 7,424-member, 92-date dataset into 10-1,000-member subsamples, recompute fair CRPS/Brier vs ERA5, fit skill(N) = S_inf - a/sqrt(N), and report the fitted asymptote gap at N=50 with bootstrap confidence intervals. Roughly $5-25 of CPU re-scoring; no GPU forecasts needed.",
+     "compute_after": "If the MC share at N~50-100 is negligible, cancel the 7,000-member run and instead fine-tune a second seed (a fraction of the planned GPU budget) to test whether a mixed 2-seed ensemble shifts the asymptote.",
+     "exact": "Fit S_inf - a/N^0.5 to bootstrap subsamples of HENS scores; report S_inf - S(50), its 95% CI, and the N where this gap reaches 10% of the seed-to-seed score spread.",
+     "expected": "The gap at N=50 is already small relative to plausible model-to-model spread, meaning saturation is a model property and more members buy nothing.",
+     "fails_if": "The fitted curve still rises materially past N=200, i.e., the Monte Carlo share is large and the original 1,000-member plan genuinely tests new territory.",
+     "closest_prior": "HENS Part 2's own outlier-reduction curves with 7,424 members over 92 dates [s_hens], re-read as a convergence measurement rather than a skill result.",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "spend compute on members drawn from different training seeds or checkpoints, so extra compute buys a different distribution rather than more samples of the same one",
+      "reason": "Shifts axis from member count to model diversity; compute then buys a different distribution, not more samples of the same one."
+     }
+    },
+    {
+     "bottleneck": "With N members the finest resolvable probability is about 1/N, so fixed top-percentile scores conflate two things: better tail resolution (mechanical, scales with N) and better tail truthfulness (capped by shared model error). The metric saturates or rises for reasons orthogonal to the root question.",
+     "assumption": "The event definition (top percentile of climatology, scored by Brier/fair CRPS) must be held fixed while N varies.",
+     "reframe": "Change the measured quantity to one whose rarity scales with the compute: the error of the ensemble-implied return level at fixed physical thresholds (e.g., the 1-in-100-day 10 m wind gust and 2 m temperature), estimated by fitting a tail distribution to the pooled ensemble. This lets the question 'what does more compute buy' be answered as: access to rarer, still-accurate events, versus nothing.",
+     "question": "Does the RMSE of the ensemble-derived 1-in-100-day return level for 10 m wind against ERA5 keep falling from N=50 to N=1,000, even where top-1% Brier skill has flattened?",
+     "measure": "Fit GPD/GEV tails to subsampled HENS members (N in {10,25,50,100,200,500,1000,2000,7424}) for the 92 summer-2023 dates and compute return-level RMSE vs ERA5 over land grid points. Pure post-processing of existing data, roughly $10-30 CPU.",
+     "compute_after": "If return-level error keeps falling where probability scores saturate, redirect the planned AIFS spend toward fewer dates at N=1,000 scored on return levels; if both flatten, the saturation conclusion is established without any new forecasts.",
+     "exact": "RMSE of the 100-day return level, ensemble-derived vs ERA5, averaged over land grid points, reported as a function of N on the resampled HENS archive.",
+     "expected": "Brier/fair-CRPS at the top percentile flattens by N~100-200 while return-level error keeps decreasing, showing that what extra members buy is tail resolution, not probability skill.",
+     "fails_if": "Return-level error also flattens by N~100, which would show the cap is real and shared even on the resolution-insensitive quantity.",
+     "closest_prior": "HENS's claim of sampling 4-sigma tails [s_hens], recast as return-level accuracy rather than counts of sampled outliers.",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change the measured quantity to one whose rarity scales with the compute: the error of the ensemble-implied return level at fixed physical thresholds",
+      "reason": "Replaces fixed-percentile scores with return-level error at fixed thresholds, so added members buy access to rarer, still-accurate events."
+     }
+    },
+    {
+     "bottleneck": "The binding statistical constraint is independent weather cases, not members: members on the same date are correlated evidence about one event, so pushing N from 50 to 1,000 on only 7 dates may buy more of the same while the yes/no slope past N=50 stays undetectable regardless of member count.",
+     "assumption": "The number of verification dates is fixed at 7 and ensemble size is the free compute axis; all members must be run before any scoring.",
+     "reframe": "Swap the compute axis and reorder the work: before running anything, test whether 7 dates can resolve a slope at all; if not, reallocate the same budget from 1,000 members x 7 dates to ~100-200 members x 40-60 dates, and run members in sequential batches with a stopping rule once the slope's sign is resolved.",
+     "question": "With 7 dates, what is the smallest skill-vs-log(N) slope past N=50 in fair CRPS for top-1% events that is detectable at 80% power?",
+     "measure": "Bootstrap power analysis on the existing 92-date HENS archive: repeatedly subsample 7 dates, compute the OLS slope of fair CRPS vs log10(N) for N>=50, and report the slope magnitude resolved in >=80% of resamples. Roughly $5-15 CPU; if even 92 HENS dates barely resolve the slope, the planned 7-date run is shown not worth pursuing before spending the $963.",
+     "compute_after": "If underpowered, redirect the same dollars to many more dates at moderate N; only add members past ~100 on dates where the resampled slope CI excludes zero.",
+     "exact": "Distribution over bootstrap resamples of the fair-CRPS-vs-log10(N) slope for N>=50 on 7-date subsets; report the effect size with >=80% detection rate and the date count needed for a modest slope.",
+     "expected": "Seven dates resolve only a very large slope; roughly 30-50 dates are needed for a modest one, meaning the plan as written cannot answer its question at any member count.",
+     "fails_if": "The bootstrap shows 7 dates already resolve small slopes with high power, in which case the original 1,000-member design is adequately powered.",
+     "closest_prior": "HENS used 92 dates at up to 7,424 members [s_hens]; the plan inverts this to 7 dates at 1,000 members, and no prior result tests detectability as a function of date count.",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "reallocate the same budget from 1,000 members x 7 dates to ~100-200 members x 40-60 dates, and run members in sequential batches with a stopping rule once the slope's sign is resolved",
+      "reason": "Swaps compute axis to dates and reorders runs with a stopping rule; compute buys slope detectability, not undetectable member gains."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  },
+  {
+   "case": "coolant",
+   "lens": "harry",
+   "reframes": [
+    {
+     "bottleneck": "The ~25% floor is stated for absolute per-molecule properties, so the 8→24→48→120 ladder mostly re-measures the same floor with more precision; the quantity the pipeline actually needs — which of two candidates ranks higher — is never measured directly.",
+     "assumption": "That ranking accuracy is capped by absolute accuracy, i.e. that force-field errors are independent across molecules. Same-chemistry molecules share the same parameter bias, so errors are correlated and largely cancel inside a difference.",
+     "reframe": "Change the objective and the unit of work: from the absolute property of one molecule to the sign of the difference within a pair. Score pairwise ordering accuracy and spend simulation only on pairs the current ranking leaves ambiguous.",
+     "question": "For molecule pairs whose measured viscosities differ by at least 10%, what fraction are ordered the same way by the published Green–Kubo runs — and does that fraction stay at or above 0.9 while absolute per-molecule error stays near 25%?",
+     "measure": "Re-score the published 8-molecule table as 28 pairs (sign agreement for viscosity and for thermal conductivity); no new simulation, roughly an afternoon of analysis, under $10. If too few pairs clear the 10% separation, add the next 16 molecules (about $125 at the plan's ~$7.8 per molecule) and repeat.",
+     "compute_after": "If sign accuracy is high, the 120-molecule absolute-error campaign and the 15% error target can be dropped; compute moves to targeted paired runs near decision boundaries, with many candidate pairs run side by side.",
+     "exact": "fraction f of pairs (A,B) with |eta_meas(A)-eta_meas(B)|/eta_meas >= 0.10 for which sign[eta_MD(A)-eta_MD(B)] = sign[eta_meas(A)-eta_meas(B)]; the same quantity for thermal conductivity.",
+     "expected": "f >= 0.9 for both properties despite ~25% absolute error, because the shared chemistry bias appears in both members of a pair and cancels in the difference.",
+     "fails_if": "f <= 0.7, meaning the error is dominated by molecule-specific, uncorrelated noise; differences then inherit the full floor and ranking really is capped — the reframe buys nothing.",
+     "closest_prior": "The published 8-molecule benchmark [s_ogbomo_md] reports only per-molecule absolute errors; this re-scores the identical data as 28 pairwise decisions — beyond it at zero simulation cost.",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change the objective and the unit of work: from the absolute property of one molecule to the sign of the difference within a pair. Score pairwise ordering accuracy and spend simulation only on pairs the current ranking leaves ambiguous.",
+      "reason": "Shifts measured quantity from absolute per-molecule error to pairwise sign agreement; compute then targets ambiguous pairs instead of re-measuring the floor."
+     }
+    },
+    {
+     "bottleneck": "With LOPLS-AA parameters fixed, no amount of Green–Kubo sampling lowers the error floor: molecules 9–120 only estimate the same floor more precisely. The published result that all eight thermal conductivities are over-predicted points to a shared, parameter-level bias rather than random per-molecule error.",
+     "assumption": "That the force field is an untouchable input and error can only be corrected after the fact (the plan's output bias correction). The floor is treated as a fact of nature instead of as one or two mis-set parameters.",
+     "reframe": "Change the order of steps: before adding molecules, make the force field itself the object of compute — a small scaling sweep of the one or two Lennard-Jones or charge parameters plausibly carrying the bias, fit on the 8 known molecules, frozen, then tested on the next 8.",
+     "question": "Does a single global rescaling of one parameter class (for example the ester carbonyl LJ epsilon, or the united-atom CHx epsilon), fit to the 8 published viscosities, cut held-out viscosity error on 8 unseen molecules below 15%?",
+     "measure": "Kill-signal sweep: 5 epsilon-scale values x 8 molecules x one 2-ns run each = 80 ns, about $25 at the plan's ~$0.26/ns. Only if training error collapses monotonically, run the frozen setting on 8 new molecules with the full 6x5 ns protocol (240 ns, about $65). Total about $90.",
+     "compute_after": "If the refit transfers, compute buys depth instead of breadth: per-chemistry-class refits, then a corrected-field screen of the full 835-molecule set at a lower floor — more compute now changes the answer rather than re-measuring it.",
+     "exact": "held-out mean absolute percent error of Green–Kubo viscosity at 40 °C on 8 molecules excluded from the fit, using one frozen global scaling; secondary: the same for thermal conductivity.",
+     "expected": "Because all 8 conductivities were over-predicted (one shared sign), a single knob removes most of the bias; held-out viscosity error lands at 12–18%.",
+     "fails_if": "Best-fit training error stays above 20%, or the optimal scaling reverses sign between hydrocarbons and esters — then the error is molecule-specific, not parameter-level, and refitting merely overfits the eight.",
+     "closest_prior": "The published benchmark [s_ogbomo_md] holds the field fixed and only reports the bias; the plan corrects outputs afterward. Fitting the field against the same measurements is the step beyond both.",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change the order of steps: before adding molecules, make the force field itself the object of compute — a small scaling sweep of the one or two Lennard-Jones or charge parameters plausibly carrying the bias",
+      "reason": "Makes force-field parameters the object of compute; more compute buys bias removal and a lower floor, not just re-measurement."
+     }
+    },
+    {
+     "bottleneck": "The unit of work is a pure liquid, but the pipeline's product is a formulated single-phase coolant, usually a blend; the plan itself concedes it cannot show blends, so no amount of pure-molecule compute at 40 °C answers whether blend rankings are right.",
+     "assumption": "That pure-component rankings transfer to blends through an implicit mixing rule — that mixing adds no new error beyond the per-component floor.",
+     "reframe": "Change the unit of work from molecule to mixture: simulate the blend directly at several compositions, so compute acts on the object actually being ranked and measures whether mixing itself is predictable.",
+     "question": "For one binary pair from the benchmark set at three compositions (25/50/75 mol%), does direct blend simulation reproduce the measured blend viscosity within the same error band as the pure components, and does a mole-fraction mixing rule built from the already-simulated pures do measurably worse?",
+     "measure": "3 compositions x 6 replicas x 5 ns = 90 ns, about $25, using published blend data for the same pair; compare direct-blend error against the mixing-rule prediction from the existing pure simulations. Total about $25–50.",
+     "compute_after": "If direct-blend error tracks the pure-component floor, the search space opens up: compute screens blend compositions of a few validated components (combinatorially many liquids from few chemistries), and pure-molecule runs shrink to calibration.",
+     "exact": "mean absolute percent error versus measurement of Green–Kubo blend viscosity at 40 °C at mole fractions 0.25/0.50/0.75, compared against the mixing-rule prediction built from the two pure simulations.",
+     "expected": "Direct-blend error within roughly 5 points of the pure-component floor; the mixing rule biased by more than that for ester–hydrocarbon pairs, so direct simulation wins on ranking.",
+     "fails_if": "Blend error exceeds the pure floor by more than a factor of 2, or the ordering across compositions is wrong while pure ordering is right — blend MD then carries its own uncharacterized error that must be fixed before the reframe is usable.",
+     "closest_prior": "The 8-molecule pure-liquid benchmark and the 835-molecule reference set [s_ogbomo_md, s_ogbomo_db] contain no mixtures; even one binary composition series is beyond both.",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change the unit of work from molecule to mixture: simulate the blend directly at several compositions, so compute acts on the object actually being ranked",
+      "reason": "Changes computed object from pure molecules to blends; compute then buys combinatorial blend screening, not more pure-molecule runs."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  },
+  {
+   "case": "coolant",
+   "lens": "independent",
+   "reframes": [
+    {
+     "bottleneck": "The compute axis scales molecule count (8 to 120) under one fixed force field, but the hypothesized error floor is systematic and chemistry-dependent. More molecules with the same force field only measure that floor more precisely; a single global bias correction cannot remove chemistry-dependent bias, so most of the $940 buys better statistics on the same error rather than a smaller error.",
+     "assumption": "The force field and its errors are held fixed; only the number of sampled molecules is allowed to grow, and correction is a single global bias term.",
+     "reframe": "Redirect compute from more molecules to a chemistry-conditioned correction: regress MD-to-measurement residuals on cheap per-molecule descriptors (carbon number, ester-group count, MD-predicted value) trained on a modest set and validated held-out. Compute then buys a transferable correction applicable to all 835 molecules, not repeated samples of the same bias.",
+     "question": "Does a descriptor-based correction trained on 24 molecules' MD-and-measurement pairs reduce held-out viscosity mean absolute percent error below 15% on 8 molecules not used in fitting, at 40 °C?",
+     "measure": "Fit a ridge or Gaussian-process regression of signed MD-vs-measurement residuals against descriptors using the published 8 plus 16 new molecules from the already-budgeted 24-molecule stage; score absolute percent error on 8 held-out molecules. The training runs are already paid for; incremental cost is 8 held-out molecules at ~30 ns each, roughly $60–$100, plus negligible analysis time.",
+     "compute_after": "Each additional dollar buys training molecules that shrink correction error across the whole 835-molecule set, so more compute changes the ranking answer instead of re-measuring a fixed floor.",
+     "exact": "Held-out mean absolute percent error on viscosity, and Spearman rank correlation between corrected MD viscosity and measured viscosity, over 8 molecules excluded from fitting, at 40 °C.",
+     "expected": "If the floor is genuinely chemistry-dependent, residuals are structured and held-out error falls to roughly 12–18% at N=24 with rank correlation above 0.85.",
+     "fails_if": "Held-out error stays at or above 25% with the correction trained on 24 molecules, meaning residuals carry no chemistry-predictable structure and the floor is effectively random.",
+     "closest_prior": "Ogbomo 2026 reports raw LOPLS-AA Green–Kubo errors on 8 molecules with no correction model [s_ogbomo_md]; the planned work scales the same uncorrected protocol [s_ogbomo_res].",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Redirect compute from more molecules to a chemistry-conditioned correction: regress MD-to-measurement residuals on cheap per-molecule descriptors (carbon number, ester-group count, MD-predicted value) trained on a modest set and validated held-out.",
+      "reason": "Compute trains a transferable residual-correction model instead of resampling the same bias; it buys error reduction across all 835 molecules."
+     }
+    },
+    {
+     "bottleneck": "Cost per molecule is dominated by converging the Green–Kubo stress autocorrelation (six 5-ns replicas, ~30 ns per molecule), because the chosen quantity, direct viscosity, is one of the slowest observables to converge. The pipeline's actual need is rank order over hundreds of candidates, so expensive absolute accuracy on few molecules caps coverage.",
+     "assumption": "Viscosity and thermal conductivity must be computed directly and at high absolute accuracy in order to rank candidates.",
+     "reframe": "Change the measured quantity to a cheaper related one that converges in about 1 ns, such as the self-diffusion coefficient from the mean-squared displacement, combined through a Stokes–Einstein- or Rosenfeld-style scaling with density and size, calibrated to viscosity on a small anchor set. Compute then buys chemical coverage instead of trajectory length.",
+     "question": "Does a 1-ns diffusion-derived proxy rank the 8 published benchmark molecules' measured viscosity with Spearman rank correlation of at least 0.8?",
+     "measure": "Run one 1-ns trajectory for each of the 8 published molecules, extract the self-diffusion coefficient from the MSD slope, and compute Spearman correlation between the proxy ranking and the measured viscosity ranking. Roughly 8 ns total, on the order of $10–$20, fittable inside the existing check-first stage.",
+     "compute_after": "If the proxy preserves order, each GPU-hour covers roughly 20–30 times more molecules, so additional compute directly buys ranking coverage toward the full 835-molecule set rather than longer runs on the same few.",
+     "exact": "Spearman rank correlation between proxy-derived ordering (inverse diffusion scaled by density and molecular size) and measured viscosity ordering across the 8 published molecules at 40 °C.",
+     "expected": "Correlation around 0.7–0.9 within a homologous series, with the main risk being a systematic offset between hydrocarbons and esters that a two-group calibration would absorb.",
+     "fails_if": "Spearman correlation below 0.6 on the 8 molecules, showing the proxy does not preserve order even in-distribution and is not worth calibrating.",
+     "closest_prior": "Direct Green–Kubo viscosity on 8 molecules [s_ogbomo_md]; diffusion-based and excess-entropy viscosity scalings are established elsewhere in the liquids literature but unused in this benchmark.",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Change the measured quantity to a cheaper related one that converges in about 1 ns, such as the self-diffusion coefficient from the mean-squared displacement, combined through a Stokes–Einstein- or Rosenfeld-style scaling with density and size, calibrated to viscosity on a small anchor set.",
+      "reason": "Replaces slow Green–Kubo viscosity with a fast diffusion-derived proxy; compute then buys chemical coverage rather than trajectory length."
+     }
+    },
+    {
+     "bottleneck": "The 8-to-24-to-48-to-120 ladder commits most of the budget before the decisive fact is known: whether the error is between-chemistry systematic (correctable by coverage and calibration) or within-molecule statistical (reducible only by longer runs). The six-replica protocol already produces both variance components, but the plan never decomposes them, so the allocation between more molecules and more nanoseconds is made blind.",
+     "assumption": "Deciding whether the floor exists requires the full 120-molecule ladder run with a fixed per-molecule protocol of six 5-ns replicas.",
+     "reframe": "Reorder the work: at the 24-molecule stage, decompose per-replica percent errors into between-molecule and within-molecule variance, then let that decomposition choose the allocation. If between-molecule variance dominates, spend on coverage and correction; if within-molecule variance dominates, spend on longer or more replicas per molecule and fewer molecules.",
+     "question": "In the 24-molecule run, what fraction of total viscosity error variance is between-molecule (systematic, chemistry-attached) versus within-molecule (replica noise), as measured by a random-effects variance decomposition of per-replica percent errors?",
+     "measure": "Fit a random-effects model to the 6 x 24 per-replica viscosity percent errors from the already-budgeted 24-molecule stage and report the intraclass correlation. Incremental cost is essentially $0 on top of the roughly $150–$250 that stage already plans to spend.",
+     "compute_after": "Whichever variance component dominates dictates what the remaining roughly $700 buys, so every later dollar is spent on the term that actually limits ranking, and more compute changes the conclusion rather than repeating the same protocol.",
+     "exact": "Intraclass correlation, the share of residual variance attributable to molecule identity, in a random-effects fit of per-replica viscosity percent errors at 40 °C over 24 molecules with 6 replicas each.",
+     "expected": "The stated hypothesis predicts a high between-molecule share, above about 0.6, which would confirm a correctable chemistry-dependent floor and argue for the correction-model path.",
+     "fails_if": "Between-molecule share below about 0.3, meaning error is mostly statistical replica noise; then correction models are dead and the lever is trajectory length per molecule, which the current plan does not vary.",
+     "closest_prior": "Ogbomo 2026 reports per-molecule errors for 8 molecules but no replica-level variance decomposition [s_ogbomo_md, s_ogbomo_res].",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "NA",
+      "quote": "Reorder the work: at the 24-molecule stage, decompose per-replica percent errors into between-molecule and within-molecule variance, then let that decomposition choose the allocation.",
+      "reason": "Computes a new variance decomposition that adaptively steers remaining budget to coverage or longer replicas — runs the fixed plan never bought."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  }
+ ]
+}

@@ -1,0 +1,200 @@
+{
+  "info": {
+    "id": "ses_eb177c383ffeyiVehruPwYhENH",
+    "slug": "lucky-moon",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls",
+    "path": "experiments/reframe-pilot/20261018-1021-reframe/calls",
+    "title": "coolant-independent",
+    "agent": "qt-bare",
+    "model": {
+      "id": "kimi-k3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.070512,
+    "tokens": {
+      "input": 1304,
+      "output": 1647,
+      "reasoning": 2793,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792318913661,
+      "updated": 1792318977666
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792318913911
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "kimi-k3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14e883d77001HNkQbcJlhvg1xU",
+        "sessionID": "ses_eb177c383ffeyiVehruPwYhENH"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"You look for the assumption that makes a problem slow, or makes extra compute buy only more of the same. Ask which part\nof the work waits on another part, and whether it must. Ask which quantity is measured, and whether a different but\nrelated quantity would be cheaper to compute, easier to split, or more informative. Ask whether the unit of work is the\nright one, or whether the work could be cut, merged or reordered. Ask whether the objective is the right one: the single\nbest answer, a ranking, a distribution, a rare tail, or a yes or no. Ask what is held fixed that need not be. Prefer\nchanges that alter what more compute buys over changes that only run the same work more times.\n\nHere is a research problem as it was first written down, with the question it belongs to.\nRoot question: generative pipeline for discovery of single phase immersion coolants\nProblem:\n**IC-V1 · Force-field error floor for coolant MD: an enlarged C10–C50 benchmark scored against measurement.** seed pick · compute tested: yes · plan expects: not the lever · PASS\n\n**Question.** Will graphics-card molecular simulations using Green–Kubo on C10–C50 hydrocarbons and esters rank immersion coolants' viscosity and thermal conductivity the same way measurements do?\n\n**What is known.** Ogbomo and colleagues, in 2026, used Green–Kubo molecular dynamics to compute viscosity and thermal conductivity for eight C10–C50 molecules at 40 °C and compared with measurements [s_ogbomo_md]. Whether the error is a correctable bias or a random floor that caps ranking, and how rank agreement holds over hundreds of molecules [s_ogbomo_db].\n\n**Hypothesis.** Green–Kubo MD with one fixed force field has a chemistry-dependent error floor near 25 percent that more molecules cannot remove [s_ogbomo_res].\n\n**If compute is the lever.** At 120 molecules, held-out viscosity error after bias correction falls below 15 percent and rank correlation with measurement exceeds 0.9 [s_ogbomo_res].\n\n**If not.** Held-out viscosity error stays above 25 percent and rank correlation below 0.7 at every set size, capping candidate ranking [s_ogbomo_res].\n\n**Test.** One LAMMPS LOPLS-AA Green–Kubo protocol at 40 °C, six five-nanosecond replicas per molecule, run on 8, 24, 48 then 120 molecules from the public 835-molecule reference set, scored only against measured viscosity and thermal conductivity [s_ogbomo_db].\n\n*Compute axis.* Benchmark molecules scored against measured viscosity and thermal conductivity: 8–120 molecules, 4 levels. Closest prior: 8 [s_ogbomo_md], beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Repeat the published eight-molecule Green–Kubo run first: density within 4% for seven molecules and thermal conductivity over-predicted for all eight [s_ogbomo_res]. Tolerance: same bias signs for viscosity and thermal conductivity; density error within 4 percentage points of the published error; per-molecule viscosity within 20% of the reference value.\n\n**Would not show.** Shows transport-property error only at 40 °C for pure liquids between 1 and 50 mPa·s, not blends or sold coolants. Cannot show ranking behaviour beyond 120 molecules.\n\n*Cost.* Plans $940.98 of the $1,000 budget over 59 machine-hours, leaving $59.02. Main guess: assumed MD throughput per GPU [p], measured after $36.20 of spend; the budget is reached if it is 1.1× lower. 3 cost flags in the block.\n\nFind where this problem stops more compute from helping, or where more compute only buys more of the same. Then look for reframings: changes to what is measured, the unit of work, the objective or the order of steps that would let more compute change the answer. Give up to three. End each with one question someone could investigate: specific, answerable by a measurement, and naming what is measured. For each, give the cheapest measurement that would answer it or show it is not worth pursuing, with a rough cost. Decide from the text above and what you know; do not use tools.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"reframes\\\"],\\\"properties\\\":{\\\"reframes\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"bottleneck\\\",\\\"assumption\\\",\\\"reframe\\\",\\\"question\\\",\\\"measure\\\",\\\"compute_after\\\",\\\"exact\\\",\\\"expected\\\",\\\"fails_if\\\",\\\"closest_prior\\\"],\\\"properties\\\":{\\\"bottleneck\\\":{\\\"type\\\":\\\"string\\\"},\\\"assumption\\\":{\\\"type\\\":\\\"string\\\"},\\\"reframe\\\":{\\\"type\\\":\\\"string\\\"},\\\"question\\\":{\\\"type\\\":\\\"string\\\"},\\\"measure\\\":{\\\"type\\\":\\\"string\\\"},\\\"compute_after\\\":{\\\"type\\\":\\\"string\\\"},\\\"exact\\\":{\\\"type\\\":\\\"string\\\"},\\\"expected\\\":{\\\"type\\\":\\\"string\\\"},\\\"fails_if\\\":{\\\"type\\\":\\\"string\\\"},\\\"closest_prior\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_14e883d86001cSG76oyiPcL5Hz",
+          "sessionID": "ses_eb177c383ffeyiVehruPwYhENH",
+          "messageID": "msg_14e883d77001HNkQbcJlhvg1xU"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14e883d77001HNkQbcJlhvg1xU",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.070512,
+        "tokens": {
+          "total": 5744,
+          "input": 1304,
+          "output": 1647,
+          "reasoning": 2793,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "kimi-k3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792318916412,
+          "completed": 1792318977622
+        },
+        "finish": "stop",
+        "id": "msg_14e88473c001zVE0MJ33ThJVpJ",
+        "sessionID": "ses_eb177c383ffeyiVehruPwYhENH"
+      },
+      "parts": [
+        {
+          "snapshot": "325142497f7d63a32d957cf6650fbeca6c4a9674",
+          "type": "step-start",
+          "id": "prt_14e885be1001wqUNMmAn3KJHjZ",
+          "sessionID": "ses_eb177c383ffeyiVehruPwYhENH",
+          "messageID": "msg_14e88473c001zVE0MJ33ThJVpJ"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me analyze this problem carefully.\n\nThe problem: Using Green–Kubo MD with a fixed force field (LOPLS-AA) to compute viscosity and thermal conductivity of C10–C50 hydrocarbons/esters, ranking immersion coolants against measurement. The hypothesis is there's a chemistry-dependent error floor ~25% that more molecules cannot remove. The plan is to scale from 8 to 120 molecules, checking if bias correction gets error below 15% and rank correlation above 0.9.\n\nWhere does more compute only buy more of the same?\n\n1. **The force field is held fixed.** If there's an error floor caused by the force field itself (systematic, chemistry-dependent bias), running more molecules with the same force field just measures the floor more precisely — it doesn't reduce it. The compute axis (8→120 molecules) only buys statistical precision on an error that is systematic. The bias correction step is acknowledged, but a single global bias correction may not capture chemistry-dependent error. So the assumption: \"the force field is fixed; only the molecule count scales.\" A reframe: instead of more molecules per force field, use compute to fit/correct the force field — e.g., learn a per-chemistry correction (a delta model / ML correction trained on measured data), or run a small set of force-field variants. More compute then buys better correction, not more samples of the same bias. Question: does a per-functional-group correction (trained on N molecules) generalize to held-out molecules, reducing error below 15%? Measure: train correction on 24 molecules with existing MD runs + measured values, test on 8 held out. Cheap — reuse the 24-molecule runs, just fit a regression. Cost ~ small (analysis time, maybe $0 if runs exist; the 24-molecule stage is already budgeted).\n\n2. **The quantity measured: Green–Kubo for viscosity is expensive and noisy; the unit of work is 6×5ns replicas per molecule.** Green–Kubo integrates autocorrelation of stress/heat flux — converges slowly, especially viscosity. A different but related quantity might be cheaper: e.g., compute viscosity via equilibrium fluctuations of a derived observable, or use a cheaper proxy (e.g., self-diffusion via MSD + Stokes–Einstein-like relation, or rotational correlation times, or entropy-based correlations like Rosenfeld scaling) that ranks viscosity/thermal conductivity. If the goal is ranking, a cheaper proxy that preserves order could let compute buy coverage (hundreds of molecules) instead of precision on a few. Also non-equilibrium MD (NEMD) for viscosity can be more efficient per accuracy than Green–Kubo. Question: does a cheap proxy (e.g., diffusion coefficient or excess entropy from 1ns runs) rank the 8 published molecules' measured viscosity with Spearman ρ > 0.8? Measure: run 1ns trajectories on the 8 benchmark molecules, compute MSD-derived diffusion and Rosenfeld/excess-entropy proxy, correlate with measured viscosity ranking. Cost: tiny — 8 × 1ns ≈ maybe $5–20.\n\n3. **The objective: single-point property estimates at 40 °C vs. ranking / yes-no screening.** Also the endpoint: the plan scores absolute error against measurement, but the pipeline's actual need is candidate ranking/discovery. The bias-correction question is framed as absolute error. Alternatively: reframe the unit of work — instead of six 5-ns replicas per molecule (30 ns per molecule), ask whether one long run or many short runs minimize rank-error per dollar; i.e., the replica structure is held fixed. Or reorder: check-first gate then adaptive sampling — spend compute where chemistry is novel (active learning): cluster the 835-molecule set, sample diverse molecules, and use compute to expand coverage in chemical space where the correction model is uncertain, rather than uniform scaling 8→24→48→120. More compute then buys information (uncertainty reduction) rather than more of the same.\n\nAlso: temperature held fixed at 40 °C — sold coolants operate over a range; but that's scope.\n\nAnother: the error floor hypothesis itself — \"chemistry-dependent error floor\" suggests error correlates with chemistry features. So a reframe: instead of testing whether error falls with more molecules, test whether error is predictable from cheap descriptors (no MD at all) — i.e., the measurement that decides the whole question is the heteroscedasticity/structure of the error vs. chemistry on the existing 8 + 24 molecules. If errors are structured, compute should go into the correction model; if random, into replicas. That's a decision-reordering reframe: measure error structure first on 24 molecules before buying 120.\n\nLet me pick the three strongest reframes:\n\n**Reframe 1 (objective/quantity: what's held fixed — the force field; change what compute buys: correction model instead of more molecules).**\n- Bottleneck: more molecules with one fixed force field only measure the systematic error floor more precisely; the bias is chemistry-dependent, so a single global correction can't remove it, and 120 molecules buy precision on the floor, not reduction of it.\n- Assumption: force field and its errors are fixed; only sample count scales.\n- Reframe: spend compute learning a chemistry-conditioned correction (per functional group / descriptor regression from MD error to measured values), validated held-out; compute then buys correction accuracy that transfers across the 835-molecule set rather than repeated samples of the same bias.\n- Question: Does a correction model trained on MD–measurement pairs from N training molecules reduce held-out viscosity error below 15% at N = 24?\n- Measure: fit ridge/GP regression from cheap descriptors (carbon count, ester group count, MD-predicted value) to the MD-vs-measurement residuals on the 8 published + 16 new molecules; score on 8 held-out molecules. Uses runs already in the budget (24-molecule stage); incremental cost ~0 (analysis only) or ~$10 of compute for the 8 held-out molecules if not already run. Say <$40 (a few GPU-hours).\n- compute_after: if the correction generalizes, each further dollar buys training molecules that improve the correction across the whole 835-molecule set — compute changes the answer (ranking quality) rather than re-measuring the floor.\n- exact: held-out mean absolute percent error on viscosity for 8 molecules not used in fitting, at 40 °C.\n- expected: held-out MAPE 12–18% at N=24; if chemistry-dependent floor is real, structured residuals → correction works.\n- fails_if: held-out error stays ≥25% with correction trained on 24 — residuals are not chemistry-predictable, floor is random.\n- closest_prior: Ogbomo 2026 used raw MD without correction on 8 molecules [s_ogbomo_md].\n\n**Reframe 2 (quantity measured: cheap proxy for ranking instead of expensive Green–Kubo).**\n- Bottleneck: Green–Kubo viscosity needs long trajectories (6×5 ns per molecule); cost per molecule is dominated by converging the stress autocorrelation, so compute buys few molecules at high precision when the pipeline only needs rank order.\n- Assumption: viscosity/thermal conductivity must be computed directly at high absolute accuracy to rank.\n- Reframe: measure a cheaper related quantity — self-diffusion from mean-squared displacement (converges in ~1 ns), or excess-entropy/Rosenfeld scaling — calibrated to viscosity on a small anchor set; rank by the proxy. Compute then buys chemical coverage (hundreds of molecules) instead of long trajectories on few.\n- Question: Do 1-ns diffusion-derived proxies rank the 8 benchmark molecules' measured viscosity with Spearman ρ ≥ 0.8?\n- Measure: run 8 × 1-ns simulations, compute self-diffusion coefficient from MSD slope, correlate D⁻¹ (or D⁻¹ scaled by density/size) ranking against measured viscosity ranking. Cost ~8 GPU-hours ≈ $10–20, within the check-first stage.\n- compute_after: if ρ is high, each GPU-hour covers ~30× more molecules, so the 835-molecule set becomes reachable and more compute directly buys ranking coverage.\n- exact: Spearman rank correlation between proxy ranking and measured viscosity ranking over the 8 published molecules.\n- expected: ρ 0.7–0.9 (Stokes–Einstein-ish behavior holds within a homologous series; risk across chemistries ester vs alkane).\n- fails_if: ρ < 0.6 on the 8 — proxy doesn't preserve order even in-distribution; not worth pursuing.\n- closest_prior: Green–Kubo on 8 molecules [s_ogbomo_md]; Rosenfeld/excess-entropy scaling known in literature but not applied here.\n\n**Reframe 3 (unit of work / order: error-structure measurement before scaling; adaptive allocation).**\n- Bottleneck: the 8→24→48→120 ladder spends most of the budget re-measuring error on similar molecules before knowing whether the error is structured (correctable) or random (floor); the decisive measurement is error vs. chemistry, which is available at 24 molecules, and the replica design (6×5 ns) is held fixed though rank-error per dollar may be minimized by a different split (e.g., 12×2.5 ns or fewer replicas on more molecules).\n- Assumption: uniform scaling of molecule count with a fixed per-molecule protocol is the right allocation; the floor question needs 120 molecules.\n- Reframe: reorder — measure the structure of the residuals at 24 molecules (variance across chemistries vs. across replicas within a molecule), then allocate: if between-chemistry variance dominates, spend on coverage + correction; if within-molecule (statistical) variance dominates, spend on longer runs per molecule. Compute allocation follows the variance decomposition.\n- Question: On 24 molecules, what fraction of total error variance is between-chemistry (systematic) vs. within-molecule (replica noise)?\n- Measure: variance decomposition (random-effects model) on per-replica viscosity errors from the 24-molecule stage — 6 replicas per molecule give within-molecule variance directly. Cost: analysis of already-budgeted runs ≈ $0 (or the 24-molecule stage itself, ~$150–250, which the plan already spends).\n- compute_after: whichever component dominates dictates what further compute buys — molecules (correctable bias) or trajectory length (noise) — so every later dollar changes the answer instead of running the same protocol more times.\n- exact: intraclass correlation / share of residual variance attributable to molecule identity in a random-effects fit of per-replica percent errors at 40 °C.\n- expected: hypothesis predicts between-chemistry share high (>0.6); measurement decides.\n- fails_if: between-chemistry share < 0.3 — error is mostly statistical, and the correction reframe is dead; scaling replicas is the lever.\n- closest_prior: [s_ogbomo_md] reports per-molecule errors for 8 but no variance decomposition across replicas.\n\nHmm, reframe 2 and 3 both good. Also could reframe the objective from absolute accuracy to yes/no screening (does candidate beat incumbent?). The ranking-vs-absolute point is partially in reframe 2. Maybe make reframe 3 about the objective: yes/no or ranking with sequential testing — spend compute only until rank ordering is statistically decided, early stopping. But the variance decomposition one is more concrete and measurement-decisive. Alternatively reframe 3: objective change — from \"match measurements\" to \"rank against the incumbent coolant\": a yes/no comparison per candidate; cheaper because paired comparisons can use correlated noise and stop early. Question: can a paired-difference protocol (candidate vs. reference run under identical conditions) classify better/worse viscosity with fewer ns? Measure: paired runs on 8 molecules vs reference... Cost moderate.\n\nI'll go with the three: correction model, cheap proxy quantity, variance decomposition / reorder. Each ends with a specific measurable question and cheapest measurement with rough cost.\n\nCosts: budget context: $1000 total, 59 machine-hours, $940.98 planned, MD throughput measured after $36.20. So ~$16/machine-hour. 8 × 1ns runs: if 6×5ns per molecule costs... 120 molecules at 30ns each = 3600 ns over 59 machine-hours? That seems off but let's scale: per molecule (30 ns) ≈ $940/120 ≈ $7.8/molecule... wait that includes staging. Roughly per-molecule cost ≈ $8 at 120 scale, more at small scale. So 8 × 1 ns ≈ 8 ns total ≈ maybe $2–10. Say \"~$10\". Correction fit: analysis only, ~$0 on top of 24-molecule stage (~$150–200 already budgeted); held-out 8 molecules ≈ $60–100 if run fresh. Variance decomposition: $0 incremental on 24-molecule stage (~$180 stage cost already budgeted).\n\nLet me write final JSON. Fields: bottleneck, assumption, reframe, question, measure, compute_after, exact, expected, fails_if, closest_prior.\n\nKeep each a string. Make questions specific with named measured quantities. Rough costs in \"measure\".",
+          "time": {
+            "start": 1792318921705,
+            "end": 1792318958092
+          },
+          "id": "prt_14e885be9001gtR2L3HG3XYC4C",
+          "sessionID": "ses_eb177c383ffeyiVehruPwYhENH",
+          "messageID": "msg_14e88473c001zVE0MJ33ThJVpJ"
+        },
+        {
+          "type": "text",
+          "text": "{\n  \"reframes\": [\n    {\n      \"bottleneck\": \"The compute axis scales molecule count (8 to 120) under one fixed force field, but the hypothesized error floor is systematic and chemistry-dependent. More molecules with the same force field only measure that floor more precisely; a single global bias correction cannot remove chemistry-dependent bias, so most of the $940 buys better statistics on the same error rather than a smaller error.\",\n      \"assumption\": \"The force field and its errors are held fixed; only the number of sampled molecules is allowed to grow, and correction is a single global bias term.\",\n      \"reframe\": \"Redirect compute from more molecules to a chemistry-conditioned correction: regress MD-to-measurement residuals on cheap per-molecule descriptors (carbon number, ester-group count, MD-predicted value) trained on a modest set and validated held-out. Compute then buys a transferable correction applicable to all 835 molecules, not repeated samples of the same bias.\",\n      \"question\": \"Does a descriptor-based correction trained on 24 molecules' MD-and-measurement pairs reduce held-out viscosity mean absolute percent error below 15% on 8 molecules not used in fitting, at 40 °C?\",\n      \"measure\": \"Fit a ridge or Gaussian-process regression of signed MD-vs-measurement residuals against descriptors using the published 8 plus 16 new molecules from the already-budgeted 24-molecule stage; score absolute percent error on 8 held-out molecules. The training runs are already paid for; incremental cost is 8 held-out molecules at ~30 ns each, roughly $60–$100, plus negligible analysis time.\",\n      \"compute_after\": \"Each additional dollar buys training molecules that shrink correction error across the whole 835-molecule set, so more compute changes the ranking answer instead of re-measuring a fixed floor.\",\n      \"exact\": \"Held-out mean absolute percent error on viscosity, and Spearman rank correlation between corrected MD viscosity and measured viscosity, over 8 molecules excluded from fitting, at 40 °C.\",\n      \"expected\": \"If the floor is genuinely chemistry-dependent, residuals are structured and held-out error falls to roughly 12–18% at N=24 with rank correlation above 0.85.\",\n      \"fails_if\": \"Held-out error stays at or above 25% with the correction trained on 24 molecules, meaning residuals carry no chemistry-predictable structure and the floor is effectively random.\",\n      \"closest_prior\": \"Ogbomo 2026 reports raw LOPLS-AA Green–Kubo errors on 8 molecules with no correction model [s_ogbomo_md]; the planned work scales the same uncorrected protocol [s_ogbomo_res].\"\n    },\n    {\n      \"bottleneck\": \"Cost per molecule is dominated by converging the Green–Kubo stress autocorrelation (six 5-ns replicas, ~30 ns per molecule), because the chosen quantity, direct viscosity, is one of the slowest observables to converge. The pipeline's actual need is rank order over hundreds of candidates, so expensive absolute accuracy on few molecules caps coverage.\",\n      \"assumption\": \"Viscosity and thermal conductivity must be computed directly and at high absolute accuracy in order to rank candidates.\",\n      \"reframe\": \"Change the measured quantity to a cheaper related one that converges in about 1 ns, such as the self-diffusion coefficient from the mean-squared displacement, combined through a Stokes–Einstein- or Rosenfeld-style scaling with density and size, calibrated to viscosity on a small anchor set. Compute then buys chemical coverage instead of trajectory length.\",\n      \"question\": \"Does a 1-ns diffusion-derived proxy rank the 8 published benchmark molecules' measured viscosity with Spearman rank correlation of at least 0.8?\",\n      \"measure\": \"Run one 1-ns trajectory for each of the 8 published molecules, extract the self-diffusion coefficient from the MSD slope, and compute Spearman correlation between the proxy ranking and the measured viscosity ranking. Roughly 8 ns total, on the order of $10–$20, fittable inside the existing check-first stage.\",\n      \"compute_after\": \"If the proxy preserves order, each GPU-hour covers roughly 20–30 times more molecules, so additional compute directly buys ranking coverage toward the full 835-molecule set rather than longer runs on the same few.\",\n      \"exact\": \"Spearman rank correlation between proxy-derived ordering (inverse diffusion scaled by density and molecular size) and measured viscosity ordering across the 8 published molecules at 40 °C.\",\n      \"expected\": \"Correlation around 0.7–0.9 within a homologous series, with the main risk being a systematic offset between hydrocarbons and esters that a two-group calibration would absorb.\",\n      \"fails_if\": \"Spearman correlation below 0.6 on the 8 molecules, showing the proxy does not preserve order even in-distribution and is not worth calibrating.\",\n      \"closest_prior\": \"Direct Green–Kubo viscosity on 8 molecules [s_ogbomo_md]; diffusion-based and excess-entropy viscosity scalings are established elsewhere in the liquids literature but unused in this benchmark.\"\n    },\n    {\n      \"bottleneck\": \"The 8-to-24-to-48-to-120 ladder commits most of the budget before the decisive fact is known: whether the error is between-chemistry systematic (correctable by coverage and calibration) or within-molecule statistical (reducible only by longer runs). The six-replica protocol already produces both variance components, but the plan never decomposes them, so the allocation between more molecules and more nanoseconds is made blind.\",\n      \"assumption\": \"Deciding whether the floor exists requires the full 120-molecule ladder run with a fixed per-molecule protocol of six 5-ns replicas.\",\n      \"reframe\": \"Reorder the work: at the 24-molecule stage, decompose per-replica percent errors into between-molecule and within-molecule variance, then let that decomposition choose the allocation. If between-molecule variance dominates, spend on coverage and correction; if within-molecule variance dominates, spend on longer or more replicas per molecule and fewer molecules.\",\n      \"question\": \"In the 24-molecule run, what fraction of total viscosity error variance is between-molecule (systematic, chemistry-attached) versus within-molecule (replica noise), as measured by a random-effects variance decomposition of per-replica percent errors?\",\n      \"measure\": \"Fit a random-effects model to the 6 x 24 per-replica viscosity percent errors from the already-budgeted 24-molecule stage and report the intraclass correlation. Incremental cost is essentially $0 on top of the roughly $150–$250 that stage already plans to spend.\",\n      \"compute_after\": \"Whichever variance component dominates dictates what the remaining roughly $700 buys, so every later dollar is spent on the term that actually limits ranking, and more compute changes the conclusion rather than repeating the same protocol.\",\n      \"exact\": \"Intraclass correlation, the share of residual variance attributable to molecule identity, in a random-effects fit of per-replica viscosity percent errors at 40 °C over 24 molecules with 6 replicas each.\",\n      \"expected\": \"The stated hypothesis predicts a high between-molecule share, above about 0.6, which would confirm a correctable chemistry-dependent floor and argue for the correction-model path.\",\n      \"fails_if\": \"Between-molecule share below about 0.3, meaning error is mostly statistical replica noise; then correction models are dead and the lever is trajectory length per molecule, which the current plan does not vary.\",\n      \"closest_prior\": \"Ogbomo 2026 reports per-molecule errors for 8 molecules but no replica-level variance decomposition [s_ogbomo_md, s_ogbomo_res].\"\n    }\n  ]\n}",
+          "time": {
+            "start": 1792318958106,
+            "end": 1792318977058
+          },
+          "id": "prt_14e88ea1a0015M0XX0XfJDHVZG",
+          "sessionID": "ses_eb177c383ffeyiVehruPwYhENH",
+          "messageID": "msg_14e88473c001zVE0MJ33ThJVpJ"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "37450e4028329647194dd7dd9556dc5ffd28d228",
+          "type": "step-finish",
+          "tokens": {
+            "total": 5744,
+            "input": 1304,
+            "output": 1647,
+            "reasoning": 2793,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.070512,
+          "id": "prt_14e89352d001rI7nEcSSIP18wA",
+          "sessionID": "ses_eb177c383ffeyiVehruPwYhENH",
+          "messageID": "msg_14e88473c001zVE0MJ33ThJVpJ"
+        },
+        {
+          "type": "patch",
+          "hash": "325142497f7d63a32d957cf6650fbeca6c4a9674",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-independent.http/001.response.txt"
+          ],
+          "id": "prt_14e89364b001kd6xccsmA35xMz",
+          "sessionID": "ses_eb177c383ffeyiVehruPwYhENH",
+          "messageID": "msg_14e88473c001zVE0MJ33ThJVpJ"
+        }
+      ]
+    }
+  ]
+}

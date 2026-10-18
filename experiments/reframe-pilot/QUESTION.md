@@ -30,3 +30,29 @@ tell us whether any reframe works: that needs a measurement.
 
 | Run | Result |
 |---|---|
+| `20261018-1021-reframe` | 18 questions (3 cases x 2 lenses x 3), all first-attempt valid, $0.76. Known positive found by the independent lens (question 1) and, more loosely, by the harry lens (question 3). The judge called all 18 "reframe" and none "copies". |
+
+## Outcome against the predictions
+
+- `vla`, independent lens meets the criterion: **held.** Its first question scores steered action-chunk divergence on
+  recorded states and checks the ranking against closed-loop success (Spearman over about 30 features).
+- `vla`, harry lens proposes computing the 56-call rollout all at once and misses: **wrong.** It never proposed its own
+  method. It turned the forgetfulness test into short steered-versus-unsteered branches from checkpoints, and its third
+  question (rank features by activation gaps in the 420,000 logged rollouts, confirm the top ones closed-loop) was
+  judged to meet the criterion. That is correlational mining rather than steering on recorded frames: a loose match.
+- `weather`, harry lens predicts failure on chaotic dynamics: **wrong.** It did not mention its method; it proposed
+  extrapolating skill to infinite members, fitted "virtual members", and pooling model families.
+- `weather`, independent lens proposes rare-event sampling: **wrong.** It proposed separating Monte Carlo error from
+  shared model error by resampling the existing 7,424-member HENS archive, scoring return levels instead of fixed
+  percentiles, and a power analysis showing whether 7 dates can resolve a slope at all.
+- `coolant`, harry lens predicts failure for molecular dynamics: **wrong.** It proposed pairwise ordering on the
+  published 8-molecule table, a force-field parameter sweep, and simulating blends directly.
+- `coolant`, independent lens changes the metric: **held.** A 1-ns diffusion proxy for viscosity ranking, a learned
+  residual correction, and a variance decomposition that steers the remaining budget.
+- Batching judged copies wherever it appears: **not tested.** No proposal batched anything, so the judge never had a
+  copies case; it needs a planted one.
+
+Most questions are answerable by reanalysing data that already exists (the HENS archive, the published 8-molecule
+table, the logged rollouts) for $0 to $25. The harry brief behaved as a second general reframer with a convergence
+flavour, not as its namesake method.
+

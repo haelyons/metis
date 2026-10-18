@@ -1,0 +1,217 @@
+{
+  "info": {
+    "id": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+    "slug": "gentle-comet",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls",
+    "path": "experiments/reframe-pilot/20261018-1021-reframe/calls",
+    "title": "weather-independent",
+    "agent": "qt-bare",
+    "model": {
+      "id": "kimi-k3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.078888,
+    "tokens": {
+      "input": 1336,
+      "output": 1684,
+      "reasoning": 3308,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792318913369,
+      "updated": 1792319016868
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792318913848
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "kimi-k3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14e883d38001y5Hd0QWEuHRafu",
+        "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"You look for the assumption that makes a problem slow, or makes extra compute buy only more of the same. Ask which part\nof the work waits on another part, and whether it must. Ask which quantity is measured, and whether a different but\nrelated quantity would be cheaper to compute, easier to split, or more informative. Ask whether the unit of work is the\nright one, or whether the work could be cut, merged or reordered. Ask whether the objective is the right one: the single\nbest answer, a ranking, a distribution, a rare tail, or a yes or no. Ask what is held fixed that need not be. Prefer\nchanges that alter what more compute buys over changes that only run the same work more times.\n\nHere is a research problem as it was first written down, with the question it belongs to.\nRoot question: Do more members of a machine-learned weather ensemble buy better forecasts of rare extremes, or does error shared by all members cap the skill?\nProblem:\n**ml-ensemble-extremes · Ensemble size for rare extremes in a machine-learned weather ensemble.** seed pick · compute tested: yes · plan expects: the lever · PASS\n\n**Question.** Does 10 to 1,000 AIFS-ENS members beat 50 for top-percentile wind, temperature, and rain probability forecasts, or does shared model error cap the skill?\n\n**What is known.** HENS Part 2: 7,424 SFNO members per day for 92 summer-2023 dates; showed huge ensembles sample 4-sigma tails and reduce outliers. Whether AIFS-ENS, whose members are exchangeable draws of one afCRPS-trained distribution, keeps gaining skill past 50 members or saturates from shared model error.\n\n**Hypothesis.** More members keep helping: 1,000 members sample top-percentile tails far better than 50, so extreme-event scores keep improving [s_hens].\n\n**If compute is the lever.** Skill on top-percentile wind, temperature, and rain keeps rising past 50 members: 1,000 members sharpen the tails and improve extreme-event scores.\n\n**If not.** Skill flattens near 50 members: members are exchangeable draws of one trained distribution, so shared model error caps tail sharpness and extra members add nothing.\n\n**Test.** Run 7,000 fifteen-day AIFS-ENS v1 forecasts (7 dates x 1,000 members) on eight A100 40 GB GPUs; subsample 10-1,000 members, score top-percentile wind/temperature/rain probabilities against ERA5 with fair CRPS and Brier scores, and test whether skill still rises past 50 members.\n\n*Compute axis.* Ensemble members per forecast: 10–1,000 members, 6 levels. Closest prior: 7,424 [s_hens], not beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Reproduce the published 4-minute N320 member time and 38 GB memory; one control run must match ECMWF open data within ensemble spread [s_crps_paper]. Tolerance: timing within +/-25% of 4 min; 38 GB memory fits; control field within the ensemble's own member-to-member spread at each lead time (GPUs are non-deterministic, so exact reproduction is not expected).\n\n**Would not show.** Applies to AIFS-ENS v1 medium-range extremes on 7 dates; not a multi-season reforecast, other models, subseasonal leads, or direct proof that shared error causes any saturation.\n\n*Cost.* Plans $963.17 of the $1,000 budget over 74.3 machine-hours, leaving $36.83. Main guess: peak filesystem usage [g], measured after $19.90 of spend; the budget is reached if it is 15× higher. Full scale: A 30-date multi-season reforecast at 1,000 members, $3,980, 3.98× the budget.\n\nFind where this problem stops more compute from helping, or where more compute only buys more of the same. Then look for reframings: changes to what is measured, the unit of work, the objective or the order of steps that would let more compute change the answer. Give up to three. End each with one question someone could investigate: specific, answerable by a measurement, and naming what is measured. For each, give the cheapest measurement that would answer it or show it is not worth pursuing, with a rough cost. Decide from the text above and what you know; do not use tools.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"reframes\\\"],\\\"properties\\\":{\\\"reframes\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"bottleneck\\\",\\\"assumption\\\",\\\"reframe\\\",\\\"question\\\",\\\"measure\\\",\\\"compute_after\\\",\\\"exact\\\",\\\"expected\\\",\\\"fails_if\\\",\\\"closest_prior\\\"],\\\"properties\\\":{\\\"bottleneck\\\":{\\\"type\\\":\\\"string\\\"},\\\"assumption\\\":{\\\"type\\\":\\\"string\\\"},\\\"reframe\\\":{\\\"type\\\":\\\"string\\\"},\\\"question\\\":{\\\"type\\\":\\\"string\\\"},\\\"measure\\\":{\\\"type\\\":\\\"string\\\"},\\\"compute_after\\\":{\\\"type\\\":\\\"string\\\"},\\\"exact\\\":{\\\"type\\\":\\\"string\\\"},\\\"expected\\\":{\\\"type\\\":\\\"string\\\"},\\\"fails_if\\\":{\\\"type\\\":\\\"string\\\"},\\\"closest_prior\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_14e883d59001QXKu24D07oRSJ3",
+          "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+          "messageID": "msg_14e883d38001y5Hd0QWEuHRafu"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14e883d38001y5Hd0QWEuHRafu",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.078888,
+        "tokens": {
+          "total": 6328,
+          "input": 1336,
+          "output": 1684,
+          "reasoning": 3308,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "kimi-k3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792318916246,
+          "completed": 1792319016825
+        },
+        "finish": "stop",
+        "id": "msg_14e884696001cKftMC8PV4muQc",
+        "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf"
+      },
+      "parts": [
+        {
+          "snapshot": "325142497f7d63a32d957cf6650fbeca6c4a9674",
+          "type": "step-start",
+          "id": "prt_14e885748001otDQRKuZK8S5LY",
+          "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+          "messageID": "msg_14e884696001cKftMC8PV4muQc"
+        },
+        {
+          "type": "reasoning",
+          "text": "The task: read the problem, find where more compute stops helping, and propose up to three reframings. Return only JSON matching the schema.\n\nLet me analyze the problem:\n\nThe root question: does ensemble size buy better forecasts of rare extremes, or does shared model error cap skill? The plan: run 1,000 AIFS-ENS members, subsample 10–1,000, score with fair CRPS and Brier against ERA5.\n\nKey assumptions / bottlenecks:\n\n1. **All members are exchangeable draws from one trained distribution.** If so, more members only reduce Monte Carlo sampling error of the same underlying distribution — they cannot fix the distribution's own error. So the \"skill vs N\" curve's asymptote is fixed by the model, and by a few hundred members the MC noise is small anyway. The experiment mostly measures the convergence of a Monte Carlo estimator, which is predictable. Compute buys more of the same: more draws from the same distribution. Reframe: instead of measuring whether skill saturates, decompose skill into MC-sampling part (which shrinks as 1/N, computable analytically or from resampling) vs the irreducible model error. Or: hold fixed that all members come from one model — what is held fixed that need not be: the model itself. Mix members across models/checkpoints (e.g., different training seeds, different model versions, perturbed analyses) so extra compute buys diversity rather than more of the same draw. Question: at what member count does the MC-sampling error fall below the shared model error, i.e., when is the ensemble's own distribution the limit? Cheapest measurement: bootstrap/subsample from existing HENS 7,424-member archive — you can compute the skill-vs-N curve with resampling alone, no new forecasts. Actually the plan's compute is running AIFS-ENS, but a first measurement could use HENS's 7,424 members to measure the shape of the saturation curve and estimate the asymptote — cheap, just rescoring.\n\n2. **What is measured: top-percentile threshold exceedance probabilities with fair CRPS and Brier.** Probability of exceeding a climatological percentile is a quantity that saturates because the event definition is relative to a shifting climatology; a different but related quantity — quantile level (e.g., return level of the 1-in-100-day event), or the probability of a fixed physical threshold (e.g., wind > 25 m/s), or tail index / generalised Pareto parameters of the ensemble-max distribution — may respond differently to N and be more informative about extremes. In particular, ensemble size buys resolution of rarer probabilities: with N members the finest resolvable probability is ~1/N. So asking \"does skill at top 1% keep improving\" when N=10 cannot even resolve 1%... wait 10 members → 10% granularity; 1,000 → 0.1%. The rarest resolvable event scales with N. So reframe: instead of fixed top-percentile events, measure the largest return period the ensemble can price — the skill-vs-N curve at event rarity matched to N (e.g., 1/N events). Question: does the 1-in-N-day event probability from N members verify against ERA5 better as N grows — i.e., does compute buy access to rarer events rather than better scores on the same events? Measurement: score the ensemble-max distribution / extrapolated return levels for fixed high thresholds, using only the existing HENS 7,424-member data subsampled — cheap re-scoring.\n\n3. **The objective: single best answer vs distribution vs yes/no.** The test asks whether the skill curve still rises past 50 — a yes/no with a curve. A different objective: what's the economically optimal N (where marginal skill per GPU-hour stops paying), which turns compute into a decision variable. Or: which part of the work waits on another part — all 1,000 members are independent; the plan runs them then subsamples. But you could reorder: run members sequentially and stop when the curve's slope is measured (sequential testing) — adaptive member count. Actually \"which part of the work waits on another part, and whether it must\": subsampling after the full run is fine, but check-first steps: the reproduction check gates everything.\n\n4. **Unit of work: member.** Is the member the right unit? A cheaper related quantity: generate members with fewer steps? Not applicable. Alternative: the unit could be the \"effective independent member\" — members may be correlated (shared initial perturbations? In AIFS-ENS they're exchangeable draws). Measure effective ensemble size / intra-ensemble correlation: if members are strongly correlated in the tail, effective N is much smaller than nominal N, and saturation happens in effective-N space. Question: what is the effective ensemble size for top-percentile events — i.e., at what nominal N does effective N plateau? Measurement: from the HENS archive, compute tail-dependence between members (e.g., pairwise co-exceedance beyond the 99th percentile) — cheap, data-only.\n\n5. **Dates: 7 dates, one season, one model.** What is held fixed that need not be: the verification (ERA5, which is itself analysis, not truth) and the event definition. Also, the assumption that saturation observed on 7 summer dates generalizes.\n\nThe strongest reframings per the meta-instructions (changes that alter what more compute buys):\n\nA. **Decompose MC error vs model error; change what more members buy by mixing distributions.** Bottleneck: all members are draws of one afCRPS-trained distribution, so past some N compute only reduces Monte Carlo noise of the same wrong distribution. Assumption: ensemble members must come from a single model. Reframe: make the axis ensemble diversity (mix checkpoints/seeds/models or perturbed ICs) rather than member count; or first measure where MC noise falls below model error so you know the point past which more members can't help. Question: at what member count does the skill-vs-N curve's MC-sampling contribution (estimable by resampling) drop below the spread between different trained models/checkpoints on top-percentile scores? Measure: resample existing HENS 7,424-member archive (subsampling 10–7,424) and compare the resampling curve's asymptote gap to spread across the two model variants / or across random seeds — cost: a few CPU-hours of rescoring, <$10. Compute after: only if a diversity axis exists does more compute buy anything past saturation.\n\nB. **Match event rarity to ensemble size (change the measured quantity).** Bottleneck: with N members the finest probability resolvable is ~1/N, so fixed top-percentile scores conflate resolution with skill and saturate mechanically. Assumption: the event set (top 1%) is fixed while N varies. Reframe: score the 1-in-N event each ensemble size can uniquely price, or measure return-level error at fixed physical thresholds via tail extrapolation. Question: does the error of the ensemble-implied 1-in-100-day return level (e.g., 10 m wind gust at grid points) keep falling from N=50 to N=1,000? Measure: fit GPD/GEV to HENS archive subsamples vs ERA5; cheap re-scoring, ~$10.\n\nC. **Sequential/adaptive unit of work or the yes/no objective → optimal-N decision.** Bottleneck: the plan buys a fixed 7,000 forecast-members regardless of what the data show; the objective is a yes/no about the curve rather than the decision-relevant quantity (marginal skill per compute). Assumption: member count must be chosen before seeing results, and all dates/members are run. Reframe: reorder steps — run members in batches and stop when the skill-vs-N slope is resolved (sequential testing); objective becomes the N where marginal CRPS gain per GPU-hour crosses a threshold. Question: after how many members/dates is the sign and curvature of the skill-vs-N curve past 50 resolved at 95% confidence? Measure: bootstrap the HENS subsample scores to get the variance of the slope estimate vs number of dates — cheap, <$10, and it may show 7 dates can never resolve the slope, saving the whole run.\n\nActually C is strong: \"would not show\" says 7 dates — the power analysis. The cheapest measurement: use HENS (7,424 members, 92 dates) to simulate the planned experiment's statistical power — subsample to 7 dates and see whether the slope past 50 members is detectable. If the slope isn't detectable with 92 dates of HENS, the planned 7-date AIFS run can't answer its question regardless of compute. That's a \"show it is not worth pursuing\" measurement.\n\nLet me pick the three best reframings, each ending with one specific, answerable question naming what's measured, plus cheapest measurement with rough cost.\n\nReframe 1 (what's held fixed: single trained distribution; more members buy only Monte Carlo convergence):\n- bottleneck: Past some N, extra members only reduce Monte Carlo error of the same afCRPS-trained distribution; shared model error fixes the asymptote, so the run mostly measures estimator convergence.\n- assumption: All members must be exchangeable draws of one trained model.\n- reframe: Change the axis from member count to member diversity — hold N fixed and add members drawn from different training seeds/checkpoints/perturbed analyses — so extra compute buys a different distribution, not more samples of the same one.\n- question: Does a 100-member ensemble mixed from 4 independently trained models beat 100 members from one model on top-1% Brier skill, and does it shift the saturation point?\n- measure: Resample the HENS 7,424-member archive (already on disk) into 10–1,000-member subsamples and fit the skill-vs-N curve; extrapolate its asymptote; the gap between the 1,000-member score and the fitted asymptote is the MC-error share — if that share is tiny at N=50, the planned run measures only convergence. Cost: ~$5–20 CPU re-scoring.\n- compute_after: If the MC share is small by N≈50–100, further members buy nothing; spend compute instead on a second training seed (~one fine-tune run) to test diversity.\n- exact: fit e.g. skill(N) = S∞ − a/N (or a/N^0.5) to bootstrap subsamples; report S∞ − S(50) and its CI.\n- expected: MC-error share at N=50 is small relative to model-vs-model spread, meaning saturation is a model property.\n- fails_if: the fitted curve still rises materially past N=200 (then more members do buy skill and the original plan stands).\n- closest_prior: HENS Part 2's own outlier-reduction curve with 7,424 members [s_hens].\n\nReframe 2 (what is measured: fixed top-percentile events; finest resolvable probability is 1/N):\n- bottleneck: Fixed top-percentile scores mechanically saturate: with N members you cannot price events rarer than ~1/N, so part of the \"gain\" from 50→1,000 is resolution, not forecast quality; conversely scores at fixed 1% cannot show whether the true tail improves.\n- assumption: The event definition (top percentile of climatology) must be fixed while N varies.\n- reframe: Measure the quantity whose rarity scales with the compute: return-level error at fixed physical thresholds (e.g., 1-in-100-day 10 m wind), via tail fits on the pooled ensemble; let the event get rarer as N grows.\n- question: Does the error of the ensemble-implied 1-in-100-day return level for 10 m wind and 2 m temperature against ERA5 keep shrinking from N=50 to N=1,000?\n- measure: Fit GPD/GEV to subsamples of the HENS 7,424-member archive for the 92 summer-2023 dates and compare return levels to ERA5 — pure post-processing, ~$10–30 CPU.\n- compute_after: If return-level error keeps falling with N where probability scores saturate, the 1,000-member AIFS run should budget a few dates at N=1,000 scored on return levels rather than 7 dates scored on Brier.\n- exact: RMSE of the 100-day return level over land grid points, ensemble-derived vs ERA5, at N ∈ {10,25,50,100,200,500,1000,2000,7424}.\n- expected: probability scores flatten by N≈100–200 while return-level error keeps falling, showing what compute actually buys is tail resolution.\n- fails_if: return-level error also flattens by N≈100 — then saturation is real and shared.\n- closest_prior: HENS's 4-sigma tail sampling claim, tested with return-level errors rather than counts of outliers.\n\nReframe 3 (objective/order: the plan's yes/no needs power that 7 dates may not have; reorder to sequential batches):\n- bottleneck: The objective is a yes/no — \"does skill still rise past 50\" — but with 7 dates the slope past N=50 may be undetectable no matter how many members are run; compute buys members, but the binding constraint is dates (independent weather cases), so extra members only buy more of the same correlated evidence.\n- assumption: The number of verification dates is fixed at 7 and members are the free axis.\n- reframe: Swap the axes: more independent dates at moderate N beats more members on few dates for detecting a slope; reorder work into sequential batches (members in chunks, dates first) with a stopping rule.\n- question: With 7 dates, what is the smallest detectable skill-vs-N slope past N=50 at 80% power for the fair CRPS of top-1% events?\n- measure: Power analysis by bootstrap on HENS's 92 dates: subsample 7 dates, estimate the slope of fair-CRPS vs log N past 50 across many resamples, report the detectable effect size; ~$5–15 CPU. If 92 HENS dates barely resolve the slope, 7 AIFS dates cannot, and the plan fails before spending the $963.\n- compute_after: If underpowered, redirect compute from 1,000 members × 7 dates to e.g. 100–200 members × 40–60 dates — same budget, more independent cases.\n- exact: distribution over bootstrap resamples of the OLS slope of fair CRPS vs log10(N) for N ≥ 50, restricted to 7-date subsets; report the slope magnitude detected in ≥80% of resamples.\n- expected: 7 dates resolve only a very large slope; 30–50 dates are needed for a modest one — the plan as written cannot answer its question.\n- fails_if: the bootstrap shows 7 dates already resolve small slopes (then the original plan is adequately powered).\n- closest_prior: HENS used 92 dates; the plan shrinks to 7 while pushing N — no prior tests detectability vs date count.\n\nAlso could mention \"unit of work is the member; effective ensemble size\" but three is enough. Maybe fold effective-N into reframe 1's assumption? Keep three clean ones.\n\nNow format per schema. Fields: bottleneck, assumption, reframe, question, measure, compute_after, exact, expected, fails_if, closest_prior. All strings. Return only JSON.\n\nMake each field reasonably concise but complete. Costs: rough — HENS archive rescoring maybe \"$5–25 of CPU time\". The problem says budget ~$1,000, plans $963. Cheapest measurements should be much cheaper.\n\nLet me write the JSON.",
+          "time": {
+            "start": 1792318920532,
+            "end": 1792318994248
+          },
+          "id": "prt_14e885754001328g6fTXFFAHFv",
+          "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+          "messageID": "msg_14e884696001cKftMC8PV4muQc"
+        },
+        {
+          "type": "text",
+          "text": "```json\n{\n  \"reframes\": [\n    {\n      \"bottleneck\": \"All 1,000 members are exchangeable draws of one afCRPS-trained distribution, so past some N extra compute only shrinks the Monte Carlo error of the same (possibly wrong) distribution; the skill asymptote is a property of the model, not of N, and the run largely measures estimator convergence.\",\n      \"assumption\": \"Ensemble members must all come from a single trained model; the axis of variation is member count.\",\n      \"reframe\": \"Change the axis from member count to member diversity: first split the observed skill-vs-N curve into its Monte-Carlo-convergence part (estimable by resampling, no new forecasts) and its irreducible shared-model part; only if the latter dominates, spend compute on members drawn from different training seeds or checkpoints, so extra compute buys a different distribution rather than more samples of the same one.\",\n      \"question\": \"At what member count does the Monte Carlo share of top-1% fair-CRPS skill (the fitted gap S_infinity minus S(N)) fall below 10% of the score spread between two independently trained model seeds?\",\n      \"measure\": \"Resample the already-archived HENS 7,424-member, 92-date dataset into 10-1,000-member subsamples, recompute fair CRPS/Brier vs ERA5, fit skill(N) = S_inf - a/sqrt(N), and report the fitted asymptote gap at N=50 with bootstrap confidence intervals. Roughly $5-25 of CPU re-scoring; no GPU forecasts needed.\",\n      \"compute_after\": \"If the MC share at N~50-100 is negligible, cancel the 7,000-member run and instead fine-tune a second seed (a fraction of the planned GPU budget) to test whether a mixed 2-seed ensemble shifts the asymptote.\",\n      \"exact\": \"Fit S_inf - a/N^0.5 to bootstrap subsamples of HENS scores; report S_inf - S(50), its 95% CI, and the N where this gap reaches 10% of the seed-to-seed score spread.\",\n      \"expected\": \"The gap at N=50 is already small relative to plausible model-to-model spread, meaning saturation is a model property and more members buy nothing.\",\n      \"fails_if\": \"The fitted curve still rises materially past N=200, i.e., the Monte Carlo share is large and the original 1,000-member plan genuinely tests new territory.\",\n      \"closest_prior\": \"HENS Part 2's own outlier-reduction curves with 7,424 members over 92 dates [s_hens], re-read as a convergence measurement rather than a skill result.\"\n    },\n    {\n      \"bottleneck\": \"With N members the finest resolvable probability is about 1/N, so fixed top-percentile scores conflate two things: better tail resolution (mechanical, scales with N) and better tail truthfulness (capped by shared model error). The metric saturates or rises for reasons orthogonal to the root question.\",\n      \"assumption\": \"The event definition (top percentile of climatology, scored by Brier/fair CRPS) must be held fixed while N varies.\",\n      \"reframe\": \"Change the measured quantity to one whose rarity scales with the compute: the error of the ensemble-implied return level at fixed physical thresholds (e.g., the 1-in-100-day 10 m wind gust and 2 m temperature), estimated by fitting a tail distribution to the pooled ensemble. This lets the question 'what does more compute buy' be answered as: access to rarer, still-accurate events, versus nothing.\",\n      \"question\": \"Does the RMSE of the ensemble-derived 1-in-100-day return level for 10 m wind against ERA5 keep falling from N=50 to N=1,000, even where top-1% Brier skill has flattened?\",\n      \"measure\": \"Fit GPD/GEV tails to subsampled HENS members (N in {10,25,50,100,200,500,1000,2000,7424}) for the 92 summer-2023 dates and compute return-level RMSE vs ERA5 over land grid points. Pure post-processing of existing data, roughly $10-30 CPU.\",\n      \"compute_after\": \"If return-level error keeps falling where probability scores saturate, redirect the planned AIFS spend toward fewer dates at N=1,000 scored on return levels; if both flatten, the saturation conclusion is established without any new forecasts.\",\n      \"exact\": \"RMSE of the 100-day return level, ensemble-derived vs ERA5, averaged over land grid points, reported as a function of N on the resampled HENS archive.\",\n      \"expected\": \"Brier/fair-CRPS at the top percentile flattens by N~100-200 while return-level error keeps decreasing, showing that what extra members buy is tail resolution, not probability skill.\",\n      \"fails_if\": \"Return-level error also flattens by N~100, which would show the cap is real and shared even on the resolution-insensitive quantity.\",\n      \"closest_prior\": \"HENS's claim of sampling 4-sigma tails [s_hens], recast as return-level accuracy rather than counts of sampled outliers.\"\n    },\n    {\n      \"bottleneck\": \"The binding statistical constraint is independent weather cases, not members: members on the same date are correlated evidence about one event, so pushing N from 50 to 1,000 on only 7 dates may buy more of the same while the yes/no slope past N=50 stays undetectable regardless of member count.\",\n      \"assumption\": \"The number of verification dates is fixed at 7 and ensemble size is the free compute axis; all members must be run before any scoring.\",\n      \"reframe\": \"Swap the compute axis and reorder the work: before running anything, test whether 7 dates can resolve a slope at all; if not, reallocate the same budget from 1,000 members x 7 dates to ~100-200 members x 40-60 dates, and run members in sequential batches with a stopping rule once the slope's sign is resolved.\",\n      \"question\": \"With 7 dates, what is the smallest skill-vs-log(N) slope past N=50 in fair CRPS for top-1% events that is detectable at 80% power?\",\n      \"measure\": \"Bootstrap power analysis on the existing 92-date HENS archive: repeatedly subsample 7 dates, compute the OLS slope of fair CRPS vs log10(N) for N>=50, and report the slope magnitude resolved in >=80% of resamples. Roughly $5-15 CPU; if even 92 HENS dates barely resolve the slope, the planned 7-date run is shown not worth pursuing before spending the $963.\",\n      \"compute_after\": \"If underpowered, redirect the same dollars to many more dates at moderate N; only add members past ~100 on dates where the resampled slope CI excludes zero.\",\n      \"exact\": \"Distribution over bootstrap resamples of the fair-CRPS-vs-log10(N) slope for N>=50 on 7-date subsets; report the effect size with >=80% detection rate and the date count needed for a modest slope.\",\n      \"expected\": \"Seven dates resolve only a very large slope; roughly 30-50 dates are needed for a modest one, meaning the plan as written cannot answer its question at any member count.\",\n      \"fails_if\": \"The bootstrap shows 7 dates already resolve small slopes with high power, in which case the original 1,000-member design is adequately powered.\",\n      \"closest_prior\": \"HENS used 92 dates at up to 7,424 members [s_hens]; the plan inverts this to 7 dates at 1,000 members, and no prior result tests detectability as a function of date count.\"\n    }\n  ]\n}\n```",
+          "time": {
+            "start": 1792318994269,
+            "end": 1792319016106
+          },
+          "id": "prt_14e89775c001v0mGdHYSgw0hfx",
+          "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+          "messageID": "msg_14e884696001cKftMC8PV4muQc"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "a648bb40eeb5a6f6f53ae5a196c757132af8f2ce",
+          "type": "step-finish",
+          "tokens": {
+            "total": 6328,
+            "input": 1336,
+            "output": 1684,
+            "reasoning": 3308,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.078888,
+          "id": "prt_14e89ce840010UAV1oLp24CG0o",
+          "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+          "messageID": "msg_14e884696001cKftMC8PV4muQc"
+        },
+        {
+          "type": "patch",
+          "hash": "325142497f7d63a32d957cf6650fbeca6c4a9674",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/coolant-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/vla-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls/weather-independent.http/001.response.txt"
+          ],
+          "id": "prt_14e89cf73001zmv1w3L1f8yn72",
+          "sessionID": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+          "messageID": "msg_14e884696001cKftMC8PV4muQc"
+        }
+      ]
+    }
+  ]
+}

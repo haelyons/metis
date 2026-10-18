@@ -1,0 +1,39 @@
+{
+ "ts": "2026-10-18T10:21:59.634Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_14e883d38001y5Hd0QWEuHRafu",
+  "x-opencode-session": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+  "x-opencode-session-id": "ses_eb177c4a7ffeBUxg9omzh5ocCf",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:39769",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "5668"
+ },
+ "body": {
+  "model": "kimi-k3",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the text you are given. You use no tools. You return only the JSON asked for.\nYou are powered by the model named kimi-k3. The exact model ID is opencode-go/kimi-k3\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1021-reframe/calls\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Sun Oct 18 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"You look for the assumption that makes a problem slow, or makes extra compute buy only more of the same. Ask which part\nof the work waits on another part, and whether it must. Ask which quantity is measured, and whether a different but\nrelated quantity would be cheaper to compute, easier to split, or more informative. Ask whether the unit of work is the\nright one, or whether the work could be cut, merged or reordered. Ask whether the objective is the right one: the single\nbest answer, a ranking, a distribution, a rare tail, or a yes or no. Ask what is held fixed that need not be. Prefer\nchanges that alter what more compute buys over changes that only run the same work more times.\n\nHere is a research problem as it was first written down, with the question it belongs to.\nRoot question: Do more members of a machine-learned weather ensemble buy better forecasts of rare extremes, or does error shared by all members cap the skill?\nProblem:\n**ml-ensemble-extremes · Ensemble size for rare extremes in a machine-learned weather ensemble.** seed pick · compute tested: yes · plan expects: the lever · PASS\n\n**Question.** Does 10 to 1,000 AIFS-ENS members beat 50 for top-percentile wind, temperature, and rain probability forecasts, or does shared model error cap the skill?\n\n**What is known.** HENS Part 2: 7,424 SFNO members per day for 92 summer-2023 dates; showed huge ensembles sample 4-sigma tails and reduce outliers. Whether AIFS-ENS, whose members are exchangeable draws of one afCRPS-trained distribution, keeps gaining skill past 50 members or saturates from shared model error.\n\n**Hypothesis.** More members keep helping: 1,000 members sample top-percentile tails far better than 50, so extreme-event scores keep improving [s_hens].\n\n**If compute is the lever.** Skill on top-percentile wind, temperature, and rain keeps rising past 50 members: 1,000 members sharpen the tails and improve extreme-event scores.\n\n**If not.** Skill flattens near 50 members: members are exchangeable draws of one trained distribution, so shared model error caps tail sharpness and extra members add nothing.\n\n**Test.** Run 7,000 fifteen-day AIFS-ENS v1 forecasts (7 dates x 1,000 members) on eight A100 40 GB GPUs; subsample 10-1,000 members, score top-percentile wind/temperature/rain probabilities against ERA5 with fair CRPS and Brier scores, and test whether skill still rises past 50 members.\n\n*Compute axis.* Ensemble members per forecast: 10–1,000 members, 6 levels. Closest prior: 7,424 [s_hens], not beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Reproduce the published 4-minute N320 member time and 38 GB memory; one control run must match ECMWF open data within ensemble spread [s_crps_paper]. Tolerance: timing within +/-25% of 4 min; 38 GB memory fits; control field within the ensemble's own member-to-member spread at each lead time (GPUs are non-deterministic, so exact reproduction is not expected).\n\n**Would not show.** Applies to AIFS-ENS v1 medium-range extremes on 7 dates; not a multi-season reforecast, other models, subseasonal leads, or direct proof that shared error causes any saturation.\n\n*Cost.* Plans $963.17 of the $1,000 budget over 74.3 machine-hours, leaving $36.83. Main guess: peak filesystem usage [g], measured after $19.90 of spend; the budget is reached if it is 15× higher. Full scale: A 30-date multi-season reforecast at 1,000 members, $3,980, 3.98× the budget.\n\nFind where this problem stops more compute from helping, or where more compute only buys more of the same. Then look for reframings: changes to what is measured, the unit of work, the objective or the order of steps that would let more compute change the answer. Give up to three. End each with one question someone could investigate: specific, answerable by a measurement, and naming what is measured. For each, give the cheapest measurement that would answer it or show it is not worth pursuing, with a rough cost. Decide from the text above and what you know; do not use tools.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"reframes\\\"],\\\"properties\\\":{\\\"reframes\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"bottleneck\\\",\\\"assumption\\\",\\\"reframe\\\",\\\"question\\\",\\\"measure\\\",\\\"compute_after\\\",\\\"exact\\\",\\\"expected\\\",\\\"fails_if\\\",\\\"closest_prior\\\"],\\\"properties\\\":{\\\"bottleneck\\\":{\\\"type\\\":\\\"string\\\"},\\\"assumption\\\":{\\\"type\\\":\\\"string\\\"},\\\"reframe\\\":{\\\"type\\\":\\\"string\\\"},\\\"question\\\":{\\\"type\\\":\\\"string\\\"},\\\"measure\\\":{\\\"type\\\":\\\"string\\\"},\\\"compute_after\\\":{\\\"type\\\":\\\"string\\\"},\\\"exact\\\":{\\\"type\\\":\\\"string\\\"},\\\"expected\\\":{\\\"type\\\":\\\"string\\\"},\\\"fails_if\\\":{\\\"type\\\":\\\"string\\\"},\\\"closest_prior\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\""
+   }
+  ],
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}
