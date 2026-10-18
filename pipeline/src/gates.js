@@ -219,7 +219,13 @@ function gate_plan(plan, ev, pick, args) {
   // only errors that stop evaluation route to repair; a value not found in its quote, or a gate naming a non-number,
   // is annotated and left to the dramaturg (an unconfirmed citation is shown as GUESS on the card)
   for (const e of ev.errors) (['quote', 'gate_ref'].includes(e.kind) ? annotations : repair).push(`${e.kind} at ${e.where}: ${e.msg}`)
-  if (ev.planned > budget && stated <= budget) repair.push(`planned ${usd(ev.planned)} over ${usd(budget)} while stated ${usd(stated)} is not`)
+  if (ev.planned > budget && stated <= budget) {
+    repair.push(`planned ${usd(ev.planned)} over ${usd(budget)} while stated ${usd(stated)} is not`)
+    // GPU-hours billed at an instance rate: the overrun then matches the GPU count of a multi-GPU rate
+    const ratio = stated > 0 ? ev.planned / stated : 0
+    const n = [...new Set((plan.cost.rates || []).map(r => r.n_gpus).filter(g => g > 1))].find(g => Math.abs(ratio - g) / g < 0.05)
+    if (n) repair.push(`the planned total is ${ratio.toFixed(1)}x the stated one, the GPU count of the ${n}-GPU rate: a line's hours are wall-clock hours of the whole instance, so hours given as GPU-hours must be divided by its GPU count (${n})`)
+  }
 
   if (txt_normalize_title(plan.option_title) !== txt_normalize_title(pick.title))
     annotations.push(`option_title mismatch: plan "${plan.option_title}", pick "${pick.title}" (re-key if it is another option in this branch)`)

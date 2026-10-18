@@ -1,0 +1,13 @@
+{
+ "id": "IC-V3",
+ "title": "MD verification inserted into Org-Mol's ester shortlist before synthesis",
+ "text": "Data-centre immersion cooling needs dielectric liquids with low viscosity, high thermal conductivity and heat capacity, and PFAS rules are pushing the field towards PFAS-free esters. Restrict the generative search to synthetically accessible PFAS-free esters of the kind already ML-screened at scale, filter to a ranked shortlist, and MD-verify the top 100, 300 then 1000 candidates' viscosity and thermal conductivity before any synthesis decision. Score against measured data for known esters and commercial single-phase fluids held out of training, never against the predictors. More compute buys more MD-verified candidates and longer simulations per candidate, testing whether the best cooling figure of merit keeps climbing beyond the 461-candidate shortlist stage.",
+ "root_question": "generative pipeline for discovery of single phase immersion coolants",
+ "kind": "physical",
+ "root_link": "SAME: ester discovery kept on transport properties and on the down-selection step where prior work stops.",
+ "compute_open": "MD-verified candidates (100\u20131000, anchored to a ~461-candidate shortlist) and simulation length per candidate. Unknown: whether MD meaningfully reorders an ML shortlist or merely confirms it.",
+ "sequential": "not given",
+ "source_urls": [],
+ "variant_of": "seed.json",
+ "changes": "Changes the system studied: esters only, inside a synthetically accessible space, instead of esters plus hydrocarbons, with the candidate count anchored to the existing 461-candidate shortlist. Answers the gap that the Org-Mol/SINOPEC team ML-filtered millions of esters but manually picked only two to synthesise and never MD-verified the shortlist; also partially probes whether the best figure of merit still improves from ~100 to ~1000 verified candidates."
+}

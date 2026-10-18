@@ -137,7 +137,7 @@
       "up to $1,000 of GPU credit at Lambda's on-demand prices (https://lambda.ai/pricing).",
       'Run every local command under timeout. Start no new local run 45 minutes after you begin; if a run you need is unfinished by then, give its inputs basis GUESS with measured_by naming the phase that measures it. Local runs share a 4-core machine with other producers.',
       'predictions.noise_rule', 'predictions.expected', 'scored_against', 'novelty.prior_max_level', 'novelty.searched', 'test_summary 45',
-      'that you rely on. In restructuring, sequential_part is the part of this computation', 'nearest published parallel version of this computation. Write the record\'s card fields',
+      'that you rely on. Cite pages a reader can open without a login or paywall: a value that appears only in a paywalled full text cannot be checked, so take it from an open source (an open-access version, a preprint or a public database). In restructuring, sequential_part is the part of this computation', 'nearest published parallel version of this computation. Write the record\'s card fields',
       'limits, restructuring.sequential_part, restructuring.method) for a reader', 'restructuring.sequential_part 18, restructuring.method 22)',
       `${A.dir}/pilot/`, `Lambda's prices as read at the start of this run: ${SHEET}.`,
     ]) assert.ok(OUT.P_PRODUCER.includes(s), `producer lacks ${s.slice(0, 50)}`)

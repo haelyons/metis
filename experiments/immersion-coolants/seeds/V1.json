@@ -1,0 +1,13 @@
+{
+ "id": "IC-V1",
+ "title": "Force-field error floor for coolant MD: an enlarged C10\u2013C50 benchmark scored against measurement",
+ "text": "Data-centre immersion cooling needs dielectric liquids with low viscosity, high thermal conductivity and heat capacity, a low dielectric constant and a high flash point, and MD is increasingly used to rank candidates. Turn the MD verification step itself into the object of study: run one GPU-MD protocol for viscosity and thermal conductivity over a systematically enlarged set of C10\u2013C50 hydrocarbons and esters, including the known commercial single-phase coolants, and score it only against measured values. More compute buys more benchmark molecules (from the handful used today to hundreds) and longer trajectories per molecule, not more novel candidates. Report the force-field error distribution and whether MD ranks known fluids in the same order as measurement well enough to trust a candidate ranking.",
+ "root_question": "generative pipeline for discovery of single phase immersion coolants",
+ "kind": "physical",
+ "root_link": "SAME: transport properties (viscosity, thermal conductivity) of organic liquids, verified by GPU-MD against measurement.",
+ "compute_open": "Benchmark molecules covered (roughly 8 to a few hundred) and simulation length per molecule. Unknown: whether the error is a correctable systematic bias or a random floor that caps how far a ranking can be trusted.",
+ "sequential": "not given",
+ "source_urls": [],
+ "variant_of": "seed.json",
+ "changes": "Changes the comparison it is judged against and what compute buys: instead of a hit rate over novel candidates versus commercial fluids, it is MD-versus-measurement error over an enlarged C10\u2013C50 benchmark that includes commercial coolants. Answers the gap that the Ewen group's MD verification covers only 8 representative molecules with no coolant figure of merit, and measures the ~10% force-field error the original card only assumes."
+}
