@@ -15,7 +15,7 @@ the scripts that read them are in the session that wrote this, not in the repo.
 
 | | Claude card (run F) | OpenCode card |
 |---|---|---|
-| Verdict | PASS 2/2 | REJECT: the hypothesis quotes AUROC 0.953 with no source; the cited page says 0.960 |
+| Verdict | PASS 2/2 | REJECT: the hypothesis uses AUROC 0.953 (a MATH-500 figure from another study) without its source, so the checker read it against the cited SMT-LIB page, which says 0.960 |
 | Critic | Sonnet: stakes 4, lever 4, verifiable 4, open 5, reshape 4 | GLM 5.3 Flash alone: 5, 5, 3, 5, 5 |
 | Plan | $535 | $489 |
 | Producer context | median 6.5M tokens per run-F producer | 0.73M with cache, $0.28 |

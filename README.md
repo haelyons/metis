@@ -1,6 +1,6 @@
 # latent_open
 
-Where could massive parallel compute change a scientific answer? A question-tree pipeline turns a root question or a
+A question-tree pipeline turns a root question or a
 one-line idea into research cards: a plan with a costed compute axis, a cheap check to run first, and predictions for
 either outcome. Fresh model contexts then check every cited claim against its page, score the card, and place it in
 the existing research or industrial programmes its result would feed.
