@@ -9,6 +9,7 @@ const path = require('node:path')
 
 const UPSTREAM = 'opencode.ai'
 const SECRET = /^(authorization|x-api-key|x-opencode-org-id|cookie|set-cookie)$/i
+const ORG = /org_[A-Z0-9]{20,}/g   // account workspace ids appear in error bodies
 const redact = h => Object.fromEntries(Object.entries(h).map(([k, v]) => [k, SECRET.test(k) ? '[redacted]' : v]))
 
 function start(dir) {
@@ -30,7 +31,7 @@ function start(dir) {
       const up = https.request({ host: UPSTREAM, method: req.method, path: p, headers }, r => {
         out.write(`HTTP ${r.statusCode}\n${JSON.stringify(redact(r.headers))}\n\n`)
         res.writeHead(r.statusCode, r.headers)
-        r.on('data', c => { out.write(c); res.write(c) })
+        r.on('data', c => { out.write(String(c).replace(ORG, 'org_[redacted]')); res.write(c) })
         r.on('end', () => { out.end(); res.end() })
       })
       up.on('error', e => { out.end(`proxy error: ${e.message}\n`); if (!res.headersSent) res.writeHead(502); res.end() })
