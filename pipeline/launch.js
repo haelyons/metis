@@ -25,7 +25,9 @@ if (!name || !['loop', 'card', 'frame'].includes(kind) || !fs.existsSync(EXP)) {
   process.exit(2)
 }
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-').slice(0, 13)
-const RUN = path.join(EXP, `${stamp}-${kind}`)
+// two launches in the same minute get -2, -3 ...
+let RUN = path.join(EXP, `${stamp}-${kind}`)
+for (let i = 2; fs.existsSync(RUN); i++) RUN = path.join(EXP, `${stamp}-${kind}-${i}`)
 const COPY = path.join(RUN, 'pipeline')
 fs.mkdirSync(path.join(RUN, 'out'), { recursive: true })
 
