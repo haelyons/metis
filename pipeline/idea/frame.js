@@ -156,7 +156,7 @@ async function main() {
     if (str(p.step_url)) items.push({ ref: `p${i + 1}:step`, line: `p${i + 1}:step: ${p.name} has this step in its pipeline: ${p.step} | source: ${p.step_url} | recorded quote: "${p.step_quote || ''}"` })
     const a = p.activity || {}
     if (str(a.url)) items.push({ ref: `p${i + 1}:activity`, line: `p${i + 1}:activity: ${a.claim} | source: ${a.url} | recorded quote: "${a.quote || ''}"` })
-    (p.practice || []).forEach((c, j) => items.push({ ref: `p${i + 1}:c${j + 1}`, line: `p${i + 1}:c${j + 1}: ${c.claim} | source: ${c.url} | recorded quote: "${c.quote}"` }))
+    ;(p.practice || []).forEach((c, j) => items.push({ ref: `p${i + 1}:c${j + 1}`, line: `p${i + 1}:c${j + 1}: ${c.claim} | source: ${c.url} | recorded quote: "${c.quote}"` }))
     const d = p.already_done || {}
     if (str(d.url)) items.push({ ref: `p${i + 1}:done`, line: `p${i + 1}:done: ${d.claim || `already done: ${d.status}`} | source: ${d.url} | recorded quote: "${d.quote || ''}"` })
   })

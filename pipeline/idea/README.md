@@ -13,7 +13,8 @@ Every model call goes through OpenCode (`opencode-go/*` models), under the isola
   in the card's terms.
 - `status.js` progress and spend; `httplog.js` per-call logging proxy; `panel.js` critic-panel merge; `oc.js` one call.
 - `test/stub-oc.js` smoke test with no model calls:
-  `NODE_OPTIONS="--require $PWD/test/stub-oc.js" node loop.js --seed <seed.json> --dir <scratch>`.
+  `NODE_OPTIONS="--require $PWD/test/stub-oc.js" node loop.js --seed <seed.json> --dir <scratch>`, and for the frame
+  check `... node frame.js --card-file <card.md> --root "<q>" --out <scratch>` (the loop stops before it on a stub card).
 
 ## Isolation
 
