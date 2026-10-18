@@ -1,0 +1,194 @@
+{
+  "info": {
+    "id": "ses_eb156c61dffewDjbdjCe5YPEoS",
+    "slug": "sunny-wizard",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls",
+    "path": "experiments/reframe-pilot/20261018-1057-reframe-a/calls",
+    "title": "vla-harry",
+    "agent": "qt-bare",
+    "model": {
+      "id": "kimi-k3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.0747402,
+    "tokens": {
+      "input": 1347,
+      "output": 1843,
+      "reasoning": 2869,
+      "cache": {
+        "read": 64,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792321075682,
+      "updated": 1792321153753
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792321078099
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "kimi-k3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14ea94353001vwiZjffKteOZKp",
+        "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"You look at problems through one lens. Many computations are a loop: the next state is computed from the current one,\nso step 1,000 cannot start until step 999 ends, and when the state is small most of a GPU sits idle. Such a loop can\nsometimes be computed all at once: guess every state, check every step in parallel against the one before, correct\nall the errors together, and repeat until nothing changes. The result is exactly what the loop would give. It pays only\nwhen the system forgets its past, so that early errors fade: damped, dissipative or mixing dynamics, or a long sampling\nchain. It fails when small errors grow, as in chaotic systems. Before spending, measure forgetfulness: start two runs a\nhair apart and see whether they converge or drift apart. A good candidate has a step-by-step loop, a small state (a\nhandful to a few hundred numbers), a long run (thousands of steps or more), forgetful dynamics, and few runs needed; if\nthousands of runs are needed, run them side by side instead. The method does more total arithmetic and wins only on how\nlong one answer takes. Before proposing anything, check whether a strong GPU method for this already exists; rebuilding\nit wins nothing. Write down your predictions and how you could be wrong before any test, and compare against a tuned\nsequential baseline and against many independent copies run side by side.\n\nHere is a research problem as it was first written down, with the question it belongs to.\nRoot question: What's actually stopping general purpose robot hands from reliably doing stuff like folding laundry or loading a dishwasher? Is it the lack of real-world manipulation data, the hardware (sensors, actuators, tactile feedback), or the sim-to-real gap? Is that a major blocker at some level, and could it be fixed by running millions of simulated robots in parallel on a shit ton of GPUs?\nProblem:\nInference-time steering of VLA internals (SAEs, FFN vectors, conceptors, linear observers)\nSteering a VLA's internal features can bring out behaviour the model already has, without retraining. On real DROID hardware, SAE steering of pi0.5 raised target-object grasps by +9 to +21 out of 25 trials, and ablating the top-4 general features cut success from 39/40 to 0/40. COAST conceptors raised pi0.5 on LIBERO-10 from 0.43 to 0.80, with about +40% on three real tasks. Grant et al. found motor programs bound to absolute coordinates (50/50 grasps at the recorded spot on a UR10e). All tests are rigid tabletop tasks; none is cloth or a dish rack. Goodfire markets steering for robotics but publishes no numbers.\nWhat more compute would buy: The quantity is closed-loop rollouts and SAEs swept; the largest is 420,000+ rollouts and 520+ SAEs across six VLAs (https://arxiv.org/abs/2603.19233), and above that it is unknown whether any feature controls contact-rich or deformable behaviour, because every sweep so far ran rigid pick-and-place or drawer tasks.\nWhat runs step after step: Each feature waits on an SAE fit (about 6,700 Adam steps, derived from https://arxiv.org/html/2603.19183; 'a few GPU-hours per SAE on one A100') and then on closed-loop rollouts of up to 300 steps, each waiting on a ~150 ms VLA forward pass and the next observation; the answer needed 150 rollouts × 135 features (20,250 episodes), and one unbatched rollout leaves the GPU idle while the simulator steps. Steps within a rollout must run in order, but rollouts are independent: batching hundreds of steered environments in a GPU-parallel simulator, with a separate hook per environment and simulation pipelined against inference, would run them together; this pays only if steering effects in simulation match the real robot (false for cloth). The nearest attempt is RLinf-VLA, 1.61-1.88x with 256 ManiSkill environments, for RL rather than interpretability (https://arxiv.org/html/2510.06710v2).\n\nFind where this problem stops more compute from helping, or where more compute only buys more of the same. Then look for reframings: changes to what is measured, the unit of work, the objective or the order of steps that would let more compute change the answer. Give up to three. End each with one question someone could investigate: specific, answerable by a measurement, and naming what is measured. For each, give the cheapest measurement that would answer it or show it is not worth pursuing, with a rough cost. Decide from the text above and what you know; do not use tools.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"reframes\\\"],\\\"properties\\\":{\\\"reframes\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"bottleneck\\\",\\\"assumption\\\",\\\"reframe\\\",\\\"question\\\",\\\"measure\\\",\\\"compute_after\\\",\\\"exact\\\",\\\"expected\\\",\\\"fails_if\\\",\\\"closest_prior\\\"],\\\"properties\\\":{\\\"bottleneck\\\":{\\\"type\\\":\\\"string\\\"},\\\"assumption\\\":{\\\"type\\\":\\\"string\\\"},\\\"reframe\\\":{\\\"type\\\":\\\"string\\\"},\\\"question\\\":{\\\"type\\\":\\\"string\\\"},\\\"measure\\\":{\\\"type\\\":\\\"string\\\"},\\\"compute_after\\\":{\\\"type\\\":\\\"string\\\"},\\\"exact\\\":{\\\"type\\\":\\\"string\\\"},\\\"expected\\\":{\\\"type\\\":\\\"string\\\"},\\\"fails_if\\\":{\\\"type\\\":\\\"string\\\"},\\\"closest_prior\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_14ea94375001gC46vb3cgitXFh",
+          "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS",
+          "messageID": "msg_14ea94353001vwiZjffKteOZKp"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14ea94353001vwiZjffKteOZKp",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.0747402,
+        "tokens": {
+          "total": 6123,
+          "input": 1347,
+          "output": 1843,
+          "reasoning": 2869,
+          "cache": {
+            "write": 0,
+            "read": 64
+          }
+        },
+        "modelID": "kimi-k3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792321083581,
+          "completed": 1792321153674
+        },
+        "finish": "stop",
+        "id": "msg_14ea958bd0016Aj7qaAgbc4YvV",
+        "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS"
+      },
+      "parts": [
+        {
+          "snapshot": "e3aae8fa45d81db954d8717dd2b48c75bf25136b",
+          "type": "step-start",
+          "id": "prt_14ea978de001cPsdiJE43N7phb",
+          "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS",
+          "messageID": "msg_14ea958bd0016Aj7qaAgbc4YvV"
+        },
+        {
+          "type": "reasoning",
+          "text": "The task: given the problem about inference-time steering of VLA internals (SAEs, FFN vectors, conceptors), find where the problem stops more compute from helping, and propose up to three reframings. Each reframe needs: bottleneck, assumption, reframe, question, measure, compute_after, exact, expected, fails_if, closest_prior.\n\nKey constraints from the framing text: the parallel-in-time method pays only for forgetful dynamics, small state, long runs, few runs needed. Here the loop is closed-loop rollouts: each rollout is sequential (300 steps, 150ms forward pass each), but rollouts are independent — so the natural fix is batching many environments, which is the \"many independent copies run side by side\" baseline. RLinf-VLA already does 1.61-1.88x with 256 ManiSkill envs. So compute via parallelism is largely already captured; more compute buys more of the same rigid-task sweeps.\n\nWhere compute stops helping:\n1. The sim-to-real gap for cloth/deformable/contact-rich tasks: steering effects measured in simulation may not transfer; no amount of simulated rollouts answers whether any feature controls cloth behaviour on a real robot. The bottleneck is the fidelity of deformable simulation and the real-robot trial cost, not GPU throughput. More compute buys more simulated rollouts whose signal is unvalidated.\n2. The SAE fit itself is sequential Adam steps (~6,700 steps), small state — a training loop, sequential but GPU-efficient enough; \"few GPU-hours per SAE\" — parallelizing SAE training across features is trivially parallel (520 SAEs independent). So that's throughput, already fine. The real cost driver is 20,250 episodes of closed-loop rollouts; these are independent → batching works, RLinf-VLA shows ~1.7x. So compute isn't really the blocker; the blocker is what's measured (rigid tasks) and whether steering has any effect at all on contact-rich/deformable behaviour — unknown.\n3. The assumption that the unit of work is \"one SAE → 150 rollouts.\" Reframe: instead of sweeping features one at a time with closed-loop rollouts, screen features open-loop (measure effect of steering on predicted actions over a fixed dataset of observations) to rank features, then closed-loop only the top few. Changes order of steps: cheap open-loop screening first. Measurable: rank correlation between open-loop action divergence and closed-loop success delta. Cost: one GPU-day.\n4. Reframe the objective: instead of \"does steering raise success on a task,\" measure whether any linear direction in activation space controls a physical variable (e.g., grip force, contact onset) using a small number of instrumented real-robot trials — changes what's measured from task success to a continuous physical signal, which needs far fewer trials (regression vs Bernoulli). Cheaper: force/torque or tactile signal correlation with steered direction. ~a few days of robot time.\n5. Reframe sim-to-real: measure the sim-real gap directly for steering effect sizes on rigid tasks (where sim is trustworthy) to establish whether effect direction transfers; if steering deltas correlate between sim and real on rigid tasks, then simulation screening is valid and compute buys the cloth question only if cloth sim fidelity passes a threshold. Cheapest measurement: pick one steering intervention, run 25 real trials vs 200 sim trials on a rigid task, compare effect sign/magnitude. Cost ~$1-2k robot time.\n6. Reframe unit of work: replace per-feature SAE sweep with amortized/once-per-model representation (e.g., a single linear probe / conceptor fit on pooled activations) — reduces the 520-SAE stage; measure how much of the steering effect of the best SAE feature is recovered by top principal components or a single supervised probe trained on action-labeled activations. Cheap: reuse logged activations.\n\nAlso the \"guess every state, check in parallel\" parallel-in-time reframing: closed-loop rollouts are chaotic-ish contact dynamics? Actually robot manipulation with contact is dissipative (contact damping, friction) — arguably forgetful locally, but policy in the loop with visual feedback. Could one parallelize within a rollout via speculative/parallel-in-time simulation? The VLA forward pass is the latency; 150ms × 300 steps = 45s per rollout. Batching across environments already fills the GPU; the forward pass batch amortizes. So parallel-in-time isn't the win; throughput across rollouts is. So a reframe could be: the latency of a single rollout doesn't matter when you need 20,250; only throughput matters; hence measure max sustainable parallel envs before the simulator or policy batch saturates — RLinf-VLA got 1.88x at 256 envs; question: at what env count does throughput per GPU plateau for a steered pi0.5 + ManiSkill? Measure: rollout throughput vs env count; cost: one A100-day. Expected: plateau at a few hundred envs giving 10-50x over unbatched. Fails if per-env steering hooks serialize. Closest prior: RLinf-VLA.\n\nBut the prompt says: \"Find where this problem stops more compute from helping, or where more compute only buys more of the same. Then look for reframings: changes to what is measured, the unit of work, the objective or the order of steps.\" Give up to three reframes, each ending with a question, cheapest measurement with rough cost, and fields compute_after (what more compute buys after reframe), exact, expected, fails_if, closest_prior.\n\nLet me draft three reframes:\n\nReframe 1 — Order of steps: screen features open-loop before closed-loop.\n- Bottleneck: The 20,250-episode closed-loop stage dominates cost, and it is spent uniformly over 135 features regardless of whether a feature does anything.\n- Assumption: That a feature's effect can only be judged by closed-loop rollouts (task success), so every feature pays the full 150-rollout price.\n- Reframe: Change the order: first score every steered feature open-loop — steer and measure divergence between steered and unsteered predicted actions on a fixed buffer of recorded observations — then run closed-loop rollouts only for the top-k by effect size.\n- Question: What is the Spearman rank correlation between open-loop steered-vs-unsteered action divergence (L2 on action tokens over a fixed observation buffer) and closed-loop success delta per feature on one LIBERO task?\n- Measure: Log activations/actions from ~200 unsteered episodes of pi0.5 on one task (a few GPU-hours), apply each of 135 steering vectors open-loop, compute action divergence; then run 25 closed-loop rollouts for each of 10 features spanning the divergence range; compute the rank correlation. Cost: ~1 A100-day plus simulator time; no robot.\n- compute_after: If correlation is high, the same compute screens 10-100x more features, or the 135-feature study costs ~1/10th, letting compute buy coverage of contact-rich tasks in sim.\n- exact: rank correlation ρ between per-feature mean open-loop action divergence and per-feature closed-loop success-rate change.\n- expected: ρ ≥ 0.7 would justify the screening; even ρ ~ 0.4 with a cheap top-20 cut would cut cost ~5x.\n- fails_if: open-loop divergence does not predict closed-loop effect (compounding errors, features that only matter under contact), or all features produce near-zero divergence so ranking is noise.\n- closest_prior: the 420k-rollout/520-SAE sweep (arXiv 2603.19233) which pays full closed-loop cost per feature; open-loop action-divergence screening is standard in activation-steering evals for LLMs.\n\nReframe 2 — What is measured: replace binary task success with a continuous physical variable to cut trials and to test cloth-relevant control.\n- Bottleneck: The binary success metric forces ~150 rollouts per condition and cannot detect partial control; and it cannot ask \"does any feature control a contact variable\" without a full cloth task that sim can't validate.\n- Assumption: That the thing to measure is task-level success on a rigid pick/place task.\n- Reframe: Change the measurement to a continuous physical readout — e.g., gripper force/torque profile or contact timing — and regress steering strength against it, so each episode yields a slope rather than one bit; test whether any direction modulates contact behaviour in a short instrumented real-robot setup (e.g., pressing/grasping a compliant object with a force sensor), which sidesteps the cloth-sim fidelity question.\n- Question: On a real pi0.5 arm grasping a deformable object with a wrist force/torque sensor, does any SAE/FFN steering direction produce a monotone change in peak grasp force (measured N) across 5 steering strengths?\n- Measure: ~10 steering candidates × 5 strengths × 5 repeats = 250 real grasps (~1-2 days of robot time, ~$2-5k); fit slope per direction; compare against unsteered variance.\n- compute_after: If a slope exists, compute buys a wide sim-screened sweep validated by a handful of real trials per candidate instead of 150; the expensive stage shrinks by ~30x.\n- exact: slope (N per unit steering coefficient) and its t-statistic per direction, versus null distribution from sham (random) directions.\n- expected: if motor programs bind to coordinates (Grant et al.), some direction should shift applied force/position measurably; a detected effect at 25 trials replaces 150-trial success tests.\n- fails_if: no direction moves the force trace beyond trial noise, meaning steering has no fine contact control and cloth/deformable claims are moot.\n- closest_prior: Grant et al. motor-program/absolute-coordinate finding (50/50 grasps at recorded spot, UR10e); COAST conceptors with +40% on three real tasks but binary metrics.\n\nReframe 3 — Sim-to-real transfer of effect sizes: the blocker is not throughput but that simulation can't validate cloth steering; change the objective to calibrating transfer on rigid tasks.\n- Bottleneck: Compute spent on simulated rollouts only buys an answer if steering effects transfer sim→real; for cloth this is asserted false, so more GPUs buy more of the same rigid-task numbers.\n- Assumption: That the answer needed is \"which features control cloth behaviour,\" which requires cloth simulation fidelity we don't have.\n- Reframe: Change the objective to measuring the sim→real transfer function of steering effect sizes on tasks where both are cheap (rigid): run the same steering sweep in sim and on the real robot and fit the correlation. If effect direction/magnitude transfers on rigid tasks, sim screening is a valid instrument; then the only remaining question for cloth is a sim-fidelity threshold, measurable independently (e.g., does sim predict force traces).\n- Question: Across ≥10 steering interventions on rigid DROID-style tasks, what is the correlation between per-intervention success-rate delta in a GPU-parallel simulator and on the real robot (25 trials each)?\n- Measure: 10 interventions × (200 sim rollouts batched, ~1 A100-day) + 10 × 25 real trials (~1-2 days robot, ~$2-5k). Report Pearson/Spearman of deltas and sign agreement.\n- compute_after: If sign agreement ≥ 9/10 and ρ ≥ 0.8, compute buys a validated cheap screening instrument and the field can sweep deformable-adjacent proxies; if not, no amount of sim compute helps and the field should spend on real-robot throughput instead.\n- exact: sign agreement rate and rank correlation of sim vs real per-intervention success deltas.\n- expected: rigid-task transfer likely decent given RLinf-VLA and sim benchmarks, but unmeasured for steering specifically; this number gates all further sim spending.\n- fails_if: sim and real deltas disagree in sign for even 2-3 of 10 interventions — then sim sweeps are noise and compute only buys real-robot parallelization.\n- closest_prior: RLinf-VLA (1.61-1.88x, 256 ManiSkill envs) shows the throughput side; no published sim-vs-real steering-effect correlation exists; Goodfire markets steering with no numbers.\n\nAlso mention compute_after for reframe 1.\n\nMaybe include in one reframe the point about \"parallel-in-time doesn't apply because rollouts are independent and batching is the right baseline\"? The instructions say find where problem stops more compute from helping — I can embed that in bottleneck of reframe 3: \"rollouts are embarrassingly parallel; RLinf-VLA already shows batching; so raw GPU count buys little new — the binding constraint is that sim signal for cloth is unvalidated.\"\n\nCost roughness: A100-day ~ $20-30; robot day maybe $1-3k amortized. I'll state \"1 A100-day (~$25), 2 robot-days (~$4k)\" style.\n\nThe schema fields: bottleneck, assumption, reframe, question, measure, compute_after, exact, expected, fails_if, closest_prior. All strings. Return only JSON, no other text.\n\nEnsure the \"question\" names what is measured and is answerable by measurement. \"measure\" = cheapest measurement with rough cost. \"exact\" = exact metric. \"expected\" = expected outcome/threshold. \"fails_if\" = condition that kills it. \"closest_prior\" = nearest existing work.\n\nWrite concisely. JSON valid: escape quotes as needed; avoid internal double quotes or escape them. Use plain text.",
+          "time": {
+            "start": 1792321091815,
+            "end": 1792321133906
+          },
+          "id": "prt_14ea978e70015Hs3VGCSn4muD7",
+          "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS",
+          "messageID": "msg_14ea958bd0016Aj7qaAgbc4YvV"
+        },
+        {
+          "type": "text",
+          "text": "```json\n{\n  \"reframes\": [\n    {\n      \"bottleneck\": \"Cost is concentrated in the closed-loop stage: 150 rollouts x 135 features = 20,250 sequential 300-step episodes, each gated by a 150 ms VLA forward pass. This budget is spent uniformly on every feature, including the majority that do nothing, and rollouts are already independent so raw GPU count only buys the ~2x batching that RLinf-VLA demonstrated.\",\n      \"assumption\": \"A feature's value can only be judged by closed-loop task success, so every candidate feature must pay the full 150-rollout price before anything is known about it.\",\n      \"reframe\": \"Change the order of steps: screen all features open-loop first by steering and measuring divergence between steered and unsteered predicted actions on a fixed buffer of recorded observations, then pay closed-loop rollouts only for the top-k features by effect size. Compute then buys feature coverage instead of redundant rollouts.\",\n      \"question\": \"On one LIBERO task with pi0.5, what is the Spearman rank correlation between per-feature open-loop steered-vs-unsteered action divergence (L2 on action tokens over a fixed observation buffer) and per-feature closed-loop success-rate delta across 10 features spanning the divergence range?\",\n      \"measure\": \"Record ~200 unsteered episodes and their activations on one task (a few GPU-hours), apply each of the 135 steering vectors open-loop to get divergence scores (~1 A100-day, ~$25), then run 25 closed-loop rollouts for each of 10 chosen features in a batched simulator (~1 A100-day). Compute the rank correlation. No real robot needed.\",\n      \"compute_after\": \"If the correlation holds, the same compute screens 10-100x more features per study, or the 135-feature sweep shrinks ~10x in cost, freeing budget to sweep features on contact-rich simulated tasks that currently get no coverage.\",\n      \"exact\": \"Spearman rho between per-feature mean open-loop action divergence and per-feature closed-loop success delta, over 10 features, plus the recall of truly-effective features in the open-loop top-20.\",\n      \"expected\": \"Rho >= 0.7 and top-20 recall >= 0.8 would make screening the default; even rho ~ 0.4 with a cheap top-20 cutoff cuts cost roughly 5x.\",\n      \"fails_if\": \"Open-loop divergence does not predict closed-loop effect (compounding errors, features that only matter under contact and never fire on the recorded buffer), or all divergences are near zero so the ranking is noise.\",\n      \"closest_prior\": \"The 420,000-rollout / 520-SAE sweep (arXiv 2603.19233) pays full closed-loop cost per feature; open-loop action-divergence is the standard cheap proxy in LLM activation-steering evals but is unpublished for VLAs.\"\n    },\n    {\n      \"bottleneck\": \"The binary success metric forces ~150 rollouts per condition to resolve an effect and yields one bit per episode; it also cannot ask whether steering controls any contact variable without a full validated cloth task, which simulation cannot currently provide.\",\n      \"assumption\": \"The unit of evidence is task-level success on a rigid pick-and-place benchmark, so effects smaller than a success-rate swing, and any control of contact rather than motion, are invisible.\",\n      \"reframe\": \"Change what is measured: replace binary success with a continuous physical readout (wrist force/torque trace, contact timing, peak grasp force) on a short instrumented real-robot task such as grasping a compliant object, and regress steering strength against the readout so each trial yields a slope. This tests control of contact behaviour directly and sidesteps the unvalidated cloth simulator.\",\n      \"question\": \"On a real pi0.5-class arm grasping a deformable object with a wrist force/torque sensor, does any of ~10 candidate SAE or FFN steering directions produce a monotone change in peak grasp force (newtons) across 5 steering strengths, versus sham random directions?\",\n      \"measure\": \"10 directions x 5 strengths x 5 repeats = 250 real grasps, roughly 1-2 robot-days (~$2-5k) plus trivial GPU time; fit slope per direction and compare against the null distribution from random directions. Cheapest kill-criterion: if even the strongest known steering feature shows no force-trace effect in 25 trials, stop.\",\n      \"compute_after\": \"If slopes exist, a handful of real trials validates each candidate, so compute shifts to wide sim-screened sweeps with cheap real confirmation (~25 trials per candidate instead of 150), a ~30x reduction in the expensive stage; if no slope exists, the cloth/deformable steering question is dead regardless of compute.\",\n      \"exact\": \"Slope in newtons per unit steering coefficient and its t-statistic per direction, against the null distribution from random directions, plus minimum detectable effect at 25 trials.\",\n      \"expected\": \"Given Grant et al. found motor programs bound to absolute coordinates (50/50 grasps at the recorded spot), at least one direction should shift applied force or contact timing measurably within 25 trials.\",\n      \"fails_if\": \"No direction moves the force trace beyond trial-to-trial noise, meaning steering modulates high-level plans but not contact execution, so no sweep size can reveal cloth control that is not there.\",\n      \"closest_prior\": \"Grant et al. motor-program binding on UR10e; COAST conceptors reporting +40% on three real tasks with binary metrics only; Goodfire marketing steering for robotics with no published numbers.\"\n    },\n    {\n      \"bottleneck\": \"For cloth and dish-rack tasks the binding constraint is not throughput but validity: steering effects measured in simulation are asserted not to transfer for deformables, so every additional simulated rollout buys more of the same rigid-task evidence and nothing about the actual blocker.\",\n      \"assumption\": \"The answer needed is 'which features control cloth behaviour', which presumes a trustworthy cloth simulator; without one, sim compute is uninformative and the sim-vs-real transfer of steering effects has never been measured even where it could be.\",\n      \"reframe\": \"Change the objective: before sweeping anything new, calibrate the sim-to-real transfer function of steering effect sizes on rigid tasks where both sides are cheap. If per-intervention effect direction and magnitude correlate between a GPU-parallel simulator and the real robot, simulation becomes a validated screening instrument; independently, measure whether the simulator predicts force traces for compliant objects, which is the fidelity threshold cloth screening would require.\",\n      \"question\": \"Across >= 10 steering interventions on rigid DROID-style tasks, what is the sign agreement and rank correlation between each intervention's success-rate delta in a batched simulator (200 rollouts) and on the real robot (25 trials)?\",\n      \"measure\": \"10 interventions x 200 batched sim rollouts (~1 A100-day, ~$25) + 10 x 25 real trials (~1-2 robot-days, ~$2-5k). Report sign agreement and Spearman rho of the deltas. Separately, log sim-vs-real wrist force traces on one compliant grasp and report trace error.\",\n      \"compute_after\": \"If sign agreement >= 9/10 and rho >= 0.8, every GPU-dollar afterward buys validated screening and the field can cheaply sweep deformable-adjacent proxies; if agreement is poor, all sim spending on steering should stop and compute should be redirected to real-robot parallelization (many arms, many objects) instead.\",\n      \"exact\": \"Sign-agreement rate and Spearman rho of per-intervention sim vs real success deltas, plus sim-vs-real force-trace RMSE on the compliant-grasp probe.\",\n      \"expected\": \"Rigid-task transfer plausibly holds (consistent with sim benchmarks and RLinf-VLA throughput results) but is unmeasured for steering; the force-trace probe on a compliant object is expected to show a clear gap, quantifying exactly how far sim is from supporting cloth claims.\",\n      \"fails_if\": \"Even 2-3 of 10 rigid interventions flip sign between sim and real, showing sim sweeps are noise for steering specifically, in which case more GPU compute only buys faster wrong answers.\",\n      \"closest_prior\": \"RLinf-VLA (1.61-1.88x with 256 ManiSkill environments) establishes the throughput side but not effect transfer; no published sim-vs-real correlation of steering effect sizes exists; the 420k-rollout sweep (arXiv 2603.19233) is entirely rigid-task and does not test transfer.\"\n    }\n  ]\n}\n```",
+          "time": {
+            "start": 1792321133971,
+            "end": 1792321151907
+          },
+          "id": "prt_14eaa1d93001CaYNgc5oRRQwyH",
+          "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS",
+          "messageID": "msg_14ea958bd0016Aj7qaAgbc4YvV"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "d8c96b19e10df999db3f6c4c1eeffb7aa790b289",
+          "type": "step-finish",
+          "tokens": {
+            "total": 6123,
+            "input": 1347,
+            "output": 1843,
+            "reasoning": 2869,
+            "cache": {
+              "write": 0,
+              "read": 64
+            }
+          },
+          "cost": 0.0747402,
+          "id": "prt_14eaa6649001Vbpp4st4AwTR38",
+          "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS",
+          "messageID": "msg_14ea958bd0016Aj7qaAgbc4YvV"
+        },
+        {
+          "type": "patch",
+          "hash": "e3aae8fa45d81db954d8717dd2b48c75bf25136b",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-independent.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-independent.http/001.response.txt"
+          ],
+          "id": "prt_14eaa6a74001ho3ggZ2JN1V1OD",
+          "sessionID": "ses_eb156c61dffewDjbdjCe5YPEoS",
+          "messageID": "msg_14ea958bd0016Aj7qaAgbc4YvV"
+        }
+      ]
+    }
+  ]
+}

@@ -55,4 +55,18 @@ tell us whether any reframe works: that needs a measurement.
 Most questions are answerable by reanalysing data that already exists (the HENS archive, the published 8-molecule
 table, the logged rollouts) for $0 to $25. The harry brief behaved as a second general reframer with a convergence
 flavour, not as its namesake method.
+| `20261018-1057-planted-glm` | GLM judge on the VLA list with three planted proposals mixed in (`planted.json`; key in `planted-key.json`, not shown to the judge): 3 of 3 planted judged as expected (two copies, one near-miss that fails the criterion) |
+| `20261018-1057-reframe-a`, `-b` | two reruns of all cases; all 12 reframer calls completed; 7 of 12 GLM judge calls blocked by the OpenCode Go weekly limit (`all-lists.json` gathers every proposal) |
+| `20261018-opus-judge` | an Opus subagent judged all 63 proposals (19 lists) from `judge_input.json`, without the GLM labels |
+
+## Judges and stability (2026-10-18)
+
+- Planted proposals: both judges 3 of 3. Each can say "copies", and both separate a near-miss from the criterion.
+- GLM against Opus on the 45 proposals both judged: kind 45 of 45, criterion 44 of 45. The one disagreement is the
+  first run's loose harry match: GLM said yes when judging that list alone and no inside the mixed list; Opus said no.
+- Opus called 60 of 63 proposals reframes and 3 copies: the two planted ones and one real proposal (a rerun's harry
+  coolant question that only resized replicas).
+- The VLA known positive (score steering on recorded observations, confirm the top features closed-loop), by run:
+  first run, independent lens only; rerun a, harry lens only; rerun b, both. At least one lens found it in all three
+  runs; each lens alone found it in two of three.
 

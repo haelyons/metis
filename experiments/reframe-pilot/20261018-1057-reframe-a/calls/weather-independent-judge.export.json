@@ -1,0 +1,193 @@
+{
+  "info": {
+    "id": "ses_eb154fb2efferYYArHIrcxAvlH",
+    "slug": "silent-island",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls",
+    "path": "experiments/reframe-pilot/20261018-1057-reframe-a/calls",
+    "title": "weather-independent-judge",
+    "agent": "qt-bare",
+    "model": {
+      "id": "glm-5.3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.01593548,
+    "tokens": {
+      "input": 2373,
+      "output": 277,
+      "reasoning": 2575,
+      "cache": {
+        "read": 248,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792321193169,
+      "updated": 1792321238162
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792321193814
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "glm-5.3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14eab075600138I1CUwatlsoBS",
+        "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Below are questions proposed for a research problem, each with the reframing behind it. Classify each one.\nkind: \\\"reframe\\\" if it changes what is computed, measured or ordered so that more compute buys something it did not before; \\\"copies\\\" if it only runs the same computation more times, on more items, or side by side; \\\"other\\\" otherwise.\nmeets_criterion: \\\"yes\\\" or \\\"no\\\" for this criterion: none given; answer NA\nGive for each a quote from the proposal and a reason of at most 25 words. Decide only from the text below; do not use tools.\nProblem:\n**ml-ensemble-extremes · Ensemble size for rare extremes in a machine-learned weather ensemble.** seed pick · compute tested: yes · plan expects: the lever · PASS\n\n**Question.** Does 10 to 1,000 AIFS-ENS members beat 50 for top-percentile wind, temperature, and rain probability forecasts, or does shared model error cap the skill?\n\n**What is known.** HENS Part 2: 7,424 SFNO members per day for 92 summer-2023 dates; showed huge ensembles sample 4-sigma tails and reduce outliers. Whether AIFS-ENS, whose members are exchangeable draws of one afCRPS-trained distribution, keeps gaining skill past 50 members or saturates from shared model error.\n\n**Hypothesis.** More members keep helping: 1,000 members sample top-percentile tails far better than 50, so extreme-event scores keep improving [s_hens].\n\n**If compute is the lever.** Skill on top-percentile wind, temperature, and rain keeps rising past 50 members: 1,000 members sharpen the tails and improve extreme-event scores.\n\n**If not.** Skill flattens near 50 members: members are exchangeable draws of one trained distribution, so shared model error caps tail sharpness and extra members add nothing.\n\n**Test.** Run 7,000 fifteen-day AIFS-ENS v1 forecasts (7 dates x 1,000 members) on eight A100 40 GB GPUs; subsample 10-1,000 members, score top-percentile wind/temperature/rain probabilities against ERA5 with fair CRPS and Brier scores, and test whether skill still rises past 50 members.\n\n*Compute axis.* Ensemble members per forecast: 10–1,000 members, 6 levels. Closest prior: 7,424 [s_hens], not beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Reproduce the published 4-minute N320 member time and 38 GB memory; one control run must match ECMWF open data within ensemble spread [s_crps_paper]. Tolerance: timing within +/-25% of 4 min; 38 GB memory fits; control field within the ensemble's own member-to-member spread at each lead time (GPUs are non-deterministic, so exact reproduction is not expected).\n\n**Would not show.** Applies to AIFS-ENS v1 medium-range extremes on 7 dates; not a multi-season reforecast, other models, subseasonal leads, or direct proof that shared error causes any saturation.\n\n*Cost.* Plans $963.17 of the $1,000 budget over 74.3 machine-hours, leaving $36.83. Main guess: peak filesystem usage [g], measured after $19.90 of spend; the budget is reached if it is 15× higher. Full scale: A 30-date multi-season reforecast at 1,000 members, $3,980, 3.98× the budget.\nProposals: [{\\\"index\\\":1,\\\"bottleneck\\\":\\\"Skill differences between member counts are averaged over only 7 held-fixed verification dates; across-date variance dominates the standard error of the skill-vs-N slope, so members past roughly 50-100 per date buy precision on a quantity that stays swamped by date noise. Extra members purchase more of the same.\\\",\\\"assumption\\\":\\\"That members per forecast is the compute axis that limits the answer, with the 7 verification dates held fixed.\\\",\\\"reframe\\\":\\\"Treat the run budget as an experimental-design problem: estimate the variance components (across-date vs within-date sampling) and reallocate a fixed number of member-forecasts across (dates x members) to minimize the standard error of the slope of skill vs log N, rather than maximizing members on few dates.\\\",\\\"question\\\":\\\"For a fixed budget of 3,000 member-forecasts, which (dates x members) allocation - 7x400, 15x200, or 30x100 - gives the smallest standard error on the slope of top-1% fair-Brier skill vs log2 N, measured against ERA5?\\\",\\\"measure\\\":\\\"Pilot: run 2 new dates at 200 members plus reuse the 50-member control (about 400 new runs, roughly $55, about 4 machine-hours). Estimate across-date and sampling variance of the Brier score at N=50 and N=200, then solve the analytic optimal-allocation formula for the fixed budget.\\\",\\\"compute_after\\\":\\\"The full budget buys the optimal split (likely around 30 dates x 100 members, roughly $413): extra compute then buys independent verification dates, i.e. new information, instead of redundant draws from one distribution.\\\",\\\"exact\\\":\\\"Standard error of the fitted slope of fair-Brier skill vs log2(members) for top-1% wind, temperature, and rain exceedance probabilities verified against ERA5.\\\",\\\"expected\\\":\\\"Across-date variance dominates at N>=50, so the optimal allocation shifts compute toward dates and the slope's standard error drops by roughly a factor of 2 at equal dollar cost.\\\",\\\"fails_if\\\":\\\"Within-date sampling variance still dominates at N=200, meaning large member counts genuinely add measurable skill and the original 1,000-member design stands.\\\",\\\"closest_prior\\\":\\\"HENS Part 2 [s_hens] ran 92 dates x 7,424 members but never reported the variance components or an optimal (dates x members) split; the afCRPS paper [s_crps_paper] used a fixed 51-member operational set.\\\"},{\\\"index\\\":2,\\\"bottleneck\\\":\\\"Members are exchangeable draws of one afCRPS-trained distribution, so the N-dependence of any threshold-probability score is binomial sampling noise with a known 1/N form; running 1,000 members mostly measures arithmetic and cannot move the N-infinity cap set by model error.\\\",\\\"assumption\\\":\\\"That the saturation point and the asymptotic skill must be found empirically by actually running the large ensembles.\\\",\\\"reframe\\\":\\\"Change what is measured: fit the score's a + b/N law from nested subsamples of a few hundred members and extrapolate the N-infinity asymptote directly, instead of buying the curve point by point with full-fidelity members.\\\",\\\"question\\\":\\\"From a + b/N fits to fair-CRPS and fair-Brier on nested subsamples of 10-200 members over the 7 dates, is the extrapolated N-infinity skill for top-1% wind/temperature/rain probabilities statistically distinguishable from the N=50 skill (difference greater than 0.02 Brier)?\\\",\\\"measure\\\":\\\"Run 7 dates x 200 members (1,400 runs, roughly $193, about 15 machine-hours), or first test the 1/N law for free on the published 51-member ECMWF open-data control (about $0). Bootstrap subsample 10-200 members and fit per variable.\\\",\\\"compute_after\\\":\\\"If the asymptote is flat, the question is answered with about 5x less member compute, and the saved budget redirects to more dates or perturbed-model diversity; only a failed 1/N fit justifies the 1,000-member runs.\\\",\\\"exact\\\":\\\"Extrapolated N-infinity fair-Brier and fair-CRPS (the a parameter of the a + b/N fit) for top-1% wind/temperature/rain exceedance probabilities, with bootstrap confidence intervals.\\\",\\\"expected\\\":\\\"The 1/N law fits within bootstrap error and the asymptote lies within about 0.01 Brier of the N=50 value, demonstrating saturation from 200 members instead of 1,000.\\\",\\\"fails_if\\\":\\\"Scores deviate systematically from a + b/N (for example in the far tail, where member exchangeability could break down), meaning large-N runs carry real information and must be executed.\\\",\\\"closest_prior\\\":\\\"HENS [s_hens] demonstrated 4-sigma tail sampling at 7,424 members but did not test whether skill follows the exchangeable-draw a + b/N asymptote; standard Monte Carlo theory predicts it must if members are exchangeable.\\\"},{\\\"index\\\":3,\\\"bottleneck\\\":\\\"The fixed 7-dates x 6-member-levels factorial commits all 7,000 runs before any data are examined; compute is spent even where the answer is already decided, while the real objective is binary - does skill keep rising past 50 members, yes or no - not the full curve.\\\",\\\"assumption\\\":\\\"That the experiment needs a fixed design at six member levels, fully executed before analysis begins.\\\",\\\"reframe\\\":\\\"Change the objective to the yes/no decision and reorder the work: a group-sequential test that adds members in batches of 50 and stops as soon as the confidence interval on the skill gain versus the 50-member baseline excludes the decision threshold in either direction.\\\",\\\"question\\\":\\\"With a group-sequential test at tolerance 0.02 Brier on the paired difference from the 50-member baseline, after how many members per date does the question 'skill keeps rising past 50 members' resolve on the first 2 dates, measured on top-1% wind/temperature/rain Brier skill against ERA5?\\\",\\\"measure\\\":\\\"Run 2 dates in batches of 50 members up to 400 (at most 800 runs, roughly $110, about 8.5 machine-hours; expected $30-55 with early stopping), applying the sequential test after each batch.\\\",\\\"compute_after\\\":\\\"Compute becomes adaptive, spent only until the decision resolves; if 'no gain' resolves at 100-200 members, the remaining roughly $850 buys more dates or a perturbed-checkpoint diversity test instead of redundant members.\\\",\\\"exact\\\":\\\"Stopping member-count and the accepted hypothesis of the group-sequential test on the paired difference in top-1% fair-Brier skill between N members and the 50-member baseline.\\\",\\\"expected\\\":\\\"The test accepts 'no gain past 50' by 100-200 members per date, cutting member compute 5-10x relative to the 1,000-member plan.\\\",\\\"fails_if\\\":\\\"The true gain sits near the 0.02-Brier tolerance, so the test rarely stops early and costs about the same as the fixed design.\\\",\\\"closest_prior\\\":\\\"Group-sequential designs are standard in clinical trials; neither HENS [s_hens] nor the AIFS-ENS evaluation [s_crps_paper] used adaptive stopping, fixing member counts in advance.\\\"}]\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"items\\\"],\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"index\\\",\\\"kind\\\",\\\"meets_criterion\\\",\\\"quote\\\",\\\"reason\\\"],\\\"properties\\\":{\\\"index\\\":{\\\"type\\\":\\\"integer\\\"},\\\"kind\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"reframe\\\",\\\"copies\\\",\\\"other\\\"]},\\\"meets_criterion\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"yes\\\",\\\"no\\\",\\\"NA\\\"]},\\\"quote\\\":{\\\"type\\\":\\\"string\\\"},\\\"reason\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_14eab0781001BavrYRDlhQYKPi",
+          "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH",
+          "messageID": "msg_14eab075600138I1CUwatlsoBS"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14eab075600138I1CUwatlsoBS",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.01593548,
+        "tokens": {
+          "total": 5473,
+          "input": 2373,
+          "output": 277,
+          "reasoning": 2575,
+          "cache": {
+            "write": 0,
+            "read": 248
+          }
+        },
+        "modelID": "glm-5.3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792321197900,
+          "completed": 1792321237917
+        },
+        "finish": "stop",
+        "id": "msg_14eab174c001LGtykP8D0ar5wq",
+        "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH"
+      },
+      "parts": [
+        {
+          "snapshot": "0281901741191646ae701e42cfe2c78b47169458",
+          "type": "step-start",
+          "id": "prt_14eab32f4001FZW8Cp7Iv0KVK2",
+          "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH",
+          "messageID": "msg_14eab174c001LGtykP8D0ar5wq"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me analyze each proposal against the criterion: \"reframe\" if it changes what is computed, measured or ordered so that more compute buys something it did not before; \"copies\" if it only runs the same computation more times, on more items, or side by side; \"other\" otherwise.\n\nProposal 1: The reframe treats the run budget as an experimental-design problem, reallocating a fixed number of member-forecasts across (dates x members) to minimize standard error of the slope. This changes what is computed/measured (the standard error of the slope, and the allocation of compute across dates vs members). More compute buys independent verification dates, i.e., new information, instead of redundant draws. This is a reframe — it changes what is measured (slope SE via variance components) and reorders the allocation so compute buys dates (new information). Actually, is this a \"reframe\" or \"other\"? The criterion says \"reframe\" if it changes what is computed, measured or ordered so that more compute buys something it did not before. Here, the reallocation changes the design — compute buys dates instead of members. The thing measured is the standard error of the slope rather than skill at max members. So yes, this is a reframe. It changes what compute buys: instead of redundant members, compute buys independent dates. That's a reframe.\n\nHmm, but one could argue it's \"other\" because it's about experimental design optimization, not about compute buying something new... But the text says \"extra compute then buys independent verification dates, i.e. new information, instead of redundant draws from one distribution.\" That clearly matches \"changes what is computed, measured or ordered so that more compute buys something it did not before\" — compute now buys dates (new information) rather than more members. The reordering (allocation) is changed. So \"reframe\".\n\nProposal 2: The reframe changes what is measured: fit the a + b/N law from nested subsamples and extrapolate the N-infinity asymptote, instead of buying curve points with full-fidelity members. This changes what is computed (the asymptote parameter a, extrapolated) so that compute buys the asymptote estimation rather than direct large-N runs. More compute buys... hmm. Actually with this reframe, LESS compute is needed. The criterion: \"reframe\" if it changes what is computed, measured or ordered so that more compute buys something it did not before. Here what is measured changes from the curve at each N to the fitted asymptote. Compute buys extrapolation-informed answers — with the reframe, the saved budget redirects to more dates or perturbed-model diversity. Does more compute buy something it did not before? Under the reframe, compute buys the asymptote (a new quantity) and savings can buy diversity/more dates. I'd classify as \"reframe\" since it changes what is measured (asymptote via fit instead of direct points).\n\nProposal 3: Group-sequential test that adds members in batches and stops when decision resolves. This changes the ordering of computation (adaptive, sequential) and the objective (binary decision). Compute becomes adaptive — spent only until decision resolves; remaining budget buys more dates or perturbed-checkpoint diversity. Does this change what is computed/measured/ordered so that more compute buys something new? It changes the order (sequential batches with early stopping) and the objective (yes/no decision instead of full curve). More compute buys... under the reframe, compute buys the decision (stopping member count and accepted hypothesis). Hmm. The criterion asks whether the reframe changes what is computed/measured/ordered so that more compute buys something it did not before. In proposal 3, the reordering (sequential) means compute is spent adaptively; leftover buys dates/diversity. I think this is a \"reframe\" too — it changes what is ordered (adaptive stopping, decision-focused) and what is measured (stopping member-count and accepted hypothesis).\n\nWait, but let me reconsider. Some taxonomies would call proposal 3 \"other\" because it's about saving compute via early stopping rather than making compute buy something new. The criterion: \"reframe if it changes what is computed, measured or ordered so that more compute buys something it did not before\". In proposal 3, the measure changes to \"stopping member-count and accepted hypothesis of the group-sequential test\" — a different exact quantity. And the reordering changes so compute is spent adaptively; the remaining compute buys more dates or diversity — something it did not before (previously all compute went to the fixed factorial). So yes, reframe.\n\nActually, let me be careful. The \"copies\" category: only runs the same computation more times, on more items, or side by side. None of these are copies. All three change something substantive:\n\n1. Changes allocation across (dates x members) and measures slope SE — reframe.\n2. Changes measurement from direct points to fitted asymptote — reframe.\n3. Changes ordering to adaptive sequential and objective to binary decision — reframe.\n\nHmm, but is there a possibility that some are \"other\"? Let me think about what \"other\" would look like: e.g., proposals that identify a bottleneck but propose no change to computation/measurement/ordering, or ones that are purely about analysis. \n\nProposal 1: The reallocation means compute buys dates instead of members. The measured quantity changes (variance components, slope SE, optimal allocation). This is a change to what is computed/measured and ordered. Reframe.\n\nProposal 2: The measured quantity becomes the extrapolated asymptote (a parameter) with bootstrap CIs. This is clearly changing what is measured. Reframe.\n\nProposal 3: Group-sequential — changes ordering of computation (batches, early stopping) and the exact measured quantity (stopping member-count, accepted hypothesis). Reframe.\n\nmeets_criterion: \"yes\" or \"no\" for this criterion: none given; answer NA. So meets_criterion is \"NA\" for all.\n\nQuotes: I should pick a short representative quote from each proposal.\n\nProposal 1 quote: \"reallocate a fixed number of member-forecasts across (dates x members) to minimize the standard error of the slope of skill vs log N, rather than maximizing members on few dates.\" Or the compute_after: \"extra compute then buys independent verification dates, i.e. new information, instead of redundant draws from one distribution.\" The quote should be from the proposal. Either works. I'll use the reframe quote: \"reallocate a fixed number of member-forecasts across (dates x members) to minimize the standard error of the slope of skill vs log N, rather than maximizing members on few dates.\"\n\nReason (≤25 words): \"Reorders compute across dates versus members and measures slope standard error, so compute buys new verification dates instead of redundant members.\" That's about 20 words. Good.\n\nProposal 2 quote: \"fit the score's a + b/N law from nested subsamples of a few hundred members and extrapolate the N-infinity asymptote directly, instead of buying the curve point by point with full-fidelity members.\"\n\nReason: \"Changes what is measured: extrapolated N-infinity asymptote from fitted a + b/N law, so compute buys the asymptote and freed budget buys dates/diversity.\" Let me count: Changes(1) what(2) is(3) measured(4) extrapolated(5) N-infinity(6) asymptote(7) from(8) fitted(9) a(10) +(?) b/N(11) law(12) so(13) compute(14) buys(15) the(16) asymptote(17) and(18) freed(19) budget(20) buys(21) dates/diversity(22). ~22 words. OK.\n\nProposal 3 quote: \"a group-sequential test that adds members in batches of 50 and stops as soon as the confidence interval on the skill gain versus the 50-member baseline excludes the decision threshold in either direction.\"\n\nReason: \"Reorders computation adaptively toward a binary decision; leftover compute buys more dates or diversity, not redundant members.\" ~16 words. Good.\n\nWait — for proposal 3, is the \"measured\" thing new? \"Stopping member-count and the accepted hypothesis\" — yes, a new measured quantity. And ordering changed. So reframe.\n\nLet me double check proposal 1: Is it possibly \"other\"? The criterion says reframe \"changes what is computed, measured or ordered so that more compute buys something it did not before.\" Proposal 1 changes what is measured (slope SE, variance components) and reorders the allocation. More compute now buys independent dates (new information). Yes, reframe.\n\nOne might argue proposal 1 is more about statistical efficiency than compute buying something new — but the text explicitly says \"extra compute then buys independent verification dates, i.e. new information, instead of redundant draws from one distribution.\" That's the definition of reframe per the criterion.\n\nAll three: kind = \"reframe\", meets_criterion = \"NA\".\n\nLet me finalize the JSON with quotes that are verbatim from the proposals.\n\nProposal 1 verbatim reframe: \"Treat the run budget as an experimental-design problem: estimate the variance components (across-date vs within-date sampling) and reallocate a fixed number of member-forecasts across (dates x members) to minimize the standard error of the slope of skill vs log N, rather than maximizing members on few dates.\"\n\nThat's long but fine. Maybe shorter: \"reallocate a fixed number of member-forecasts across (dates x members) to minimize the standard error of the slope of skill vs log N, rather than maximizing members on few dates\" — this is a substring, verbatim. Good.\n\nProposal 2 verbatim: \"fit the score's a + b/N law from nested subsamples of a few hundred members and extrapolate the N-infinity asymptote directly, instead of buying the curve point by point with full-fidelity members.\" — verbatim substring of the reframe field. Good.\n\nProposal 3 verbatim: \"a group-sequential test that adds members in batches of 50 and stops as soon as the confidence interval on the skill gain versus the 50-member baseline excludes the decision threshold in either direction\" — verbatim substring. Good.\n\nReasons ≤25 words each:\n\n1: \"Reallocates compute across dates vs members and measures slope standard error; compute then buys independent verification dates, new information, not redundant draws.\" Count: Reallocates(1) compute(2) across(3) dates(4) vs(5) members(6) and(7) measures(8) slope(9) standard(10) error(11) compute(12) then(13) buys(14) independent(15) verification(16) dates(17) new(18) information(19) not(20) redundant(21) draws(22). 22 words. OK.\n\n2: \"Changes what is measured: extrapolated N-infinity asymptote from an a + b/N fit; compute buys the asymptote and savings buy new dates/diversity.\" Count: Changes1 what2 is3 measured4 extrapolated5 N-infinity6 asymptote7 from8 an9 a10 +/and? Let's count tokens: \"Changes what is measured: extrapolated N-infinity asymptote from an a + b/N fit; compute buys the asymptote and savings buy new dates/diversity.\" Changes(1) what(2) is(3) measured(4) extrapolated(5) N-infinity(6) asymptote(7) from(8) an(9) a(10) b/N(11) fit(12) compute(13) buys(14) the(15) asymptote(16) and(17) savings(18) buy(19) new(20) dates/diversity(21). ~21 words. OK.\n\n3: \"Reorders computation as adaptive sequential batches aimed at a binary decision; freed compute buys more dates or diversity, not redundant members.\" Count: Reorders1 computation2 as3 adaptive4 sequential5 batches6 aimed7 at8 a9 binary10 decision11 freed12 compute13 buys14 more15 dates16 or17 diversity18 not19 redundant20 members21. 21 words. OK.\n\nNow output JSON only.",
+          "time": {
+            "start": 1792321205026,
+            "end": 1792321233166
+          },
+          "id": "prt_14eab3322001WO68y4HhY6weH4",
+          "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH",
+          "messageID": "msg_14eab174c001LGtykP8D0ar5wq"
+        },
+        {
+          "type": "text",
+          "text": "{\"items\":[{\"index\":1,\"kind\":\"reframe\",\"meets_criterion\":\"NA\",\"quote\":\"reallocate a fixed number of member-forecasts across (dates x members) to minimize the standard error of the slope of skill vs log N, rather than maximizing members on few dates\",\"reason\":\"Reallocates compute across dates vs members and measures slope standard error; compute then buys independent verification dates, new information, not redundant draws.\"},{\"index\":2,\"kind\":\"reframe\",\"meets_criterion\":\"NA\",\"quote\":\"fit the score's a + b/N law from nested subsamples of a few hundred members and extrapolate the N-infinity asymptote directly, instead of buying the curve point by point with full-fidelity members\",\"reason\":\"Changes what is measured: extrapolated N-infinity asymptote from an a + b/N fit; compute buys the asymptote and savings buy new dates/diversity.\"},{\"index\":3,\"kind\":\"reframe\",\"meets_criterion\":\"NA\",\"quote\":\"a group-sequential test that adds members in batches of 50 and stops as soon as the confidence interval on the skill gain versus the 50-member baseline excludes the decision threshold in either direction\",\"reason\":\"Reorders computation as adaptive sequential batches aimed at a binary decision; freed compute buys more dates or diversity, not redundant members.\"}]}",
+          "time": {
+            "start": 1792321233268,
+            "end": 1792321235625
+          },
+          "id": "prt_14eaba1740010VJuCzv5UKRBvx",
+          "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH",
+          "messageID": "msg_14eab174c001LGtykP8D0ar5wq"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "447ed9316cd091d7800f31a6b104cb9d6f86fa80",
+          "type": "step-finish",
+          "tokens": {
+            "total": 5473,
+            "input": 2373,
+            "output": 277,
+            "reasoning": 2575,
+            "cache": {
+              "write": 0,
+              "read": 248
+            }
+          },
+          "cost": 0.01593548,
+          "id": "prt_14eabaf2f001Sm12qRznndAUuH",
+          "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH",
+          "messageID": "msg_14eab174c001LGtykP8D0ar5wq"
+        },
+        {
+          "type": "patch",
+          "hash": "0281901741191646ae701e42cfe2c78b47169458",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-independent-judge.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/coolant-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/vla-independent.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry-judge.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-a/calls/weather-independent-judge.http/001.response.txt"
+          ],
+          "id": "prt_14eabb376001skAC6zfvZbFKPd",
+          "sessionID": "ses_eb154fb2efferYYArHIrcxAvlH",
+          "messageID": "msg_14eab174c001LGtykP8D0ar5wq"
+        }
+      ]
+    }
+  ]
+}

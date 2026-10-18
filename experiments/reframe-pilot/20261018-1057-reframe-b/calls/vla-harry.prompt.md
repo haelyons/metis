@@ -1,0 +1,25 @@
+You look at problems through one lens. Many computations are a loop: the next state is computed from the current one,
+so step 1,000 cannot start until step 999 ends, and when the state is small most of a GPU sits idle. Such a loop can
+sometimes be computed all at once: guess every state, check every step in parallel against the one before, correct
+all the errors together, and repeat until nothing changes. The result is exactly what the loop would give. It pays only
+when the system forgets its past, so that early errors fade: damped, dissipative or mixing dynamics, or a long sampling
+chain. It fails when small errors grow, as in chaotic systems. Before spending, measure forgetfulness: start two runs a
+hair apart and see whether they converge or drift apart. A good candidate has a step-by-step loop, a small state (a
+handful to a few hundred numbers), a long run (thousands of steps or more), forgetful dynamics, and few runs needed; if
+thousands of runs are needed, run them side by side instead. The method does more total arithmetic and wins only on how
+long one answer takes. Before proposing anything, check whether a strong GPU method for this already exists; rebuilding
+it wins nothing. Write down your predictions and how you could be wrong before any test, and compare against a tuned
+sequential baseline and against many independent copies run side by side.
+
+Here is a research problem as it was first written down, with the question it belongs to.
+Root question: What's actually stopping general purpose robot hands from reliably doing stuff like folding laundry or loading a dishwasher? Is it the lack of real-world manipulation data, the hardware (sensors, actuators, tactile feedback), or the sim-to-real gap? Is that a major blocker at some level, and could it be fixed by running millions of simulated robots in parallel on a shit ton of GPUs?
+Problem:
+Inference-time steering of VLA internals (SAEs, FFN vectors, conceptors, linear observers)
+Steering a VLA's internal features can bring out behaviour the model already has, without retraining. On real DROID hardware, SAE steering of pi0.5 raised target-object grasps by +9 to +21 out of 25 trials, and ablating the top-4 general features cut success from 39/40 to 0/40. COAST conceptors raised pi0.5 on LIBERO-10 from 0.43 to 0.80, with about +40% on three real tasks. Grant et al. found motor programs bound to absolute coordinates (50/50 grasps at the recorded spot on a UR10e). All tests are rigid tabletop tasks; none is cloth or a dish rack. Goodfire markets steering for robotics but publishes no numbers.
+What more compute would buy: The quantity is closed-loop rollouts and SAEs swept; the largest is 420,000+ rollouts and 520+ SAEs across six VLAs (https://arxiv.org/abs/2603.19233), and above that it is unknown whether any feature controls contact-rich or deformable behaviour, because every sweep so far ran rigid pick-and-place or drawer tasks.
+What runs step after step: Each feature waits on an SAE fit (about 6,700 Adam steps, derived from https://arxiv.org/html/2603.19183; 'a few GPU-hours per SAE on one A100') and then on closed-loop rollouts of up to 300 steps, each waiting on a ~150 ms VLA forward pass and the next observation; the answer needed 150 rollouts × 135 features (20,250 episodes), and one unbatched rollout leaves the GPU idle while the simulator steps. Steps within a rollout must run in order, but rollouts are independent: batching hundreds of steered environments in a GPU-parallel simulator, with a separate hook per environment and simulation pipelined against inference, would run them together; this pays only if steering effects in simulation match the real robot (false for cloth). The nearest attempt is RLinf-VLA, 1.61-1.88x with 256 ManiSkill environments, for RL rather than interpretability (https://arxiv.org/html/2510.06710v2).
+
+Find where this problem stops more compute from helping, or where more compute only buys more of the same. Then look for reframings: changes to what is measured, the unit of work, the objective or the order of steps that would let more compute change the answer. Give up to three. End each with one question someone could investigate: specific, answerable by a measurement, and naming what is measured. For each, give the cheapest measurement that would answer it or show it is not worth pursuing, with a rough cost. Decide from the text above and what you know; do not use tools.
+
+Return only one JSON value, with no other text, that matches this JSON Schema:
+{"type":"object","required":["reframes"],"properties":{"reframes":{"type":"array","items":{"type":"object","required":["bottleneck","assumption","reframe","question","measure","compute_after","exact","expected","fails_if","closest_prior"],"properties":{"bottleneck":{"type":"string"},"assumption":{"type":"string"},"reframe":{"type":"string"},"question":{"type":"string"},"measure":{"type":"string"},"compute_after":{"type":"string"},"exact":{"type":"string"},"expected":{"type":"string"},"fails_if":{"type":"string"},"closest_prior":{"type":"string"}}}}}}

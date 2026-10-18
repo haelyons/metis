@@ -6,6 +6,8 @@
 // other, and checks it against the case's criterion when the case has one. Every call is logged as in the pipeline.
 //
 // usage: node reframe/reframe.js --cases <cases.json> --out <run dir> [--model m] [--judge m] [--lenses harry,independent]
+//        node reframe/reframe.js --cases <cases.json> --judge-only <proposals.json> --out <run dir> [--judge m]
+//          proposals.json: [{case, label, reframes: [...]}]; judges each list as given (planted tests, other judges' input)
 const fs = require('node:fs')
 const path = require('node:path')
 const crypto = require('node:crypto')
@@ -65,6 +67,18 @@ async function call(name, model, prompt, schema) {
   for (const [n, t] of Object.entries(LENSES)) fs.writeFileSync(path.join(OUT, 'lenses', `${n}.md`), t + '\n')
   fs.writeFileSync(path.join(OUT, 'cases.json'), JSON.stringify(CASES, null, 1))
 
+  const judgeOnly = opt('judge-only')
+  if (judgeOnly) {
+    const lists = JSON.parse(fs.readFileSync(judgeOnly, 'utf8'))
+    const out = await Promise.all(lists.map(async x => {
+      const c = CASES.find(k => k.id === x.case)
+      const j = await call(`${x.case}-${x.label}-judge`, JUDGE, P_JUDGE(c, x.reframes), SCHEMA_JUDGE)
+      return { case: x.case, label: x.label, judged: ((j && j.items) || []) }
+    }))
+    fs.writeFileSync(path.join(OUT, 'judged.json'), JSON.stringify({ judge: JUDGE, cost_usd: +spend.toFixed(4), lists: out }, null, 1))
+    console.log(`judge-only done: $${spend.toFixed(3)}\n${OUT}/judged.json`)
+    return
+  }
   const jobs = CASES.flatMap(c => Object.keys(LENSES).map(l => ({ c, l })))
   const results = await Promise.all(jobs.map(async ({ c, l }) => {
     const r = await call(`${c.id}-${l}`, MODEL, P_REFRAME(LENSES[l], c), SCHEMA_REFRAMES)

@@ -1,0 +1,190 @@
+{
+  "info": {
+    "id": "ses_eb154ef12ffePS1rS8frg6Af1k",
+    "slug": "jolly-cactus",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls",
+    "path": "experiments/reframe-pilot/20261018-1057-reframe-b/calls",
+    "title": "vla-independent-judge",
+    "agent": "qt-bare",
+    "model": {
+      "id": "glm-5.3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.01865408,
+    "tokens": {
+      "input": 2822,
+      "output": 264,
+      "reasoning": 3063,
+      "cache": {
+        "read": 248,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792321196269,
+      "updated": 1792321247531
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792321196918
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "glm-5.3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14eab1376001ruZdS6T5gSfaW0",
+        "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Below are questions proposed for a research problem, each with the reframing behind it. Classify each one.\nkind: \\\"reframe\\\" if it changes what is computed, measured or ordered so that more compute buys something it did not before; \\\"copies\\\" if it only runs the same computation more times, on more items, or side by side; \\\"other\\\" otherwise.\nmeets_criterion: \\\"yes\\\" or \\\"no\\\" for this criterion: The question removes the closed-loop dependency: it scores steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, and confirms only the top candidates with closed-loop episodes.\nGive for each a quote from the proposal and a reason of at most 25 words. Decide only from the text below; do not use tools.\nProblem:\nInference-time steering of VLA internals (SAEs, FFN vectors, conceptors, linear observers)\nSteering a VLA's internal features can bring out behaviour the model already has, without retraining. On real DROID hardware, SAE steering of pi0.5 raised target-object grasps by +9 to +21 out of 25 trials, and ablating the top-4 general features cut success from 39/40 to 0/40. COAST conceptors raised pi0.5 on LIBERO-10 from 0.43 to 0.80, with about +40% on three real tasks. Grant et al. found motor programs bound to absolute coordinates (50/50 grasps at the recorded spot on a UR10e). All tests are rigid tabletop tasks; none is cloth or a dish rack. Goodfire markets steering for robotics but publishes no numbers.\nWhat more compute would buy: The quantity is closed-loop rollouts and SAEs swept; the largest is 420,000+ rollouts and 520+ SAEs across six VLAs (https://arxiv.org/abs/2603.19233), and above that it is unknown whether any feature controls contact-rich or deformable behaviour, because every sweep so far ran rigid pick-and-place or drawer tasks.\nWhat runs step after step: Each feature waits on an SAE fit (about 6,700 Adam steps, derived from https://arxiv.org/html/2603.19183; 'a few GPU-hours per SAE on one A100') and then on closed-loop rollouts of up to 300 steps, each waiting on a ~150 ms VLA forward pass and the next observation; the answer needed 150 rollouts × 135 features (20,250 episodes), and one unbatched rollout leaves the GPU idle while the simulator steps. Steps within a rollout must run in order, but rollouts are independent: batching hundreds of steered environments in a GPU-parallel simulator, with a separate hook per environment and simulation pipelined against inference, would run them together; this pays only if steering effects in simulation match the real robot (false for cloth). The nearest attempt is RLinf-VLA, 1.61-1.88x with 256 ManiSkill environments, for RL rather than interpretability (https://arxiv.org/html/2510.06710v2).\nProposals: [{\\\"index\\\":1,\\\"bottleneck\\\":\\\"Testing one feature costs 150 sequential closed-loop rollouts (up to 300 steps each, every step waiting on a ~150 ms forward pass plus the next observation), so answering whether any feature controls contact-rich or deformable behavior means months of serial robot or simulator time; an unbatched rollout also leaves the GPU idle while the simulator steps.\\\",\\\"assumption\\\":\\\"That a feature's effect can only be measured as closed-loop task success: the unit of measurement is a 300-step episode in which each observation causally depends on the previous action.\\\",\\\"reframe\\\":\\\"Change what is measured: score each feature by its open-loop action-chunk divergence (L2/KL between steered and unsteered predicted actions) on recorded contact-rich frames. Recorded observations break the step-after-step dependency, so every (frame, feature) pair is independent and thousands of steered forward passes batch on one GPU; serial closed-loop rollouts are reserved for the few features the screen promotes.\\\",\\\"question\\\":\\\"On the existing 135-feature rigid-task sweep, what is the Spearman rank correlation between per-feature open-loop action-chunk divergence (measured on ~10k recorded frames) and the already-measured closed-loop success delta per feature?\\\",\\\"measure\\\":\\\"Recompute each of the 135 steers as batched forward passes over ~10k recorded task frames (~1.35M forward passes, 1-3 A100-days batched, zero new rollouts), rank features by divergence, and correlate against the published 150-rollout success deltas; the episode logs already exist, so this is pure GPU inference plus an afternoon of statistics.\\\",\\\"compute_after\\\":\\\"If the screen validates (rho >= 0.7), the cloth question becomes embarrassingly parallel: sweep all 520 SAEs x all features against a few hours of recorded cloth and dish-rack teleoperation in GPU-weeks instead of robot-years, spending serial closed-loop rollouts only on the top-k; each added GPU buys a linear increase in features screened per day.\\\",\\\"exact\\\":\\\"Delta_i = mean over frames of ||a_steer_i - a_base||^2 on the action chunk (KL over action tokens as robustness check); Spearman rho with bootstrap CI between Delta_i and the closed-loop delta across the 135 features; prospective confirmation: top-5 open-loop features get 25 real rollouts each on one towel-fold task (125 episodes, ~2 robot-days).\\\",\\\"expected\\\":\\\"High correlation on rigid tasks: features that do nothing closed-loop should perturb nothing open-loop, and the large reported effects (+9 to +21 out of 25; 39/40 to 0/40) should produce large divergences; expect the screen to discard >80% of features at under 1% of the rollout cost.\\\",\\\"fails_if\\\":\\\"Open-loop divergence does not rank closed-loop success (rho < ~0.3), which existing VLA evaluations suggest is possible: small per-step action shifts can compound or be corrected under closed-loop feedback, in which case recorded-frame screening is worthless and the sequential rollout dependency is real.\\\",\\\"closest_prior\\\":\\\"Documented open-loop vs closed-loop gaps for VLAs (open-loop L2 predicting closed-loop success poorly in OpenVLA-class evaluations); RLinf-VLA's batched rollouts (1.61-1.88x with 256 ManiSkill envs) is the closed-loop alternative this would beat; action-token prediction accuracy is already used as a cheap proxy during VLA training.\\\"},{\\\"index\\\":2,\\\"bottleneck\\\":\\\"The 20,250-episode answer was bought as 135 features x 150 rollouts at uniform precision; if most features are near-null, most episodes purchased no information, and the same waste scales to any future cloth sweep.\\\",\\\"assumption\\\":\\\"That the objective is a precise success estimate per feature (hence 150 trials for every feature), rather than a decision - is this feature worth testing on cloth, yes or no - or a ranking of the top few.\\\",\\\"reframe\\\":\\\"Change the objective from estimation to screening: run a sequential probability ratio test or successive halving over features, killing nulls after ~10 rollouts and concentrating budget near the decision boundary. Compute becomes an anytime resource that buys discrimination among top candidates instead of uniform confidence intervals over all 135.\\\",\\\"question\\\":\\\"Replaying the recorded outcomes of the completed 20,250 episodes: what fraction of the 135 features are correctly accepted or rejected at alpha=0.05 within <=20 rollouts under an SPRT, and does successive halving return the same top-10 features using <=30% of the episodes?\\\",\\\"measure\\\":\\\"Retrospective reanalysis only: implement SPRT (H0: delta=0 vs H1: |delta|>=0.2, alpha=beta=0.05) and successive halving on the logged per-episode success sequences, average over ~100 random episode orderings, and compare the selected feature set and episodes consumed against the full-data answer. Cost: hours of analyst time, no GPU, no robot.\\\",\\\"compute_after\\\":\\\"If the retrospective saving is >=3x, every future sweep inherits it: the same robot-week screens 3-10x more features, SAEs, or tasks, and the freed budget is what pays for the first contact-rich sweeps on real hardware.\\\",\\\"exact\\\":\\\"Per feature, replay episodes in shuffled order; record episodes-to-decision under SPRT and under successive halving with brackets at 10/30/90 rollouts; report median and 90th-percentile savings, false-accept/false-reject rates vs the full-data labels, and the rank correlation of the halving top-10 with the full-data top-10.\\\",\\\"expected\\\":\\\"Large savings: the reported effects are enormous (+9 to +21 out of 25, and 39/40 to 0/40 on ablation), so most decisions are statistically obvious within 10-20 episodes; expect >=70% episode reduction with an identical top-feature set.\\\",\\\"fails_if\\\":\\\"Most true effects are small (|delta| < 5 percentage points), so no early-stopping rule can separate them - but that itself would be the finding that steering effects are mostly negligible; also fails if outcomes drift over the sweep (non-i.i.d.), which inflates SPRT error rates and must be checked from the logs.\\\",\\\"closest_prior\\\":\\\"Wald's SPRT; Hyperband/ASHA and best-arm-identification bandits in hyperparameter search; adaptive-subsampling approaches in LLM evaluation (tinyBenchmarks, IRT-based efficient benchmarks) applying the same trick to expensive evals.\\\"},{\\\"index\\\":3,\\\"bottleneck\\\":\\\"The one proven parallelization route - batched GPU sim rollouts, 1.61-1.88x at 256 ManiSkill environments - is written off because steering effects in simulation are assumed not to match the real robot ('false for cloth'), leaving all contact-rich steering evaluation serial on real hardware.\\\",\\\"assumption\\\":\\\"That steering-induced deltas inherit the full sim-to-real gap of the task: because absolute cloth behavior is wrong in sim, the effect of clamping a feature must also be wrong, so sim cannot even rank features for the real robot.\\\",\\\"reframe\\\":\\\"Test transfer of the delta, not the behavior. SAE features live in the network's activation space and encode its largely real-data-trained priors; the sim gap may sit in the physics while the feature-to-action-delta pathway is a property of the weights. If steering deltas correlate sim-to-real even when absolute success does not, sim becomes a valid screen and the parallel infrastructure applies directly.\\\",\\\"question\\\":\\\"Across >=12 features with known real-robot effects on a rigid tabletop task, is the Spearman correlation between sim-measured and real-measured steering success-deltas >=0.7, and what is that correlation on one deformable task (towel fold)?\\\",\\\"measure\\\":\\\"Build sim mirrors of 2-3 already-published steered tabletop tasks (~1 engineer-week), run batched sim rollouts for ~12 features x 100 episodes (1,200 episodes, 1-2 A100-days at 256 envs), reuse the published real numbers for rigid deltas, and add ~6 features x 25 real rollouts on one towel-fold task (~150 episodes, 2-3 days on one DROID-class setup). Total about 2 weeks.\\\",\\\"compute_after\\\":\\\"If rigid deltas transfer (rho >= 0.7) and cloth shows even rho ~ 0.5, the entire interpretability sweep moves to batched sim: compute then buys orders of magnitude - 420k-rollout-scale sweeps over all 520 SAEs and many deformable tasks become GPU-weeks, with real rollouts spent only confirming promoted features.\\\",\\\"exact\\\":\\\"Select features spanning the observed real effect range (+9, +15, +21 out of 25, plus the top-4 general features whose ablation took 39/40 to 0/40); replicate each steer in a ManiSkill/Isaac mirror of the DROID tabletop setup; delta_i = success(steer_i) - success(base) per domain; Spearman rho with bootstrap CI across features, reported separately for rigid and cloth.\\\",\\\"expected\\\":\\\"Rigid-task deltas plausibly transfer since those tasks succeed in both domains; cloth is the genuine bet - even a moderate positive correlation justifies sim pre-screening with real confirmation, still a 10-100x episode saving over pure real sweeps.\\\",\\\"fails_if\\\":\\\"Even rigid-task steering deltas fail to correlate (rho < 0.3), meaning the intervention pathway itself is sim-sensitive; then sim screening is dead at any physics fidelity and the remaining routes are open-loop screening or fixing cloth simulation first.\\\",\\\"closest_prior\\\":\\\"RLinf-VLA (256 parallel ManiSkill envs, 1.61-1.88x) as ready infrastructure; the deformable sim-to-real gap documented in cloth simulation benchmarks; analogous to RL findings that method or policy rankings can transfer sim-to-real even when absolute scores do not - treatment-effect rather than performance transfer.\\\"}]\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"items\\\"],\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"index\\\",\\\"kind\\\",\\\"meets_criterion\\\",\\\"quote\\\",\\\"reason\\\"],\\\"properties\\\":{\\\"index\\\":{\\\"type\\\":\\\"integer\\\"},\\\"kind\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"reframe\\\",\\\"copies\\\",\\\"other\\\"]},\\\"meets_criterion\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"yes\\\",\\\"no\\\",\\\"NA\\\"]},\\\"quote\\\":{\\\"type\\\":\\\"string\\\"},\\\"reason\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_14eab13d3001bpvCNPESPF3C6t",
+          "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k",
+          "messageID": "msg_14eab1376001ruZdS6T5gSfaW0"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14eab1376001ruZdS6T5gSfaW0",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.01865408,
+        "tokens": {
+          "total": 6397,
+          "input": 2822,
+          "output": 264,
+          "reasoning": 3063,
+          "cache": {
+            "write": 0,
+            "read": 248
+          }
+        },
+        "modelID": "glm-5.3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792321198968,
+          "completed": 1792321247434
+        },
+        "finish": "stop",
+        "id": "msg_14eab1b7800191OIZNrpgWBPOW",
+        "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k"
+      },
+      "parts": [
+        {
+          "snapshot": "b992c3810ffec68c798ed90041f6953429e4ba49",
+          "type": "step-start",
+          "id": "prt_14eab34c3001bOhYBFSUh0QmmZ",
+          "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k",
+          "messageID": "msg_14eab1b7800191OIZNrpgWBPOW"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me analyze each proposal.\n\n**Proposal 1:**\n- The reframing: change what is measured — score features by open-loop action-chunk divergence on recorded frames instead of closed-loop rollouts. Recorded observations break the step-after-step dependency, so (frame, feature) pairs are independent and batchable. Closed-loop rollouts reserved for top candidates (\"serial closed-loop rollouts are reserved for the few features the screen promotes\", \"prospective confirmation: top-5 open-loop features get 25 real rollouts each\").\n- Kind: this changes what is measured (open-loop divergence on recorded frames vs closed-loop success), which makes more compute (batched forward passes) buy something it didn't before (screening thousands of features). So \"reframe\".\n- Meets criterion: yes — it scores steering effects on fixed recorded observations (open loop) and confirms top candidates with closed-loop episodes (top-5 get 25 real rollouts). Quote: \"Recorded observations break the step-after-step dependency... serial closed-loop rollouts are reserved for the few features the screen promotes.\" or \"score each feature by its open-loop action-chunk divergence... on recorded contact-rich frames.\"\n\n**Proposal 2:**\n- Reframing: change the objective from estimation to screening; sequential testing/SUCCESSIVE halving kills null features after ~10 rollouts. This changes what is measured/ordered (a decision/ranking rather than precise estimate), letting more compute buy discrimination among top candidates. Actually the compute aspect: the question is retrospective reanalysis only — replaying recorded outcomes with SPRT. Hmm. Does it change what is computed? It changes the objective: instead of uniform 150 rollouts per feature for precise estimates, use sequential tests that stop early. That is a reframe of what is computed (the decision rather than the estimate). More compute buys discrimination among top candidates instead of uniform confidence. This is a classic adaptive-sampling reframe. But the specific question (index 2) is a retrospective reanalysis of existing logs — no new compute. However the \"compute_after\" says future sweeps inherit savings. The reframe itself: \"Change the objective from estimation to screening... Compute becomes an anytime resource that buys discrimination among top candidates.\" This changes what is computed/ordered so more compute buys something new — kind: \"reframe\".\n\nBut wait — is it just \"running the same computation more times\"? No, it changes the stopping rule and objective. Sequential testing reorders budget. I'd say \"reframe\". One could argue \"other\" since it's about statistical efficiency rather than parallelism, but the criterion for reframe: \"changes what is computed, measured or ordered so that more compute buys something it did not before.\" Changing the objective from estimation to screening/ranking — more compute buys discrimination among top candidates. Yes, \"reframe\".\n\n- Meets criterion: the criterion is about removing closed-loop dependency by scoring on fixed recorded observations (open loop) and confirming top candidates with closed-loop episodes. Proposal 2 still uses closed-loop rollouts, just fewer of them via early stopping. It doesn't score on fixed recorded observations (well, it replays recorded outcomes, but that's retrospective analysis of closed-loop episodes, not open-loop scoring on recorded frames). The criterion specifically: \"scores steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, and confirms only the top candidates with closed-loop episodes.\" Proposal 2 does not do open-loop scoring; it reduces closed-loop episodes via sequential testing. So meets_criterion: \"no\".\n\n**Proposal 3:**\n- Reframing: test transfer of the delta, not the behavior — use sim as a screen. This changes what is measured (sim-measured deltas vs real) enabling batched parallel sim rollouts. More compute (parallel sim) buys screening capability it didn't before (sim was written off). Kind: \"reframe\".\n- Meets criterion: does it remove the closed-loop dependency by scoring on fixed recorded observations open-loop? No — it still runs closed-loop episodes, just in simulation (batched). It does confirm top candidates on real robot (\"real rollouts spent only confirming promoted features\"), but the screening is closed-loop in sim, not open-loop on recorded observations. So meets_criterion: \"no\".\n\nWait, but let me reconsider proposal 3. The criterion: \"The question removes the closed-loop dependency: it scores steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, and confirms only the top candidates with closed-loop episodes.\" Proposal 3 uses closed-loop sim episodes (batched), not open-loop recorded observations. The dependency removed is the serial real-robot dependency, not the closed-loop dependency per se. So \"no\".\n\nActually, one could argue the sim rollouts are closed-loop episodes, so the closed-loop dependency remains (just parallelized in sim). Yes, \"no\".\n\nNow for quotes:\n\nProposal 1 quote: \"Recorded observations break the step-after-step dependency, so every (frame, feature) pair is independent and thousands of steered forward passes batch on one GPU; serial closed-loop rollouts are reserved for the few features the screen promotes.\"\n\nReason: Scores features open-loop on recorded frames, batching forward passes; confirms only top-5 with closed-loop rollouts.\n\nProposal 2 quote: \"Change the objective from estimation to screening: run a sequential probability ratio test or successive halving over features, killing nulls after ~10 rollouts and concentrating budget near the decision boundary.\"\n\nReason: Still evaluates closed-loop episodes, only adaptively; no open-loop scoring on recorded observations.\n\nProposal 3 quote: \"If steering deltas correlate sim-to-real even when absolute success does not, sim becomes a valid screen and the parallel infrastructure applies directly.\"\n\nReason: Screens via closed-loop sim rollouts (batched), not open-loop scoring on recorded observations; real rollouts confirm, but that's not open-loop screening.\n\nLet me double check the kind classification for proposal 2. The reframe criterion: \"if it changes what is computed, measured or ordered so that more compute buys something it did not before\". Proposal 2 changes the objective from estimation to screening/decision — this changes what is computed (a binary decision/ranking rather than precise per-feature estimates) and makes compute an anytime resource buying discrimination. Yes, \"reframe\".\n\nHmm, but one might also consider it \"other\" because the specific question is a retrospective reanalysis that requires no new compute. But the reframing itself is about how future sweeps allocate episodes — the question changes what is measured (decision vs estimate). I'll stick with \"reframe\".\n\nActually, let me reconsider: the instructions say classify each question (\"Below are questions proposed for a research problem, each with the reframing behind it\"). The question for #2: \"Replaying the recorded outcomes of the completed 20,250 episodes: what fraction of the 135 features are correctly accepted or rejected at alpha=0.05 within <=20 rollouts under an SPRT...\" — this replays recorded outcomes, no new rollouts. Does this reframe what compute buys? The reframe section says \"Compute becomes an anytime resource that buys discrimination among top candidates instead of uniform confidence intervals over all 135.\" That changes what is ordered/measured (a ranking/decision) so more compute buys discrimination. I think \"reframe\" is right.\n\nBut wait — is it possible that the criterion intends only proposal 1 to be \"yes\"? Yes, clearly proposal 1 is the archetype of the criterion. Proposals 2 and 3 reduce closed-loop cost but don't use open-loop recorded-observation scoring.\n\nFor proposal 2, meets_criterion \"no\": it doesn't score on fixed recorded observations (open loop); it adaptively stops closed-loop episodes. Also it doesn't have the confirm-top-candidates-with-closed-loop structure in the open-loop sense — actually successive halving does concentrate on top candidates, but the screening is still closed-loop episodes. The defining feature of the criterion is open-loop scoring on recorded observations. Proposal 2 lacks that. \"no\".\n\nFor proposal 3, meets_criterion \"no\": sim screening is still closed-loop (in sim), parallelized, not open-loop on recorded observations. \"no\".\n\nNow, quotes should be from the proposal. Let me pick concise quotes.\n\n1: \"score each feature by its open-loop action-chunk divergence (L2/KL between steered and unsteered predicted actions) on recorded contact-rich frames\" — or the reframe sentence. I'll use the reframe sentence since it captures both parts: \"Recorded observations break the step-after-step dependency... serial closed-loop rollouts are reserved for the few features the screen promotes.\" Maybe use a shorter quote: \"serial closed-loop rollouts are reserved for the few features the screen promotes\" plus open-loop. The quote should be a single quote string. I'll use: \"Recorded observations break the step-after-step dependency, so every (frame, feature) pair is independent and thousands of steered forward passes batch on one GPU; serial closed-loop rollouts are reserved for the few features the screen promotes.\"\n\nReason (≤25 words): \"Screens features open-loop on recorded frames; only top-5 candidates get closed-loop rollouts, exactly removing the closed-loop dependency.\" Count: Screens(1) features(2) open-loop(3) on(4) recorded(5) frames(6); only(7) top-5(8) candidates(9) get(10) closed-loop(11) rollouts(12), exactly(13) removing(14) the(15) closed-loop(16) dependency(17). 17 words. Good.\n\n2: quote: \"Change the objective from estimation to screening: run a sequential probability ratio test or successive halving over features, killing nulls after ~10 rollouts and concentrating budget near the decision boundary.\"\n\nReason: \"Adaptive early stopping of closed-loop episodes; screening remains closed-loop rollouts, never open-loop scoring on recorded observations.\" Count: Adaptive(1) early(2) stopping(3) of(4) closed-loop(5) episodes(6); screening(7) remains(8) closed-loop(9) rollouts(10), never(11) open-loop(12) scoring(13) on(14) recorded(15) observations(16). 16 words. Good.\n\n3: quote: \"If steering deltas correlate sim-to-real even when absolute success does not, sim becomes a valid screen and the parallel infrastructure applies directly.\"\n\nReason: \"Screens with batched closed-loop sim episodes, not open-loop recorded observations; parallelism, not open-loop scoring, removes the serial dependency.\" Count: Screens(1) with(2) batched(3) closed-loop(4) sim(5) episodes(6), not(7) open-loop(8) recorded(9) observations(10); parallelism(11), not(12) open-loop(13) scoring(14), removes(15) the(16) serial(17) dependency(18). 18 words. Good.\n\nKinds:\n1: reframe — changes what is measured (open-loop divergence on recorded frames) enabling massive batching; more compute buys screening throughput. Yes.\n2: reframe — changes objective from estimation to screening; compute becomes anytime resource buying discrimination. Yes reframe.\n3: reframe — changes what is measured (sim deltas as screen) enabling parallel sim infrastructure. Yes reframe.\n\nAll three are reframes by the given definition. Let me double check none are \"copies\": copies = only runs the same computation more times, on more items, or side by side. Proposal 3 uses batched sim rollouts — but it's not merely running the same computation side by side; it changes what is measured (sim-measured deltas as proxy) to unlock the parallel infrastructure. The reframe is \"test transfer of the delta, not the behavior\" — that changes the measured quantity's interpretation. It enables more compute to buy something (sim screening) it didn't before. So \"reframe\".\n\nHmm, but one could argue proposal 3 is closer to \"copies\" because the parallelism is just running the same rollouts side by side in sim. But the key is that sim was written off; the reframe validates sim deltas as a screen, changing what is measured (delta transfer rather than absolute behavior), which is what makes the copies useful. The definition: \"reframe if it changes what is computed, measured or ordered so that more compute buys something it did not before.\" Yes — it changes what is measured (sim-measured steering deltas rather than real behavior), and that's what makes parallel sim compute buy screening. \"reframe\".\n\nProposal 2: is it reframe or other? It changes the objective from estimation to decision/ranking. \"Compute becomes an anytime resource that buys discrimination among top candidates instead of uniform confidence intervals\" — more compute buys something different (discrimination among top candidates). This changes what is computed (binary decisions vs confidence intervals). I'll say \"reframe\". Though there's a subtlety: sequential testing doesn't make more compute buy more — it makes less compute buy the same decision. Hmm. \"so that more compute buys something it did not before\" — with SPRT, more compute (more rollouts) buys discrimination among top candidates rather than narrower CIs for all. It changes what is ordered (a top-k ranking rather than uniform estimates). I think \"reframe\" is intended here — the reframe field literally says \"Change the objective from estimation to screening\" and \"Compute becomes an anytime resource that buys discrimination among top candidates instead of uniform confidence intervals over all 135.\" That matches the reframe definition.\n\nAlternatively, some might classify #2 as \"other\" since the question itself is retrospective analysis with no new compute. But the reframing behind it clearly changes the objective/measurement structure. Given the schema asks to classify \"each one\" (the questions with the reframing behind them), I'll classify based on the reframing. \"reframe\".\n\nMeets criterion:\n1: yes\n2: no\n3: no\n\nActually, let me reconsider #3 once more. The criterion: \"The question removes the closed-loop dependency: it scores steering effects on fixed, recorded observations (open loop) instead of full closed-loop episodes, and confirms only the top candidates with closed-loop episodes.\" Proposal 3: sim rollouts are full closed-loop episodes (in sim), batched. Real confirmation of promoted features. So it does NOT score on fixed recorded observations. The closed-loop dependency within each rollout remains (each sim step depends on previous action), just parallelized. So \"no\".\n\nAnd #2: episodes are closed-loop rollouts (replayed), sequential testing reduces count. No open-loop scoring on recorded observations. \"no\".\n\nFinal answer JSON.",
+          "time": {
+            "start": 1792321205456,
+            "end": 1792321244436
+          },
+          "id": "prt_14eab34cf0018GKREd3jV5P6Pk",
+          "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k",
+          "messageID": "msg_14eab1b7800191OIZNrpgWBPOW"
+        },
+        {
+          "type": "text",
+          "text": "{\"items\":[{\"index\":1,\"kind\":\"reframe\",\"meets_criterion\":\"yes\",\"quote\":\"Recorded observations break the step-after-step dependency, so every (frame, feature) pair is independent and thousands of steered forward passes batch on one GPU; serial closed-loop rollouts are reserved for the few features the screen promotes.\",\"reason\":\"Screens features open-loop on recorded frames, batching forward passes; only top-5 candidates are confirmed with closed-loop rollouts, removing the closed-loop dependency.\"},{\"index\":2,\"kind\":\"reframe\",\"meets_criterion\":\"no\",\"quote\":\"Change the objective from estimation to screening: run a sequential probability ratio test or successive halving over features, killing nulls after ~10 rollouts and concentrating budget near the decision boundary.\",\"reason\":\"Adaptive early stopping of closed-loop episodes; screening still uses closed-loop rollouts, never open-loop scoring on recorded observations.\"},{\"index\":3,\"kind\":\"reframe\",\"meets_criterion\":\"no\",\"quote\":\"If steering deltas correlate sim-to-real even when absolute success does not, sim becomes a valid screen and the parallel infrastructure applies directly.\",\"reason\":\"Screens via batched closed-loop sim episodes, not open-loop scoring on recorded observations; parallelism removes serial cost, not the closed-loop dependency.\"}]}",
+          "time": {
+            "start": 1792321244454,
+            "end": 1792321246764
+          },
+          "id": "prt_14eabcd26001vp31vrW737aq4U",
+          "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k",
+          "messageID": "msg_14eab1b7800191OIZNrpgWBPOW"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "e99e32bb69ffb7b757882e5498de7054cadf3209",
+          "type": "step-finish",
+          "tokens": {
+            "total": 6397,
+            "input": 2822,
+            "output": 264,
+            "reasoning": 3063,
+            "cache": {
+              "write": 0,
+              "read": 248
+            }
+          },
+          "cost": 0.01865408,
+          "id": "prt_14eabd769001VqXOrZoXAHOWAB",
+          "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k",
+          "messageID": "msg_14eab1b7800191OIZNrpgWBPOW"
+        },
+        {
+          "type": "patch",
+          "hash": "b992c3810ffec68c798ed90041f6953429e4ba49",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/coolant-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/coolant-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/coolant-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/coolant-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/coolant-harry.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/coolant-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/coolant-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/vla-harry.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/vla-independent-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/vla-independent-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/vla-independent-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/weather-harry-judge.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/weather-harry-judge.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/weather-harry-judge.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/weather-harry-judge.prompt.md",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/weather-harry.export.json",
+            "/home/hal/dev/interp/metis/experiments/reframe-pilot/20261018-1057-reframe-b/calls/weather-independent.http/001.response.txt"
+          ],
+          "id": "prt_14eabd8be001mhfYorBI0UGg05",
+          "sessionID": "ses_eb154ef12ffePS1rS8frg6Af1k",
+          "messageID": "msg_14eab1b7800191OIZNrpgWBPOW"
+        }
+      ]
+    }
+  ]
+}

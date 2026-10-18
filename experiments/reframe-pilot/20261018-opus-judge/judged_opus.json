@@ -1,0 +1,103 @@
+{"lists": [
+{"id": "run1/vla/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "no", "quote": "log per-step continuous proxies inside rollouts that already run", "reason": "Changes measured quantity to per-step proxies, but still needs closed-loop rollouts; no open-loop scoring on recorded observations."},
+{"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "branch steered vs unsteered copies from each checkpoint for short horizons", "reason": "Shortens closed-loop horizons via checkpoint branching; effects still come from simulated closed-loop segments, not fixed recorded observations."},
+{"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "spend rollouts only on verifying top correlational candidates", "reason": "Screens logs then confirms top candidates, but scores correlational activation gaps, not steering effects on recorded observations."}
+]},
+{"id": "run1/vla/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "closed-loop rollouts are then spent only on the top-k features by divergence", "reason": "Scores steering by open-loop action divergence on recorded states; closed-loop rollouts only confirm top-k features."},
+{"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "Change the objective from per-feature rate estimation to best-arm identification", "reason": "Adaptive allocation and progress scores change what rollouts buy, but evaluation stays closed-loop."},
+{"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "Change the measured quantity from success rate in sim to the transfer coefficient itself", "reason": "Measures sim-to-real transfer of steering effects using closed-loop episodes in both domains; no open-loop screen."}
+]},
+{"id": "run1/weather/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "estimate the infinite-member skill S_inf and the convergence exponent", "reason": "Replaces the skill-at-N ladder with asymptote extrapolation and date-bootstrap resolvability."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "then draw arbitrarily many virtual members on CPU", "reason": "Replaces GPU member rollouts with fitted-distribution sampling, removing member count as a compute axis."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "vary the number of distinct model distributions they are drawn from", "reason": "Swaps member count for model-family diversity at fixed size, so compute buys decorrelated error rather than redraws."}
+]},
+{"id": "run1/weather/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "Change the axis from member count to member diversity", "reason": "Separates Monte Carlo convergence from shared-model error by resampling, then spends compute on new seeds, not more draws."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "the error of the ensemble-implied return level at fixed physical thresholds", "reason": "Changes the measured quantity to return-level error, whose rarity scales with members, unlike fixed top-percentile scores."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "run members in sequential batches with a stopping rule once the slope's sign is resolved", "reason": "Adds a power test and sequential stopping, shifting compute toward dates; changes ordering and what is measured."}
+]},
+{"id": "run1/coolant/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "from the absolute property of one molecule to the sign of the difference within a pair", "reason": "Scores pairwise ordering where shared bias cancels; simulation targets ambiguous pairs instead of absolute error."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "make the force field itself the object of compute", "reason": "Fits force-field parameters before adding molecules, so compute can lower the floor rather than re-measure it."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "Change the unit of work from molecule to mixture", "reason": "Simulates blends directly, the object actually ranked, testing mixing predictability rather than more pure-liquid runs."}
+]},
+{"id": "run1/coolant/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "Redirect compute from more molecules to a chemistry-conditioned correction", "reason": "Learns a descriptor-based residual correction so added molecules improve a transferable model, not re-measure the floor."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "Change the measured quantity to a cheaper related one that converges in about 1 ns", "reason": "Swaps Green-Kubo viscosity for a fast diffusion proxy, so compute buys chemical coverage instead of trajectory length."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "decompose per-replica percent errors into between-molecule and within-molecule variance", "reason": "Reorders work so a variance decomposition decides whether compute goes to coverage or run length."}
+]},
+{"id": "rerun-a/vla/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "on a fixed buffer of recorded observations, then pay closed-loop rollouts only for the top-k features by effect size", "reason": "Open-loop steering divergence on recorded observations screens features; closed-loop rollouts only for top-k."},
+{"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "replace binary success with a continuous physical readout", "reason": "Changes the readout to force traces on real closed-loop grasps; no open-loop scoring on recorded observations."},
+{"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "calibrate the sim-to-real transfer function of steering effect sizes", "reason": "Measures sim-to-real transfer of steering deltas with closed-loop sim and real trials; no open-loop screen."}
+]},
+{"id": "rerun-a/vla/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "no", "quote": "Change the unit of work to a short paired contact-window intervention", "reason": "Short steered windows still execute closed-loop in sim and real; not scored on fixed recorded observations."},
+{"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "Change the objective to a paired rare-tail and recovery claim", "reason": "Retargets measurement to failure tails and recovery using perturbed closed-loop episodes; closed-loop dependency remains."},
+{"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "Measure steering as a function of SE(3) displacement", "reason": "Measures pose retention of steering through closed-loop trials; no open-loop scoring on recorded observations."}
+]},
+{"id": "rerun-a/weather/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "estimate the asymptote and curvature of skill vs 1/M instead of skill at large M", "reason": "Fits a + b/M on archived subsamples to measure the cap directly instead of running large-M forecasts."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "pick the allocation that minimizes the standard error of the quantity of interest", "reason": "Optimizes the dates-by-members allocation for the gain's standard error; compute buys independent cases, not redraws."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "measure the cap directly as tail calibration of the exchangeable distribution plus tail-error dependence", "reason": "Measures tail calibration and effective ensemble size, testing the cap directly rather than watching skill flatten."}
+]},
+{"id": "rerun-a/weather/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "reallocate a fixed number of member-forecasts across (dates x members) to minimize the standard error", "reason": "Treats the budget as experimental design from variance components; compute buys verification dates, not redundant members."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "fit the score's a + b/N law from nested subsamples of a few hundred members and extrapolate", "reason": "Extrapolates the asymptote from a fitted law instead of buying the curve point by point."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "a group-sequential test that adds members in batches of 50 and stops", "reason": "Reorders work into an adaptive sequential test on the yes/no decision; compute spent only until resolved."}
+]},
+{"id": "rerun-a/coolant/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "derive per-molecule atomic charges from a cheap DFT single point (RESP-style)", "reason": "Varies force-field charges per molecule so compute can lower the error floor rather than document it."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "Invert the order of steps: fit a small chemistry-conditioned correction", "reason": "Fits a correction on published data first and tests generalization cheaply, so added molecules buy correction generality."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "rank candidates by their simulated temperature response", "reason": "Measures temperature slopes where multiplicative force-field error cancels; extra temperatures buy new ranking signal."}
+]},
+{"id": "rerun-a/coolant/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "spend the compute on a force-field/parameterization axis instead", "reason": "Varies force-field parameterizations on a fixed panel, so each run tests a different error floor."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "compute self-diffusion coefficient D from mean-squared displacement", "reason": "Replaces slow Green-Kubo with a fast diffusion proxy calibrated on a subset, so compute buys screening coverage."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "the learning curve of a class-conditional bias model", "reason": "Makes a pooled class-conditional correction and its learning curve the object, so molecules shrink a shared bias model."}
+]},
+{"id": "rerun-b/vla/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "no", "quote": "measure the transfer coefficient of the steering effect itself", "reason": "Measures sim-real rank agreement of closed-loop steering deltas; no open-loop recorded-observation screen."},
+{"index": 2, "kind": "reframe", "meets_criterion": "yes", "quote": "rank features by that probe, and buy closed-loop rollouts only for the top-k", "reason": "Open-loop probe on a fixed bank of recorded states ranks features; closed-loop rollouts bought only for top-k."},
+{"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "fit SAEs on activations from contact-rich and deformable episodes", "reason": "Changes the SAE training distribution; evaluation still uses closed-loop ablation episodes, no open-loop screen."}
+]},
+{"id": "rerun-b/vla/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "serial closed-loop rollouts are reserved for the few features the screen promotes", "reason": "Scores open-loop action divergence on recorded frames; closed-loop rollouts reserved for features the screen promotes."},
+{"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "Change the objective from estimation to screening", "reason": "Sequential testing cuts closed-loop episodes but keeps closed-loop outcomes as the measured quantity."},
+{"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "Test transfer of the delta, not the behavior", "reason": "Tests sim-to-real correlation of closed-loop steering deltas; does not score on recorded observations."}
+]},
+{"id": "rerun-b/weather/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "build it from 4 partially independent sources", "reason": "Holds member count fixed and varies error sources, so compute buys diversity instead of redraws."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "measure the distribution across events of the 50->250 member gain instead of one pooled number", "reason": "Measures per-event gain distribution across many dates; borderline, since it largely runs the same forecasts on more dates."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "fit score(N) = a + b/N from a small pilot", "reason": "Estimates asymptote and tail dispersion from a pilot before committing; gates spend toward recalibration if capped."}
+]},
+{"id": "rerun-b/weather/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "Reorder the steps: measure exchangeability first", "reason": "Measures member error correlation and effective ensemble size first, deriving the gain bound instead of running 1,000 members."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "fit a generalized Pareto tail (peaks over threshold) to each grid point's 50-member ensemble", "reason": "Replaces empirical member counting with a tail model, so compute buys dates rather than members."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "Hold GPU-hours fixed and make diversity the axis", "reason": "Pools checkpoints at equal cost so compute buys independent error modes, directly testing the shared-error cap."}
+]},
+{"id": "rerun-b/coolant/harry", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "compute viscosity by reverse non-equilibrium MD", "reason": "Changes the estimator to separate truncation from force-field bias, rather than adding identical Green-Kubo replicas."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "score pairwise ordering accuracy and Spearman rank of computed versus measured properties first", "reason": "Changes the objective to ranking accuracy, so each added molecule adds pair tests rather than absolute precision."},
+{"index": 3, "kind": "copies", "meets_criterion": "NA", "quote": "replace 6 long replicas with many short decorrelated-started replicas run side by side", "reason": "Main payoff is resizing replicas to run more short copies side by side; estimand unchanged, compute buys more of the same."}
+]},
+{"id": "rerun-b/coolant/independent", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "NA", "quote": "Change the measured quantity from absolute properties to paired differences", "reason": "Scores sign agreement of paired differences where shared bias cancels; compute buys ordering decisions."},
+{"index": 2, "kind": "reframe", "meets_criterion": "NA", "quote": "screen with self-diffusion from the Einstein relation", "reason": "Cheap diffusion-proxy funnel reserves Green-Kubo for survivors, so compute buys screening depth."},
+{"index": 3, "kind": "reframe", "meets_criterion": "NA", "quote": "Change the objective to a yes/no decision", "reason": "Decision objective with learned class-conditional correction and boundary-focused allocation; compute moves decisions, not error bars."}
+]},
+{"id": "planted/vla/mix", "items": [
+{"index": 1, "kind": "reframe", "meets_criterion": "no", "quote": "branch steered vs unsteered copies from each checkpoint for short horizons", "reason": "Shortens closed-loop horizons via checkpoint branching; effects still come from simulated closed-loop segments, not recorded observations."},
+{"index": 2, "kind": "copies", "meets_criterion": "no", "quote": "Run the same closed-loop steering sweep with 256 steered environments side by side in a GPU-parallel simulator", "reason": "Same closed-loop episodes run in parallel; only speeds the sweep, nothing new is measured."},
+{"index": 3, "kind": "copies", "meets_criterion": "no", "quote": "each with the same 150 closed-loop rollouts", "reason": "Same closed-loop protocol applied to ten times more features; compute buys more of the same."},
+{"index": 4, "kind": "reframe", "meets_criterion": "no", "quote": "Change the objective from per-feature rate estimation to best-arm identification", "reason": "Adaptive allocation and progress scores change what rollouts buy, but evaluation stays closed-loop."},
+{"index": 5, "kind": "reframe", "meets_criterion": "no", "quote": "log per-step continuous proxies inside rollouts that already run", "reason": "Changes measured quantity to per-step proxies, but still needs closed-loop rollouts; no open-loop scoring on recorded observations."},
+{"index": 6, "kind": "reframe", "meets_criterion": "no", "quote": "report the 20 largest as grasp rescuers", "reason": "Open-loop scoring on recorded frames, but takes the open-loop effect as the answer with no closed-loop confirmation."},
+{"index": 7, "kind": "reframe", "meets_criterion": "yes", "quote": "closed-loop rollouts are then spent only on the top-k features by divergence", "reason": "Scores steering by open-loop action divergence on recorded states; closed-loop rollouts only confirm top-k features."},
+{"index": 8, "kind": "reframe", "meets_criterion": "no", "quote": "spend rollouts only on verifying top correlational candidates", "reason": "Screens logs then confirms top candidates, but scores correlational activation gaps, not steering effects on recorded observations."},
+{"index": 9, "kind": "reframe", "meets_criterion": "no", "quote": "Change the measured quantity from success rate in sim to the transfer coefficient itself", "reason": "Measures sim-to-real transfer of steering effects using closed-loop episodes in both domains; no open-loop screen."}
+]}
+]}
