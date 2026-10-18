@@ -5,7 +5,7 @@
 // <run>/console.log. The copy is what ran; edit pipeline/ freely afterwards.
 //
 // usage: node pipeline/launch.js <experiment> loop             (needs experiments/<experiment>/seed.json)
-//        node pipeline/launch.js <experiment> card             (one card for the seed, no frame check or neighbours)
+//        node pipeline/launch.js <experiment> card [--main <model>]  (one card for the seed; --main swaps the producer's model)
 //        node pipeline/launch.js <experiment> frame --card-file <card.md> --root "<question>"
 //        add --dry-run to prepare the run folder and print the command without running it;
 //        add --seed <file> to run card or loop on another seed than the experiment's seed.json (a variant)
@@ -54,7 +54,7 @@ if (kind === 'card') {
   const seed = JSON.parse(fs.readFileSync(SEED, 'utf8'))
   const args = { ...Object.fromEntries(Object.entries(F).filter(([k]) => !['fixed_roots', 'base'].includes(k))), base: 'auto', fixed_roots: [], seed_ideas: [seed] }
   fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify(args, null, 1))
-  cmd = node('wf.js', ['--args', path.join(RUN, 'args.json'), '--name', name, '--out', path.join(RUN, 'out')])
+  cmd = node('wf.js', ['--args', path.join(RUN, 'args.json'), '--name', name, '--out', path.join(RUN, 'out'), ...extra])   // extra: e.g. --main <model>
 }
 const commit = git(['rev-parse', '--short', 'HEAD']), dirty = git(['status', '--porcelain', '--', 'pipeline']) ? ' (pipeline/ had uncommitted changes)' : ''
 fs.writeFileSync(path.join(RUN, 'RUN.md'), [`# ${name} · ${kind} · ${stamp}`, '',
