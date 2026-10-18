@@ -18,7 +18,7 @@ const REPO = path.dirname(PIPE)
 const [name, kind, ...rest] = process.argv.slice(2)
 const dry = rest.includes('--dry-run')
 const si = rest.indexOf('--seed'), seedFile = si >= 0 ? path.resolve(rest[si + 1]) : null
-const extra = rest.filter((a, i) => a !== '--dry-run' && i !== si && i !== si + 1)
+const extra = rest.filter((a, i) => a !== '--dry-run' && !(si >= 0 && (i === si || i === si + 1)))
 const EXP = path.join(REPO, 'experiments', name || '')
 if (!name || !['loop', 'card', 'frame'].includes(kind) || !fs.existsSync(EXP)) {
   console.error('usage: node pipeline/launch.js <experiment> <loop|card|frame> [args] [--dry-run]; the experiment folder must exist')
