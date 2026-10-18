@@ -1,0 +1,130 @@
+Both remaining quotes (s7, s8) are confirmed on the PMC13647254 page via the scraped page content. All sources are now verified. Here is the result:
+
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "N/A (no sources cited)",
+      "note": "A research question posed by the plan; contains no sourced factual claims, so no source check applies."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "Table 2 (columns: Model, ε, ν at 40°C, ν at 100°C, Cp, κ; row block MAPE(%)): \"our work 9.233 22.467 12.528 3.978 2.911\"",
+      "note": "s3's Table 2 gives the machine-learning model's ('our work', Org-Mol) kinematic-viscosity MAPE of 22.467% at 40°C, exactly as cited; the claim that this exceeds molecular-dynamics error is the hypothesis under test and needs no source."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "N/A (no sources cited)",
+      "note": "Describes the plan's sequential execution design (one long trajectory per candidate; rankings at 100/300/1000 candidates); no sourced factual claims."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "N/A (no sources cited)",
+      "note": "Describes what the plan will do (replica splitting, block-averaged Green-Kubo integrals, parallel runs); no sourced factual claims."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "N/A (no sources cited)",
+      "note": "States the plan's predicted success outcome; predictions of the plan need no source."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "N/A (no sources cited)",
+      "note": "States the plan's predicted failure outcome; predictions of the plan need no source."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "\"Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.\"",
+      "note": "s1 verbatim confirms the 461-monoester shortlist from the ML screen; the Green-Kubo MD runs on the top 100 then 300 and the timing comparisons are what the plan will do and need no source."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "\"we apply Green–Kubo MD simulations to eight molecules, two from each of the four principal chemical families of the dataset, at 40 °C and 100 °C.\" ... \"Despite these limitations, the force field largely preserves the ordering of the reference viscosity values for the eight fluids at both temperatures, suggesting that MD simulations remain useful for relative screening, even where its absolute viscosity predictions require caution.\" ... \"Unlike the viscosity, the LOPLS force field does not reproduce even the relative ordering of the thermal conductivities of the eight fluids.\"",
+      "note": "PMC13647254: header reads 'Digit Discov. 2026 Sep 29' (2026 benchmark); s9 confirms eight molecules; s7 and s8 confirmed on the page and support viscosity ranking preserved / thermal-conductivity ranking not; value 8 matches the eight fluids."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "\"we apply Green–Kubo MD simulations to eight molecules, two from each of the four principal chemical families of the dataset, at 40 °C and 100 °C.\"",
+      "note": "s9 confirms only eight molecules received Green-Kubo MD verification of viscosity and thermal conductivity against reference values; the 100-to-1000 shortlist question is the plan's open gap and needs no source."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "Table 4 (columns: ε Exp./Pred., ν at 40°C (cSt) Exp./Pred., ν at 100°C (cSt) Exp./Pred., κ (W/m·K) Exp./Pred.): \"Ester 1 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144\"",
+      "note": "s4's Table 4 gives Ester 1 experimentally measured kinematic viscosity 6.41 cSt at 40°C and thermal conductivity 0.141 W/m·K, matching the cited measured values and value 6.41; that Green-Kubo MD reproduces them is the plan's target and needs no source."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "N/A (no sources cited)",
+      "note": "States the plan's own scope limitations (one force field, 15 ns sampling, missing property checks, budget overrun); no external factual claims to verify."
+    },
+    {
+      "ref": "src:s3",
+      "status": "SUPPORTED",
+      "page_quote": "Table 2 row under MAPE(%): \"our work 9.233 22.467 12.528 3.978 2.911\" (columns ε, ν at 40°C, ν at 100°C, Cp, κ)",
+      "note": "Quote appears on the Table 2 page; 22.467 is the 'our work' ML MAPE for kinematic viscosity at 40°C, matching 'ML viscosity MAPE 22.467% at 40 C'."
+    },
+    {
+      "ref": "src:s1",
+      "status": "SUPPORTED",
+      "page_quote": "\"Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.\"",
+      "note": "Quote appears verbatim in the article; supports the 461-monoester shortlist produced by the ML-only screen."
+    },
+    {
+      "ref": "src:s9",
+      "status": "SUPPORTED",
+      "page_quote": "\"Finally, we apply Green–Kubo MD simulations to eight molecules, two from each of the four principal chemical families of the dataset, at 40 °C and 100 °C.\"",
+      "note": "Quote appears verbatim on the PMC page; supports the prior's scope of eight molecules, four chemical families, 40 and 100 °C."
+    },
+    {
+      "ref": "src:s7",
+      "status": "SUPPORTED",
+      "page_quote": "\"Despite these limitations, the force field largely preserves the ordering of the reference viscosity values for the eight fluids at both temperatures, suggesting that MD simulations remain useful for relative screening, even where its absolute viscosity predictions require caution.\"",
+      "note": "Sentence confirmed on the PMC13647254 page (Results/Discussion, MD-vs-reference viscosity comparison); supports that MD largely preserves the viscosity ranking."
+    },
+    {
+      "ref": "src:s8",
+      "status": "SUPPORTED",
+      "page_quote": "\"Unlike the viscosity, the LOPLS force field does not reproduce even the relative ordering of the thermal conductivities of the eight fluids.\"",
+      "note": "Sentence confirmed on the PMC13647254 page; supports that MD misorders the thermal conductivities."
+    },
+    {
+      "ref": "src:s4",
+      "status": "SUPPORTED",
+      "page_quote": "Table 4 row: \"Ester 1 2.80 3.13 6.41 7.18 1.98 2.23 0.141 0.144\" (Exp./Pred. for ε, ν at 40°C, ν at 100°C, κ)",
+      "note": "Quote appears on the Table 4 page; experimental ν at 40°C = 6.41 cSt and experimental κ = 0.141 W/m·K for Ester 1, matching the supported claim."
+    },
+    {
+      "ref": "src:s6",
+      "status": "SUPPORTED",
+      "page_quote": "\"For each molecule, 10 independent replicas were branched from the equilibrated configuration with independently seeded velocities... Production was carried out in the NVT ensemble for 8 ns per replica to allow the slow shear-stress autocorrelation tail to converge.\"",
+      "note": "Quote appears verbatim on the PMC page; confirms the 8 ns-per-replica production protocol (with 10 replicas per molecule), supporting the compute quantity 8."
+    },
+    {
+      "ref": "num:a100_usd_gpu_h",
+      "status": "SUPPORTED",
+      "page_quote": "\"NVIDIA A100 SXM 40 GB | 124 vCPUs | 1800 GiB RAM | 5.8 TiB SSD | $1.99 ... * plus applicable sales tax/VAT/GST\"",
+      "note": "Lambda instances pricing page lists NVIDIA A100 SXM (40 GB VRAM, 124 vCPUs, 1800 GiB RAM, 5.8 TiB SSD) at $1.99 per GPU-hour, matching the recorded value and quote.",
+      "page_value": 1.99
+    },
+    {
+      "ref": "num:a100_ns_day",
+      "status": "SUPPORTED",
+      "page_quote": "\"R-143a in hexane (20,248 atoms) with very high output rate\" ... \"[ns/day] System 1 System 2 ... A100 267.5 691.7 265.8 129.1 38.8 23.2\" ... \"the former benchmark generates the energy output with a frequency 333x greater than the latter one and thereby loses performance by a factor of 2.6\"",
+      "note": "NHR@FAU GROMACS 2024.1 benchmark page states 267.5 ns/day for the A100 on System 1 (R-143a in hexane, 20,248 atoms), matching the recorded value and page_setting; the page also confirms the 333x output-frequency and 2.6x performance-loss details in differs_in.",
+      "page_value": 267.5
+    }
+  ]
+}
+```

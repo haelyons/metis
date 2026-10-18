@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Tests only pure-liquid transport; full coolant choices still depend on blends, dielectric, flash point and candidates."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:held_fixed",
+      "reason": "Held_fixed does not lock molecule selection or bias-correction, so differences need not be compute-only."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "card:test_summary",
+      "reason": "Measured reference values are independent; anchor reproduces published eight-molecule run within tolerance."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior covers eight molecules; gap over rank agreement through 120 and beyond is explicitly stated."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "Only independent molecules run side by side; no sequential dependency is removed."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring.method is none, so baseline comparison is not applicable."
+    }
+  ],
+  "decides_by": "p_score",
+  "decides_by_reason": "p_score computes MAPE and rank correlation over set sizes, needed to apply decision_rule."
+}

@@ -1,0 +1,106 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "We compile a database of approximately 4,700 critically evaluated reference values for the density, viscosity, and thermal conductivity of 835 unique organic molecules in the C10–C50 range.",
+      "note": "Research question with no source cited and no factual claim to verify; its terms (Green–Kubo MD on C10–C50 hydrocarbons and esters, viscosity and thermal conductivity) match the scope of the cited paper, which includes alkane, alkyl-aromatic, ester and ether families."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "PARTIAL",
+      "page_quote": "The MD benchmark, using a Green–Kubo protocol with quantified trajectory-length convergence, shows that the accuracy of the LOPLS-AA force field is property- and chemistry dependent.",
+      "note": "The page confirms Green–Kubo MD with one fixed force field (LOPLS-AA) and chemistry-dependent transport errors that persist at convergence (viscosity under-predicted 17–38% for esters and 26–57% for ethers; thermal conductivity over-predicted +7 to +96%). But no ~25% floor is stated anywhere, and the paper explicitly says that with only eight molecules these observations 'can only be used to identify plausible explanations, rather than establish firm conclusions' — so the 'near 25 percent' figure and 'more molecules cannot remove' are the plan's own extrapolation, not page content."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "Despite these limitations, the force field largely preserves the ordering of the reference viscosity values for the eight fluids at both temperatures, suggesting that MD simulations remain useful for relative screening, even where its absolute viscosity predictions require caution.",
+      "note": "This is the plan's predicted success outcome (what it will measure), which needs no source; the <15% error and >0.9 rank-correlation thresholds appear on no page and none is claimed to. The cited paper's finding of a largely preserved viscosity ranking is the grounding and does not contradict the prediction."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "these systematic under-predictions are unlikely to arise from incomplete Green–Kubo convergence. Instead, they are consistent with a limitation of the force field for the oxygen-containing molecules in this dataset.",
+      "note": "Predicted failure branch of the plan; the >25% error and <0.7 rank-correlation thresholds are the plan's own and need no source. The page grounds their plausibility (force-field-limited, convergence-independent errors; thermal-conductivity ranking misordered) without contradicting them."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "We compile a database of approximately 4,700 critically evaluated reference values for the density, viscosity, and thermal conductivity of 835 unique organic molecules in the C10–C50 range.",
+      "note": "The checkable factual claim — the public 835-molecule reference set — matches the page. The protocol frame (LAMMPS, LOPLS-AA, Green–Kubo, 40 °C) mirrors the published method ('All the MD simulations were performed using the LAMMPS software'; 'All simulations were performed using the LOPLS-AA force field'), while six 5-ns replicas, the 8/24/48/120 set sizes and the scoring choice are what the plan will build and need no source (the published run used ten replicas of up to 8 ns)."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Equilibrium molecular dynamics (EMD) simulations of eight representative molecules reproduce density accurately but show systematic, chemistry-dependent force-field errors for the viscosity and thermal conductivity.",
+      "note": "Authors (Ogbomo, Carman, Dini, Ewen) and 2026 (first published 2026-09-29, Digital Discovery) are on the page; Green–Kubo and 40 °C are confirmed in the full text ('Viscosity was calculated using the Green–Kubo (GK) formalism'; simulations 'of the eight target molecules at 40 °C and 100 °C'), and the eight molecules confirm the value 8. The paper also ran 100 °C; the item names only the 40 °C state point, which is accurate for the condition the plan reuses."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "With only eight molecules used for the MD benchmarking, these observations can only be used to identify plausible explanations, rather than establish firm conclusions.",
+      "note": "Consistent with the page: MD evidence covers only eight molecules and the paper says the causes 'remain to be firmly established', so whether the error is a correctable bias or a hard floor, and rank agreement over hundreds of molecules, is left open; the 835-molecule database is reference data, not MD coverage."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "Density is reproduced to within 4% for seven of the eight molecules at 40 °C. ... Thermal conductivity is over-predicted for every molecule, by amounts that correlate with the density of aliphatic C–H bonds, compressing the reference range and misordering the fluids.",
+      "note": "Both sentences appear verbatim in the PDF served at the cited bitstream URL (conclusion section), which also states the eight-molecule Green–Kubo run ('applied Green–Kubo MD simulations to eight target molecules'). The carried value 'density error 4% or less on 7 of 8 molecules at 40 °C' matches the page."
+    },
+    {
+      "ref": "card:limits",
+      "status": "PARTIAL",
+      "page_quote": "Only molecules with a dynamic viscosity of approximately 1–50 mPa·s at 40 °C were included, because this is the range accessible to equilibrium molecular dynamics (EMD) simulations.",
+      "note": "The plan-scope limits (40 °C-only protocol; no ranking behaviour beyond 120 molecules) are the plan's own and need no source. The dataset-scope factual claims (pure liquids only, ~1–50 mPa·s, no blends) are correct per the Ogbomo paper but carry no source on this item; also note the published benchmark reported errors at both 40 °C and 100 °C, so 'only at 40 °C' holds for the plan's protocol (per test_summary), not for the prior paper."
+    },
+    {
+      "ref": "src:s_ogbomo_res",
+      "status": "PARTIAL",
+      "page_quote": "Density is reproduced to within 4% for seven of the eight molecules at 40 °C. Viscosity errors are small for the pure hydrocarbons with LOPLS, but this property is consistently under-predicted for the oxygen-containing molecules; the reference ranking of the fluids is nonetheless largely preserved. Thermal conductivity is over-predicted for every molecule, by amounts that correlate with the density of aliphatic C–H bonds, compressing the reference range and misordering the fluids.",
+      "note": "The quote appears verbatim in the PDF served at this bitstream URL (conclusion section; confirmed via the indexed full text of this exact URL — a direct fetch returns a binary PDF that could not be text-extracted). It fully backs the anchor tolerances and qualitatively backs a chemistry-dependent, force-field-limited error floor, but the page nowhere states the ~25% floor or the if_not thresholds (>25% error, rank correlation <0.7), and for viscosity it reports the ranking 'largely preserved' while only thermal-conductivity ranking is misordered — so 'the predicted error floor and the if_not expectation' are only partly backed."
+    },
+    {
+      "ref": "src:s_ogbomo_db",
+      "status": "SUPPORTED",
+      "page_quote": "We compile a database of approximately 4,700 critically evaluated reference values for the density, viscosity, and thermal conductivity of 835 unique organic molecules in the C10–C50 range.",
+      "note": "Verbatim in the PDF abstract at this record (the Spiral/RSC landing-page abstract inserts 'experimental and' — immaterial abridgement). Supports the measured reference set used for scoring, its size (835 molecules) and range (C10–C50)."
+    },
+    {
+      "ref": "src:s_ogbomo_md",
+      "status": "SUPPORTED",
+      "page_quote": "Equilibrium molecular dynamics (EMD) simulations of eight representative molecules reproduce density accurately but show systematic, chemistry-dependent force-field errors for the viscosity and thermal conductivity.",
+      "note": "Quote appears verbatim on the publication page; supports the closest-prior-work claim and the eight-molecule baseline arm."
+    },
+    {
+      "ref": "num:n_ref_molecules",
+      "status": "SUPPORTED",
+      "page_quote": "We compile a database of approximately 4,700 critically evaluated reference values for the density, viscosity, and thermal conductivity of 835 unique organic molecules in the C10–C50 range.",
+      "note": "Page states 835 unique organic molecules for the reference dataset, which covers density, viscosity and thermal conductivity at 40 and 100 °C, matching the recorded setting.",
+      "page_value": 835
+    },
+    {
+      "ref": "num:n_gpus",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A100 SXM 40 GB 124 1800 GiB 5.8 TiB SSD $1.99 (row of the 8x 'Instances pricing' table)",
+      "note": "The Lambda instances pricing page lists an 8x plan containing the A100 SXM 40 GB row exactly as quoted, i.e. an 8-GPU on-demand instance.",
+      "page_value": 8
+    },
+    {
+      "ref": "num:a100x8_usd_gpu_h",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A100 SXM 40 GB 124 1800 GiB 5.8 TiB SSD $1.99 (PRICE/GPU/HR, 8x Instances pricing table; '* plus applicable sales tax/VAT/GST')",
+      "note": "The page states $1.99 per GPU-hour for the 8x A100 SXM 40 GB instance, matching the recorded value and setting.",
+      "page_value": 1.99
+    },
+    {
+      "ref": "num:throughput_ns_day",
+      "status": "SUPPORTED",
+      "page_quote": "JAC_PRODUCTION_NVE - 23,558 atoms PME 2fs ... 1 x A100 GPU:      |         ns/day =    611.08",
+      "note": "The page states 611.08 ns/day for one A100 GPU on exactly the recorded setting (Amber JAC_PRODUCTION_NVE, 23,558 atoms, PME, 2 fs timestep). The plan's 250 ns/day is a declared PROXY — a safety factor of about 2.4 below the measured 611.08 — with the Amber-pmemd.cuda/protein-in-water caveats correctly disclosed in differs_in.",
+      "page_value": 611.08
+    }
+  ]
+}
+```

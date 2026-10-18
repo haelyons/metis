@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 5,
+      "ref": "plan:predictions.decision_rule",
+      "reason": "Outcomes change whether to invest compute in MD for ester shortlists; Mouromtseff figure is the choice-relevant quantity."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:compute_axis.levels",
+      "reason": "Compute spans 10× (100→1000); force field, replicas, pool, node all held; gap (Spearman 0.7, ratio 1.05) exceeds noise rule."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:anchor",
+      "reason": "Anchor reproduces published Ester 1 (6.41 cSt) and Ester 2 (9.67 cSt) within ±40%; held-out published truth, not MD's own output."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "plan:novelty.left_open",
+      "reason": "Closest prior covers only 8 molecules [s9]; 100-to-1000 shortlist reordering is explicitly the open gap."
+    },
+    {
+      "criterion": "reshape",
+      "value": 5,
+      "ref": "plan:restructuring.condition",
+      "reason": "Names sequential trajectory dependency, parallelizes via independent replicas, condition measured on Ester 1 in anchor phase."
+    },
+    {
+      "criterion": "baseline",
+      "value": 5,
+      "ref": "plan:restructuring.baseline_sequential",
+      "reason": "Sequential baseline uses tuned GPU GROMACS flags; anchor times replicas vs sequential on same 8-GPU node; ml_rank has zero compute."
+    }
+  ],
+  "decides_by": "verify_300",
+  "decides_by_reason": "Decision rule explicitly fires at 300 candidates: Spearman vs ML and figure climb from 100→300 decide if_lever vs if_not."
+}
+```
