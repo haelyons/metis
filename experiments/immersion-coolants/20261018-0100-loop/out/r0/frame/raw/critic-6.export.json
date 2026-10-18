@@ -1,0 +1,187 @@
+{
+  "info": {
+    "id": "ses_eb373c9fcffe7RQZSPaRrkbc7C",
+    "slug": "proud-planet",
+    "projectID": "e635804b0fe929d2ed556701e94990a108996451",
+    "directory": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame",
+    "path": "experiments/immersion-coolants/20261018-0100-loop/out/r0/frame",
+    "title": "critic#6",
+    "agent": "qt-bare",
+    "model": {
+      "id": "minimax-m3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.00471918,
+    "tokens": {
+      "input": 2877,
+      "output": 470,
+      "reasoning": 2737,
+      "cache": {
+        "read": 128,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792285619715,
+      "updated": 1792285640456
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792285619941
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "minimax-m3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14c8c36e5001ClhHFRZSpgbUAd",
+        "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Score how well this research card fits each existing programme below. Each programme lists claims about its current practice; two checkers fetched each source and marked each claim SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE. Rely only on claims that at least one checker marked SUPPORTED or PARTIAL. Score each programme 1-5 on each criterion, with a reason of at most 25 words. Decide only from the text below; do not use tools.\nRoot question: generative pipeline for discovery of single phase immersion coolants\nCard:\n**immersion-coolants · Generative search for single-phase immersion coolants.** seed pick · compute tested: yes · plan expects: unsure · REJECT\n\n**Question.** Does verifying more candidate coolants with GPU molecular dynamics keep raising the best figure of merit above known commercial single-phase fluids, or does it plateau?\n\n**What is known.** Org-Mol ML-screened six million esters and experimentally validated two; it never MD-verified hundreds-to-thousands of candidates at once. No study measures whether the best MD-ranked coolant keeps improving as the number of MD-verified candidates grows from 100 to 10,000.\n\n**Hypothesis.** Predictor-filtered molecular dynamics finds PFAS-free esters or hydrocarbons that beat commercial coolants [orgmol], and more candidates keep improving the best one.\n\n**If compute is the lever.** Best cooling figure of merit keeps climbing with candidates verified, so more compute keeps finding fluids that beat commercial ones.\n\n**If not.** Best figure of merit plateaus by a few hundred candidates, because predictor filtering and ~10% force-field error cap how high MD-ranked fluids score.\n\n**Test.** Generate a million PFAS-free esters and hydrocarbons, ML-filter to a ranked shortlist, MD-verify the top 100, 300, then 1000 candidates' viscosity and thermal conductivity, and compare their cooling figure of merit to commercial fluids.\n\n*Compute axis.* Candidate fluids verified by GPU molecular dynamics: 100–1,000 candidates, 3 levels. Closest prior: not on this axis.\n\n*Restructuring.* none.\n\n**Check first.** MD pipeline reproduces n-hexadecane thermal conductivity 0.1444 W/m/K and viscosity 2.95 mPa/s near 300 K before scoring candidates. Tolerance: +/-25%.\n\n**Would not show.** Result is a ranking and hit rate, not absolute fluid accuracy; one fluid class, no mixtures, no synthesis or lifetime testing.\n\n*Cost.* Plans $874.15 of the $1,000 budget over 793 machine-hours, leaving $125.85. Main guess: MD throughput on one A6000 for a ~20-30k-atom organic liquid [p], measured after $26.16 of spend; the budget is reached if it is 1.2× lower. 1 cost flag in the block.\nProgrammes:\n{\\\"programme\\\":1,\\\"name\\\":\\\"Ewen group (Imperial College London / University of Bath) — MD benchmarking of organic-liquid thermophysical properties\\\",\\\"step\\\":\\\"The GPU molecular-dynamics verification of candidate fluids' viscosity and thermal conductivity — the exact step the card scales to 100/300/1000 candidates. Today the group runs equilibrium MD (EMD) on a handful of representative molecules and benchmarks it against ML predictors for density, viscosity and thermal conductivity of C10–C50 organics (lubricants and cooling fluids).\\\",\\\"practice\\\":[\\\"The group's ML-first screening toolchain is built on a ~4,700-value experimental database for 835 organic molecules, with XGBoost as the best model — i.e. MD is used only as a spot-check, not at screening scale. [PARTIAL, SUPPORTED]\\\",\\\"MD verification is run on only eight molecules, and the group already concluded that ML (orders of magnitude cheaper than EMD) is the right tool for high-throughput screening — the assumption the card tests. [SUPPORTED, SUPPORTED]\\\",\\\"The work is done by Egheosa Ogbomo, Fionn Carman, Daniele Dini and James Patrick Ewen (Imperial College London; Ewen now Lecturer at University of Bath), using supercomputer molecular simulation of solid-liquid interfaces. [SUPPORTED, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"If the best MD-ranked coolant keeps improving as verified candidates grow 100→1000, the group has a concrete reason to build a GPU-MD verification stage as a genuine ranking/filter (not an 8-molecule benchmark), investing in throughput and force-field refinement so MD — rather than XGBoost alone — decides which candidates advance.\\\",\\\"if_not_changes\\\":\\\"If the best FOM plateaus by a few hundred candidates, it confirms their published conclusion that ML predictors at orders-of-magnitude lower cost are the right screening tool and that MD's force-field error (~chemistry-dependent bias in viscosity/thermal conductivity) caps its ranking value; their MD stays a spot-check rather than a scaled verification layer.\\\",\\\"already_done\\\":{\\\"status\\\":\\\"partly\\\",\\\"claim\\\":\\\"They have EMD-verified thermophysical properties but only for a fixed set of eight representative molecules; they have not run the card's scaling experiment (best MD-ranked FOM vs number of MD-verified candidates from 100 to 1000, compared to commercial fluids).\\\",\\\"checks\\\":[\\\"SUPPORTED\\\",\\\"SUPPORTED\\\"]},\\\"activity\\\":\\\"active: Most recent output is the Digital Discovery paper benchmarking ML vs MD for organic-liquid thermophysical properties, dated 29 Sep 2026, following a 22 Apr 2026 ChemRxiv preprint on the hydrocarbon version. [SUPPORTED, PARTIAL]\\\",\\\"step_in_card_terms\\\":\\\"yes: the step is put in the card's terms, or no checker found it on the programme's page\\\"}\n{\\\"programme\\\":2,\\\"name\\\":\\\"Sinton Lab / FL01 (University of Toronto + Acceleration Consortium) — self-driving lab for immersion coolant discovery\\\",\\\"step\\\":\\\"The verification/ranking of many candidate coolants — the same pipeline stage the card runs with GPU-MD, which Sinton/FL01 run instead with a wet-lab self-driving lab measuring viscosity, density, heat capacity, thermal conductivity and dielectric constant.\\\",\\\"practice\\\":[\\\"Their verification throughput is 5 samples/hour (claimed 100× conventional), i.e. thousands of measurements per device per month, but still a wet-lab loop rather than computation. [SUPPORTED, SUPPORTED]\\\",\\\"Data-generation scale is the explicit selling point: one device produces 10,000 data points in two months, versus ~4,000 publicly available data points over the prior century. [SUPPORTED, SUPPORTED]\\\",\\\"The group already uses a figure of merit (FOM) for immersion coolants and screens >1600 fluid mixtures by coupling CFD with active learning (15 data points to drive the FOM, 10× efficiency). People: David Sinton, Mohammad Zargartalebi, Hanie Rezaei, Maryam Ebrahimiazar (U of T Mechanical & Industrial Engineering); FL01 CEO Zargartalebi. [PARTIAL, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"If more MD verification keeps raising the best FOM, FL01/Sinton gains a cheap GPU pre-filter: MD could rank a million candidates before any fluid is ever synthesized, letting their 5-samples/hour wet-lab loop spend effort only on the MD-verified top tier — shrinking the 'years to weeks' R&D timeline further and de-risking which chemistries to buy/synthesize.\\\",\\\"if_not_changes\\\":\\\"If MD FOM plateaus, their experimental self-driving lab remains the only trustworthy verifier (their Nature Communications microfluidic method already argues computational thermal-conductivity models carry ~10% errors and 'necessitate experimental verification'), so they keep investing in sensor/SDL throughput rather than GPU-MD, and the card's MD stage is not added to their loop.\\\",\\\"already_done\\\":{\\\"status\\\":\\\"no\\\",\\\"claim\\\":\\\"Sinton/FL01 verify and rank candidates experimentally (self-driving lab, microfluidics, CFD+active learning), not via GPU molecular dynamics, and they have not run the card's MD-verification scaling experiment (best MD-ranked FOM vs number of MD-verified candidates).\\\",\\\"checks\\\":[\\\"PARTIAL\\\",\\\"PARTIAL\\\"]},\\\"activity\\\":\\\"active: FL01 launched November 2025 and, as of a 1 Sep 2026 Acceleration Consortium article, is prototyping its self-driving lab with several industry partners. [SUPPORTED, SUPPORTED]\\\",\\\"step_in_card_terms\\\":\\\"yes: the step is put in the card's terms, or no checker found it on the programme's page\\\"}\n{\\\"programme\\\":3,\\\"name\\\":\\\"Org-Mol team (SINOPEC Research Institute of Petroleum Processing + DP Technology + AI for Science Institute)\\\",\\\"step\\\":\\\"The post-ML-filter down-selection the card replaces with MD verification: Org-Mol ML-screens millions of esters, filters to a 461-candidate shortlist, then manually picks only two to synthesize and measure — exactly where the card would insert GPU-MD verification of the top 100–1000.\\\",\\\"practice\\\":[\\\"Generation + ML filter runs at millions scale: >6 million saturated mono-/dibasic esters are constructed and screened by dielectric constant, yielding 8569 monoesters. [SUPPORTED, SUPPORTED]\\\",\\\"The downstream filter collapses the shortlist to 461 by predicted viscosity and thermal conductivity, then to 2 by human synthetic-feasibility judgement — no computational verification of hundreds of candidates exists. [SUPPORTED, SUPPORTED]\\\",\\\"People/institutions: Qi Ou, Minyang Zhuang, Lele Liu, Ning Wang (SINOPEC Research Institute of Petroleum Processing, Beijing); Hongshuai Wang, Shangqian Chen, Zhifeng Gao (DP Technology, Beijing); Zhifeng Gao (AI for Science Institute, Beijing). The model is a Uni-Mol-derived 3D transformer (Org-Mol). [SUPPORTED, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"If MD verification keeps raising the best FOM, the Org-Mol pipeline would add a GPU-MD verification stage (100–1000 candidates) between the 461-candidate ML shortlist and synthesis, replacing the manual 2-candidate pick with an MD-ranked list — likely producing a verified coolant that beats commercial fluids and turning their 'two validated candidates' proof-of-concept into a scalable discovery engine.\\\",\\\"if_not_changes\\\":\\\"If MD FOM plateaus, their current practice is confirmed as already near-optimal: ML filtering to a few hundred then hand-picking two to synthesize is sufficient, and spending compute on MD-verifying hundreds-to-thousands of candidates would be a waste, so the pipeline stays ML-plus-sparse-experiment.\\\",\\\"already_done\\\":{\\\"status\\\":\\\"no\\\",\\\"claim\\\":\\\"Org-Mol ML-screened millions of esters and experimentally validated two synthesized candidates; it never MD-verified hundreds-to-thousands of candidates' viscosity and thermal conductivity, so the card's scaling experiment has not been run by this team.\\\",\\\"checks\\\":[\\\"SUPPORTED\\\",\\\"SUPPORTED\\\"]},\\\"activity\\\":\\\"active: The pipeline was published 11 July 2025 and is backed by multi-year funding from China Petroleum & Chemical Corp and the National Key R&D Program of China (grant 2024YFA1510200), indicating an ongoing effort rather than an archived one. [SUPPORTED, SUPPORTED]\\\",\\\"step_in_card_terms\\\":\\\"yes: the step is put in the card's terms, or no checker found it on the programme's page\\\"}\nCriteria:\nfit: Does the card's measured outcome feed a named step of this programme? 5 = it measures the quantity that step's current practice depends on, on systems the programme uses; 3 = it feeds that step only through a stand-in (another model, system or scale) the programme would have to bridge; 1 = no step of the programme would use the outcome. A step given only in the card's terms, not the programme's own, scores 3 at most.\nchange: What would the card's outcomes change in this programme's practice? 5 = either outcome changes a choice the programme makes now (what to build, buy, label, check or scale), as its supported practice shows; 3 = only one outcome would change practice, or the change needs further work the card does not do; 1 = neither outcome would change what the programme does. An inactive or archived programme scores 1.\nnew: Has this programme, or work it relies on, already answered the card's question? 5 = supported claims show its current practice lacks this measurement; 3 = unclear, or partly answered; 1 = already answered. If a checker contradicted the claim that it has not been done, score 3 at most.\nReturn only JSON: {\\\"scores\\\": [{\\\"programme\\\": 1, \\\"criterion\\\": \\\"fit | change | new\\\", \\\"value\\\": 1, \\\"reason\\\": \\\"\\\"}]}\"",
+          "id": "prt_14c8c36f7001zVgBs7ZfUBiLnj",
+          "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C",
+          "messageID": "msg_14c8c36e5001ClhHFRZSpgbUAd"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14c8c36e5001ClhHFRZSpgbUAd",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00471918,
+        "tokens": {
+          "total": 6212,
+          "input": 2877,
+          "output": 470,
+          "reasoning": 2737,
+          "cache": {
+            "write": 0,
+            "read": 128
+          }
+        },
+        "modelID": "minimax-m3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792285621391,
+          "completed": 1792285640433
+        },
+        "finish": "stop",
+        "id": "msg_14c8c3c8f001CqSCjGf85m9Jl4",
+        "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C"
+      },
+      "parts": [
+        {
+          "snapshot": "11c6285fddbe1ad946432470073e4f81dddfa6a9",
+          "type": "step-start",
+          "id": "prt_14c8c4751001JSJ5hIMRv5ewx4",
+          "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C",
+          "messageID": "msg_14c8c3c8f001CqSCjGf85m9Jl4"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me analyze each programme against the card's research question and criteria.\n\nThe card asks: Does verifying more candidate coolants with GPU molecular dynamics keep raising the best figure of merit above known commercial single-phase fluids, or does it plateau?\n\nThe card's measured outcome: best MD-ranked cooling FOM vs number of MD-verified candidates (100 to 1000), compared to commercial fluids.\n\n**Programme 1: Ewen group**\n- Step: GPU MD verification of candidate fluids' viscosity and thermal conductivity, scaling to 100/300/1000 candidates. Currently they run EMD on ~8 molecules.\n- Practice: ML-first screening, MD as spot-check on 8 molecules.\n- Fit: The card measures MD-verified FOM at scale, which is exactly what their MD verification step would do if scaled up. They use C10-C50 organics as cooling fluids. This feeds their step directly - it's measuring the quantity their MD verification would produce, on similar systems. Score: 5 (measures the quantity the step depends on, on systems they use).\n- Actually, wait - \"A step given only in the card's terms, not the programme's own, scores 3 at most.\" The step is described in the card's terms (GPU MD verification of 100-1000 candidates for FOM), but the programme itself doesn't have this step - they have MD verification of 8 molecules. However, the practice shows MD verification is part of their workflow. The card measures whether scaling MD verification beyond 8 molecules is worthwhile. So the outcome feeds the decision about whether to scale MD verification. I'd say 4 - it's close to 5 because the systems match (organic liquids for cooling/lubricants) and the quantity measured (MD viscosity/thermal conductivity) is exactly what they measure, but the scale is different.\n\nActually, let me reconsider. The step the programme currently has is MD verification of thermophysical properties. The card measures whether scaling MD verification from 8 to 100-1000 candidates keeps improving the best FOM. This directly feeds the decision about what to do with their MD verification step - scale it or keep it small. The systems are organic liquids (lubricants/cooling fluids), which matches. Score: 4-5. I'll go with 4 because the scale is different but the property and system match.\n\n- Change: If MD FOM keeps climbing, they'd build a GPU-MD verification stage. If plateaus, MD stays a spot-check. Both outcomes change their current practice (what to build/scale). Score: 5.\n- New: They have MD-verified thermophysical properties for 8 molecules but not the scaling experiment. The scaling experiment (best MD-ranked FOM vs number of candidates 100→1000) has not been run. Score: 4 - supported claims show their current practice lacks this measurement.\n\nWait, \"already_done\": \"partly\" - they've done MD verification but not the scaling. The card's question is about scaling. So the card's specific question hasn't been answered. Score: 4.\n\n**Programme 2: Sinton Lab / FL01**\n- Step: Verification/ranking of many candidate coolants, but via wet-lab self-driving lab, not GPU-MD.\n- Practice: Wet-lab self-driving lab at 5 samples/hour, CFD+active learning, uses FOM for immersion coolants.\n- Fit: The card measures MD-verified FOM, but their step is experimental verification. The card's outcome doesn't directly feed their wet-lab verification step - it would only feed it as a pre-filter. The card's measurement is computational, their step is experimental. Score: 3 (feeds through a stand-in - MD as pre-filter for wet-lab). Actually, the card measures MD-ranked FOM which could serve as a pre-filter for their wet-lab. This is a stand-in relationship. Score: 3.\n- Change: If MD FOM keeps climbing, they could add GPU-MD as pre-filter, changing what they build. If plateaus, they keep investing in sensor/SDL throughput. Both outcomes change practice (what to build/buy). Score: 4-5. The \"if_lever_changes\" says it would let them \"shrink the timeline further\" and change what they buy/synthesize. \"if_not_changes\" says they keep investing in sensor/SDL throughput. Both change practice. Score: 5? Actually the if_not case is essentially status quo (they don't add MD stage), so only one outcome changes practice. Score: 3-4. I'll say 4.\n\nWait, re-reading: \"5 = either outcome changes a choice the programme makes now\". Either outcome changes a choice. If lever: add GPU-MD pre-filter. If not: keep current (which is also a choice). So both outcomes change what they do. Score: 4-5. I'll go with 4 because the change needs further work (integrating MD into their wet-lab pipeline).\n\n- New: They haven't done MD verification scaling - their verification is experimental. The card's question hasn't been answered. Score: 4.\n\n**Programme 3: Org-Mol team**\n- Step: Post-ML-filter down-selection where card would insert GPU-MD verification.\n- Practice: ML screening of millions → 461 shortlist → manual pick 2.\n- Fit: The card measures MD-verified FOM at 100-1000 scale, which would replace their manual 2-candidate pick. This directly feeds their down-selection step. The systems are esters, which matches. Score: 5 (or 4 - the card measures the quantity that step depends on, on systems the programme uses - esters/hydrocarbons). Score: 4-5. I'll say 4 because the step is described in card terms (MD verification replacing manual pick), and the programme doesn't currently have MD verification.\n\nActually, \"A step given only in the card's terms, not the programme's own, scores 3 at most.\" The step is \"post-ML-filter down-selection the card replaces with MD verification\" - this is the card's proposed step, not theirs. Their step is manual picking. So the card's outcome feeds their step through a stand-in (MD replacing manual pick). Score: 3-4. I'll say 3.\n\nHmm, but the step_in_card_terms says \"yes: the step is put in the card's terms\". So it's described in card terms. Score: 3 at most.\n\n- Change: If MD FOM keeps climbing, they'd add GPU-MD verification stage. If plateaus, current practice confirmed. Both change practice. Score: 4-5. I'll say 4 because in the \"if_not\" case, practice is confirmed as near-optimal (status quo), so only one outcome truly changes. Score: 4? Actually \"5 = either outcome changes a choice\". If lever changes: they add MD stage (change). If not: they stay with ML+sparse experiment (no change from current). So only one outcome changes practice. Score: 3-4. I'll say 3 because only one outcome changes practice.\n\nWait, re-reading the if_not: \"spending compute on MD-verifying hundreds-to-thousands of candidates would be a waste, so the pipeline stays ML-plus-sparse-experiment.\" This confirms current practice but doesn't change it. So only the lever case changes practice. Score: 3.\n\n- New: They haven't MD-verified hundreds-to-thousands - confirmed. Card's question unanswered. Score: 5? \"5 = supported claims show its current practice lacks this measurement.\" Yes, supported claims show they lack MD verification at scale. Score: 4.\n\nLet me finalize:\n\nProgramme 1:\n- fit: 4 - card measures MD-verified FOM on organic C10-C50 systems matching their practice, but scale differs (8 molecules vs 100-1000)\n- change: 5 - both outcomes change whether they build scaled GPU-MD stage\n- new: 4 - they've done MD for 8 molecules but not the scaling experiment\n\nProgramme 2:\n- fit: 3 - card's computational FOM is a stand-in for their experimental verification step\n- change: 4 - if lever changes, they add GPU-MD pre-filter; if not, status quo. Both outcomes inform but only one truly changes practice.\n- Actually, if not changes: \"they keep investing in sensor/SDL throughput rather than GPU-MD, and the card's MD stage is not added.\" This is essentially the status quo. So only lever case changes. Score: 3.\n- new: 4 - they haven't done the MD scaling experiment\n\nProgramme 3:\n- fit: 3 - step given in card terms (MD verification replacing manual pick), not their own\n- change: 3 - only lever case changes practice (add MD stage); if_not confirms status quo\n- new: 4 - they haven't MD-verified at scale\n\nLet me reconsider fit scores more carefully.\n\nProgramme 1: The programme's step is \"GPU molecular-dynamics verification of candidate fluids' viscosity and thermal conductivity.\" This matches the card's measurement exactly. The card measures whether scaling this step (from their current 8 molecules to 100-1000) keeps improving FOM. The systems are organic liquids (lubricants/cooling fluids) which match. The step is described in somewhat card terms but the practice clearly shows MD verification is part of their workflow. I'd argue fit: 4-5. Given \"A step given only in the card's terms, not the programme's own, scores 3 at most\" - the step is described in card terms (\"GPU molecular-dynamics verification of candidate fluids' viscosity and thermal conductivity\") but the programme does have MD verification as practice. The card measures the quantity this step depends on. I'll go with 4.\n\nProgramme 2: Their step is experimental verification, not computational. The card's MD-FOM would serve as a pre-filter. This is a stand-in. Score: 3.\n\nProgramme 3: Their step is manual pick of 2 from 461. The card's MD verification would replace this. The step is described in card terms (MD replacing manual pick). Score: 3.\n\nFor change:\nProgramme 1: Both outcomes change practice (scale MD or keep as spot-check). Score: 5.\nProgramme 2: Lever case adds GPU-MD pre-filter (change). If-not case: status quo. Score: 3-4. I'll say 3.\nProgramme 3: Lever case adds MD verification stage (change). If-not case: status quo confirmed. Score: 3.\n\nFor new:\nAll three: card's specific scaling experiment hasn't been run. \nProgramme 1: \"partly\" - they've done MD verification but not the scaling. Score: 4.\nProgramme 2: \"no\" - haven't done MD scaling. Score: 4.\nProgramme 3: \"no\" - haven't done MD scaling. Score: 4.\n\nActually for Programme 1 new: they have MD-verified thermophysical properties for 8 molecules. The card's question is about scaling from 100 to 1000 and comparing to commercial fluids. The card's specific question hasn't been answered. Score: 4.\n\nLet me also reconsider Programme 2 fit. The step is described as \"verification/ranking of many candidate coolants\" which matches the card's verification step. But their method is wet-lab, not MD. The card measures MD-ranked FOM. This is a stand-in for their experimental verification. Score: 3.\n\nFinal scores:\n\nProgramme 1: fit 4, change 5, new 4\nProgramme 2: fit 3, change 3, new 4\nProgramme 3: fit 3, change 3, new 4\n\nReasons (≤25 words each):\n\nProgramme 1 fit: Measures MD-verified viscosity/thermal conductivity FOM at scale on C10-C50 organics matching their practice; scale differs from current 8 molecules.\n\nProgramme 1 change: If lever holds, group builds scaled GPU-MD verification; if not, MD stays 8-molecule spot-check—both change their current MD practice.\n\nProgramme 1 new: Group MD-verified 8 molecules but has not run scaling experiment (best MD-FOM vs 100→1000 candidates vs commercial fluids).\n\nProgramme 2 fit: Card measures computational MD-FOM as stand-in for their experimental wet-lab verification step; bridges computation to experiment.\n\nProgramme 2 change: If lever holds, they add GPU-MD pre-filter before wet-lab; if not, status quo—only lever case changes practice.\n\nProgramme 2 new: Group verifies experimentally via SDL/microfluidics; has not run card's MD-verification scaling experiment.\n\nProgramme 3 fit: Card's MD verification step replaces their manual 2-candidate pick; step is in card terms, not theirs.\n\nProgramme 3 change: If lever holds, they insert MD verification between ML shortlist and synthesis; if not, ML+sparse experiment confirmed—only lever changes.\n\nProgramme 3 new: Group ML-screened millions and validated 2 experimentally; never MD-verified hundreds-to-thousands candidates' thermophysical properties.",
+          "time": {
+            "start": 1792285624151,
+            "end": 1792285638637
+          },
+          "metadata": {
+            "anthropic": {
+              "signature": "0145f38cf04649958b1fab7d7b4991e035896dc3830a0ff3aff7a8a70d18630c"
+            }
+          },
+          "id": "prt_14c8c4757001ymLjKYwP0PGTIE",
+          "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C",
+          "messageID": "msg_14c8c3c8f001CqSCjGf85m9Jl4"
+        },
+        {
+          "type": "text",
+          "text": "```json\n{\"scores\": [{\"programme\": 1, \"criterion\": \"fit\", \"value\": 4, \"reason\": \"Measures MD-verified viscosity/thermal conductivity FOM at scale on C10–C50 organics matching their practice; scale differs from current 8 molecules.\"}, {\"programme\": 1, \"criterion\": \"change\", \"value\": 5, \"reason\": \"If lever holds, group builds scaled GPU-MD verification; if not, MD stays spot-check—both outcomes change current MD practice.\"}, {\"programme\": 1, \"criterion\": \"new\", \"value\": 4, \"reason\": \"Group MD-verified 8 molecules but has not run scaling experiment (best MD-FOM vs 100→1000 candidates vs commercial fluids).\"}, {\"programme\": 2, \"criterion\": \"fit\", \"value\": 3, \"reason\": \"Card measures computational MD-FOM as stand-in for their experimental wet-lab verification; bridges computation to experiment.\"}, {\"programme\": 2, \"criterion\": \"change\", \"value\": 3, \"reason\": \"If lever holds, they add GPU-MD pre-filter before wet-lab; if not, status quo—only lever case changes practice.\"}, {\"programme\": 2, \"criterion\": \"new\", \"value\": 4, \"reason\": \"Group verifies experimentally via SDL/microfluidics; has not run card's MD-verification scaling experiment.\"}, {\"programme\": 3, \"criterion\": \"fit\", \"value\": 3, \"reason\": \"Card's MD verification step replaces their manual 2-candidate pick; step is in card terms, not theirs.\"}, {\"programme\": 3, \"criterion\": \"change\", \"value\": 3, \"reason\": \"If lever holds, they insert MD verification between ML shortlist and synthesis; if not, ML+sparse experiment confirmed—only lever changes.\"}, {\"programme\": 3, \"criterion\": \"new\", \"value\": 4, \"reason\": \"Group ML-screened millions and validated 2 experimentally; never MD-verified hundreds-to-thousands candidates' thermophysical properties.\"}]}\n```",
+          "time": {
+            "start": 1792285638643,
+            "end": 1792285640154
+          },
+          "id": "prt_14c8c7ff3001tFQkjvutX9SKtE",
+          "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C",
+          "messageID": "msg_14c8c3c8f001CqSCjGf85m9Jl4"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "0e7382e724aff1fe7232862f29d1ce4e9875ff2c",
+          "type": "step-finish",
+          "tokens": {
+            "total": 6212,
+            "input": 2877,
+            "output": 470,
+            "reasoning": 2737,
+            "cache": {
+              "write": 0,
+              "read": 128
+            }
+          },
+          "cost": 0.00471918,
+          "id": "prt_14c8c86840012RcIXI5AiCtqM2",
+          "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C",
+          "messageID": "msg_14c8c3c8f001CqSCjGf85m9Jl4"
+        },
+        {
+          "type": "patch",
+          "hash": "11c6285fddbe1ad946432470073e4f81dddfa6a9",
+          "files": [
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-4.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-4.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-4.jsonl",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-5.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-5.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-5.jsonl",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-6.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-6.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/raw/critic-6.jsonl"
+          ],
+          "id": "prt_14c8c86ea001DKGUBQ1UjmBqhn",
+          "sessionID": "ses_eb373c9fcffe7RQZSPaRrkbc7C",
+          "messageID": "msg_14c8c3c8f001CqSCjGf85m9Jl4"
+        }
+      ]
+    }
+  ]
+}

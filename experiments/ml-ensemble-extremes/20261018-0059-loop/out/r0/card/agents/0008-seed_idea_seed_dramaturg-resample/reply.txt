@@ -1,0 +1,93 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Research question; states no factual claim that requires a source, so nothing to verify against a page."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "Here in Part 2, we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023. ... For extreme climate statistics, HENS samples events 4σ away from the ensemble mean.",
+      "note": "This is the plan's hypothesis/prediction (needs no source), and the cited s_hens quote appears verbatim; the page also supports the premise that larger ensembles sample the tails better (7424 members reach ~4σ, vs ~2σ for a 50-member ensemble)."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Conditional prediction (the 'lever works' branch of the hypothesis); no factual claim requiring a source."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Conditional prediction/mechanism (the 'lever fails' branch); no factual claim requiring a source. Its premise that members are exchangeable draws of one trained distribution is consistent with s_crps_paper ('The trained model is stochastic and can generate as many exchangeable members as desired')."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Describes what the plan will run and measure (7,000 forecasts, subsampling, scoring); build/measure content needs no source."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Here in Part 2, we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023. ... The HENS forecasts are initialized on each day of June, July, August 2023 at 00:00 UTC, for a total of 92 initial dates. ... For extreme climate statistics, HENS samples events 4σ away from the ensemble mean. ... It also reduces the probability of outlier events, in which the verification value lies outside the ensemble forecast distribution.",
+      "note": "Page confirms 7,424 SFNO members per day, 92 summer-2023 initial dates, 4-sigma tail sampling, and reduced outlier probability; the carried value 7424 matches the page."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Open question (what remains unresolved); no factual claim requiring a source. The 'exchangeable draws of one afCRPS-trained distribution' characterization is consistent with s_crps_paper."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "PARTIAL",
+      "page_quote": "This makes inference computationally cheap: a single member 15 day forecast is created in about one minute for AIFS-CRPS O96 and four minutes for AIFS-CRPS N320 on an NVIDIA A100 40 GB GPU, including the time spent reading the initial state and writing the forecast to disk.",
+      "note": "The '4-minute N320 member time' is on the page and supported. The '38 GB memory' value is not stated anywhere on the page (it only mentions the A100 40 GB GPU), so that part is unsupported."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Scope/limitations statement about the plan's own coverage; no external factual claim requiring a source."
+    },
+    {
+      "ref": "src:s_hens",
+      "status": "SUPPORTED",
+      "page_quote": "Here in Part 2, we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023.",
+      "note": "Quote appears verbatim in the abstract; supports the closest prior's ensemble size (7424 members)."
+    },
+    {
+      "ref": "src:s_crps_paper",
+      "status": "SUPPORTED",
+      "page_quote": "This makes inference computationally cheap: a single member 15 day forecast is created in about one minute for AIFS-CRPS O96 and four minutes for AIFS-CRPS N320 on an NVIDIA A100 40 GB GPU, including the time spent reading the initial state and writing the forecast to disk.",
+      "note": "Quote appears verbatim in the paper; supports per-member N320 inference time (4 min) and the anchor timing."
+    },
+    {
+      "ref": "num:n_infer_min_member",
+      "status": "SUPPORTED",
+      "page_quote": "a single member 15 day forecast is created in about one minute for AIFS-CRPS O96 and four minutes for AIFS-CRPS N320 on an NVIDIA A100 40 GB GPU",
+      "note": "Page states four minutes for AIFS-CRPS N320 on an A100 40 GB GPU; value 4 min matches.",
+      "page_value": 4
+    },
+    {
+      "ref": "num:n_hens_members",
+      "status": "SUPPORTED",
+      "page_quote": "we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023",
+      "note": "Page states 7424 members; value matches.",
+      "page_value": 7424
+    },
+    {
+      "ref": "num:n_a100_usd_h",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A100 SXM | 40 GB | 124 | 1800 GiB | 5.8 TiB SSD | $1.99",
+      "note": "Lambda Instances pricing (8x) lists the NVIDIA A100 SXM 40 GB at $1.99/GPU/hr; matches the quoted figure and setting.",
+      "page_value": 1.99
+    }
+  ]
+}
+```

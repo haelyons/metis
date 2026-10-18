@@ -1,0 +1,45 @@
+{
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0133-loop/out/r0/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-18T01:33:19.456Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "failed",
+   "attempts": 2,
+   "ms": 153589,
+   "cost_usd": 0.08298659600000001,
+   "tokens": 78395,
+   "errors": [
+    "no programmes array"
+   ]
+  }
+ ],
+ "cost_usd": 0.08298659600000001,
+ "tokens": 78395,
+ "by_model": {
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.08298659600000001,
+   "tokens": 78395
+  }
+ },
+ "done": true,
+ "updated": "2026-10-18T01:35:54.869Z",
+ "best": null
+}

@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "plan:scope_gap",
+      "reason": "Outcomes inform compute-investment choice but only through synthesis and lifetime testing, which limits and scope_gap explicitly exclude."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:numbers.ff_visc_err",
+      "reason": "5% decision gate is comparable to ~10% force-field viscosity error floor, so run-to-run noise power is unclear; compute_axis 10×, compute-only, and held_fixed otherwise hold."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:scored_against",
+      "reason": "Candidates scored against measured held-out commercial-fluid data; anchor phase first reproduces published n-hexadecane k and viscosity within ±25%."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "plan:novelty.left_open",
+      "reason": "Org-Mol validated two esters experimentally and never MD-verified hundreds-to-thousands; plan states the 100-to-10,000 gap explicitly."
+    },
+    {
+      "criterion": "reshape",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "restructuring.method is none; no parallelisation of a removed dependency is claimed."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "restructuring.method is none; baseline criterion does not apply."
+    }
+  ],
+  "decides_by": "score",
+  "decides_by_reason": "Decision rule needs Mouromtseff numbers at 100, 300, and 1000 verified candidates, which the score phase computes after verify."
+}
+```

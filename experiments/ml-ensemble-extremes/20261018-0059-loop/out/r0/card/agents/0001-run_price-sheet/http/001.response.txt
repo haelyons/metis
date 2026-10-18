@@ -1,0 +1,15 @@
+HTTP 200
+{"date":"Sun, 18 Oct 2026 00:59:12 GMT","content-type":"text/event-stream","transfer-encoding":"chunked","connection":"keep-alive","cache-control":"no-cache","cf-placement":"remote-IAD","x-opencode-endpoint-id":"pareto-glm","x-opencode-log-id":"d353b3ad-d461-4cdd-ac53-f6a9c118f075","x-opencode-upstream-model-id":"z-ai/glm-5.3-flash","x-zen-model":"glm-5.3-flash","server":"cloudflare","cf-ray":"a4c3994eded0435d-EWR"}
+
+data: {"id":"chatcmpl-f0a50902d7fcb5289f31fd84b0f7f03b","object":"chat.completion.chunk","created":1792285151,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"role":"assistant","content":""}}]}
+
+data: {"id":"chatcmpl-f0a50902d7fcb5289f31fd84b0f7f03b","object":"chat.completion.chunk","created":1792285151,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"id":"chatcmpl-tool-b49b36a769507f3f","type":"function","function":{"name":"webfetch","arguments":"{\"format\": \"text\", \"url\": \"https://lambda.ai"}}]}}]}
+
+data: {"id":"chatcmpl-f0a50902d7fcb5289f31fd84b0f7f03b","object":"chat.completion.chunk","created":1792285151,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"/pricing\"}"}},{"index":1,"id":"chatcmpl-tool-a9f88014b65b5dc1","type":"function","function":{"name":"webfetch","arguments":"{\"format\": \"text\", \"url\": \"https"}}]}}]}
+
+data: {"id":"chatcmpl-f0a50902d7fcb5289f31fd84b0f7f03b","object":"chat.completion.chunk","created":1792285151,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":"tool_calls","logprobs":null,"delta":{"tool_calls":[{"index":1,"function":{"arguments":"://docs.lambda.ai/public-cloud/billing/\"}"}}]}}]}
+
+data: {"id":"chatcmpl-f0a50902d7fcb5289f31fd84b0f7f03b","object":"chat.completion.chunk","created":1792285151,"model":"glm-5.3-flash","choices":[],"usage":{"prompt_tokens":1378,"completion_tokens":48,"total_tokens":1426,"prompt_tokens_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":0}}}
+
+data: [DONE]
+

@@ -1,0 +1,123 @@
+{
+  "programmes": [
+    {
+      "name": "ENEOS Holdings — AI-driven immersion-cooling-fluid discovery (NVIDIA ALCHEMI + Matlantis PFP)",
+      "url": "https://www.hd.eneos.co.jp/english/news/release_information/year/2025/20251205_02_01_mr03/",
+      "step": "The card targets the down-select/verification tier where shortlisted coolant candidates have their viscosity and thermal conductivity computed and are ranked by a cooling figure of merit against commercial single-phase fluids. ENEOS's pipeline today screens ~10 million molecular candidates against dielectric and thermal properties with MLIP-based simulation and down-selects ~1,000 molecules \"for further experimental evaluation\"; its MD step (the BMD NIM) computes bulk dielectric constant, while viscosity and thermal-conductivity confirmation at 100→1,000-candidate scale is the exact tier the card would insert before wet-lab testing.",
+      "step_url": "https://www.hd.eneos.co.jp/english/news/release_information/year/2025/20251205_02_01_mr03/",
+      "step_quote": "For immersion cooling fluids aimed at data center thermal management, the workflow screened on the order of ten million molecular candidates against dielectric and thermal properties and identified approximately 1,000 molecules that met or exceeded the target performance envelope for further experimental evaluation.",
+      "activity": {
+        "state": "active",
+        "claim": "ENEOS announced this immersion-cooling screening on 5 December 2025, presented it at Supercomputing 2025 in November 2025, and continued presenting the ALCHEMI/Matlantis work at NVIDIA GTC 2026; no archived/stopped statement exists.",
+        "url": "https://www.hd.eneos.co.jp/english/news/release_information/year/2025/20251205_02_01_mr03/",
+        "quote": "ENEOS Holdings, Inc. (hereinafter \"ENEOS HD\") today announced that it has implemented AI-driven chemistry and materials discovery platform, NVIDIA ALCHEMI, to accelerate identification and optimization of next-generation immersion cooling fluids*1 and oxygen evolution reaction (OER) catalysts."
+      },
+      "practice": [
+        {
+          "claim": "Today ENEOS verifies/shortlists at a scale of ~10 million candidates, keeping ~1,000 for experimental evaluation, rather than MD-computing viscosity and thermal conductivity of a few hundred to a thousand candidates.",
+          "url": "https://www.hd.eneos.co.jp/english/news/release_information/year/2025/20251205_02_01_mr03/",
+          "quote": "For immersion cooling fluids aimed at data center thermal management, the workflow screened on the order of ten million molecular candidates against dielectric and thermal properties and identified approximately 1,000 molecules that met or exceeded the target performance envelope for further experimental evaluation."
+        },
+        {
+          "claim": "Its physics step is MLIP molecular dynamics (BMD NIM) for bulk dielectric constant, batched DFT for polarizability, and a KPGT model for flash point — not MD-computed viscosity or thermal conductivity, which is what the card's verification tier would add.",
+          "url": "https://developer.nvidia.com/blog/faster-chemistry-and-materials-discovery-with-ai-powered-simulations-using-nvidia-alchemi/",
+          "quote": "Next, the BMD NIM was used to calculate bulk dielectric constants and identify candidates with low dielectric constants. Finally, flash point predictions were made using a KPGT model. This workflow enabled ENEOS to identify over 1,000 promising immersion cooling fluids with both low dielectric constant and high flash point in just three weeks."
+        },
+        {
+          "claim": "The compute is the Matlantis PFP machine-learning interatomic potential (jointly developed by Preferred Networks and ENEOS), accelerated roughly an order of magnitude by NVIDIA ALCHEMI.",
+          "url": "https://www.hd.eneos.co.jp/english/news/release_information/year/2025/20251205_02_01_mr03/",
+          "quote": "By leveraging NVIDIA ALCHEMI, ENEOS accelerated calculations of Matlantis's core technology, PreFerred Potential (PFP), by an order of magnitude -- that is, several tens of times faster."
+        }
+      ],
+      "if_lever_changes": "If MD-verified candidates keep raising the best cooling FOM, ENEOS should extend its BMD-NIM/PFP MD from dielectric-constant screening to viscosity + thermal-conductivity verification and FOM ranking over its full ~1,000-candidate shortlist (and beyond), because every additional GPU-hour keeps finding fluids that beat its commercial IX-series coolants before synthesis.",
+      "if_not_changes": "If the best FOM plateaus by a few hundred candidates, ENEOS should cap MD verification at ~100–300 candidates and spend the saved compute on synthesizing and wet-lab testing that top set, since predictor filtering plus MLIP/force-field error cap how high MD-ranked fluids can score and more verification would not yield better products.",
+      "already_done": {
+        "status": "partly",
+        "claim": "ENEOS already runs large-scale MLIP-based MD screening of ~10 million coolant candidates against dielectric and thermal properties, but its published MD step computes bulk dielectric constant only, and it has not published an MD-computed viscosity + thermal-conductivity figure-of-merit versus number-of-verified-candidates study against commercial fluids.",
+        "url": "https://developer.nvidia.com/blog/faster-chemistry-and-materials-discovery-with-ai-powered-simulations-using-nvidia-alchemi/",
+        "quote": "Next, the BMD NIM was used to calculate bulk dielectric constants and identify candidates with low dielectric constants. Finally, flash point predictions were made using a KPGT model."
+      }
+    },
+    {
+      "name": "Org-Mol (Sinopec Research Institute of Petroleum Processing / DP Technology / AI for Science Institute)",
+      "url": "https://www.nature.com/articles/s41524-025-01720-4",
+      "step": "The card targets the verification tier between ML shortlisting and synthesis: GPU-MD computation of viscosity and thermal conductivity for the top 100/300/1,000 esters to rank a cooling figure of merit against commercial fluids. Org-Mol's pipeline currently fills that tier with ML prediction (dielectric constant → kinematic viscosity → thermal conductivity), filtering 461 monoesters and then synthesizing + experimentally measuring only two candidates — the card inserts the MD verification they explicitly skipped.",
+      "step_url": "https://www.nature.com/articles/s41524-025-01720-4",
+      "step_quote": "Monoesters with dielectric constants lower than 3.20 are then fed to the kinetic viscosity model and then the thermal conductivity model. Viscosity is prioritized over thermal conductivity due to its significant impact on system efficiency and operational feasibility. Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out. By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured.",
+      "activity": {
+        "state": "active",
+        "claim": "The Org-Mol immersion-coolant screening was published open-access on 11 July 2025 in npj Computational Materials (with tested structures deposited on Zenodo); no archived or stopped statement exists for the group's line of work.",
+        "url": "https://www.nature.com/articles/s41524-025-01720-4",
+        "quote": "The application of Org-Mol in high-throughput screening has demonstrated its capability to enable the rapid identification of potential immersion coolants from a pool of millions of automatically constructed ester molecules. The experimental validation of two promising candidates further underscores the practical utility of our approach in accelerating the discovery of new materials for energy-efficient applications."
+      },
+      "practice": [
+        {
+          "claim": "It handles the verification step today by ML-predicting viscosity and thermal conductivity and then wet-lab validating only two synthesized esters — not by MD-verifying hundreds to thousands of candidates.",
+          "url": "https://www.nature.com/articles/s41524-025-01720-4",
+          "quote": "Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out. By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured."
+        },
+        {
+          "claim": "The group deliberately avoids MD for these transport properties at scale, stating it is unaffordable for thousands of candidates and that accuracy depends on the force field — the precise gap the card's GPU-MD verification tier addresses.",
+          "url": "https://arxiv.org/html/2501.09896",
+          "quote": "It can be seen that predicting these physical properties via MD is time-consuming for a single system and become unaffordable in a high-throughput screening scenario with thousands of candidates, while the validity of some previously reported ML models is limited to a few specific types of compounds."
+        },
+        {
+          "claim": "The pipeline is a collaboration of Sinopec RIPP (Qi Ou, Ning Wang), DP Technology (Hongshuai Wang, Shangqian Chen) and the AI for Science Institute (Zhifeng Gao), built on the open-source Uni-Mol framework, screening over 6 million esters to 461 survivors.",
+          "url": "https://www.nature.com/articles/s41524-025-01720-4",
+          "quote": "we apply the dielectric constant as a primary criterion and screen out over 6 million saturated monoesters and dibasic esters (constructed from saturated acid and alcohol, checked out from PubChem 50) with the number of carbon atoms lower or equal to 30."
+        }
+      ],
+      "if_lever_changes": "If more MD-verified candidates keep raising the best FOM, the Org-Mol group should add a GPU-MD verification tier between its Uni-Mol shortlist and synthesis — MD-ranking the top 461 esters (then hundreds more) by viscosity/thermal-conductivity FOM — replacing its two manually-chosen syntheses with a larger, MD-confirmed batch and correcting its observed ML overestimation of viscosity and thermal conductivity.",
+      "if_not_changes": "If the best FOM plateaus by a few hundred candidates, their two-candidate experimental validation is vindicated as capturing the ceiling: they should keep MD verification to a small calibration set (~100) for force-field checks and continue relying on Org-Mol ML filtering, since ~10% force-field error and predictor filtering cap the achievable FOM.",
+      "already_done": {
+        "status": "no",
+        "claim": "Org-Mol explicitly avoided MD for viscosity/thermal conductivity at scale (calling it unaffordable for thousands of candidates) and experimentally validated only two esters; it has never MD-verified 100–1,000 candidates nor measured whether the best cooling FOM rises or plateaus with N.",
+        "url": "https://arxiv.org/html/2501.09896",
+        "quote": "It can be seen that predicting these physical properties via MD is time-consuming for a single system and become unaffordable in a high-throughput screening scenario with thousands of candidates, while the validity of some previously reported ML models is limited to a few specific types of compounds."
+      }
+    },
+    {
+      "name": "GATE (LG AI Research / Kyonggi University) — generalizable AI immersion-coolant screening",
+      "url": "https://arxiv.org/abs/2510.23371",
+      "step": "The card targets the validation tier where shortlisted candidates' viscosity and thermal conductivity are confirmed to rank a cooling figure of merit against commercial fluids. GATE's pipeline currently ML-predicts 10 relevant properties (including dynamic viscosity, density and dielectric constant) over 41M purchasable + 2.54B in-silico compounds, keeps 92,861 candidates, then relies on wet-lab TGA/DSC plus literature to validate just four — the card would replace this with GPU-MD verification at 100→1,000-candidate scale.",
+      "step_url": "https://arxiv.org/html/2510.23371",
+      "step_quote": "Finally, experimental and literature validation confirm the physicochemical properties of selected candidates (Fig. 2 f), ensuring their suitability as single-phase immersion cooling fluids.",
+      "activity": {
+        "state": "active",
+        "claim": "The GATE immersion-cooling study is an active preprint: submitted 27 October 2025 and last revised 31 October 2025 (v2), with no archived/stopped statement.",
+        "url": "https://arxiv.org/abs/2510.23371",
+        "quote": "[Submitted on 27 Oct 2025 (v1), last revised 31 Oct 2025 (this version, v2)]"
+      },
+      "practice": [
+        {
+          "claim": "It screens at a scale of billions of compounds (41 million purchasable + 2.54 billion in-silico products) and keeps 92,861 candidates, using ML predictions rather than MD to rank them.",
+          "url": "https://arxiv.org/html/2510.23371",
+          "quote": "Across the 41 million purchasable compounds and 2.54 billion in-silico reaction products examined, this screening yielded 356 candidates satisfying Criterion 1, and a total of 92,861 compounds meeting at least one of Criteria 1–6."
+        },
+        {
+          "claim": "Its ranking uses the GATE model jointly trained on 34 properties, ten of which (dynamic viscosity, density, dielectric constant, thermal properties, etc.) map to the Open Compute Project immersion-cooling requirements.",
+          "url": "https://arxiv.org/html/2510.23371",
+          "quote": "Among the 34 physicochemical properties supported by GATE, ten properties—boiling point, melting point, flash point, critical temperature, decomposition temperature, specific heat, vapor pressure, dynamic viscosity, density, and dielectric constant—are directly relevant to immersion cooling fluids and collectively cover the key requirements specified by OCP (Table 1)."
+        },
+        {
+          "claim": "It validates candidates today by wet-lab (TGA/DSC) plus literature values for only four molecules, not by MD-computing viscosity and thermal conductivity across the shortlist.",
+          "url": "https://arxiv.org/abs/2510.23371",
+          "quote": "Four were experimentally or literarily validated, showing strong agreement with wet-lab measurements and performance comparable to or exceeding a commercial coolant."
+        }
+      ],
+      "if_lever_changes": "If MD-verified candidates keep raising the best cooling FOM, LG AI Research should add a GPU-MD tier to confirm viscosity + thermal conductivity and compute the OCP figure of merit over a ranked subset of its 92,861 candidates instead of validating only four, because more verified candidates keep producing fluids that beat the commercial benchmark.",
+      "if_not_changes": "If the best FOM plateaus by a few hundred candidates, LG AI Research should MD-verify only the top few hundred candidates and route the remaining effort into synthesizing and testing that shortlist, since GATE's ML ranking already captures the achievable ceiling and MD error caps the FOM.",
+      "already_done": {
+        "status": "no",
+        "claim": "GATE validated only four candidates through TGA/DSC and literature values; it has not MD-verified viscosity and thermal conductivity at 100–1,000-candidate scale nor measured whether the best cooling FOM rises or plateaus with the number verified.",
+        "url": "https://arxiv.org/abs/2510.23371",
+        "quote": "Four were experimentally or literarily validated, showing strong agreement with wet-lab measurements and performance comparable to or exceeding a commercial coolant."
+      }
+    }
+  ],
+  "gaps": [
+    "None of the three programmes computes viscosity and thermal conductivity by GPU-MD at the 100→1,000-candidate scale: ENEOS's MD step (BMD NIM) computes bulk dielectric constant only, and Org-Mol and GATE use ML prediction plus wet-lab validation of two to four molecules.",
+    "No open-source, reusable GPU-MD verification pipeline for coolant transport properties (viscosity + thermal conductivity FOM ranking) is shared by these programmes; the card's pipeline would be the first published FOM-vs-number-of-verified-candidates study against commercial fluids."
+  ],
+  "no_programme_reason": ""
+}

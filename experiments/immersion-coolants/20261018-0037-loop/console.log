@@ -1,0 +1,43 @@
+[immersion-coolants-r0] pool: 0 candidate cluster(s); picked 0
+[immersion-coolants-r0] seed:idea:seed: quote at numbers.throughput_ns_day.quote: 500 does not appear in the quote "| [ns/day] | System 1 | System 2 | System 3 | System 4 | System 5 | System 6 | ... A100 | 267.5 | 691.7 | 265.8 | 129.1 | 38.8 | 23.2 | ... A40 | 277.0 | 731.8 | 268.1 | 122.3 | 34.9 | 19.0 |"; a value transformed from the page belongs in a DERIVED number
+[immersion-coolants-r0] seed:idea:seed: quote at numbers.anchor_k_hexadecane.quote: 0.1444 does not appear in the quote "298.15 144.43"; a value transformed from the page belongs in a DERIVED number
+[immersion-coolants-r0] seed:idea:seed: quote at numbers.anchor_eta_hexadecane.quote: 2.9523 does not appear in the quote "0.1 2952.3"; a value transformed from the page belongs in a DERIVED number
+[immersion-coolants-r0] seed:idea:seed: quote at numbers.ff_visc_err.quote: 0.1 does not appear in the quote "For saturated liquids, both Mie-based potential models (Potoff and TAMie) provide roughly 10% accuracy for linear alkanes, while deviations are closer to 20 to 50% for TraPPE-UA."; a value transformed from the page belongs in a DERIVED number
+[immersion-coolants-r0] seed:idea:seed: thin headroom: the budget is reached if MD throughput on one A6000 for a ~20-30k-atom organic liquid is 1.2× lower
+[immersion-coolants-r0] seed:idea:seed: question: a sentence of 25 words
+[immersion-coolants-r0] seed:idea:seed: hypothesis: a sentence of 21 words
+[immersion-coolants-r0] seed:idea:seed: predictions.if_not: a sentence of 23 words
+[immersion-coolants-r0] seed:idea:seed: test_summary: a sentence of 34 words
+[immersion-coolants-r0] seed:idea:seed: novelty.left_open: a sentence of 21 words
+[immersion-coolants-r0] seed:idea:seed: limits: a sentence of 21 words
+[immersion-coolants-r0] seed:idea:seed: dramaturg: degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not; degenerate: card:test_summary; degenerate: card:limits
+[immersion-coolants-r0] seed:idea:seed: dramaturg (resample): degenerate: card:question; degenerate: card:if_lever; degenerate: card:if_not; degenerate: card:test_summary; degenerate: card:limits
+[immersion-coolants-r0] seed:idea:seed: dramaturg findings failed G-find after a resample; decided as returned
+[immersion-coolants-r0] seed:idea:seed: dramaturg-2: card:limits: 0 findings
+[immersion-coolants-r0] seed:idea:seed: dramaturg-2 (resample): card:limits: 0 findings
+[immersion-coolants-r0] seed:idea:seed: dramaturg-2 findings failed G-find after a resample; decided as returned
+immersion-coolants-r0: done · $0.375 · 436,116 tokens · 9 agent calls
+opencode-go/glm-5.3-flash: $0.038 over 3 calls = 0.1% of its $60 monthly cap, 0.3% of a 5-hour window
+opencode-go/deepseek-v4-pro: $0.324 over 3 calls = 2.2% of its $15 monthly cap, 10.8% of a 5-hour window
+opencode-go/minimax-m3: $0.005 over 1 calls = 0.0% of its $60 monthly cap, 0.0% of a 5-hour window
+opencode-go/mimo-v2.6-flash: $0.002 over 1 calls = 0.0% of its $60 monthly cap, 0.0% of a 5-hour window
+opencode-go/qwen3.8-flash: $0.005 over 1 calls = 0.0% of its $30 monthly cap, 0.1% of a 5-hour window
+/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/out/r0/card
+TypeError: items.push(...) is not a function
+    at /home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/frame.js:159:5
+    at Array.forEach (<anonymous>)
+    at main (/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/frame.js:155:9)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+Error: frame.js exited 1
+    at runNode (/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/loop.js:57:29)
+    at cardAndFrame (/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/loop.js:72:62)
+    at /home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/loop.js:140:14
+    at Object.<anonymous> (/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/loop.js:166:3)
+    at Module._compile (node:internal/modules/cjs/loader:1871:14)
+    at Object..js (node:internal/modules/cjs/loader:2002:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+
+[exit 1]

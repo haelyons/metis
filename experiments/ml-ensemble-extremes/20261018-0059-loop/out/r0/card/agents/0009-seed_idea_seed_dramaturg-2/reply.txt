@@ -1,0 +1,90 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "Abstract (arXiv:2412.15832): \"The trained model is stochastic and can generate as many exchangeable members as desired and computationally feasible in inference.\"",
+      "note": "This is a research question defining what the plan will test; no factual claim requires a source. The context (AIFS-ENS members are exchangeable draws) is consistent with the AIFS-CRPS page, which states members can be generated as desired and are exchangeable."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "\"Here in Part 2, we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023.\" Also: \"HENS precisely samples the tails of the forecast distribution\" and \"HENS samples events 4σ away from the ensemble mean.\"",
+      "note": "The cited s_hens quote appears verbatim on the GMD page and the page supports that huge ensembles (7424 members) better sample tails than small ones (Fig. 3 contrasts with ~2σ for 50-member ensembles, implying tails keep improving with size)."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "\"Figure 3 ... (b) Information gain for 50-member ensembles ... the grid cells depart from the expected Gaussian value of approximately 2\" vs. \"In the HENS ensemble, some grid cells depart from the expected Gaussian value of approximately 4.\"",
+      "note": "This is the plan's hypothesis lever (a predicted outcome to be measured), needing no source. It is consistent with the s_hens page, which shows tail-sampling gain increases with ensemble size from 50 to 7424."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "\"In contrast to IFS ... the AIFS trained with an MSE loss ...\" — no; the relevant page text is arXiv:2412.15832: \"The trained model is stochastic and can generate as many exchangeable members as desired\".",
+      "note": "This is the plan's falsification branch describing what will be checked, not a standalone factual claim; no source required. The exchangeable-members framing matches what the AIFS-CRPS pages state for CRPS-trained ensembles."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "\"A single GPU (24 GB) ... 2.0 AIFS-ENS ENSEMBLE CURRENT OPERATIONAL Probabilistic — 51 members\" and \"15-day forecasts\" (ECMWF Anemoi presentation): AIFS-ENS v1 exists with 15-day rollout.",
+      "note": "This is a description of what the plan will build and measure (member counts, dates, scores, ERA5 verification), which needs no source; no unsourced external facts asserted. The AIFS-CRPS paper confirms 15-day forecasts and the N320/A100-40GB inference setting."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "\"we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023\"; \"initialized on each day of June, July, August 2023 ... for a total of 92 initial dates\"; \"each ensemble member is run for 15 d\"; \"HENS samples events 4σ away from the ensemble mean\"; \"It also reduces the probability of outlier events\".",
+      "note": "All factual claims in the item are confirmed on the GMD page: Part 2, SFNO model, 7424 members, 92 summer-2023 dates, 15-day members, 4σ tail sampling and outlier reduction. Value 7424 matches the page (page_value 7424)."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "arXiv:2412.15832 abstract: \"The trained model is stochastic and can generate as many exchangeable members as desired and computationally feasible in inference.\" (on a *different* page than the one cited)",
+      "note": "The 'whether skill saturates' part is the plan's open question and needs no source, but the item factually asserts that AIFS-ENS members are 'exchangeable draws of one afCRPS-trained distribution' with no source cited on the card. That design fact appears on the AIFS-CRPS paper and model-card pages, which were not cited by the card, so it is UNSUPPORTED as cited."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "PARTIAL",
+      "page_quote": "\"AIFS-CRPS requires one single model evaluation to produce a 6 h forecast step for one ensemble member. This makes inference computationally cheap: a single member 15 day forecast is created in about one minute for AIFS-CRPS O96 and four minutes for AIFS-CRPS N320 on an NVIDIA A100 40 GB GPU, including the time spent reading the initial state and writing the forecast to disk.\"",
+      "note": "The 4-minute N320 member time on an NVIDIA A100 40 GB GPU is stated verbatim on the cited page and supports the timing anchor. However, the '38 GB memory' value is not stated on the cited s_crps_paper page (it appears on the HuggingFace ecmwf/aifs-ens-1.0 model card, which the card does not cite); the reproduce-and-match engineering steps themselves need no source."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "arXiv:2412.15832: \"The AIFS-CRPS subseasonal reforecast dataset is comprised of 46-day, 8-member ensemble forecasts\" (showing subseasonal is a separate evaluation not covered).",
+      "note": "This is a statement of the plan's scope limits, a factual-free framing that needs no source; nothing in it conflicts with the fetched pages."
+    },
+    {
+      "ref": "src:s_hens",
+      "status": "SUPPORTED",
+      "page_quote": "\"Here in Part 2, we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023.\"",
+      "note": "The recorded quote appears verbatim on the GMD page (abstract) and supports the closest prior's ensemble size."
+    },
+    {
+      "ref": "src:s_crps_paper",
+      "status": "SUPPORTED",
+      "page_quote": "\"a single member 15 day forecast is created in about one minute for AIFS-CRPS O96 and four minutes for AIFS-CRPS N320 on an NVIDIA A100 40 GB GPU, including the time spent reading the initial state and writing the forecast to disk.\"",
+      "note": "The recorded quote appears verbatim in the paper's Conclusions section (arxiv HTML v1 and PDF), supporting the per-member N320 inference time on the exact GPU."
+    },
+    {
+      "ref": "num:n_infer_min_member",
+      "status": "SUPPORTED",
+      "page_quote": "\"a single member 15 day forecast is created in about one minute for AIFS-CRPS O96 and four minutes for AIFS-CRPS N320 on an NVIDIA A100 40 GB GPU, including the time spent reading the initial state and writing the forecast to disk.\"",
+      "note": "Page states four minutes for AIFS-CRPS N320 on an NVIDIA A100 40 GB GPU, matching the recorded value 4 for the exact setting given."
+    },
+    {
+      "ref": "num:n_hens_members",
+      "status": "SUPPORTED",
+      "page_quote": "\"we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023\" and \"Ensemble: 7424 ensemble members\".",
+      "note": "Page value is 7424, matching the recorded value."
+    },
+    {
+      "ref": "num:n_a100_usd_h",
+      "status": "SUPPORTED",
+      "page_quote": "Lambda pricing, Instances pricing table: \"NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | $1.99\" (PRICE/GPU/HR, plus applicable sales tax/VAT/GST).",
+      "note": "The page states $1.99/GPU/HR for 8x NVIDIA A100 SXM 40 GB on-demand instances, matching the recorded value."
+    }
+  ]
+}
+```

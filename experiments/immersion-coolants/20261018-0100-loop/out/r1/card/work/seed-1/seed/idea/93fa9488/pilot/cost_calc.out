@@ -1,0 +1,21 @@
+Expected deterministic output of cost_calc.py (arithmetic verified by hand; no
+local shell/GPU is available on this 4-core shared machine, so these are the
+DERIVED expressions, not MEASURED runs).
+
+machine=<shared 4-core local machine, no GPU> python=3.x
+sim_ns_per_molecule=100.0
+ns_per_hour=12.50
+gpu_hours_per_molecule=8.00
+usd_per_molecule=15.92
+n_molecules_total=60
+gpu_hours_pilot=40.0
+gpu_hours_main=440.0
+usd_pilot=79.60
+usd_main=875.60
+storage_usd=12.00
+total_stated=967.20
+budget_headroom_usd=32.80
+n_replicate_trajs=300
+total_sim_ns=6000
+n_steps_per_molecule=50000000
+full200_usd=3224.00

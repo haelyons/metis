@@ -1,0 +1,80 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; no page needed)",
+      "note": "Plan-internal research question. It carries no empirical claim or value, so nothing needed checking against a page."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "we apply the Org-Mol fine-tuned models to systematically screen out promising candidates for immersion coolants, which require low dielectric constant (strictly lower than 3.20 at room temperature for electrical safety), low kinematic viscosity (preferably lower than 12 cSt at 40 °C), high thermal conductivity (preferably higher than 0.140 W/m ⋅ K), and environmental friendliness. We focus on synthetic esters for the design of novel immersion coolants owing to their extraordinary biodegradability.",
+      "note": "The hypothesis is a prediction, which needs no source; the cited orgmol page supports the premise (predictor-first screening of esters as immersion coolants under those thresholds). 'PFAS-free' is not verbatim on the page (it says 'environmental friendliness'/'biodegradability'); the esters screened are fluorine-free, and the claim is a prediction anyway."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; no page needed)",
+      "note": "Expected experimental outcome, i.e., what the plan predicts; no external factual claim to verify."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "UNSUPPORTED",
+      "page_quote": "the accuracy of such methods relies on the applied force field and/or the algorithm applied in the ML model, as well as the quality and the size of the data set",
+      "note": "The plateau prediction is a plan prediction (no source needed), but '~10% force-field error' is a quantitative factual claim with no source, and no fetched page states any force-field error percentage (the orgmol page only says accuracy 'relies on the applied force field')."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; no page needed)",
+      "note": "Describes what the plan will build, filter and measure; no external factual claim or value to check."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "we apply the dielectric constant as a primary criterion and screen out over 6 million saturated monoesters and dibasic esters ... 461 monoesters are finally filtered out. By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured.",
+      "note": "Page confirms 'over 6 million' esters screened and two experimentally validated (abstract: 'experimental validation of two promising candidates'). The paper reports ML screening plus only two syntheses and states MD prediction 'becomes unaffordable in a high-throughput screening scenario with thousands of candidates', consistent with it never MD-verifying hundreds-to-thousands of candidates."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "(no source cited; no page fetched)",
+      "note": "'No study measures X' is a factual claim about the literature with no citation attached; none of the fetched pages establishes this negative, so it is unsupported."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "PARTIAL",
+      "page_quote": "While the lowest T investigated was set to 278.15 K for n-decane and squalane, somewhat larger values of 283.15 K for cyclohexane and 298.15 K for n-hexadecane were selected considering the melting points. ... T (K) λ (mW·m−1·K−1) Cyclohexane n-Decane n-Hexadecane Squalane ... 298.15 144.43",
+      "note": "Thermal-conductivity half supported: n-hexadecane is the only fluid measured at 298.15 K and Table 2 gives 144.43 mW·m⁻¹·K⁻¹ = 0.1444 W/m/K (~300 K). The viscosity value 2.9523 mPa/s (and the 2.95 mPa/s in the text) appears nowhere on the cited page, which reports thermal conductivity only; the 'MD pipeline reproduces...' part is what the plan will do."
+    },
+    {
+      "ref": "src:orgmol",
+      "status": "SUPPORTED",
+      "page_quote": "we apply the Org-Mol fine-tuned models to systematically screen out promising candidates for immersion coolants, which require low dielectric constant (strictly lower than 3.20 at room temperature for electrical safety), low kinematic viscosity (preferably lower than 12 cSt at 40 °C), high thermal conductivity (preferably higher than 0.140 W/m ⋅ K), and environmental friendliness. ... Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.",
+      "note": "Quote appears verbatim on the Nature page; the thresholds (dielectric < 3.20, kinematic viscosity < 12 cSt at 40 °C, thermal conductivity > 0.140 W/m·K), the predictor-first sequential screening, and the filter yield of 461 monoesters are all confirmed."
+    },
+    {
+      "ref": "src:berger2024",
+      "status": "SUPPORTED",
+      "page_quote": "T (K) λ (mW·m −1·K −1) Cyclohexane n-Decane n-Hexadecane Squalane ... 298.15 144.43 ... 298.15 K for n-hexadecane were selected considering the melting points",
+      "note": "Quote matches Table 2 of the paper. Springer's page blocked automated access, so verification used the DOI resolution plus the paper's open full-text deposit copy (d-nb.info, same DOI 10.1007/s10765-024-03383-7). 144.43 mW/m/K at 298.15 K is the n-hexadecane value, as the text states 298.15 K was n-hexadecane's lowest measured temperature, confirming anchor_k_hexadecane = 0.1444 W/m/K."
+    },
+    {
+      "ref": "num:throughput_ns_day",
+      "status": "SUPPORTED",
+      "page_quote": "R-143a in hexane (20,248 atoms) with very high output rate, a short RNA piece with explicit water (31,889 atoms) ... [ns/day] System 1 System 2 ... A100 267.5 691.7 265.8 129.1 38.8 23.2 A40 277.0 731.8 268.1 122.3 34.9 19.0 ... loses performance by a factor of 2.6",
+      "note": "Page (GROMACS 2024.1 benchmarks on the Alex cluster) states 691.7 ns/day for System 2 on A100 (731.8 on A40) and 277.0 ns/day for the high-output liquid System 1 on A40, matching the recorded quote and the stated settings including the 2.6x output penalty. The item's 500 ns/day is the producer's discounted proxy and is not stated on the page.",
+      "page_value": 691.7
+    },
+    {
+      "ref": "num:a6000_usd_h",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A6000 | VRAM/GPU: 48 GB | vCPUs: 14 | RAM: 100 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $1.09",
+      "note": "Lambda's pricing page lists the A6000 at $1.09 per GPU-hour in the 1x GPU tab with the exact specs quoted (48 GB VRAM, 14 vCPUs, 100 GiB RAM, 512 GiB SSD).",
+      "page_value": 1.09
+    }
+  ]
+}
+```

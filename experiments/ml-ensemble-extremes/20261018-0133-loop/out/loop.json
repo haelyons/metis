@@ -1,0 +1,87 @@
+{
+ "name": "ml-ensemble-extremes",
+ "seed": {
+  "id": "ml-ensemble-extremes",
+  "title": "Ensemble size for rare extremes in a machine-learned weather ensemble",
+  "text": "ECMWF runs its machine-learned ensemble, AIFS-ENS, operationally with 50 members, and the model weights are public. An extra member needs one GPU run rather than a supercomputer slot, so ensembles of hundreds or thousands look affordable. Study whether 10 to 1,000 members improve probability forecasts of rare extremes, such as top-percentile wind, temperature or rainfall. Score against ERA5 reanalysis and station observations, which the model did not produce. The open question is whether more members keep helping or whether error shared by every member caps the skill.",
+  "root_question": "Do more members of a machine-learned weather ensemble buy better forecasts of rare extremes, or does error shared by all members cap the skill?",
+  "kind": "physical",
+  "root_link": "SAME: the director's C1 question made concrete on one open, operational model.",
+  "compute_open": "Ensemble members per forecast, from about 10 to 1,000. Unknown: whether skill on top-percentile events keeps rising past the operational 50 members, or flattens because members share model error. The closest prior, HENS, ran 7,424 members of a different model (SFNO) for summer 2023.",
+  "sequential": "not given",
+  "source_urls": [
+   "https://huggingface.co/ecmwf/aifs-ens-1.0",
+   "https://forum.ecmwf.int/t/inference-with-aifs-ens-v-1-on-s2s-timescales/14832",
+   "https://meetingorganizer.copernicus.org/EMS2026/EMS2026-212.html",
+   "https://eesm.science.energy.gov/sites/default/files/Fri_Mahesh_HugeEnsembles.pdf"
+  ]
+ },
+ "expanded": null,
+ "loop_dir": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0133-loop/out",
+ "screen": [
+  {
+   "id": "O",
+   "title": "Ensemble size for rare extremes in a machine-learned weather ensemble",
+   "changes": "",
+   "stakes": 5,
+   "open": 5,
+   "reshape": 1,
+   "total": 10,
+   "distance": "SAME"
+  },
+  {
+   "id": "V1",
+   "title": "Ensemble size for rare extremes in the HENS SFNO large ensemble",
+   "changes": "System studied: SFNO instead of AIFS-ENS. Answers HENS's unresolved question of whether its 7,424-member 4-sigma tail finding converts into ERA5-scored top-percentile probability skill and where that skill saturates.",
+   "stakes": 5,
+   "open": 3,
+   "reshape": 1,
+   "total": 8,
+   "distance": "SAME"
+  },
+  {
+   "id": "V2",
+   "title": "Ensemble size for rare extremes across a multi-season AIFS-ENS sample",
+   "changes": "Quantity more compute buys: synoptic-date and seasonal coverage at fixed member count, instead of members on seven dates. Closes the card's own 'applies to 7 dates; not a multi-season reforecast' gap, and its result is usable by ECMWF's operational AIFS-ENS verification.",
+   "stakes": 5,
+   "open": 5,
+   "reshape": 1,
+   "total": 10,
+   "distance": "SAME"
+  },
+  {
+   "id": "V3",
+   "title": "AIFS-ENS ensemble size judged against the operational physical ensemble",
+   "changes": "Comparison judged against: the operational ECMWF IFS ENS instead of ERA5 alone. Matters to ECMWF's operational ensemble design by asking whether member count can substitute for physical spread.",
+   "stakes": 5,
+   "open": 5,
+   "reshape": 1,
+   "total": 10,
+   "distance": "SAME"
+  }
+ ],
+ "chosen": null,
+ "rounds": [
+  {
+   "tag": "r0",
+   "judged": true,
+   "verdict": "PASS 2/2",
+   "critic": {
+    "lever": 3,
+    "open": 5,
+    "stakes": 5,
+    "verifiable": 5,
+    "internals": null,
+    "reshape": 1,
+    "baseline": null
+   },
+   "critic_sum": 19,
+   "plan": "$963 at p_score · plan $963 · 1 GUESS",
+   "frame_best": null,
+   "frame_programmes": [],
+   "gaps": [],
+   "cost_usd": 0.083
+  }
+ ],
+ "loop_calls_cost_usd": 0.0204
+}

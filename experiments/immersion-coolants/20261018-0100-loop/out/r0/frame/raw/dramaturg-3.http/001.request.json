@@ -1,0 +1,121 @@
+{
+ "ts": "2026-10-18T01:05:10.123Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e635804b0fe929d2ed556701e94990a108996451",
+  "x-opencode-request": "msg_14c8a81570011tUlke5CpLGwyk",
+  "x-opencode-session": "ses_eb3757f75ffe1N3X0CnnG0D5vz",
+  "x-opencode-session-id": "ses_eb3757f75ffe1N3X0CnnG0D5vz",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:39849",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "15403"
+ },
+ "body": {
+  "model": "glm-5.3-flash",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.\nYou are powered by the model named glm-5.3-flash. The exact model ID is opencode-go/glm-5.3-flash\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame\n  Workspace root folder: /home/hal/dev/interp/latent_open\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Sun Oct 18 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"For each item below, fetch its source and check that the recorded quote appears on the page and supports the item. A card item is a field of the plan in the producer's words, with the sources it cites: check each factual claim in it against those sources, and any value it carries against the page; what the plan will build, measure or predict needs no source, but a factual claim with no source is UNSUPPORTED. For a cost input, check that the page states the number for the setting given; whether it applies to this plan is not yours to judge. When the page states a different number for a num or rate item, give it as page_value. Decide only from the pages you fetch and the text below; do not read files. Return one status per item, under its ref: SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE, with the page sentence you relied on.\nItems, one per line:\np1:step: Ewen group (Imperial College London / University of Bath) — MD benchmarking of organic-liquid thermophysical properties has this step in its pipeline: The GPU molecular-dynamics verification of candidate fluids' viscosity and thermal conductivity — the exact step the card scales to 100/300/1000 candidates. Today the group runs equilibrium MD (EMD) on a handful of representative molecules and benchmarks it against ML predictors for density, viscosity and thermal conductivity of C10–C50 organics (lubricants and cooling fluids). | source: https://doi.org/10.1039/D6DD00260A | recorded quote: \\\"Equilibrium molecular dynamics (EMD) simulations of eight representative molecules reproduce density accurately but show systematic, chemistry-dependent force-field errors for the viscosity and thermal conductivity.\\\"\np1:activity: Most recent output is the Digital Discovery paper benchmarking ML vs MD for organic-liquid thermophysical properties, dated 29 Sep 2026, following a 22 Apr 2026 ChemRxiv preprint on the hydrocarbon version. | source: https://profiles.imperial.ac.uk/j.ewen/publications | recorded quote: \\\"Benchmarking machine learning and molecular dynamics methods for the prediction of the thermophysical properties of organic liquids … 29 Sep 2026 Digital Discovery The Royal Society of Chemistry\\\"\np1:c1: The group's ML-first screening toolchain is built on a ~4,700-value experimental database for 835 organic molecules, with XGBoost as the best model — i.e. MD is used only as a spot-check, not at screening scale. | source: https://doi.org/10.1039/D6DD00260A | recorded quote: \\\"We compile a database of approximately 4,700 experimental and critically evaluated reference values for the density, viscosity, and thermal conductivity of 835 unique organic molecules in the C10--C50 range.\\\"\np1:c2: MD verification is run on only eight molecules, and the group already concluded that ML (orders of magnitude cheaper than EMD) is the right tool for high-throughput screening — the assumption the card tests. | source: https://doi.org/10.1039/D6DD00260A | recorded quote: \\\"At an inference cost orders of magnitude lower than EMD simulations, the ML models are well suited to high-throughput screening of new candidate molecules for lubricants and other formulated products.\\\"\np1:c3: The work is done by Egheosa Ogbomo, Fionn Carman, Daniele Dini and James Patrick Ewen (Imperial College London; Ewen now Lecturer at University of Bath), using supercomputer molecular simulation of solid-liquid interfaces. | source: https://profiles.imperial.ac.uk/j.ewen | recorded quote: \\\"James uses supercomputers to study solid-liquid interfaces with molecular simulations. He studies complex formulations to identify links between their nanoscale behaviour and macroscale performance.\\\"\np1:done: They have EMD-verified thermophysical properties but only for a fixed set of eight representative molecules; they have not run the card's scaling experiment (best MD-ranked FOM vs number of MD-verified candidates from 100 to 1000, compared to commercial fluids). | source: https://doi.org/10.1039/D6DD00260A | recorded quote: \\\"Equilibrium molecular dynamics (EMD) simulations of eight representative molecules reproduce density accurately but show systematic, chemistry-dependent force-field errors for the viscosity and thermal conductivity.\\\"\np2:step: Sinton Lab / FL01 (University of Toronto + Acceleration Consortium) — self-driving lab for immersion coolant discovery has this step in its pipeline: The verification/ranking of many candidate coolants — the same pipeline stage the card runs with GPU-MD, which Sinton/FL01 run instead with a wet-lab self-driving lab measuring viscosity, density, heat capacity, thermal conductivity and dielectric constant. | source: https://doi.org/10.82417/pw8c-8z69 | recorded quote: \\\"This study focuses on developing a self-driving lab to accelerate the discovery of optimal coolants. An automated high-throughput AI-powered screening platform has been developed to analyze key properties, including viscosity, density, heat capacity, thermal conductivity, dielectric constant, and additive compatibility.\\\"\np2:activity: FL01 launched November 2025 and, as of a 1 Sep 2026 Acceleration Consortium article, is prototyping its self-driving lab with several industry partners. | source: https://acceleration.utoronto.ca/news/ac-u-of-t-startup-tackles-the-growing-challenge-of-cooling-powerful-technologies | recorded quote: \\\"Launched in November 2025, FL01 has developed patented sensor technology to accelerate the discovery of coolants for heat management in battery packs, high-power electronics and data centres, among other applications.\\\"\np2:c1: Their verification throughput is 5 samples/hour (claimed 100× conventional), i.e. thousands of measurements per device per month, but still a wet-lab loop rather than computation. | source: https://doi.org/10.82417/pw8c-8z69 | recorded quote: \\\"The system analyzes up to five samples per hour, achieving a 100x higher throughput than conventional methods.\\\"\np2:c2: Data-generation scale is the explicit selling point: one device produces 10,000 data points in two months, versus ~4,000 publicly available data points over the prior century. | source: https://acceleration.utoronto.ca/news/ac-u-of-t-startup-tackles-the-growing-challenge-of-cooling-powerful-technologies | recorded quote: \\\"One of our devices can generate 10,000 data points in two months.\\\"\np2:c3: The group already uses a figure of merit (FOM) for immersion coolants and screens >1600 fluid mixtures by coupling CFD with active learning (15 data points to drive the FOM, 10× efficiency). People: David Sinton, Mohammad Zargartalebi, Hanie Rezaei, Maryam Ebrahimiazar (U of T Mechanical & Industrial Engineering); FL01 CEO Zargartalebi. | source: https://ui.adsabs.harvard.edu/abs/2025JEnSt.14019036R/abstract | recorded quote: \\\"We combined computational fluid dynamics (CFD) and active learning techniques to screen over 1600 fluid mixtures drawn from liquid families potentially suitable for EV immersion cooling. Active learning drove the FOM with 15 data points—achieving a tenfold improvement in computational efficiency compared to random sampling.\\\"\np2:done: Sinton/FL01 verify and rank candidates experimentally (self-driving lab, microfluidics, CFD+active learning), not via GPU molecular dynamics, and they have not run the card's MD-verification scaling experiment (best MD-ranked FOM vs number of MD-verified candidates). | source: https://doi.org/10.82417/pw8c-8z69 | recorded quote: \\\"An automated high-throughput AI-powered screening platform has been developed to analyze key properties, including viscosity, density, heat capacity, thermal conductivity, dielectric constant, and additive compatibility.\\\"\np3:step: Org-Mol team (SINOPEC Research Institute of Petroleum Processing + DP Technology + AI for Science Institute) has this step in its pipeline: The post-ML-filter down-selection the card replaces with MD verification: Org-Mol ML-screens millions of esters, filters to a 461-candidate shortlist, then manually picks only two to synthesize and measure — exactly where the card would insert GPU-MD verification of the top 100–1000. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured.\\\"\np3:activity: The pipeline was published 11 July 2025 and is backed by multi-year funding from China Petroleum & Chemical Corp and the National Key R&D Program of China (grant 2024YFA1510200), indicating an ongoing effort rather than an archived one. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"This work was supported by research grants from China Petroleum & Chemical Corp (funding number 124014). N.W. thanks the financial support from the National Key R&D Program of China (Grant No. 2024YFA1510200).\\\"\np3:c1: Generation + ML filter runs at millions scale: >6 million saturated mono-/dibasic esters are constructed and screened by dielectric constant, yielding 8569 monoesters. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"we apply the dielectric constant as a primary criterion and screen out over 6 million saturated monoesters and dibasic esters (constructed from saturated acid and alcohol, checked out from PubChem) with the number of carbon atoms lower or equal to 30. Interestingly, all tested dibasic esters possess dielectric constants larger than 3.50, while 8569 monoesters meet the criterion.\\\"\np3:c2: The downstream filter collapses the shortlist to 461 by predicted viscosity and thermal conductivity, then to 2 by human synthetic-feasibility judgement — no computational verification of hundreds of candidates exists. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"Based on the aforementioned criteria of the kinematic viscosity and thermal conductivity, 461 monoesters are finally filtered out.\\\"\np3:c3: People/institutions: Qi Ou, Minyang Zhuang, Lele Liu, Ning Wang (SINOPEC Research Institute of Petroleum Processing, Beijing); Hongshuai Wang, Shangqian Chen, Zhifeng Gao (DP Technology, Beijing); Zhifeng Gao (AI for Science Institute, Beijing). The model is a Uni-Mol-derived 3D transformer (Org-Mol). | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"SINOPEC Research Institute of Petroleum Processing Co., Ltd, Beijing, China … DP Technology, Beijing, China … AI for Science Institute, Beijing, China\\\"\np3:done: Org-Mol ML-screened millions of esters and experimentally validated two synthesized candidates; it never MD-verified hundreds-to-thousands of candidates' viscosity and thermal conductivity, so the card's scaling experiment has not been run by this team. | source: https://www.nature.com/articles/s41524-025-01720-4 | recorded quote: \\\"By further incorporating manual synthetic feasibility assessments based on experimental expertise, we select two candidates for synthesis, and their physical properties are experimentally measured.\\\"\nReturn only JSON: {\\\"items\\\": [{\\\"ref\\\": \\\"\\\", \\\"status\\\": \\\"SUPPORTED | PARTIAL | UNSUPPORTED | CONTRADICTED | UNREACHABLE\\\", \\\"page_quote\\\": \\\"\\\", \\\"note\\\": \\\"\\\"}]}\""
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

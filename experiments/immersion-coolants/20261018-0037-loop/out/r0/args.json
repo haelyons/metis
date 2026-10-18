@@ -1,0 +1,32 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "immersion-coolants",
+   "title": "Generative search for single-phase immersion coolants",
+   "text": "Data-centre immersion cooling needs dielectric liquids with low viscosity, high thermal conductivity and heat capacity, a low dielectric constant and a high flash point. PFAS rules and the end of Novec production are pushing the field towards PFAS-free hydrocarbons and esters. Study whether a generative search over molecules and mixtures finds candidates that beat known commercial single-phase fluids on a cooling figure of merit. More compute buys more candidates checked by GPU molecular dynamics after predictor filtering, and longer simulations per candidate. Score against measured viscosity, thermal conductivity and dielectric data for known fluids held out of training, never against the predictors themselves.",
+   "root_question": "generative pipeline for discovery of single phase immersion coolants",
+   "kind": "physical",
+   "root_link": "SAME: a concrete version of the asker's line, kept on discovery and on transport properties (viscosity, thermal conductivity).",
+   "compute_open": "Candidates checked by GPU molecular dynamics (about 10^2 to 10^4) and simulation length per candidate. Unknown: whether the hit rate against known commercial fluids keeps rising with more candidates, or whether predictor and force-field error caps it.",
+   "sequential": "not given",
+   "source_urls": [
+    "https://espace2.etsmtl.ca/id/eprint/31955/",
+    "https://blog.se.com/datacenter/2026/05/22/pfas-phase-out-liquid-cooling-us-data-center-operators-must-do/",
+    "https://opencompute.org/documents/ocp-acs-immersion-requirements-rev-2-v1-00-pdf"
+   ]
+  }
+ ]
+}

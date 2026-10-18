@@ -1,0 +1,158 @@
+{
+ "name": "immersion-coolants-r0",
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/out/r0/card",
+ "script": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "b7d451cf548e526458359e6ea5f1e4ad8e9a63b0b027088dc619e07984d0490a",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/out/r0/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "immersion-coolants",
+    "title": "Generative search for single-phase immersion coolants",
+    "text": "Data-centre immersion cooling needs dielectric liquids with low viscosity, high thermal conductivity and heat capacity, a low dielectric constant and a high flash point. PFAS rules and the end of Novec production are pushing the field towards PFAS-free hydrocarbons and esters. Study whether a generative search over molecules and mixtures finds candidates that beat known commercial single-phase fluids on a cooling figure of merit. More compute buys more candidates checked by GPU molecular dynamics after predictor filtering, and longer simulations per candidate. Score against measured viscosity, thermal conductivity and dielectric data for known fluids held out of training, never against the predictors themselves.",
+    "root_question": "generative pipeline for discovery of single phase immersion coolants",
+    "kind": "physical",
+    "root_link": "SAME: a concrete version of the asker's line, kept on discovery and on transport properties (viscosity, thermal conductivity).",
+    "compute_open": "Candidates checked by GPU molecular dynamics (about 10^2 to 10^4) and simulation length per candidate. Unknown: whether the hit rate against known commercial fluids keeps rising with more candidates, or whether predictor and force-field error caps it.",
+    "sequential": "not given",
+    "source_urls": [
+     "https://espace2.etsmtl.ca/id/eprint/31955/",
+     "https://blog.se.com/datacenter/2026/05/22/pfas-phase-out-liquid-cooling-us-data-center-operators-must-do/",
+     "https://opencompute.org/documents/ocp-acs-immersion-requirements-rev-2-v1-00-pdf"
+    ]
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/deepseek-v4-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/latent_open",
+  "commit": "ea9329c8a92a377649b37e26f3c053a82efb0cfd",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-18T00:37:30.963Z",
+ "finished": "2026-10-18T00:54:29.413Z",
+ "totals": {
+  "cost_usd": 0.374902354,
+  "tokens": 436116,
+  "calls": 9,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 3,
+    "cost_usd": 0.03776369,
+    "tokens": 130886
+   },
+   "opencode-go/deepseek-v4-pro": {
+    "calls": 3,
+    "cost_usd": 0.32397974399999996,
+    "tokens": 274876
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 1,
+    "cost_usd": 0.00538608,
+    "tokens": 9783
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 1,
+    "cost_usd": 0.00241122,
+    "tokens": 12409
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 1,
+    "cost_usd": 0.00536162,
+    "tokens": 8162
+   }
+  }
+ }
+}

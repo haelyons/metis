@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-18T01:41:17.262Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 270946,
+   "cost_usd": 0.1205061,
+   "tokens": 131663,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 158556,
+   "cost_usd": 0.04144473,
+   "tokens": 175626,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 181469,
+   "cost_usd": 0.04467337999999999,
+   "tokens": 134967,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 142214,
+   "cost_usd": 0.00515207,
+   "tokens": 9637,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 39310,
+   "cost_usd": 0.0008967,
+   "tokens": 4745,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 17906,
+   "cost_usd": 0.00451128,
+   "tokens": 5955,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.21718426,
+ "tokens": 462593,
+ "by_model": {
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.1205061,
+   "tokens": 131663
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.04144473,
+   "tokens": 175626
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.04467337999999999,
+   "tokens": 134967
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00451128,
+   "tokens": 5955
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.0008967,
+   "tokens": 4745
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.00515207,
+   "tokens": 9637
+  }
+ },
+ "done": true,
+ "updated": "2026-10-18T01:51:17.551Z",
+ "best": {
+  "name": "ECMWF — AIFS ENS (operational machine-learned ensemble)",
+  "step": "Generating exchangeable ensemble members from one afCRPS/multi-scale-trained distribution and verifying them (including top-percentile events) to set the operational ensemble size. Today ECMWF draws 51 members (50 perturbed + control) and scores 50-member ensembles against IFS, flagging extreme-event skill as still-unassessed.",
+  "sum": 15,
+  "fit": 5,
+  "change": 5,
+  "new": 5
+ }
+}

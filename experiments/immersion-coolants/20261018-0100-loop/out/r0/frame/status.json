@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-18T01:00:36.612Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 266896,
+   "cost_usd": 0.091968844,
+   "tokens": 98043,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 105089,
+   "cost_usd": 0.034204452,
+   "tokens": 186999,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 109558,
+   "cost_usd": 0.02130576,
+   "tokens": 82234,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 285005,
+   "cost_usd": 0.00970276,
+   "tokens": 19344,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 274042,
+   "cost_usd": 0.0024577,
+   "tokens": 10290,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 23766,
+   "cost_usd": 0.00471918,
+   "tokens": 6084,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.164358696,
+ "tokens": 402994,
+ "by_model": {
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.091968844,
+   "tokens": 98043
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.034204452,
+   "tokens": 186999
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.02130576,
+   "tokens": 82234
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00471918,
+   "tokens": 6084
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.0024577,
+   "tokens": 10290
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.00970276,
+   "tokens": 19344
+  }
+ },
+ "done": true,
+ "updated": "2026-10-18T01:11:43.945Z",
+ "best": {
+  "name": "Ewen group (Imperial College London / University of Bath) — MD benchmarking of organic-liquid thermophysical properties",
+  "step": "The GPU molecular-dynamics verification of candidate fluids' viscosity and thermal conductivity — the exact step the card scales to 100/300/1000 candidates. Today the group runs equilibrium MD (EMD) on a handful of representative molecules and benchmarks it against ML predictors for density, viscosity and thermal conductivity of C10–C50 organics (lubricants and cooling fluids).",
+  "sum": 11,
+  "fit": 4,
+  "change": 3,
+  "new": 4
+ }
+}

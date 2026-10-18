@@ -1,0 +1,13 @@
+HTTP 200
+{"date":"Sun, 18 Oct 2026 00:59:14 GMT","content-type":"text/event-stream","transfer-encoding":"chunked","connection":"keep-alive","cache-control":"no-cache","cf-placement":"remote-IAD","x-opencode-endpoint-id":"pareto-glm","x-opencode-log-id":"31d8829b-5558-4624-a3c7-6e499f6a84de","x-opencode-upstream-model-id":"z-ai/glm-5.3-flash","x-zen-model":"glm-5.3-flash","server":"cloudflare","cf-ray":"a4c3995e5e12435d-EWR"}
+
+data: {"id":"chatcmpl-c1368382deca505b33c1a7c9a09dcabc","object":"chat.completion.chunk","created":1792285154,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"role":"assistant","content":""}}]}
+
+data: {"id":"chatcmpl-c1368382deca505b33c1a7c9a09dcabc","object":"chat.completion.chunk","created":1792285154,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"id":"chatcmpl-tool-911526a4d2bc0511","type":"function","function":{"name":"webfetch","arguments":"{\"format\": \"markdown\", \"url\": \"https://docs.lambda.ai"}}]}}]}
+
+data: {"id":"chatcmpl-c1368382deca505b33c1a7c9a09dcabc","object":"chat.completion.chunk","created":1792285154,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":"tool_calls","logprobs":null,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"/public-cloud/billing/\"}"}}]}}]}
+
+data: {"id":"chatcmpl-c1368382deca505b33c1a7c9a09dcabc","object":"chat.completion.chunk","created":1792285154,"model":"glm-5.3-flash","choices":[],"usage":{"prompt_tokens":4490,"completion_tokens":27,"total_tokens":4517,"prompt_tokens_details":{"cached_tokens":1088},"completion_tokens_details":{"reasoning_tokens":0}}}
+
+data: [DONE]
+

@@ -67,3 +67,16 @@ production judges, is the gap the Kimi-set frame check named for the Claude card
 
 Still worth doing: the cheap frame set on run F's 13 PASS cards (about $2, one 5-hour window), to compare runtimes on
 identical cards.
+
+## Day 2: the memo's picks (2026-10-18)
+
+| Experiment | Card | Frame check (best of three) | Loop |
+|---|---|---|---|
+| immersion-coolants (from the note) | REJECT: 2 core sources unreachable, 3 claims uncited; critic 18/25; plan $874 | 11/15, three groups at 11 (Imperial/Bath MD benchmarking, Toronto self-driving lab, SINOPEC Org-Mol) | variant scored higher; its card halted on a cost record ($7,654 against $967 stated) |
+| ml-ensemble-extremes (director C1) | PASS 2/2; critic 19/25; plan $963 | 15/15 ECMWF AIFS ENS, 11 HENS, 11 Anemoi | no variant beat it |
+
+The new frame rules ran for the first time. Activity was researched and checked for all six programmes (all active).
+The step flag fired on four of six, so researchers still describe steps in the card's terms; it does not cap scores.
+No inactive programme or contradicted "not done" came up, so neither cap applied. Two pipeline bugs surfaced and were
+fixed: a JavaScript statement run-on in frame.js, and replies with a JSON syntax error being parsed as an inner fragment.
+

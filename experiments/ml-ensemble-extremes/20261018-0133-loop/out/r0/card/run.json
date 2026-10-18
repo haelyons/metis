@@ -1,0 +1,159 @@
+{
+ "name": "ml-ensemble-extremes-r0",
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0059-loop/out/r0/card",
+ "script": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0059-loop/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "b7d451cf548e526458359e6ea5f1e4ad8e9a63b0b027088dc619e07984d0490a",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0059-loop/out/r0/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "ml-ensemble-extremes",
+    "title": "Ensemble size for rare extremes in a machine-learned weather ensemble",
+    "text": "ECMWF runs its machine-learned ensemble, AIFS-ENS, operationally with 50 members, and the model weights are public. An extra member needs one GPU run rather than a supercomputer slot, so ensembles of hundreds or thousands look affordable. Study whether 10 to 1,000 members improve probability forecasts of rare extremes, such as top-percentile wind, temperature or rainfall. Score against ERA5 reanalysis and station observations, which the model did not produce. The open question is whether more members keep helping or whether error shared by every member caps the skill.",
+    "root_question": "Do more members of a machine-learned weather ensemble buy better forecasts of rare extremes, or does error shared by all members cap the skill?",
+    "kind": "physical",
+    "root_link": "SAME: the director's C1 question made concrete on one open, operational model.",
+    "compute_open": "Ensemble members per forecast, from about 10 to 1,000. Unknown: whether skill on top-percentile events keeps rising past the operational 50 members, or flattens because members share model error. The closest prior, HENS, ran 7,424 members of a different model (SFNO) for summer 2023.",
+    "sequential": "not given",
+    "source_urls": [
+     "https://huggingface.co/ecmwf/aifs-ens-1.0",
+     "https://forum.ecmwf.int/t/inference-with-aifs-ens-v-1-on-s2s-timescales/14832",
+     "https://meetingorganizer.copernicus.org/EMS2026/EMS2026-212.html",
+     "https://eesm.science.energy.gov/sites/default/files/Fri_Mahesh_HugeEnsembles.pdf"
+    ]
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/deepseek-v4-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/latent_open",
+  "commit": "ea9329c8a92a377649b37e26f3c053a82efb0cfd",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-18T00:59:06.673Z",
+ "finished": "2026-10-18T01:29:11.557Z",
+ "totals": {
+  "cost_usd": 0.469281082,
+  "tokens": 552672,
+  "calls": 9,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 3,
+    "cost_usd": 0.02897023,
+    "tokens": 113539
+   },
+   "opencode-go/deepseek-v4-pro": {
+    "calls": 3,
+    "cost_usd": 0.423607272,
+    "tokens": 404346
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 1,
+    "cost_usd": 0.00554748,
+    "tokens": 8896
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 1,
+    "cost_usd": 0.00119448,
+    "tokens": 7269
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 1,
+    "cost_usd": 0.00996162,
+    "tokens": 18622
+   }
+  }
+ }
+}

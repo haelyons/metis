@@ -1,0 +1,169 @@
+{
+  "option_title": "Force-field error floor for coolant MD: an enlarged C10–C50 benchmark scored against measurement",
+  "question": "Does one GPU-MD force field rank C10–C50 hydrocarbons and esters in the same order as measured viscosity and thermal conductivity?",
+  "hypothesis": "One TraPPE-UA Green-Kubo protocol reproduces the measured ranking of coolants because its viscosity error is a systematic bias, not a random floor.",
+  "compute_axis": {
+    "quantity": "benchmark molecules scored (each one independent GPU-MD run)",
+    "unit": "molecules",
+    "levels": [8, 30, 60]
+  },
+  "held_fixed": [
+    "TraPPE-UA united-atom force field",
+    "temperature 313.15 K (raised for waxy C30+ where needed)",
+    "~10,000-site liquid box",
+    "2 fs timestep",
+    "20 ns per replicate, 5 replicates per molecule",
+    "NVT production ensemble",
+    "GROMACS GPU code",
+    "A100 40GB GPUs",
+    "measured values from DIPPR 801 / NIST TDE plus vendor datasheets"
+  ],
+  "predictions": {
+    "if_lever": "The MD-vs-measurement rank correlation reaches at least 0.9 once 30+ molecules are scored, so rankings can be trusted.",
+    "if_not": "The rank correlation plateaus below 0.75 even at 60 molecules, so the force-field error is a random floor.",
+    "decision_rule": "Spearman rank correlation rho(MD, measured) over all scored molecules: rho >= 0.90 for viscosity and for thermal conductivity -> if_lever; rho < 0.90 -> if_not; also require rho to stop changing as the set grows 8 -> 30 -> 60.",
+    "noise_rule": "Each molecule averages 5 independent seeds; a ranking change is real only if it exceeds the bootstrap 95% CI across seeds (Messerly double-exponential Green-Kubo fit).",
+    "expected": "unsure",
+    "expected_why": "TraPPE-UA viscosity deviations of 20-50% can scramble close rankings, but the bias may track chain length systematically, so ranking could still hold."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "Each added molecule is one independent GPU run, so more parallel GPUs/hours buy more molecules on the score axis.",
+  "scored_against": "Critically evaluated measured liquid viscosity and thermal conductivity from DIPPR 801 (LVS, LTC) and NIST ThermoData Engine, plus vendor datasheets (Castrol ON DC 15, Shell MIDEL 7131) for commercial coolants.",
+  "arms": [
+    {"id": "eta", "what": "shear viscosity from the same Green-Kubo trajectories, compared with measured liquid viscosity"},
+    {"id": "kappa", "what": "thermal conductivity from the same Green-Kubo trajectories, compared with measured liquid thermal conductivity"}
+  ],
+  "baseline": {
+    "what": "Green-Kubo MD scored against measurement exists only for a handful of molecules; Messerly et al. 2018 studied 14 normal and branched alkanes.",
+    "value": 14,
+    "source_id": "s1"
+  },
+  "anchor": {
+    "what": "Setup reproduces published n-hexadecane Green-Kubo thermal conductivity 0.14 W/(m·K) matching its experiment, before scoring other molecules.",
+    "published_value": 0.14,
+    "tolerance": "±30% (0.098-0.182 W/(m·K))",
+    "source_id": "s9",
+    "independent_code": "GROMACS gmx energy pressure-tensor/heat-flux autocorrelation, cross-checked by a standalone Python Green-Kubo integrator"
+  },
+  "checks": [
+    "Anchor: reproduce n-hexadecane thermal conductivity 0.14 W/(m·K) [s9] within ±30% before scoring any other molecule.",
+    "Per molecule: 5 independent 20-ns replicates; report bootstrap 95% CI via the double-exponential Green-Kubo fit [s1][s2].",
+    "Green-Kubo convergence: trajectory length >= ~10x the running-integral plateau time, block-averaged across seeds [s2].",
+    "Finite-size: confirm viscosity is unchanged between ~250 and ~1000 molecules before fixing the box.",
+    "Density gate: match measured liquid density within 2% at the scoring temperature before transport analysis.",
+    "Ranking: Spearman rho between MD and measured viscosity and thermal conductivity, with a bootstrap CI across seeds.",
+    "Cost guard: total GPU-hours x $1.99 <= $1,000; a timer stops the main allotment."
+  ],
+  "phases": [
+    {
+      "id": "p1",
+      "what": "Build GROMACS + TraPPE-UA setup; run 5 anchor molecules; reproduce n-hexadecane 0.14 W/(m·K); measure per-molecule throughput and error",
+      "stop_rule": "stop before the main spend if the anchor thermal conductivity falls below 0.10 W/(m·K)",
+      "gate": {"on": "anchor_kappa_md_w_mk", "op": ">=", "value": 0.10, "else": "stop; switch force field (e.g. TAMie) and re-anchor before spending"}
+    },
+    {
+      "id": "p2",
+      "what": "Run the identical protocol over the enlarged C10-C50 hydrocarbon/ester set in batches (~30, then up to 60 total), scoring each against measured values",
+      "stop_rule": "stop when budget_usd is exhausted or 60 molecules are scored"
+    },
+    {
+      "id": "p3",
+      "what": "Fit the error distribution, split systematic bias from random floor, compute Spearman rank correlation MD vs measured for viscosity and thermal conductivity, write report"
+    }
+  ],
+  "numbers": [
+    {"id": "n_anchor", "name": "anchor molecules in the pilot phase", "unit": "molecules", "basis": "DESIGN", "value": 5},
+    {"id": "n_main", "name": "additional benchmark molecules in the main phase", "unit": "molecules", "basis": "DESIGN", "value": 55},
+    {"id": "n_replicates", "name": "independent replicate trajectories per molecule", "unit": "trajectories", "basis": "DESIGN", "value": 5},
+    {"id": "replicate_ns", "name": "production length per replicate", "unit": "ns", "basis": "DESIGN", "value": 20},
+    {"id": "timestep_fs", "name": "MD timestep", "unit": "fs", "basis": "DESIGN", "value": 2},
+    {"id": "box_atoms", "name": "target system size", "unit": "sites", "basis": "DESIGN", "value": 10000},
+    {"id": "target_temp_k", "name": "scoring temperature", "unit": "K", "basis": "DESIGN", "value": 313.15},
+    {"id": "storage_gb_per_molecule", "name": "storage per molecule (Green-Kubo flux files)", "unit": "GiB", "basis": "DESIGN", "value": 1},
+    {"id": "months_kept", "name": "filesystem months kept", "unit": "month", "basis": "DESIGN", "value": 1},
+    {"id": "per_gpu_usd_h", "name": "A100 40GB price", "unit": "USD/GPU-hour", "basis": "CITED", "value": 1.99, "source_id": "s12", "quote": "NVIDIA A100 SXM | 40 GB VRAM/GPU | 124 vCPUs | 1800 GiB RAM | 5.8 TiB SSD | $1.99", "page_setting": "Lambda on-demand, 8xA100 SXM 40GB instance, read 2026-10-18"},
+    {"id": "throughput_ns_day", "name": "MD throughput per A100 GPU", "unit": "ns/day", "basis": "PROXY", "value": 300, "source_id": "s11", "quote": "A100 | 267,48 691,67 265,83 129,09 38,83 23,22", "page_setting": "GROMACS 2024 ns/day on A100 across six benchmark systems (267-692)", "differs_in": ["water/biomolecular GROMACS benchmarks, not 10k-site united-atom hydrocarbon boxes", "exact atom counts of the six systems not stated in the source"]},
+    {"id": "trappe_eta_dev_pct_max", "name": "max TraPPE-UA viscosity deviation, linear alkanes", "unit": "%", "basis": "CITED", "value": 50, "source_id": "s1", "quote": "TAMie) provide roughly 10 % accuracy for linear alkanes, while deviations are between 20 and 50 % for TraPPE-UA.", "page_setting": "Green-Kubo viscosity of normal and branched alkanes (Messerly 2018)"},
+    {"id": "messerly_alkanes", "name": "alkanes scored in prior work", "unit": "molecules", "basis": "CITED", "value": 14, "source_id": "s1", "quote": "Seven normal and seven branched alkanes of varying chain-length and degree of", "page_setting": "Green-Kubo viscosity study (Messerly 2018)"},
+    {"id": "dippr_chemicals", "name": "chemicals in DIPPR 801", "unit": "chemicals", "basis": "CITED", "value": 1700, "source_id": "s4", "quote": "The database currently contains the properties of over 1700 chemicals and is arguably the best process design database in the world.", "page_setting": "DIPPR Project 801 evaluated database (Wilding 1998)"},
+    {"id": "anchor_kappa_w_mk", "name": "n-hexadecane thermal conductivity anchor", "unit": "W/(m·K)", "basis": "CITED", "value": 0.14, "source_id": "s9", "quote": "thermal conductivity remains constant around 0.14 W m−1 K−1 in the studied temperature range.", "page_setting": "n-hexadecane Green-Kubo MD checked against experiment (arXiv 2203.07165)"},
+    {"id": "anchor_kappa_md_w_mk", "name": "MD thermal conductivity at the anchor molecule", "unit": "W/(m·K)", "basis": "GUESS", "value": 0.14, "rests_on": "TraPPE-UA alkane thermal conductivity is expected near the published n-hexadecane MD value 0.14 W/(m·K)", "measured_by": "p1"},
+    {"id": "sim_ns_per_molecule", "name": "production ns per molecule", "unit": "ns", "basis": "DERIVED", "expr": "n_replicates * replicate_ns"},
+    {"id": "n_steps_per_molecule", "name": "production steps per molecule", "unit": "steps", "basis": "DERIVED", "expr": "sim_ns_per_molecule * 1000000 / timestep_fs"},
+    {"id": "gpu_hours_per_molecule", "name": "GPU-hours per molecule", "unit": "GPU-hour", "basis": "DERIVED", "expr": "sim_ns_per_molecule / (throughput_ns_day / 24)"},
+    {"id": "usd_per_molecule", "name": "cost per molecule", "unit": "USD", "basis": "DERIVED", "expr": "gpu_hours_per_molecule * per_gpu_usd_h"},
+    {"id": "n_molecules_total", "name": "total molecules scored", "unit": "molecules", "basis": "DERIVED", "expr": "n_anchor + n_main"},
+    {"id": "gpu_hours_pilot", "name": "pilot GPU-hours", "unit": "GPU-hour", "basis": "DERIVED", "expr": "n_anchor * gpu_hours_per_molecule"},
+    {"id": "gpu_hours_main", "name": "main GPU-hours", "unit": "GPU-hour", "basis": "DERIVED", "expr": "n_main * gpu_hours_per_molecule"},
+    {"id": "usd_pilot", "name": "pilot cost", "unit": "USD", "basis": "DERIVED", "expr": "gpu_hours_pilot * per_gpu_usd_h"},
+    {"id": "usd_main", "name": "main cost", "unit": "USD", "basis": "DERIVED", "expr": "gpu_hours_main * per_gpu_usd_h"},
+    {"id": "storage_usd", "name": "filesystem cost", "unit": "USD", "basis": "DERIVED", "expr": "n_molecules_total * storage_gb_per_molecule * months_kept * fs_usd_gib_month"},
+    {"id": "total_stated", "name": "total stated spend", "unit": "USD", "basis": "DERIVED", "expr": "usd_pilot + usd_main + storage_usd"},
+    {"id": "budget_headroom_usd", "name": "unspent headroom", "unit": "USD", "basis": "DERIVED", "expr": "budget_usd - total_stated"},
+    {"id": "n_replicate_trajs", "name": "replicate trajectories bought", "unit": "trajectories", "basis": "DERIVED", "expr": "n_molecules_total * n_replicates"},
+    {"id": "total_sim_ns", "name": "total sampled ns", "unit": "ns", "basis": "DERIVED", "expr": "n_molecules_total * sim_ns_per_molecule"}
+  ],
+  "cost": {
+    "rates": [
+      {"id": "a100_40g_8x", "gpu": "NVIDIA A100 SXM", "gpu_memory_gb": 40, "n_gpus": 8, "per_gpu_usd_h": 1.99}
+    ],
+    "lines": [
+      {"id": "l1_pilot", "phase": "p1", "what": "Anchor 5 molecules; verify setup reproduces n-hexadecane and measure per-molecule throughput and error (40 GPU-hours = ~5 wall-clock hours on 8 GPUs)", "kind": "work", "rate": "a100_40g_8x", "hours": "gpu_hours_pilot"},
+      {"id": "l2_main", "phase": "p2", "what": "Time box: score the enlarged C10-C50 set up to 55 more molecules, ended by the budget timer (440 GPU-hours = ~55 wall-clock hours on 8 GPUs)", "kind": "allotment", "rate": "a100_40g_8x", "hours": "gpu_hours_main", "need": "gpu_hours_main"},
+      {"id": "l3_storage", "phase": "p3", "what": "Filesystem: Green-Kubo flux and coordinate files, ~1 GiB per molecule kept one month", "kind": "storage", "usd": "storage_usd"}
+    ],
+    "scenarios": [
+      {"id": "s_pessimistic", "what": "GPU throughput halves to 150 ns/day: only ~25 extra molecules fit the budget", "set": {"throughput_ns_day": 150, "n_main": 25}},
+      {"id": "s_optimistic", "what": "GPU throughput doubles to 600 ns/day: ~110 extra molecules fit the budget", "set": {"throughput_ns_day": 600, "n_main": 110}}
+    ],
+    "yields": ["n_molecules_total", "n_replicate_trajs", "total_sim_ns"],
+    "spend_cap_usd": 1000,
+    "total_stated": 967.2
+  },
+  "full_scale": [
+    {"id": "full200", "what": "The option's 'hundreds' target: 200 molecules at 100 ns each", "usd": "200 * usd_per_molecule + 200 * storage_gb_per_molecule * months_kept * fs_usd_gib_month", "ratio_to": "n_molecules_total"}
+  ],
+  "outside_budget": [
+    {"what": "researcher time to write the GROMACS protocol, run analysis, and write the report", "qty": 20, "unit": "hours"},
+    {"what": "DIPPR 801 database license for measured viscosity and thermal conductivity", "qty": 1, "unit": "license"}
+  ],
+  "restructuring": {
+    "sequential_part": "Each molecule's viscosity and thermal conductivity come from one Green-Kubo trajectory, ~50 million steps accumulated in order.",
+    "method": "None: every molecule is an independent run, so GPUs only run them side by side."
+  },
+  "scope_gap": [
+    "Cannot test whether results generalize to fluorinated or silicone coolants, other force fields, or novel-candidate discovery; only C10-C50 hydrocarbon/ester ranking."
+  ],
+  "novelty": {
+    "closest_prior": "Messerly 2018 scored Green-Kubo viscosity of 14 normal and branched alkanes against reference data; largest set used.",
+    "closest_source_id": "s1",
+    "prior_max_level": 14,
+    "left_open": "No prior work reports the force-field error distribution or rank correlation across dozens to hundreds of C10-C50 hydrocarbons and esters scored against measurement.",
+    "decides": "partly",
+    "searched": true
+  },
+  "limits": [
+    "Shows ranking reliability for one force field and one temperature; not best force field, not novel-coolant discovery, not fluorinated coolants."
+  ],
+  "test_summary": "Run one GPU Green-Kubo protocol for viscosity and thermal conductivity over 60 C10-C50 hydrocarbons and esters, score against measured values, and test whether the MD ranking correlation holds as molecules are added.",
+  "sources": [
+    {"id": "s1", "url": "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=926488", "quote": "TAMie) provide roughly 10 % accuracy for linear alkanes, while deviations are between 20 and 50 % for TraPPE-UA.", "supports": "force-field viscosity error magnitudes (error-floor prior) and the 14-alkane baseline set (Messerly 2018)"},
+    {"id": "s2", "url": "https://tsapps.nist.gov/publication/get_pdf.cfm?pub_id=925953", "quote": "To smooth noise in the Green-Kubo integral or Einstein slope, we recommend generating independent replicate trajectories (i.e., different initial configurations or random seeds to initialize velocities).", "supports": "5-replicate-per-molecule protocol and plateau-time simulation-length rule"},
+    {"id": "s3", "url": "https://www.aiche.org/dippr/events-products/801-database/thermophysical-properties", "quote": "Viscosity of Liquid | LVS | Pa∙s", "supports": "DIPPR 801 lists measured liquid viscosity (LVS) and thermal conductivity (LTC) as temperature-dependent properties"},
+    {"id": "s4", "url": "https://www.sciencedirect.com/science/article/pii/S0378381298003410", "quote": "The database currently contains the properties of over 1700 chemicals and is arguably the best process design database in the world.", "supports": "benchmark pool is large enough for hundreds of C10-C50 hydrocarbons and esters"},
+    {"id": "s5", "url": "https://nvlpubs.nist.gov/nistpubs/ir/2018/NIST.IR.8209.pdf", "quote": "Extensive use of the NIST ThermoDataEngine database (Diky et al., 2017) was made to locate data sources.", "supports": "NIST ThermoData Engine as a source of measured viscosity/thermal-conductivity data"},
+    {"id": "s6", "url": "https://www.castrol.com/content/dam/castrol/country-sites-new/en_gb/united-kingdom/home/documents/products/castrol-on-immersion-cooling-fluid-dc-15-product-data.pdf", "quote": "Castrol ON Immersion Cooling Fluid DC 15 is a synthetic hydrocarbon based dielectric coolant.", "supports": "a commercial single-phase coolant that is a hydrocarbon; datasheet gives measured viscosity 7.5 mm²/s and thermal conductivity 0.126 W/(m·K) at 40°C"},
+    {"id": "s7", "url": "https://www.shell.com/business-customers/lubricants-for-business/sector-expertise/power-industry/wind-power/windeurope-electric-city/_jcr_content/root/main/section/simple_2118681472/text.multi.stream/1726581237561/afecbe304426ba5866fc53afd2e9c01f31e63e0d/midel-7131-product-brochure.pdf", "quote": "MIDEL 7131 is a synthetic ester dielectric fluid designed to provide an alternative to mineral oil, silicone fluid and dry-type transformers.", "supports": "a commercial single-phase coolant that is a synthetic ester; viscosity 29 mm²/s at 40°C"},
+    {"id": "s8", "url": "https://www.thebusinessresearchcompany.com/report/immersion-cooling-fluids-global-market-report", "quote": "The cooling fluid includes mineral oil, synthetic fluids, fluorocarbon-based fluids, and other cooling fluids.", "supports": "mineral oil and synthetic esters (C10-C50 hydrocarbons/esters) are the hydrocarbon/ester single-phase coolants the benchmark covers"},
+    {"id": "s9", "url": "https://arxiv.org/pdf/2203.07165", "quote": "thermal conductivity remains constant around 0.14 W m−1 K−1 in the studied temperature range.", "supports": "anchor value; the source also measured viscosity and thermal conductivity experimentally and compared to MD"},
+    {"id": "s10", "url": "https://nvlpubs.nist.gov/nistpubs/Legacy/IR/nistir7170.pdf", "quote": "we note that a Green-Kubo simulation of duration 10^4 τ generates estimates with approximately 5% uncertainty in the shear viscosity and about 10% uncertainty in the thermal conductivity.", "supports": "expected GK statistical uncertainty, backing the noise_rule"},
+    {"id": "s11", "url": "https://hpc.fau.de/files/2024/07/2024-07-09_NHR@FAU_HPC-Cafe_Gromacs-Benchmarks.pdf", "quote": "A100 | 267,48 691,67 265,83 129,09 38,83 23,22", "supports": "throughput proxy: GROMACS 2024 runs ~267-692 ns/day on an A100 across six benchmark systems, so 300 ns/day is a conservative figure"},
+    {"id": "s12", "url": "https://lambda.ai/pricing", "quote": "NVIDIA A100 SXM | 40 GB VRAM/GPU | 124 vCPUs | 1800 GiB RAM | 5.8 TiB SSD | $1.99", "supports": "per-GPU price $1.99/hour for the 8xA100 SXM 40GB instance"},
+    {"id": "s13", "url": "https://manual.gromacs.org/current/user-guide/mdrun-performance.html", "quote": "around ~100 atoms/core or ~10000 atoms/GPU", "supports": "~10,000-site box size choice for one GPU"}
+  ],
+  "files_read": [
+    "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card/work/seed-1/seed/idea/93fa9488/pilot/cost_calc.py",
+    "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card/work/seed-1/seed/idea/93fa9488/pilot/cost_calc.out",
+    "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card/work/seed-1/seed/idea/93fa9488/producer.md"
+  ]
+}

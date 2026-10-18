@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 5,
+      "ref": "plan:predictions.if_lever",
+      "reason": "Whether to scale AIFS-ENS past 50 members is a real ECMWF compute-procurement choice; the test directly measures extreme-event skill vs ensemble size."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.decision_rule",
+      "reason": "Compute spans 100×; thresholds (≥0.01 vs <0.005) exceed bootstrap 95% CI noise; only compute varies; model, leads, scoring all held fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "card:anchor",
+      "reason": "ERA5 and SYNOP are independent of AIFS-ENS output; anchor reproduces published 4-min/member timing and 38 GB memory before the main run."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "plan:novelty.left_open",
+      "reason": "HENS used SFNO (a different model); plan explicitly names the gap that AIFS-ENS shared-model-error saturation was not measured."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "plan:phases",
+      "reason": "Phases run strictly sequentially (pilot→era5→main→score→station); only intra-phase one-job-per-GPU parallelism in p_main; no dependency is removed."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "restructuring.method is none; baseline criterion is NA by rule."
+    }
+  ],
+  "decides_by": "p_score",
+  "decides_by_reason": "p_score subsamples to 10/50/100/250/500/1000 and outputs fair-CRPS and Brier with bootstrap CIs, the quantities the decision rule compares."
+}
+```

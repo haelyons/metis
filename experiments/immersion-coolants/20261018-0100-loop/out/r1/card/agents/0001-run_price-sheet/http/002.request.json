@@ -1,0 +1,154 @@
+{
+ "ts": "2026-10-18T01:15:45.858Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e635804b0fe929d2ed556701e94990a108996451",
+  "x-opencode-request": "msg_14c94304b001dUsZgWlvrFNhKJ",
+  "x-opencode-session": "ses_eb36bd000ffeiA0FFWDQtSCmv0",
+  "x-opencode-session-id": "ses_eb36bd000ffeiA0FFWDQtSCmv0",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:42075",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "27703"
+ },
+ "body": {
+  "model": "glm-5.3-flash",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.\nYou are powered by the model named glm-5.3-flash. The exact model ID is opencode-go/glm-5.3-flash\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card/agents/0001-run_price-sheet/cwd\n  Workspace root folder: /home/hal/dev/interp/latent_open\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Sun Oct 18 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Fetch https://lambda.ai/pricing and https://docs.lambda.ai/public-cloud/billing/. List every on-demand instance as {gpu, gpu_memory_gb, n_gpus, per_gpu_usd_h, page_text}, where page_text is the text that shows that price for that instance size; and the filesystem price with page_text and whether the page calls it an example. Decide only from these two pages.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"read_at\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The date the pages were fetched, ISO format.\\\"},\\\"instances\\\":{\\\"type\\\":\\\"array\\\",\\\"description\\\":\\\"Every on-demand instance size listed.\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"gpu\\\":{\\\"type\\\":\\\"string\\\"},\\\"gpu_memory_gb\\\":{\\\"type\\\":\\\"number\\\"},\\\"n_gpus\\\":{\\\"type\\\":\\\"integer\\\"},\\\"per_gpu_usd_h\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"US dollars per GPU per hour.\\\"},\\\"page_text\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The text on the page that shows this price for this instance size.\\\"}},\\\"required\\\":[\\\"gpu\\\",\\\"gpu_memory_gb\\\",\\\"n_gpus\\\",\\\"per_gpu_usd_h\\\",\\\"page_text\\\"]}},\\\"filesystem\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"usd_gib_month\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"US dollars per GiB per month.\\\"},\\\"page_text\\\":{\\\"type\\\":\\\"string\\\"},\\\"example\\\":{\\\"type\\\":\\\"boolean\\\",\\\"description\\\":\\\"True if the page presents this price as an example.\\\"}},\\\"required\\\":[\\\"usd_gib_month\\\",\\\"page_text\\\",\\\"example\\\"]}},\\\"required\\\":[\\\"read_at\\\",\\\"instances\\\",\\\"filesystem\\\"]}\""
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "chatcmpl-tool-9d8fdbdd62535b8d",
+      "type": "function",
+      "function": {
+       "name": "webfetch",
+       "arguments": "{\"url\":\"https://lambda.ai/pricing\",\"format\":\"text\"}"
+      }
+     },
+     {
+      "id": "chatcmpl-tool-aff5b4556ad0b1ef",
+      "type": "function",
+      "function": {
+       "name": "webfetch",
+       "arguments": "{\"url\":\"https://docs.lambda.ai/public-cloud/billing/\",\"format\":\"text\"}"
+      }
+     }
+    ],
+    "reasoning_content": "The user wants me to fetch two pages: https://lambda.ai/pricing and https://docs.lambda.ai/public-cloud/billing/, then extract on-demand GPU instance pricing and filesystem pricing. Let me fetch both pages in parallel since they're independent."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "chatcmpl-tool-9d8fdbdd62535b8d",
+    "content": "GPU cloud pricing: rent NVIDIA H100, H200, and B200 | Lambda\n  \n  \n  \n  \n  \n  \n  \n\n  \n  \n\n  \n\n  \n  \n\n  \n\n    \n    \n    \n    \n    \n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n    \n\n    \n    \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n  \n  \n  \n  \n\n\n\n\n  \n  Skip to main content\n  \n  \n  \n\n  \n\n  \n  \n\n  AI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our teamAI factoriesProductsSupercomputersSuperclusters1-Click Clusters™InstancesCompareFor every missionSuperintelligenceEnterpriseGovernmentStartups and ResearchersFoundationsAI factoriesVera RubinOrchestrationLambda StackTrust and securityDocsCustomer storiesDocumentationBlogResearchPricingCompanyInside LambdaAboutCareersLeadershipInvestorsAnalyst updatesResourcesResearchLLM indexGPU benchmarksCustomer storiesSupportBlogPartnersLog inGet startedCreate accountTalk to our team\n    \n      \n  \n  \n  \n      \n  \n\n  \n    \n    \n\n\n\n\n\n\n\n\n\n\n\nAI cloud pricingClear, straightforward pricing for Instances, 1-Click Clusters™, and Superclusters.\nContact us for reserved capacity at our lowest prices.Launch GPU instanceTalk to our team\n    \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\n1-Click ClusterspricingProduction-ready clusters from 16 to 2,000+ NVIDIA B200 or H100 GPUs.Learn moreNVIDIA HGX B200NVIDIA H100NVIDIA HGX B200 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA HGX B2002 weeks – 1 year16$9.86Talk to our teamNVIDIA HGX B2002 weeks – 1 year64$9.36Talk to our teamNVIDIA HGX B2002 weeks – 1 year256+$8.87Talk to our teamNVIDIA HGX B2001 year+16+—Talk to our team* plus applicable sales tax/VAT/GSTNVIDIA H100 systemsPlanDURATIONGPU COUNTPRICE/GPU/HR*ActionNVIDIA H1002 weeks – 1 year16$6.16Talk to our teamNVIDIA H1002 weeks – 1 year64$5.85Talk to our teamNVIDIA H1002 weeks – 1 year256$5.54Talk to our teamNVIDIA H1001 year+16+—Talk to our team* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n    \n      \n\n\n\n\n\n\n\n\n\n\nInstances pricingDeploy NVIDIA B200, H100, A100, or GH200 instances in minutes with self-serve, first-come access.Launch GPU instance8x4x2x1xPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB2082900 GiB22 TiB SSD$6.69NVIDIA H100 SXM80 GB2081800 GiB22 TiB SSD$3.99NVIDIA A100 SXM80 GB2401800 GiB19.5 TiB SSD$2.79NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB1041440 GiB11 TiB SSD$6.79NVIDIA H100 SXM80 GB104900 GiB11 TiB SSD$4.09NVIDIA A100 PCIe40 GB120900 GiB1 TiB SSD$1.99NVIDIA A600048 GB56400 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB52720 GiB5.5 TiB SSD$6.89NVIDIA H100 SXM80 GB52450 GiB5.5 TiB SSD$4.19NVIDIA A100 PCIe40 GB60450 GiB1 TiB SSD$1.99NVIDIA A600048 GB28200 GiB1 TiB SSD$1.09* plus applicable sales tax/VAT/GSTPlanVRAM/GPUvCPUsRAMSTORAGEPRICE/GPU/HR*NVIDIA B200 SXM6180 GB26360 GiB2.75 TiB SSD$6.99NVIDIA GH20096 GB64432 GiB4 TiB SSD$2.29NVIDIA H100 SXM80 GB26225 GiB2.75 TiB SSD$4.29NVIDIA H100 PCIe80 GB26225 GiB1 TiB SSD$3.29NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99NVIDIA A100 PCIe40 GB30225 GiB512 GiB SSD$1.99NVIDIA A1024 GB30226 GiB1.3 TiB SSD$1.29NVIDIA A600048 GB14100 GiB512 GiB SSD$1.09NVIDIA Quadro RTX 600024 GB1446 GiB512 GiB SSD$0.69* plus applicable sales tax/VAT/GST\n    \n      \n  \n  \n  \n      \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n\n  \n  \n\n\nFOOTERAI FACTORIESFor every mission Superintelligence Enterprise Government Startups and researchersFoundations AI infrastructure Trust and security Customer storiesProductsProducts Superclusters 1-Click Clusters InstancesFeatures AI infrastructure Orchestration Lambda Stack Trust and securityDocs Documentation Blog ResearchCompanyInside LambdaAboutCareersLeadershipInvestorsResourcesResearchCustomer storiesBlogPartnersBrand guidelinesPrivacy PolicyTerms of ServiceCookie preferencesCookie management is unavailable because your browser is blocking third-party scripts.© 2026 Lambda. All rights reserved."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "chatcmpl-tool-aff5b4556ad0b1ef",
+    "content": "Billing overview - Lambda Docs\n      \n    \n    \n      \n      \n        \n        \n      \n      \n\n\n    \n    \n      \n    \n    \n      \n        \n        \n        \n        \n        \n      \n    \n    \n      \n    \n      \n    \n      \n    \n      \n    \n    \n    \n      \n  \n\n\n  \n\n\n  \n    \n  \n\n    \n    \n  \n\n  \n\n\n\n\n\n\n\n\n\n\n\n\n\n  \n  \n    \n    \n      \n    \n    \n    \n    \n    \n  \n    \n    \n    \n    \n    \n      \n        \n        \n          Skip to content\n        \n      \n    \n    \n      \n    \n    \n    \n      \n\n\n\n\n\n\n\n  \n\n    \n    \n      \n  \n\n    \n\n    \n    \n      \n      \n    \n\n    \n    \n      \n        \n          \n            \n          \n        \n        \n          \n            \n          \n        \n      \n    \n\n    \n    \n      \n        \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n    \n    \n    \n    \n    \n      \n        \n      \n    \n  \n\n      \n    \n\n    \n    \n      \n    \n\n    \n    \n\n    \n    \n      \n        \n        \n      \n\n      \n      \n  \n  \n    \n      \n      \n        \n        \n        \n        \n      \n      \n        \n        \n          \n          \n        \n      \n      \n    \n    \n      \n        \n          \n            Initializing search\n          \n          \n        \n      \n    \n  \n\n    \n\n    \n    \n  \n\n  \n  \n\n    \n    \n      \n      \n        \n          \n            \n\n  \n    \n      \n        \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    \n  \n  Home\n\n      \n    \n  \n\n      \n        \n  \n  \n  \n    \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Public Cloud\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Private Cloud\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Managed Kubernetes\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Managed Slurm\n\n        \n      \n    \n  \n\n      \n        \n  \n  \n  \n  \n    \n    \n      \n        \n          \n  \n  \n  Education\n\n        \n      \n    \n  \n\n      \n    \n  \n\n          \n        \n      \n      \n        \n          \n            \n              \n              \n                \n                  \n                    \n\n\n  \n\n\n\n  \n    \n      \n  \n\n    \n    Lambda Docs\n  \n  \n  \n    \n      \n      \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Home\n  \n  \n\n      \n    \n  \n\n    \n      \n      \n  \n  \n    \n  \n  \n  \n    \n    \n    \n      \n        \n          \n          \n        \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n        \n        \n          \n          \n            \n  \n  \n    Public Cloud\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Public Cloud\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Cloud Console\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Resource management\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Resource management\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Resource hierarchy\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your account\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your workspaces\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Access and security\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Access and security\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Access and security overview\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Firewalls\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Enabling single sign-on (SSO)\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Data management\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Data management\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Filesystems\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Filesystem S3 Adapter\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Importing and exporting data\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Logging and monitoring\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Logging and monitoring\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Guest Agent\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n    \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n        \n      \n    \n    \n    \n      \n        \n        \n        \n        \n          \n          \n            \n  \n  \n    Billing\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Billing\n          \n          \n            \n              \n                \n  \n  \n    \n  \n  \n  \n    \n      \n      \n      \n      \n        \n      \n      \n        \n          \n  \n  \n    Billing overview\n  \n  \n\n          \n        \n      \n      \n        \n  \n  \n    Billing overview\n  \n  \n\n      \n      \n        \n\n\n\n\n\n\n\n\n\n  \n  \n    \n  \n\n  \n  \n    \n      \n      Table of contents\n    \n    \n      \n        \n  \n    \n      \n        Billable resources\n      \n    \n  \n  \n    \n      \n        \n          \n  \n    \n      \n        On-Demand Cloud (ODC) instances\n      \n    \n  \n  \n\n        \n          \n  \n    \n      \n        1-Click Clusters (1CCs)\n      \n    \n  \n  \n\n        \n          \n  \n    \n      \n        Filesystems\n      \n    \n  \n  \n\n        \n      \n    \n  \n\n      \n        \n  \n    \n      \n        Credits and refunds\n      \n    \n  \n  \n\n      \n        \n  \n    \n      \n        Next steps\n      \n    \n  \n  \n\n      \n    \n  \n\n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing billing\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Cloud API\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    On-Demand\n  \n  \n\n            \n          \n        \n        \n          \n            \n            On-Demand\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Overview\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Connecting to an instance\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Creating and managing instances\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Managing your system environment\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Troubleshooting\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    1-Click Clusters\n  \n  \n\n            \n          \n        \n        \n          \n            \n            1-Click Clusters\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    How to serve the Llama 3.1 405B model using a Lambda 1-Click Cluster\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Security posture\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Support\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n          \n            \n            \n          \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Additional resources\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Additional resources\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Forum\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Blog\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    YouTube\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Main site\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Tags index\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n    \n      \n      \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Private Cloud\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Private Cloud\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Accessing your Lambda Private Cloud cluster\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Security posture\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Additional resources\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Additional resources\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Forum\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Blog\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    YouTube\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Main site\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Tags index\n  \n  \n\n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n              \n            \n          \n        \n      \n    \n  \n\n    \n      \n      \n  \n  \n  \n  \n    \n    \n    \n      \n      \n        \n      \n    \n    \n    \n      \n        \n        \n          \n        \n        \n        \n          \n          \n            \n  \n  \n    Managed Kubernetes\n  \n  \n\n            \n          \n        \n        \n          \n            \n            Managed Kubernetes\n          \n          \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Introduction\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Continuous validation\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n      \n        \n  \n  \n    Auto-remediation system\n  \n  \n\n      \n    \n  \n\n              \n            \n              \n                \n  \n  \n  \n  \n    \n\n...1698 lines truncated...\n\nThe tool call succeeded but the output was truncated. Full output saved to: /home/hal/.local/share/opencode/tool-output/tool_14c943c54001718LOGL2t57ABN\nUse Grep to search the full content or Read with offset/limit to view specific sections."
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

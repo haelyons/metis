@@ -1,0 +1,43 @@
+{
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/out/r0/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "error",
+ "started": "2026-10-18T00:54:29.491Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 274465,
+   "cost_usd": 0.084550576,
+   "tokens": 84366,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.084550576,
+ "tokens": 84366,
+ "by_model": {
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.084550576,
+   "tokens": 84366
+  }
+ },
+ "done": true,
+ "updated": "2026-10-18T00:59:05.722Z",
+ "error": "TypeError: items.push(...) is not a function\n    at /home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/frame.js:159:5\n    at Array.forEach (<anonymous>)\n    at main (/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/pipeline/idea/frame.js:155:9)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}

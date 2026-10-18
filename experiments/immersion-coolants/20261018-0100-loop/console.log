@@ -1,0 +1,46 @@
+card: best Ewen group (Imperial College London / University of Bath) — MD benchmarking of organic-liquid thermophysical properties (fit 4, change 3, new 4; sum 11/15) · $0.1644 · 402,994 tokens · 11.1 min
+/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame/frame.md
+[immersion-coolants-r1] pool: 0 candidate cluster(s); picked 0
+[immersion-coolants-r1] seed:idea:seed: G-plan repair: planned $7653.60 over $1000.00 while stated $967.20 is not
+[immersion-coolants-r1] seed:idea:seed: cost record repaired: 2 expression(s) rewritten
+[immersion-coolants-r1] seed:idea:seed: quote at numbers.throughput_ns_day.quote: 300 does not appear in the quote "A100 | 267,48 691,67 265,83 129,09 38,83 23,22"; a value transformed from the page belongs in a DERIVED number
+[immersion-coolants-r1] seed:idea:seed: quote at numbers.messerly_alkanes.quote: 14 does not appear in the quote "Seven normal and seven branched alkanes of varying chain-length and degree of"; a value transformed from the page belongs in a DERIVED number
+[immersion-coolants-r1] seed:idea:seed: uncut plan at the p1 gate threshold costs $7,653.60, over budget; the plan relies on: stop; switch force field (e.g. TAMie) and re-anchor before spending
+[immersion-coolants-r1] seed:idea:seed: MD throughput per A100 GPU [p] is load-bearing and no phase measures it
+[immersion-coolants-r1] seed:idea:seed: thin headroom: the budget is reached if MD throughput per A100 GPU is 1.0× lower
+[immersion-coolants-r1] seed:idea:seed: thin headroom: the budget is reached if MD thermal conductivity at the anchor molecule is 1.0× higher
+[immersion-coolants-r1] seed:idea:seed: stated total $967.20 differs from computed $7,653.60
+[immersion-coolants-r1] seed:idea:seed: planned spend $7,653.60 is over the $1,000 budget (stated $967.20)
+[immersion-coolants-r1] seed:idea:seed: prior_max_level 14 is not in the quote of s1
+[immersion-coolants-r1] seed:idea:seed: restructuring.condition is empty
+[immersion-coolants-r1] seed:idea:seed: restructuring.condition_phase is empty
+[immersion-coolants-r1] seed:idea:seed: restructuring.baseline_sequential is empty
+[immersion-coolants-r1] seed:idea:seed: restructuring.baseline_copies is empty
+[immersion-coolants-r1] seed:idea:seed: halted at cost record broken: planned $7653.60 over $1000.00 while stated $967.20 is not
+immersion-coolants-r1: done · $0.238 · 250,294 tokens · 3 agent calls
+opencode-go/glm-5.3-flash: $0.011 over 2 calls = 0.0% of its $60 monthly cap, 0.1% of a 5-hour window
+opencode-go/deepseek-v4-pro: $0.227 over 1 calls = 1.5% of its $15 monthly cap, 7.6% of a 5-hour window
+/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card
+# Idea loop: Generative search for single-phase immersion coolants
+
+Root question: generative pipeline for discovery of single phase immersion coolants
+
+## Screen (option-critic panel, medians)
+
+| Option | stakes | open | reshape | total | changes |
+|---|---|---|---|---|---|
+| O Generative search for single-phase immersion coolants | 5 | 4 | 1 | 9 |  |
+| V1 Force-field error floor for coolant MD: an enlarged C10–C50 benchmark scored against measurement | 5 | 5 | 1 | 10 | Changes the comparison it is judged against and what compute buys: instead of a hit rate over novel candidates versus commercial fluids, it is MD-versus-measurement error over an enlarged C10–C50 benchmark that includes commercial coolants. Answers the gap that the Ewen group's MD verification covers only 8 representative molecules with no coolant figure of merit, and measures the ~10% force-field error the original card only assumes. |
+| V2 MD-ranked coolant shortlist judged against a self-driving lab's measured property panel | 5 | 4 | 1 | 9 | Changes the comparison it is judged against: a self-driving lab's measured viscosity/density/heat-capacity/thermal-conductivity/dielectric panel rather than only held-out literature values for known fluids. Answers the Sinton Lab / FL01 gap (they verify experimentally and by CFD, not with MD) and turns the MD output into a shortlist a named programme can actually test. |
+| V3 MD verification inserted into Org-Mol's ester shortlist before synthesis | 5 | 5 | 1 | 10 | Changes the system studied: esters only, inside a synthetically accessible space, instead of esters plus hydrocarbons, with the candidate count anchored to the existing 461-candidate shortlist. Answers the gap that the Org-Mol/SINOPEC team ML-filtered millions of esters but manually picked only two to synthesise and never MD-verified the shortlist; also partially probes whether the best figure of merit still improves from ~100 to ~1000 verified candidates. |
+
+Variant V1 scored higher than the original and got its own card.
+
+## Rounds
+
+**r0:** card REJECT (2 blocking), critic sum 18/25 (lever 3, open 5, stakes 4, verifiable 5, internals —, reshape 1, baseline —), $874 at score · plan $874 · 3 GUESS. Frame: Ewen group (Imperial College London / University of Bath) — MD benchmarking of organic-liquid thermophysical properties, fit 4, change 3, new 4 (11/15).
+
+**r1:** card halted: cost record broken, critic sum 0/25 (), . Frame: no grounded programme.
+
+/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out
+[exit 0]

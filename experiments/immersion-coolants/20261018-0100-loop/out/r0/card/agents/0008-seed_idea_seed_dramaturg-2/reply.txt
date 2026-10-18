@@ -1,0 +1,80 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; nothing to check on a page)",
+      "note": "The item is the plan's research question, not a factual claim; 'what the plan will measure' needs no source, and no fetched page contradicts it."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "PARTIAL",
+      "page_quote": "These fine-tuned models are used in high-throughput screening among millions of ester molecules to identify novel immersion coolants, resulting in the experimental validation of two promising candidates. ... We focus on synthetic esters for the design of novel immersion coolants owing to their extraordinary biodegradability. ... predicting these physical properties via MD is time-consuming for a single system and becomes unaffordable in a high-throughput screening scenario with thousands of candidates",
+      "note": "The Org-Mol page supports predictor(ML)-filtered screening of environmentally friendly esters for immersion coolants (eps<3.20, nu<12 cSt at 40 C, kappa>0.140 W/m*K; two experimentally validated). It does not support 'molecular dynamics' doing the finding (the page used ML and calls MD unaffordable at screening throughput), and it never compares its candidates against commercial coolants; 'more candidates keep improving the best one' is the plan's own prediction, needing no source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; nothing to check on a page)",
+      "note": "Statement of the plan's predicted mechanism (positive lever) for the scaling experiment; a prediction, needs no source."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "PARTIAL",
+      "page_quote": "(no source cited; nothing to check on a page)",
+      "note": "The plateau scenario is the plan's alternative hypothesis (a prediction, needs no source), but the '~10% force-field error' is a quantitative factual claim about MD force fields with no cited source, so that premise is unsupported."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; nothing to check on a page)",
+      "note": "Describes what the plan will build, measure and compare (generate, ML-filter, MD-verify top 100/300/1000, compare figure of merit); protocol description needs no source."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "we apply the Org-Mol fine-tuned models to systematically screen out promising candidates for immersion coolants, which require low dielectric constant (strictly lower than 3.20 at room temperature for electrical safety), low kinematic viscosity (preferably lower than 12 cSt at 40 °C), high thermal conductivity (preferably higher than 0.140 W/m ⋅ K), and environmental friendliness.",
+      "note": "Recorded quote appears verbatim. The page also states 'screen out over 6 million saturated monoesters and dibasic esters' and 'two of them are experimentally synthesized and validated', and its screening is ML-only ('predicting these physical properties via MD ... becomes unaffordable in a high-throughput screening scenario with thousands of candidates'), consistent with the claim that it never MD-verified hundreds-to-thousands of candidates."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; nothing to check on a page)",
+      "note": "Research-gap framing of what the plan will address; needs no source. Nothing on the fetched pages contradicts it: the closest prior (Org-Mol) screened with ML and validated only two candidates, with no MD verification at any scale."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "UNSUPPORTED",
+      "page_quote": "Berger Bioucas, F. E., Rausch, M. H., Koller, T. M., & Fröba, A. P. (2024). Thermal Conductivity of Liquid Cyclohexane, n-Decane, n-Hexadecane, and Squalane at Atmospheric Pressure up to 353 K Determined with a Steady-State Parallel-Plate Instrument. International Journal of Thermophysics, 45(7).",
+      "note": "The cited DOI resolves only to this citation metadata; the Springer full-text page is bot-blocked, so the recorded table quote ('298.15 144.43') and the 0.1444 W/m/K value could not be verified on any fetched page. The viscosity value 2.95 mPa/s (2.9523) is additionally outside the cited source's scope (a thermal-conductivity study; the recorded table is lambda only) and has no source. The MD-reproduction step itself is what the plan will do and needs no source."
+    },
+    {
+      "ref": "src:orgmol",
+      "status": "SUPPORTED",
+      "page_quote": "we apply the Org-Mol fine-tuned models to systematically screen out promising candidates for immersion coolants, which require low dielectric constant (strictly lower than 3.20 at room temperature for electrical safety), low kinematic viscosity (preferably lower than 12 cSt at 40 °C), high thermal conductivity (preferably higher than 0.140 W/m ⋅ K), and environmental friendliness.",
+      "note": "Quote appears verbatim. The page states the three thresholds (die_hi 3.20, kvisc_hi 12 cSt at 40 C, kcond_lo 0.140 W/m*K), the predictor-first design ('predicting these physical properties via MD ... becomes unaffordable in a high-throughput screening scenario'), and the filter yield ('461 monoesters are finally filtered out')."
+    },
+    {
+      "ref": "src:berger2024",
+      "status": "UNREACHABLE",
+      "page_quote": "Thermal Conductivity of Liquid Cyclohexane, n-Decane, n-Hexadecane, and Squalane at Atmospheric Pressure up to 353 K Determined with a Steady-State Parallel-Plate Instrument. International Journal of Thermophysics, 45(7). https://doi.org/10.1007/s10765-024-03383-7",
+      "note": "The DOI URL returns only this citation metadata (which confirms the paper covers thermal conductivity of n-hexadecane, matching the quote's column header), and the Springer article page is bot-blocked ('A required part of this site couldn't load'); the recorded table text ('298.15 144.43') could not be confirmed on any fetched page."
+    },
+    {
+      "ref": "num:throughput_ns_day",
+      "status": "SUPPORTED",
+      "page_value": 691.7,
+      "page_quote": "R-143a in hexane (20,248 atoms) with very high output rate, a short RNA piece with explicit water (31,889 atoms) ... [ns/day] System 1 System 2 ... A100 267.5 691.7 265.8 129.1 38.8 23.2 ... A40 277.0 731.8 268.1 122.3 34.9 19.0",
+      "note": "Quote matches the page's GROMACS 2024.1 benchmark table (NHR@FAU Alex) and the system descriptions. The recorded 500 ns/day is the producer's declared PROXY discount of System 2's A100 value (691.7 ns/day; A40 731.8) for a 31,889-atom system, as documented in 'differs_in'; the page itself never states 500 and includes no A6000 row."
+    },
+    {
+      "ref": "num:a6000_usd_h",
+      "status": "SUPPORTED",
+      "page_value": 1.09,
+      "page_quote": "NVIDIA A6000 48 GB 14 100 GiB 512 GiB SSD $1.09",
+      "note": "Lambda's pricing page lists the 1x-GPU A6000 instance (48 GB VRAM, 14 vCPUs, 100 GiB RAM, 512 GiB SSD) at $1.09 PRICE/GPU/HR, exactly matching the recorded quote and value."
+    }
+  ]
+}
+```

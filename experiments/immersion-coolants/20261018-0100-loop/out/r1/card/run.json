@@ -1,0 +1,139 @@
+{
+ "name": "immersion-coolants-r1",
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card",
+ "script": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "b7d451cf548e526458359e6ea5f1e4ad8e9a63b0b027088dc619e07984d0490a",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "V1",
+    "title": "Force-field error floor for coolant MD: an enlarged C10–C50 benchmark scored against measurement",
+    "text": "Data-centre immersion cooling needs dielectric liquids with low viscosity, high thermal conductivity and heat capacity, a low dielectric constant and a high flash point, and MD is increasingly used to rank candidates. Turn the MD verification step itself into the object of study: run one GPU-MD protocol for viscosity and thermal conductivity over a systematically enlarged set of C10–C50 hydrocarbons and esters, including the known commercial single-phase coolants, and score it only against measured values. More compute buys more benchmark molecules (from the handful used today to hundreds) and longer trajectories per molecule, not more novel candidates. Report the force-field error distribution and whether MD ranks known fluids in the same order as measurement well enough to trust a candidate ranking.",
+    "root_link": "SAME: transport properties (viscosity, thermal conductivity) of organic liquids, verified by GPU-MD against measurement.",
+    "compute_open": "Benchmark molecules covered (roughly 8 to a few hundred) and simulation length per molecule. Unknown: whether the error is a correctable systematic bias or a random floor that caps how far a ranking can be trusted.",
+    "sequential": "not given",
+    "source_urls": [],
+    "root_question": "generative pipeline for discovery of single phase immersion coolants",
+    "kind": "physical"
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/deepseek-v4-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/latent_open",
+  "commit": "5360255da4813710d118cd72a48198855358f345",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-18T01:15:40.262Z",
+ "finished": "2026-10-18T01:31:12.486Z",
+ "totals": {
+  "cost_usd": 0.23798953800000003,
+  "tokens": 250294,
+  "calls": 3,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 2,
+    "cost_usd": 0.01116373,
+    "tokens": 34546
+   },
+   "opencode-go/deepseek-v4-pro": {
+    "calls": 1,
+    "cost_usd": 0.22682580800000002,
+    "tokens": 215748
+   }
+  }
+ }
+}

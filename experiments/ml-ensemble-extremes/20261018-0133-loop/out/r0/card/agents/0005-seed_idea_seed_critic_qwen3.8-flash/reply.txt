@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 5,
+      "ref": "card:question",
+      "reason": "Outcome directly tells whether buying extra GPU members beats keeping operational 50 for AIFS-ENS extremes."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:predictions.noise_rule",
+      "reason": "No power analysis shows the 0.01 skill difference exceeds bootstrap noise over only seven dates."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "card:test_summary",
+      "reason": "Decision scores use ERA5 reanalysis, a model truth proxy; station observation remains a stretch."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "HENS used SFNO; left_open names AIFS-ENS exchangeable-draw saturation as still unknown."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:method",
+      "reason": "method:none; only independent members and dates run side by side, each forecast's sequential steps remain."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring method is none, so the baseline throughput comparison is not applicable."
+    }
+  ],
+  "decides_by": "p_score",
+  "decides_by_reason": "Fair CRPS/Brier skill versus member count and bootstrap intervals are computed only in p_score."
+}

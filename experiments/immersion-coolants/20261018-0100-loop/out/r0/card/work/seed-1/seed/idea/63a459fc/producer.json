@@ -1,0 +1,211 @@
+{
+  "option_title": "Generative search for single-phase immersion coolants",
+  "question": "Does verifying more candidate coolants with GPU molecular dynamics keep raising the best figure of merit above known commercial single-phase fluids, or does it plateau?",
+  "hypothesis": "Predictor-filtered molecular dynamics finds PFAS-free esters or hydrocarbons that beat commercial coolants [orgmol], and more candidates keep improving the best one.",
+  "compute_axis": {
+    "quantity": "candidate fluids verified by GPU molecular dynamics",
+    "unit": "candidates",
+    "levels": [100, 300, 1000]
+  },
+  "held_fixed": [
+    "MD simulation length per candidate (12 ns: 2 ns equilibration + 2 x 5 ns production)",
+    "independent MD replicas per candidate (2)",
+    "temperature 313 K (40 C, the temperature OCP specs k and viscosity at)",
+    "force field (united-atom Mie Potoff/TAMie, TraPPE-UA fallback)",
+    "molecule class (PFAS-free saturated monoesters and hydrocarbons, <= 30 carbons)",
+    "predictor training data and held-out commercial fluids"
+  ],
+  "predictions": {
+    "if_lever": "Best cooling figure of merit keeps climbing with candidates verified, so more compute keeps finding fluids that beat commercial ones.",
+    "if_not": "Best figure of merit plateaus by a few hundred candidates, because predictor filtering and ~10% force-field error cap how high MD-ranked fluids score.",
+    "decision_rule": "if_lever if the best Mouromtseff number at 1000 candidates exceeds the best at 100 by more than 5% and keeps beating the commercial baseline; if_not if the best plateaus within 5% between 300 and 1000 candidates.",
+    "noise_rule": "Run 2 independent replicas per candidate; a level-to-level best-score difference counts only if it exceeds the replica-to-replica standard error of the score.",
+    "expected": "unsure",
+    "expected_why": "No published run has MD-verified thousands of immersion-coolant candidates, so whether the hit rate saturates or keeps rising is genuinely unknown."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "The test varies the number of candidates verified by MD (100 to 1000), which is exactly what more parallel GPUs buy; each candidate is an independent simulation run one-per-GPU.",
+  "scored_against": "Measured viscosity, thermal conductivity, density, heat capacity and dielectric constant of known commercial fluids (3M Novec 7000 and n-hexadecane), held out of predictor training; never against the predictors.",
+  "arms": [
+    {"id": "arm_anchor", "what": "Reproduce n-hexadecane thermal conductivity and viscosity with MD before scoring any candidate"},
+    {"id": "arm_predictor", "what": "Fine-tune dielectric/viscosity/thermal-conductivity predictors on public data, hold out commercial fluids"},
+    {"id": "arm_generate", "what": "Enumerate ~1M PFAS-free esters and hydrocarbons and rank them by predicted figure of merit"},
+    {"id": "arm_verify_100", "what": "MD-verify the top 100 ranked candidates"},
+    {"id": "arm_verify_300", "what": "MD-verify the next 200 ranked candidates (300 total)"},
+    {"id": "arm_verify_1000", "what": "MD-verify the next 700 ranked candidates (1000 total)"},
+    {"id": "arm_refine", "what": "Longer 50 ns runs on the top 30 MD-ranked candidates"},
+    {"id": "arm_score", "what": "Compute Mouromtseff numbers and hit rate versus the commercial baseline"}
+  ],
+  "baseline": {
+    "what": "Known commercial fluids' published properties converted to a Mouromtseff number: 3M Novec 7000 (k=0.075 W/m/K, 0.32 cSt) and n-hexadecane (k=0.1444 W/m/K, 2.95 mPa s).",
+    "value": "k=0.075 W/m/K, nu=0.32 cSt, rho=1400 kg/m3, cp=1300 J/kg/K (Novec 7000); k=0.1444 W/m/K (n-hexadecane)",
+    "source_id": "novec7000"
+  },
+  "anchor": {
+    "what": "MD pipeline reproduces n-hexadecane thermal conductivity 0.1444 W/m/K and viscosity 2.95 mPa/s near 300 K before scoring candidates.",
+    "published_value": "0.1444 W/m/K and 2.9523 mPa/s (n-hexadecane, ~300 K)",
+    "tolerance": "+/-25%",
+    "source_id": "berger2024"
+  },
+  "checks": [
+    "Anchor: MD reproduces n-hexadecane k and viscosity within +/-25% before candidates are scored.",
+    "Predictor holdout: R^2 >= 0.85 on held-out commercial-fluid properties before trusting the filter.",
+    "Score candidates only against measured (never predicted) data for held-out fluids.",
+    "Compare each candidate's MD-computed properties, not the predictor's, against the baseline."
+  ],
+  "phases": [
+    {
+      "id": "anchor",
+      "what": "Build the MD pipeline; reproduce n-hexadecane k and viscosity within +/-25%; measure the real MD throughput.",
+      "stop_rule": "Stop at the 24 GPU-hour time box or when both properties are within +/-25%.",
+      "gate": {
+        "on": "anchor_k_err",
+        "op": "<=",
+        "value": 0.25,
+        "else": "Switch to a Mie (Potoff/TAMie) force field and rerun once; if it still fails, stop before spending on candidates."
+      }
+    },
+    {
+      "id": "predictor",
+      "what": "Fine-tune property predictors (dielectric, viscosity, thermal conductivity) on public data, holding out commercial fluids.",
+      "stop_rule": "Stop at the 16 GPU-hour time box or when holdout R^2 stops improving.",
+      "gate": {
+        "on": "predictor_r2",
+        "op": ">=",
+        "value": 0.85,
+        "else": "Fall back to a group-contribution ranking as the filter instead of the ML predictor."
+      }
+    },
+    {
+      "id": "generate",
+      "what": "Enumerate ~1M PFAS-free saturated esters and hydrocarbons, score with the predictor, rank by predicted Mouromtseff number.",
+      "stop_rule": "Stop when 1M molecules are enumerated and ranked.",
+      "gate": {
+        "on": "n_pass_filter",
+        "op": ">=",
+        "value": 1000,
+        "else": "Relax the dielectric-constant filter and re-rank before starting MD."
+      }
+    },
+    {
+      "id": "verify",
+      "what": "MD-verify the top 100, then 300, then 1000 candidates (eight A6000s at once), computing density, viscosity, heat capacity and thermal conductivity.",
+      "stop_rule": "Stop each level when its candidate count is verified or its line's GPU-hours are spent."
+    },
+    {
+      "id": "score",
+      "what": "Compute each candidate's Mouromtseff number and hit rate versus the commercial baseline; apply the decision rule.",
+      "stop_rule": "Stop when the best-score-versus-candidates curve is plotted at 100/300/1000."
+    }
+  ],
+  "numbers": [
+    {"id": "throughput_ns_day", "name": "MD throughput on one A6000 for a ~20-30k-atom organic liquid", "unit": "ns/day", "basis": "PROXY", "value": 500, "source_id": "gromacs_fau", "quote": "| [ns/day] | System 1 | System 2 | System 3 | System 4 | System 5 | System 6 | ... A100 | 267.5 | 691.7 | 265.8 | 129.1 | 38.8 | 23.2 | ... A40 | 277.0 | 731.8 | 268.1 | 122.3 | 34.9 | 19.0 |", "page_setting": "GROMACS 2024.1 benchmark on NHR@FAU Alex cluster; System 1 = R-143a in hexane (20,248 atoms, very high output), System 2 = short RNA in water (31,889 atoms)", "differs_in": ["my systems are 10-45k-atom pure ester/hydrocarbon liquids with rare output, not RNA or hexane benchmarks", "System 1's very high output rate cuts speed ~2.6x", "A6000 is the same GA102 chip as the A40 (277.0 ns/day), clocked slightly differently", "I discount System 2's 691.7 to 500 ns/day for margin"], "measured_by": "anchor"},
+    {"id": "sim_len_ns", "name": "MD simulation length per candidate", "unit": "ns", "basis": "DESIGN", "value": 12},
+    {"id": "n_replicas", "name": "independent MD replicas per candidate", "unit": "replicas", "basis": "DESIGN", "value": 2},
+    {"id": "overhead_factor", "name": "overhead multiplier for equilibration, setup and reruns", "unit": "ratio", "basis": "DESIGN", "value": 1.3},
+    {"id": "ns_per_gpu_hour", "name": "MD nanoseconds per GPU-hour", "unit": "ns/hour", "basis": "DERIVED", "expr": "throughput_ns_day / 24"},
+    {"id": "md_gpu_hours_per_candidate", "name": "GPU-hours per verified candidate", "unit": "GPU-hours", "basis": "DERIVED", "expr": "(sim_len_ns / ns_per_gpu_hour) * overhead_factor"},
+    {"id": "diel_hi", "name": "dielectric constant upper bound for a candidate", "unit": "dimensionless", "basis": "CITED", "value": 3.20, "source_id": "orgmol", "quote": "require low dielectric constant (strictly lower than 3.20 at room temperature for electrical safety)"},
+    {"id": "kvisc_hi", "name": "kinematic viscosity upper bound at 40 C", "unit": "cSt", "basis": "CITED", "value": 12, "source_id": "orgmol", "quote": "low kinematic viscosity (preferably lower than 12 cSt at 40 °C)"},
+    {"id": "kcond_lo", "name": "thermal conductivity lower bound", "unit": "W/m/K", "basis": "CITED", "value": 0.140, "source_id": "orgmol", "quote": "high thermal conductivity (preferably higher than 0.140 W/m ⋅ K)"},
+    {"id": "flash_min", "name": "flash point minimum (closed cup)", "unit": "C", "basis": "CITED", "value": 150, "source_id": "ocp", "quote": "Flash point (COC) | ≥150 °C | ≥150 °C"},
+    {"id": "fom_a", "name": "Mouromtseff exponent on density", "unit": "dimensionless", "basis": "CITED", "value": 0.8, "source_id": "uh_fom", "quote": "(FOM)h = (ρ/ρb) 0.8 cp/cp,b 0.4 (μ/μb)− 0.4 × (k/kb) 0.6"},
+    {"id": "fom_b", "name": "Mouromtseff exponent on thermal conductivity", "unit": "dimensionless", "basis": "CITED", "value": 0.6, "source_id": "uh_fom", "quote": "(FOM)h = (ρ/ρb) 0.8 cp/cp,b 0.4 (μ/μb)− 0.4 × (k/kb) 0.6"},
+    {"id": "fom_c", "name": "Mouromtseff exponent on heat capacity", "unit": "dimensionless", "basis": "CITED", "value": 0.4, "source_id": "uh_fom", "quote": "(FOM)h = (ρ/ρb) 0.8 cp/cp,b 0.4 (μ/μb)− 0.4 × (k/kb) 0.6"},
+    {"id": "fom_e", "name": "Mouromtseff exponent on dynamic viscosity (denominator)", "unit": "dimensionless", "basis": "CITED", "value": 0.4, "source_id": "uh_fom", "quote": "(FOM)h = (ρ/ρb) 0.8 cp/cp,b 0.4 (μ/μb)− 0.4 × (k/kb) 0.6"},
+    {"id": "n_generate", "name": "molecules enumerated for filtering", "unit": "molecules", "basis": "DESIGN", "value": 1000000},
+    {"id": "n_cand_100", "name": "candidates verified at level 1", "unit": "candidates", "basis": "DESIGN", "value": 100},
+    {"id": "n_cand_300", "name": "candidates verified at level 2", "unit": "candidates", "basis": "DESIGN", "value": 300},
+    {"id": "n_cand_1000", "name": "candidates verified at level 3", "unit": "candidates", "basis": "DESIGN", "value": 1000},
+    {"id": "n_cand_10000", "name": "candidates verified at the full-scale 10^4 level", "unit": "candidates", "basis": "DESIGN", "value": 10000},
+    {"id": "anchor_k_hexadecane", "name": "experimental thermal conductivity of n-hexadecane", "unit": "W/m/K", "basis": "CITED", "value": 0.1444, "source_id": "berger2024", "quote": "298.15 144.43", "page_setting": "Table 2, n-hexadecane thermal conductivity in mW/m/K at 298.15 K, atmospheric pressure, parallel-plate instrument"},
+    {"id": "anchor_eta_hexadecane", "name": "recommended viscosity of n-hexadecane at 300 K, 0.1 MPa", "unit": "mPa.s", "basis": "CITED", "value": 2.9523, "source_id": "meng2018", "quote": "0.1 2952.3", "page_setting": "Table 4, recommended n-hexadecane viscosity in microPa.s at 0.1 MPa and 300 K"},
+    {"id": "anchor_tol", "name": "anchor tolerance on reproduced properties", "unit": "ratio", "basis": "DESIGN", "value": 0.25},
+    {"id": "ff_visc_err", "name": "force-field viscosity error floor (best case)", "unit": "ratio", "basis": "PROXY", "value": 0.1, "source_id": "messerly", "quote": "For saturated liquids, both Mie-based potential models (Potoff and TAMie) provide roughly 10% accuracy for linear alkanes, while deviations are closer to 20 to 50% for TraPPE-UA.", "page_setting": "Green-Kubo viscosity of linear alkanes with united-atom force fields; I use the 10% Mie best case, my setting is esters/hydrocarbons", "differs_in": ["my fluids are esters and branched hydrocarbons, not linear alkanes", "thermal conductivity may be more accurate than viscosity"], "measured_by": "anchor"},
+    {"id": "predictor_r2", "name": "predictor holdout R^2 expected", "unit": "dimensionless", "basis": "GUESS", "value": 0.9, "rests_on": "Org-Mol reports test-set R^2 above 0.92 for these exact properties", "measured_by": "predictor"},
+    {"id": "predictor_r2_gate", "name": "minimum holdout R^2 to trust the filter", "unit": "dimensionless", "basis": "DESIGN", "value": 0.85},
+    {"id": "hit_gate", "name": "minimum best-score improvement to declare the lever", "unit": "ratio", "basis": "DESIGN", "value": 0.05},
+    {"id": "n_refine", "name": "top candidates given longer refinement runs", "unit": "candidates", "basis": "DESIGN", "value": 30},
+    {"id": "refine_len_ns", "name": "refinement simulation length per candidate", "unit": "ns", "basis": "DESIGN", "value": 50},
+    {"id": "n_pass_filter", "name": "candidates available after predictor filter", "unit": "molecules", "basis": "GUESS", "value": 3000, "rests_on": "Org-Mol filtered 461 hard-threshold passes from 6M esters; ranking by predicted score always yields a top-N", "measured_by": "generate"},
+    {"id": "anchor_k_err", "name": "anchor fractional error on n-hexadecane conductivity expected", "unit": "ratio", "basis": "GUESS", "value": 0.15, "rests_on": "Mie force fields predict alkane viscosity to ~10% and thermal conductivity typically within a few percent", "measured_by": "anchor"},
+    {"id": "a6000_usd_h", "name": "Lambda on-demand A6000 price per GPU-hour", "unit": "USD/GPU-hour", "basis": "CITED", "value": 1.09, "source_id": "lambda_pricing", "quote": "1x GPU tab: NVIDIA A6000 | VRAM/GPU: 48 GB | vCPUs: 14 | RAM: 100 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $1.09"}
+  ],
+  "cost": {
+    "rates": [
+      {"id": "r_a6000", "gpu": "NVIDIA A6000", "gpu_memory_gb": 48, "n_gpus": 1, "per_gpu_usd_h": 1.09}
+    ],
+    "lines": [
+      {"id": "line_anchor", "phase": "anchor", "what": "Reproduce n-hexadecane k and viscosity; measure real throughput", "kind": "work", "rate": "r_a6000", "hours": 24, "need": 8},
+      {"id": "line_predictor", "phase": "predictor", "what": "Fine-tune predictors and run the holdout check", "kind": "work", "rate": "r_a6000", "hours": 16, "need": 8},
+      {"id": "line_generate", "phase": "generate", "what": "Enumerate 1M SMILES and rank by predicted figure of merit", "kind": "work", "rate": "r_a6000", "hours": 4, "need": 1},
+      {"id": "line_verify_100", "phase": "verify", "what": "MD-verify the top 100 candidates, eight A6000s at once", "kind": "work", "rate": "r_a6000", "hours": "n_cand_100 * md_gpu_hours_per_candidate"},
+      {"id": "line_verify_300", "phase": "verify", "what": "MD-verify the next 200 candidates (300 total)", "kind": "work", "rate": "r_a6000", "hours": "(n_cand_300 - n_cand_100) * md_gpu_hours_per_candidate"},
+      {"id": "line_verify_1000", "phase": "verify", "what": "MD-verify the next 700 candidates (1000 total)", "kind": "work", "rate": "r_a6000", "hours": "(n_cand_1000 - n_cand_300) * md_gpu_hours_per_candidate"},
+      {"id": "line_refine", "phase": "verify", "what": "Longer 50 ns runs on the top 30 MD-ranked candidates", "kind": "work", "rate": "r_a6000", "hours": "n_refine * refine_len_ns / ns_per_gpu_hour * overhead_factor", "optional": true},
+      {"id": "line_storage", "phase": "score", "what": "Filesystem for checkpoints and logs (50 GiB-month)", "kind": "storage", "usd": "50 * fs_usd_gib_month"}
+    ],
+    "scenarios": [
+      {"id": "pessimistic", "what": "Throughput lands at the A100 System-1 level (267 ns/day) and overhead is 1.5x: only the 100 and 300 levels stay under $1000.", "set": {"throughput_ns_day": 267, "overhead_factor": 1.5}}
+    ],
+    "yields": ["n_cand_1000", "n_cand_300", "n_cand_100", "n_refine"],
+    "spend_cap_usd": 1000,
+    "total_stated": 874
+  },
+  "full_scale": [
+    {"id": "fs_10k", "what": "Verify 10,000 candidates by MD (the option's 10^4 level)", "usd": "n_cand_10000 * md_gpu_hours_per_candidate * a6000_usd_h", "ratio_to": "n_cand_1000"}
+  ],
+  "outside_budget": [
+    {"what": "human time writing the generator, filter and analysis code", "qty": 40, "unit": "hours"},
+    {"what": "human time running and reviewing results", "qty": 15, "unit": "hours"},
+    {"what": "local 4-core CPU for generation, filtering and scoring (not Lambda)", "qty": 30, "unit": "CPU-hours"}
+  ],
+  "restructuring": {
+    "sequential_part": "One trajectory runs timestep by timestep; verifying a thousand candidates serially chains that work a thousand times.",
+    "method": "none"
+  },
+  "scope_gap": [
+    "The 10^4-candidate level is unaffordable, so the curve is only tested to 10^3.",
+    "Only pure single-component fluids; mixtures, which the option also names, are not screened.",
+    "MD transport properties carry ~10% force-field error, so absolute accuracy is capped even at scale.",
+    "No synthesis or experimental validation of the top candidates."
+  ],
+  "novelty": {
+    "closest_prior": "Org-Mol ML-screened six million esters and experimentally validated two; it never MD-verified hundreds-to-thousands of candidates at once.",
+    "closest_source_id": "orgmol",
+    "prior_max_level": null,
+    "left_open": "No study measures whether the best MD-ranked coolant keeps improving as the number of MD-verified candidates grows from 100 to 10,000.",
+    "decides": "no",
+    "searched": true
+  },
+  "limits": [
+    "Result is a ranking and hit rate, not absolute fluid accuracy; one fluid class, no mixtures, no synthesis or lifetime testing."
+  ],
+  "test_summary": "Generate a million PFAS-free esters and hydrocarbons, ML-filter to a ranked shortlist, MD-verify the top 100, 300, then 1000 candidates' viscosity and thermal conductivity, and compare their cooling figure of merit to commercial fluids.",
+  "sources": [
+    {"id": "orgmol", "url": "https://www.nature.com/articles/s41524-025-01720-4", "quote": "we apply the Org-Mol fine-tuned models to systematically screen out promising candidates for immersion coolants, which require low dielectric constant (strictly lower than 3.20 at room temperature for electrical safety), low kinematic viscosity (preferably lower than 12 cSt at 40 °C), high thermal conductivity (preferably higher than 0.140 W/m ⋅ K), and environmental friendliness.", "supports": "property thresholds diel_hi, kvisc_hi, kcond_lo; the predictor-first design; filter yield (461 monoesters pass all filters)"},
+    {"id": "ocp", "url": "https://opencompute.org/documents/ocp-acs-immersion-requirements-rev-2-v1-00-pdf", "quote": "Flash point (COC) | ≥150 °C | ≥150 °C", "supports": "flash_min threshold; also that thermal conductivity and kinematic viscosity are specified per ASTM D 7896 / D 7042 at 40 C"},
+    {"id": "se_blog", "url": "https://blog.se.com/datacenter/2026/05/22/pfas-phase-out-liquid-cooling-us-data-center-operators-must-do/", "quote": "the pressure is on since 3M, the biggest producer of PFAS, has phased out production of chemicals such as Novec.", "supports": "why the search targets PFAS-free hydrocarbons and esters"},
+    {"id": "gromacs_fau", "url": "https://hpc.fau.de/2024/08/13/gromacs-2024-1-on-brand-new-gpgpus/", "quote": "| [ns/day] | System 1 | System 2 | System 3 | System 4 | System 5 | System 6 | ... A100 | 267.5 | 691.7 | 265.8 | 129.1 | 38.8 | 23.2 | ... A40 | 277.0 | 731.8 | 268.1 | 122.3 | 34.9 | 19.0 |", "supports": "throughput_ns_day proxy (System 2 = 691.7 ns/day on A100 for 31,889 atoms; I discount to 500)"},
+    {"id": "uh_fom", "url": "http://www2.egr.uh.edu/~dli9/2013_ieee_cmpt_nanofluids.pdf", "quote": "(FOM)h = (ρ/ρb) 0.8 cp/cp,b 0.4 (μ/μb)− 0.4 × (k/kb) 0.6", "supports": "Mouromtseff exponents fom_a..fom_e for turbulent forced convection"},
+    {"id": "messerly", "url": "https://www.nist.gov/publications/improvements-and-limitations-mie-lambda-6-potential-prediction-saturated-and-compressed", "quote": "For saturated liquids, both Mie-based potential models (Potoff and TAMie) provide roughly 10% accuracy for linear alkanes, while deviations are closer to 20 to 50% for TraPPE-UA.", "supports": "ff_visc_err, the force-field error floor behind the if_not prediction"},
+    {"id": "berger2024", "url": "https://doi.org/10.1007/s10765-024-03383-7", "quote": "T (K) λ (mW·m−1·K−1) Cyclohexane n-Decane n-Hexadecane Squalane ... 298.15 144.43", "supports": "anchor_k_hexadecane = 0.1444 W/m/K for n-hexadecane at 298.15 K (144.43 mW/m/K)"},
+    {"id": "meng2018", "url": "https://spiral.imperial.ac.uk/server/api/core/bitstreams/168e7342-56a1-48b1-a1d5-b2f4789facec/content", "quote": "P T(K) MPa 300 320 340 ... 0.1 2952.3 1949.7 1389.8", "supports": "anchor_eta_hexadecane = 2.9523 mPa.s for n-hexadecane at 0.1 MPa and 300 K (2952.3 microPa.s)"},
+    {"id": "lambda_pricing", "url": "https://lambda.ai/pricing", "quote": "1x GPU tab: NVIDIA A6000 | VRAM/GPU: 48 GB | vCPUs: 14 | RAM: 100 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $1.09", "supports": "a6000_usd_h = 1.09 and the r_a6000 rate"},
+    {"id": "novec7000", "url": "https://www.reedtec.com/stylesheet/download/Novec%E2%84%A2%207000.pdf", "quote": "Thermal Conductivity (W·m−1·K−1) 0.075", "supports": "baseline commercial fluid properties (also kinematic viscosity 0.32 cSt, specific heat 1300 J/kg-K, density 1400 kg/m3, dielectric constant 7.4)"}
+  ],
+  "files_read": [
+    "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0037-loop/out/r0/card/work/seed-1/seed/idea/63a459fc/producer.md",
+    "https://www.nature.com/articles/s41524-025-01720-4",
+    "https://blog.se.com/datacenter/2026/05/22/pfas-phase-out-liquid-cooling-us-data-center-operators-must-do/",
+    "https://opencompute.org/documents/ocp-acs-immersion-requirements-rev-2-v1-00-pdf",
+    "https://hpc.fau.de/2024/08/13/gromacs-2024-1-on-brand-new-gpgpus/",
+    "http://www2.egr.uh.edu/~dli9/2013_ieee_cmpt_nanofluids.pdf",
+    "https://www.nist.gov/publications/improvements-and-limitations-mie-lambda-6-potential-prediction-saturated-and-compressed",
+    "https://doi.org/10.1007/s10765-024-03383-7",
+    "https://spiral.imperial.ac.uk/server/api/core/bitstreams/168e7342-56a1-48b1-a1d5-b2f4789facec/content",
+    "https://www.reedtec.com/stylesheet/download/Novec%E2%84%A2%207000.pdf",
+    "https://lambda.ai/pricing",
+    "https://espace2.etsmtl.ca/id/eprint/31955/ (HTTP 403, could not read; option's own reference)"
+  ]
+}

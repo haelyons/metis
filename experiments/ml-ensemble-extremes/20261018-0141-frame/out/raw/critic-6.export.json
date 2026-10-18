@@ -1,0 +1,187 @@
+{
+  "info": {
+    "id": "ses_eb34d6396ffeAU46Jcjb0ha34O",
+    "slug": "lucky-river",
+    "projectID": "e635804b0fe929d2ed556701e94990a108996451",
+    "directory": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out",
+    "path": "experiments/ml-ensemble-extremes/20261018-0141-frame/out",
+    "title": "critic#6",
+    "agent": "qt-bare",
+    "model": {
+      "id": "minimax-m3",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.00451128,
+    "tokens": {
+      "input": 2936,
+      "output": 514,
+      "reasoning": 2505,
+      "cache": {
+        "read": 128,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792288136298,
+      "updated": 1792288151413
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792288136490
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "minimax-m3"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_14cb29d2a001i1wosL3gpOKEJg",
+        "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"Score how well this research card fits each existing programme below. Each programme lists claims about its current practice; two checkers fetched each source and marked each claim SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE. Rely only on claims that at least one checker marked SUPPORTED or PARTIAL. Score each programme 1-5 on each criterion, with a reason of at most 25 words. Decide only from the text below; do not use tools.\nRoot question: Do more members of a machine-learned weather ensemble buy better forecasts of rare extremes, or does error shared by all members cap the skill?\nCard:\n**ml-ensemble-extremes · Ensemble size for rare extremes in a machine-learned weather ensemble.** seed pick · compute tested: yes · plan expects: the lever · PASS\n\n**Question.** Does 10 to 1,000 AIFS-ENS members beat 50 for top-percentile wind, temperature, and rain probability forecasts, or does shared model error cap the skill?\n\n**What is known.** HENS Part 2: 7,424 SFNO members per day for 92 summer-2023 dates; showed huge ensembles sample 4-sigma tails and reduce outliers. Whether AIFS-ENS, whose members are exchangeable draws of one afCRPS-trained distribution, keeps gaining skill past 50 members or saturates from shared model error.\n\n**Hypothesis.** More members keep helping: 1,000 members sample top-percentile tails far better than 50, so extreme-event scores keep improving [s_hens].\n\n**If compute is the lever.** Skill on top-percentile wind, temperature, and rain keeps rising past 50 members: 1,000 members sharpen the tails and improve extreme-event scores.\n\n**If not.** Skill flattens near 50 members: members are exchangeable draws of one trained distribution, so shared model error caps tail sharpness and extra members add nothing.\n\n**Test.** Run 7,000 fifteen-day AIFS-ENS v1 forecasts (7 dates x 1,000 members) on eight A100 40 GB GPUs; subsample 10-1,000 members, score top-percentile wind/temperature/rain probabilities against ERA5 with fair CRPS and Brier scores, and test whether skill still rises past 50 members.\n\n*Compute axis.* Ensemble members per forecast: 10–1,000 members, 6 levels. Closest prior: 7,424 [s_hens], not beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Reproduce the published 4-minute N320 member time and 38 GB memory; one control run must match ECMWF open data within ensemble spread [s_crps_paper]. Tolerance: timing within +/-25% of 4 min; 38 GB memory fits; control field within the ensemble's own member-to-member spread at each lead time (GPUs are non-deterministic, so exact reproduction is not expected).\n\n**Would not show.** Applies to AIFS-ENS v1 medium-range extremes on 7 dates; not a multi-season reforecast, other models, subseasonal leads, or direct proof that shared error causes any saturation.\n\n*Cost.* Plans $963.17 of the $1,000 budget over 74.3 machine-hours, leaving $36.83. Main guess: peak filesystem usage [g], measured after $19.90 of spend; the budget is reached if it is 15× higher. Full scale: A 30-date multi-season reforecast at 1,000 members, $3,980, 3.98× the budget.\nProgrammes:\n{\\\"programme\\\":1,\\\"name\\\":\\\"ECMWF — AIFS ENS (operational machine-learned ensemble)\\\",\\\"step\\\":\\\"Generating exchangeable ensemble members from one afCRPS/multi-scale-trained distribution and verifying them (including top-percentile events) to set the operational ensemble size. Today ECMWF draws 51 members (50 perturbed + control) and scores 50-member ensembles against IFS, flagging extreme-event skill as still-unassessed.\\\",\\\"practice\\\":[\\\"Operational AIFS ENS runs 51 members on the N320 (~31 km) grid, 15-day, 6-hourly, four times per day; it is trained on 32 GH200 GPUs via the Anemoi framework by ECMWF's AIFS team (Lang, Leutbecher, Clare, Chantry, et al.). [SUPPORTED, SUPPORTED]\\\",\\\"ECMWF verifies AIFS-CRPS as 50-member ensembles against the 50-member physics-based IFS ensemble, using analysis and radiosonde/SYNOP observations — the same 50-member baseline the card proposes to exceed. [SUPPORTED, SUPPORTED]\\\",\\\"ECMWF has explicitly not yet assessed AIFS-CRPS skill for extreme events, noting CRPS's limited sensitivity to distribution tails — exactly the gap the card's top-percentile scoring targets. [SUPPORTED, SUPPORTED]\\\",\\\"The card's 'check first' reproduction target comes from ECMWF's own reported N320 member runtime: about 4 minutes for a 15-day member on an A100 40 GB GPU. [SUPPORTED, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"If 1,000 exchangeable members keep improving top-percentile wind/temperature/rain scores past 50, ECMWF gets cheap direct evidence to raise operational AIFS ENS membership (or add a high-member extreme-event product such as percentiles/EFI), because members are near-free draws of one trained model — changing the current 51-member operational and verification choice.\\\",\\\"if_not_changes\\\":\\\"If skill flattens near 50 members, it confirms shared model error from the single trained distribution — not sampling — caps tail sharpness, so ECMWF would keep ~51 members and spend effort on better uncertainty representation instead (e.g., the multi-scale loss already adopted in v2, perturbed initial conditions, or perturbed-parameter ensembles).\\\",\\\"already_done\\\":{\\\"status\\\":\\\"partly\\\",\\\"claim\\\":\\\"ECMWF has studied ensemble-size convergence for the physics-based IFS ensemble (up to 200 members, Leutbecher 2017) but has not run a 10–1,000-member AIFS-ENS exchangeable-member rare-extreme saturation study; its own paper lists extreme-event skill as a next step.\\\",\\\"checks\\\":[\\\"SUPPORTED\\\",\\\"UNREACHABLE\\\"]},\\\"activity\\\":\\\"active: AIFS ENS has been operational since 1 July 2025 and was upgraded from v1 (afCRPS) to v2 on 12 May 2026, alongside IFS Cycle 50r1. [SUPPORTED, PARTIAL]\\\",\\\"step_in_card_terms\\\":\\\"no\\\"}\n{\\\"programme\\\":2,\\\"name\\\":\\\"HENS (Huge ENSembles) — NVIDIA Earth-2 / SFNO huge-ensemble project\\\",\\\"step\\\":\\\"Generating very large ensembles and sampling their tails for extreme-event statistics. Today HENS builds members from bred-vector initial-condition perturbations plus 29 independently trained SFNO checkpoints (real model uncertainty), not from exchangeable draws of a single distribution, and measures information gain vs member count.\\\",\\\"practice\\\":[\\\"HENS (Mahesh et al., NVIDIA with LBNL, UC Berkeley, Colorado State, UC Irvine, PNNL) ran 7,424 members per day over 92 summer-2023 dates — the card's 'closest prior' scale, but with a different ensemble scheme. [PARTIAL, PARTIAL]\\\",\\\"Their member-generation step is 256 bred-vector initial-condition perturbations per each of 29 independently trained checkpoints — the expensive multi-checkpoint machinery the card would test against cheap exchangeable draws. [SUPPORTED, SUPPORTED]\\\",\\\"HENS already measured tail-sampling (information gain ~4, i.e. 4-sigma events) as a function of ensemble size, showing bigger ensembles sharpen tails — but only for SFNO-BVMC, not for exchangeable draws. [SUPPORTED, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"If exchangeable members of one CRPS-trained distribution keep gaining extreme-event skill past 50, it shows huge ensembles can be built from a single model's exchangeable draws — far cheaper than 29 checkpoints plus bred vectors — so the HENS approach could simplify to one trained model while retaining its tail-sampling benefit.\\\",\\\"if_not_changes\\\":\\\"If skill saturates near 50 for exchangeable draws, it vindicates HENS's design premise that genuine model uncertainty (multiple independently trained checkpoints) is what lets added members sample the tails, reinforcing the need for the multi-checkpoint/bred-vector machinery rather than plain member scaling.\\\",\\\"already_done\\\":{\\\"status\\\":\\\"partly\\\",\\\"claim\\\":\\\"HENS already ran the 'more members sample the tails' experiment, but with SFNO-BVMC (bred vectors + 29 checkpoints); it does not test whether a single afCRPS-trained distribution's exchangeable members saturate, which is the card's question.\\\",\\\"checks\\\":[\\\"SUPPORTED\\\",\\\"SUPPORTED\\\"]},\\\"activity\\\":\\\"active: The HENS recipe is maintained on the main branch of NVIDIA Earth2Studio, which released v0.19.0 on 30 September 2026. [SUPPORTED, SUPPORTED]\\\",\\\"step_in_card_terms\\\":\\\"no\\\"}\n{\\\"programme\\\":3,\\\"name\\\":\\\"Anemoi — ECMWF open-source ML weather framework (co-developed with European national meteorological services)\\\",\\\"step\\\":\\\"Running AIFS-ENS ensemble inference (reproducing the member runtime/memory the card checks first) and evaluating the forecasts — the framework and its verification tooling through which the card's 10–1,000-member sweep and scoring would be executed and documented.\\\",\\\"practice\\\":[\\\"AIFS ENS is run through Anemoi's inference package (anemoi-inference), which is what the card's 'check first' step uses to reproduce the published 4-minute N320 member time and 38 GB memory on external hardware. [UNSUPPORTED, PARTIAL]\\\",\\\"Anemoi's verification is served by evaluation pipelines (e.g., MeteoSwiss's evalml) that run standard and diagnostic verification for Anemoi-built models — the tooling that would score the card's top-percentile wind/temperature/rain probabilities. [SUPPORTED, SUPPORTED]\\\",\\\"anemoi-training recently added ensemble 'graph scores' (energy/CRPS/variogram) for spatial ensemble scoring, showing active work on ensemble-verification tooling adjacent to the card. [SUPPORTED, SUPPORTED]\\\"],\\\"if_lever_changes\\\":\\\"Anemoi's documentation and reference configs could gain a reproducible ensemble-size guideline: how many exchangeable members to draw for top-percentile products, and reference verification configs running >51 members for extreme-event scoring across the ECMWF-and-national-met-service user community.\\\",\\\"if_not_changes\\\":\\\"Anemoi could document ~50 members as sufficient for its AIFS-ENS users, keeping effort on improving model uncertainty (multi-scale loss, graph/energy scores) rather than scaling member counts in inference and evaluation workflows.\\\",\\\"already_done\\\":{\\\"status\\\":\\\"no\\\",\\\"claim\\\":\\\"Anemoi is a framework and tooling project, not an ensemble-size research programme; neither it nor its evaluation tooling has published a 10–1,000-member AIFS-ENS extreme-tail saturation experiment.\\\",\\\"checks\\\":[\\\"SUPPORTED\\\",\\\"SUPPORTED\\\"]},\\\"activity\\\":\\\"active: anemoi-core is under active development, publishing graphs v0.9.8 and training-0.17.1 on 1 October 2026; the anemoi-inference package was last pushed 16 October 2026. [SUPPORTED, PARTIAL]\\\",\\\"step_in_card_terms\\\":\\\"yes: the step is put in the card's terms, or no checker found it on the programme's page\\\"}\nCriteria:\nfit: Does the card's measured outcome feed a named step of this programme? 5 = it measures the quantity that step's current practice depends on, on systems the programme uses; 3 = it feeds that step only through a stand-in (another model, system or scale) the programme would have to bridge; 1 = no step of the programme would use the outcome. A step given only in the card's terms, not the programme's own, scores 3 at most.\nchange: What would the card's outcomes change in this programme's practice? 5 = either outcome changes a choice the programme makes now (what to build, buy, label, check or scale), as its supported practice shows; 3 = only one outcome would change practice, or the change needs further work the card does not do; 1 = neither outcome would change what the programme does. An inactive or archived programme scores 1.\nnew: Has this programme, or work it relies on, already answered the card's question? 5 = supported claims show its current practice lacks this measurement; 3 = unclear, or partly answered; 1 = already answered. If a checker contradicted the claim that it has not been done, score 3 at most.\nReturn only JSON: {\\\"scores\\\": [{\\\"programme\\\": 1, \\\"criterion\\\": \\\"fit | change | new\\\", \\\"value\\\": 1, \\\"reason\\\": \\\"\\\"}]}\"",
+          "id": "prt_14cb29d3b001h6rNNHNz7xTpxi",
+          "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O",
+          "messageID": "msg_14cb29d2a001i1wosL3gpOKEJg"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_14cb29d2a001i1wosL3gpOKEJg",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out",
+          "root": "/home/hal/dev/interp/latent_open"
+        },
+        "cost": 0.00451128,
+        "tokens": {
+          "total": 6083,
+          "input": 2936,
+          "output": 514,
+          "reasoning": 2505,
+          "cache": {
+            "write": 0,
+            "read": 128
+          }
+        },
+        "modelID": "minimax-m3",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792288137620,
+          "completed": 1792288151390
+        },
+        "finish": "stop",
+        "id": "msg_14cb2a194001LkcpX20cwKag73",
+        "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O"
+      },
+      "parts": [
+        {
+          "snapshot": "849e030fb8b9d1316e9e24b773f36429ea9b4e76",
+          "type": "step-start",
+          "id": "prt_14cb2aac40011TyMi3GnPUGwDG",
+          "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O",
+          "messageID": "msg_14cb2a194001LkcpX20cwKag73"
+        },
+        {
+          "type": "reasoning",
+          "text": "Let me analyze each programme carefully against the card's research question and outcomes.\n\n**Card summary:** Tests whether 10-1,000 AIFS-ENS exchangeable members keep improving extreme-event skill past 50, or whether shared model error caps skill. Uses AIFS-ENS v1, scores top-percentile wind/temperature/rain against ERA5.\n\n**Programme 1: ECMWF — AIFS ENS (operational)**\n- Step: Setting operational ensemble size; currently 51 members, scores against IFS, flags extreme-event skill as unassessed.\n- Practice claims (rely only on SUPPORTED/PARTIAL):\n  - \"Operational AIFS ENS runs 51 members on N320, trained on 32 GH200 GPUs via Anemoi by ECMWF AIFS team\" — SUPPORTED, SUPPORTED ✓\n  - \"ECMWF verifies AIFS-CRPS as 50-member ensembles against 50-member physics-based IFS ensemble\" — SUPPORTED, SUPPORTED ✓\n  - \"ECMWF has explicitly not yet assessed AIFS-CRPS skill for extreme events\" — SUPPORTED, SUPPORTED ✓\n  - \"Card's check first target comes from ECMWF's own reported N320 member runtime: ~4 minutes on A100 40 GB GPU\" — SUPPORTED, SUPPORTED ✓\n- if_lever_changes: If 1,000 members improve extremes, ECMWF could raise operational AIFS ENS membership or add high-member extreme-event product.\n- if_not_changes: If skill saturates near 50, confirms shared model error; ECMWF keeps ~51 members, spends effort on better uncertainty representation.\n- already_done: status \"partly\" — ECMWF studied ensemble-size convergence for IFS (up to 200 members) but not for AIFS-ENS exchangeable members; checks: SUPPORTED, UNREACHABLE.\n- activity: active (operational since 1 July 2025, upgraded to v2 on 12 May 2026). Supported/Partial.\n- step_in_card_terms: \"no\"\n\n**Fit:** The card measures exactly what ECMWF's ensemble-size step depends on — how many exchangeable AIFS-ENS members are needed for extreme-event skill. It uses the same AIFS-ENS system at the same scale. The step is given in the programme's terms (operational ensemble size), not just the card's terms. Score: 5.\n\n**Change:** Both outcomes change practice directly. If lever (more members help), ECMWF raises ensemble size or adds high-member extreme-event product. If not (saturation), they keep 51 members and invest in better uncertainty. These are supported choices. Score: 5.\n\n**New:** Programme 1's already_done is \"partly\" with checks [SUPPORTED, UNREACHABLE]. The supported claim says ECMWF has not run this exact 10–1,000-member AIFS-ENS exchangeable rare-extreme study. Since at least one checker marked it SUPPORTED, and the other is UNREACHABLE (not contradicting), we can rely on the SUPPORTED. So this measurement is lacking. Score: 5.\n\nWait, let me reconsider. The instructions say \"Rely only on claims that at least one checker marked SUPPORTED or PARTIAL.\" The claim that the programme has not done the study has one SUPPORTED and one UNREACHABLE. So we can rely on it (at least one SUPPORTED). This means the programme has not answered the question. Score: 5.\n\n**Programme 2: HENS — NVIDIA Earth-2 / SFNO**\n- Step: Building very large ensembles and sampling their tails; uses bred-vector IC perturbations + 29 independently trained SFNO checkpoints, measures information gain vs member count.\n- Practice claims:\n  - \"HENS ran 7,424 members per day over 92 summer-2023 dates\" — PARTIAL, PARTIAL ✓\n  - \"Member-generation is 256 bred-vector IC perturbations × 29 independently trained checkpoints\" — SUPPORTED, SUPPORTED ✓\n  - \"HENS measured tail-sampling as function of ensemble size, showing bigger ensembles sharpen tails — but only for SFNO-BVMC, not for exchangeable draws\" — SUPPORTED, SUPPORTED ✓\n- if_lever_changes: If exchangeable members keep gaining, HENS could simplify to one trained model and retain tail-sampling benefit.\n- if_not_changes: If saturates near 50, vindicates HENS's design premise that genuine model uncertainty (multiple checkpoints) is needed.\n- already_done: status \"partly\" — HENS ran the \"more members sample tails\" experiment but with SFNO-BVMC; checks: SUPPORTED, SUPPORTED. So HENS partly answered for its own setup, not for exchangeable draws.\n- activity: active. Earth2Studio v0.19.0 released 30 September 2026. SUPPORTED, SUPPORTED.\n- step_in_card_terms: \"no\"\n\n**Fit:** The card tests exchangeable AIFS-ENS members; HENS uses SFNO-BVMC (different model + different ensemble scheme — bred vectors + multiple checkpoints). The card's outcome would inform HENS's design choice, but the system is different. The card measures a stand-in (AIFS-ENS exchangeable), not HENS's actual SFNO-BVMC. Score: 3.\n\n**Change:** Both outcomes would change HENS practice — if lever works, HENS could simplify; if not, HENS is vindicated in its multi-checkpoint approach. These are concrete changes. Score: 5.\n\n**New:** HENS already partly answered (with a different ensemble scheme — multi-checkpoint vs exchangeable). The supported claim explicitly states HENS ran the \"more members sample tails\" experiment with SFNO-BVMC but doesn't test exchangeable draws. So the card's specific question (exchangeable members) is not answered. Score: 3 (partly answered — the broader question of ensemble-size tail-sampling is addressed, but for a different setup).\n\nHmm, actually the criterion says: \"5 = supported claims show its current practice lacks this measurement; 3 = unclear, or partly answered; 1 = already answered.\" The card's question is specifically about exchangeable draws of one afCRPS-trained distribution. HENS has answered a related but different question (different ensemble scheme). This is \"partly answered.\" Score: 3.\n\n**Programme 3: Anemoi — ECMWF open-source framework**\n- Step: Running AIFS-ENS ensemble inference and evaluating forecasts — the framework and verification tooling for the card's sweep.\n- Practice claims:\n  - \"AIFS ENS is run through anemoi-inference\" — UNSUPPORTED, PARTIAL. Only one checker marked PARTIAL, the other UNSUPPORTED. This counts as supported by at least one checker.\n  - \"Anemoi's verification is served by evaluation pipelines\" — SUPPORTED, SUPPORTED ✓\n  - \"anemoi-training recently added ensemble 'graph scores' (energy/CRPS/variogram)\" — SUPPORTED, SUPPORTED ✓\n- if_lever_changes: Anemoi docs could gain reproducible ensemble-size guideline; reference configs running >51 members for extreme-event scoring.\n- if_not_changes: Document ~50 members as sufficient.\n- already_done: status \"no\" — Anemoi is framework/tooling, hasn't published the saturation experiment. checks: SUPPORTED, SUPPORTED ✓\n- activity: active. anemoi-core v0.9.8 and training-0.17.1 on 1 October 2026; anemoi-inference pushed 16 October 2026. SUPPORTED, PARTIAL.\n- step_in_card_terms: \"yes\"\n\n**Fit:** The step is given in the card's terms, not the programme's own (\"yes: the step is put in the card's terms, or no checker found it on the programme's page\"). So per criteria, \"A step given only in the card's terms, not the programme's own, scores 3 at most.\" The card uses anemoi-inference to run AIFS-ENS, which is Anemoi's tooling. But the step is framed in card's terms. Score: 3.\n\n**Change:** Both outcomes would change documentation/reference configs (ensemble-size guidelines). This is a concrete practice change. Score: 5.\n\nActually, let me reconsider. The \"if_lever_changes\" describes how documentation gains a guideline for ensemble-size and reference verification configs running >51 members. The \"if_not_changes\" describes documenting ~50 members as sufficient. These are direct changes to Anemoi's documentation and reference configs. Score: 5.\n\nHmm, but Anemoi is a framework. Changing documentation and reference configs is real but less impactful than ECMWF's operational choices. Let me stay with 5 since both outcomes change practice.\n\n**New:** Supported claims show Anemoi has not published this saturation experiment. Score: 5.\n\nLet me finalize:\n\nProgramme 1: fit=5, change=5, new=5\nProgramme 2: fit=3, change=5, new=3\nProgramme 3: fit=3, change=5, new=5\n\nLet me double-check the reason word counts (≤25 words each).\n\nProgramme 1 fit: \"Card measures exchangeable AIFS-ENS extreme-event skill past 50 members; ECMWF's ensemble-size step depends on this exact quantity on the same system.\" — 24 words. Good.\n\nProgramme 1 change: \"Both outcomes change ECMWF's operational ensemble size: raise to >51 if lever; keep ~51 and invest in uncertainty methods if not. Supported.\" — 22 words. Good.\n\nProgramme 1 new: \"ECMWF flagged extreme-event skill as unassessed; no 10–1,000-member AIFS-ENS exchangeable saturation study done. Supported claim confirms gap.\" — 19 words. Good.\n\nProgramme 2 fit: \"Card tests AIFS-ENS exchangeable draws; HENS uses SFNO-BVMC (bred vectors + 29 checkpoints), a different system serving as stand-in.\" — 20 words. Good.\n\nProgramme 2 change: \"If lever works, HENS could simplify to one model retaining tail benefit; if not, multi-checkpoint design is vindicated.\" — 20 words. Good.\n\nProgramme 2 new: \"HENS ran 'more members sample tails' with SFNO-BVMC (bred vectors + 29 checkpoints), not exchangeable draws — card's specific question partly answered.\" — 22 words. Good.\n\nProgramme 3 fit: \"Step framed in card's terms (Anemoi as AIFS-ENS runtime/eval tool); Anemoi's own step is framework tooling, not ensemble-size research. Capped at 3.\" — 22 words. Good.\n\nProgramme 3 change: \"Outcomes change Anemoi docs and reference configs: ensemble-size guideline and >51-member verification configs, or documenting ~50 as sufficient.\" — 17 words. Good.\n\nProgramme 3 new: \"Supported claim: Anemoi is tooling/framework, has not published this experiment. Practice lacks the measurement.\" — 15 words. Good.\n\nWait — for programme 3 fit, I should be more careful. The criterion says \"A step given only in the card's terms, not the programme's own, scores 3 at most.\" The card does use Anemoi infrastructure (anemoi-inference). The card's measured outcome (ensemble-size saturation) would feed Anemoi's documentation/configs. But since the step_in_card_terms is \"yes\", score is capped at 3. I'll keep 3.\n\nActually re-reading: \"Does the card's measured outcome feed a named step of this programme?\" The named step is \"Running AIFS-ENS ensemble inference and evaluating forecasts.\" The card does run AIFS-ENS inference (via anemoi-inference) and evaluates forecasts. So the outcome does feed this step. But the step is put in the card's terms. Score 3.\n\nLet me finalize the JSON.",
+          "time": {
+            "start": 1792288139984,
+            "end": 1792288149840
+          },
+          "metadata": {
+            "anthropic": {
+              "signature": "55977f7fc4beece2ae718847bb6b928af42f2d24337ab8e4296a27395b183835"
+            }
+          },
+          "id": "prt_14cb2aad0001F8Noc2XEmq5ujD",
+          "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O",
+          "messageID": "msg_14cb2a194001LkcpX20cwKag73"
+        },
+        {
+          "type": "text",
+          "text": "```json\n{\"scores\": [{\"programme\": 1, \"criterion\": \"fit\", \"value\": 5, \"reason\": \"Card measures exchangeable AIFS-ENS extreme-event skill past 50 members on the same N320 system ECMWF's ensemble-size step depends on.\"}, {\"programme\": 1, \"criterion\": \"change\", \"value\": 5, \"reason\": \"Both outcomes change ECMWF's operational ensemble size: raise >51 if lever; keep ~51 and invest in uncertainty methods if not. Supported.\"}, {\"programme\": 1, \"criterion\": \"new\", \"value\": 5, \"reason\": \"ECMWF flagged extreme-event skill as unassessed; no 10–1,000-member AIFS-ENS exchangeable saturation study done. Supported claim confirms gap.\"}, {\"programme\": 2, \"criterion\": \"fit\", \"value\": 3, \"reason\": \"Card tests AIFS-ENS exchangeable draws; HENS uses SFNO-BVMC (bred vectors + 29 checkpoints), a different system serving as stand-in.\"}, {\"programme\": 2, \"criterion\": \"change\", \"value\": 5, \"reason\": \"If lever works, HENS could simplify to one model retaining tail benefit; if not, multi-checkpoint/bred-vector design is vindicated.\"}, {\"programme\": 2, \"criterion\": \"new\", \"value\": 3, \"reason\": \"HENS ran 'more members sample tails' with SFNO-BVMC, not exchangeable draws — card's specific question partly answered.\"}, {\"programme\": 3, \"criterion\": \"fit\", \"value\": 3, \"reason\": \"Step framed in card's terms (Anemoi as AIFS-ENS runtime/eval tool); Anemoi's own step is framework tooling, capped at 3.\"}, {\"programme\": 3, \"criterion\": \"change\", \"value\": 5, \"reason\": \"Outcomes change Anemoi docs and reference configs: ensemble-size guideline and >51-member verification configs, or documenting ~50 sufficient.\"}, {\"programme\": 3, \"criterion\": \"new\", \"value\": 5, \"reason\": \"Supported claim: Anemoi is framework/tooling, has not published this 10–1,000-member AIFS-ENS extreme-tail saturation experiment.\"}]}\n```",
+          "time": {
+            "start": 1792288149845,
+            "end": 1792288151184
+          },
+          "id": "prt_14cb2d155001AnXAmUjjW11t27",
+          "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O",
+          "messageID": "msg_14cb2a194001LkcpX20cwKag73"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "96a416e3326f26c88eb3466c68e635f94e7a3507",
+          "type": "step-finish",
+          "tokens": {
+            "total": 6083,
+            "input": 2936,
+            "output": 514,
+            "reasoning": 2505,
+            "cache": {
+              "write": 0,
+              "read": 128
+            }
+          },
+          "cost": 0.00451128,
+          "id": "prt_14cb2d706001Ieuxb5LO7OIJxm",
+          "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O",
+          "messageID": "msg_14cb2a194001LkcpX20cwKag73"
+        },
+        {
+          "type": "patch",
+          "hash": "849e030fb8b9d1316e9e24b773f36429ea9b4e76",
+          "files": [
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-4.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-4.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-4.jsonl",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-5.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-5.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-5.jsonl",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-6.http/001.request.json",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-6.http/001.response.txt",
+            "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0141-frame/out/raw/critic-6.jsonl"
+          ],
+          "id": "prt_14cb2d758001hfuUqnDssrS2Sc",
+          "sessionID": "ses_eb34d6396ffeAU46Jcjb0ha34O",
+          "messageID": "msg_14cb2a194001LkcpX20cwKag73"
+        }
+      ]
+    }
+  ]
+}

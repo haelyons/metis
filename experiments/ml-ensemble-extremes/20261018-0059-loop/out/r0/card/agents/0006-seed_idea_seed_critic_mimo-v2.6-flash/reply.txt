@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 4,
+      "ref": "card:if_lever",
+      "reason": "Either outcome changes whether to buy GPU-scale member counts, but only for one model and 7 dates; multi-season generality unchecked."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:decision_rule",
+      "reason": "Axis (10-1,000, 100x), compute-bought members, and held_fixed all hold; but 0.01 vs 0.005 thresholds over 7 dates may sit inside bootstrap noise."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:scored_against",
+      "reason": "ERA5 and SYNOP observations are independent truth, and the anchor reproduces published per-member timing plus ECMWF control fields within stated tolerance."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:closest_prior",
+      "reason": "HENS used a different model (SFNO); plan states the gap: whether exchangeable AIFS-ENS members saturate past 50 members."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:method",
+      "reason": "method is none; only parallel member generation and within-step GPU splitting, leaving the sequential chain intact."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "restructuring.method is none, so baseline criteria do not apply."
+    }
+  ],
+  "decides_by": "p_score",
+  "decides_by_reason": "Only p_score subsamples members and computes fair CRPS/Brier versus N with bootstrap intervals, the quantities the decision_rule thresholds."
+}
+```

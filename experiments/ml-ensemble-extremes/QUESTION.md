@@ -9,3 +9,6 @@ the strongest independent truth (reanalysis and station data) and an active oper
 
 | Run | Kind | Result |
 |---|---|---|
+| `20261018-0059-loop` | loop | card done; frame check crashed on the frame.js bug |
+| `20261018-0133-loop` | loop, reusing that card | card PASS 2/2, critic 19/25 (stakes 5, lever 3, verifiable 5, open 5, reshape 1), plan $963; frame researcher's JSON did not parse twice (fixed in 9a7ba5f); no variant beat the original |
+| `20261018-0141-frame` | frame check of that card | ECMWF AIFS ENS 15/15 (operational since July 2025; ECMWF flags extreme-event skill as not yet assessed), HENS 11, Anemoi 11 (step flagged) |

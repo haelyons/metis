@@ -1,0 +1,372 @@
+{
+ "card": "card",
+ "root": "generative pipeline for discovery of single phase immersion coolants",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r0/frame",
+ "wall_min": 11.1,
+ "cost_usd": 0.1644,
+ "tokens": 402994,
+ "research_ok": true,
+ "research_errors": [],
+ "no_programme_reason": "",
+ "gaps": [
+  "No programme measures the card's exact quantity: whether the best MD-ranked coolant's cooling FOM keeps improving as the number of MD-verified candidates grows from ~100 to ~1000 (vs. plateauing).",
+  "Ewen group's MD verification covers only 8 representative molecules with no immersion-coolant FOM compared against commercial fluids; Sinton/FL01 verify experimentally and via CFD, not with MD; Org-Mol never MD-verified its shortlist.",
+  "Activity of the Org-Mol/SINOPEC team is inferred from a July 2025 paper plus multi-year funding; no follow-on release was found by Oct 2026, so its 'active' state is weaker evidence than for the Ewen (Sep 2026 paper) and Sinton/FL01 (Nov 2025 launch, Sep 2026 prototyping) programmes."
+ ],
+ "programmes": [
+  {
+   "n": 1,
+   "name": "Ewen group (Imperial College London / University of Bath) — MD benchmarking of organic-liquid thermophysical properties",
+   "url": "https://doi.org/10.1039/D6DD00260A",
+   "step": "The GPU molecular-dynamics verification of candidate fluids' viscosity and thermal conductivity — the exact step the card scales to 100/300/1000 candidates. Today the group runs equilibrium MD (EMD) on a handful of representative molecules and benchmarks it against ML predictors for density, viscosity and thermal conductivity of C10–C50 organics (lubricants and cooling fluids).",
+   "step_url": "https://doi.org/10.1039/D6DD00260A",
+   "step_checks": [
+    "SUPPORTED",
+    "SUPPORTED"
+   ],
+   "activity": {
+    "state": "active",
+    "claim": "Most recent output is the Digital Discovery paper benchmarking ML vs MD for organic-liquid thermophysical properties, dated 29 Sep 2026, following a 22 Apr 2026 ChemRxiv preprint on the hydrocarbon version.",
+    "url": "https://profiles.imperial.ac.uk/j.ewen/publications",
+    "checks": [
+     "SUPPORTED",
+     "PARTIAL"
+    ]
+   },
+   "flags": {
+    "inactive": false,
+    "done_contradicted": false,
+    "step_restates_card": true
+   },
+   "claims": [
+    {
+     "claim": "The group's ML-first screening toolchain is built on a ~4,700-value experimental database for 835 organic molecules, with XGBoost as the best model — i.e. MD is used only as a spot-check, not at screening scale.",
+     "url": "https://doi.org/10.1039/D6DD00260A",
+     "checks": [
+      "PARTIAL",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "MD verification is run on only eight molecules, and the group already concluded that ML (orders of magnitude cheaper than EMD) is the right tool for high-throughput screening — the assumption the card tests.",
+     "url": "https://doi.org/10.1039/D6DD00260A",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The work is done by Egheosa Ogbomo, Fionn Carman, Daniele Dini and James Patrick Ewen (Imperial College London; Ewen now Lecturer at University of Bath), using supercomputer molecular simulation of solid-liquid interfaces.",
+     "url": "https://profiles.imperial.ac.uk/j.ewen",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "If the best MD-ranked coolant keeps improving as verified candidates grow 100→1000, the group has a concrete reason to build a GPU-MD verification stage as a genuine ranking/filter (not an 8-molecule benchmark), investing in throughput and force-field refinement so MD — rather than XGBoost alone — decides which candidates advance.",
+   "if_not_changes": "If the best FOM plateaus by a few hundred candidates, it confirms their published conclusion that ML predictors at orders-of-magnitude lower cost are the right screening tool and that MD's force-field error (~chemistry-dependent bias in viscosity/thermal conductivity) caps its ranking value; their MD stays a spot-check rather than a scaled verification layer.",
+   "already_done": {
+    "status": "partly",
+    "claim": "They have EMD-verified thermophysical properties but only for a fixed set of eight representative molecules; they have not run the card's scaling experiment (best MD-ranked FOM vs number of MD-verified candidates from 100 to 1000, compared to commercial fluids).",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 4,
+     "values": [
+      5,
+      3,
+      4
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Card measures GPU-MD organic-liquid viscosity/conductivity, exactly the EMD step and systems programme currently spot-checks.",
+      "opencode-go/mimo-v2.6-flash: Card reports ranking and hit rate, explicitly not absolute fluid accuracy; Ewen benchmarking needs absolute viscosity/thermal-conductivity accuracy — a stand-in.",
+      "opencode-go/minimax-m3: Measures MD-verified viscosity/thermal conductivity FOM at scale on C10–C50 organics matching their practice; scale differs from current 8 molecules."
+     ]
+    },
+    "change": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      5
+     ],
+     "spread": 2,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Only rising FOM would make it scale MD from spot-check to ranking; plateau confirms ML-first practice, no change.",
+      "opencode-go/mimo-v2.6-flash: Plateau outcome only confirms their published ML-first conclusion; only the climbing outcome would change what they build or scale.",
+      "opencode-go/minimax-m3: If lever holds, group builds scaled GPU-MD verification; if not, MD stays spot-check—both outcomes change current MD practice."
+     ]
+    },
+    "new": {
+     "median": 4,
+     "values": [
+      5,
+      4,
+      4
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Practice verifies only eight molecules and uses ML screening; it lacks MD-verified FOM over 100–1000 candidates.",
+      "opencode-go/mimo-v2.6-flash: They MD-verified only eight molecules and never scaled candidate count, but that partial verification overlaps the card's mechanism.",
+      "opencode-go/minimax-m3: Group MD-verified 8 molecules but has not run scaling experiment (best MD-FOM vs 100→1000 candidates vs commercial fluids)."
+     ]
+    }
+   },
+   "sum": 11,
+   "caps": []
+  },
+  {
+   "n": 2,
+   "name": "Sinton Lab / FL01 (University of Toronto + Acceleration Consortium) — self-driving lab for immersion coolant discovery",
+   "url": "https://acceleration.utoronto.ca/news/ac-u-of-t-startup-tackles-the-growing-challenge-of-cooling-powerful-technologies",
+   "step": "The verification/ranking of many candidate coolants — the same pipeline stage the card runs with GPU-MD, which Sinton/FL01 run instead with a wet-lab self-driving lab measuring viscosity, density, heat capacity, thermal conductivity and dielectric constant.",
+   "step_url": "https://doi.org/10.82417/pw8c-8z69",
+   "step_checks": [
+    "SUPPORTED",
+    "SUPPORTED"
+   ],
+   "activity": {
+    "state": "active",
+    "claim": "FL01 launched November 2025 and, as of a 1 Sep 2026 Acceleration Consortium article, is prototyping its self-driving lab with several industry partners.",
+    "url": "https://acceleration.utoronto.ca/news/ac-u-of-t-startup-tackles-the-growing-challenge-of-cooling-powerful-technologies",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "flags": {
+    "inactive": false,
+    "done_contradicted": false,
+    "step_restates_card": true
+   },
+   "claims": [
+    {
+     "claim": "Their verification throughput is 5 samples/hour (claimed 100× conventional), i.e. thousands of measurements per device per month, but still a wet-lab loop rather than computation.",
+     "url": "https://doi.org/10.82417/pw8c-8z69",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "Data-generation scale is the explicit selling point: one device produces 10,000 data points in two months, versus ~4,000 publicly available data points over the prior century.",
+     "url": "https://acceleration.utoronto.ca/news/ac-u-of-t-startup-tackles-the-growing-challenge-of-cooling-powerful-technologies",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The group already uses a figure of merit (FOM) for immersion coolants and screens >1600 fluid mixtures by coupling CFD with active learning (15 data points to drive the FOM, 10× efficiency). People: David Sinton, Mohammad Zargartalebi, Hanie Rezaei, Maryam Ebrahimiazar (U of T Mechanical & Industrial Engineering); FL01 CEO Zargartalebi.",
+     "url": "https://ui.adsabs.harvard.edu/abs/2025JEnSt.14019036R/abstract",
+     "checks": [
+      "PARTIAL",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "If more MD verification keeps raising the best FOM, FL01/Sinton gains a cheap GPU pre-filter: MD could rank a million candidates before any fluid is ever synthesized, letting their 5-samples/hour wet-lab loop spend effort only on the MD-verified top tier — shrinking the 'years to weeks' R&D timeline further and de-risking which chemistries to buy/synthesize.",
+   "if_not_changes": "If MD FOM plateaus, their experimental self-driving lab remains the only trustworthy verifier (their Nature Communications microfluidic method already argues computational thermal-conductivity models carry ~10% errors and 'necessitate experimental verification'), so they keep investing in sensor/SDL throughput rather than GPU-MD, and the card's MD stage is not added to their loop.",
+   "already_done": {
+    "status": "no",
+    "claim": "Sinton/FL01 verify and rank candidates experimentally (self-driving lab, microfluidics, CFD+active learning), not via GPU molecular dynamics, and they have not run the card's MD-verification scaling experiment (best MD-ranked FOM vs number of MD-verified candidates).",
+    "checks": [
+     "PARTIAL",
+     "PARTIAL"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      3
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Outcome concerns GPU-MD ranking, not SDL wet-lab verification; they would bridge computation to 5-sample/hour experimental selection.",
+      "opencode-go/mimo-v2.6-flash: Card's MD ranking substitutes for their wet-lab measurement of the same properties; their own work says computation needs experimental verification.",
+      "opencode-go/minimax-m3: Card measures computational MD-FOM as stand-in for their experimental wet-lab verification; bridges computation to experiment."
+     ]
+    },
+    "change": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      3
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Only rising MD FOM justifies adding a GPU pre-filter before SDL; plateau keeps SDL throughput investment unchanged.",
+      "opencode-go/mimo-v2.6-flash: Only the climbing outcome would add an MD pre-filter; plateau merely reconfirms their wet-lab-first investment, changing nothing.",
+      "opencode-go/minimax-m3: If lever holds, they add GPU-MD pre-filter before wet-lab; if not, status quo—only lever case changes practice."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      4
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: SDL verifies candidates experimentally via FOM/CFD, not by GPU-MD scaling, so the MD plateau question lacks evidence.",
+      "opencode-go/mimo-v2.6-flash: Both checkers confirm they verify experimentally, never via GPU-MD, and have not run the candidate-count scaling experiment.",
+      "opencode-go/minimax-m3: Group verifies experimentally via SDL/microfluidics; has not run card's MD-verification scaling experiment."
+     ]
+    }
+   },
+   "sum": 11,
+   "caps": []
+  },
+  {
+   "n": 3,
+   "name": "Org-Mol team (SINOPEC Research Institute of Petroleum Processing + DP Technology + AI for Science Institute)",
+   "url": "https://www.nature.com/articles/s41524-025-01720-4",
+   "step": "The post-ML-filter down-selection the card replaces with MD verification: Org-Mol ML-screens millions of esters, filters to a 461-candidate shortlist, then manually picks only two to synthesize and measure — exactly where the card would insert GPU-MD verification of the top 100–1000.",
+   "step_url": "https://www.nature.com/articles/s41524-025-01720-4",
+   "step_checks": [
+    "SUPPORTED",
+    "SUPPORTED"
+   ],
+   "activity": {
+    "state": "active",
+    "claim": "The pipeline was published 11 July 2025 and is backed by multi-year funding from China Petroleum & Chemical Corp and the National Key R&D Program of China (grant 2024YFA1510200), indicating an ongoing effort rather than an archived one.",
+    "url": "https://www.nature.com/articles/s41524-025-01720-4",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "flags": {
+    "inactive": false,
+    "done_contradicted": false,
+    "step_restates_card": true
+   },
+   "claims": [
+    {
+     "claim": "Generation + ML filter runs at millions scale: >6 million saturated mono-/dibasic esters are constructed and screened by dielectric constant, yielding 8569 monoesters.",
+     "url": "https://www.nature.com/articles/s41524-025-01720-4",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "The downstream filter collapses the shortlist to 461 by predicted viscosity and thermal conductivity, then to 2 by human synthetic-feasibility judgement — no computational verification of hundreds of candidates exists.",
+     "url": "https://www.nature.com/articles/s41524-025-01720-4",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    },
+    {
+     "claim": "People/institutions: Qi Ou, Minyang Zhuang, Lele Liu, Ning Wang (SINOPEC Research Institute of Petroleum Processing, Beijing); Hongshuai Wang, Shangqian Chen, Zhifeng Gao (DP Technology, Beijing); Zhifeng Gao (AI for Science Institute, Beijing). The model is a Uni-Mol-derived 3D transformer (Org-Mol).",
+     "url": "https://www.nature.com/articles/s41524-025-01720-4",
+     "checks": [
+      "SUPPORTED",
+      "SUPPORTED"
+     ],
+     "verdict": "verified"
+    }
+   ],
+   "if_lever_changes": "If MD verification keeps raising the best FOM, the Org-Mol pipeline would add a GPU-MD verification stage (100–1000 candidates) between the 461-candidate ML shortlist and synthesis, replacing the manual 2-candidate pick with an MD-ranked list — likely producing a verified coolant that beats commercial fluids and turning their 'two validated candidates' proof-of-concept into a scalable discovery engine.",
+   "if_not_changes": "If MD FOM plateaus, their current practice is confirmed as already near-optimal: ML filtering to a few hundred then hand-picking two to synthesize is sufficient, and spending compute on MD-verifying hundreds-to-thousands of candidates would be a waste, so the pipeline stays ML-plus-sparse-experiment.",
+   "already_done": {
+    "status": "no",
+    "claim": "Org-Mol ML-screened millions of esters and experimentally validated two synthesized candidates; it never MD-verified hundreds-to-thousands of candidates' viscosity and thermal conductivity, so the card's scaling experiment has not been run by this team.",
+    "checks": [
+     "SUPPORTED",
+     "SUPPORTED"
+    ]
+   },
+   "grounded": true,
+   "scores": {
+    "fit": {
+     "median": 3,
+     "values": [
+      3,
+      4,
+      3
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Outcome suggests MD verification for esters, but current down-selection depends on predictions plus synthesis; a computational bridge is needed.",
+      "opencode-go/mimo-v2.6-flash: Card's MD ranks ester viscosity/thermal conductivity between their 461-shortlist and synthesis — same chemistry and quantities, but omits their dielectric filter.",
+      "opencode-go/minimax-m3: Card's MD verification step replaces their manual 2-candidate pick; step is in card terms, not theirs."
+     ]
+    },
+    "change": {
+     "median": 3,
+     "values": [
+      3,
+      3,
+      3
+     ],
+     "spread": 0,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Only rising FOM changes their ML-plus-hand-pick pipeline to add MD ranking; plateau confirms current two-candidate practice.",
+      "opencode-go/mimo-v2.6-flash: Climbing outcome would insert an MD stage replacing their manual two-candidate pick; plateau only endorses current ML-plus-sparse-experiment practice.",
+      "opencode-go/minimax-m3: If lever holds, they insert MD verification between ML shortlist and synthesis; if not, ML+sparse experiment confirmed—only lever changes."
+     ]
+    },
+    "new": {
+     "median": 5,
+     "values": [
+      5,
+      5,
+      4
+     ],
+     "spread": 1,
+     "reasons": [
+      "opencode-go/qwen3.8-flash: Org-Mol ML-screened millions and validated two experimentally; it never MD-verified hundreds-to-thousands candidates for the scaling question.",
+      "opencode-go/mimo-v2.6-flash: Both checkers support that they never MD-verified hundreds-to-thousands of candidates — the card's scaling experiment is unrun by this team.",
+      "opencode-go/minimax-m3: Group ML-screened millions and validated 2 experimentally; never MD-verified hundreds-to-thousands candidates' thermophysical properties."
+     ]
+    }
+   },
+   "sum": 11,
+   "caps": []
+  }
+ ],
+ "best": {
+  "name": "Ewen group (Imperial College London / University of Bath) — MD benchmarking of organic-liquid thermophysical properties",
+  "step": "The GPU molecular-dynamics verification of candidate fluids' viscosity and thermal conductivity — the exact step the card scales to 100/300/1000 candidates. Today the group runs equilibrium MD (EMD) on a handful of representative molecules and benchmarks it against ML predictors for density, viscosity and thermal conductivity of C10–C50 organics (lubricants and cooling fluids).",
+  "sum": 11,
+  "fit": 4,
+  "change": 3,
+  "new": 4
+ },
+ "failed_calls": []
+}

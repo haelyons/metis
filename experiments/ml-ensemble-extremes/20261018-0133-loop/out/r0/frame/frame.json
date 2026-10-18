@@ -1,0 +1,36 @@
+{
+ "card": "card",
+ "root": "Do more members of a machine-learned weather ensemble buy better forecasts of rare extremes, or does error shared by all members cap the skill?",
+ "models": {
+  "research": "opencode-go/deepseek-v4-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0133-loop/out/r0/frame",
+ "wall_min": 2.6,
+ "cost_usd": 0.083,
+ "tokens": 78395,
+ "research_ok": false,
+ "research_errors": [
+  "no programmes array"
+ ],
+ "gaps": [],
+ "programmes": [],
+ "best": null,
+ "failed_calls": [
+  {
+   "id": "research#1",
+   "model": "opencode-go/deepseek-v4-pro",
+   "errors": [
+    "no programmes array"
+   ]
+  }
+ ]
+}

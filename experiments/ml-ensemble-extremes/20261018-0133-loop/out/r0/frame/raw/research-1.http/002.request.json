@@ -1,0 +1,310 @@
+{
+ "ts": "2026-10-18T01:33:35.752Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e635804b0fe929d2ed556701e94990a108996451",
+  "x-opencode-request": "msg_14ca45958001wV2LZZhJT7sP5M",
+  "x-opencode-session": "ses_eb35ba70affe2op1g6G5SHstMe",
+  "x-opencode-session-id": "ses_eb35ba70affe2op1g6G5SHstMe",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:39115",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "57016"
+ },
+ "body": {
+  "model": "deepseek-v4-pro",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.\nYou are powered by the model named deepseek-v4-pro. The exact model ID is opencode-go/deepseek-v4-pro\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0133-loop/out/r0/frame/research\n  Workspace root folder: /home/hal/dev/interp/latent_open\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Sun Oct 18 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Here is a research card, written to answer this root question: Do more members of a machine-learned weather ensemble buy better forecasts of rare extremes, or does error shared by all members cap the skill?\n\n**ml-ensemble-extremes · Ensemble size for rare extremes in a machine-learned weather ensemble.** seed pick · compute tested: yes · plan expects: the lever · PASS\n\n**Question.** Does 10 to 1,000 AIFS-ENS members beat 50 for top-percentile wind, temperature, and rain probability forecasts, or does shared model error cap the skill?\n\n**What is known.** HENS Part 2: 7,424 SFNO members per day for 92 summer-2023 dates; showed huge ensembles sample 4-sigma tails and reduce outliers. Whether AIFS-ENS, whose members are exchangeable draws of one afCRPS-trained distribution, keeps gaining skill past 50 members or saturates from shared model error.\n\n**Hypothesis.** More members keep helping: 1,000 members sample top-percentile tails far better than 50, so extreme-event scores keep improving [s_hens].\n\n**If compute is the lever.** Skill on top-percentile wind, temperature, and rain keeps rising past 50 members: 1,000 members sharpen the tails and improve extreme-event scores.\n\n**If not.** Skill flattens near 50 members: members are exchangeable draws of one trained distribution, so shared model error caps tail sharpness and extra members add nothing.\n\n**Test.** Run 7,000 fifteen-day AIFS-ENS v1 forecasts (7 dates x 1,000 members) on eight A100 40 GB GPUs; subsample 10-1,000 members, score top-percentile wind/temperature/rain probabilities against ERA5 with fair CRPS and Brier scores, and test whether skill still rises past 50 members.\n\n*Compute axis.* Ensemble members per forecast: 10–1,000 members, 6 levels. Closest prior: 7,424 [s_hens], not beyond it.\n\n*Restructuring.* none.\n\n**Check first.** Reproduce the published 4-minute N320 member time and 38 GB memory; one control run must match ECMWF open data within ensemble spread [s_crps_paper]. Tolerance: timing within +/-25% of 4 min; 38 GB memory fits; control field within the ensemble's own member-to-member spread at each lead time (GPUs are non-deterministic, so exact reproduction is not expected).\n\n**Would not show.** Applies to AIFS-ENS v1 medium-range extremes on 7 dates; not a multi-season reforecast, other models, subseasonal leads, or direct proof that shared error causes any saturation.\n\n*Cost.* Plans $963.17 of the $1,000 budget over 74.3 machine-hours, leaving $36.83. Main guess: peak filesystem usage [g], measured after $19.90 of spend; the budget is reached if it is 15× higher. Full scale: A 30-date multi-season reforecast at 1,000 members, $3,980, 3.98× the budget.\n\nFind the existing research or industrial programmes this card's result would feed: named labs, companies, open-source projects or consortia doing this work now. Pick one to three. For each, use its own pages, papers or repositories to describe the step of its pipeline the card targets, and how it handles that step today: at what scale, with which tools or people. Describe that step in the programme's own words, and copy the sentence from its own page that describes it (step_url, step_quote). Say whether the programme is active now: cite its most recent release, commit, paper or announcement, or a statement that it was archived or stopped (activity). Say what each of the card's two predicted outcomes would change in that programme's practice, or that it would change nothing. Check whether that programme, or work it relies on, has already run this experiment. Cite a URL for every factual claim and copy the sentence from that page that supports it. If no programme would use the result, return no programmes and say why. Write your working notes to notes.md in your working directory.\nReturn only JSON: {\\\"programmes\\\": [{\\\"name\\\": \\\"\\\", \\\"url\\\": \\\"\\\", \\\"step\\\": \\\"\\\", \\\"step_url\\\": \\\"\\\", \\\"step_quote\\\": \\\"\\\", \\\"activity\\\": {\\\"state\\\": \\\"active | inactive | unknown\\\", \\\"claim\\\": \\\"\\\", \\\"url\\\": \\\"\\\", \\\"quote\\\": \\\"\\\"}, \\\"practice\\\": [{\\\"claim\\\": \\\"\\\", \\\"url\\\": \\\"\\\", \\\"quote\\\": \\\"\\\"}], \\\"if_lever_changes\\\": \\\"\\\", \\\"if_not_changes\\\": \\\"\\\", \\\"already_done\\\": {\\\"status\\\": \\\"yes | partly | no | unknown\\\", \\\"claim\\\": \\\"\\\", \\\"url\\\": \\\"\\\", \\\"quote\\\": \\\"\\\"}}], \\\"gaps\\\": [\\\"\\\"], \\\"no_programme_reason\\\": \\\"\\\"}\""
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_00_0FoJFlQBLRWTnbYrRjM71252",
+      "type": "function",
+      "function": {
+       "name": "read",
+       "arguments": "{\"filePath\":\"/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0133-loop/out/r0/frame/research\"}"
+      }
+     },
+     {
+      "id": "call_01_KSFu4GpszTLcgVcqOrC52360",
+      "type": "function",
+      "function": {
+       "name": "websearch",
+       "arguments": "{\"query\":\"ECMWF AIFS-ENS afCRPS ensemble machine learning weather forecast members\",\"numResults\":8}"
+      }
+     },
+     {
+      "id": "call_02_2r3amQe1iSZefqlHTHsn5887",
+      "type": "function",
+      "function": {
+       "name": "websearch",
+       "arguments": "{\"query\":\"HENS huge ensemble SFNO 7424 members NVIDIA Earth-2\",\"numResults\":8}"
+      }
+     }
+    ],
+    "reasoning_content": "Let me understand this task. I need to research existing programmes that this research card's result would feed into. The card is about ensemble size for rare extremes in a machine-learned weather ensemble, specifically AIFS-ENS (ECMWF's AI forecasting system ensemble).\n\nLet me first read my working directory to see what's there, then research the relevant programmes.\n\nThe key players here:\n1. ECMWF (European Centre for Medium-Range Weather Forecasts) - they build AIFS (Artificial Intelligence Forecasting System), including AIFS-ENS. This is the most direct.\n2. AIFS-ENS is based on the \"afCRPS-trained distribution\" - there's a paper by Lang et al. (2024) about AIFS.\n3. The card references \"HENS Part 2\" - which is the \"Huge Ensembles\" paper? Let me think. There's a paper \"A Generative Foundation Model for an Ensemble Weather Forecast\" or \"Ensemble Weather Forecasting using Diffusion...\" Actually HENS might refer to a specific work. Let me search.\n\nActually, the reference [s_hens] - \"HENS Part 2: 7,424 SFNO members per day for 92 summer-2023 dates\". SFNO = Spherical Fourier Neural Operator, which is NVIDIA Earth-2's FourCastNet successor / NIM. HENS could be \"Huge Ensemble of Neural... \" Let me search for this.\n\nAlso [s_crps_paper] - the afCRPS paper is \"AIFS - ECMWF's data-driven forecasting system\" by Lang et al. 2024. afCRPS = affine conditional rank probability score? Actually it's the \"CRPS with affine transformation\"? Let me recall. The AIFS paper: \"AIFS – ECMWF's data-driven forecasting system\" (Lang et al., 2024). They trained with a loss that produces a distribution: the model outputs mean and spread parameters, trained with CRPS.\n\nActually afCRPS might be \"affine CRPS\" used in the ensemble version. There's a follow-up paper \"AIFS-ENS\" or similar.\n\nLet me do web searches to get accurate, current info.\n\nKey programmes:\n1. ECMWF AIFS (AIFS and AIFS-ENS) - the direct target. ECMWF is a consortium (intergovernmental organisation) with 35 member and cooperating states.\n2. NVIDIA Earth-2 / FourCastNet / SFNO - the HENS work with huge ensembles. NVIDIA's Earth-2 platform.\n3. Maybe Google DeepMind's GraphCast/GenCast - ensemble ML weather forecasting.\n4. Maybe Microsoft Start / Aurora - ensemble weather.\n5. Open-source projects: ecmwf/earthkit, ai-models, anemoi (ECMWF's AI framework - the open-source project behind AIFS).\n\nThe card specifically targets AIFS-ENS. The most relevant programmes:\n\n1. **ECMWF** (the AIFS programme) - named organisation. Their pipeline: training AIFS-ENS with afCRPS, running operational ensemble forecasts. The step targeted: ensemble size / number of members for extreme event prediction.\n\n2. **Anemoi** - ECMWF's open-source project for AI weather models (anemoi-training, anemoi-models, anemoi-inference, anemoi-graphs). AIFS is built on Anemoi. This is the open-source project.\n\n3. **NVIDIA Earth-2** - runs huge ensembles with SFNO (FourCastNet), including the \"HENS\" huge ensemble work. The HENS Part 2 with 7,424 members is likely NVIDIA Earth-2 work.\n\nLet me search for specifics to get accurate quotes and URLs.\n\nLet me start with searches.\n\nActually, let me first check the working directory and notes.md, then do parallel web searches.\n\nLet me plan the searches:\n1. \"AIFS-ENS ECMWF afCRPS\" - find the paper and programme.\n2. \"HENS huge ensemble SFNO 7424 members\" - find the NVIDIA work.\n3. \"Anemoi ECMWF open source AI weather\"\n4. \"ECMWF AIFS ensemble members operational\"\n\nLet me do these searches."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_00_0FoJFlQBLRWTnbYrRjM71252",
+    "content": "<path>/home/hal/dev/interp/latent_open/experiments/ml-ensemble-extremes/20261018-0133-loop/out/r0/frame/research</path>\n<type>directory</type>\n<entries>\n\n\n(0 entries)\n</entries>"
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_01_KSFu4GpszTLcgVcqOrC52360",
+    "content": "{\n  \"search_id\": \"search_f7d5a921d50bd8051576148f6ee91c93\",\n  \"results\": [\n    {\n      \"url\": \"https://www.ecmwf.int/en/forecasts/datasets/set-x\",\n      \"title\": \"AIFS forecast - AIFS Ensemble | ECMWF\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"Tropical cyclone ensemble products will contain 52 members (50 perturbed members, 1 control member and 1 AIFS Single member). More details including licences and parameters are described at page AIFS Machine Learning data.\\nAIFS forecast - AIFS Ensemble (Set X - AIFS ENS)\\nEnsemble forecast runs produced by the ECMWF Artificial Intelligence Forecasting System (AIFS) Ensemble model.\\n* 4 forecast runs per day (00/06/12/18)\\n* 6 hourly steps to 360 (15 days)\\n  More information can be found on the implementation page .\\nX-i: AIFS ENS forecast\\nProduct description\\n* 0.25° x 0.25° lat/lon grid or any multiple thereof (global or sub-area)\\n* On model (Reduced Gaussian) n320 grid\\nFile-naming convention\\n* z | 129 | Geopotential | m ** 2 s **-2 | 300, 500, 1000\\n* t | 130 | Temperature | K | 250, 500, 850\\n* X-vii: Tropical Cyclone Tracks\\nTropical cyclone track forecast will be produced by all 4 daily runs (00/06/12/18) to step 360.\\nTropical cyclone ensemble products will contain 52 members (50 perturbed members, 1 control member and 1 AIFS Single member).\\n* SHORT NAME | LONG NAME | Additional information\\n* TC | Tropical Cyclone | BUFR, available for base times 00/06/12/18\\nMore details including licences and parameters are described at page AIFS Machine Learning data .\\nRange\"\n      ]\n    },\n    {\n      \"url\": \"https://www.ecmwf.int/en/newsletter/181/earth-system-science/data-driven-ensemble-forecasting-aifs\",\n      \"title\": \"Data-driven ensemble forecasting with the AIFS | ECMWF\",\n      \"publish_date\": \"2024-10-15\",\n      \"excerpts\": [\n        \"In the AIFS–CRPS configuration, multiple model states (i.e. ensemble members) are propagated forward in time, as shown in Figure 1 (see for example Kochkov et al., 2024). For each ensemble member, a different realisation of random Gaussian noise is injected into the transformer processor.\\nWhite noise is fed into the model, during both training and inference (forecasting), to be used by AIFS–CRPS to learn a representation of forecast model uncertainty. The CRPS training objective is calculated against the ERA5 deterministic reanalysis at the forecast target time.\\nPerturbed initial conditions are generated by re-centring the ERA5 Ensemble of Data Assimilations (EDA) on the ERA5 deterministic reanalysis. This is consistent with the use of the EDA for ECMWF’s Integrated Forecasting System (IFS), as described in Lang et al., 2015.\\nIn addition to model parallelism (sharding, see Lang et al., 2024(a)), the AIFS code can distribute ensemble members across several graphics processing units (GPUs) to enable the training of larger ensembles at higher spatial resolution.\\nAIFS–CRPS also implements autoregressive rollout during training, with 6‑hour time steps; this makes it possible to optimise CRPS up to several days into the forecast. We found that a four-member ensemble was sufficient during training to arrive at a model that shows good probabilistic skill in both training and inference.\\nLarger ensemble sizes are used during inference.\\nFIGURE 1 FIGURE 1 Probabilistic training with CRPS optimisation (AIFS–CRPS): the AIFS propagates four ensemble members that are then optimised jointly through the CRPS loss.\\nIn the diffusion approach (AIFS–Diffusion), the AIFS learns to remove noise from a forecast state, conditioned on the initial conditions and a noise schedule (Price et al., 2024; Karras et al., 2022; and Figure 2). During training, the model ‘sees’ different noise levels, i.e. increasingly noisy forecast states, all the way up to ‘pure’ noise.\\nOn the other hand, AIFS–Diffusion does not incur the overhead of propagating multiple ensemble members as in AIFS–CRPS. We have found that both ensemble configurations have comparable training costs at a horizontal grid spacing of approximately one degree (111 km).\\nThe ensembles are configured with a forecast step of 12 hours (AIFS–Diffusion, cf. Price et al., 2024) and 6 hours (AIFS–CRPS). Each ensemble member is independent, and thus the forecast generation is fully parallel.\\nThat said, both data-driven approaches are very cheap when compared to the\"\n      ]\n    },\n    {\n      \"url\": \"https://www.ecmwf.int/en/newsletter/185/earth-system-science/aifs-ens-becomes-operational\",\n      \"title\": \"AIFS ENS becomes operational | ECMWF\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"When generating forecasts, as many members as required can be generated by providing different random seeds to the model. Two ensemble members are used in training. AIFS ENS currently has 50 perturbed members and one control member. Simon Lang\\nLinus Magnusson\\nIn recent years, machine-learned (ML) weather forecasting systems such as FourCastNet, Pangu-Weather, GraphCast and the Artificial Intelligence Forecasting System (AIFS) have shown that they can produce highly skilful deterministic predictions that match or exceed those from physics-based models.\\nThese forecast models learn how to forecast by advancing the atmospheric state from one analysis date to the next during training. When in forecast mode, they run autoregressively – they evolve the atmospheric state forward in time from their own predictions.\\nSmoothing reduces differences among ensemble members, which decreases the spread, measured by the ensemble standard deviation, and can make the forecast unreliable. In other words, the forecasted probabilities do not match reality.\\nProbabilistically trained models have now been developed that address these limitations.\\nCompared to diffusion-based models, the direct optimisation of proper scores such as the Continuous Ranked Probability Score (CRPS) provides several practical advantages. First, the model can learn how to forecast across many steps. Second, generating ensemble members requires just one model evaluation per forecast step.\\nIt is named AIFS ENS to distinguish it from the deterministically trained AIFS Single.\\nAIFS ENS has been trained on 38 years of ERA5 reanalysis data (1979–2017) and eight years of data from the Integrated Forecasting System (IFS) operational analyses (2016–2023).\\nEnsemble members are generated by introducing noise within the processor. When generating forecasts, as many members as required can be generated by providing different random seeds to the model. Two ensemble members are used in training.\\nAIFS ENS currently has 50 perturbed members and one control member.\\nHowever, unlike the physics-based IFS ENS, where the control member uses unperturbed initial conditions and the forecast model is unperturbed as well, the AIFS ENS control member also starts from unperturbed initial conditions but still includes model-generated variations during the forecast.\\nThis means that all AIFS ENS members, including the control, are stochastic forecasts that represent different outcomes from a learned forecast distribution.\\nAIFS ENS training FIGURE 1 AIFS ENS\"\n      ]\n    },\n    {\n      \"url\": \"https://www.ecmwf.int/en/forecasts/datasets/aifs-machine-learning-data\",\n      \"title\": \"AIFS Machine Learning data | ECMWF\",\n      \"publish_date\": \"2026-05-08\",\n      \"excerpts\": [\n        \"AIFS Machine Learning data\\nECMWF is now running version 2 of its Artificial Intelligence Forecasting System (AIFS). The AIFS consists of a deterministic model, AIFS Single, and an ensemble model, AIFS ENS.\\nThe deterministic model has been running operationally since 25 February 2025 and was upgraded from AIFS Single v1.1 to AIFS Single v2 on 12 May 2026.\\nFurther details can be found on the dedicated Implementation of AIFS Single v1 page.\\nThe ensemble model has been running operationally since 1 July 2025 and was upgraded from AIFS ENS v1 to AIFS ENS v2 on 12 May 2026. Further details can be found on the dedicated Implementation of AIFS ENS v2 page.\\nOpen data from the IFS model are also publicly available; see https://www.ecmwf.int/en/forecasts/datasets/open-data for further information.\\nGraphical products are available as part of the charts catalogue and the ecCharts application . If the products are not found, please reload the page.\\nAs part of the AIFS v2 implementation, ECMWF has stopped producing graphical products from third-party experimental machine-learning models Aurora, FourCastNet, GraphCast and Pangu-Weather.\\nArchive data via MARS\\nHistorical AIFS Single and AIFS ENS data are available in ECMWF's Archive and MARS catalogues. Users must be registered for archive access. The AIFS single data exists from February 2024 onwards, while the AIFS Ensemble data exists from July 2025 onwards.\\n* AIFS Single data in the Archive catalogue\\n* AIFS Single data in the MARS catalogue (restricted)\\n* AIFS Ensemble data in the Archive catalogue\\n* AIFS Ensemble data in the MARS catalogue (restricted)\\nAvailable Products\\nDeterministic and ensemble model\\nThe output of the AIFS deterministic and ensemble model is forecast with 6-hourly time steps out to 15 days initialised from the ECMWF operational analysis. Forecasts are produced four times per day (00/06/12/18UTC).\\nAll forecasts are produced on an approximately 0.25 x 0.25-degree grid ( N320 grid).\\nOpen data for the AIFS is disseminated on a regular 0.25 x 0.25-degree grid.\\nA full list of available products output by the AIFS Single and Ensemble models is available on the dataset description pages for AIFS Single , AIFS Single Wave , AIFS Ensemble and AIFS Ensemble Wave .\\nPortal\\nPublic FTP server\\nChart browser\\nProduct Family\\nData\\nProvider\\nECMWF\\nTemporal Coverage\\nMedium (15 days)\\nVariable Domain\\nMachine learning\\nView dataset in\\nPublic FTP server\\nChart browser\\nexpand_less expand_more\"\n      ]\n    },\n    {\n      \"url\": \"https://confluence.ecmwf.int/spaces/FCST/pages/540554034/Implementation+of+AIFS+ENS+v1\",\n      \"title\": \"Implementation of AIFS ENS v1 - Forecast User - ECMWF ...\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"The AIFS ENS v1 model is a probabilistic weather forecasting system developed by ECMWF that uses machine learning to generate ensemble forecasts. It is the first ensemble version of a new AIFS ensemble forecasting system.\"\n      ]\n    },\n    {\n      \"url\": \"https://confluence.ecmwf.int/spaces/FUG/pages/673550661/Section+2B.4+AIFS+ENS+The+Ensemble+Model\",\n      \"title\": \"Section 2B.4 AIFS ENS The Ensemble Model - Forecast User ...\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"There is only one set of algorithms produced by the ML process for the ensemble and this is used throughout the forecast and by all ensemble members. Each ensemble member uses the same set of algorithms as the others.\"\n      ]\n    },\n    {\n      \"url\": \"https://www.ecmwf.int/sites/default/files/elibrary/102024/81620-data-driven-ensemble-forecasting-with-the-aifs.pdf\",\n      \"title\": \"Data-driven ensemble forecasting with the AIFS\",\n      \"publish_date\": \"2024-10-23\",\n      \"excerpts\": [\n        \"doi: 10.21957/ma3p95hxe2\\nwww.ecmwf.int/en/about/media-centre/media-resources\\nfrom Newsletter Number 181 – Autumn 2024\\nData-driven ensemble forecasting with the AIFS\\nMETEOROLOGY EARTH SYSTEM SCIENCE\\nData-driven weather forecast models are a promising addition to physics-based numerical weather prediction (NWP) models. ECMWF now runs the Artificial Intelligence Forecasting System (AIFS) in an experimental real-time mode. It is run four times daily and is open to the public under ECMWF’s open data policy.\\nThe latest version of the AIFS at the time of writing (0.2.1) was trained on approximately 40 years of Copernicus ERA5 reanalysis data and ‘fine-tuned’ on the ECMWF operational analysis from 2019 to 2020 to improve the skill of real-time forecasts.\\nCRPS-based training In the AIFS–CRPS configuration, multiple model states (i.e.\\nensemble members) are propagated forward in time, as shown in Figure 1 (see for example Kochkov et al., 2024). For each ensemble member, a different realisation of random Gaussian noise is injected into the transformer processor.\\nWhite noise is fed into the model, during both training and inference (forecasting), to be used by AIFS– CRPS to learn a representation of forecast model uncertainty. The CRPS training objective is calculated against the ERA5 deterministic reanalysis at the forecast target time.\\nPerturbed initial conditions are generated by re-centring the ERA5 Ensemble of Data Assimilations (EDA) on the ERA5 deterministic reanalysis. This is consistent with the use of the EDA for ECMWF’s Integrated Forecasting System (IFS), as described in Lang et al., 2015.\\nIn addition to model parallelism (sharding, see Lang et al., 2024(a)), the AIFS code can distribute ensemble members across several graphics processing units (GPUs) to enable the training of larger ensembles at higher spatial resolution.\\nAIFS–CRPS also implements autoregressive rollout during training, with 6-hour time steps; this makes it possible to optimise CRPS up to several days into the forecast. We found that a four-member ensemble was sufficient during training to arrive at a model that shows good probabilistic skill in both training and inference.\\nLarger ensemble sizes are used during inference.\\nDiffusion-based training In the diffusion approach (AIFS–Diffusion), the AIFS learns to remove noise from a forecast state, conditioned on the initial conditions and a noise schedule (Price et al., 2024; Karras et al., 2022; and Figure 2).\"\n      ]\n    },\n    {\n      \"url\": \"https://huggingface.co/ecmwf/collections\",\n      \"title\": \"ecmwf (ECMWF) - Hugging Face\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"An update to ECMWF's machine-learned weather forecast model AIFS ... AIFS-CRPS: Ensemble forecasting using a model trained with a loss function based on the Continuous Ranked Probability Score\"\n      ]\n    },\n    {\n      \"url\": \"https://www.nature.com/articles/s44387-026-00073-7.pdf\",\n      \"title\": \"AIFS-CRPS: ensemble forecasting using a model trained with a loss function based on the continuous ranked probability score\",\n      \"publish_date\": \"2026-01-27\",\n      \"excerpts\": [\n        \"Ensemble weather forecasts provide a probabilistic description of the future state of the atmosphere and give users flow-dependent estimates of forecast uncertainty. Here, we introduce AIFS-CRPS, an ensemble variant of the machine-learned Artificial Intelligence Forecasting System (AIFS) developed at ECMWF.\\nIts loss function is the almost fair Continuous Ranked Probability Score (afCRPS). It is based on a proper score, the CRPS, but approximately removes the bias in the score due to finite ensemble size yet avoids a degeneracy of the fair CRPS. The trained model is stochastic and can generate as many exchangeable members as desired.\\nIn training, proper score optimisation allows for the model to be rolled out over multiple forecast steps. AIFS-CRPS is a machine-learned ensemble forecast model that is highly skillful across forecast lead times ranging from days to subseasonal predictions.\\nUnlike deterministic machine-learned weather models that are trained to minimise mean-squared error, AIFS-CRPS is trained probabil- istically using a proper scoring rule based on the Continuous Ranked Probability Score (CRPS), enabling it to generate stochastic forecasts that maintain realistic atmospheric variability.\\nFor medium-range forecasts, AIFS-CRPS out- performs the physics-based IFS ensemble for the majority of variables.\\nHowever, the ensemble members of the AIFS-CRPS ensemble maintain maintain varia- bility close to the training distribution throughout the forecast range (compare Fig. 1e–h). This is an important property for ensemble forecasts and the representation of extreme events such as intense mesoscale and\\nMedium-Range Evaluation We compare 50-member 15-day AIFS-CRPS ensemble forecasts with the 9-km 50-member ECMWF IFS (Integrated Forecasting System) ensemble forecasts 29 . Both forecast systems are initialised from the operational IFS ensemble initial conditions and verified against the operational ECMWF analysis.\\nForecasts are verified against ERA5 and all weekly means are constructed to ensure consistent sampling of the available data.\\nhttps://doi.org/10.1038/s44387-026-00073-7 Article\\nnpj Artificial Intelligence | (2026) 2:18 7\\nAIFS-ENS, ECMWF’s now-operational real-time AIFS ensemble forecasting system, is based on AIFS-CRPS N320 described here.\\nThe noise embeddings are then used in conditional layer normalisations 54 , which replace all standard layer normalisations in the processor pre-norm transformer layers. The different ensemble members from the model instances are\"\n      ]\n    },\n    {\n      \"url\": \"https://www.nature.com/articles/s44387-026-00073-7\",\n      \"title\": \"AIFS-CRPS: ensemble forecasting using a model ... - Nature\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"Here, we introduce AIFS-CRPS, an ensemble variant of the machine-learned Artificial Intelligence Forecasting System (AIFS) developed at ECMWF. Its loss function is the almost fair\"\n      ]\n    }\n  ],\n  \"warnings\": null,\n  \"metadata\": null,\n  \"session_id\": \"ses_eb35ba70affe2op1g6G5SHstMe\"\n}"
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_02_2r3amQe1iSZefqlHTHsn5887",
+    "content": "{\n  \"search_id\": \"search_4d76294ae6b39523f9ec687ce3504894\",\n  \"results\": [\n    {\n      \"url\": \"https://www.nvidia.com/en-gb/high-performance-computing/earth-2\",\n      \"title\": \"AI-Powered Climate and Weather Simulation Platform | NVIDIA Earth-2\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"By running FourCastNet in NVIDIA PhysicsNeMo, we were able to generate 21-day weather trajectories of 1,000 ensemble members in a tenth of the time it previously took to do a single ensemble—and with 1,000X less energy consumption.\\nWatch Predict Extreme Weather Events with FourCastNet Demo (01:40)\"\n      ]\n    },\n    {\n      \"url\": \"https://eesm.science.energy.gov/sites/default/files/Fri_Mahesh_HugeEnsembles.pdf\",\n      \"title\": \"Generating Huge Ensemble Weather Forecasts with Spherical Fourier Neural Operators (SFNO)\",\n      \"publish_date\": \"2024-09-03\",\n      \"excerpts\": [\n        \"HENS consists of 29 * 256 = 7,424 ensemble members and 28,050 years of simulation.\\n…\\n7424 members\\n7424 members\\n7424 members\\n…\\nConstruction of Huge Ensembles (HENS)\\n8\\nDemo of Huge Ensembles\\nOn August 23, 2023, Kansas City had an extreme heatwave, with 95 °F air temperature, 56% relative humidity, and a heat index of 109 °F.\\n9\\nDemo of Huge Ensembles\\nHENS samples the tails of the forecast distribution and is able to capture the magnitude of the event.\\n11\\nInformation Gain from Huge Ensembles\\nThe gain is the maximum number of standard deviations away from the ensemble mean that can be sampled by the ensemble.\\nwhere is an ensemble member, is the ensemble standard deviation, and is the ensemble mean.\\nHENS is large enough to have at least one member that is 4 standard deviations away from the ensemble mean.\\n12\\nInformation Gain from Huge Ensembles\\nThe information gain at each grid cell is shown below, for huge ensembles and traditional ensemble sizes.\\n13\"\n      ]\n    },\n    {\n      \"url\": \"https://developer.nvidia.com/blog/predict-extreme-weather-events-in-minutes-without-a-supercomputer\",\n      \"title\": \"Predict Extreme Weather Events in Minutes Without a Supercomputer | NVIDIA Technical Blog\",\n      \"publish_date\": \"2025-09-19\",\n      \"excerpts\": [\n        \"* Huge Ensembles (HENS) generates 27,000 years of climate data using AI models trained on 40 years of ERA5 atmospheric data through NVIDIA PhysicsNeMo.\\n* The method produces 7,424 ensemble members per initial condition, nearly 150x more than conventional models, and captures 96% of rare severe extreme weather events with uncertainties over 10 times smaller.\\n* Explore the HENS open source code and fully-trained model on GitHub.\\n* Read the Huge ensembles Part 1 research paper on spherical Fourier neural operators for ensemble weather forecasts.\\n* Read the Huge ensembles Part 2 research paper on properties of huge ensemble hindcasts generated with spherical Fourier neural operators.\\nScientists from NVIDIA, in collaboration with Lawrence Berkeley National Laboratory (Berkeley Lab), released a machine learning tool called Huge Ensembles (HENS) for extreme-weather prediction that brings supercomputer-class forecasting but at significantly less computational power and cost.\\nThe two-part study published in the journal Geoscientific Model Development , introduces a method called HENS to produce 27,000 years of data and is one of the largest and most reliable ensembles of weather and climate simulations available.\\n“HENS is a game changer. Until today, generating 1,000- or 10,000-member ensembles of simulations was simply impractical because of prohibitive compute and data storage costs,” said co-author Michael Pritchard, director of climate simulation research at NVIDIA and a professor at UC Irvine.\\nHow can you improve weather prediction accuracy using HENS?\\nTo capture the range of possible future weather outcomes, national weather services run multiple different simulations, or “ensemble members,” each with small changes to the initial conditions. These numerical models are based on ‌laws of physics such as the conservation of mass, the conservation of momentum, and the conservation of energy.\\nThere is a lot of trust in these physics-based simulations, but they are also very computationally expensive because they require a supercomputer.\\nDue to this expense, traditional weather models can only have 50 ensemble members.\\nThe researchers used HENS to create 7,424 ensemble members based on initial weather conditions from each day of summer 2023, the hottest on record at the time—nearly 150x more members than what’s possible with conventional models—each ensemble member represents an alternate weather trajectory, or a different way the weather could have unfolded.\\nDuring rigorous validation experiments at NERSC, Mahesh and team weighed the ensemble predictions on a wide range of diagnostic metrics, showing that HENS is very close to the gold standard.\\n* HENS open source code and fully-trained model on GitHub\\n* HENS research papers:\\n* Huge ensembles—Part 1: Design of ensemble weather forecasts using spherical Fourier neural operators\\n* Huge ensembles—Part 2: Properties of a huge ensemble of hindcasts generated with spherical Fourier neural operators\"\n      ]\n    },\n    {\n      \"url\": \"https://destination-earth.eu/wp-content/uploads/2025/10/NVIDIA-Earth-2-1.pdf\",\n      \"title\": \"[PDF] NVIDIA Earth-2\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"A stable backbone powering FourCastNet, FCONS, HENS, and ACE’, stability properties enable long\\nsubseasonal-to-seasonal rollouts\\na —— oo —\\n+ v_ = E\\na = et - ee\\n~~\\nHuge Ensembles, Built on the sFNO backbone with bred-vector multi- checkpoint perturbations’, 7424- member probabilistic global ensembles at five orders of magnitude lower cost than traditional NWP ensembles”. In prodiiction at JEA and AXA for insurance and climate risk”.\\n17 né, 18 (2025), Ol O1D2S/2024MS004505, arkin2406.15947 LN] HENS: Mahesh etal, \\\"Huge Ensembles Part) & il’ (NVIDIA Earth-2, 2024), arxiy praprinis {verify exact IDs before print}, [12] DLESYM: Cresewell-Clay et al, Geophysical Research Letters 2025; DLESyM-Distill arxiv:2512:228 14.\"\n      ]\n    },\n    {\n      \"url\": \"https://gmd.copernicus.org/articles/18/5605/2025/gmd-18-5605-2025.html\",\n      \"title\": \"GMD - Huge ensembles – Part 2: Properties of a huge ensemble of hindcasts generated with spherical Fourier neural operators\",\n      \"publish_date\": \"2025-09-04\",\n      \"excerpts\": [\n        \"Based on diagnostics that assess the ensemble's physical fidelity, our ensemble has comparable performance to operational weather forecasting systems. However, it requires orders-of-magnitude fewer computational resources. Here in Part 2, we generate a huge ensemble (HENS), with 7424 members initialized each day of summer 2023.\\nThe ensemble is orders of magnitude faster than comparable numerical simulations, so it enables the generation of huge ensembles (HENS). We validated the fidelity of SFNO-BVMC extremes using mean, spectral, and extreme diagnostics. Here in Part 2, we use SFNO-BVMC to generate ensemble hindcasts initialized on each day of summer 2023.\\nWe use SFNO-BVMC to generate a huge ensemble with 7424 members; each ensemble member is run for 15 d. Throughout this paper, we refer to this particular set of huge ensemble hindcasts during summer 2023 as “HENS”. We contextualize the size of HENS compared to other large ensembles in Fig. 1 .\\nIn Part 1, we used bred vectors to represent initial condition uncertainty, and we trained 29 SFNO checkpoints from scratch to represent model uncertainty. Here, we combine these two perturbation techniques to create a 7424-member ensemble: 256 initial condition perturbations for each of the 29 SFNO checkpoints.\\nIf we stored all the channels in the ensemble (not our chosen subset of 12 channels), then the total size of the dataset would be approximately 25 petabytes.\\nTo create the HENS hindcasts, we run SFNO in inference mode, in which Pytorch's automatic differentiation is turned off. We use NVIDIA's earth2mip library for inference.\\nIn Part 1, we validated a 58-member SFNO-BVMC ensemble using the CRPS, spread–error ratio, threshold-weighted CRPS (twCRPS), reliability diagram, and receiver operating characteristic (ROC) curve.\\nOn these metrics, SFNO-BVMC performs comparably to the Integrated Forecast System (IFS), a leading ensemble numerical weather prediction model based on traditional physics solvers. These metrics show that SFNO-BVMC has a realistic, reliable, and well-calibrated ensemble spread. These are prerequisite characteristics for running huge ensembles.\\nBased on these constraints, we determine that we have the computational budget for 7424 members: 256 members each for 29 trained SFNO checkpoints (see Sect. 2.2 of Part 1).\\nhttps://gmd.copernicus.org/articles/18/5605/2025/gmd-18-5605-2025-f02\\nFigure 2 Information gain from huge ensembles (HENS).\\nThis allows us to assess the ensemble members in aggregate and how far each ensemble member is from the ensemble mean.\\nFigure 2 shows the information gain as a function of ensemble size. The 7424-member ensemble has an information gain of 4.\\n2 , but it is calculated at each grid cell, instead of on the global land mean value. (a) Information gain for huge ensembles (7424 members). (b) Information gain for 50-member ensembles. Gain is calculated for 2 m temperature at a lead time of 10 d and across all forecasts initialized in summer 2023.\"\n      ]\n    },\n    {\n      \"url\": \"https://arxiv.org/html/2408.01581v3\",\n      \"title\": \"Huge Ensembles Part II: Properties of a Huge Ensemble of Hindcasts Generated with Spherical Fourier Neural Operators\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"Huge Ensembles Part II: Properties of a Huge Ensemble of Hindcasts Generated with Spherical Fourier Neural Operators\\nAccepted TBD\\nAbstract\\nBased on diagnostics that assess the ensemble’s physical fidelity, our ensemble has comparable performance to operational weather forecasting systems. However, it requires orders of magnitude fewer computational resources. Here in Part II, we generate a huge ensemble (HENS), with 7,424 members initialized each day of summer 2023.\\nHuge Ensembles (HENS) is the ensemble presented here, and it is highlighted with red. Bracketed numbers correspond to the numbered list of references for this figure provided in Section A .\\nDue to computational costs, it is impractical to run massive ensembles with numerical weather and climate models.\\nIn Part I ( Mahesh et al., 2024 ) , we introduced an ensemble based on Spherical Fourier Neural Operators, Bred Vectors, and Multiple Checkpoints trained from scratch (SFNO-BVMC). The ensemble is orders of magnitude faster than comparable numerical simulations, so it enables the generation of huge ensembles (HENS).\\nWe validated the fidelity of SFNO-BVMC extremes using mean, spectral, and extreme diagnostics. Here in Part II, we use SFNO-BVMC to generate ensemble hindcasts initialized on each day of summer 2023. We choose summer 2023 as our test period because it is the hottest summer in the observed record ( Esper et al., 2024 ) .\\nTherefore, it is an important period to validate forecasts of extreme heatwaves and to analyze low-likelihood high-impact heatwaves in a warming world. We use SFNO-BVMC to generate a huge ensemble with 7,424 members; each ensemble member is run for 15 days.\\nThroughout this manuscript, we refer to this particular set of huge ensemble hindcasts during summer 2023 as \\\"HENS.\\\" We contextualize the size of HENS compared to other large ensembles in Figure 1 . HENS has more members than the majority of ensembles used in the past.\\n2 Generating the Huge Ensemble\\n2.1 Technical Setup\\nIn Part I, we used bred vectors to represent initial condition uncertainty, and we trained twenty-nine SFNO checkpoints from scratch to represent model uncertainty. Here, we combine these two perturbation techniques to create a 7,424-member ensemble: 256 initial condition perturbations for each of the 29 SFNO checkpoints.\\nNumber of Saved Variables: 12\\n2. 2.\\nInitial Time: 92 initial days\\n3. 3.\\nLead Time: 61 time steps (One perturbed initial condition followed by a 360-hour forecast rollout)\\n4. 4.\\nEnsemble: 7424 ensemble members\\n5. 5.\\nLatitude: 721 (0.25 degrees)\\n6. 6.\\nLongitude: 1440 (0.25 degrees)\\n3 Climate and Extreme Statistics\\n3.1 Sampling the Forecast Distribution with Huge Ensembles\\nWe are constrained by available memory, computational resources, and data movement time from scratch to rotating disk file storage. Based on these constraints, we determine that we have the computational budget for 7,424 members: 256 members each for 29 trained SFNO checkpoints. (See Section 2.2 of Part I.)\"\n      ]\n    },\n    {\n      \"url\": \"https://arxiv.org/html/2408.03100v2\",\n      \"title\": \"Huge Ensembles Part I: Design of Ensemble Weather Forecasts using Spherical Fourier Neural Operators\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"\\\\Author [5]ShashankSubramanian \\\\Author [5]JaredWillard 1]Earth and Environmental Sciences Area, Lawrence Berkeley National Laboratory (LBNL), Berkeley, California, USA 2]Department of Earth and Planetary Science, University of California, Berkeley, USA 3]NVIDIA Corporation, Santa Clara, California, USA 4]Department of Earth and Atmospheric\\nThey may capture the long tails associated with climate hazards better than traditional ensemble sizes. Due to computational constraints, it is infeasible to generate huge ensembles (comprised of 1,000-10,000 members) with traditional, physics-based numerical models.\\nIn this two-part paper, we replace traditional numerical simulations with machine learning (ML) to generate hindcasts of huge ensembles. In Part I, we construct an ensemble weather forecasting system based on Spherical Fourier Neural Operators (SFNO), and we discuss important design decisions for constructing such an ensemble.\\nhese diagnosticsy ensure that the ensemble can reliably simulate the time evolution of the atmosphere, including low likelihood high-impact extremes. In Part II, we generate a huge ensemble initialized each day in summer 2023, and we characterize the statistics of extremes.\\n† † firstpage: 1\\nThe climate modeling community has successfully constructed large ensembles of up to ${\\\\cal O}(10^{2})$ members, such as the Community Earth System Model 2 Large Ensemble (CESM2-LE). To examine the rarest of LLHIs, a larger sample size is necessary.\\nIn this two-part paper, we present a first-of-its-kind huge ensemble of weather extremes using an ML-based emulator of global numerical reanalyses. In Part I, we introduce the ML architecture and the ensemble design (Section 2 ).\\nIn Part II, we analyze a huge ensemble with hindcasts of 7,424 ensemble members.\\n2 Designing ensembles with SFNO\\nEach bred vector creates two initial condition perturbations: one with the bred vector added to the initial condition, and one with the bred vector subtracted from the initial condition. For the small ensemble, we use $N=1$ bred vectors per checkpoint. For the huge ensemble in Part II, there are $N=128$ bred vectors per checkpoint.\\nTo evaluate the skill for extreme weather, we use boreal summer 2023 (June, July, August) because it is the hottest summer in recorded history ( Esper et al., 2024 ) . In Part II, we present a deep dive on a huge ensemble of forecasts from this time period. No SFNO training or ensemble design decisions were made using the year 2020 or 2023.\\nNumber of Perturbations per Model Checkpoint (Benchmark Ensemble)\\n2, with 1 centered bred vector perturbation\\nPart I, Section 3\\nNumber of perturbations per Model Checkpoint (Huge Ensemble)\\n256, with 128 centered bred vector perturbations\\nPart II\\nTotal size of huge ensemble\\n7424 members\\nPart II\\nBased on these two tests, we use the large version of SFNO, with a scale factor of 2 and embed dimension of 620. This version of SFNO trains in 16 hours on 256 80GB NVIDIA A100 GPUs.\"\n      ]\n    },\n    {\n      \"url\": \"https://blogs.nvidia.com/blog/nvidia-earth-2-open-models?ncid=so-twit-259380\",\n      \"title\": \"NVIDIA Launches Earth-2 Family of Open Models — the World’s First Fully Open, Accelerated Set of Models and Tools for AI Weather | NVIDIA Blog\",\n      \"publish_date\": \"2026-01-26\",\n      \"excerpts\": [\n        \"Ensembles of forecasts of different weather variables — total column water vapor, wind speed and specific humidity — using NVIDIA Earth-2 Medium Range, compared against ERA5 reanalysis data.\\n* Earth-2 FourCastNet3 , which delivers high forecasting accuracy for various weather variables, such as wind, temperature and humidity, surpassing leading conventional ensemble models and rivaling top diffusion-based methods while producing forecasts up to 60x faster than these approaches.\\nAI weather tool provider Brightband — a member of the NVIDIA Inception program’s Sustainable Futures initiative — is running Earth-2 Medium Range to issue real-world global forecasts daily.\\n“Brightband is among the first to run Earth-2 Medium Range operationally, and the model being open source speeds up innovation, allowing easier comparison and improvements by other members of the weather enterprise.”\"\n      ]\n    },\n    {\n      \"url\": \"https://www.nvidia.com/en-gb/industries/supercomputing\",\n      \"title\": \"Supercomputing Solutions for AI and Research | NVIDIA\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"NVIDIA Earth-2 is a full-stack, open platform that accelerates climate and weather predictions with interactive, high-resolution simulation.\\nIt includes physical simulation of numerical models like ICON and IFS; neural network models such as FourCastNet , GraphCast, and Deep Learning Weather Prediction (DLWP) through NVIDIA PhysicsNeMo ; and data federation and visualization with NVIDIA Omniverse™ .\\nRunning on NVIDIA DGX™ GH200 , HGX H100, and OVX supercomputers, Earth-2 will provide a path to simulate and visualize the global atmosphere at unprecedented speed and scale.\\nComputational Chemistry\"\n      ]\n    },\n    {\n      \"url\": \"https://www.nvidia.com/en-us/high-performance-computing/earth-2\",\n      \"title\": \"NVIDIA Earth 2 Platform\",\n      \"publish_date\": null,\n      \"excerpts\": [\n        \"NVIDIA Earth 2 Platform\\nDiscover NVIDIA Earth-2, the AI-accelerated climate digital twin platform for high-resolution weather simulation, visualization, and prediction at global scale.\"\n      ]\n    }\n  ],\n  \"warnings\": null,\n  \"metadata\": null,\n  \"session_id\": \"ses_eb35ba70affe2op1g6G5SHstMe\"\n}"
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "edit",
+     "description": "Performs exact string replacements in files. \n\nUsage:\n- You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file. \n- When editing text from Read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. The line number prefix format is: line number + colon + space (e.g., `1: `). Everything after that space is the actual file content to match. Never include any part of the line number prefix in the oldString or newString.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.\n- The edit will FAIL if `oldString` is not found in the file with an error \"oldString not found in content\".\n- The edit will FAIL if `oldString` is found multiple times in the file with an error \"Found multiple matches for oldString. Provide more surrounding lines in oldString to identify the correct match.\" Either provide a larger string with more surrounding context to make it unique or use `replaceAll` to change every instance of `oldString`. \n- Use `replaceAll` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to modify"
+       },
+       "oldString": {
+        "type": "string",
+        "description": "The text to replace"
+       },
+       "newString": {
+        "type": "string",
+        "description": "The text to replace it with (must be different from oldString)"
+       },
+       "replaceAll": {
+        "type": "boolean",
+        "description": "Replace all occurrences of oldString (default false)"
+       }
+      },
+      "required": [
+       "filePath",
+       "oldString",
+       "newString"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "glob",
+     "description": "- Fast file pattern matching tool that works with any codebase size\n- Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\"\n- Returns matching file paths\n- Use this tool when you need to find files by name patterns\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n- You have the capability to call multiple tools in a single response. It is always better to speculatively perform multiple searches as a batch that are potentially useful.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The glob pattern to match files against"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter \"undefined\" or \"null\" - simply omit it for the default behavior. Must be a valid directory path if provided."
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "grep",
+     "description": "- Fast content search tool that works with any codebase size\n- Searches file contents using regular expressions\n- Supports full regex syntax (eg. \"log.*Error\", \"function\\s+\\w+\", etc.)\n- Filter files by pattern with the include parameter (eg. \"*.js\", \"*.{ts,tsx}\")\n- Returns file paths and line numbers with matching lines\n- Use this tool when you need to find files containing specific patterns\n- If you need to identify/count the number of matches within files, use the Bash tool with `rg` (ripgrep) directly. Do NOT use `grep`.\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The regex pattern to search for in file contents"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. Defaults to the current working directory."
+       },
+       "include": {
+        "type": "string",
+        "description": "File pattern to include in the search (e.g. \"*.js\", \"*.{ts,tsx}\")"
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "read",
+     "description": "Read a file or directory from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter should be an absolute path.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Use the grep tool to find specific content in large files or files with long lines.\n- If you are unsure of the correct file path, use the glob tool to look up filenames by glob pattern.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\". For directories, entries are returned one per line (without line numbers) with a trailing `/` for subdirectories.\n- Any line longer than 2000 characters is truncated.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.\n- This tool can read image files and PDFs and return them as file attachments.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file or directory to read"
+       },
+       "offset": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The line number to start reading from (1-indexed)"
+       },
+       "limit": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The maximum number of lines to read (defaults to 2000)"
+       }
+      },
+      "required": [
+       "filePath"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "write",
+     "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the Read tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "content": {
+        "type": "string",
+        "description": "The content to write to the file"
+       },
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to write (must be absolute, not relative)"
+       }
+      },
+      "required": [
+       "content",
+       "filePath"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

@@ -1,0 +1,62 @@
+{
+ "card": "immersion-coolants-r1",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/latent_open/experiments/immersion-coolants/20261018-0100-loop/out/r1/card",
+ "stage": "done",
+ "started": "2026-10-18T01:15:40.262Z",
+ "calls": [
+  {
+   "id": "0001 run:price-sheet",
+   "stage": "Frame",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 69336,
+   "cost_usd": 0.00375958,
+   "tokens": 16027,
+   "errors": []
+  },
+  {
+   "id": "0002 seed:idea:seed:producer",
+   "stage": "Produce",
+   "model": "opencode-go/deepseek-v4-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 745795,
+   "cost_usd": 0.22682580800000002,
+   "tokens": 215748,
+   "errors": []
+  },
+  {
+   "id": "0003 seed:idea:seed:repair-expr",
+   "stage": "Produce",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 111111,
+   "cost_usd": 0.00740415,
+   "tokens": 18519,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.23798953800000003,
+ "tokens": 250294,
+ "by_model": {
+  "opencode-go/glm-5.3-flash": {
+   "calls": 2,
+   "cost_usd": 0.01116373,
+   "tokens": 34546
+  },
+  "opencode-go/deepseek-v4-pro": {
+   "calls": 1,
+   "cost_usd": 0.22682580800000002,
+   "tokens": 215748
+  }
+ },
+ "done": true,
+ "updated": "2026-10-18T01:31:12.486Z",
+ "go": [
+  "opencode-go/glm-5.3-flash: $0.011 over 2 calls = 0.0% of its $60 monthly cap, 0.1% of a 5-hour window",
+  "opencode-go/deepseek-v4-pro: $0.227 over 1 calls = 1.5% of its $15 monthly cap, 7.6% of a 5-hour window"
+ ]
+}
