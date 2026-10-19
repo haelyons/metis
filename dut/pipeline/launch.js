@@ -2,11 +2,11 @@
 'use strict'
 // Start a run of one experiment. Copies this pipeline into experiments/<name>/<stamp>-<kind>/pipeline (files read-only),
 // writes RUN.md (command, source commit), then runs the copy with every output under <run>/out and the console in
-// <run>/console.log. The copy is what ran; edit pipeline/ freely afterwards.
+// <run>/console.log. The copy is what ran; edit dut/pipeline/ freely afterwards.
 //
-// usage: node pipeline/launch.js <experiment> loop             (needs experiments/<experiment>/seed.json)
-//        node pipeline/launch.js <experiment> card [--main <model>]  (one card for the seed; --main swaps the producer's model)
-//        node pipeline/launch.js <experiment> frame --card-file <card.md> --root "<question>"
+// usage: node dut/pipeline/launch.js <experiment> loop             (needs experiments/<experiment>/seed.json)
+//        node dut/pipeline/launch.js <experiment> card [--main <model>]  (one card for the seed; --main swaps the producer's model)
+//        node dut/pipeline/launch.js <experiment> frame --card-file <card.md> --root "<question>"
 //        add --dry-run to prepare the run folder and print the command without running it;
 //        add --seed <file> to run card or loop on another seed than the experiment's seed.json (a variant)
 const fs = require('node:fs')
@@ -14,14 +14,14 @@ const path = require('node:path')
 const { spawn, execFileSync } = require('node:child_process')
 
 const PIPE = __dirname
-const REPO = path.dirname(PIPE)
+const REPO = path.resolve(PIPE, '..', '..')
 const [name, kind, ...rest] = process.argv.slice(2)
 const dry = rest.includes('--dry-run')
 const si = rest.indexOf('--seed'), seedFile = si >= 0 ? path.resolve(rest[si + 1]) : null
 const extra = rest.filter((a, i) => a !== '--dry-run' && !(si >= 0 && (i === si || i === si + 1)))
 const EXP = path.join(REPO, 'experiments', name || '')
 if (!name || !['loop', 'card', 'frame'].includes(kind) || !fs.existsSync(EXP)) {
-  console.error('usage: node pipeline/launch.js <experiment> <loop|card|frame> [args] [--dry-run]; the experiment folder must exist')
+  console.error('usage: node dut/pipeline/launch.js <experiment> <loop|card|frame> [args] [--dry-run]; the experiment folder must exist')
   process.exit(2)
 }
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-').slice(0, 13)
@@ -56,9 +56,9 @@ if (kind === 'card') {
   fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify(args, null, 1))
   cmd = node('wf.js', ['--args', path.join(RUN, 'args.json'), '--name', name, '--out', path.join(RUN, 'out'), ...extra])   // extra: e.g. --main <model>
 }
-const commit = git(['rev-parse', '--short', 'HEAD']), dirty = git(['status', '--porcelain', '--', 'pipeline']) ? ' (pipeline/ had uncommitted changes)' : ''
+const commit = git(['rev-parse', '--short', 'HEAD']), dirty = git(['status', '--porcelain', '--', 'dut/pipeline']) ? ' (dut/pipeline/ had uncommitted changes)' : ''
 fs.writeFileSync(path.join(RUN, 'RUN.md'), [`# ${name} · ${kind} · ${stamp}`, '',
-  `Pipeline: copy of pipeline/ at commit ${commit}${dirty}, in ./pipeline (read-only).`,
+  `Pipeline: copy of dut/pipeline/ at commit ${commit}${dirty}, in ./pipeline (read-only).`,
   `Command: ${cmd[0]} ${cmd[1].map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`,
   `Seed: ${path.relative(EXP, SEED)}`, `Outputs: ./out · console: ./console.log`, ''].join('\n'))
 console.log(`run folder: ${RUN}\n${fs.readFileSync(path.join(RUN, 'RUN.md'), 'utf8')}`)

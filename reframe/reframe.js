@@ -12,8 +12,8 @@ const fs = require('node:fs')
 const path = require('node:path')
 const crypto = require('node:crypto')
 const { execFileSync } = require('node:child_process')
-const oc = require('../pipeline/idea/oc.js')
-const { validate, promptSuffix } = require('../pipeline/idea/schema.js')
+const oc = require('../dut/pipeline/idea/oc.js')
+const { validate, promptSuffix } = require('../dut/pipeline/idea/schema.js')
 
 const argv = process.argv.slice(2)
 const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d }

@@ -13,9 +13,10 @@ either outcome. Fresh model contexts then check every cited claim against its
 page, score the card, and name the existing research or industrial programmes
 its result would feed. A loop proposes close variants and keeps a better one.
 
-  pipeline/            the tool, the copy we edit
+  dut/                 the designers under test
+  dut/pipeline/        this tool, the copy we edit
     src/               modules, built by build.js into dist/
-    tests/             node pipeline/tests/run.js
+    tests/             node dut/pipeline/tests/run.js
     CONTRACT.md        the spec
     idea/              the OpenCode runtime
       loop.js          one idea, one round: expand a one-line seed, card,
@@ -24,6 +25,9 @@ its result would feed. A loop proposes close variants and keeps a better one.
       frame.js         which programmes would use the result, and how well
       status.js        progress and spend of any run
     launch.js          starts a run (below)
+  dut/latent_skeptic/  submodule at ff9a63c: the pipeline that designs, gates,
+                       runs and writes up one GPU experiment (the coolant pilot ran on it)
+  reframe/             a separate stage: from a problem to investigable reframings
   experiments/<name>/  one project: QUESTION.md, seed.json, one folder per run
   experiments/_meta/   notes across projects (COMPARE.md, idea memos)
 
@@ -35,9 +39,10 @@ REQUIREMENTS
 ------------
 - node 24+.
 - OpenCode with an OpenCode Go subscription (opencode-go/* models). Calls run
-  under the isolated config in pipeline/idea/ocx: no MCP servers, every
+  under the isolated config in dut/pipeline/idea/ocx: no MCP servers, every
   permission denied unless the agent needs it.
-- Optional: Claude Code, for the Workflow runtime (pipeline/dist/*.js).
+- Optional: Claude Code, for the Workflow runtime (dut/pipeline/dist/*.js).
+- After cloning: git submodule update --init (dut/latent_skeptic).
 
 COLD START
 ----------
@@ -47,10 +52,10 @@ COLD START
    plus root_link, compute_open and sequential when known. A seed whose
    compute_open is "not given" is first expanded by the pipeline's own framer
    and widener.
-2. node pipeline/launch.js <name> loop
+2. node dut/pipeline/launch.js <name> loop
    (or card, or frame --card-file <card.md> --root "<question>";
    add --dry-run to see the run folder and command first)
-3. node pipeline/idea/status.js --latest, or /idea-status inside OpenCode.
+3. node dut/pipeline/idea/status.js --latest, or /idea-status inside OpenCode.
 4. Read out/loop.md, then each round's card/RESULT.md and frame/frame.md.
 
 WHAT A RUN RECORDS
@@ -65,8 +70,8 @@ spend by model.
 LOCAL LINKS
 -----------
 The files live here; what loads them is a symlink:
-  /home/hal/stage/qt2                          -> pipeline/
-  ~/.config/opencode/commands/idea-status.md   -> pipeline/idea/commands/
+  /home/hal/stage/qt2                          -> dut/pipeline/
+  ~/.config/opencode/commands/idea-status.md   -> dut/pipeline/idea/commands/
 
 PRIVATE
 -------

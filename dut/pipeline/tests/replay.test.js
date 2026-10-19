@@ -43,7 +43,7 @@
   })
 
   test('replay: args_A.json holds 20 picks with existing producer.md files, 10 branches with options and scores, 5 roots', () => {
-    same(fixture('../../../experiments/question-tree/replay/args_A.json'), ARGS, 'the fixture copy is stale')
+    same(fixture('../../../../experiments/question-tree/replay/args_A.json'), ARGS, 'the fixture copy is stale')
     assert.equal(ARGS.phase, 'A')
     same(ARGS.given, { budget_usd: 1000, budget_covers_storage: true, budget_covers_tax: false })
     assert.equal(ARGS.picks.length, 20)

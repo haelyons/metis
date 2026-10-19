@@ -1,7 +1,7 @@
 # OpenCode runtime
 
 Every model call goes through OpenCode (`opencode-go/*` models), under the isolated config in `ocx/`. Start runs with
-`node pipeline/launch.js` from the repository root, which copies the pipeline into the run folder first.
+`node dut/pipeline/launch.js` from the repository root, which copies the pipeline into the run folder first.
 
 - `loop.js` one idea, one round: seed expansion when the seed is one line (FRAMER, WIDENER, screen), card (`wf.js`),
   frame check (`frame.js`), three neighbours, option-critic screen, and card plus frame check for a variant that scores
