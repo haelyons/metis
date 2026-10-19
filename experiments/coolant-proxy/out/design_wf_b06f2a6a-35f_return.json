@@ -1,0 +1,152 @@
+{
+  "summary": "Seed question to takeaways; agents speak only through typed contracts; nothing proceeds past a gate unconsumed",
+  "agentCount": 1,
+  "logs": [
+    "Design: 9 arms, 8 endpoints, $200"
+  ],
+  "result": {
+    "halt": "budget_over_cap",
+    "design": {
+      "hypothesis": "A viscosity proxy built from about 1 ns of LOPLS-AA molecular dynamics at 40 °C (313.15 K) ranks the 8 benchmark molecules like their reference viscosities. The proxy is kT/(6π·D·R). D is the self-diffusion coefficient from mean-squared displacement of molecular centres. R is a radius from the simulated density and molar mass. The claim is Spearman rank correlation of at least 0.8, stable across replicas, cheaper than the paper's Green-Kubo runs, working inside chemical families, and better than free orderings.",
+      "models": [
+        "Force field: LOPLS-AA (a long-chain variant of the OPLS all-atom force field), built with the committed SMILES-to-LAMMPS builder after a line-by-line review. The builder and decks are untrusted until reviewed.",
+        "Engine: LAMMPS with GPU acceleration on one rented single-GPU box (GUESS: LAMMPS GPU package is installed and works on the box; if not, OpenMM from pip is the fallback, and the fallback is recorded).",
+        "Comparison ordering only, no new training: released out-of-fold XGBoost-descriptor viscosity predictions at 40 °C (column xgboost_descriptors_40C, rho about 0.738 as stated in the question).",
+        "No language models, no layers, no steering strengths. Those fields do not apply."
+      ],
+      "data": "[\"Committed files, unchanged: dataset.csv (835 molecules, sha256 962d1c7e...cded0, 164094 bytes) and predictions_viscosity.csv (sha256 bf0e17fc...0d, 618589 bytes). Also dataset.report.json, builder smiles2loplsaa.py (sha256 91cac1d5...7008), and decks equilibrate.in, tdm.in, tdm_continue.in. Hashes are checked before any use.\", \"Test set: the 8 molecules in the question, ids mol_00105, mol_00557, mol_00426, mol_00400, mol_00764, mol_00305, mol_00942, mol_01025. Reference targets are the viscosity_40c column in mPa·s and the density column, copied in the question.\", \"Paper densities for the density check are the 8 values in the question's table (Figure 7a labels times reference density).\", \"Calibration set, disjoint from the 8: two molecules from dataset.csv. Rule: the two lowest-numbered ids that have a viscosity_40c tagged Experimental and are not among the 8. They fix only the diffusion fit window. No result is judged on them.\", \"Planted known-truth data: synthetic Brownian-walk trajectories with a chosen D, same molecule count and length as the real runs. They test the diffusion analysis code, not the chemistry.\", \"Item counts: 8 test molecules, 2 calibration molecules, 3 independent 1-ns replicas per test molecule, 1 long run per test molecule.\"]",
+      "arms": [
+        "Main proxy (Stokes-Einstein-like): per molecule, kT/(6π·D·R), D averaged over 3 replicas of about 1 ns production. R=(3M/(4πρN_A))^(1/3) from the simulated density. Judged against reference viscosity at 40 °C.",
+        "Control, diffusion only: 1/D with no size term. Shows whether the size term helps.",
+        "Control, simulated density only: MD density from the same runs as a ranking. Shows whether the proxy beats the density that equilibration gives for free.",
+        "Control, free orderings (no MD): molar mass, reference density, and released XGBoost out-of-fold predictions, each used directly as a ranking.",
+        "Control, chance: exact distribution of Spearman rho over all 40320 orderings of 8 items. Gives the probability that a random ordering reaches rho of at least 0.8.",
+        "Control, planted known truth: synthetic trajectories with known D, plus a synthetic known-order and reversed-order pair, to prove the code recovers D and returns rho of +1 and -1.",
+        "Validation arm, long run: replica 1 of each molecule continued for 5 ns more in constant volume (GUESS: 5 ns is long enough to be diffusive for squalane). Gives a longer-trajectory D for the same systems.",
+        "Replica arm: the 3 independent 1-ns runs scored separately, to measure rerun dispersion and ordering stability.",
+        "Density reproduction arm: first number to reproduce, simulated 40 °C density against the paper's value for each molecule, before any proxy is trusted."
+      ],
+      "endpoints": [
+        {
+          "metric": "Density gate. Per molecule, simulated 40 °C density (mean of last 0.8 ns of a 1 ns constant-pressure run, 3 replicas) relative to the paper's MD density. Tetraethylene glycol diethyl ether must also sit at least 6% below its reference density while the other 7 sit within 4% of reference. Those bands are derived from the paper's own labels: the others are within 3%, the outlier is -10%.",
+          "threshold": "At least 7 of 8 molecules within ±2% of the paper MD density, AND the outlier condition holds. Fewer than 7 passing marks the proxy result uninterpretable, not refuted.",
+          "refuting_outcome": "Two or more molecules outside ±2%, or a second molecule beyond 4% of reference, or the glycol ether not low. The systems are not built like the paper's, and the proxy ranking is not judged."
+        },
+        {
+          "metric": "MAIN. Spearman rho between the main proxy and the reference 40 °C viscosities of the 8 molecules. Reference order is hexyl-diphenylheptane > squalane > propylheptyl-naphthalene > decyl stearate > sebacate > trioxanonadecane > glycol diethyl ether > nonylcyclohexane. A data-only pre-check confirms this order from dataset.csv and from predictions_viscosity.csv.",
+          "threshold": "rho >= 0.8, equivalent to a sum of squared rank differences <= 16. Below 0.6 is also reported as the reframing step's abandon line.",
+          "refuting_outcome": "rho < 0.8 with the density gate passed. Chance probability of rho >= 0.8 from the exact permutation count is reported beside it."
+        },
+        {
+          "metric": "Stability. Pairwise Spearman rho between the 3 replica orderings, and rho between the 1-ns mean ordering and the long-run ordering. Also each replica's own rho against reference, with mean and range reported as rerun dispersion.",
+          "threshold": "All 3 replica-replica rho >= 0.8 and long-run agreement rho >= 0.8. The 0.8 is the question's own bar. Dispersion of exactly zero across replicas halts the run as WRONG_VARIANCE_SOURCE.",
+          "refuting_outcome": "Any replica pair below 0.8, or long-run agreement below 0.8. The ranking then rests on noise."
+        },
+        {
+          "metric": "Cost. Simulated nanoseconds per molecule for the proxy: 3 replicas times (1 ns equilibration + 1 ns production). The long run is validation only and is excluded but reported. Paper baseline is 10 replicas times 8 ns = 80 ns per molecule per temperature.",
+          "threshold": "<= 8 ns per molecule, i.e. at most 10% of the paper's simulated time. Measured GPU hours per molecule are also reported. CPU-hours and GPU-hours are not directly comparable, so the ns ratio is the judged number.",
+          "refuting_outcome": "More than 8 ns per molecule, for example if 5 replicas are needed to stabilise the order."
+        },
+        {
+          "metric": "Family test. Concordant pairs among the 12 within-group pairs: 6 among the 4 hydrocarbons (alkanes, aromatics) and 6 among the 4 oxygenates (esters, polyethers). A pair is concordant if proxy order equals reference order. Also report the between-group offset as the ratio of group-mean proxy to group-mean reference.",
+          "threshold": "At least 10 of 12 concordant. Derived from the exact binomial: 10 of 12 gives one-sided p = 0.019 under chance, 9 of 12 gives 0.073. Pairs are not independent, so this is approximate.",
+          "refuting_outcome": "Fewer than 10 of 12 concordant while the main rho is >= 0.8. The correlation is then carried by hydrocarbon-versus-oxygenate order."
+        },
+        {
+          "metric": "Added value. Main-proxy rho minus the largest rho among the free orderings (molar mass, reference density, simulated density, released XGBoost out-of-fold at about 0.738) and the diffusion-only and simulated-density controls.",
+          "threshold": "Main proxy rho strictly greater than every control rho. Rho moves in steps of about 0.012, and with n = 8 differences below 0.05 are reported as ties.",
+          "refuting_outcome": "Any control with rho at or above the main proxy, or within 0.05 of it. The result is true but uninformative."
+        },
+        {
+          "metric": "Analysis code check on planted data. Recovered D on 20 synthetic ensembles versus true D, and the three outcome labels (pass, refute, non-diffusive) each reached by a planted case.",
+          "threshold": "Mean bias of recovered D within 2 standard errors of the 20 ensembles. Known-order gives rho = +1 and reversed gives -1. A subdiffusive synthetic case must receive the non-diffusive label.",
+          "refuting_outcome": "Bias beyond 2 standard errors, or any label unreachable. Real results are not read until fixed."
+        },
+        {
+          "metric": "Diffusion fit window rule. On the 2 calibration molecules only, choose the window where the log-log slope of mean-squared displacement against time lies in 0.9 to 1.1 (GUESS band), at least 0.3 ns wide. The same rule is applied unchanged to the 8.",
+          "threshold": "A window of at least 0.3 ns must exist for each of the 8. A molecule without one is labelled non-diffusive in 1 ns and scored from its last 0.5 ns with a flag; the main rho is also reported with it excluded.",
+          "refuting_outcome": "Three or more of the 8 labelled non-diffusive. The 1-ns claim is refuted on its own terms, whatever rho shows."
+        }
+      ],
+      "sampling": "Each box holds about 15,000 atoms (the paper's size). Each replica has an independent packing seed and velocity seed; seeds are 11, 22 and 33 (GUESS, arbitrary labels). Equilibration: 1 ns at constant pressure (1 atm) and 313.15 K with the committed deck's thermostat and barostat after review. Production: 1 ns at constant volume, set to the equilibrated mean box, same temperature, with the deck's timestep (GUESS: 1 to 2 fs). Molecular centre-of-mass positions are written unwrapped every 1 ps. Overall drift is removed. Mean-squared displacement uses all time origins. D is the slope divided by 6 over the fit window. Cells: 8 molecules times 3 replicas for the proxy; 8 long runs; 2 calibration molecules with 1 replica each. Density uses the last 0.8 ns of equilibration. Temperature is 313.15 K only; 100 °C is not run.",
+      "budget_usd": 200,
+      "does_not_test": [
+        "Finite-size correction to D. It needs viscosity, which is circular. Box sizes differ by molecule, so D errors could reorder close pairs. How wrong: unknown; shifts could be 10 to 30% in D (GUESS).",
+        "Excess-entropy scaling. Only the Stokes-Einstein-like form is judged. If it fails, an entropy form might still pass.",
+        "Whether the reference labels are right. Two of eight are PPDS 9 correlations, the sebacate was patched after training, and the glycol ether density looks high. All are taken as given.",
+        "Order of the top two molecules (squalane 15.06 and hexyl-diphenylheptane 15.57, 3.4% apart). Their order is within plausible reference error, which is unverified. With n = 8, one swap changes rho by about 0.024.",
+        "Any claim at 100 °C, other force fields, thermal conductivity, or the 835-molecule set. Eight molecules cannot support a general claim.",
+        "Absolute viscosity accuracy; only rank is asked.",
+        "GUESS: throughput of 25 ns/day for 15,000 atoms on one GPU. If it is 10 ns/day, cost rises to about $330 and the long runs are shortened to 2 ns first.",
+        "GUESS: box price of $1.5 per hour. Wrong by 2x would move the cost between $100 and $400.",
+        "GUESS: total simulated time about 92 ns (48 proxy, 40 long, 4 calibration), 88 GPU hours, plus 50% for setup and reruns.",
+        "GUESS: slope band 0.9 to 1.1 and 0.3 ns minimum window. Wrong band could include ballistic or caged motion; the calibration molecules check only two chemistries.",
+        "GUESS: 5 ns long run is diffusive for squalane. If not, long-run agreement is itself non-diffusive and the stability endpoint is reported as inconclusive.",
+        "GUESS: 3 replicas. With 3, a rho range is a rough dispersion estimate only; no confidence interval is claimed.",
+        "MEMORY: the builder emits LAMMPS inputs for LOPLS-AA and the decks run as described in the repo README. Not checked here; review is a required first step.",
+        "Spearman rho at n = 8 has coarse steps (about 0.012) and wide uncertainty; one rank swap near the threshold can flip the verdict."
+      ]
+    }
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Design"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Diff"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 3,
+      "title": "Triage"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 4,
+      "title": "GateCheck"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 5,
+      "title": "Build"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 6,
+      "title": "Elicit"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 7,
+      "title": "Write"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "design",
+      "phaseIndex": 1,
+      "phaseTitle": "Design",
+      "agentId": "a599fd14f8925c5a8",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1792323104084,
+      "queuedAt": 1792323104062,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "A viscosity proxy built from about 1 ns of LOPLS-AA molecul…",
+      "promptPreview": "Design the minimal experiment that answers this question, as a typed record.\n\nQUESTION:\n# QUESTION: does a 1-ns diffusion-derived proxy rank the 8 benchmark coolant molecules' viscosity?\n\n## The question\n\nTake the eight molecules that Ogbomo, Carman, Dini and Ewen simulated with Green-Kubo equilibrium MD. Compute a viscosity proxy for each one from about 1 ns of LOPLS-AA MD at 40 °C: self-diffusio…",
+      "promptFramed": true,
+      "lastProgressAt": 1792323184665,
+      "tokens": 37298,
+      "toolCalls": 1,
+      "durationMs": 80581,
+      "resultPreview": "{\"hypothesis\":\"A viscosity proxy built from about 1 ns of LOPLS-AA molecular dynamics at 40 °C (313.15 K) ranks the 8 benchmark molecules like their reference viscosities. The proxy is kT/(6π·D·R). D is the self-diffusion coefficient from mean-squared displacement of molecular centres. R is a radius from the simulated density and molar mass. The claim is Spearman rank correlation of at least 0.8, …"
+    }
+  ],
+  "totalTokens": 37298,
+  "totalToolCalls": 1
+}

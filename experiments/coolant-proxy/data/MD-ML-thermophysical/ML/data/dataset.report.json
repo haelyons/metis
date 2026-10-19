@@ -1,0 +1,88 @@
+{
+  "conflict_rtol": 0.02,
+  "molecules": 835,
+  "labels": {
+    "viscosity_40c": 799,
+    "viscosity_100c": 804,
+    "density_40c": 770,
+    "density_100c": 769,
+    "thermal_conductivity_40c": 785,
+    "thermal_conductivity_100c": 786
+  },
+  "viscosity_resolution": {
+    "viscosity_40c": {
+      "single": 796,
+      "conflict": 31,
+      "missing": 285,
+      "median_within_tolerance": 2
+    },
+    "viscosity_100c": {
+      "single": 795,
+      "median_within_tolerance": 8,
+      "missing": 284,
+      "conflict": 27
+    }
+  },
+  "viscosity_source_counts": {
+    "viscosity_40c": {
+      "Experimental": 446,
+      "PPDS 9": 207,
+      "ViscosityL": 141,
+      "REFPROP": 2,
+      "mixed:Experimental+ViscosityL": 2,
+      "mixed:Experimental+PPDS 9": 1
+    },
+    "viscosity_100c": {
+      "Experimental": 446,
+      "PPDS 9": 208,
+      "ViscosityL": 140,
+      "mixed:Experimental+ViscosityL": 5,
+      "mixed:Experimental+PPDS 9": 3,
+      "REFPROP": 2
+    }
+  },
+  "viscosity_range": {
+    "viscosity_40c": [
+      0.54,
+      56.3
+    ],
+    "viscosity_100c": [
+      0.29,
+      22.0
+    ]
+  },
+  "note": "density/TC labels and folds unchanged from canonical_molecules.csv; viscosity rebuilt dynamic-only (dynamic rows verbatim from original table, kinematic rows converted via nu*rho) with conversion before deduplication",
+  "post_patches": [
+    "mol_00305 bis(2-ethylhexyl) sebacate: viscosity, density and thermal-conductivity labels added from NIST WTT (kv 11.616/3.141 cSt x rho 0.89925/0.85654 g cm-3). The molecule keeps fold 4, so its released predictions come from the fold-4 models, which never saw it in training and therefore give a genuine out-of-fold value. The models for the other four folds were not retrained afterwards, so their training sets omit this one molecule; with 799 and 804 viscosity labels the effect on any other prediction is negligible."
+  ],
+  "molecules_note": "1,114 unique molecules result from deduplicating the source entries; 279 of them retain no usable label after unit conversion and conflict screening and are not released, leaving 835 labelled molecules",
+  "density_source_counts": {
+    "density_40c": {
+      "VDNSExpansion": 762,
+      "REFPROP": 4,
+      "Method not recovered": 3,
+      "NIST WTT": 1
+    },
+    "density_100c": {
+      "VDNSExpansion": 761,
+      "REFPROP": 4,
+      "Method not recovered": 3,
+      "NIST WTT": 1
+    }
+  },
+  "thermal_conductivity_source_counts": {
+    "thermal_conductivity_40c": {
+      "TransportPolynomial": 768,
+      "Method not recovered": 11,
+      "REFPROP": 5,
+      "NIST WTT": 1
+    },
+    "thermal_conductivity_100c": {
+      "TransportPolynomial": 769,
+      "Method not recovered": 11,
+      "REFPROP": 5,
+      "NIST WTT": 1
+    }
+  },
+  "source_note": "Per-label source methods for density and thermal conductivity are recovered from the source databases' retained method fields; 'Method not recovered' marks labels whose method field could not be recovered, and 'NIST WTT' marks the bis(2-ethylhexyl) sebacate labels added per post_patches."
+}

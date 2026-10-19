@@ -1,0 +1,61 @@
+{
+  "cell": {
+    "molecule": "mol_00105",
+    "pack_seed": 61453,
+    "stage": "prelaunch",
+    "step": "build"
+  },
+  "decision": "FAIL",
+  "decision_rule": "the builder exits 0 and writes all four files",
+  "env": {
+    "git_rev": "5544378",
+    "host": "johns-world",
+    "python": "3.10.22",
+    "timestamp_utc": "2026-10-18T20:43:16+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 43257,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/MD/builder/smiles2loplsaa.py",
+      "present": true,
+      "sha256": "91cac1d5307e"
+    }
+  ],
+  "metric": "one box built by the committed builder",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": false,
+  "run_valid_voided_by": [
+    "pre-launch step failed: build: mol_00105 seed 61453: exit 2; mol_00105 seed 61454: exit 2; mol_00105 seed 61455: exit 2; mol_00557 seed 61453: exit 2; mol_00557 seed 61454: exit 2; mol_00557 seed 61455: exit 2; mol_00426 seed 61453: exit 2; mol_00426 seed 61454: exit 2; mol_00426 seed 61455: exit 2; mol_00400 seed 61453: exit 2; mol_00400 seed 61454: exit 2; mol_00400 seed 61455: exit 2; mol_00764 seed 61453: exit 2; mol_00764 seed 61454: exit 2; mol_00764 seed 61455: exit 2; mol_00305 seed 61453: exit 2; mol_00305 seed 61454: exit 2; mol_00305 seed 61455: exit 2; mol_00942 seed 61453: exit 2; mol_00942 seed 61454: exit 2; mol_00942 seed 61455: exit 2; mol_01025 seed 61453: exit 2; mol_01025 seed 61454: exit 2; mol_01025 seed 61455: exit 2"
+  ],
+  "run_valid_voided_retroactively": true,
+  "threshold": {},
+  "values": {
+    "command": [
+      "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/.toolchain/env/bin/python",
+      "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/MD/builder/smiles2loplsaa.py",
+      "--smiles",
+      "CC(C)CCCC(C)CCCC(C)CCCCC(C)CCCC(C)CCCC(C)C",
+      "--n",
+      "163",
+      "--density",
+      "0.75",
+      "--seed",
+      "61453",
+      "--out",
+      "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/boxes_cp1/mol_00105/pack61453"
+    ],
+    "exit_code": 2,
+    "files_sha256": {
+      "in.data": null,
+      "in.init": null,
+      "in.settings": null,
+      "metadata.json": null
+    },
+    "packing_density_g_cm3": 0.75,
+    "stderr": "ERROR: Packmol failed with exit code 173:\nSTOP 173\n\n",
+    "stdout": "",
+    "wall_seconds": 1605.3612837590044
+  }
+}

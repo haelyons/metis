@@ -1,0 +1,7 @@
+# Zero-step read of one built box (pre-launch check, written for run cp1). Nothing moves.
+variable        system_dir index .
+include         ${system_dir}/in.init
+read_data       ${system_dir}/in.data
+include         ${system_dir}/in.settings
+thermo_style    custom step atoms density vol pe
+run             0

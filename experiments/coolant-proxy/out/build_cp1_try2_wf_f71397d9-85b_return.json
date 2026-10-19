@@ -1,0 +1,98 @@
+{
+  "summary": "Seed question to takeaways; agents speak only through typed contracts; nothing proceeds past a gate unconsumed",
+  "agentCount": 2,
+  "logs": [
+    "GateCheck: 19 item(s) answered of record",
+    "[build] failed: You've hit your session limit · resets 5:20pm (Europe/London)"
+  ],
+  "result": {
+    "gatecheck": {
+      "answered": 19,
+      "unanswered": []
+    },
+    "built": null,
+    "next": "human reviews files, then runs the launcher verbatim"
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Design"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Diff"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 3,
+      "title": "Triage"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 4,
+      "title": "GateCheck"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 5,
+      "title": "Build"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 6,
+      "title": "Elicit"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 7,
+      "title": "Write"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "gatecheck",
+      "phaseIndex": 4,
+      "phaseTitle": "GateCheck",
+      "agentId": "aad7ed4043016e28f",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1792330119889,
+      "queuedAt": 1792330119864,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You verify that a human gate answered everything a design phase queued. Read exactly two files: the design record /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/design_record_attempt2.json and the gate commit /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/GATE_COMMIT.md. From the design record collect every item needing an answer of recor…",
+      "promptFramed": true,
+      "lastProgressAt": 1792330130404,
+      "tokens": 66814,
+      "toolCalls": 3,
+      "durationMs": 10514,
+      "resultPreview": "{\"answered\":19,\"unanswered\":[]}"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "build",
+      "phaseIndex": 5,
+      "phaseTitle": "Build",
+      "agentId": "aced09a96a1f046ab",
+      "model": "claude-opus-5-5",
+      "state": "error",
+      "startedAt": 1792330130424,
+      "queuedAt": 1792330130404,
+      "attempt": 1,
+      "lastToolName": "Bash",
+      "lastToolSummary": "python3 - <<'EOF' import re p = \"run_cp1.py\" s = open(p).re…",
+      "promptPreview": "You build the execution layer for one pre-registered experiment. The design is the spec; implement it exactly - never improve, rescope, or fix what looks wrong. Every number marked GUESS is binding.\n\nREAD IN ORDER: (1) /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/design_record_attempt2.json - the design object is the complete spec. (2) /home/hal/dev/interp/dm_hack…",
+      "promptFramed": true,
+      "lastProgressAt": 1792332523470,
+      "error": "You've hit your session limit · resets 5:20pm (Europe/London)",
+      "tokens": 402480,
+      "toolCalls": 39,
+      "durationMs": 2393046
+    }
+  ],
+  "totalTokens": 469294,
+  "totalToolCalls": 42
+}

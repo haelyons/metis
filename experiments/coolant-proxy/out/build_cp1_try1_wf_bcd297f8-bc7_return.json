@@ -1,0 +1,103 @@
+{
+  "summary": "Seed question to takeaways; agents speak only through typed contracts; nothing proceeds past a gate unconsumed",
+  "agentCount": 2,
+  "logs": [
+    "GateCheck: 19 item(s) answered of record"
+  ],
+  "result": {
+    "gatecheck": {
+      "answered": 19,
+      "unanswered": []
+    },
+    "built": {
+      "runner_py": "HALT: the build stopped before writing either file. No runner exists and no on-box script exists. Nothing was patched. Spend: $0.00. No box was launched.\n\nTwo blockers need a decision from the owner. A third group of items must be settled in the launcher copy.\n\nBLOCKER 1. Two binding documents disagree, and this build received only one of them.\n- The build instruction says the design record alone is the complete specification.\n- The operating notes (/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/OPERATOR.md, step 4) say the build binds to the design record and the gate commit.\n- The gate commit is /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/GATE_COMMIT.md.\n- The gate approved the design only \"with the changes stated below and nothing else.\"\n- Those changes never reached this build. The instruction carried no execution directive (the exec_note argument).\n- In the worked example run (/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/latent_verify_b), the gate's changes reached the build through exactly that directive.\n- The changes alter verdicts, so they are not optional extras. Four examples follow.\n  - Design: three or more of eight molecules outside the band of normal diffusion refutes the one-nanosecond claim. Gate: this only adds a label (item D3a).\n  - Design: the proxy must beat inverse diffusion and simulated density by the spread between reruns. Gate: judge only against the three orderings that need no simulation (item D3d).\n  - Design: disagreement between fit windows leaves the main claim \"not established\". Gate: it is only downgraded to \"window-dependent\" (item D3b).\n  - Design: a rank correlation below 0.8 refutes the main claim. Gate: it refutes only the one proxy formula tested (item D1).\n- The gate also queued nine controls that the design lacks.\n  - One is an early speed check that stops a run that is too slow (item D5).\n  - By the gate's arithmetic, a box three times slower than guessed spends about $13.2 without it. With it, about $3.3.\n  - Two more: a hand-computed density for every built box (item I2), and a planted check of the proxy formula (item I3).\n  - Four more are planted checks: the family count (I7), the noise margin (I8), the other fit windows (I10), and joined trajectories (I5).\n  - The last two: a long-lag slope readout (F2), and a check that time comes from step number times timestep (I12).\n- In all, twelve gate answers change the build: three rejections (D1, D3, F1) and nine queued controls.\n- Building the design alone ships verdict rules the gate rejected. It also drops a control that caps spend.\n- Building the gate's version departs from the build instruction. Choosing between them is not the builder's call.\n\nBLOCKER 2. The design builds the simulation boxes on this workstation, and this workstation cannot.\n- The design says boxes are \"built and checked on the local workstation\" before launch, at no rented-box cost.\n- The checks are a builder review, a charge check per molecule, and a zero-step read.\n- A zero-step read loads each box into the simulation program without moving any atoms.\n- The gate's density check (item I2) also relies on that read. It stops the run before launch on a mismatch.\n- On 2026-10-18, none of the three programs this needs was installed here.\n  - The chemistry toolkit (RDKit) is missing: \"No module named 'rdkit'\".\n  - The box-packing program (Packmol) is not on the path. There is no Fortran compiler to build it.\n  - The simulation program (LAMMPS) has no executable and no Python module here.\n- No conda installation exists either. The system Python is 3.14.4.\n- The build instruction also has the on-box script run every stage in order.\n- That would build the boxes on the rented box, which the design rules out.\n- So the pre-launch step is not runnable as given. Installing a toolchain, or moving the step to the box, would be a patch.\n\nALSO TO SETTLE, in the same directive or in the launcher copy. The operating notes already allow launcher edits to folder, payload and forwarded settings.\n- The frozen bootstrap (/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/frozen/remote_run.sh) checks for a language-model stack.\n- It requires a card-enabled torch and a Gemma-2 model class. Neither has any use in this run.\n- It has no recipe for a simulation program with graphics-card (GPU) support. The design's one-hour setup for that is marked GUESS.\n- That bootstrap enters ~/mats_manifold. The frozen launcher copies code to ~/welfare_probe. The two frozen files disagree as shipped.\n- The design's clock rule divides 18.0 by the hourly price. The launcher forwards no price setting.\n- The launcher's default remote time cap is 5400 seconds. The plan is 12.54 hours.\n- The launcher fetches the box's out/ folder. The build instruction puts results in results_cp1/out/.\n- The design never sets the packing density for the builder. The builder's default is 0.75 g/cm³. Its README example uses 0.3 g/cm³.\n\nWHAT WOULD UNBLOCK THE BUILD (for the owner; none of it was done here)\n1. Rerun build mode with an execution directive (exec_note) saying which document binds. If the gate binds, list its twelve changes.\n2. Say where the boxes are built. Either install the three programs here first, or allow building and checking on the rented box.\n3. Name the setting the launcher copy will forward for the hourly price. Name the packing density to use.\n\nWHAT WAS CHECKED\n- Design record sha256 9f320ef3d15f224a9bebeb30d7ff4dfe6eeab79230ec9785f2a977de0af6e641. This matches the hash the gate read.\n- Builder sha256 91cac1d5307eb3a0ab54be1cfd2fac3d01919bdd1cd35e7c75929bd016977008. This matches the question file.\n- Equilibration deck sha256 1e79c3f7669b8ae2e994caacc6f56dc4bfac19737f6f61a3b0f68a94269816cb. This matches the question file.\n- I read the builder line by line. It writes only to its output folder and a temporary folder.\n- The only outside program the builder runs is the box-packing program.",
+      "onbox_sh": "HALT: not written. The build stopped before writing either file. The reasons are in the runner field above.",
+      "selftest_output": "Not run. No runner was written, so there was no selftest to run.",
+      "onbox_command": "None. Do not launch. The build halted before the on-box script existed.",
+      "expected": "Nothing. The build halted before either file existed, so there is no wall-clock time, no rows and no records. Spend: $0.00. No box was launched."
+    },
+    "next": "human reviews files, then runs the launcher verbatim"
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Design"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Diff"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 3,
+      "title": "Triage"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 4,
+      "title": "GateCheck"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 5,
+      "title": "Build"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 6,
+      "title": "Elicit"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 7,
+      "title": "Write"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "gatecheck",
+      "phaseIndex": 4,
+      "phaseTitle": "GateCheck",
+      "agentId": "acbb375fd4aa2db13",
+      "model": "claude-sonnet-5-5",
+      "state": "done",
+      "startedAt": 1792329300978,
+      "queuedAt": 1792329300952,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "promptPreview": "You verify that a human gate answered everything a design phase queued. Read exactly two files: the design record /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/design_record_attempt2.json and the gate commit /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/GATE_COMMIT.md. From the design record collect every item needing an answer of recor…",
+      "promptFramed": true,
+      "lastProgressAt": 1792329310867,
+      "tokens": 61872,
+      "toolCalls": 3,
+      "durationMs": 9888,
+      "resultPreview": "{\"answered\":19,\"unanswered\":[]}"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "build",
+      "phaseIndex": 5,
+      "phaseTitle": "Build",
+      "agentId": "a6cf1ef294a7e14f5",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1792329310889,
+      "queuedAt": 1792329310868,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "HALT: the build stopped before writing either file. No runn…",
+      "promptPreview": "You build the execution layer for one pre-registered experiment. The design is the spec; implement it exactly - never improve, rescope, or fix what looks wrong. Every number marked GUESS is binding.\n\nREAD IN ORDER: (1) /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/design_record_attempt2.json - the design object is the complete spec. (2) /home/hal/dev/interp/dm_hack…",
+      "promptFramed": true,
+      "lastProgressAt": 1792329645707,
+      "tokens": 159255,
+      "toolCalls": 22,
+      "durationMs": 334818,
+      "resultPreview": "{\"runner_py\":\"HALT: the build stopped before writing either file. No runner exists and no on-box script exists. Nothing was patched. Spend: $0.00. No box was launched.\\n\\nTwo blockers need a decision from the owner. A third group of items must be settled in the launcher copy.\\n\\nBLOCKER 1. Two binding documents disagree, and this build received only one of them.\\n- The build instruction says the d…"
+    }
+  ],
+  "totalTokens": 221127,
+  "totalToolCalls": 25
+}

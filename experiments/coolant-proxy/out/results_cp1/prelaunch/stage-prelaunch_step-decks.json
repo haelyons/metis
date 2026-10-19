@@ -1,0 +1,113 @@
+{
+  "cell": {
+    "stage": "prelaunch",
+    "step": "decks"
+  },
+  "decision": "RECORDED",
+  "decision_rule": "only the listed edits: remove the density-matching stage; write centres every 1 ps",
+  "env": {
+    "git_rev": "5544378",
+    "host": "johns-world",
+    "python": "3.10.22",
+    "timestamp_utc": "2026-10-18T17:35:37+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 4066,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/MD/lammps/equilibrate.in",
+      "present": true,
+      "sha256": "1e79c3f7669b"
+    }
+  ],
+  "metric": "the design's listed deck edits, as a diff",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": false,
+  "run_valid_voided_by": [
+    "pre-launch step failed: build: mol_00105 seed 61453: exit 2; mol_00105 seed 61454: exit 2; mol_00105 seed 61455: exit 2; mol_00557 seed 61453: exit 2; mol_00557 seed 61454: exit 2; mol_00557 seed 61455: exit 2; mol_00426 seed 61453: exit 2; mol_00426 seed 61454: exit 2; mol_00426 seed 61455: exit 2; mol_00400 seed 61453: exit 2; mol_00400 seed 61454: exit 2; mol_00400 seed 61455: exit 2; mol_00764 seed 61453: exit 2; mol_00764 seed 61454: exit 2; mol_00764 seed 61455: exit 2; mol_00305 seed 61453: exit 2; mol_00305 seed 61454: exit 2; mol_00305 seed 61455: exit 2; mol_00942 seed 61453: exit 2; mol_00942 seed 61454: exit 2; mol_00942 seed 61455: exit 2; mol_01025 seed 61453: exit 2; mol_01025 seed 61454: exit 2; mol_01025 seed 61455: exit 2"
+  ],
+  "run_valid_voided_retroactively": true,
+  "threshold": {},
+  "values": {
+    "diff": [
+      "--- equilibrate.in",
+      "+++ deck_main_cp1.in",
+      "@@ -65,6 +65,11 @@",
+      " fix             npt_density all ave/time ${density_sample_every} ${density_sample_repeat} ${density_sample_freq} v_rho &",
+      "                 file ${system_dir}/density_npt_T${T}K_run${run_id}.dat ave one start ${density_avg_start}",
+      " fix             eq_npt all npt temp ${T} ${T} ${tdamp} iso ${P} ${P} ${pdamp} nreset 1000",
+      "+# Edit listed in the design (run cp1): write the unwrapped centre of every molecule every 1 ps.",
+      "+variable        com_every             index 500",
+      "+compute         cp1_mol all chunk/atom molecule",
+      "+compute         cp1_com all com/chunk cp1_mol",
+      "+fix             cp1_com_out all ave/time ${com_every} 1 ${com_every} c_cp1_com[*] file ${system_dir}/com_npt_T${T}K_run${run_id}.dat mode vector",
+      " run             ${npt_steps}",
+      " unfix           eq_npt",
+      " ",
+      "@@ -72,24 +77,6 @@",
+      " print           \"NPT average density target from final window: ${rho_target} g/cm^3\"",
+      " unfix           npt_density",
+      " ",
+      "-variable        rho_now equal density",
+      "-variable        scale equal (v_rho_now/v_rho_target)^(1.0/3.0)",
+      "-variable        xlo_target equal xlo",
+      "-variable        xhi_target equal xlo+lx*v_scale",
+      "-variable        ylo_target equal ylo",
+      "-variable        yhi_target equal ylo+ly*v_scale",
+      "-variable        zlo_target equal zlo",
+      "-variable        zhi_target equal zlo+lz*v_scale",
+      "-",
+      "-reset_timestep  0",
+      "-fix             eq_nvt all nvt temp ${T} ${T} ${tdamp}",
+      "-fix             match_density all deform 1 &",
+      "-                x final $(v_xlo_target:%.10f) $(v_xhi_target:%.10f) &",
+      "-                y final $(v_ylo_target:%.10f) $(v_yhi_target:%.10f) &",
+      "-                z final $(v_zlo_target:%.10f) $(v_zhi_target:%.10f) units box remap x",
+      "-run             ${deform_steps}",
+      "-unfix           match_density",
+      "-unfix           eq_nvt",
+      " unfix           constrain_h",
+      " ",
+      " write_restart   ${system_dir}/equilibrated_T${T}K.restart"
+    ],
+    "extension_deck_sha256": "e366a2dfad96d66931cdec2663718c31699a25870c75ee7c78554334448620af",
+    "main_deck_sha256": "c6aa3c9b2d179b5be129540224bb437ff521892eb33f1ef19e1c200120414e94",
+    "set_on_the_command_line": {
+      "extension": {
+        "com_every": 500,
+        "density_avg_start": 875000,
+        "density_sample_every": 50,
+        "density_sample_freq": 125000,
+        "density_sample_repeat": 2500,
+        "ext_steps": 500000,
+        "timestep_fs": 2.0
+      },
+      "main": {
+        "com_every": 500,
+        "density_avg_start": 375000,
+        "density_sample_every": 50,
+        "density_sample_freq": 125000,
+        "density_sample_repeat": 2500,
+        "npt_steps": 500000,
+        "pushoff_steps": 50000,
+        "relax_dt": 0.5,
+        "settle_steps": 50000,
+        "timestep_fs": 2.0
+      },
+      "timestep_1fs": {
+        "com_every": 1000,
+        "density_avg_start": 750000,
+        "density_sample_every": 100,
+        "density_sample_freq": 250000,
+        "density_sample_repeat": 2500,
+        "npt_steps": 1000000,
+        "pushoff_steps": 50000,
+        "relax_dt": 0.5,
+        "settle_steps": 100000,
+        "timestep_fs": 1.0
+      }
+    },
+    "zero_step_deck_sha256": "5fbdfc2d3bb333f7a2115071ab841a57669d02a2aa5f7823c8ac1764503990b3"
+  }
+}

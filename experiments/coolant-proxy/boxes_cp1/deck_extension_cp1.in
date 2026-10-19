@@ -1,0 +1,51 @@
+# Continuation of the constant-pressure stage for 1 ns more (rerun 1 only), written for run cp1.
+# Restart handling follows the committed tdm_continue.in. The stage repeats the committed
+# equilibrate.in constant-pressure stage: same thermostat, barostat, constraints and density
+# window, and the same centre output as the edited main deck. Step numbers continue.
+
+variable        system_dir            index .
+variable        restart_file          index equilibrated_T313.15K.restart
+variable        T                     index 313.15
+variable        P                     index 1.0
+variable        run_id                index 1
+variable        timestep_fs           index 2.0
+variable        thermo_every          index 5000
+variable        tdamp                 index 100.0
+variable        pdamp                 index 1000.0
+variable        ext_steps             index 500000
+variable        density_avg_start     index 875000
+variable        density_sample_every  index 50
+variable        density_sample_repeat index 2500
+variable        density_sample_freq   index 125000
+variable        shake_tol             index 0.0001
+variable        shake_iter            index 20
+variable        shake_order           index 0
+variable        com_every             index 500
+
+log             ${system_dir}/log_extension_T${T}K_run${run_id}.out
+
+read_restart    ${restart_file}
+kspace_style    pppm 1.0e-5
+include         ${system_dir}/in.settings
+timestep        ${timestep_fs}
+
+thermo          ${thermo_every}
+thermo_style    custom step temp press density vol lx ly lz pe etotal
+
+fix             constrain_h all shake ${shake_tol} ${shake_iter} ${shake_order} m 1.008
+
+variable        rho equal density
+fix             npt_density all ave/time ${density_sample_every} ${density_sample_repeat} ${density_sample_freq} v_rho &
+                file ${system_dir}/density_npt_ext_T${T}K_run${run_id}.dat ave one start ${density_avg_start}
+fix             eq_npt all npt temp ${T} ${T} ${tdamp} iso ${P} ${P} ${pdamp} nreset 1000
+compute         cp1_mol all chunk/atom molecule
+compute         cp1_com all com/chunk cp1_mol
+fix             cp1_com_out all ave/time ${com_every} 1 ${com_every} c_cp1_com[*] file ${system_dir}/com_ext_T${T}K_run${run_id}.dat mode vector
+run             ${ext_steps}
+unfix           eq_npt
+
+variable        rho_target equal $(f_npt_density:%.12g)
+print           "NPT average density target from final window: ${rho_target} g/cm^3"
+unfix           npt_density
+unfix           constrain_h
+print           "Extension done: steps=${ext_steps}"

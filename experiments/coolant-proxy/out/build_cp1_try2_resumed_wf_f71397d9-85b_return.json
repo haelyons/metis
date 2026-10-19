@@ -1,0 +1,97 @@
+{
+  "summary": "Seed question to takeaways; agents speak only through typed contracts; nothing proceeds past a gate unconsumed",
+  "agentCount": 2,
+  "logs": [
+    "GateCheck: 19 item(s) answered of record"
+  ],
+  "result": {
+    "gatecheck": {
+      "answered": 19,
+      "unanswered": []
+    },
+    "built": {
+      "runner_py": "Written: /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/run_cp1.py (4,011 lines, sha256 7debf260f4b6dcca537f8545377bcec7a67d3cac5dfded40660b6aa1575a38e6). Nothing existing was edited.\n\nWHAT IT DOES\nThe three named stages each run on their own. Smaller helper stages sit between them.\n- Before launch, on this workstation, with .toolchain/env/bin/python. The extract stage runs the directive's pre-launch steps in its order:\n  - hash checks of the committed inputs and the three binding texts;\n  - the data-only pre-check (endpoint 1); it stops everything if it fails;\n  - 24 boxes from the committed builder: 8 molecules x packing seeds 61453, 61454 and 61455, at 0.75 g/cm3, with the design's molecule counts;\n  - the net-charge check; the zero-step read; the density computed by hand within 0.1%;\n  - the planted checks (a) to (d) and the queued planted controls (I3, I5 part 1, I7, I8, I10);\n  - every file hash and tool version.\n  Records go to out/results_cp1/prelaunch/. The shipped bundle goes to boxes_cp1/.\n- On the box (onbox_cp1.sh calls these in order):\n  - budget: price and budget first, then the time limit T = min(18/P, B/P - 0.75);\n  - engine: a short trial picks the graphics-card (GPU) path or the processor (CPU) fallback;\n  - verify: every shipped file against its hash;\n  - generate: the runs, in tiers and in waves of four, under the clock rule and the speed probe;\n  - endpoints: all twelve endpoints, two report-only readouts, and a summary.\n  Records go to out/results_cp1/, as the directive replaces results_cp1/out/.\n- Optional and free (decktrial): runs the edited deck for a few hundred steps on one box locally. It catches deck errors before launch.\n\nHOW IT RECORDS\n- Every record goes through the frozen writer, then gains a run validity field (run_valid).\n- A failing gate sets validity to false in every later record. That covers a pre-launch step, an unfinished tier 1, or the density gate.\n- It also rewrites every earlier record, run files included, marked as voided after the fact. A void is never undone.\n- Each run keeps its raw engine output word for word: logs, density file, deck copy, and the compressed centre file. One row per lag of the mean-squared displacement goes in its record.\n- All gate labels are carried word for word. That covers the narrowed refutation label, the window-dependent label, the cost label and the incomplete-run label.\n\nTHINGS THE READER SHOULD KNOW\n1. GPU engine: the conda-forge CUDA 12.6 LAMMPS build has no GPU package. Its build flags turn GPU support on through the KOKKOS package, built for an old card generation (Maxwell 5.0).\n   - The design's memory note assumed the GPU package.\n   - The runner tries KOKKOS command-line switches first, then the processor path. The trial must show signs the card was used.\n   - Some deck commands have no KOKKOS version, so this path may fail or run slowly. That path is unverified, as the operator said.\n2. Planted walkers share a centre that does not wander, as in a box with zero total momentum. A known drift is then added.\n   - With independent walkers, removing drift would shrink D by 1 part in N, which is 0.42% on average here.\n   - Over 160 planted cells that would show as about 2 standard errors. The bias check would then test an artefact, not the code.\n3. Every planted walk uses one D, 0.01 square angstroms per picosecond. Rerun noise can then reorder liquids, so the margin check (I8) tests the margin code.\n4. Readings I chose, all declared in the file:\n   - the 0.2-1.0 ns window holds 801 positions;\n   - D is a fit with an intercept, divided by 6;\n   - the slope band comes from single planted cells;\n   - the non-diffusive count uses each liquid's displacement curve averaged over its reruns;\n   - the short side of the longer-run comparison uses whichever of reruns 2 and 3 finished;\n   - the margin is a population deviation; the timestep spread is a sample deviation.\n5. Choices to confirm, flagged here:\n   - A margin or spread of exactly zero halts only that endpoint (code WRONG_VARIANCE_SOURCE). It does not void the run.\n   - Runs are stopped when the time limit T is reached, so the analysis fits inside the 30-minute backstop.\n   - The box refuses to start if T is under 6.29 h, which is the gate's launch rule.\n   - A failed or degenerate run is repeated once, using the design's 10% repeat allowance.\n6. The 2 ns continuation needs a deck the committed files do not have. I wrote one, modelled on the committed continuation deck.\n   - The thermostat and barostat restart fresh at the 1.0 ns join, because the committed deck removes them before saving.\n   - The join check (I5 part 2) guards the positions.\n7. Reruns are never described with the forbidden word. The selftest scans every output for it.\n\nWHAT I RAN\n- The selftest only, plus four checks that run no stage:\n  - pyflakes on the runner;\n  - a dry-run package solve, which installed nothing;\n  - the LAMMPS package recipe, downloaded to the scratchpad and read;\n  - a numpy function check on synthetic arrays in the scratchpad. The fast and plain displacement code agree to 4e-14. Planted noise gives an exponent of 0.702.\n- The bytecode caches my runs created were removed. The runner now loads the frozen writer without writing a cache.",
+      "onbox_sh": "Written: /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/onbox_cp1.sh (157 lines, sha256 795af8002be00ebfe5e1e602cf36c40cf1fe7c078ab9d752ce8f7c944f2edfd9).\n\nIt runs inside the one working folder and follows the directive's on-box order.\n1. Price and budget are read first, with the system Python. It exits at once if either is missing, not a number, or not above zero (code 3), or if T is under 6.29 h (code 4).\n2. Engine setup:\n   - a plain Python environment with numpy 1.26.4, then the runner's selftest;\n   - micromamba 2.9.0, from a pinned web address, checked against sha256 8761c382…;\n   - LAMMPS 29 Aug 2024, CUDA 12.6 single-process build (cuda126_py310_h894d002_nompi_2). If that will not install, it installs the workstation's own processor build (cpu_py310_h956f9f1_mpi_openmpi_2);\n   - the path trial, GPU switches first. Code 5 if no path works; code 8 if no build installs.\n3. Hash check of the shipped bundle (code 6 on any mismatch).\n4. The simulations.\n5. The analysis always runs, so finished runs are reported after an early stop.\n6. A listing of results, then the finish marker (RUN_DONE) holding the exit code. The marker is written beside the script and in out/results_cp1/.\nEvery stage failure exits nonzero; an unfinished tier 1 gives code 4. It never runs the builder, Packmol or RDKit.",
+      "selftest_output": "$ .toolchain/env/bin/python run_cp1.py --selftest\n[void] run_valid=false; reason: the density gate (endpoint 2) failed\n[void] run_valid=false; reason: another reason\n[void] run_valid=false; reason: incomplete run: tier 1 did not finish\n[budget] P=1.29 B=19.0 T=13.953 h REMOTE_TIMEOUT=52032 s\n[budget] FATAL: PRICE_USD_PER_HOUR is missing\n[budget] FATAL: PRICE_USD_PER_HOUR is not a number: 'abc'\n[budget] FATAL: BUDGET_LEFT_USD is not above zero: '0'\n[budget] P=2.7 B=19.0 T=6.287 h REMOTE_TIMEOUT=24433 s\n[verify] 25 files; all match\n[verify] 25 files; PROBLEMS: mol_00400/pack61454/in.data: hash differs\nselftest: 217 checks, PASS\nexit code: 0\n\n(The same 217 checks pass under the system Python 3.14. The printed void, budget and hash-check lines come from planted cases that are meant to fail. The checks cover:\n- every parser and every degenerate-output detector;\n- each endpoint's arithmetic on planted rows;\n- a planted density-gate failure that sets validity to false in every record, run files included;\n- planted zero dispersion, which halts both dispersion rules with the code WRONG_VARIANCE_SOURCE;\n- the directive's price table: 13.953, 11.917 and 8.798 h;\n- the chance counts 439 and 2,318 of 40,320, and 26 and 68 of 576;\n- the free orderings 0.524, 0.048 and 0.738;\n- the scheduler on a simulated clock. A box 3 times slower stops at the speed probe. At $1.99 and the guessed speed, tiers 1 and 2 fit.)",
+      "onbox_command": "Order of work. Pre-launch is operator work; the launcher copy is operator work too.\n\n1. On this workstation, at no cost, from the coolant_proxy folder:\n   .toolchain/env/bin/python run_cp1.py extract\n   Optional but recommended, also free, to catch deck errors before launch:\n   .toolchain/env/bin/python run_cp1.py decktrial\n   Launch only if out/results_cp1/prelaunch/stage-prelaunch-summary.json reads LAUNCH_ALLOWED.\n\n2. The launcher copy must do four things:\n   - ship run_cp1.py, onbox_cp1.sh, frozen/provenance.py and the whole boxes_cp1/ folder into the one working folder;\n   - forward PRICE_USD_PER_HOUR and BUDGET_LEFT_USD in the run environment;\n   - set REMOTE_TIMEOUT = floor((T + 0.5) x 3600), for example 52032 at $1.29 with 19.0 left;\n   - fetch the box's out/ folder. The first files to fetch are out/results_cp1/*summary*.json, out/results_cp1/onbox_cp1.log and RUN_DONE.\n\n3. On the box, the command the launcher runs through the frozen bootstrap:\n   PRICE_USD_PER_HOUR=<listed hourly price> BUDGET_LEFT_USD=<budget left, 19.0 on a first launch> bash onbox_cp1.sh\n\n4. After fetching, the analysis can be rerun anywhere:\n   python3 run_cp1.py endpoints --outdir <fetched>/out/results_cp1 --bundle boxes_cp1",
+      "expected": "Selftest: about 5 s, 217 checks.\n\nPRE-LAUNCH, ON THIS WORKSTATION (not run by me)\n- Time:\n  - The 24 Packmol box builds run 4 at a time, capped at 2 h each. Their time is unknown.\n  - The 24 zero-step reads take seconds to a minute each.\n  - The planted checks take about 10 minutes. Measured: 0.2 s per planted 1 ns cell, and about 3 s per planted 2 ns two-file cell at 349 molecules.\n- Records: 42 in out/results_cp1/prelaunch/:\n  - 1 input check, 1 data pre-check, 1 deck diff;\n  - 24 box builds;\n  - 1 each for the charge check, the zero-step read and the density by hand;\n  - 9 planted checks;\n  - 1 for hashes and tool versions, and 1 summary.\n  The optional deck trial adds 1 more.\n- Bundle: 103 files in boxes_cp1/. That is 96 box files, 4 decks, a reference table, a status file and a manifest.\n\nON THE BOX\n- Clock, at the guessed combined 530 steps per second:\n  - setup allowance 1.0 h;\n  - tier 1 5.04 h, tier 2 2.10 h, tier 3 2.52 h, tier 4 0.60 h;\n  - the design's total is 12.54 h.\n- Limit at $1.29 with 19.0 left: T = 13.953 h, timeout 52,032 s.\n- Speed probe: it fires once each first-wave run has done 150,000 steps. That is about 0.31 h into the wave at the guessed speed. On a box 3 times slower it stops the run near 1.9 h of uptime, about $2.5 at $1.29.\n- Records, if every run finishes first time: 54 in total. Retries add one record per extra attempt.\n  - 1 budget, 2 engine, 1 hash check, 1 speed probe;\n  - 33 run records: 16 + 8 + 8 + 1;\n  - 1 tier record, 12 endpoints, 2 report-only readouts, 1 summary;\n  - plus three state files: run validity, engine choice and progress.\n- Rows:\n  - 401 displacement rows per 1 ns run and 901 per 2 ns run, 17,233 in all;\n  - centre files of 1,001 frames, each 163 to 349 molecules.\n- Raw output under out/results_cp1/raw/, compressed: roughly 100 to 170 MB."
+    },
+    "next": "human reviews files, then runs the launcher verbatim"
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Design"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 2,
+      "title": "Diff"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 3,
+      "title": "Triage"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 4,
+      "title": "GateCheck"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 5,
+      "title": "Build"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 6,
+      "title": "Elicit"
+    },
+    {
+      "type": "workflow_phase",
+      "index": 7,
+      "title": "Write"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "gatecheck",
+      "phaseIndex": 4,
+      "phaseTitle": "GateCheck",
+      "agentId": "aad7ed4043016e28f",
+      "model": "sonnet",
+      "state": "done",
+      "startedAt": 1792341770648,
+      "lastProgressAt": 1792341770648,
+      "cached": true,
+      "resultPreview": "{\"answered\":19,\"unanswered\":[]}",
+      "promptPreview": "You verify that a human gate answered everything a design phase queued. Read exactly two files: the design record /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/design_record_attempt2.json and the gate commit /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/GATE_COMMIT.md. From the design record collect every item needing an answer of recor…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "build",
+      "phaseIndex": 5,
+      "phaseTitle": "Build",
+      "agentId": "a63499c7f4d37948f",
+      "model": "claude-opus-5-5",
+      "state": "done",
+      "startedAt": 1792341770675,
+      "queuedAt": 1792341770649,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "Written: /home/hal/dev/interp/dm_hack/latent_skeptic_meta/e…",
+      "promptPreview": "You build the execution layer for one pre-registered experiment. The design is the spec; implement it exactly - never improve, rescope, or fix what looks wrong. Every number marked GUESS is binding.\n\nREAD IN ORDER: (1) /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/design_record_attempt2.json - the design object is the complete spec. (2) /home/hal/dev/interp/dm_hack…",
+      "promptFramed": true,
+      "lastProgressAt": 1792344914034,
+      "tokens": 505293,
+      "toolCalls": 64,
+      "durationMs": 3143359,
+      "resultPreview": "{\"runner_py\":\"Written: /home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/run_cp1.py (4,011 lines, sha256 7debf260f4b6dcca537f8545377bcec7a67d3cac5dfded40660b6aa1575a38e6). Nothing existing was edited.\\n\\nWHAT IT DOES\\nThe three named stages each run on their own. Smaller helper stages sit between them.\\n- Before launch, on this workstation, with .toolchain/env/bin/python. …"
+    }
+  ],
+  "totalTokens": 505293,
+  "totalToolCalls": 64
+}

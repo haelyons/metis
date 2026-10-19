@@ -1,0 +1,136 @@
+## Addendum after build halt 1: execution directives for build
+
+Date: 2026-10-18. Added after the first build try halted. Nothing above this heading is changed.
+
+**New input of record.** `out/build_cp1_try1_wf_bcd297f8-bc7_return.json` (sha256 `2829f55fa6d85612805bd94e873d61ba9ea632a2fa35601abf49ccdba691bd75`).
+- The builder stopped before writing any file. It spent $0.00 and launched no box.
+- It named two blockers and some launcher items, and it asked three questions.
+- The operator also confirmed some facts about the infrastructure. They are quoted where they are used below. The gate did not check them itself.
+
+**How this addendum is used.** The operator passes this section, word for word, to the build as its execution directive (exec_note).
+
+### (a) Which document binds
+
+- The build binds to three texts. This addendum comes first. The item answers in GATE_COMMIT.md above come second. The design record (`out/design_record_attempt2.json`, sha256 `9f320ef3d15f224a9bebeb30d7ff4dfe6eeab79230ec9785f2a977de0af6e641`) comes third.
+- Where two of them differ, the earlier one in that list wins. Where the first two are silent, the design record binds as written, GUESS numbers included.
+- The builder must read GATE_COMMIT.md in full. The checklist below is there to make sure nothing is missed. If the checklist and an item answer above ever seem to differ, the item answer above binds.
+
+**Checklist of gate changes the build must carry (16 entries).**
+
+Labels and narrowed rules:
+1. **D1.** A main rho below 0.8 is labelled "refuted for the Stokes-Einstein-like form kT/(6π·D·R) only; the excess-entropy-like form was not tested". The rho-below-0.6 abandon line gets the same label. A pass answers "yes" for this form.
+2. **D3(a).** Endpoint 9 never refutes. If 3 or more of 8 molecules fall outside the slope band, it adds the label "apparent D: slope outside the planted band for N of 8 molecules". Claim 2 is judged only by endpoints 4 and 5.
+3. **D3(b).** Endpoint 10 never refutes. A main-window pass with another window below 0.8 is reported as "passed in the pre-registered window (0.1–0.4 ns); window-dependent".
+4. **D3(c).** Endpoint 7 is unchanged. It may refute claim 4 only. The discordant pairs are listed beside the count.
+5. **D3(d).** Endpoint 8 judges claim 5 against molar mass, reference density and XGBoost only.
+   - At or below the best of these: refuted.
+   - Above the best but within the rerun margin: "higher than free orderings, within rerun noise".
+   - Above the best by more than the margin: passed.
+   - 1/D and simulated density are reported as ablations and cannot refute claim 5. If either matches or beats the proxy, the label is "size term adds nothing" or "diffusion adds nothing over density".
+6. **F1.** Endpoint 6 is labelled "met by the plan's arithmetic: 3.375 ns per molecule, 4.2% of 80 ns; not an empirical test". If endpoint 4 fails, claim 3 is labelled "not shown". A pass of endpoint 1 is labelled "integrity check, not evidence". A failure of endpoint 1 stops the run before any spend.
+7. **Early stop.** If tier 1 does not finish, numbers from finished cells may be reported, each labelled "incomplete run: descriptive only, no verdict". No pass or refutation is claimed.
+
+Queued controls:
+
+8. **D5.** The throughput probe in wave 1, against the time limit T defined in (d).
+9. **F2.** The log-log slope of each molecule's mean-squared displacement in the 2 ns extension, at lags 0.1–0.9 ns. Report only.
+10. **I2.** Density computed by hand from each data file must match LAMMPS's step-0 density to within 0.1%.
+11. **I3.** Planted proxy path: made-up η of 1 to 8 mPa·s with seed 7. Each η must come back to within 1 part in 10⁶, with rho +1, and −1 when reversed.
+12. **I5.** A planted 1.8 ns window split into two files at 1.0 ns, plus the real-data join check.
+13. **I7.** Planted family orderings (12, 0, and 12 with ln 4 offset), and the enumeration giving 26 and 68 of 576.
+14. **I8.** Identical reruns must halt with WRONG_VARIANCE_SOURCE. Planted reruns must give a positive margin over exactly 6,561 picks (256 with two reruns).
+15. **I10.** Planted (a) bias check at the 0.05–0.2 ns and 0.2–0.4 ns windows.
+16. **I12.** For the 1 fs run, frame times come from step number × timestep, and the frame spacing must be 1.000 ps.
+
+### (b) Where boxes are built and checked
+
+**On this workstation, before launch, as the design says.** The operator reports that `.toolchain/env` in this folder now holds RDKit 2025.09.5, Packmol, numpy 1.26.4 and the LAMMPS 29 Aug 2024 CPU build. So blocker 2 no longer holds. Boxes are not built on the rented box.
+
+Pre-launch steps, in order, all local and all at $0.00:
+1. Build 24 boxes with the committed builder (sha256 `91cac1d5307eb3a0ab54be1cfd2fac3d01919bdd1cd35e7c75929bd016977008`). That is 8 molecules × 3 packing seeds (61453, 61454, 61455), with the design's molecule counts and the packing density from (c).
+2. Check that the net charge per molecule is near zero, from the builder's metadata.
+3. Do a zero-step read of every box with the local LAMMPS build.
+4. Run the I2 density check on every box.
+5. Run R1 and the planted controls (I3, I5 part 1, I7, I8, I10) with the local numpy. The item answers above allow either the workstation or the box. The workstation is chosen, because a failure there costs nothing.
+6. Record the sha256 of every built data file and the version of every tool used.
+
+If any step fails, stop before launch and report. Do not launch with a partial set of boxes.
+
+The on-box script starts from the 24 shipped data files and never runs the builder, Packmol or RDKit. Its stages, in order:
+1. Check the price and budget variables (d).
+2. Set up the engine (f, item 2).
+3. Check each data file's sha256 against step 6 above.
+4. Run tiers 1 to 4 under the clock rule and the D5 probe.
+5. Run the analysis pass (the endpoints, F2, I5 part 2, I12).
+6. Write results as in (e).
+
+### (c) Packing density
+
+**0.75 g/cm³ for all 24 boxes.** This is the builder's own default. Do not use the README example's 0.3 g/cm³.
+
+Reason:
+- 0.75 is closest to where the boxes end up. The paper's simulated densities run from 0.797 to 0.962 g/cm³.
+- Starting from 0.75, a box shrinks by at most a factor of 1.28 in volume. Starting from 0.3, it would have to shrink by a factor of 2.66 to 3.21.
+- The design reads D from 0.2 ns of the constant-pressure stage onward. That assumes the density has levelled off by then, and a start near the final density makes that most likely.
+- The gate did not check which packing density the paper itself used.
+
+If Packmol cannot pack any box at 0.75, stop before launch and report. Do not lower the density for some boxes only.
+
+Report only, with no effect on any verdict: for each molecule, the mean density over 0.20–0.45 ns of the constant-pressure stage, beside the mean over its last 250 ps. This shows whether density had levelled off when the D window opened.
+
+### (d) Price variable and time cap
+
+**Variables** the operator forwards to the box:
+- `PRICE_USD_PER_HOUR`: the listed on-demand hourly price, in US dollars, of the instance type actually launched (for example `1.29`).
+- `BUDGET_LEFT_USD`: the part of the $19.0 approval not yet spent by earlier launches of this run. It is `19.0` on the first launch.
+
+The on-box script reads both before anything else. If either is missing, not a number, or not above zero, it exits at once.
+
+**Runner time limit**, in hours, counted from box boot (the machine's uptime clock), so boot, bootstrap installs and setup all count against it:
+
+  T = min(18.0 / P, B / P − 0.75), where P = `PRICE_USD_PER_HOUR` and B = `BUDGET_LEFT_USD`.
+
+- On a first launch at $1.33 per hour or less, this is exactly the design's rule, 18.0 / P.
+- The second term is a gate change. The design's rule assumes that the 0.75 hours of boot, teardown and backstop cost $1.0 or less. That holds only up to $1.33 per hour. At the design's own guessed $1.5, the worst case would have been $19.13. With the second term, the worst case never goes above B.
+- T is the limit used by both the design's clock rule and the D5 probe.
+
+**Backstop.** `REMOTE_TIMEOUT` = floor((T + 0.5) × 3600) seconds. These are the design's 30 minutes of backstop. The operator computes it from the same P and B and sets it.
+
+**Worst-case spend** is P × (T + 0.5 + 0.25 for boot and teardown). It is never more than B.
+
+**Launch rule.** Launch the cheapest single-GPU type with capacity at launch time, as the design says. Do not launch if T would be under 6.29 hours. That figure is 1.0 h setup + 5.04 h for tier 1 + 0.25 h spare, at the guessed speed. On a first launch, it means do not launch above $2.69 per hour.
+
+| Price per hour | T (hours) | REMOTE_TIMEOUT (s) | Worst case | Tiers that fit at the guessed speed |
+|---|---|---|---|---|
+| $1.29 (gpu_1x_a10) | 13.953 | 52032 | $18.97 | 1, 2, 3, 4 |
+| $1.50 (design's guess) | 11.917 | 44700 | $19.00 | 1, 2, 3, 4 |
+| $1.99 (gpu_1x_a100_sxm4) | 8.798 | 33471 | $19.00 | 1, 2 |
+
+The guessed speed of 530 steps per second was scaled from an A100 benchmark, and an A10 may be slower. The D5 probe measures the real speed. It stops the run early if tier 1 cannot fit.
+
+### (e) Results path
+
+- On the box, every path is relative to the one working folder named in the launcher copy's working-folder line. The operator matches that folder to the one the frozen bootstrap enters, as in the worked example.
+- The runner writes every result under `out/results_cp1/` in that folder, because the launcher fetches the box's `out/` folder. This replaces the build instruction's `results_cp1/out/`.
+- The runner writes each cell's records as soon as that cell finishes, and flushes them to disk. So whatever is fetched after a probe stop, a clock stop or a backstop kill is complete up to that point.
+- It also writes these as soon as each is known: the measured probe rate, the acceleration path that ran (GPU or CPU), the tool versions, and the box hashes.
+- Locally, pre-launch records go to `out/results_cp1/prelaunch/`. The on-box script never writes into a folder named `prelaunch`, so a fetch cannot overwrite them.
+
+### (f) Other items in the halt that need an owner answer
+
+1. **The frozen bootstrap's language-model checks (torch, Gemma-2)** are accepted as they are. The operator reports they are installs and checks that pass on a Lambda image. Their time counts against setup and against T. They are not a reason to halt.
+2. **The GPU engine on the box.**
+   - Install LAMMPS 29 Aug 2024 from conda-forge, cuda126 build. That is the same release as the local build. Do not compile from source on the box.
+   - Turn GPU acceleration on with LAMMPS command-line switches only. The deck text keeps only the design's listed edits.
+   - The operator reports this GPU path is not verified. So the run logs which path actually ran: GPU, or the design's CPU fallback.
+   - If no GPU path works, run on the CPU as the design says. The D5 probe then decides whether tier 1 can fit.
+3. **"The on-box script runs every stage in order."** This is settled by (b). Building boxes, the zero-step read, I2, R1 and the planted controls are local stages before launch. The on-box script runs only the stages listed in (b).
+4. **The default `REMOTE_TIMEOUT` of 5400 seconds and the missing price setting** are settled by (d).
+5. **The two frozen files name different working folders.** This is infrastructure, settled by the operator under (e). The gate sets only that the on-box script uses paths relative to that single folder.
+6. **What this addendum changes in the design record.** It makes four changes:
+   - the second term of T and the launch rule above $2.69 per hour, which can only shorten or prevent spend;
+   - the packing density, which the design left open;
+   - local execution of R1 and the planted controls, which the item answers already allowed;
+   - one report-only density readout.
+
+   No verdict rule changes. No answer above changes. The $20 cap and the $19 approval stand.

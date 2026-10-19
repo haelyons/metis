@@ -1,0 +1,55 @@
+{
+  "cell": {
+    "stage": "prelaunch-summary"
+  },
+  "decision": "DO_NOT_LAUNCH",
+  "decision_rule": "every pre-launch step passes; else do not launch",
+  "env": {
+    "git_rev": "5544378",
+    "host": "johns-world",
+    "python": "3.10.22",
+    "timestamp_utc": "2026-10-18T20:43:16+00:00"
+  },
+  "inputs": [],
+  "metric": "pre-launch steps",
+  "notes": "mol_00105 seed 61453: exit 2; mol_00105 seed 61454: exit 2; mol_00105 seed 61455: exit 2; mol_00557 seed 61453: exit 2; mol_00557 seed 61454: exit 2; mol_00557 seed 61455: exit 2; mol_00426 seed 61453: exit 2; mol_00426 seed 61454: exit 2; mol_00426 seed 61455: exit 2; mol_00400 seed 61453: exit 2; mol_00400 seed 61454: exit 2; mol_00400 seed 61455: exit 2; mol_00764 seed 61453: exit 2; mol_00764 seed 61454: exit 2; mol_00764 seed 61455: exit 2; mol_00305 seed 61453: exit 2; mol_00305 seed 61454: exit 2; mol_00305 seed 61455: exit 2; mol_00942 seed 61453: exit 2; mol_00942 seed 61454: exit 2; mol_00942 seed 61455: exit 2; mol_01025 seed 61453: exit 2; mol_01025 seed 61454: exit 2; mol_01025 seed 61455: exit 2",
+  "run_labels": [],
+  "run_valid": false,
+  "run_valid_voided_by": [
+    "pre-launch step failed: build: mol_00105 seed 61453: exit 2; mol_00105 seed 61454: exit 2; mol_00105 seed 61455: exit 2; mol_00557 seed 61453: exit 2; mol_00557 seed 61454: exit 2; mol_00557 seed 61455: exit 2; mol_00426 seed 61453: exit 2; mol_00426 seed 61454: exit 2; mol_00426 seed 61455: exit 2; mol_00400 seed 61453: exit 2; mol_00400 seed 61454: exit 2; mol_00400 seed 61455: exit 2; mol_00764 seed 61453: exit 2; mol_00764 seed 61454: exit 2; mol_00764 seed 61455: exit 2; mol_00305 seed 61453: exit 2; mol_00305 seed 61454: exit 2; mol_00305 seed 61455: exit 2; mol_00942 seed 61453: exit 2; mol_00942 seed 61454: exit 2; mol_00942 seed 61455: exit 2; mol_01025 seed 61453: exit 2; mol_01025 seed 61454: exit 2; mol_01025 seed 61455: exit 2"
+  ],
+  "run_valid_voided_retroactively": false,
+  "threshold": {},
+  "values": {
+    "all_passed": false,
+    "created_utc": "2026-10-18T17:35:37+00:00",
+    "e1": {
+      "free_orderings": {
+        "molar_mass": 0.52380952381,
+        "reference_density": 0.047619047619,
+        "xgboost": 0.738095238095
+      },
+      "label": "integrity check, not evidence",
+      "order": [
+        "mol_00426",
+        "mol_00105",
+        "mol_00400",
+        "mol_00764",
+        "mol_00305",
+        "mol_00942",
+        "mol_01025",
+        "mol_00557"
+      ],
+      "passed": true,
+      "rho_between_files": 1.0
+    },
+    "failed_step": "build",
+    "failure": "mol_00105 seed 61453: exit 2; mol_00105 seed 61454: exit 2; mol_00105 seed 61455: exit 2; mol_00557 seed 61453: exit 2; mol_00557 seed 61454: exit 2; mol_00557 seed 61455: exit 2; mol_00426 seed 61453: exit 2; mol_00426 seed 61454: exit 2; mol_00426 seed 61455: exit 2; mol_00400 seed 61453: exit 2; mol_00400 seed 61454: exit 2; mol_00400 seed 61455: exit 2; mol_00764 seed 61453: exit 2; mol_00764 seed 61454: exit 2; mol_00764 seed 61455: exit 2; mol_00305 seed 61453: exit 2; mol_00305 seed 61454: exit 2; mol_00305 seed 61455: exit 2; mol_00942 seed 61453: exit 2; mol_00942 seed 61454: exit 2; mol_00942 seed 61455: exit 2; mol_01025 seed 61453: exit 2; mol_01025 seed 61454: exit 2; mol_01025 seed 61455: exit 2",
+    "launch": "DO NOT LAUNCH",
+    "steps": {
+      "build": "FAIL",
+      "data-precheck": "PASS",
+      "inputs": "PASS"
+    }
+  }
+}

@@ -1,0 +1,36 @@
+# Single environment for everything in this repository:
+#   - the SMILES-to-LAMMPS system builder (MD/builder/: RDKit + Packmol)
+#   - the ML benchmark code (ML/)
+#
+#   conda env create -f environment.yml   &&   conda activate mol-rl
+#
+# The graph (GAT, MPNN) and transformer/ChemBERTa models additionally need the deep
+# learning stack, installed as a separate step because the PyTorch Geometric wheels
+# depend on the local CUDA build. These are the exact versions used for the paper's
+# training runs; run this after activating the environment:
+#
+#   pip install torch==2.10.0 torch-geometric==2.7.0 transformers==5.2.0
+#
+# The tree, kernel and neighbour models need nothing beyond the environment below.
+name: mol-rl
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10.20
+  # MD system builder
+  - rdkit=2025.09.5
+  - packmol
+  # ML benchmark + analysis (versions as used for the paper's training runs)
+  - numpy=1.26.4
+  - pandas=2.3.3
+  - scipy=1.15.2
+  - scikit-learn=1.7.2
+  - joblib=1.5.3
+  - xgboost=3.2.0
+  - matplotlib
+  - pytest
+  - pip
+  - pip:
+      - mordred==1.2.0
+      - selfies==2.1.1
+      - umap-learn==0.5.11

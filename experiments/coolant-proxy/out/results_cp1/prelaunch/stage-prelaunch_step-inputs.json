@@ -1,0 +1,128 @@
+{
+  "cell": {
+    "stage": "prelaunch",
+    "step": "inputs"
+  },
+  "decision": "PASS",
+  "decision_rule": "every file present with its recorded hash; the local toolchain present",
+  "env": {
+    "git_rev": "5544378",
+    "host": "johns-world",
+    "python": "3.10.22",
+    "timestamp_utc": "2026-10-18T17:35:37+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 164094,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/ML/data/dataset.csv",
+      "present": true,
+      "sha256": "962d1c7e9517"
+    },
+    {
+      "bytes": 618589,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/ML/results/predictions_viscosity.csv",
+      "present": true,
+      "sha256": "bf0e17fc60c8"
+    },
+    {
+      "bytes": 43257,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/MD/builder/smiles2loplsaa.py",
+      "present": true,
+      "sha256": "91cac1d5307e"
+    },
+    {
+      "bytes": 4066,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/MD/lammps/equilibrate.in",
+      "present": true,
+      "sha256": "1e79c3f7669b"
+    },
+    {
+      "bytes": 12021,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/exec_note_cp1.txt",
+      "present": true,
+      "sha256": "968be335ec19"
+    },
+    {
+      "bytes": 36636,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/GATE_COMMIT.md",
+      "present": true,
+      "sha256": "ffe8be31860c"
+    },
+    {
+      "bytes": 47618,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/out/design_record_attempt2.json",
+      "present": true,
+      "sha256": "9f320ef3d15f"
+    }
+  ],
+  "metric": "committed inputs and binding texts against their recorded hashes",
+  "notes": "",
+  "rows": [
+    {
+      "expected": "962d1c7e9517b04b97f73f7a016e102eb1cacbd13a190222c0f1e30aa33cded0",
+      "found": "962d1c7e9517b04b97f73f7a016e102eb1cacbd13a190222c0f1e30aa33cded0",
+      "match": true,
+      "name": "dataset",
+      "path": "data/MD-ML-thermophysical/ML/data/dataset.csv"
+    },
+    {
+      "expected": "bf0e17fc60c8ac816debb48ca497b75a4d459f810a123f7d9c76330d06ab420d",
+      "found": "bf0e17fc60c8ac816debb48ca497b75a4d459f810a123f7d9c76330d06ab420d",
+      "match": true,
+      "name": "predictions",
+      "path": "data/MD-ML-thermophysical/ML/results/predictions_viscosity.csv"
+    },
+    {
+      "expected": "91cac1d5307eb3a0ab54be1cfd2fac3d01919bdd1cd35e7c75929bd016977008",
+      "found": "91cac1d5307eb3a0ab54be1cfd2fac3d01919bdd1cd35e7c75929bd016977008",
+      "match": true,
+      "name": "builder",
+      "path": "data/MD-ML-thermophysical/MD/builder/smiles2loplsaa.py"
+    },
+    {
+      "expected": "1e79c3f7669b8ae2e994caacc6f56dc4bfac19737f6f61a3b0f68a94269816cb",
+      "found": "1e79c3f7669b8ae2e994caacc6f56dc4bfac19737f6f61a3b0f68a94269816cb",
+      "match": true,
+      "name": "deck",
+      "path": "data/MD-ML-thermophysical/MD/lammps/equilibrate.in"
+    },
+    {
+      "expected": "968be335ec19d72765471955296fcf7aa6b9e6d27230f34f941f34d3e6865285",
+      "found": "968be335ec19d72765471955296fcf7aa6b9e6d27230f34f941f34d3e6865285",
+      "match": true,
+      "name": "execution_directive",
+      "path": "out/exec_note_cp1.txt"
+    },
+    {
+      "expected": "ffe8be31860cae42238346797b2326ffb3d91a9e48b4347153384326524886cf",
+      "found": "ffe8be31860cae42238346797b2326ffb3d91a9e48b4347153384326524886cf",
+      "match": true,
+      "name": "gate_commit",
+      "path": "GATE_COMMIT.md"
+    },
+    {
+      "expected": "9f320ef3d15f224a9bebeb30d7ff4dfe6eeab79230ec9785f2a977de0af6e641",
+      "found": "9f320ef3d15f224a9bebeb30d7ff4dfe6eeab79230ec9785f2a977de0af6e641",
+      "match": true,
+      "name": "design_record",
+      "path": "out/design_record_attempt2.json"
+    }
+  ],
+  "run_labels": [],
+  "run_valid": false,
+  "run_valid_voided_by": [
+    "pre-launch step failed: build: mol_00105 seed 61453: exit 2; mol_00105 seed 61454: exit 2; mol_00105 seed 61455: exit 2; mol_00557 seed 61453: exit 2; mol_00557 seed 61454: exit 2; mol_00557 seed 61455: exit 2; mol_00426 seed 61453: exit 2; mol_00426 seed 61454: exit 2; mol_00426 seed 61455: exit 2; mol_00400 seed 61453: exit 2; mol_00400 seed 61454: exit 2; mol_00400 seed 61455: exit 2; mol_00764 seed 61453: exit 2; mol_00764 seed 61454: exit 2; mol_00764 seed 61455: exit 2; mol_00305 seed 61453: exit 2; mol_00305 seed 61454: exit 2; mol_00305 seed 61455: exit 2; mol_00942 seed 61453: exit 2; mol_00942 seed 61454: exit 2; mol_00942 seed 61455: exit 2; mol_01025 seed 61453: exit 2; mol_01025 seed 61454: exit 2; mol_01025 seed 61455: exit 2"
+  ],
+  "run_valid_voided_retroactively": true,
+  "threshold": {},
+  "values": {
+    "problems": []
+  }
+}

@@ -1,0 +1,169 @@
+{
+  "cell": {
+    "endpoint": 1,
+    "stage": "prelaunch",
+    "step": "data-precheck"
+  },
+  "decision": "PASS",
+  "decision_rule": "rho = 1.0 between the two committed files, and the stated reference order. A failure stops the run before any spend. A pass is an integrity check, not evidence.",
+  "env": {
+    "git_rev": "5544378",
+    "host": "johns-world",
+    "python": "3.10.22",
+    "timestamp_utc": "2026-10-18T17:35:37+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 164094,
+      "n_items": 835,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/ML/data/dataset.csv",
+      "present": true,
+      "sha256": "962d1c7e9517"
+    },
+    {
+      "bytes": 618589,
+      "n_items": null,
+      "path": "/home/hal/dev/interp/dm_hack/latent_skeptic_meta/experiments/coolant_proxy/data/MD-ML-thermophysical/ML/results/predictions_viscosity.csv",
+      "present": true,
+      "sha256": "bf0e17fc60c8"
+    }
+  ],
+  "metric": "Spearman rho between the two committed reference columns, the order, and the free orderings",
+  "notes": "integrity check, not evidence",
+  "rows": [
+    {
+      "atoms_per_molecule": 92,
+      "eta_dataset": 15.06,
+      "eta_predictions": 15.06,
+      "formula": "C30H62",
+      "molar_mass": 422.82599999999996,
+      "molecule": "mol_00105",
+      "rho_ref": 0.796,
+      "xgboost": 8.730885530105278
+    },
+    {
+      "atoms_per_molecule": 45,
+      "eta_dataset": 2.68,
+      "eta_predictions": 2.68,
+      "formula": "C15H30",
+      "molar_mass": 210.405,
+      "molecule": "mol_00557",
+      "rho_ref": 0.805,
+      "xgboost": 2.4852394175543613
+    },
+    {
+      "atoms_per_molecule": 61,
+      "eta_dataset": 15.56688,
+      "eta_predictions": 15.56688,
+      "formula": "C25H36",
+      "molar_mass": 336.563,
+      "molecule": "mol_00426",
+      "rho_ref": 0.904,
+      "xgboost": 26.304483501588013
+    },
+    {
+      "atoms_per_molecule": 48,
+      "eta_dataset": 13.3444,
+      "eta_predictions": 13.3444,
+      "formula": "C20H28",
+      "molar_mass": 268.44399999999996,
+      "molecule": "mol_00400",
+      "rho_ref": 0.914,
+      "xgboost": 11.987561853147511
+    },
+    {
+      "atoms_per_molecule": 86,
+      "eta_dataset": 11.17585,
+      "eta_predictions": 11.17585,
+      "formula": "C28H56O2",
+      "molar_mass": 424.75399999999996,
+      "molecule": "mol_00764",
+      "rho_ref": 0.863,
+      "xgboost": 16.0765839457935
+    },
+    {
+      "atoms_per_molecule": 80,
+      "eta_dataset": 10.445688,
+      "eta_predictions": 10.445688,
+      "formula": "C26H50O4",
+      "molar_mass": 426.68199999999996,
+      "molecule": "mol_00305",
+      "rho_ref": 0.89925,
+      "xgboost": 24.81221580505371
+    },
+    {
+      "atoms_per_molecule": 53,
+      "eta_dataset": 6.4,
+      "eta_predictions": 6.4,
+      "formula": "C16H34O3",
+      "molar_mass": 274.445,
+      "molecule": "mol_00942",
+      "rho_ref": 0.859,
+      "xgboost": 4.83047062110704
+    },
+    {
+      "atoms_per_molecule": 43,
+      "eta_dataset": 5.5,
+      "eta_predictions": 5.5,
+      "formula": "C12H26O5",
+      "molar_mass": 250.335,
+      "molecule": "mol_01025",
+      "rho_ref": 1.069,
+      "xgboost": 5.215729689763804
+    }
+  ],
+  "run_labels": [],
+  "run_valid": false,
+  "run_valid_voided_by": [
+    "pre-launch step failed: build: mol_00105 seed 61453: exit 2; mol_00105 seed 61454: exit 2; mol_00105 seed 61455: exit 2; mol_00557 seed 61453: exit 2; mol_00557 seed 61454: exit 2; mol_00557 seed 61455: exit 2; mol_00426 seed 61453: exit 2; mol_00426 seed 61454: exit 2; mol_00426 seed 61455: exit 2; mol_00400 seed 61453: exit 2; mol_00400 seed 61454: exit 2; mol_00400 seed 61455: exit 2; mol_00764 seed 61453: exit 2; mol_00764 seed 61454: exit 2; mol_00764 seed 61455: exit 2; mol_00305 seed 61453: exit 2; mol_00305 seed 61454: exit 2; mol_00305 seed 61455: exit 2; mol_00942 seed 61453: exit 2; mol_00942 seed 61454: exit 2; mol_00942 seed 61455: exit 2; mol_01025 seed 61453: exit 2; mol_01025 seed 61454: exit 2; mol_01025 seed 61455: exit 2"
+  ],
+  "run_valid_voided_retroactively": true,
+  "threshold": {
+    "rho": 1.0
+  },
+  "values": {
+    "free_orderings": {
+      "molar_mass": 0.52380952381,
+      "reference_density": 0.047619047619,
+      "xgboost": 0.738095238095
+    },
+    "free_orderings_at_design_time": {
+      "molar_mass": 0.524,
+      "reference_density": 0.048,
+      "xgboost": 0.738
+    },
+    "order_dataset": [
+      "mol_00426",
+      "mol_00105",
+      "mol_00400",
+      "mol_00764",
+      "mol_00305",
+      "mol_00942",
+      "mol_01025",
+      "mol_00557"
+    ],
+    "order_expected": [
+      "mol_00426",
+      "mol_00105",
+      "mol_00400",
+      "mol_00764",
+      "mol_00305",
+      "mol_00942",
+      "mol_01025",
+      "mol_00557"
+    ],
+    "order_predictions": [
+      "mol_00426",
+      "mol_00105",
+      "mol_00400",
+      "mol_00764",
+      "mol_00305",
+      "mol_00942",
+      "mol_01025",
+      "mol_00557"
+    ],
+    "passed": true,
+    "problems": [],
+    "rho_between_files": 1.0
+  }
+}
