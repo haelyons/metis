@@ -1,0 +1,24 @@
+[
+ {
+  "case": "planted",
+  "label": "planted",
+  "reframes": [
+   {
+    "title": "Split each step",
+    "summary": "Split each daily time step's 2 million grid cells across 8 GPUs with domain decomposition, exchanging halos every step."
+   },
+   {
+    "title": "Whole-chain Newton",
+    "summary": "Guess all 10,000 states of one MCMC chain at once, then correct every state in parallel with Newton iterations until the chain matches the sequential one."
+   },
+   {
+    "title": "Scan over days",
+    "summary": "Each day's update of the linear reservoir model is an affine map, so compute all 36,500 days at once with a parallel prefix scan instead of the time loop."
+   },
+   {
+    "title": "Many chains",
+    "summary": "Run 4,096 independent MCMC chains side by side on the GPU, one per starting point, and pool their samples."
+   }
+  ]
+ }
+]

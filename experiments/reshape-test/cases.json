@@ -1,0 +1,20 @@
+[
+ {
+  "id": "rr",
+  "root_question": "What limits Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains? Is compute a major blocker at some level, and could that be fixed with a shit ton of GPU parallelism?",
+  "input": "Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.",
+  "criterion": "It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count."
+ },
+ {
+  "id": "open",
+  "root_question": "Projects for a scientific parallelism hackathon",
+  "input": "A weekend hackathon on scientific parallelism, about 30 hours, on 21 November. GPUs are provided; their type is not yet\nknown. Teams may bring their own problem, and the thinking, data and baseline can be prepared beforehand.\n\nJudges score reshaping, a credible baseline, correctness and scientific value. A carefully explained failure to get a\nspeedup can still win, if its failure modes were predicted in advance.\n\nThe sponsors build systems that split workloads into subtasks and route each to the best chip, and low-latency\ninference chips. The question they care about: which parts of a workload are sequential, and must they be?",
+  "criterion": "It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count."
+ },
+ {
+  "id": "planted",
+  "root_question": "What limits Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains? Is compute a major blocker at some level, and could that be fixed with a shit ton of GPU parallelism?",
+  "input": "Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.",
+  "criterion": "It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count."
+ }
+]

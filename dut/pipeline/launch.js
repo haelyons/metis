@@ -7,6 +7,8 @@
 // usage: node dut/pipeline/launch.js <experiment> loop             (needs experiments/<experiment>/seed.json)
 //        node dut/pipeline/launch.js <experiment> card [--main <model>]  (one card for the seed; --main swaps the producer's model)
 //        node dut/pipeline/launch.js <experiment> frame --card-file <card.md> --root "<question>"
+//        node dut/pipeline/launch.js <experiment> tree --seed <args.json>  (the full tree; args.json overrides run F's args,
+//                                                                          e.g. {"fixed_roots": ["..."], "picks_per_branch": 1})
 //        add --dry-run to prepare the run folder and print the command without running it;
 //        add --seed <file> to run card or loop on another seed than the experiment's seed.json (a variant)
 const fs = require('node:fs')
@@ -20,8 +22,8 @@ const dry = rest.includes('--dry-run')
 const si = rest.indexOf('--seed'), seedFile = si >= 0 ? path.resolve(rest[si + 1]) : null
 const extra = rest.filter((a, i) => a !== '--dry-run' && !(si >= 0 && (i === si || i === si + 1)))
 const EXP = path.join(REPO, 'experiments', name || '')
-if (!name || !['loop', 'card', 'frame'].includes(kind) || !fs.existsSync(EXP)) {
-  console.error('usage: node dut/pipeline/launch.js <experiment> <loop|card|frame> [args] [--dry-run]; the experiment folder must exist')
+if (!name || !['loop', 'card', 'frame', 'tree'].includes(kind) || !fs.existsSync(EXP)) {
+  console.error('usage: node dut/pipeline/launch.js <experiment> <loop|card|frame|tree> [args] [--dry-run]; the experiment folder must exist')
   process.exit(2)
 }
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-').slice(0, 13)
@@ -48,11 +50,12 @@ let cmd
 const SEED = seedFile || path.join(EXP, 'seed.json')
 if (kind === 'loop') cmd = node('loop.js', ['--seed', SEED, '--name', name, '--dir', path.join(RUN, 'out')])
 if (kind === 'frame') cmd = node('frame.js', [...extra, '--out', path.join(RUN, 'out')])
-if (kind === 'card') {
+if (kind === 'card' || kind === 'tree') {
   const cfg = JSON.parse(fs.readFileSync(path.join(COPY, 'idea', 'config.json'), 'utf8'))
   const F = JSON.parse(fs.readFileSync(cfg.roots_args, 'utf8'))
   const seed = JSON.parse(fs.readFileSync(SEED, 'utf8'))
-  const args = { ...Object.fromEntries(Object.entries(F).filter(([k]) => !['fixed_roots', 'base'].includes(k))), base: 'auto', fixed_roots: [], seed_ideas: [seed] }
+  const given = Object.fromEntries(Object.entries(F).filter(([k]) => !['fixed_roots', 'base'].includes(k)))
+  const args = kind === 'card' ? { ...given, base: 'auto', fixed_roots: [], seed_ideas: [seed] } : { ...given, base: 'auto', ...seed }
   fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify(args, null, 1))
   cmd = node('wf.js', ['--args', path.join(RUN, 'args.json'), '--name', name, '--out', path.join(RUN, 'out'), ...extra])   // extra: e.g. --main <model>
 }
