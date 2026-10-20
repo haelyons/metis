@@ -1,0 +1,139 @@
+{
+  "cell": {
+    "endpoint": "E8",
+    "tag": "m3"
+  },
+  "decision": "PASS",
+  "decision_rule": "Per production run: pass if the mean thermo temperature of the 100 ps run is within 313.15 +/- 5 K, no line of that run's output (its thermo header through its Loop line) contains 'Lost atoms', 'SHAKE', 'Bond atom missing' or 'ERROR', and the run started from the restart whose sha256 was recorded once after equilibration. PASS if every run that ran passes; FAIL otherwise; NOT_READ if none ran. A failing run is 'descriptive only; unstable run' and E3 is not read from it.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T13:55:54+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 8938,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/run-prod_a_tag-m3.json",
+      "present": true,
+      "sha256": "50208114a12b"
+    },
+    {
+      "bytes": 8818,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/run-prod_b_tag-m3.json",
+      "present": true,
+      "sha256": "0a7158b15362"
+    },
+    {
+      "bytes": 8784,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/run-prod_c_tag-m3.json",
+      "present": true,
+      "sha256": "83df958eb723"
+    },
+    {
+      "bytes": 20103,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/prod_a.deck.log",
+      "present": true,
+      "sha256": "8391acd35e27"
+    },
+    {
+      "bytes": 16998,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/prod_b.deck.log",
+      "present": true,
+      "sha256": "93f4034c74ae"
+    },
+    {
+      "bytes": 15419,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/prod_c.deck.log",
+      "present": true,
+      "sha256": "b774b1ed5a17"
+    }
+  ],
+  "metric": "sanity control: temperature within 313.15 +/- 5 K over each production run; no error or lost-atom lines; all from the same equilibrated restart",
+  "notes": "",
+  "rows": [
+    {
+      "matching_lines": [],
+      "mean_temp_K": "313.5604345454545454545454545",
+      "pass": true,
+      "reasons": [],
+      "restart_ok": true,
+      "segment_label": null,
+      "status": "RUNS",
+      "variant": "prod_a"
+    },
+    {
+      "matching_lines": [],
+      "mean_temp_K": "313.5903690909090909090909091",
+      "pass": true,
+      "reasons": [],
+      "restart_ok": true,
+      "segment_label": null,
+      "status": "RUNS",
+      "variant": "prod_b"
+    },
+    {
+      "matching_lines": [],
+      "mean_temp_K": "311.7062290909090909090909091",
+      "pass": true,
+      "reasons": [],
+      "restart_ok": true,
+      "segment_label": null,
+      "status": "RUNS",
+      "variant": "prod_c"
+    }
+  ],
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "mean_temp_K": "313.15 +/- 5",
+    "patterns": [
+      "Lost atoms",
+      "SHAKE",
+      "Bond atom missing",
+      "ERROR"
+    ]
+  },
+  "values": {
+    "restart_sha256_recorded_once": "93fdc49e6fe02d1d69842ff337b8eb4c17adfc328d272ae9bc65cbe8e4a7fc95",
+    "segments": [
+      {
+        "matching_lines": [],
+        "mean_temp_K": "313.5604345454545454545454545",
+        "pass": true,
+        "reasons": [],
+        "restart_ok": true,
+        "segment_label": null,
+        "status": "RUNS",
+        "variant": "prod_a"
+      },
+      {
+        "matching_lines": [],
+        "mean_temp_K": "313.5903690909090909090909091",
+        "pass": true,
+        "reasons": [],
+        "restart_ok": true,
+        "segment_label": null,
+        "status": "RUNS",
+        "variant": "prod_b"
+      },
+      {
+        "matching_lines": [],
+        "mean_temp_K": "311.7062290909090909090909091",
+        "pass": true,
+        "reasons": [],
+        "restart_ok": true,
+        "segment_label": null,
+        "status": "RUNS",
+        "variant": "prod_c"
+      }
+    ]
+  }
+}

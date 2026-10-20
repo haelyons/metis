@@ -1,0 +1,177 @@
+{
+ "seed": "# QUESTION: does the coolant card's GPU throughput proxy hold on its own protocol, and does its p_bench gate pass?\n\n## The question\n\nThe card \"Force-field error floor for coolant MD: an enlarged C10-C50 benchmark scored against measurement\" prices\nevery phase by one number it did not measure: `throughput_ns_day = 250` per GPU, a PROXY taken from Amber's JAC\nbenchmark (23,558 atoms, one A100, 611 ns/day) with \"a safety factor of about 2.4\". Its own `p_bench` gate reads\n`throughput_ns_day >= 150`, else \"drop the extension tier and re-plan with 48 molecules at 3 replicas\". **Measure\nthe throughput of the card's own protocol on one A100 and read that gate.** The protocol, from the card's held_fixed\nand the committed decks: LOPLS-AA, a 250-molecule box, 313.15 K and 1 atm, 2 fs timestep, PPPM electrostatics, SHAKE\non C-H bonds, Green-Kubo sampling of the pressure tensor and the heat flux every 5 steps, LAMMPS 29Aug2024.\n\nAlso read, on the same trajectory: the first part of the card's anchor (liquid density within 4% of the reference at\n40 C), the cost of the per-5-step sampling (the Amber proxy has none; the card lists this difference itself), and\nwhether the deck's heat-flux compute runs on the GPU pair style at all. And measure the step the coolant pilot halted\non: packing the box.\n\nBoth outcomes are informative. A throughput at or above 150 ns/day confirms the card's plan as priced. Below 150, the\ncard's own else-branch applies and its USD 941 plan is under-priced by the ratio 250 / measured.\n\n## Committed data\n\n| File (under `data/`) | sha256 | Source |\n|---|---|---|\n| `MD-ML-thermophysical/MD/builder/smiles2loplsaa.py` (SMILES to LAMMPS LOPLS-AA builder) | `91cac1d5307eb3a0ab54be1cfd2fac3d01919bdd1cd35e7c75929bd016977008` | github fionn-carman/MD-ML-thermophysical @ 23121719 (Zenodo 10.5281/zenodo.21824121), copied from `../../coolant-proxy/data` and re-hashed |\n| `MD-ML-thermophysical/MD/lammps/equilibrate.in` | `1e79c3f7669b8ae2e994caacc6f56dc4bfac19737f6f61a3b0f68a94269816cb` | same |\n| `MD-ML-thermophysical/MD/lammps/tdm.in` (Green-Kubo production, segment 1) | `4d6a778e7148335a35bf680829a934c7ce4cc864fc6e050a3f23ed9854058a98` | same |\n| `MD-ML-thermophysical/MD/lammps/tdm_continue.in` | in `out/INPUT_HASHES.txt` | same |\n| `MD-ML-thermophysical/MD/README.md`, `README.md`, `environment.yml` | in `out/INPUT_HASHES.txt` | same |\n| `MD-ML-thermophysical/ML/data/dataset.csv` (835-molecule reference set; row `mol_00557`) | `962d1c7e9517b04b97f73f7a016e102eb1cacbd13a190222c0f1e30aa33cded0` | same |\n| `box_mol00557_n250_d0.30_s61453/{in.data,in.init,in.settings,metadata.json}` (the built box; see Pre-launch build) | appended to `out/INPUT_HASHES.txt` after the build, before triage | built here by the committed builder |\n\nMolecule: 1-cyclohexylnonane (nonylcyclohexane), `mol_00557`, SMILES `CCCCCCCCCC1CCCCC1`, C15H30, 45 atoms. Reference\ndensity at 40 C: **0.805 g/cm3** (dataset.csv, `density_40c`, source Experimental). 250 molecules = 11,250 atoms.\n\n## Pre-launch build (the coolant pilot's halt point, now measured)\n\nOn this workstation, in a fresh micromamba env matching the dataset's `environment.yml` (rdkit 2025.09.5, packmol):\n`smiles2loplsaa.py -smiles CCCCCCCCCC1CCCCC1 -n 250 --density 0.3 --seed 61453`. 0.3 g/cm3 is the dataset README's\nown packing density (\"dilute on purpose; equilibration compresses them to the real density\"). Recorded: exit code,\nwall-clock, `net_charge_per_molecule` from metadata.json, and a zero-step `read_data` in LAMMPS 2024.08.29 (CPU build).\nThe pilot packed at 0.75 g/cm3 and Packmol ended without perfect packing on all 24 boxes.\n\n## Anchor\n\nDensity. After the deck's equilibration (minimise, 25 ps strain relaxation, 200 ps NVT, **0.5 ns NPT** at 313.15 K and\n1 atm, then the deck's deform-to-mean-density step), the NPT mean density over the last 250 ps must be within **+/-4%**\nof 0.805 g/cm3 (the card's anchor tolerance: \"density within 4%\"). The paper reports density plateaus within about\n0.2 ns. Out of band: the timed system is not the liquid the card describes; throughput rows are \"descriptive only;\nanchor failed\" (the step rate is still a fact about this box).\n\n## What would refute each claim\n\n- Claim A (card PROXY `throughput_ns_day = 250`): the production throughput of the deck as written (pressure tensor\n  and heat flux every 5 steps), from LAMMPS's own `Performance:` line over a 200 ps segment after a 50 ps warm-up, on\n  one A100 with the GPU package. Holds if within [100, 625] ns/day (2.5x either way); refuted outside.\n- Claim B (card gate `throughput_ns_day >= 150`): pass or fail, read on the same number. Fail means the card's own\n  text: \"drop the extension tier and re-plan with 48 molecules at 3 replicas\".\n- Claim C (card plan USD 941 at 250 ns/day): the plan's GPU hours scale as 250 / measured. Recomputed plan cost\n  reported; \"under-priced\" if the recomputed cost exceeds the card's USD 1,000 cap (measured below about 235).\n- Claim D (card anchor, density within 4%): as in the Anchor section.\n- Compatibility reading (report only, decides nothing but which variant Claim A reads): does `compute\n  centroid/stress/atom` run with the GPU pair style? If LAMMPS refuses it, the deck as written cannot run on the GPU;\n  Claim A is then read from the pressure-tensor-only variant with the label \"viscosity-only protocol; the deck's heat\n  flux does not run on the GPU pair style\", and the card's thermal-conductivity arm is flagged as unpriced.\n- Sampling-cost reading (report only): ns/day of three 200 ps production variants on the same equilibrated box:\n  (a) deck as written; (b) pressure tensor only; (c) no per-step sampling. Ratios (c)/(a) and (b)/(a).\n- Build reading (report only): Packmol wall-clock at 0.3 g/cm3 and exit code; LAMMPS install wall-clock on the box\n  (the card's `l_dry` line buys 4 h for \"build LAMMPS ... dry-run one molecule\").\n\n## Scope\n\nOne molecule (nonylcyclohexane), one box of 250 molecules, one GPU (A100 SXM4 40 GB, the card's GPU, at the card's\nrate), one equilibration, three 200 ps production variants. The card's `p_bench` throughput only. Out of scope: the\nreplica spread `eta_se_frac` (3 replicas x 8 ns), the 8-molecule anchor `eta_anchor_err`, viscosity or thermal\nconductivity values themselves, any CPU-only floor, the other seven molecules, p_core and beyond.\n\n## Declared construct risks\n\n- Throughput depends on the engine build. The conda-forge LAMMPS CUDA build (GPU package: pair and k-space on the\n  GPU; bonds, SHAKE and per-atom computes on the CPU) is what is measured; a KOKKOS or a hand-compiled build could\n  differ by 2x. Stated as \"LAMMPS 2024.08.29, conda-forge CUDA build, GPU package, one A100\".\n- One molecule of 45 atoms; the card's eight anchor molecules range to 92 atoms (squalane), so boxes of 250 molecules\n  range from about 11,000 to 23,000 atoms. Throughput for the larger boxes is not measured; the per-atom step rate is\n  reported so a reader can scale.\n- 200 ps segments: the LAMMPS Performance line averages the segment; the first seconds include neighbour-list and\n  GPU warm-up. Three segments on one box are same-box reruns, not replication.\n- The density anchor after 0.5 ns NPT is a plateau check, not the paper's 1 ns protocol.\n\n## How the card maps onto this record\n\n| Card (PLAN) field | Here |\n|---|---|\n| `numbers[throughput_ns_day]` PROXY 250, `measured_by: p_bench` | Claim A |\n| `phases[p_bench].gate` (>= 150) | Claim B |\n| `cost.lines[*]` (hours divide by throughput), `spend_cap_usd` 1000 | Claim C |\n| `anchor` (density within 4%) | Claim D |\n| `numbers[throughput_ns_day].differs_in` (\"no per-step stress-tensor autocorrelation accumulation\") | Sampling-cost reading |\n| `held_fixed` (LOPLS-AA, 250 molecules, 313.15 K, 2 fs, PME, Green-Kubo estimators) | Protocol |\n| `cost.lines[l_dry]` (4 h: build LAMMPS, dry-run one molecule) | Build reading |\n| `numbers[eta_se_frac]`, `numbers[eta_anchor_err]`, p_core, p_ext, p_score | not measured |\n",
+ "design": {
+  "hypothesis": "Measured on one rented A100 SXM4 40 GB box, the production throughput (ns/day) of the card's own protocol (LOPLS-AA, 250-molecule nonylcyclohexane box of 11,250 atoms, 313.15 K, 2 fs, PPPM 1e-5, SHAKE on C-H, pressure tensor and heat flux sampled every 5 steps; LAMMPS 2024.08.29 conda-forge CUDA build, GPU package), substituted for the card's PROXY 250 ns/day, reads the card's p_bench gate (>= 150 ns/day) and re-prices the card's USD 941 plan; the liquid density after equilibration is checked against the reference 0.805 g/cm3 within 4% first.",
+  "models": [
+   "LAMMPS 2024.08.29 from conda-forge, CUDA build (the coolant pilot's pinned spec lammps=2024.08.29=cuda126_py310_h894d002_nompi_2 if available, else the nearest 2024.08.29 cuda build, recorded), run with -sf gpu -pk gpu 1; package list from `lmp -h` recorded",
+   "LOPLS-AA parameters and LAMMPS data from the committed builder smiles2loplsaa.py (Zenodo 10.5281/zenodo.21824121); the committed decks equilibrate.in and tdm.in driven only through -var overrides and three listed edits (see arms)",
+   "Builder env on the workstation: micromamba, rdkit 2025.09.5, packmol (dataset environment.yml); LAMMPS 2024.08.29 CPU build for a zero-step read_data check"
+  ],
+  "data": "No download. Committed: the dataset's builder, decks, READMEs, environment.yml and dataset.csv (hashes in out/INPUT_HASHES.txt, each verified against the coolant pilot's table). Built pre-launch by the committed builder: data/box_mol00557_n250_d0.30_s61453/{in.data,in.init,in.settings,metadata.json} for mol_00557 (1-cyclohexylnonane, SMILES CCCCCCCCCC1CCCCC1, 45 atoms), 250 molecules = 11,250 atoms, packing density 0.3 g/cm3, seed 61453; hashes appended to out/INPUT_HASHES.txt before triage. Reference density 0.805 g/cm3 at 40 C from dataset.csv row mol_00557 (Experimental).",
+  "arms": [
+   "prelaunch_build (workstation, E1): the committed builder at 0.3 g/cm3, exit code, wall-clock, net_charge_per_molecule from metadata.json; zero-step read_data in LAMMPS CPU 2024.08.29 (no error, atom count 11,250)",
+   "install (box, report): micromamba + conda-forge LAMMPS CUDA build; wall-clock; `lmp -h` package list; GPU visible to the GPU package (a 100-step dry run of the box with -sf gpu)",
+   "equilibrate (box, E2): equilibrate.in with -var T 313.15 P 1.0 timestep_fs 2.0 pushoff_steps 50000 settle_steps 100000 npt_steps 250000 deform_steps 100000 density_avg_start 125000 density_sample_every 100 density_sample_repeat 1250 density_sample_freq 250000 thermo_every 5000 run_id 1; GPU package; the deck's density file gives the NPT mean over the last 250 ps; the deck's own 'Equilibration done' line gives target and final density",
+   "prod_a (box, E3): tdm.in as written with -var timestep_fs 2.0 warmup_steps 25000 prod_steps 100000 dump_every 5 thermo_every 5000 run_id 1 seg 1; GPU package; ns/day from the Performance line of the production run (after the warm-up run), wall-clock recorded; the Stress and HeatFlux files' row counts recorded",
+   "prod_b (box, E4): tdm.in with the heat-flux computes and the flux_raw fix removed (listed edit 1: delete the lines from 'compute myKE' through 'compute redJkZ', the three Jtot variables and 'fix flux_raw'); pressure tensor every 5 steps kept; same lengths",
+   "prod_c (box, E5): tdm.in with both ave/time fixes and all heat-flux and pressure computes removed (listed edit 2); same lengths; no per-step sampling",
+   "compat (box, E6): if prod_a exits with an error naming compute centroid/stress/atom, stress/atom, heat/flux or the GPU pair style, record the error line verbatim; E3 then reads prod_b with the label 'viscosity-only protocol; the deck's heat flux does not run on the GPU pair style'",
+   "sanity (box, control): over each production segment, mean temperature within 313.15 +/- 5 K; no 'Lost atoms', 'SHAKE', 'Bond atom missing' or 'ERROR' lines; the three segments start from the same equilibrated restart"
+  ],
+  "endpoints": [
+   {
+    "metric": "E1 pre-launch build: builder exit code at 0.3 g/cm3; |net_charge_per_molecule| from metadata.json; zero-step read_data in CPU LAMMPS; atom count",
+    "threshold": "exit 0 AND |net charge| < 1e-3 e AND read_data without error AND 11,250 atoms",
+    "refuting_outcome": "any failure: no launch (the pilot's halt stands at this density too); recorded as the run's outcome"
+   },
+   {
+    "metric": "E2 anchor: NPT mean density over the last 250 ps (the deck's density file) against the reference 0.805 g/cm3",
+    "threshold": "within +/-4%",
+    "refuting_outcome": "outside: production rows labelled 'descriptive only; anchor failed'; E3 to E5 still reported as step rates with that label; Claim B and C read NOT_READ"
+   },
+   {
+    "metric": "E3 card PROXY throughput_ns_day = 250: ns/day of prod_a (deck as written) on one A100, from the Performance line",
+    "threshold": "holds if within [100, 625] ns/day",
+    "refuting_outcome": "outside: the PROXY is off by more than 2.5x (direction reported)"
+   },
+   {
+    "metric": "E3b card gate p_bench: measured ns/day >= 150",
+    "threshold": "pass if >= 150",
+    "refuting_outcome": "fail: the card's own text applies, 'drop the extension tier and re-plan with 48 molecules at 3 replicas'"
+   },
+   {
+    "metric": "E3c card plan re-priced: USD 941 x 250 / measured ns/day (GPU-hour lines scale with 1/throughput; storage line held)",
+    "threshold": "within the card's USD 1,000 cap if measured >= 235.3",
+    "refuting_outcome": "above the cap: the plan is under-priced by the reported ratio; not a card prediction, a cost reading"
+   },
+   {
+    "metric": "E4 prod_b (pressure tensor only) ns/day and ratio E4/E3",
+    "threshold": "report",
+    "refuting_outcome": "none (descriptive)"
+   },
+   {
+    "metric": "E5 prod_c (no per-step sampling) ns/day and ratio E5/E3; per-atom step rate (atom-steps per second)",
+    "threshold": "report",
+    "refuting_outcome": "none (descriptive); the ratio prices the sampling the Amber proxy lacks"
+   },
+   {
+    "metric": "E6 compatibility: does the deck as written run with the GPU package",
+    "threshold": "RUNS or REFUSED with the error line",
+    "refuting_outcome": "REFUSED: E3 reads prod_b with the label 'viscosity-only protocol'; the card's thermal-conductivity arm is flagged unpriced on the GPU"
+   },
+   {
+    "metric": "E7 install and build readings: LAMMPS install wall-clock on the box; builder wall-clock on the workstation; dry-run success",
+    "threshold": "report against the card's l_dry line (4 h time box)",
+    "refuting_outcome": "none (descriptive)"
+   },
+   {
+    "metric": "E8 sanity control: temperature within 313.15 +/- 5 K over each production segment; no error or lost-atom lines",
+    "threshold": "all pass",
+    "refuting_outcome": "any fail: that segment's row is 'descriptive only; unstable run' and E3 is not read from it"
+   }
+  ],
+  "sampling": "One box (seed 61453), one equilibration (run_id 1), three production segments of 100,000 steps at 2 fs (200 ps) after a 25,000-step warm-up each, all from the same equilibrated restart; ns/day read from LAMMPS's Performance line (and wall-clock recorded); thermo every 5,000 steps. Order on the box: install; dry run; equilibrate; prod_a; prod_b; prod_c; endpoints. A cost guard before every stage; a time guard inside REMOTE_TIMEOUT.",
+  "layers_strengths": "not applicable; one system size (11,250 atoms)",
+  "budget_usd": 10,
+  "does_not_test": [
+   "The card's replica spread eta_se_frac and anchor error eta_anchor_err (viscosity values are not computed)",
+   "The other seven molecules; boxes above 11,250 atoms (GUESS: throughput falls roughly with atom count; reported as a per-atom rate so a reader can scale)",
+   "A KOKKOS or hand-compiled LAMMPS, GROMACS or OpenMM: the engine build is held to the conda-forge CUDA build (MEMORY: conda-forge lammps cuda builds carry the GPU package; the package list is read on the box)",
+   "A CPU-only floor",
+   "Whether 2 fs with SHAKE is stable beyond 0.9 ns (the deck default is 1 fs; the card holds 2 fs fixed): the sanity control covers the segments run",
+   "The equilibration lengths chosen (GUESS: 0.5 ns NPT instead of the deck's 1 ns; 200 ps production segments): density plateau is checked by E2, not assumed",
+   "Whether the conda-forge CUDA build's download completes on the box (MEMORY from m1: about 450 kB/s from PyPI; conda-forge speed unknown); the time guard bounds it"
+  ]
+ },
+ "diff": {
+  "departures": [
+   {
+    "id": "D1",
+    "departure": "One molecule (nonylcyclohexane, 45 atoms) of the card's eight; one box of 250 molecules (11,250 atoms). The card's anchor set spans up to 92 atoms per molecule (squalane, about 23,000 atoms per box).",
+    "question": "Is one 11,250-atom box the throughput the card's cost lines mean, or should the measure use the largest anchor molecule as well?"
+   },
+   {
+    "id": "D2",
+    "departure": "Packing density 0.3 g/cm3 (the dataset README's value), where the coolant pilot's gate chose 0.75 and halted.",
+    "question": "Accepted that the README's dilute packing plus the deck's NPT and deform-to-density stages define the box, and that the pilot's density choice is not repeated?"
+   },
+   {
+    "id": "D3",
+    "departure": "Equilibration shortened: 0.5 ns NPT at 2 fs instead of the deck's 1 ns at 1 fs; deform stage 200 ps; production segments 200 ps after 50 ps warm-up. Deck structure unchanged; -var overrides and two listed deletions only.",
+    "question": "Is a density plateau check at 0.5 ns enough to call the timed system 'the card's liquid'?"
+   },
+   {
+    "id": "D4",
+    "departure": "Three production variants where the card has one protocol: as written (a), pressure-only (b), no sampling (c). (b) stands in for (a) if the GPU pair style refuses the centroid stress compute.",
+    "question": "Should E3 fall back to (b) with a label, or should a refusal of (a) make the throughput NOT_READ?"
+   },
+   {
+    "id": "D5",
+    "departure": "Engine build: conda-forge LAMMPS CUDA build with the GPU package through micromamba on the box; the card says only 'LAMMPS 29Aug2024'.",
+    "question": "Is the conda-forge build the engine the card's cost lines mean, or would a KOKKOS or hand-built binary be required before the number counts?"
+   },
+   {
+    "id": "D6",
+    "departure": "Timestep 2 fs (card held_fixed) against the deck default 1 fs; SHAKE on C-H as the deck sets.",
+    "question": "Accepted that the card's 2 fs binds over the deck's 1 fs, with the sanity control as the only stability check?"
+   },
+   {
+    "id": "D7",
+    "departure": "The card's p_bench measures throughput on a 4-molecule, 3-replica, 8 ns pilot on 8 GPUs; here one molecule, one GPU, 0.6 ns of production. Per-GPU throughput is read from one GPU because the card's molecules never wait on each other.",
+    "question": "Accepted that one GPU measures the per-GPU rate the card divides by?"
+   }
+  ]
+ },
+ "triage": {
+  "claims": [
+   {
+    "id": "design-core",
+    "grounding": {
+     "grounding": "unauditable",
+     "observed": "E1 inputs check out: metadata.json has net_charge_per_molecule 0.0, n_molecules 250, density 0.3; the zero-step CPU read_data log shows 11250 atoms and no ERROR line. The builder log is empty, so its exit code was never recorded. None of the box outputs were found: no equilibration density file, no Performance line for prod_a, prod_b or prod_c, and no install log. So the ns/day figure (claimed proxy 250, gate >=150) and the USD 941 re-pricing cannot be re-derived.",
+     "note": "Only pre-launch artifacts exist in out/. The A100 run outputs for E2 to E8 (density file, Performance lines, thermo logs) were never saved, and the builder exit code is not recorded, so E1 is only partly checkable.",
+     "artifacts_read": [
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/data/box_mol00557_n250_d0.30_s61453/metadata.json",
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/out/prelaunch_build_mol00557.log",
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/out/prelaunch_read0_mol00557.out"
+     ]
+    },
+    "findings": [
+     {
+      "confound": "decidability by construction (forced or impossible endpoint, or endpoint answering a different question than the seed)",
+      "status": "NEEDS_RUN",
+      "crux": "Every endpoint has a pre-named, reachable refuting outcome (E3 [100,625], E3b >=150, E3c cap at 235.3, E2 +/-4%), so nothing is forced. But the gate reading is conditional on E1, E2, E6 and E8 passing, and no committed number says which branch occurs. An E6 refusal swaps the protocol to viscosity-only."
+     },
+     {
+      "confound": "Unit/scale: ns/day depends on the deck's timestep units and on which run's Performance line is read; a constant factor error would shift every E3-E5 cell together. Layers/strengths are N/A.",
+      "status": "NEEDS_RUN",
+      "crux": "No measured number exists yet. Whether the Performance-line ns/day equals steps*2fs/wall-clock (correct timestep units and correct run segment) is not established. The thresholds themselves are discriminating (E3 [100,625], gate 150, cap 235.3), so the design is not degenerate by construction."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [
+     "Install-arm 100-step GPU dry run with -var timestep_fs 2.0 (also run E1 pre-launch build): compare Performance-line ns/day to 100*2e-6 ns / (wall seconds/86400), require agreement within 5%, confirm tdm.in units line, and confirm the Performance line is read from the post-warm-up run; use it to check whether the E1 and E6 branches are reachable before paying for the full equilibrate, prod_a, prod_b, prod_c sequence"
+    ],
+    "author_queue": [],
+    "runner_results": null
+   }
+  ],
+  "shared_queue": [],
+  "instrument_queue": [
+   "AUTHOR: validation control for instrument endpoint-1-readout vv1: held-out ground truth for \"E1 pre-launch build: builder exit code at 0.3 g/cm3; |net_charge_per_molecule| from metadata.json; zero-step read_data in CPU LAMMPS; atom count\"",
+   "AUTHOR: validation control for instrument endpoint-2-readout vv1: held-out ground truth for \"E2 anchor: NPT mean density over the last 250 ps (the deck's density file) against the reference 0.805 g/cm3\"",
+   "AUTHOR: validation control for instrument endpoint-3-readout vv1: held-out ground truth for \"E3 card PROXY throughput_ns_day = 250: ns/day of prod_a (deck as written) on one A100, from the Performance line\"",
+   "AUTHOR: validation control for instrument endpoint-4-readout vv1: held-out ground truth for \"E3b card gate p_bench: measured ns/day >= 150\"",
+   "AUTHOR: validation control for instrument endpoint-5-readout vv1: held-out ground truth for \"E3c card plan re-priced: USD 941 x 250 / measured ns/day (GPU-hour lines scale with 1/throughput; storage line held)\"",
+   "AUTHOR: validation control for instrument endpoint-6-readout vv1: held-out ground truth for \"E4 prod_b (pressure tensor only) ns/day and ratio E4/E3\"",
+   "AUTHOR: validation control for instrument endpoint-7-readout vv1: held-out ground truth for \"E5 prod_c (no per-step sampling) ns/day and ratio E5/E3; per-atom step rate (atom-steps per second)\"",
+   "AUTHOR: validation control for instrument endpoint-8-readout vv1: held-out ground truth for \"E6 compatibility: does the deck as written run with the GPU package\"",
+   "AUTHOR: validation control for instrument endpoint-9-readout vv1: held-out ground truth for \"E7 install and build readings: LAMMPS install wall-clock on the box; builder wall-clock on the workstation; dry-run success\"",
+   "AUTHOR: validation control for instrument endpoint-10-readout vv1: held-out ground truth for \"E8 sanity control: temperature within 313.15 +/- 5 K over each production segment; no error or lost-atom lines\""
+  ],
+  "authored": null,
+  "_run": "wf_0cc4d978-d33",
+  "_failures": []
+ },
+ "gate": "BUDGET_AND_DESIGN_APPROVAL: human commits a gate file answering, of record, every diff question, every non-reproducing grounding note, and every queued item (instrument validations included; \"accepted as-is\" is an answer) before mode=build."
+}

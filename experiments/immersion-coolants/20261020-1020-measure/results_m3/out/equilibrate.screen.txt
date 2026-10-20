@@ -1,0 +1,783 @@
+LAMMPS (29 Aug 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/lammps-stable_29Aug2024/src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  11250 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  6 = max angles/atom
+  scanning dihedrals ...
+  19 = max dihedrals/atom
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  11250 bonds
+  reading angles ...
+  22500 angles
+  reading dihedrals ...
+  33750 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0.5     
+  special bond factors coul:  0        0        0.5     
+     4 = max # of 1-2 neighbors
+     9 = max # of 1-3 neighbors
+    18 = max # of 1-4 neighbors
+    21 = max # of special neighbors
+  special bonds CPU = 0.013 seconds
+  read_data CPU = 0.213 seconds
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+- GPU package (short-range, long-range and three-body potentials): doi:10.1016/j.cpc.2010.12.021, doi:10.1016/j.cpc.2011.10.012, doi:10.1016/j.cpc.2013.08.002, doi:10.1016/j.commatsci.2014.10.068, doi:10.1016/j.cpc.2016.10.020, doi:10.3233/APC200086
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+The log file lists these citations in BibTeX format.
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Setting up cg style minimization ...
+  Unit style    : real
+  Current step  : 0
+Per MPI rank memory allocation (min/avg/max) = 36.1 | 36.1 | 36.1 Mbytes
+   Step          Temp          Press         Density         Volume           Lx             Ly             Lz           PotEng         TotEng    
+         0   0             -9005.487       0.29999997     291154.77      66.2788        66.2788        66.2788        2571.3986      2571.3986    
+      1000   0             -95.218112      0.29999997     291154.77      66.2788        66.2788        66.2788       -150.93497     -150.93497    
+Loop time of 16.94 on 1 procs for 1000 steps with 11250 atoms
+
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = max iterations
+  Energy initial, next-to-last, final = 
+      2571.39861558335  -150.395923223933  -150.934969462241
+  Force two-norm initial, final = 1480.9494 21.166326
+  Force max component initial, final = 25.676661 3.8919482
+  Final line search alpha, max atom move = 0.0073075153 0.028440471
+  Iterations, force evaluations = 1000 2003
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.44989    | 0.44989    | 0.44989    |   0.0 |  2.66
+Bond    | 14.153     | 14.153     | 14.153     |   0.0 | 83.55
+Kspace  | 1.7844     | 1.7844     | 1.7844     |   0.0 | 10.53
+Neigh   | 0.085246   | 0.085246   | 0.085246   |   0.0 |  0.50
+Comm    | 0.21119    | 0.21119    | 0.21119    |   0.0 |  1.25
+Output  | 0.00010177 | 0.00010177 | 0.00010177 |   0.0 |  0.00
+Modify  | 0.00020195 | 0.00020195 | 0.00020195 |   0.0 |  0.00
+Other   |            | 0.2557     |            |       |  1.51
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          10921 ave       10921 max       10921 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 26
+Dangerous builds = 0
+Finding SHAKE clusters ...
+     250 = # of size 2 clusters
+    3250 = # of size 3 clusters
+     250 = # of size 4 clusters
+       0 = # of frozen angles
+  find clusters CPU = 0.003 seconds
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+
+
+---------------------------------------------------------------------
+    Device Time Info (average) for kspace: 
+---------------------------------------------------------------------
+Data Out:        0.0352 s.
+Data In:         0.1412 s.
+Kernel (map):    0.0360 s.
+Kernel (rho):    0.7509 s.
+Force interp:    0.1119 s.
+Total rho:       0.8221 s.
+Total interp:    0.2531 s.
+Force copy:      0.0404 s.
+Total:           1.1156 s.
+CPU Poisson:     1.7324 s.
+CPU Data Cast:   0.0290 s.
+CPU Idle Time:   0.0066 s.
+Max Mem / Proc:  10.90 MB.
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+
+---------------------------------------------------------------------
+      Device Time Info (average): 
+---------------------------------------------------------------------
+Data Transfer:   0.0489 s.
+Neighbor copy:   0.0071 s.
+Neighbor build:  0.0267 s.
+Force calc:      0.4265 s.
+Device Overhead: 0.0871 s.
+CPU Neighbor:    0.0181 s.
+CPU Cast/Pack:   0.0315 s.
+CPU Driver_Time: 0.0339 s.
+CPU Idle_Time:   0.0077 s.
+Average split:   1.0000.
+Max Mem / Proc:  76.01 MB.
+Prefetch mode:   None.
+Vector width:    32.
+Lanes / atom:    8.
+Pair block:      256.
+Neigh block:     128.
+Neigh mode:      Hybrid (binning on host) with subgroup support
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+WARNING: Should not use fix nve/limit with fix shake or fix rattle (src/lammps-stable_29Aug2024/src/fix_nve_limit.cpp:76)
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 1000
+  Time step     : 0.5
+Per MPI rank memory allocation (min/avg/max) = 35.6 | 35.6 | 35.6 Mbytes
+   Step          Temp          Press         Density         Volume           Lx             Ly             Lz           PotEng         TotEng    
+      1000   402.63166      765.19089      0.29999997     291154.77      66.2788        66.2788        66.2788       -153.66136      10346.613    
+      5000   312.56588      86.823452      0.29999997     291154.77      66.2788        66.2788        66.2788        7935.2147      16086.654    
+     10000   316.33281      85.347845      0.29999997     291154.77      66.2788        66.2788        66.2788        7932.4894      16182.167    
+     15000   313.24019     -253.07604      0.29999997     291154.77      66.2788        66.2788        66.2788        7957.6953      16126.72     
+     20000   314.49576     -198.19987      0.29999997     291154.77      66.2788        66.2788        66.2788        8022.903       16224.672    
+     21000   318.8534       141.23821      0.29999997     291154.77      66.2788        66.2788        66.2788        7836.341       16151.753    
+Loop time of 190.682 on 1 procs for 20000 steps with 11250 atoms
+
+Performance: 4.531 ns/day, 5.297 hours/ns, 104.887 timesteps/s, 1.180 Matom-step/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 4.8548     | 4.8548     | 4.8548     |   0.0 |  2.55
+Bond    | 142.03     | 142.03     | 142.03     |   0.0 | 74.49
+Kspace  | 17.676     | 17.676     | 17.676     |   0.0 |  9.27
+Neigh   | 0.011387   | 0.011387   | 0.011387   |   0.0 |  0.01
+Comm    | 1.9725     | 1.9725     | 1.9725     |   0.0 |  1.03
+Output  | 0.00052057 | 0.00052057 | 0.00052057 |   0.0 |  0.00
+Modify  | 23.601     | 23.601     | 23.601     |   0.0 | 12.38
+Other   |            | 0.5321     |            |       |  0.28
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          11157 ave       11157 max       11157 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 319
+Dangerous builds = 0
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+
+
+---------------------------------------------------------------------
+    Device Time Info (average) for kspace: 
+---------------------------------------------------------------------
+Data Out:        0.3549 s.
+Data In:         1.3867 s.
+Kernel (map):    0.3545 s.
+Kernel (rho):    7.5133 s.
+Force interp:    1.1398 s.
+Total rho:       8.2227 s.
+Total interp:    2.5265 s.
+Force copy:      0.3899 s.
+Total:           11.1390 s.
+CPU Poisson:     17.1460 s.
+CPU Data Cast:   0.2949 s.
+CPU Idle Time:   0.0638 s.
+Max Mem / Proc:  10.15 MB.
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+
+---------------------------------------------------------------------
+      Device Time Info (average): 
+---------------------------------------------------------------------
+Data Transfer:   0.4394 s.
+Neighbor copy:   0.0599 s.
+Neighbor build:  0.3459 s.
+Force calc:      4.3908 s.
+Device Overhead: 0.9388 s.
+CPU Neighbor:    0.1742 s.
+CPU Cast/Pack:   0.2992 s.
+CPU Driver_Time: 0.3143 s.
+CPU Idle_Time:   0.0590 s.
+Average split:   1.0000.
+Max Mem / Proc:  462.35 MB.
+Prefetch mode:   None.
+Vector width:    32.
+Lanes / atom:    8.
+Pair block:      256.
+Neigh block:     128.
+Neigh mode:      Hybrid (binning on host) with subgroup support
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 21000
+  Time step     : 2
+Per MPI rank memory allocation (min/avg/max) = 35.91 | 35.91 | 35.91 Mbytes
+   Step          Temp          Press         Density         Volume           Lx             Ly             Lz           PotEng         TotEng    
+     21000   318.8534       34.137489      0.29999997     291154.77      66.2788        66.2788        66.2788        7836.341       16151.753    
+     25000   311.18061      87.48576       0.29999997     291154.77      66.2788        66.2788        66.2788        7853.3604      15968.673    
+     30000   311.86277      109.91682      0.29999997     291154.77      66.2788        66.2788        66.2788        7673.4564      15806.559    
+     35000   313.83121      91.86622       0.29999997     291154.77      66.2788        66.2788        66.2788        7764.5564      15948.994    
+     40000   311.24457      3.2731786      0.29999997     291154.77      66.2788        66.2788        66.2788        7351.0196      15468        
+     45000   314.76692      248.43229      0.29999997     291154.77      66.2788        66.2788        66.2788        7415.3339      15624.174    
+     50000   315.54962     -62.817538      0.29999997     291154.77      66.2788        66.2788        66.2788        7306.5897      15535.842    
+     55000   313.45071     -216.74787      0.29999997     291154.77      66.2788        66.2788        66.2788        7304.0325      15478.547    
+     60000   317.52056      181.68904      0.29999997     291154.77      66.2788        66.2788        66.2788        7422.902       15703.555    
+     65000   310.3664       140.55659      0.29999997     291154.77      66.2788        66.2788        66.2788        7272.6487      15366.727    
+     70000   313.07448     -117.32449      0.29999997     291154.77      66.2788        66.2788        66.2788        7357.0771      15521.78     
+     71000   315.05254     -103.94728      0.29999997     291154.77      66.2788        66.2788        66.2788        7341.7616      15558.051    
+Loop time of 453.505 on 1 procs for 50000 steps with 11250 atoms
+
+Performance: 19.052 ns/day, 1.260 hours/ns, 110.252 timesteps/s, 1.240 Matom-step/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 22.295     | 22.295     | 22.295     |   0.0 |  4.92
+Bond    | 357.51     | 357.51     | 357.51     |   0.0 | 78.83
+Kspace  | 44.252     | 44.252     | 44.252     |   0.0 |  9.76
+Neigh   | 0.11961    | 0.11961    | 0.11961    |   0.0 |  0.03
+Comm    | 4.3524     | 4.3524     | 4.3524     |   0.0 |  0.96
+Output  | 0.0011383  | 0.0011383  | 0.0011383  |   0.0 |  0.00
+Modify  | 23.663     | 23.663     | 23.663     |   0.0 |  5.22
+Other   |            | 1.317      |            |       |  0.29
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:           8162 ave        8162 max        8162 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 3370
+Dangerous builds = 0
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+
+
+---------------------------------------------------------------------
+    Device Time Info (average) for kspace: 
+---------------------------------------------------------------------
+Data Out:        0.8850 s.
+Data In:         3.2111 s.
+Kernel (map):    0.9291 s.
+Kernel (rho):    19.1713 s.
+Force interp:    2.7643 s.
+Total rho:       20.9854 s.
+Total interp:    5.9754 s.
+Force copy:      1.0105 s.
+Total:           27.9713 s.
+CPU Poisson:     42.9190 s.
+CPU Data Cast:   0.7039 s.
+CPU Idle Time:   0.1727 s.
+Max Mem / Proc:  10.15 MB.
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+
+---------------------------------------------------------------------
+      Device Time Info (average): 
+---------------------------------------------------------------------
+Data Transfer:   1.0869 s.
+Neighbor copy:   0.6056 s.
+Neighbor build:  4.0818 s.
+Force calc:      12.7514 s.
+Device Overhead: 2.3439 s.
+CPU Neighbor:    1.5078 s.
+CPU Cast/Pack:   0.7358 s.
+CPU Driver_Time: 0.7975 s.
+CPU Idle_Time:   0.1465 s.
+Average split:   1.0000.
+Max Mem / Proc:  389.98 MB.
+Prefetch mode:   None.
+Vector width:    32.
+Lanes / atom:    8.
+Pair block:      256.
+Neigh block:     128.
+Neigh mode:      Hybrid (binning on host) with subgroup support
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 0
+  Time step     : 2
+Per MPI rank memory allocation (min/avg/max) = 35.91 | 35.91 | 35.91 Mbytes
+   Step          Temp          Press         Density         Volume           Lx             Ly             Lz           PotEng         TotEng    
+         0   315.05254     -103.94385      0.29999997     291154.77      66.2788        66.2788        66.2788        7341.7616      15558.051    
+      5000   310.68178     -443.96412      0.43202366     202179.72      58.692039      58.692039      58.692039      7282.3833      15384.687    
+     10000   308.69778     -51.782094      0.59552268     146671.87      52.737022      52.737022      52.737022      6986.2445      15036.807    
+     15000   310.93644     -23.81964       0.75414239     115822.19      48.745058      48.745058      48.745058      6522.8895      14631.834    
+     20000   312.73337     -466.62177      0.78018684     111955.78      48.1965        48.1965        48.1965        6482.964       14638.771    
+     25000   316.22675     -458.39419      0.78313633     111534.12      48.135917      48.135917      48.135917      6473.0406      14719.952    
+     30000   314.82689     -1391.3103      0.78871326     110745.47      48.022194      48.022194      48.022194      6360.6745      14571.079    
+     35000   311.99104     -469.22287      0.79154124     110349.81      47.964935      47.964935      47.964935      6396.6427      14533.091    
+     40000   311.72279      153.67523      0.80108948     109034.54      47.773607      47.773607      47.773607      6208.7078      14338.16     
+     45000   313.34075      242.55501      0.79704771     109587.45      47.854223      47.854223      47.854223      6398.5397      14570.187    
+     50000   313.171        126.66954      0.79280057     110174.52      47.939525      47.939525      47.939525      6319.7212      14486.941    
+     55000   312.48162     -238.66958      0.7953075      109827.23      47.889101      47.889101      47.889101      6321.5282      14470.77     
+     60000   312.33536     -12.290046      0.79656199     109654.27      47.863948      47.863948      47.863948      6429.6534      14575.081    
+     65000   314.80982      195.10074      0.78515374     111247.54      48.094654      48.094654      48.094654      6337.58        14547.539    
+     70000   310.11577     -447.45332      0.79654646     109656.41      47.864259      47.864259      47.864259      6347.3892      14434.932    
+     75000   312.95676      770.70424      0.80214511     108891.05      47.752641      47.752641      47.752641      6330.6644      14492.297    
+     80000   316.20117      56.121921      0.79847304     109391.83      47.825732      47.825732      47.825732      6261.8531      14508.097    
+     85000   316.31159      174.56778      0.79708311     109582.58      47.853514      47.853514      47.853514      6357.2408      14606.365    
+     90000   314.25531      79.206656      0.80143466     108987.58      47.766747      47.766747      47.766747      6248.2142      14443.712    
+     95000   314.29771     -217.78876      0.80108894     109034.61      47.773618      47.773618      47.773618      6367.4313      14564.035    
+    100000   313.39362      45.60803       0.79276605     110179.32      47.94022       47.94022       47.94022       6352.6322      14525.658    
+    105000   315.91455     -315.48064      0.79229444     110244.9       47.949731      47.949731      47.949731      6368.4159      14607.185    
+    110000   313.32375      92.361239      0.79881973     109344.35      47.818812      47.818812      47.818812      6270.4792      14441.683    
+    115000   313.09948     -642.64373      0.789422       110646.05      48.007818      48.007818      48.007818      6383.7763      14549.131    
+    120000   308.82459     -680.78874      0.7839823      111413.77      48.118597      48.118597      48.118597      6375.4916      14429.361    
+    125000   312.66652     -69.456854      0.79712174     109577.27      47.852741      47.852741      47.852741      6346.2932      14500.357    
+    130000   309.17417     -697.66948      0.79095194     110432.02      47.976844      47.976844      47.976844      6464.6213      14527.608    
+    135000   309.69402     -38.390502      0.79994241     109190.89      47.796431      47.796431      47.796431      6301.5544      14378.098    
+    140000   317.40401     -117.33636      0.79147926     110358.45      47.966187      47.966187      47.966187      6430.0313      14707.644    
+    145000   311.63873     -627.44806      0.79794213     109464.61      47.836336      47.836336      47.836336      6267.885       14395.145    
+    150000   312.03454      61.432668      0.79735175     109545.66      47.84814       47.84814       47.84814       6346.2925      14483.875    
+Loop time of 1642.5 on 1 procs for 150000 steps with 11250 atoms
+
+Performance: 15.781 ns/day, 1.521 hours/ns, 91.324 timesteps/s, 1.027 Matom-step/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 83.152     | 83.152     | 83.152     |   0.0 |  5.06
+Bond    | 1138.2     | 1138.2     | 1138.2     |   0.0 | 69.30
+Kspace  | 135.41     | 135.41     | 135.41     |   0.0 |  8.24
+Neigh   | 0.36059    | 0.36059    | 0.36059    |   0.0 |  0.02
+Comm    | 45.672     | 45.672     | 45.672     |   0.0 |  2.78
+Output  | 0.0031001  | 0.0031001  | 0.0031001  |   0.0 |  0.00
+Modify  | 234.03     | 234.03     | 234.03     |   0.0 | 14.25
+Other   |            | 5.686      |            |       |  0.35
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          33503 ave       33503 max       33503 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 10119
+Dangerous builds = 0
+NPT average density target from final window: 0.795027653302 g/cm^3
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.20128289
+  grid = 16 16 16
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0028450237
+  estimated relative force accuracy = 8.5677044e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 9261 4096
+
+
+---------------------------------------------------------------------
+    Device Time Info (average) for kspace: 
+---------------------------------------------------------------------
+Data Out:        2.6634 s.
+Data In:         13.8678 s.
+Kernel (map):    2.9803 s.
+Kernel (rho):    33.0169 s.
+Force interp:    8.4745 s.
+Total rho:       38.6606 s.
+Total interp:    22.3423 s.
+Force copy:      2.9274 s.
+Total:           63.9303 s.
+CPU Poisson:     131.4074 s.
+CPU Data Cast:   2.1192 s.
+CPU Idle Time:   0.5131 s.
+Max Mem / Proc:  11.48 MB.
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+
+---------------------------------------------------------------------
+      Device Time Info (average): 
+---------------------------------------------------------------------
+Data Transfer:   3.6998 s.
+Neighbor copy:   1.9395 s.
+Neighbor build:  12.0250 s.
+Force calc:      46.3808 s.
+Device Overhead: 6.9696 s.
+CPU Neighbor:    10.1812 s.
+CPU Cast/Pack:   2.5351 s.
+CPU Driver_Time: 2.1172 s.
+CPU Idle_Time:   0.4442 s.
+Average split:   1.0000.
+Max Mem / Proc:  943.12 MB.
+Prefetch mode:   None.
+Vector width:    32.
+Lanes / atom:    8.
+Pair block:      256.
+Neigh block:     128.
+Neigh mode:      Hybrid (binning on host) with subgroup support
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 0
+  Time step     : 2
+Per MPI rank memory allocation (min/avg/max) = 52.33 | 52.33 | 52.33 Mbytes
+   Step          Temp          Press         Density         Volume           Lx             Ly             Lz           PotEng         TotEng    
+         0   312.03454      79.274968      0.79735175     109545.66      47.84814       47.84814       47.84814       6346.0357      14483.618    
+      5000   313.37562      475.96851      0.79711893     109577.65      47.852798      47.852798      47.852798      6441.5319      14614.088    
+     10000   311.96973      121.61124      0.79688621     109609.66      47.857456      47.857456      47.857456      6273.1569      14409.049    
+     15000   312.31023     -498.94795      0.79665357     109641.66      47.862114      47.862114      47.862114      6334.6925      14479.464    
+     20000   312.09023     -117.78472      0.79642103     109673.68      47.866771      47.866771      47.866771      6303.0415      14442.076    
+     25000   316.6447      -202.28433      0.79618857     109705.7       47.871429      47.871429      47.871429      6363.535       14621.346    
+     30000   315.01385      628.93522      0.79595621     109737.72      47.876087      47.876087      47.876087      6340.2035      14555.484    
+     35000   317.21563     -258.83659      0.79572393     109769.76      47.880745      47.880745      47.880745      6431.644       14704.344    
+     40000   310.00787      252.70666      0.79549175     109801.8       47.885403      47.885403      47.885403      6257.1454      14341.874    
+     45000   315.98399      702.70982      0.79525966     109833.84      47.890061      47.890061      47.890061      6378.2303      14618.811    
+     50000   313.0272       705.64275      0.79502765     109865.89      47.894719      47.894719      47.894719      6410.2172      14573.687    
+Loop time of 493.76 on 1 procs for 50000 steps with 11250 atoms
+
+Performance: 17.498 ns/day, 1.372 hours/ns, 101.264 timesteps/s, 1.139 Matom-step/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 27.765     | 27.765     | 27.765     |   0.0 |  5.62
+Bond    | 360.82     | 360.82     | 360.82     |   0.0 | 73.08
+Kspace  | 30.314     | 30.314     | 30.314     |   0.0 |  6.14
+Neigh   | 0.11962    | 0.11962    | 0.11962    |   0.0 |  0.02
+Comm    | 15.836     | 15.836     | 15.836     |   0.0 |  3.21
+Output  | 0.0010843  | 0.0010843  | 0.0010843  |   0.0 |  0.00
+Modify  | 56.988     | 56.988     | 56.988     |   0.0 | 11.54
+Other   |            | 1.921      |            |       |  0.39
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          33719 ave       33719 max       33719 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 3351
+Dangerous builds = 0
+System init for write_restart ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.20120979
+  grid = 16 16 16
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.002852969
+  estimated relative force accuracy = 8.5916313e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 9261 4096
+
+
+---------------------------------------------------------------------
+    Device Time Info (average) for kspace: 
+---------------------------------------------------------------------
+Data Out:        0.7760 s.
+Data In:         4.2861 s.
+Kernel (map):    0.9601 s.
+Kernel (rho):    15.6246 s.
+Force interp:    2.8001 s.
+Total rho:       17.3607 s.
+Total interp:    7.0862 s.
+Force copy:      0.9807 s.
+Total:           25.4275 s.
+CPU Poisson:     29.0081 s.
+CPU Data Cast:   0.7107 s.
+CPU Idle Time:   0.1640 s.
+Max Mem / Proc:  5.91 MB.
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+
+---------------------------------------------------------------------
+      Device Time Info (average): 
+---------------------------------------------------------------------
+Data Transfer:   1.0759 s.
+Neighbor copy:   0.6444 s.
+Neighbor build:  4.0236 s.
+Force calc:      14.5918 s.
+Device Overhead: 2.4420 s.
+CPU Neighbor:    3.4790 s.
+CPU Cast/Pack:   0.7316 s.
+CPU Driver_Time: 0.8011 s.
+CPU Idle_Time:   0.1497 s.
+Average split:   1.0000.
+Max Mem / Proc:  558.43 MB.
+Prefetch mode:   None.
+Vector width:    32.
+Lanes / atom:    8.
+Pair block:      256.
+Neigh block:     128.
+Neigh mode:      Hybrid (binning on host) with subgroup support
+---------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+System init for write_data ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.20120979
+  grid = 16 16 16
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.002852969
+  estimated relative force accuracy = 8.5916313e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 9261 4096
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Equilibration done: wrote /home/ubuntu/m3_run/results_m3/system/equilibrated_T313.15K.restart, target_density=0.795027653302 g/cm^3, final_density=0.795028 g/cm^3
+Total wall time: 0:46:38

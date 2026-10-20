@@ -1,0 +1,54 @@
+{
+  "dry_rate_steps_per_s": 77.39758364743852,
+  "prod_b_required": false,
+  "restart_sha256": "93fdc49e6fe02d1d69842ff337b8eb4c17adfc328d272ae9bc65cbe8e4a7fc95",
+  "run_valid": true,
+  "stages": {
+    "copy": {
+      "status": "DONE"
+    },
+    "dryrun": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 26.508
+    },
+    "endpoints": {
+      "status": "DONE"
+    },
+    "equilibrate": {
+      "attempt": 2,
+      "attempt1": {
+        "line": "ERROR: Cannot currently use pppm/gpu with fix balance. (src/lammps-stable_29Aug2024/src/GPU/pppm_gpu.cpp:118)",
+        "status": "ERROR_ON_BALANCE_LINES",
+        "wall_s": 17.643
+      },
+      "edit3_applied": true,
+      "line": null,
+      "status": "RUNS",
+      "wall_s": 2798.294
+    },
+    "extract": {
+      "status": "DONE"
+    },
+    "prod_a": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 780.53
+    },
+    "prod_b": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 569.612
+    },
+    "prod_c": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 563.178
+    }
+  },
+  "trimmed": []
+}

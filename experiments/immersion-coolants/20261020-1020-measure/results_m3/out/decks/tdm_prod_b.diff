@@ -1,0 +1,35 @@
+--- tdm.in
++++ tdm_prod_b.in
+@@ -41,23 +41,7 @@
+ # heat current: centroid stress (pair+bonded) + kspace virial
+ compute         TT        all temp
+ compute         myP       all pressure TT
+-compute         myKE      all ke/atom
+-compute         myPE      all pe/atom
+-compute         stressC   all centroid/stress/atom NULL pair bond angle dihedral improper
+-compute         stressK   all stress/atom NULL kspace
+-compute         fluxC     all heat/flux myKE myPE stressC
+ 
+-variable        nktv2p_real equal 68568.415
+-variable        JkXa atom -(c_stressK[1]*vx+c_stressK[4]*vy+c_stressK[5]*vz)/${nktv2p_real}
+-variable        JkYa atom -(c_stressK[4]*vx+c_stressK[2]*vy+c_stressK[6]*vz)/${nktv2p_real}
+-variable        JkZa atom -(c_stressK[5]*vx+c_stressK[6]*vy+c_stressK[3]*vz)/${nktv2p_real}
+-compute         redJkX all reduce sum v_JkXa
+-compute         redJkY all reduce sum v_JkYa
+-compute         redJkZ all reduce sum v_JkZa
+-
+-variable        Jtot_x equal c_fluxC[1]+c_redJkX
+-variable        Jtot_y equal c_fluxC[2]+c_redJkY
+-variable        Jtot_z equal c_fluxC[3]+c_redJkZ
+ 
+ variable        Pxx equal c_myP[1]
+ variable        Pyy equal c_myP[2]
+@@ -74,8 +58,6 @@
+ # sample P-tensor & heat current every dump_every steps
+ fix             stress_raw all ave/time ${dump_every} 1 ${dump_every} v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz &
+                 file ${dump_dir}/Stress_perstep_T${T}K_run${run_id}_seg${seg}.out
+-fix             flux_raw all ave/time ${dump_every} 1 ${dump_every} v_Jtot_x v_Jtot_y v_Jtot_z &
+-                file ${dump_dir}/HeatFlux_perstep_T${T}K_run${run_id}_seg${seg}.out
+ 
+ thermo          ${thermo_every}
+ thermo_style    custom step temp press density vol etotal

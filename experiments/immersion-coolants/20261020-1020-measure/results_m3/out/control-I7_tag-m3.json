@@ -1,0 +1,62 @@
+{
+  "cell": {
+    "control": "I7",
+    "tag": "m3"
+  },
+  "decision": "PASS",
+  "decision_rule": "PASS if every planted case gives its known answer; FAIL otherwise. Recorded only.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T13:55:54+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 222170,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/run_m3.py",
+      "present": true,
+      "sha256": "f395a4e90b44"
+    }
+  ],
+  "metric": "instrument check for endpoint E5: planted cases with known answers",
+  "notes": "",
+  "rows": [
+    {
+      "actual": "2.0000",
+      "case": "200 / 100 -> 2.0000",
+      "expected": "2.0000",
+      "pass": true
+    },
+    {
+      "actual": "1.3021E+7",
+      "case": "11,250 atoms at 200 ns/day and 2 fs -> 1.3021e7 atom-steps per second (the planted value as corrected by the gate's addendum; the formula of checklist item 6, compared at 5 significant digits)",
+      "expected": "1.3021e7",
+      "pass": true
+    }
+  ],
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "every_case_passes": true
+  },
+  "values": {
+    "cases": [
+      {
+        "actual": "2.0000",
+        "case": "200 / 100 -> 2.0000",
+        "expected": "2.0000",
+        "pass": true
+      },
+      {
+        "actual": "1.3021E+7",
+        "case": "11,250 atoms at 200 ns/day and 2 fs -> 1.3021e7 atom-steps per second (the planted value as corrected by the gate's addendum; the formula of checklist item 6, compared at 5 significant digits)",
+        "expected": "1.3021e7",
+        "pass": true
+      }
+    ],
+    "validates": "E5"
+  }
+}

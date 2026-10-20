@@ -1,0 +1,138 @@
+{
+  "cell": {
+    "control": "R1",
+    "tag": "m3"
+  },
+  "decision": "RUNS_AGREE",
+  "decision_rule": "RUNS_AGREE if the dry run finished and |Performance ns/day - wall-clock ns/day| / wall-clock ns/day <= 0.05, the wall-clock from date stamps written just before and just after the timed run; RUNS_DISAGREE otherwise, and every later ns/day then carries 'Performance line and wall-clock disagree'; RUNS_TIMING_NOT_READ if the timing output is degenerate; REFUSED if an error line names centroid/stress/atom, stress/atom, heat/flux or the GPU pair style (run a is then not run); FAILED for any other error, which stops the run; STOPPED if the guard's deadline ended it.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-37-187",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T12:12:34+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 3379,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/decks/dryrun.in",
+      "present": true,
+      "sha256": "151f62345612"
+    },
+    {
+      "bytes": 17582,
+      "n_items": 347,
+      "path": "/home/ubuntu/m3_run/results_m3/out/dryrun.lammps.log",
+      "present": true,
+      "sha256": "1301d0f85a1e"
+    },
+    {
+      "bytes": 7989,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/dryrun.screen.txt",
+      "present": true,
+      "sha256": "a069d279ed6f"
+    },
+    {
+      "bytes": 21,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/dryrun_t0.epoch",
+      "present": true,
+      "sha256": "d3236c2d3134"
+    },
+    {
+      "bytes": 21,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/dryrun_t1.epoch",
+      "present": true,
+      "sha256": "b92976c28513"
+    }
+  ],
+  "metric": "timed dry run: Performance-line ns/day of the 1,000 timed steps against 1000 x 2e-6 ns / (wall seconds / 86400); runs or refused; units from in.init",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "relative_difference_at_most": "0.05",
+    "timed_steps": 1000
+  },
+  "values": {
+    "degenerate": [],
+    "device_lines": [
+      "- Using acceleration for pppm:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)",
+      "- Using acceleration for lj/cut/coul/long:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)"
+    ],
+    "labels": {
+      "atom_count": 11250,
+      "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+      "cuda_runtime_source": "nvcc --version: the CUDA toolkit the engine was compiled and linked with",
+      "cuda_runtime_version": "12.8",
+      "cuda_version_reported_by_driver": "12.8",
+      "engine_route": "compiled on the box from the official source tarball stable_29Aug2024 (EXEC_NOTE.md item 11; gate addendum A7)",
+      "engine_tarball_sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+      "engine_tarball_url": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+      "fft": "KISS",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "gpu_package_precision_reported_by_lmp_h": "mixed",
+      "install_wall_clock_meaning": "the whole download-and-compile stage on the box, from its first to its last date stamp in compile_record.txt",
+      "install_wall_clock_s": "137.010512247",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "labels": [
+        "one box, 11,250 atoms",
+        "LAMMPS 29Aug2024, compiled from source on the box, GPU package, CUDA sm_80",
+        "GPU package mixed precision"
+      ],
+      "lammps_version_line": "Large-scale Atomic/Molecular Massively Parallel Simulator - 29 Aug 2024",
+      "linked_libraries": [
+        "libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007e4d152ae000)",
+        "libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x00007e4d0e600000)"
+      ],
+      "lmp_help_accelerator_configuration": [
+        "GPU package API: CUDA",
+        "GPU package precision: mixed",
+        "OPENMP package API: OpenMP",
+        "OPENMP package precision: double",
+        "OpenMP standard: OpenMP 4.5"
+      ],
+      "lmp_help_compatible_gpu_present": "yes",
+      "lmp_help_compiler": "GNU C++ 11.4.0 with OpenMP 4.5",
+      "lmp_help_packages": [
+        "EXTRA-COMPUTE",
+        "GPU",
+        "KSPACE",
+        "MOLECULE",
+        "OPENMP",
+        "RIGID"
+      ],
+      "lmp_help_version": "29 Aug 2024",
+      "per_atom_step_rate_atom_steps_per_s": "8.7135e+05",
+      "price_usd_per_hour": "1.99",
+      "run_labels_at_write": [],
+      "timestep_fs": "2.0",
+      "units_in_in_init": "real",
+      "variant_read": "dryrun"
+    },
+    "status": "RUNS",
+    "status_line": null,
+    "timing": {
+      "agree": true,
+      "atoms": 11250,
+      "end_epoch": "1792498354.246633042",
+      "loop_s": "12.911",
+      "performance_line": "Performance: 13.384 ns/day, 1.793 hours/ns, 77.454 timesteps/s, 871.352 katom-step/s",
+      "performance_ns_day": "13.384",
+      "read": true,
+      "relative_difference": "0.0002436643211574074074074070831",
+      "start_epoch": "1792498341.332548673",
+      "steps": 1000,
+      "wall_clock_ns_per_day": "13.38073959117093328941685808",
+      "wall_s": "12.914084369"
+    },
+    "units_in_in_init": "real",
+    "units_real_confirmed": true
+  }
+}

@@ -1,0 +1,187 @@
+{
+ "summary": "Adversarial triage of measured research claims: an isolated reader grounds each claim in its primary artifacts (H3); fresh independent skeptics (one confound each) reason over the committed numbers and emit a raw status + crux per confound (H1; H2 number-gates: falsifiability, margin, scope); unresolved cruxes become a run-queue (existing controls) or author-queue (controls to write); an optional read-only runner executes the run-queue. Queue items shared across claims are hoisted to a shared_queue so instrument-level checks run once, not per-claim (H4). No rolled-up score or verdict (the human reads the cruxes).",
+ "agentCount": 6,
+ "logs": [
+  "H4: 10 instrument(s) lack a validation artifact; queued.",
+  "Triaging 1 claim(s); confounds=10; execute_runs=false; ground=true.",
+  "parallel[0] failed: agent({agentType}): agent type 'triage-reader' not found. Available agents: caveman:cavecrew-builder, caveman:cavecrew-investigator, caveman:cavecrew-reviewer, claude, claude-code-guide, Explore, general-purpose, Plan, statusline-setup",
+  "[skeptic:design-core:coordinates and scal] failed: Login expired \u00b7 Please run /login",
+  "[skeptic-retry:design-core:coordinates and scal] failed: Login expired \u00b7 Please run /login",
+  "[skeptic:design-core:decidability by cons] failed: Login expired \u00b7 Please run /login",
+  "[skeptic-retry:design-core:decidability by cons] failed: Login expired \u00b7 Please run /login",
+  "Rejected 2 degenerate finding(s) on design-core: decidability by construction: is any endpoint outcome forced, unable to occur, or deciding a different question than the seed asks; coordinates and scale: could the chosen layers, strengths, or units make every cell degenerate or null regardless of the hypothesis",
+  "[adjudicate:design-core] failed: Login expired \u00b7 Please run /login"
+ ],
+ "result": {
+  "claims": [
+   {
+    "id": "design-core",
+    "grounding": null,
+    "findings": [],
+    "rejected_findings": [
+     "decidability by construction: is any endpoint outcome forced, unable to occur, or deciding a different question than the seed asks",
+     "coordinates and scale: could the chosen layers, strengths, or units make every cell degenerate or null regardless of the hypothesis"
+    ],
+    "run_queue": [],
+    "author_queue": [],
+    "runner_results": null
+   }
+  ],
+  "shared_queue": [],
+  "instrument_queue": [
+   "AUTHOR: validation control for instrument endpoint-1-readout vv1: held-out ground truth for \"E1 pre-launch build: builder exit code at 0.3 g/cm3; |net_charge_per_molecule| from metadata.json; zero-step read_data in CPU LAMMPS; atom count\"",
+   "AUTHOR: validation control for instrument endpoint-2-readout vv1: held-out ground truth for \"E2 anchor: NPT mean density over the last 250 ps (the deck's density file) against the reference 0.805 g/cm3\"",
+   "AUTHOR: validation control for instrument endpoint-3-readout vv1: held-out ground truth for \"E3 card PROXY throughput_ns_day = 250: ns/day of prod_a (deck as written) on one A100, from the Performance line\"",
+   "AUTHOR: validation control for instrument endpoint-4-readout vv1: held-out ground truth for \"E3b card gate p_bench: measured ns/day >= 150\"",
+   "AUTHOR: validation control for instrument endpoint-5-readout vv1: held-out ground truth for \"E3c card plan re-priced: USD 941 x 250 / measured ns/day (GPU-hour lines scale with 1/throughput; storage line held)\"",
+   "AUTHOR: validation control for instrument endpoint-6-readout vv1: held-out ground truth for \"E4 prod_b (pressure tensor only) ns/day and ratio E4/E3\"",
+   "AUTHOR: validation control for instrument endpoint-7-readout vv1: held-out ground truth for \"E5 prod_c (no per-step sampling) ns/day and ratio E5/E3; per-atom step rate (atom-steps per second)\"",
+   "AUTHOR: validation control for instrument endpoint-8-readout vv1: held-out ground truth for \"E6 compatibility: does the deck as written run with the GPU package\"",
+   "AUTHOR: validation control for instrument endpoint-9-readout vv1: held-out ground truth for \"E7 install and build readings: LAMMPS install wall-clock on the box; builder wall-clock on the workstation; dry-run success\"",
+   "AUTHOR: validation control for instrument endpoint-10-readout vv1: held-out ground truth for \"E8 sanity control: temperature within 313.15 +/- 5 K over each production segment; no error or lost-atom lines\""
+  ],
+  "authored": null
+ },
+ "workflowProgress": [
+  {
+   "type": "workflow_phase",
+   "index": 1,
+   "title": "Ground"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 2,
+   "title": "Skeptics"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 3,
+   "title": "Adjudicate"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 4,
+   "title": "Verify"
+  },
+  {
+   "type": "workflow_phase",
+   "index": 5,
+   "title": "Author"
+  },
+  {
+   "type": "workflow_agent",
+   "index": 1,
+   "label": "read:design-core",
+   "phaseIndex": 1,
+   "phaseTitle": "Ground",
+   "model": "opus",
+   "state": "error",
+   "error": "agent({agentType}): agent type 'triage-reader' not found. Available agents: caveman:cavecrew-builder, caveman:cavecrew-investigator, caveman:cavecrew-reviewer, claude, claude-code-guide, Explore, general-purpose, Plan, statusline-setup",
+   "queuedAt": 1792492189333,
+   "promptPreview": "Ground this claim by reading the PRIMARY artifacts behind it and checking its numbers reproduce from the raw data. You read; you do not run or edit.\n\nCLAIM: If run exactly as specified, this design decides: Measured on one rented A100 SXM4 40 GB box, the production throughput (ns/day) of the card's own protocol (LOPLS-AA, 250-molecule nonylcyclohexane box of 11,250 atoms, 313.15 K, 2 fs, PPPM 1e-5\u2026",
+   "lastProgressAt": 1792492189335
+  },
+  {
+   "type": "workflow_agent",
+   "index": 2,
+   "label": "skeptic:design-core:decidability by cons",
+   "phaseIndex": 2,
+   "phaseTitle": "Skeptics",
+   "agentId": "a3920bbb0de9ff765",
+   "model": "claude-sonnet-5-5",
+   "state": "error",
+   "startedAt": 1792492189381,
+   "queuedAt": 1792492189344,
+   "attempt": 1,
+   "promptPreview": "You audit ONE measured claim through ONE assigned confound. Findings here are numbers measured from a model, not text a model wrote. Default stance: assume the claim is an ARTIFACT of your confound until a committed number rules it out.\n\nDecide only from the evidence below; do not call tools or read files. If you cannot name the deciding number, it is NEEDS_RUN, not RULED_OUT. Do not invent a cont\u2026",
+   "promptFramed": true,
+   "lastProgressAt": 1792492212632,
+   "error": "Login expired \u00b7 Please run /login",
+   "tokens": 37456,
+   "toolCalls": 0,
+   "durationMs": 23250
+  },
+  {
+   "type": "workflow_agent",
+   "index": 3,
+   "label": "skeptic:design-core:coordinates and scal",
+   "phaseIndex": 2,
+   "phaseTitle": "Skeptics",
+   "agentId": "a7d0c11e53f22a97c",
+   "model": "claude-sonnet-5-5",
+   "state": "error",
+   "startedAt": 1792492189382,
+   "queuedAt": 1792492189344,
+   "attempt": 1,
+   "promptPreview": "You audit ONE measured claim through ONE assigned confound. Findings here are numbers measured from a model, not text a model wrote. Default stance: assume the claim is an ARTIFACT of your confound until a committed number rules it out.\n\nDecide only from the evidence below; do not call tools or read files. If you cannot name the deciding number, it is NEEDS_RUN, not RULED_OUT. Do not invent a cont\u2026",
+   "promptFramed": true,
+   "lastProgressAt": 1792492191219,
+   "error": "Login expired \u00b7 Please run /login",
+   "tokens": 0,
+   "toolCalls": 0,
+   "durationMs": 56
+  },
+  {
+   "type": "workflow_agent",
+   "index": 4,
+   "label": "skeptic-retry:design-core:coordinates and scal",
+   "phaseIndex": 2,
+   "phaseTitle": "Skeptics",
+   "agentId": "aabe15c86b81a011b",
+   "model": "claude-sonnet-5-5",
+   "state": "error",
+   "startedAt": 1792492191226,
+   "queuedAt": 1792492191223,
+   "attempt": 1,
+   "promptPreview": "You audit ONE measured claim through ONE assigned confound. Findings here are numbers measured from a model, not text a model wrote. Default stance: assume the claim is an ARTIFACT of your confound until a committed number rules it out.\n\nDecide only from the evidence below; do not call tools or read files. If you cannot name the deciding number, it is NEEDS_RUN, not RULED_OUT. Do not invent a cont\u2026",
+   "promptFramed": true,
+   "lastProgressAt": 1792492191275,
+   "error": "Login expired \u00b7 Please run /login",
+   "tokens": 0,
+   "toolCalls": 0,
+   "durationMs": 49
+  },
+  {
+   "type": "workflow_agent",
+   "index": 5,
+   "label": "skeptic-retry:design-core:decidability by cons",
+   "phaseIndex": 2,
+   "phaseTitle": "Skeptics",
+   "agentId": "adf28956799b30a7f",
+   "model": "claude-sonnet-5-5",
+   "state": "error",
+   "startedAt": 1792492212638,
+   "queuedAt": 1792492212634,
+   "attempt": 1,
+   "promptPreview": "You audit ONE measured claim through ONE assigned confound. Findings here are numbers measured from a model, not text a model wrote. Default stance: assume the claim is an ARTIFACT of your confound until a committed number rules it out.\n\nDecide only from the evidence below; do not call tools or read files. If you cannot name the deciding number, it is NEEDS_RUN, not RULED_OUT. Do not invent a cont\u2026",
+   "promptFramed": true,
+   "lastProgressAt": 1792492212674,
+   "error": "Login expired \u00b7 Please run /login",
+   "tokens": 0,
+   "toolCalls": 0,
+   "durationMs": 36
+  },
+  {
+   "type": "workflow_agent",
+   "index": 6,
+   "label": "adjudicate:design-core",
+   "phaseIndex": 3,
+   "phaseTitle": "Adjudicate",
+   "agentId": "adcdd7f5bc3410026",
+   "model": "claude-sonnet-5-5",
+   "state": "error",
+   "startedAt": 1792492212699,
+   "queuedAt": 1792492212675,
+   "attempt": 1,
+   "promptPreview": "Dedup the controls the skeptics proposed for ONE claim. Do NOT score, do NOT emit a verdict label, do NOT reword cruxes (those pass through raw to the human).\nVERDICTS: []\nFrom the NEEDS_RUN entries take the next-line: tagged \"RUN:\" -> run_queue, tagged \"AUTHOR:\" -> author_queue. Dedup near-identical controls: if several confounds need the same control (e.g. one matched-resample-ablation answers o\u2026",
+   "promptFramed": true,
+   "lastProgressAt": 1792492212735,
+   "error": "Login expired \u00b7 Please run /login",
+   "tokens": 0,
+   "toolCalls": 0,
+   "durationMs": 36
+  }
+ ],
+ "totalTokens": 37456,
+ "totalToolCalls": 0
+}

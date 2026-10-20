@@ -1,0 +1,58 @@
+{
+  "cell": {
+    "endpoint": "E6",
+    "tag": "m3"
+  },
+  "decision": "RUNS",
+  "decision_rule": "REFUSED if the dry run or run a stopped with an error line naming centroid/stress/atom, stress/atom, heat/flux or the GPU pair style; the line is kept verbatim, run a is NOT_RUN, E3 reads run b with the label 'viscosity-only protocol...', and the card's thermal-conductivity arm is flagged unpriced on the GPU. RUNS if run a (or, when run a was not reached, the dry run) finished without such an error. NOT_READ otherwise.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T13:55:54+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 7999,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/run-dryrun_tag-m3.json",
+      "present": true,
+      "sha256": "2ebdb3b3093b"
+    },
+    {
+      "bytes": 8938,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/run-prod_a_tag-m3.json",
+      "present": true,
+      "sha256": "50208114a12b"
+    },
+    {
+      "bytes": 20103,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/prod_a.deck.log",
+      "present": true,
+      "sha256": "8391acd35e27"
+    }
+  ],
+  "metric": "compatibility: does the deck as written run with the GPU package",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "refusal_names": [
+      "centroid/stress/atom",
+      "stress/atom",
+      "heat/flux",
+      "the GPU pair style (lj/cut/coul/long/gpu)"
+    ]
+  },
+  "values": {
+    "dry_run_status": "RUNS",
+    "error_line_verbatim": null,
+    "flags": [],
+    "read_from": "run a",
+    "reading": "RUNS",
+    "run_a_status": "RUNS"
+  }
+}

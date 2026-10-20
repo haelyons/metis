@@ -1,0 +1,200 @@
+LAMMPS (29 Aug 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/lammps-stable_29Aug2024/src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+Reading data file ...
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  11250 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  6 = max angles/atom
+  scanning dihedrals ...
+  19 = max dihedrals/atom
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  11250 bonds
+  reading angles ...
+  22500 angles
+  reading dihedrals ...
+  33750 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0.5     
+  special bond factors coul:  0        0        0.5     
+     4 = max # of 1-2 neighbors
+     9 = max # of 1-3 neighbors
+    18 = max # of 1-4 neighbors
+    21 = max # of special neighbors
+  special bonds CPU = 0.013 seconds
+  read_data CPU = 0.215 seconds
+Finding SHAKE clusters ...
+     250 = # of size 2 clusters
+    3250 = # of size 3 clusters
+     250 = # of size 4 clusters
+       0 = # of frozen angles
+  find clusters CPU = 0.004 seconds
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+- GPU package (short-range, long-range and three-body potentials): doi:10.1016/j.cpc.2010.12.021, doi:10.1016/j.cpc.2011.10.012, doi:10.1016/j.cpc.2013.08.002, doi:10.1016/j.commatsci.2014.10.068, doi:10.1016/j.cpc.2016.10.020, doi:10.3233/APC200086
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+- compute centroid/stress/atom for angles, impropers and dihedrals: doi:10.1103/PhysRevE.99.051301
+The log file lists these citations in BibTeX format.
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+
+--------------------------------------------------------------------------
+- Using acceleration for pppm:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+
+--------------------------------------------------------------------------
+- Using acceleration for lj/cut/coul/long:
+-  with 1 proc(s) per device.
+-  with 1 thread(s) per proc.
+-  Horizontal vector operations: ENABLED
+-  Shared memory system: No
+--------------------------------------------------------------------------
+Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)
+--------------------------------------------------------------------------
+
+Initializing Device and compiling on process 0...Done.
+Initializing Device 0 on core 0...Done.
+
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Setting up Verlet run ...
+  Unit style    : real
+  Current step  : 0
+  Time step     : 2
+Per MPI rank memory allocation (min/avg/max) = 63.52 | 63.52 | 63.52 Mbytes
+   Step          Temp          Press         Density         Volume         TotEng    
+         0   313.15         806.5955       0.29999997     291154.77      9589.5565    
+      1000   309.85815      8.613536       0.29999997     291154.77      16620.123    
+Loop time of 12.7788 on 1 procs for 1000 steps with 11250 atoms
+
+Performance: 13.522 ns/day, 1.775 hours/ns, 78.254 timesteps/s, 880.362 katom-step/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.53343    | 0.53343    | 0.53343    |   0.0 |  4.17
+Bond    | 8.124      | 8.124      | 8.124      |   0.0 | 63.57
+Kspace  | 2.7264     | 2.7264     | 2.7264     |   0.0 | 21.34
+Neigh   | 0.0023831  | 0.0023831  | 0.0023831  |   0.0 |  0.02
+Comm    | 0.14494    | 0.14494    | 0.14494    |   0.0 |  1.13
+Output  | 9.3572e-05 | 9.3572e-05 | 9.3572e-05 |   0.0 |  0.00
+Modify  | 1.2165     | 1.2165     | 1.2165     |   0.0 |  9.52
+Other   |            | 0.03103    |            |       |  0.24
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          14038 ave       14038 max       14038 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 67
+Dangerous builds = 0
+   Step          Temp          Press         Density         Volume         TotEng    
+      1000   309.85815      8.613536       0.29999997     291154.77      16620.123    
+      2000   314.47604      16.060935      0.29999997     291154.77      16856.531    
+Loop time of 12.911 on 1 procs for 1000 steps with 11250 atoms
+
+Performance: 13.384 ns/day, 1.793 hours/ns, 77.454 timesteps/s, 871.352 katom-step/s
+99.9% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.56954    | 0.56954    | 0.56954    |   0.0 |  4.41
+Bond    | 8.1956     | 8.1956     | 8.1956     |   0.0 | 63.48
+Kspace  | 2.7342     | 2.7342     | 2.7342     |   0.0 | 21.18
+Neigh   | 0.0026475  | 0.0026475  | 0.0026475  |   0.0 |  0.02
+Comm    | 0.1506     | 0.1506     | 0.1506     |   0.0 |  1.17
+Output  | 9.3422e-05 | 9.3422e-05 | 9.3422e-05 |   0.0 |  0.00
+Modify  | 1.2271     | 1.2271     | 1.2271     |   0.0 |  9.50
+Other   |            | 0.0312     |            |       |  0.24
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          13370 ave       13370 max       13370 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 141
+Dangerous builds = 0
+
+
+---------------------------------------------------------------------
+      Device Time Info (average): 
+---------------------------------------------------------------------
+Data Transfer:   0.0754 s.
+Neighbor copy:   0.0278 s.
+Neighbor build:  0.1299 s.
+Force calc:      0.3712 s.
+Device Overhead: 0.0824 s.
+CPU Neighbor:    0.0846 s.
+CPU Cast/Pack:   0.2227 s.
+CPU Driver_Time: 0.0287 s.
+CPU Idle_Time:   0.0058 s.
+Average split:   1.0000.
+Max Mem / Proc:  62.41 MB.
+Prefetch mode:   None.
+Vector width:    32.
+Lanes / atom:    8.
+Pair block:      256.
+Neigh block:     128.
+Neigh mode:      Hybrid (binning on host) with subgroup support
+---------------------------------------------------------------------
+
+
+
+---------------------------------------------------------------------
+    Device Time Info (average) for kspace: 
+---------------------------------------------------------------------
+Data Out:        0.0355 s.
+Data In:         0.0649 s.
+Kernel (map):    0.0382 s.
+Kernel (rho):    0.7381 s.
+Force interp:    0.1146 s.
+Total rho:       0.8119 s.
+Total interp:    0.1795 s.
+Force copy:      0.0422 s.
+Total:           1.0335 s.
+CPU Poisson:     2.3322 s.
+CPU Data Cast:   0.0299 s.
+CPU Idle Time:   0.0070 s.
+Max Mem / Proc:  10.15 MB.
+---------------------------------------------------------------------
+
+Total wall time: 0:00:26

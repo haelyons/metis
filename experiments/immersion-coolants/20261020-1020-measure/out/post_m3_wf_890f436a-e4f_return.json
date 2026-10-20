@@ -1,0 +1,283 @@
+{
+ "gatecheck": {
+  "answered": 19,
+  "unanswered": []
+ },
+ "elicited": {
+  "questions": [
+   {
+    "question": "Is the 12.600 ns/day a measure of the GPU at all, or of one CPU core? Bonded forces and bond constraints take 433 of 685.69 seconds (63%) in the timed run. The GPU-run pair forces take 34 seconds (5%).",
+    "where": "Timing table at the end of the production run's screen output (prod_a.screen.txt). The same pattern holds in the other runs: bonds are 77% in the pressure-only and no-sampling runs. The environment file shows the thread-count variable empty, though the build used 30 parallel jobs.",
+    "if_true": "The card's per-GPU throughput proxy is being tested against a CPU-bound number. A faster GPU, or the same GPU on a box with more CPU threads, would barely move it.",
+    "changes": "The hypothesis treats throughput as a property of one rented GPU. If bonds on a single CPU thread set the speed, the gate failure and the 19.8-fold under-pricing describe this machine's CPU, not the card's GPU plan."
+   },
+   {
+    "question": "Why was the Amber benchmark never run on this same box and build? The card's 250 ns/day comes from Amber's 23,558-atom benchmark at 611 ns/day, divided by a safety factor of about 2.4 (611/250 = 2.44). Nothing here puts that benchmark and this protocol in the same units.",
+    "where": "The design's seed text quotes the Amber figure. The measured rate is 820.342 thousand atom-steps per second at 2 fs. The design record's list of what is not tested leaves out any benchmark rerun.",
+    "if_true": "Compare in atom-steps per second. The Amber figure would be about 41.6 million at a 4 fs step, or about 83 million at 2 fs (my arithmetic; the step is not in the files). That is 50 to 100 times this run's 0.82 million. The gap would come from the engine, the force field, the constraints or the build, and not from the 2.4 safety factor.",
+    "changes": "The hypothesis blames the proxy being optimistic. A gap this large points to a different cause. A same-box benchmark would show whether the proxy or the setup is at fault."
+   },
+   {
+    "question": "Is the card's named difference, the cost of accumulating the per-step stress tensor, the wrong suspect? Pressure-tensor sampling every 5 steps costs about 1.3%. Heat-flux sampling costs about 31%.",
+    "where": "Performance lines. Deck as written: 12.600 ns/day. Pressure tensor only: 18.185. No sampling: 18.426. Ratios reported: 1.4433 and 1.4624. In the full run, the Fourier-space (long-range electrostatics) time is 118.61 s against 30.44 s in the pressure-only run. Bond time is 433 s against 365 s. Ten thousand warm-up steps, before any sampling exists, ran at 18.346 ns/day.",
+    "if_true": "The cost of the card's thermal-conductivity arm is the heat-flux calculation. It is not the viscosity-style stress sampling the card says the Amber proxy lacks. Even without it, 18.4 ns/day is still 13.6 times below 250 and 8.1 times below the 150 gate.",
+    "changes": "The gate failure does not depend on sampling. The cost of each of the card's two measurement arms differs sharply, and the card prices them as one."
+   },
+   {
+    "question": "Why does the re-priced plan scale the whole USD 941? The design says only GPU-hour lines scale and the storage line is held. The reported cost is exactly 941 x 250 / 12.6 = 18,670.63.",
+    "where": "The re-pricing endpoint, which reports USD 18,670.63 and a ratio of 19.8413. The design's endpoint text says storage is held.",
+    "if_true": "Either the storage line is zero or is scaled by mistake, or the card's line items were never read. The true plan cost would then be a little lower than 18,670.63. It would still be far above the USD 1,000 cap.",
+    "changes": "The 'under-priced by 19.84' figure may be slightly overstated. The hypothesis's cost reading is not backed by the card's own line items."
+   },
+   {
+    "question": "Does 'the deck runs on the GPU' license the word RUNS? The committed equilibration deck was refused by the GPU package and then edited. It crashed with 'Cannot currently use pppm/gpu with fix balance'. The balance line was removed and the second attempt ran.",
+    "where": "The stage record shows attempt 1 failing after 17.643 s with that error. Attempt 2 ran 2798.294 s. The compatibility endpoint reads only the production stage and reports RUNS with no mention of the edit.",
+    "if_true": "The deck as written does not run on the GPU. One edit was needed, and nothing says how many other edits matter. The card's protocol was not run unmodified.",
+    "changes": "The hypothesis says 'the card's own protocol'. It was run on an edited deck plus an unplanned third edit. The compatibility reading needs a second line saying the equilibration was refused as written."
+   },
+   {
+    "question": "Is a one-sided shortfall in density, with a short and noisy equilibration, enough to call this 'the card's liquid'? The measured density is 0.795028 against 0.805, a deficit of 1.24%. The design planned 0.5 ns of NPT averaged over 250 ps. The run used 300 ps averaged over 100 ps.",
+    "where": "Density file with one value, 0.795028. The thermo density rows over the last 100 ps swing between 0.7843 and 0.8021. The same value is then fixed as the volume for all three production runs (volume 109865.89 in each).",
+    "if_true": "The box was squeezed to match a noisy 11-row mean and then held there. The anchor passes the 4% band only because the band is wide. A true density near 0.805 would shift the Fourier-space and neighbor costs a little.",
+    "changes": "The throughput claim is largely unaffected by a 1% density shift. The claim that the timed system is the reference liquid rests on a short, single-signed estimate, not a plateau."
+   },
+   {
+    "question": "How precise are the reported figures, given each rests on one run? Ratios appear to four decimals. The three runs started from one restart and each lasted 100 ps, half the planned 200 ps, with a 10,000-step warm-up instead of 25,000.",
+    "where": "Warm-up rates of the three runs are 18.346, 18.400 and 18.442 ns/day, a spread of 0.5%. Production temperature means are 313.56, 313.59 and 311.71 K, each from 11 rows. Pressure means over the production rows are -155.5, +190.8 and +114.2 bar.",
+    "if_true": "The 1.3% gap between pressure-only and no-sampling is only about twice the run-to-run noise. The no-sampling run sits 1.9 K cooler than the others, though inside the plus or minus 5 K limit.",
+    "changes": "The 12.6 headline is robust to this noise. The sampling-cost comparison is not. The ratios to four decimals imply a precision the three same-box runs do not support."
+   },
+   {
+    "question": "Which engine was measured, and which part of the setup record is missing? The design declared a packaged build from conda-forge. The run used a source build with the basic built-in Fourier transform library, non-threaded, in mixed precision. The builder's exit code and the zero-step read check are absent from the record, yet the first-stage check reads PASS_ON_PARTS_PRESENT.",
+    "where": "Build command, library lines and the engine-package report. The first-stage check lists builder exit code and zero-step read as not present. Install took 136.7 s against the card's 4 hours for building and a dry run.",
+    "if_true": "The design's own 'could differ by 2x' risk is now a different build, not the declared one. A pass was recorded on only three of five parts. The 4-hour comparison is never made.",
+    "changes": "The hypothesis names a specific engine. A different build may move the number by a factor the record cannot bound, and the install-time reading says nothing about the card's 4-hour line."
+   }
+  ]
+ },
+ "qtriage": {
+  "claims": [
+   {
+    "id": "q1",
+    "grounding": {
+     "grounding": "reproduces",
+     "observed": "prod_a timed run: loop time 685.69 s. Bond is 433 s (63.15%) and Pair is 34.267 s (5.00%). Equilibration segment in the same file: Bond 77.03%. OMP_NUM_THREADS not set, so 1 thread on 1 MPI task.",
+     "note": "The prod_a timing table matches the claim (433/685.69 = 63%, Pair 34 s = 5%). I did not open the 12.600 ns/day line, the other runs' screen files or the environment file. The 77% I saw comes from the first segment of prod_a itself.",
+     "artifacts_read": [
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/results_m3/out/prod_a.screen.txt"
+     ]
+    },
+    "findings": [
+     {
+      "confound": "off-distribution ablation (CPU-bound, single-thread configuration vs GPU-saturated regime)",
+      "status": "EXPLAINS",
+      "crux": "Bonded forces and constraints take 63% (433/685.69 s) of the timed run, and 77% in the other runs, while GPU pair forces take 5%. The thread-count variable is empty. No control varies thread count or bonded offload with the GPU held fixed."
+     },
+     {
+      "confound": "Downstream compensation (self-repair) has no mechanism here: nothing was ablated or intervened on, so there is nothing for a later component to patch. The real threat to the claim is CPU-boundness, which this confound doesn't cover.",
+      "status": "NEEDS_RUN",
+      "crux": "The timing table shows bonded forces at 63% of wall time, but it doesn't show how many CPU threads the bonded work ran on, since the thread-count variable is empty. No run varies threads or the GPU, so the claim that ns/day tracks one CPU core rather than the GPU is untested."
+     },
+     {
+      "confound": "selection bias",
+      "status": "NEEDS_RUN",
+      "crux": "Bonded forces and constraints are 63% of wall time in prod_a and 77% in the other runs, so run selection is unlikely to explain it. But no run varies CPU thread count or bonded offload, so CPU-boundness of ns/day is not measured. Only a time share is on record."
+     },
+     {
+      "confound": "readout artifact: ns/day reads out CPU-side bonded work, not GPU throughput",
+      "status": "EXPLAINS",
+      "crux": "Bonded forces and constraints take 433/685.69 s (63%) in the timed run (77% in the other runs) on the CPU, while GPU pair forces take only 34 s (5%), so GPU speed can move at most about 5% of the wall time. The thread-count variable is empty, so CPU threading was unpinned. No committed run varies threads or GPU to refute this. The claim is positive, not a null."
+     },
+     {
+      "confound": "regime specificity: 12.600 ns/day may be set by CPU-side bonded work (single thread) rather than the GPU",
+      "status": "EXPLAINS",
+      "crux": "Bonds and constraints take 433 of 685.69 s (63%) in prod_a.screen.txt (77% in the other runs), while GPU pair forces take only 34 s (5%), so wall time is dominated by CPU work. No control varied CPU threads or CPU speed, so nothing rules this out. This is not a null claim, so the confound refutes the per-GPU reading rather than supporting it."
+     },
+     {
+      "confound": "construct validity: ns/day may measure one CPU core's bonded-force speed, not the GPU",
+      "status": "EXPLAINS",
+      "crux": "Bonded forces and constraints are 433 of 685.69 s (63%) of the timed run, and 77% in the other runs. GPU pair forces are only 34 s (5%). The thread-count variable is empty. No committed control varies CPU threads or GPU, so nothing refutes a CPU-bound reading."
+     },
+     {
+      "confound": "scale incomparability: throughput measured is a single-CPU-thread bonded-force rate, not a per-GPU rate, so it is incomparable with a GPU-plan price scale",
+      "status": "EXPLAINS",
+      "crux": "Bonded forces and constraints take 433 of 685.69 s (63%), and 77% in the other runs, while GPU pair forces take 5%. The thread-count variable is empty, so the 12.6 ns/day is plausibly CPU-bound. This confound is the claim holding, not refuting it."
+     },
+     {
+      "confound": "Noise floor / CPU-bound throughput: 12.600 ns/day may be set by single-thread CPU bonded work, not by the GPU.",
+      "status": "EXPLAINS",
+      "crux": "Bonds and constraints take 433 of 685.69 s (63%; 77% in the other runs), while GPU pair forces take only 5%. The thread-count variable is empty. No run varies threads or offloads bonded forces, so nothing committed rules out a CPU-set ns/day. The claim is a threat to the GPU-throughput hypothesis, not a null."
+     },
+     {
+      "confound": "ceiling effect: single-thread CPU bonded work caps throughput, so GPU speed is not what is being measured",
+      "status": "EXPLAINS",
+      "crux": "Bonded forces and constraints are 433 of 685.69 s (63%) in the timed run, and 77% in the pressure-only and no-sampling runs, while GPU pair forces are 34 s (5%). A CPU-side term sets the wall time, and no control varies CPU threads."
+     },
+     {
+      "confound": "single-case overfit: all runs are one system on one machine with an empty thread-count variable. The 63% and 77% bonded shares are consistent across three runs but do not vary the CPU or the system.",
+      "status": "NEEDS_RUN",
+      "crux": "The evidence has no ns/day measurement at varied CPU thread count or bonded offload, and no second system. Bonded wall-clock share (63% and 77%) alone does not show the CPU sets throughput, because CPU bonded work can overlap GPU nonbonded work."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [
+     "Rerun the same production input on the same GPU with the CPU thread count set explicitly and varied (e.g. 1, 4/8, 16, 30; the thread-count variable is currently empty), and compare ns/day and the bonded-force share of the timing table. If ns/day scales with threads the 12.6 ns/day is CPU-bound; if flat, the GPU or something else sets it.",
+     "Rerun the production setup with bonded forces offloaded to the GPU on vs off (-bonded gpu vs cpu), holding the GPU fixed, and compare ns/day.",
+     "Rerun the production setup on a second system or machine/GPU to check the result is not single-case (one system, one box)."
+    ],
+    "author_queue": [],
+    "runner_results": null
+   },
+   {
+    "id": "q2",
+    "grounding": {
+     "grounding": "reproduces",
+     "observed": "611/250 = 2.44. The measured LAMMPS log reads \"12.600 ns/day, 72.919 timesteps/s, 820.342 katom-step/s\". The Amber JAC figure (23,558 atoms, 611.08 ns/day, 2 fs per the seed's own page_setting) works out to 611e-9/2e-15/86400 x 23,558 = about 83.3M atom-steps/s, roughly 101x the measured 0.82M. The claim gave 83M at 2 fs and 41.6M at 4 fs, so 50 to 100x.",
+     "note": "The numbers reproduce, but the claim says the step is not in the files and it is: the seed critic records the Amber benchmark as 'JAC_PRODUCTION_NVE, 23,558 atoms, PME, 2 fs', so the 4 fs case does not apply and the gap is about 100x, not 50 to 100x.",
+     "artifacts_read": [
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/QUESTION.md",
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0342-card/out/agents/0002-seed_idea_seed_producer/reply.txt",
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261018-0342-card/out/agents/0004-seed_idea_seed_critic_qwen3.8-flash/export.json",
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/results_m3/out/run-prod_a_tag-m3.json"
+     ]
+    },
+    "findings": [
+     {
+      "confound": "off-distribution ablation",
+      "status": "NEEDS_RUN",
+      "crux": "No committed measurement puts Amber's 23,558-atom benchmark and this protocol in the same units on the same box and build. The 50 to 100 times atom-steps/s gap rests on the author's own arithmetic, and the Amber step size is not in the files."
+     },
+     {
+      "confound": "downstream compensation (self-repair)",
+      "status": "NEEDS_RUN",
+      "crux": "No same-box, same-build Amber benchmark number is committed. The 41.6M or 83M atom-steps/s figure is the author's arithmetic with an unrecorded step, so the 50-100x gap against 0.82M cannot be attributed to the proxy, the engine, or the build. Self-repair has no mechanism here and neither explains nor refutes the claim."
+     },
+     {
+      "confound": "selection bias: the 611 ns/day Amber figure may be a favorable published headline benchmark chosen without a stated or tested selection rule",
+      "status": "EXPLAINS",
+      "crux": "No committed number bounds how the 611 ns/day benchmark was selected or how much of the 50-100x atom-steps/s gap it accounts for; the 41.6M and 83M figures are the auditor's own arithmetic, and the 2.4 factor cannot absorb that gap."
+     },
+     {
+      "confound": "Readout/unit artifact: the Amber side (41.6M or 83M atom-steps/s) is the auditor's own conversion with an assumed 4 fs or 2 fs step that is not in any file, and the 0.82M side has no committed timing definition (setup, I/O, warmup).",
+      "status": "NEEDS_RUN",
+      "crux": "The 50 to 100x gap depends on an unrecorded Amber timestep and unmatched timing definitions. No committed number shows both rates measured the same way. The claim that no same-box benchmark exists is itself supported, since the design record omits a rerun."
+     },
+     {
+      "confound": "regime specificity: the Amber 611 ns/day benchmark (23,558 atoms, engine, force field, constraints, step) is a different regime from this protocol's measured 820.342 thousand atom-steps/s at 2 fs, and no same-box, same-build rerun exists.",
+      "status": "EXPLAINS",
+      "crux": "The not-tested list omits any benchmark rerun, and the Amber figure (about 41.6M to 83M atom-steps/s) is 50 to 100 times this run's 0.82M, so a 2.4 safety factor cannot reconcile them. The 50 to 100 times range rests on an assumed Amber step, since the step is not in the files. The claim partly holds as a null: regime mismatch is the reason the units are not comparable."
+     },
+     {
+      "confound": "construct validity: Amber 23,558-atom benchmark (611 ns/day) and this protocol (820.342 k atom-steps/s at 2 fs) are not in the same units or same box/build",
+      "status": "EXPLAINS",
+      "crux": "No same-box Amber run exists, and the unit-converted Amber rate (~41.6M-83M atom-steps/s, reviewer's arithmetic) is 50-100x this run's 0.82M, which a 2.4x safety factor cannot bridge. This supports the critique rather than refuting it."
+     },
+     {
+      "confound": "scale incomparability: Amber 23,558-atom 611 ns/day benchmark vs this protocol are not in common units or same box/build",
+      "status": "EXPLAINS",
+      "crux": "The 250 ns/day is 611/2.44 from a different system, with no same-box Amber rerun. In atom-steps/s the Amber figure is about 41.6M (4 fs) to 83M (2 fs), against 0.82M measured here (820.342k at 2 fs). That 50-100x gap is far beyond the 2.4 safety factor. The Amber conversion is the auditor's own arithmetic, since the step size is not in the files."
+     },
+     {
+      "confound": "noise floor",
+      "status": "RULED_OUT",
+      "crux": "The gap between the converted Amber figure (about 41.6M to 83M atom-steps/s) and the measured 0.82M atom-steps/s is about 50x to 100x. Run-to-run noise is on the order of percent, and the unknown step size changes the Amber figure by only 2x, so noise cannot account for the unit mismatch. The claim is a missing control, not a noisy statistic."
+     },
+     {
+      "confound": "ceiling or floor effect: this run's 0.82M atom-steps/s could be overhead-limited (floor) rather than reflecting real throughput; the 41.6M/83M Amber figures are author arithmetic with the 4 fs step not in the files",
+      "status": "NEEDS_RUN",
+      "crux": "No same-box, same-build Amber benchmark was run, so no committed number shows whether the 50-100x gap is a floor on this run or comes from engine, force field, constraints or build."
+     },
+     {
+      "confound": "single-case overfit",
+      "status": "NEEDS_RUN",
+      "crux": "No same-box, same-build Amber run exists, and the 41.6M/83M atom-steps/s figures are unverified arithmetic with an unknown timestep, so no committed number shows whether the 50-100x gap holds across cases or comes from this single comparison."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [],
+    "author_queue": [
+     "Run the Amber 23,558-atom benchmark on this same box and build at a stated timestep with the timing window recorded (setup, I/O, warmup defined), report atom-steps/s next to this protocol's 820.342k at 2 fs, and name beforehand the ratio that would count as agreement",
+     "Add a size or step-count sweep, including a second system size, to show whether the protocol run is overhead-bound and whether the ratio to Amber holds across cases"
+    ],
+    "runner_results": null
+   },
+   {
+    "id": "q3",
+    "grounding": {
+     "grounding": "reproduces",
+     "observed": "prod_a (heat flux + P): 12.600 ns/day, Kspace 118.61 s, Bond 433 s; prod_b (P only): 18.185, Kspace 30.44, Bond 365.39; prod_c (no sampling): 18.426; prod_a warmup 18.346. 18.426/18.185=1.0133 (1.3%); 1-12.600/18.185=30.7% (~31%); ratios 1.4433, 1.4624; 250/18.426=13.57x, 150/18.426=8.14x.",
+     "note": "Every number matches the LAMMPS Performance and timing lines in the prod_a/b/c deck logs. Only prod_a defines the heat/flux computes, so the extra cost belongs to the heat-flux arm.",
+     "artifacts_read": [
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/results_m3/out/prod_a.deck.log",
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/results_m3/out/prod_b.deck.log",
+      "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/results_m3/out/prod_c.deck.log"
+     ]
+    },
+    "findings": [
+     {
+      "confound": "off-distribution ablation",
+      "status": "RULED_OUT",
+      "crux": "Pressure-only was run directly at 18.185 ns/day vs 18.426 with no sampling (1.3%); the 31% drop appears only when heat flux is added (12.600). Timing is a direct measurement, so ablation off-distribution cannot produce it. Caveats: heat-flux-only run is absent (additivity assumed), single system."
+     },
+     {
+      "confound": "downstream compensation (self-repair)",
+      "status": "RULED_OUT",
+      "crux": "The claim rests on end-to-end ns/day (wall-clock), not a component ablation, so no downstream stage can compensate for or mask the cost. The extra Fourier and bond time is where the heat-flux cost lands, not an offset. This is a measured cost, not a null."
+     },
+     {
+      "confound": "selection bias",
+      "status": "RULED_OUT",
+      "crux": "The heat-flux effect (pressure-only 18.185 vs deck 12.600 ns/day, ratio 1.4433) is about 44% in speed, against a noise scale of about 0.4% (warm-up 18.346 vs no-sampling 18.426). No choice among the three runs could produce that gap, and pressure-only landing near 12.6 would have refuted the claim."
+     },
+     {
+      "confound": "readout artifact: ns/day performance-line ratios could misstate sampling cost",
+      "status": "RULED_OUT",
+      "crux": "The Fourier-space time (118.61 s vs 30.44 s) and bond time (433 s vs 365 s) are separate timers that independently show the extra heat-flux cost. The warm-up at 18.346 ns/day, within 0.4% of 18.426, shows the ns/day readout is stable. The claim is not a readout artifact."
+     },
+     {
+      "confound": "regime specificity: sampling interval, system, engine and kernel path were each tested at a single setting",
+      "status": "NEEDS_RUN",
+      "crux": "Pressure-tensor cost (1.3%) was measured only at every-5-steps sampling in one system and engine, with single runs. The 31% heat-flux cost sits in Fourier-space time (118.61 s vs 30.44 s), which suggests an engine-specific path. The gate failure (18.4 ns/day vs 150) is regime-independent and holds either way."
+     },
+     {
+      "confound": "construct validity",
+      "status": "NEEDS_RUN",
+      "crux": "The 31% is deck-as-written (12.600) minus pressure-only (18.185), a bundled contrast that no heat-flux-only arm isolates. The Fourier time rising from 30.44 s to 118.61 s fits per-atom virial accumulation but doesn't separate heat flux from other deck differences. The 1.3% pressure-tensor cost is clean, and the gate failure holds at 18.4 ns/day with no sampling. No refuting outcome was named before the run."
+     },
+     {
+      "confound": "scale incomparability",
+      "status": "RULED_OUT",
+      "crux": "Both costs are ns/day ratios against the same 18.426 no-sampling baseline. The 1.3% and 31.6% figures reproduce from the reported numbers (18.185/18.426, 12.600/18.426), and the warm-up rate of 18.346 agrees with that baseline. Only attribution of the 31.6% to heat flux alone is unverified, and that is a different confound."
+     },
+     {
+      "confound": "noise floor",
+      "status": "RULED_OUT",
+      "crux": "The claim's gap (12.600 vs 18.185 ns/day, 31%) is about 70 times the observed no-sampling spread (18.346 warm-up vs 18.426 full run, 0.4%). The 1.3% pressure cost is near noise, but that only reinforces \"pressure sampling is cheap\". This is not a null claim."
+     },
+     {
+      "confound": "ceiling or floor effect",
+      "status": "RULED_OUT",
+      "crux": "No measurement is pinned at a bound. The 31.6% heat-flux drop (12.600 vs 18.426) is about 70 times the 0.43% run-to-run gap (18.346 vs 18.426), and the 1.3% pressure-tensor gap is about 3 times it. The claim is a relative-cost comparison, not a null."
+     },
+     {
+      "confound": "single-case overfit",
+      "status": "RULED_OUT",
+      "crux": "The 31% gap (12.600 vs 18.185 ns/day) is far larger than the ~0.4% spread between unsampled measurements (18.426 vs 18.346 warm-up). The Fourier-space time jump (118.61 s vs 30.44 s) gives a component-level mechanism. The claim is scoped to this deck, which is what was tested."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [
+     "Existing deck with only the heat-flux computes added to the no-sampling baseline (18.426 ns/day), and again with them removed from the full deck; compare ns/day and Fourier-space time"
+    ],
+    "author_queue": [
+     "Sampling-interval sweep (1, 5, 50 steps) for pressure-tensor-only and heat-flux-only, at least 3 replicates each, with the cost threshold that would refute 'pressure tensor is cheap' pre-stated"
+    ],
+    "runner_results": null
+   }
+  ],
+  "shared_queue": [],
+  "instrument_queue": [],
+  "authored": null
+ },
+ "takeaways": "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/TAKEAWAYS_m3.md\n\nBoth gates were run on a copy truncated at the \"Raw samples, verbatim\" line. Both exited 0, and I appended the outputs to the end of the file. The outputs are:\n\n```\n/tmp/claude-1000/-home-hal-dev-interp/72fa6ea2-188d-4e00-b467-74ae55869166/scratchpad/trunc.md: 1.1 codes/1000 words (2 codes, 1868 words); threshold 10.0\n0 unscoped result sentence(s)\n```"
+}

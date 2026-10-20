@@ -1,0 +1,65 @@
+# Timed dry run, written by run_m3.py (tag m3). Not a committed deck.
+# Built from the committed tdm.in (sha256 4d6a778e7148335a35bf680829a934c7ce4cc864fc6e050a3f23ed9854058a98); every line marked 'verbatim' is copied from it.
+# 1,000 warm-up steps, then 1,000 timed steps bracketed by date stamps, under fix nvt,
+# with tdm.in's computes, variables and fix ave/time lines active throughout.
+# --- verbatim: tdm.in's variable lines
+variable        system_dir    index .
+variable        T             index 313.15
+variable        run_id        index 1
+variable        seg           index 1
+variable        timestep_fs   index 1.0
+variable        warmup_steps  index 200000
+variable        prod_steps    index 2000000
+variable        restart_every index 500000
+variable        thermo_every  index 5000
+variable        shake_tol     index 0.0001
+variable        shake_iter    index 20
+variable        shake_order   index 0
+variable        seed          equal 4928459+${run_id}*10007
+variable        dump_every    index 5          # steps between samples
+variable        dump_dir      index .
+
+include         ${system_dir}/in.init
+read_data       ${system_dir}/in.data
+include         ${system_dir}/in.settings
+timestep        2.0
+# --- verbatim: SHAKE, velocities, thermo
+fix             constrain_h all shake ${shake_tol} ${shake_iter} ${shake_order} m 1.008
+velocity        all create ${T} ${seed} mom yes rot yes dist gaussian
+thermo          ${thermo_every}
+thermo_style    custom step temp press density vol etotal
+# --- verbatim: tdm.in's computes and variables
+compute         TT        all temp
+compute         myP       all pressure TT
+compute         myKE      all ke/atom
+compute         myPE      all pe/atom
+compute         stressC   all centroid/stress/atom NULL pair bond angle dihedral improper
+compute         stressK   all stress/atom NULL kspace
+compute         fluxC     all heat/flux myKE myPE stressC
+variable        nktv2p_real equal 68568.415
+variable        JkXa atom -(c_stressK[1]*vx+c_stressK[4]*vy+c_stressK[5]*vz)/${nktv2p_real}
+variable        JkYa atom -(c_stressK[4]*vx+c_stressK[2]*vy+c_stressK[6]*vz)/${nktv2p_real}
+variable        JkZa atom -(c_stressK[5]*vx+c_stressK[6]*vy+c_stressK[3]*vz)/${nktv2p_real}
+compute         redJkX all reduce sum v_JkXa
+compute         redJkY all reduce sum v_JkYa
+compute         redJkZ all reduce sum v_JkZa
+variable        Jtot_x equal c_fluxC[1]+c_redJkX
+variable        Jtot_y equal c_fluxC[2]+c_redJkY
+variable        Jtot_z equal c_fluxC[3]+c_redJkZ
+variable        Pxx equal c_myP[1]
+variable        Pyy equal c_myP[2]
+variable        Pzz equal c_myP[3]
+variable        Pxy equal c_myP[4]
+variable        Pxz equal c_myP[5]
+variable        Pyz equal c_myP[6]
+# --- verbatim: tdm.in's thermostat and fix ave/time lines
+fix             prod all nvt temp ${T} ${T} 100.0
+fix             stress_raw all ave/time ${dump_every} 1 ${dump_every} v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz &
+                file ${dump_dir}/Stress_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             flux_raw all ave/time ${dump_every} 1 ${dump_every} v_Jtot_x v_Jtot_y v_Jtot_z &
+                file ${dump_dir}/HeatFlux_perstep_T${T}K_run${run_id}_seg${seg}.out
+
+run             1000
+shell           date +%s.%N > ${dump_dir}/dryrun_t0.epoch
+run             1000 pre no
+shell           date +%s.%N > ${dump_dir}/dryrun_t1.epoch

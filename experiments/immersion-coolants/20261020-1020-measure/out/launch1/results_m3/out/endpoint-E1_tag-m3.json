@@ -1,0 +1,81 @@
+{
+  "cell": {
+    "endpoint": "E1",
+    "tag": "m3"
+  },
+  "decision": "PASS_ON_PARTS_PRESENT",
+  "decision_rule": "FAIL if any part present fails (builder exit 0; |net charge| < 1e-3 e; zero-step read_data without an ERROR line and with 11,250 atoms; 11,250 atoms in metadata and in the data file header). PASS if every part is present and passes. PASS_ON_PARTS_PRESENT if the parts present pass and the rest live only in the workstation's pre-launch record. FAIL voids the run and stops it with code 4.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-37-187",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T12:12:07+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 1059,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/data/box_mol00557_n250_d0.30_s61453/metadata.json",
+      "present": true,
+      "sha256": "6d7928333486"
+    },
+    {
+      "bytes": 3973656,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/data/box_mol00557_n250_d0.30_s61453/in.data",
+      "present": true,
+      "sha256": "6766496720d3"
+    },
+    {
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/out/prelaunch_build_mol00557.json",
+      "present": false,
+      "sha256": null
+    }
+  ],
+  "metric": "pre-launch build: builder exit code at 0.3 g/cm3; |net_charge_per_molecule|; zero-step read_data in CPU LAMMPS; atom count",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "atoms": 11250,
+    "builder_exit_code": 0,
+    "net_charge_abs_below": "1e-3"
+  },
+  "values": {
+    "parts": {
+      "atoms_from_metadata": {
+        "pass": true,
+        "present": true,
+        "rule": "n_molecules x atoms_per_molecule = 11,250",
+        "value": 11250
+      },
+      "atoms_in_data_file_header": {
+        "pass": true,
+        "present": true,
+        "rule": "11,250 atoms in the in.data header",
+        "value": 11250
+      },
+      "builder_exit_code": {
+        "pass": null,
+        "present": false,
+        "value": null,
+        "why_absent": "lives in the workstation's pre-launch record, which the box payload does not carry"
+      },
+      "net_charge_per_molecule": {
+        "pass": true,
+        "present": true,
+        "rule": "|net charge per molecule| < 1e-3 e",
+        "value": "0.0"
+      },
+      "zero_step_read_data": {
+        "pass": null,
+        "present": false,
+        "value": null,
+        "why_absent": "lives in the workstation's pre-launch record, which the box payload does not carry"
+      }
+    },
+    "pre_launch_record": null
+  }
+}

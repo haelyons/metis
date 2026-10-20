@@ -1,0 +1,131 @@
+{
+ "card": {
+  "run": "experiments/immersion-coolants/20261018-0342-card-2",
+  "pick": "seed\u00b7idea\u00b71 Force-field error floor for coolant MD (V1)",
+  "result_json_sha256": "1b461dfd41deda92aa7a9a439f1d21ec51aa784eab1dc463f2e7195fd4153e29",
+  "dramaturg": "PASS 2/2",
+  "expected": "if_not (not resolved here: p_score phase)"
+ },
+ "measured_by": {
+  "run": "experiments/immersion-coolants/20261020-1020-measure",
+  "box": "gpu_1x_a100_sxm4 (A100 SXM4 40 GB, driver 570.148.08, CUDA 12.8), us-east-1, USD 1.99/h",
+  "engine": "LAMMPS stable_29Aug2024 compiled on the box: GPU package (CUDA, sm_80, mixed precision), KISS FFT, one process, no MPI, OpenMP compiled but not used by the decks",
+  "run_valid": true,
+  "labels": [
+   "one box, 11,250 atoms",
+   "LAMMPS 29Aug2024, compiled from source on the box, GPU package, CUDA sm_80",
+   "GPU package mixed precision",
+   "equilibration deck edited: comm_style tiled / balance rcb / fix load_balance removed (pppm/gpu refuses fix balance)"
+  ]
+ },
+ "numbers": {
+  "throughput_ns_day": {
+   "card": {
+    "basis": "PROXY",
+    "value": 250,
+    "source": "Amber JAC 611 ns/day on one A100, safety factor 2.4"
+   },
+   "measured": {
+    "basis": "MEASURED",
+    "value": 12.6,
+    "record": "E3",
+    "protocol": "deck as written (pressure tensor and heat flux every 5 steps), 11,250-atom nonylcyclohexane box at liquid density, 2 fs, 100 ps segment",
+    "verdict": "REFUTED_BELOW (19.8x below the proxy)",
+    "variants": {
+     "pressure_only_ns_day": 18.185,
+     "no_sampling_ns_day": 18.426,
+     "dilute_box_dry_run_ns_day": 13.4
+    }
+   }
+  },
+  "throughput_gate_min": {
+   "card": {
+    "basis": "DESIGN",
+    "value": 150
+   },
+   "measured": {
+    "gate": "FAIL (12.6 < 150)",
+    "card_text_applies": "drop the extension tier and re-plan with 48 molecules at 3 replicas",
+    "record": "E3b"
+   }
+  },
+  "plan_cost_usd": {
+   "card": 941,
+   "re_priced_at_measured_throughput": 18670.63,
+   "ratio": 19.84,
+   "record": "E3c",
+   "verdict": "ABOVE_CAP (USD 1,000)"
+  },
+  "anchor_density": {
+   "card": {
+    "tolerance": "within 4%",
+    "reference_g_cm3": 0.805
+   },
+   "measured": {
+    "basis": "MEASURED",
+    "value": 0.795028,
+    "deviation_pct": -1.24,
+    "window": "last 100 ps of a 300 ps NPT at 313.15 K, 1 atm",
+    "drift_per_100ps": 0.00468,
+    "record": "E2",
+    "verdict": "WITHIN_BAND"
+   }
+  },
+  "l_dry_hours": {
+   "card": {
+    "basis": "DESIGN",
+    "value": 4,
+    "what": "build LAMMPS, dry-run one molecule"
+   },
+   "measured": {
+    "box_build_on_workstation_s": 12,
+    "lammps_compile_on_box_s": "about 115 (download, configure, build on 30 cores, install)",
+    "record": "E7"
+   }
+  }
+ },
+ "readings": {
+  "sampling_cost": {
+   "no_sampling_over_as_written": 1.4624,
+   "pressure_only_over_as_written": 1.4433,
+   "reading": "the heat-flux sampling (centroid stress every 5 steps) costs 32% of throughput; the pressure-tensor sampling costs about 1%"
+  },
+  "gpu_package_compatibility": {
+   "deck_as_written": "RUNS",
+   "equilibration_deck": "REFUSED as written (ERROR: Cannot currently use pppm/gpu with fix balance); runs with its three load-balancing lines removed (recorded edit 3)"
+  },
+  "per_atom_step_rate": {
+   "as_written": 820342,
+   "no_sampling": 1199600,
+   "unit": "atom-steps per second"
+  },
+  "sanity": {
+   "mean_T_K": [
+    313.56,
+    313.59,
+    311.71
+   ],
+   "error_lines": 0,
+   "record": "E8"
+  }
+ },
+ "cost_usd": {
+  "lambda": 3.26,
+  "launches": 2,
+  "launch1": {
+   "utc": "12:05:10-12:14:09",
+   "hours": 0.15,
+   "usd": 0.3,
+   "outcome": "guard stop before equilibration (projected 10,558 s > 7,009 s left)"
+  },
+  "launch2": {
+   "utc": "12:28:32-13:57:47",
+   "hours": 1.487,
+   "usd": 2.96,
+   "outcome": "complete, exit 0"
+  }
+ },
+ "record_sha256": {
+  "E3": "a9445c788910f6d7e866db9103d7bd7354275c000b2454954d8cbd10f00b63c3"
+ }
+}

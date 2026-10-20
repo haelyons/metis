@@ -1,0 +1,247 @@
+{
+  "cell": {
+    "control": "engine_packages",
+    "tag": "m3"
+  },
+  "decision": "LISTED",
+  "decision_rule": "LISTED if compile_record.txt says compile_ok=1 and every one of GPU, KSPACE, MOLECULE, RIGID and EXTRA-COMPUTE appears under 'Installed packages' in lmp -h. NOT_LISTED if any is missing; COMPILE_FAILED if the compile record does not say compile_ok=1. Either failure voids the run and stops it with code 2.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T12:36:37+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 11568,
+      "n_items": 6,
+      "path": "/home/ubuntu/m3_run/results_m3/out/lmp_help.txt",
+      "present": true,
+      "sha256": "79e7f8eadb59"
+    },
+    {
+      "bytes": 1920,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/compile_record.txt",
+      "present": true,
+      "sha256": "fe8f565486d2"
+    },
+    {
+      "bytes": 2865,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/cmake_configure.log",
+      "present": true,
+      "sha256": "2f3652c0a81f"
+    },
+    {
+      "bytes": 628,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/toolchain_versions.txt",
+      "present": true,
+      "sha256": "69c00f35b757"
+    }
+  ],
+  "metric": "the engine compiled on the box: lmp -h must list GPU, KSPACE, MOLECULE, RIGID and EXTRA-COMPUTE; with the compile's readings and the run labels",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "required_packages": [
+      "GPU",
+      "KSPACE",
+      "MOLECULE",
+      "RIGID",
+      "EXTRA-COMPUTE"
+    ]
+  },
+  "values": {
+    "atom_count": 11250,
+    "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+    "compile": {
+      "build_command": "/usr/bin/cmake --build /home/ubuntu/m3_run/engine_src/build -j 30",
+      "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+      "cmake_configure": {
+        "build_files_dir": "/home/ubuntu/m3_run/engine_src/build",
+        "build_type": "Release",
+        "cmake_version": "3.22.1",
+        "configure_ok": true,
+        "configuring_done": true,
+        "cuda_compiler": "/usr/bin/nvcc",
+        "cuda_found": {
+          "root": "/usr",
+          "version": "12.8"
+        },
+        "cxx_compiler": "/usr/bin/c++",
+        "cxx_compiler_type": "GNU",
+        "cxx_compiler_version": "11.4.0",
+        "cxx_flags": "-O3 -DNDEBUG",
+        "cxx_identification": "GNU 11.4.0",
+        "cxx_standard": "11",
+        "defines": "LAMMPS_SMALLBIG;LAMMPS_MEMALIGN=64;LAMMPS_OMP_COMPAT=4;LAMMPS_GZIP;LAMMPS_FFMPEG;FFT_KISS;LMP_OPENMP;LMP_GPU",
+        "enabled_packages": [
+          "EXTRA-COMPUTE",
+          "GPU",
+          "KSPACE",
+          "MOLECULE",
+          "OPENMP",
+          "RIGID"
+        ],
+        "errors": [],
+        "fft_lib": "KISS",
+        "fft_lines": [
+          "Using double precision FFTs",
+          "Using non-threaded FFTs",
+          "Using builtin distributed FFT algorithms"
+        ],
+        "generating_done": true,
+        "generator": "Unix Makefiles using /usr/bin/gmake",
+        "gpu_api": "CUDA",
+        "gpu_arch": "sm_80",
+        "gpu_precision": "MIXED",
+        "install_path": "/home/ubuntu/m3_run/engine",
+        "lammps_version": "20240829",
+        "missing_required_packages": [],
+        "n_warnings": 0,
+        "operating_system": "Linux Ubuntu\" 22.04"
+      },
+      "cmake_source": "image",
+      "cmake_version": "cmake version 3.22.1",
+      "compile_ok": true,
+      "compilers": {
+        "cmake_cuda_compiler": "/usr/bin/nvcc",
+        "cmake_cxx_compiler": "/usr/bin/c++",
+        "cmake_cxx_identification": "GNU 11.4.0",
+        "g++": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0",
+        "make": "GNU Make 4.3",
+        "nvcc": "Cuda compilation tools, release 12.8, V12.8.93",
+        "nvcc_path": "/usr/bin/nvcc"
+      },
+      "failure": null,
+      "failure_log": null,
+      "failure_log_tail": null,
+      "fft": "KISS",
+      "fftw3_header": "absent",
+      "install_command": "/usr/bin/cmake --install /home/ubuntu/m3_run/engine_src/build",
+      "nvcc": {
+        "build": "V12.8.93",
+        "line": "Cuda compilation tools, release 12.8, V12.8.93",
+        "release": "12.8"
+      },
+      "present": true,
+      "record": {
+        "allowed_seconds": "1800",
+        "build_command": "/usr/bin/cmake --build /home/ubuntu/m3_run/engine_src/build -j 30",
+        "build_end_epoch": "1792499797.394571390",
+        "build_exit": "0",
+        "build_jobs": "30",
+        "build_start_epoch": "1792499684.466587419",
+        "cap_seconds": "1800",
+        "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+        "cmake_path": "/usr/bin/cmake",
+        "cmake_source": "image",
+        "cmake_version": "cmake version 3.22.1",
+        "compile_ok": "1",
+        "configure_end_epoch": "1792499684.459192816",
+        "configure_exit": "0",
+        "configure_start_epoch": "1792499681.684144897",
+        "download_end_epoch": "1792499678.531272199",
+        "download_start_epoch": "1792499661.436057416",
+        "end_epoch": "1792499797.645256276",
+        "fft": "KISS",
+        "fftw3_header": "absent",
+        "gxx_version": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0",
+        "install_command": "/usr/bin/cmake --install /home/ubuntu/m3_run/engine_src/build",
+        "install_end_epoch": "1792499797.643676371",
+        "install_exit": "0",
+        "install_start_epoch": "1792499797.396420141",
+        "lmp_help_exit": "0",
+        "lmp_path": "/home/ubuntu/m3_run/engine/bin/lmp",
+        "make_version": "GNU Make 4.3",
+        "nvcc_path": "/usr/bin/nvcc",
+        "nvcc_version": "Cuda compilation tools, release 12.8, V12.8.93",
+        "src_dir": "/home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024",
+        "src_version_h": "#define LAMMPS_VERSION \"29 Aug 2024\"",
+        "start_epoch": "1792499660.903881987",
+        "tarball_bytes": "141582660",
+        "tarball_sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+        "unpack_end_epoch": "1792499681.670748980",
+        "unpack_start_epoch": "1792499679.084585343",
+        "url_mirror": "https://download.lammps.org/tars/lammps-29Aug2024.tar.gz",
+        "url_primary": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+        "url_used": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz"
+      },
+      "tarball": {
+        "bytes": "141582660",
+        "sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+        "url_mirror": "https://download.lammps.org/tars/lammps-29Aug2024.tar.gz",
+        "url_primary": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+        "url_used": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+        "version_h_line": "#define LAMMPS_VERSION \"29 Aug 2024\""
+      },
+      "wall_clock_s": {
+        "build": "112.927983971",
+        "cmake_pip_install": null,
+        "cmake_pip_install_not_read_because": "empty time stamp",
+        "configure": "2.775047919",
+        "download": "17.095214783",
+        "install": "0.247256230",
+        "total": "136.741374289",
+        "unpack": "2.586163637"
+      }
+    },
+    "cuda_runtime_source": "nvcc --version: the CUDA toolkit the engine was compiled and linked with",
+    "cuda_runtime_version": "12.8",
+    "cuda_version_reported_by_driver": "12.8",
+    "engine_route": "compiled on the box from the official source tarball stable_29Aug2024 (EXEC_NOTE.md item 11; gate addendum A7)",
+    "engine_tarball_sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+    "engine_tarball_url": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+    "fft": "KISS",
+    "gpu_driver": "570.148.08",
+    "gpu_name": "NVIDIA A100-SXM4-40GB",
+    "gpu_package_precision_reported_by_lmp_h": "mixed",
+    "install_wall_clock_meaning": "the whole download-and-compile stage on the box, from its first to its last date stamp in compile_record.txt",
+    "install_wall_clock_s": "136.741374289",
+    "instance_type": "gpu_1x_a100_sxm4",
+    "labels": [
+      "one box, 11,250 atoms",
+      "LAMMPS 29Aug2024, compiled from source on the box, GPU package, CUDA sm_80",
+      "GPU package mixed precision"
+    ],
+    "lammps_version_line": "Large-scale Atomic/Molecular Massively Parallel Simulator - 29 Aug 2024",
+    "linked_libraries": [
+      "libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007218312c5000)",
+      "libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x000072182a600000)"
+    ],
+    "lmp_help_accelerator_configuration": [
+      "GPU package API: CUDA",
+      "GPU package precision: mixed",
+      "OPENMP package API: OpenMP",
+      "OPENMP package precision: double",
+      "OpenMP standard: OpenMP 4.5"
+    ],
+    "lmp_help_compatible_gpu_present": "yes",
+    "lmp_help_compiler": "GNU C++ 11.4.0 with OpenMP 4.5",
+    "lmp_help_packages": [
+      "EXTRA-COMPUTE",
+      "GPU",
+      "KSPACE",
+      "MOLECULE",
+      "OPENMP",
+      "RIGID"
+    ],
+    "lmp_help_text": "\nLarge-scale Atomic/Molecular Massively Parallel Simulator - 29 Aug 2024\n\nUsage example: /home/ubuntu/m3_run/engine/bin/lmp -var t 300 -echo screen -in in.alloy\n\nList of command line options supported by this LAMMPS executable:\n\n-echo none/screen/log/both  : echoing of input script (-e)\n-help                       : print this help message (-h)\n-in none/filename           : read input from file or stdin (default) (-i)\n-kokkos on/off ...          : turn KOKKOS mode on or off (-k)\n-log none/filename          : where to send log output (-l)\n-mdi '<mdi flags>'          : pass flags to the MolSSI Driver Interface\n-mpicolor color             : which exe in a multi-exe mpirun cmd (-m)\n-cite                       : select citation reminder style (-c)\n-nocite                     : disable citation reminder (-nc)\n-nonbuf                     : disable screen/logfile buffering (-nb)\n-package style ...          : invoke package command (-pk)\n-partition size1 size2 ...  : assign partition sizes (-p)\n-plog basename              : basename for partition logs (-pl)\n-pscreen basename           : basename for partition screens (-ps)\n-restart2data rfile dfile ... : convert restart to data file (-r2data)\n-restart2dump rfile dgroup dstyle dfile ... \n                            : convert restart to dump file (-r2dump)\n-restart2info rfile         : print info about restart rfile (-r2info)\n-reorder topology-specs     : processor reordering (-r)\n-screen none/filename       : where to send screen output (-sc)\n-skiprun                    : skip loops in run and minimize (-sr)\n-suffix gpu/intel/kk/opt/omp: style suffix to apply (-sf)\n-var varname value          : set index style variable (-v)\n\nOS: Linux \"Ubuntu 22.04.5 LTS\" 6.8.0-60-generic x86_64\n\nCompiler: GNU C++ 11.4.0 with OpenMP 4.5\nC++ standard: C++11\nMPI v1.0: LAMMPS MPI STUBS for LAMMPS version 29 Aug 2024\n\nAccelerator configuration:\n\nGPU package API: CUDA\nGPU package precision: mixed\nOPENMP package API: OpenMP\nOPENMP package precision: double\nOpenMP standard: OpenMP 4.5\n\nCompatible GPU present: yes\n\nFFT information:\n\nFFT precision  = double\nFFT engine  = mpiFFT\nFFT library = KISS\n\nActive compile time flags:\n\n-DLAMMPS_GZIP\n-DLAMMPS_FFMPEG\n-DLAMMPS_SMALLBIG\nsizeof(smallint): 32-bit\nsizeof(imageint): 32-bit\nsizeof(tagint):   32-bit\nsizeof(bigint):   64-bit\n\nAvailable compression formats:\n\nExtension: .gz     Command: gzip\nExtension: .bz2    Command: bzip2\nExtension: .zst    Command: zstd\nExtension: .xz     Command: xz\nExtension: .lzma   Command: xz\n\n\nInstalled packages:\n\nEXTRA-COMPUTE GPU KSPACE MOLECULE OPENMP RIGID \n\nList of individual style options included in this LAMMPS executable\n\n* Atom styles:\n\nangle           atomic          body            bond            charge          \nellipsoid       full            hybrid          line            molecular       \nsphere          template        tri             \n\n* Integrate styles:\n\nrespa           respa/omp       verlet          \n\n* Minimize styles:\n\ncg              fire/old        fire            hftn            quickmin        \nsd              \n\n* Pair styles:\n\nborn            born/coul/long  born/coul/long/gpu              \nborn/coul/long/omp              born/coul/msm   born/coul/msm/omp               \nborn/gpu        born/omp        buck            buck/coul/cut   \nbuck/coul/cut/gpu               buck/coul/cut/omp               buck/coul/long  \nbuck/coul/long/gpu              buck/coul/long/omp              buck/coul/msm   \nbuck/coul/msm/omp               buck/gpu        buck/long/coul/long             \nbuck/long/coul/long/omp         buck/omp        coul/cut        coul/cut/gpu    \ncoul/cut/omp    coul/debye      coul/debye/gpu  coul/debye/omp  coul/dsf        \ncoul/dsf/gpu    coul/dsf/omp    coul/long       coul/long/gpu   coul/long/omp   \ncoul/msm        coul/msm/omp    coul/streitz    coul/wolf       coul/wolf/omp   \nmeam/c          reax            reax/c          mesont/tpm      \nhbond/dreiding/lj               hbond/dreiding/lj/omp           \nhbond/dreiding/morse            hbond/dreiding/morse/omp        hybrid          \nhybrid/omp      hybrid/molecular                hybrid/molecular/omp            \nhybrid/overlay  hybrid/overlay/omp              hybrid/scaled   \nhybrid/scaled/omp               lj/charmm/coul/charmm           \nlj/charmm/coul/charmm/gpu       lj/charmm/coul/charmm/implicit  \nlj/charmm/coul/charmm/implicit/omp              lj/charmm/coul/charmm/omp       \nlj/charmm/coul/long             lj/charmm/coul/long/gpu         \nlj/charmm/coul/long/omp         lj/charmm/coul/msm              \nlj/charmm/coul/msm/omp          lj/charmmfsw/coul/charmmfsh     \nlj/charmmfsw/coul/long          lj/cut          lj/cut/coul/cut \nlj/cut/coul/cut/gpu             lj/cut/coul/cut/omp             lj/cut/coul/long                \nlj/cut/coul/long/gpu            lj/cut/coul/long/omp            lj/cut/coul/msm \nlj/cut/coul/msm/gpu             lj/cut/coul/msm/omp             lj/cut/gpu      \nlj/cut/omp      lj/cut/tip4p/cut                lj/cut/tip4p/cut/omp            \nlj/cut/tip4p/long               lj/cut/tip4p/long/gpu           \nlj/cut/tip4p/long/omp           lj/expand       lj/expand/gpu   lj/expand/omp   \nlj/long/coul/long               lj/long/coul/long/omp           \nlj/long/tip4p/long              lj/long/tip4p/long/omp          morse           \nmorse/gpu       morse/omp       soft            soft/gpu        soft/omp        \ntable           table/gpu       table/omp       tip4p/cut       tip4p/cut/omp   \ntip4p/long      tip4p/long/omp  yukawa          yukawa/gpu      yukawa/omp      \nzbl             zbl/gpu         zbl/omp         zero            \n\n* Bond styles:\n\nfene            fene/expand     fene/expand/omp fene/omp        gromos          \ngromos/omp      harmonic        harmonic/omp    hybrid          morse           \nmorse/omp       quartic         quartic/omp     table           table/omp       \nzero            \n\n* Angle styles:\n\ncharmm          charmm/omp      cosine          cosine/omp      cosine/squared  \ncosine/squared/omp              harmonic        harmonic/omp    hybrid          \ntable           table/omp       zero            \n\n* Dihedral styles:\n\ncharmm          charmm/omp      charmmfsw       harmonic        harmonic/omp    \nhybrid          multi/harmonic  multi/harmonic/omp              opls            \nopls/omp        table           table/omp       zero            \n\n* Improper styles:\n\ncvff            cvff/omp        harmonic        harmonic/omp    hybrid          \numbrella        umbrella/omp    zero            \n\n* KSpace styles:\n\newald           ewald/dipole    ewald/dipole/spin               ewald/disp      \newald/disp/dipole               ewald/omp       msm             msm/cg          \nmsm/cg/omp      msm/omp         pppm            pppm/cg         pppm/cg/omp     \npppm/dipole     pppm/dipole/spin                pppm/disp       pppm/disp/omp   \npppm/disp/tip4p pppm/disp/tip4p/omp             pppm/gpu        pppm/omp        \npppm/stagger    pppm/tip4p      pppm/tip4p/omp  \n\n* Fix styles\n\nadapt           addforce        ave/atom        ave/chunk       ave/correlate   \nave/grid        ave/histo       ave/histo/weight                ave/time        \naveforce        balance         box/relax       cmap            deform          \ndeposit         ave/spatial     ave/spatial/sphere              lb/pc           \nlb/rigid/pc/sphere              reax/c/bonds    reax/c/species  dt/reset        \nefield          ehex            enforce2d       evaporate       external        \ngravity         gravity/omp     halt            heat            indent          \nlangevin        lineforce       momentum        move            nph             \nnph/omp         nph/sphere      nph/sphere/omp  npt             npt/gpu         \nnpt/omp         npt/sphere      npt/sphere/omp  nve             nve/gpu         \nnve/limit       nve/noforce     nve/omp         nve/sphere      nve/sphere/omp  \nnvt             nvt/gpu         nvt/omp         nvt/sllod       nvt/sllod/omp   \nnvt/sphere      nvt/sphere/omp  pair            planeforce      press/berendsen \npress/langevin  print           property/atom   rattle          recenter        \nrestrain        rigid           rigid/nph       rigid/nph/omp   rigid/nph/small \nrigid/npt       rigid/npt/omp   rigid/npt/small rigid/nve       rigid/nve/omp   \nrigid/nve/small rigid/nvt       rigid/nvt/omp   rigid/nvt/small rigid/omp       \nrigid/small     rigid/small/omp setforce        shake           spring          \nspring/chunk    spring/self     store/force     store/state     temp/berendsen  \ntemp/rescale    thermal/conductivity            tune/kspace     vector          \nviscous         wall/harmonic   wall/lj1043     wall/lj126      wall/lj93       \nwall/morse      wall/reflect    wall/region     wall/table      \n\n* Compute styles:\n\nackland/atom    adf             aggregate/atom  angle           angle/local     \nangmom/chunk    ave/sphere/atom basal/atom      bond            bond/local      \nborn/matrix     centro/atom     centroid/stress/atom            chunk/atom      \nchunk/spread/atom               cluster/atom    cna/atom        cnp/atom        \ncom             com/chunk       composition/atom                coord/atom      \ncount/type      mesont          dihedral        dihedral/local  dipole          \ndipole/chunk    dipole/tip4p    dipole/tip4p/chunk              displace/atom   \nefield/wolf/atom                entropy/atom    erotate/rigid   erotate/sphere  \nerotate/sphere/atom             fragment/atom   global/atom     group/group     \ngyration        gyration/chunk  gyration/shape  gyration/shape/chunk            \nheat/flux       hexorder/atom   hma             improper        improper/local  \ninertia/chunk   ke              ke/atom         ke/rigid        momentum        \nmsd             msd/chunk       msd/nongauss    omega/chunk     orientorder/atom                \npair            pair/local      pe              pe/atom         pressure        \nproperty/atom   property/chunk  property/grid   property/local  rattlers/atom   \nrdf             reduce          reduce/chunk    reduce/region   rigid/local     \nslcsa/atom      slice           stress/atom     stress/cartesian                \nstress/cylinder pressure/cylinder               stress/mop      \nstress/mop/profile              stress/spherical                temp            \ntemp/chunk      temp/com        temp/deform     temp/partial    temp/profile    \ntemp/ramp       temp/region     temp/rotate     temp/sphere     ti              \ntorque/chunk    vacf            vcm/chunk       \n\n* Region styles:\n\nblock           cone            cylinder        ellipsoid       intersect       \nplane           prism           sphere          union           \n\n* Dump styles:\n\natom            cfg             custom          atom/mpiio      cfg/mpiio       \ncustom/mpiio    xyz/mpiio       grid            grid/vtk        image           \nlocal           movie           xyz             \n\n* Command styles\n\nangle_write     balance         change_box      create_atoms    create_bonds    \ncreate_box      delete_atoms    delete_bonds    box             kim_init        \nkim_interactions                kim_param       kim_property    kim_query       \nreset_ids       reset_atom_ids  reset_mol_ids   message         server          \ndihedral_write  displace_atoms  info            minimize        read_data       \nread_dump       read_restart    replicate       rerun           run             \nset             velocity        write_coeff     write_data      write_dump      \nwrite_restart   \n\n",
+    "lmp_help_version": "29 Aug 2024",
+    "missing_required_packages": [],
+    "price_usd_per_hour": "1.99",
+    "required_packages": [
+      "GPU",
+      "KSPACE",
+      "MOLECULE",
+      "RIGID",
+      "EXTRA-COMPUTE"
+    ],
+    "timestep_fs": "2.0",
+    "units_in_in_init": "real"
+  }
+}

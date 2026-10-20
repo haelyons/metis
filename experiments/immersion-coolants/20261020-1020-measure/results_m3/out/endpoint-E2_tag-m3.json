@@ -1,0 +1,88 @@
+{
+  "cell": {
+    "endpoint": "E2",
+    "tag": "m3"
+  },
+  "decision": "WITHIN_BAND",
+  "decision_rule": "WITHIN_BAND if |NPT mean density - 0.805| <= 0.04 x 0.805 g/cm3, the mean being the single value in the deck's density file; OUTSIDE_BAND otherwise; NOT_READ if the equilibration did not finish or the file does not hold exactly one finite positive value. OUTSIDE_BAND or NOT_READ voids the run and labels throughput rows 'descriptive only; anchor failed'; claims B and C (E3b, E3c) then read NOT_READ. Separately: 'density still drifting' if |least-squares slope of the thermo density over the last 100 ps of the NPT run| x 100 ps > 1% of the mean.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T13:24:00+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 74,
+      "n_items": 1,
+      "path": "/home/ubuntu/m3_run/results_m3/out/density_npt_T313.15K_run1.dat",
+      "present": true,
+      "sha256": "64287530d1a5"
+    },
+    {
+      "bytes": 3965,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/decks/equilibrate_noballance.in",
+      "present": true,
+      "sha256": "2cf90c1713b5"
+    },
+    {
+      "bytes": 34634,
+      "n_items": 576,
+      "path": "/home/ubuntu/m3_run/results_m3/out/equilibrate.deck.log",
+      "present": true,
+      "sha256": "0444d1624a3a"
+    },
+    {
+      "bytes": 37157,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/equilibrate.screen.txt",
+      "present": true,
+      "sha256": "c28be14b7482"
+    },
+    {
+      "bytes": 1740,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/equilibrate.lammps.log",
+      "present": true,
+      "sha256": "644a2242591b"
+    }
+  ],
+  "metric": "anchor: NPT mean density over the last 100 ps of the 300 ps NPT (the deck's density file) against 0.805 g/cm3",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "band": "+/-4%",
+    "density_window": "the last 100 ps of the 300 ps NPT",
+    "drift_label_if_change_over_100_ps_above": "1% of the mean",
+    "reference_g_cm3": "0.805"
+  },
+  "values": {
+    "band_fraction": "0.04",
+    "density_file_text": "# Time-averaged data for fix npt_density\n# TimeStep v_rho\n150000 0.795028\n",
+    "density_window": "the last 100 ps of the 300 ps NPT",
+    "drift": {
+      "change_over_100_ps": "0.004682573636363636363636363636",
+      "drifting": false,
+      "first_step": "100000",
+      "last_step": "150000",
+      "limit_1pct_of_mean": "0.00795028",
+      "n_rows": 11,
+      "slope_g_cm3_per_ps": "0.00004682573636363636363636363636"
+    },
+    "drift_window_steps": 50000,
+    "equilibration_done": {
+      "final_density": "0.795028",
+      "line": "Equilibration done: wrote /home/ubuntu/m3_run/results_m3/system/equilibrated_T313.15K.restart, target_density=0.795027653302 g/cm^3, final_density=0.795028 g/cm^3",
+      "restart": "/home/ubuntu/m3_run/results_m3/system/equilibrated_T313.15K.restart",
+      "target_density": "0.795027653302"
+    },
+    "labels": [],
+    "npt_mean_density_g_cm3": "0.795028",
+    "npt_target_line_value": "0.795027653302",
+    "reference_g_cm3": "0.805",
+    "relative_difference": "-0.01238757763975155279503105590"
+  }
+}

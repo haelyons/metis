@@ -1,0 +1,50 @@
+{
+  "cell": {
+    "control": "I9",
+    "tag": "m3"
+  },
+  "decision": "PASS",
+  "decision_rule": "PASS if every planted case gives its known answer; FAIL otherwise. Recorded only.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T13:55:54+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 222170,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/run_m3.py",
+      "present": true,
+      "sha256": "f395a4e90b44"
+    }
+  ],
+  "metric": "instrument check for endpoint E7: planted cases with known answers",
+  "notes": "",
+  "rows": [
+    {
+      "actual": "612.500000000",
+      "case": "planted epochs -> seconds",
+      "expected": "612.5",
+      "pass": true
+    }
+  ],
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "every_case_passes": true
+  },
+  "values": {
+    "cases": [
+      {
+        "actual": "612.500000000",
+        "case": "planted epochs -> seconds",
+        "expected": "612.5",
+        "pass": true
+      }
+    ],
+    "validates": "E7"
+  }
+}

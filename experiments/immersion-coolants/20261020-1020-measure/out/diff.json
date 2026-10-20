@@ -1,0 +1,39 @@
+{
+ "departures": [
+  {
+   "id": "D1",
+   "departure": "One molecule (nonylcyclohexane, 45 atoms) of the card's eight; one box of 250 molecules (11,250 atoms). The card's anchor set spans up to 92 atoms per molecule (squalane, about 23,000 atoms per box).",
+   "question": "Is one 11,250-atom box the throughput the card's cost lines mean, or should the measure use the largest anchor molecule as well?"
+  },
+  {
+   "id": "D2",
+   "departure": "Packing density 0.3 g/cm3 (the dataset README's value), where the coolant pilot's gate chose 0.75 and halted.",
+   "question": "Accepted that the README's dilute packing plus the deck's NPT and deform-to-density stages define the box, and that the pilot's density choice is not repeated?"
+  },
+  {
+   "id": "D3",
+   "departure": "Equilibration shortened: 0.5 ns NPT at 2 fs instead of the deck's 1 ns at 1 fs; deform stage 200 ps; production segments 200 ps after 50 ps warm-up. Deck structure unchanged; -var overrides and two listed deletions only.",
+   "question": "Is a density plateau check at 0.5 ns enough to call the timed system 'the card's liquid'?"
+  },
+  {
+   "id": "D4",
+   "departure": "Three production variants where the card has one protocol: as written (a), pressure-only (b), no sampling (c). (b) stands in for (a) if the GPU pair style refuses the centroid stress compute.",
+   "question": "Should E3 fall back to (b) with a label, or should a refusal of (a) make the throughput NOT_READ?"
+  },
+  {
+   "id": "D5",
+   "departure": "Engine build: conda-forge LAMMPS CUDA build with the GPU package through micromamba on the box; the card says only 'LAMMPS 29Aug2024'.",
+   "question": "Is the conda-forge build the engine the card's cost lines mean, or would a KOKKOS or hand-built binary be required before the number counts?"
+  },
+  {
+   "id": "D6",
+   "departure": "Timestep 2 fs (card held_fixed) against the deck default 1 fs; SHAKE on C-H as the deck sets.",
+   "question": "Accepted that the card's 2 fs binds over the deck's 1 fs, with the sanity control as the only stability check?"
+  },
+  {
+   "id": "D7",
+   "departure": "The card's p_bench measures throughput on a 4-molecule, 3-replica, 8 ns pilot on 8 GPUs; here one molecule, one GPU, 0.6 ns of production. Per-GPU throughput is read from one GPU because the card's molecules never wait on each other.",
+   "question": "Accepted that one GPU measures the per-GPU rate the card divides by?"
+  }
+ ]
+}

@@ -1,0 +1,51 @@
+{
+ "claims": [
+  {
+   "id": "design-core",
+   "grounding": {
+    "grounding": "unauditable",
+    "observed": "E1 inputs check out: metadata.json has net_charge_per_molecule 0.0, n_molecules 250, density 0.3; the zero-step CPU read_data log shows 11250 atoms and no ERROR line. The builder log is empty, so its exit code was never recorded. None of the box outputs were found: no equilibration density file, no Performance line for prod_a, prod_b or prod_c, and no install log. So the ns/day figure (claimed proxy 250, gate >=150) and the USD 941 re-pricing cannot be re-derived.",
+    "note": "Only pre-launch artifacts exist in out/. The A100 run outputs for E2 to E8 (density file, Performance lines, thermo logs) were never saved, and the builder exit code is not recorded, so E1 is only partly checkable.",
+    "artifacts_read": [
+     "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/data/box_mol00557_n250_d0.30_s61453/metadata.json",
+     "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/out/prelaunch_build_mol00557.log",
+     "/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/out/prelaunch_read0_mol00557.out"
+    ]
+   },
+   "findings": [
+    {
+     "confound": "decidability by construction (forced or impossible endpoint, or endpoint answering a different question than the seed)",
+     "status": "NEEDS_RUN",
+     "crux": "Every endpoint has a pre-named, reachable refuting outcome (E3 [100,625], E3b >=150, E3c cap at 235.3, E2 +/-4%), so nothing is forced. But the gate reading is conditional on E1, E2, E6 and E8 passing, and no committed number says which branch occurs. An E6 refusal swaps the protocol to viscosity-only."
+    },
+    {
+     "confound": "Unit/scale: ns/day depends on the deck's timestep units and on which run's Performance line is read; a constant factor error would shift every E3-E5 cell together. Layers/strengths are N/A.",
+     "status": "NEEDS_RUN",
+     "crux": "No measured number exists yet. Whether the Performance-line ns/day equals steps*2fs/wall-clock (correct timestep units and correct run segment) is not established. The thresholds themselves are discriminating (E3 [100,625], gate 150, cap 235.3), so the design is not degenerate by construction."
+    }
+   ],
+   "rejected_findings": [],
+   "run_queue": [
+    "Install-arm 100-step GPU dry run with -var timestep_fs 2.0 (also run E1 pre-launch build): compare Performance-line ns/day to 100*2e-6 ns / (wall seconds/86400), require agreement within 5%, confirm tdm.in units line, and confirm the Performance line is read from the post-warm-up run; use it to check whether the E1 and E6 branches are reachable before paying for the full equilibrate, prod_a, prod_b, prod_c sequence"
+   ],
+   "author_queue": [],
+   "runner_results": null
+  }
+ ],
+ "shared_queue": [],
+ "instrument_queue": [
+  "AUTHOR: validation control for instrument endpoint-1-readout vv1: held-out ground truth for \"E1 pre-launch build: builder exit code at 0.3 g/cm3; |net_charge_per_molecule| from metadata.json; zero-step read_data in CPU LAMMPS; atom count\"",
+  "AUTHOR: validation control for instrument endpoint-2-readout vv1: held-out ground truth for \"E2 anchor: NPT mean density over the last 250 ps (the deck's density file) against the reference 0.805 g/cm3\"",
+  "AUTHOR: validation control for instrument endpoint-3-readout vv1: held-out ground truth for \"E3 card PROXY throughput_ns_day = 250: ns/day of prod_a (deck as written) on one A100, from the Performance line\"",
+  "AUTHOR: validation control for instrument endpoint-4-readout vv1: held-out ground truth for \"E3b card gate p_bench: measured ns/day >= 150\"",
+  "AUTHOR: validation control for instrument endpoint-5-readout vv1: held-out ground truth for \"E3c card plan re-priced: USD 941 x 250 / measured ns/day (GPU-hour lines scale with 1/throughput; storage line held)\"",
+  "AUTHOR: validation control for instrument endpoint-6-readout vv1: held-out ground truth for \"E4 prod_b (pressure tensor only) ns/day and ratio E4/E3\"",
+  "AUTHOR: validation control for instrument endpoint-7-readout vv1: held-out ground truth for \"E5 prod_c (no per-step sampling) ns/day and ratio E5/E3; per-atom step rate (atom-steps per second)\"",
+  "AUTHOR: validation control for instrument endpoint-8-readout vv1: held-out ground truth for \"E6 compatibility: does the deck as written run with the GPU package\"",
+  "AUTHOR: validation control for instrument endpoint-9-readout vv1: held-out ground truth for \"E7 install and build readings: LAMMPS install wall-clock on the box; builder wall-clock on the workstation; dry-run success\"",
+  "AUTHOR: validation control for instrument endpoint-10-readout vv1: held-out ground truth for \"E8 sanity control: temperature within 313.15 +/- 5 K over each production segment; no error or lost-atom lines\""
+ ],
+ "authored": null,
+ "_run": "wf_0cc4d978-d33",
+ "_failures": []
+}

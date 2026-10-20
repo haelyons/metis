@@ -1,0 +1,165 @@
+{
+  "controls": {
+    "R1": {
+      "decision": "RUNS_AGREE",
+      "file": "control-R1_tag-m3.json",
+      "run_valid": true
+    },
+    "deck_edits": {
+      "decision": "BUILT",
+      "file": "control-deck_edits_tag-m3.json",
+      "run_valid": true
+    },
+    "engine_packages": {
+      "decision": "LISTED",
+      "file": "control-engine_packages_tag-m3.json",
+      "run_valid": true
+    }
+  },
+  "endpoints": {
+    "E1": {
+      "decision": "PASS_ON_PARTS_PRESENT",
+      "file": "endpoint-E1_tag-m3.json",
+      "run_valid": true
+    }
+  },
+  "engine_compile": {
+    "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+    "cmake_source": "image",
+    "compile_ok": true,
+    "failure": null,
+    "failure_log": null,
+    "failure_log_tail": null,
+    "fft": "KISS",
+    "note": "restated from compile_record.txt; on a failed compile, the last 40 lines of the log named in failure_log",
+    "tarball": {
+      "bytes": "141582660",
+      "sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+      "url_mirror": "https://download.lammps.org/tars/lammps-29Aug2024.tar.gz",
+      "url_primary": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+      "url_used": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+      "version_h_line": "#define LAMMPS_VERSION \"29 Aug 2024\""
+    },
+    "wall_clock_s": {
+      "build": "113.175220412",
+      "cmake_pip_install": null,
+      "cmake_pip_install_not_read_because": "empty time stamp",
+      "configure": "2.741502274",
+      "download": "17.184146673",
+      "install": "0.252657703",
+      "total": "137.010512247",
+      "unpack": "2.584218036"
+    }
+  },
+  "exit_code": 3,
+  "guard_constants": {
+    "compile_cap_s": 1800,
+    "default_remote_timeout_s": 7200,
+    "engine_overhead_s_per_lammps_stage": 60.0,
+    "equilibration_steps_estimate": 510000,
+    "fixed_stage_estimates_s": {
+      "compile": 1800.0,
+      "copy": 10.0,
+      "dryrun": 300.0,
+      "endpoints": 60.0,
+      "extract": 5.0
+    },
+    "ns_per_day_assumed_before_any_measurement": 100.0,
+    "production_steps_estimate": 125000,
+    "seconds_billed_outside_the_on_box_run": 600.0,
+    "seconds_kept_free_before_remote_timeout": 120.0,
+    "source": "build choices recorded in the summary (gate addendum A4); the compile is planned at its 1,800 s cap (gate addendum A8)",
+    "stage_estimate_rate_margin": 1.25
+  },
+  "incomplete_run_label": "incomplete run: descriptive only, no verdict",
+  "labels": {
+    "atom_count": 11250,
+    "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+    "cuda_runtime_source": "nvcc --version: the CUDA toolkit the engine was compiled and linked with",
+    "cuda_runtime_version": "12.8",
+    "cuda_version_reported_by_driver": "12.8",
+    "engine_route": "compiled on the box from the official source tarball stable_29Aug2024 (EXEC_NOTE.md item 11; gate addendum A7)",
+    "engine_tarball_sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+    "engine_tarball_url": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+    "fft": "KISS",
+    "gpu_driver": "570.148.08",
+    "gpu_name": "NVIDIA A100-SXM4-40GB",
+    "gpu_package_precision_reported_by_lmp_h": "mixed",
+    "install_wall_clock_meaning": "the whole download-and-compile stage on the box, from its first to its last date stamp in compile_record.txt",
+    "install_wall_clock_s": "137.010512247",
+    "instance_type": "gpu_1x_a100_sxm4",
+    "labels": [
+      "one box, 11,250 atoms",
+      "LAMMPS 29Aug2024, compiled from source on the box, GPU package, CUDA sm_80",
+      "GPU package mixed precision"
+    ],
+    "lammps_version_line": "Large-scale Atomic/Molecular Massively Parallel Simulator - 29 Aug 2024",
+    "linked_libraries": [
+      "libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007e4d152ae000)",
+      "libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x00007e4d0e600000)"
+    ],
+    "lmp_help_accelerator_configuration": [
+      "GPU package API: CUDA",
+      "GPU package precision: mixed",
+      "OPENMP package API: OpenMP",
+      "OPENMP package precision: double",
+      "OpenMP standard: OpenMP 4.5"
+    ],
+    "lmp_help_compatible_gpu_present": "yes",
+    "lmp_help_compiler": "GNU C++ 11.4.0 with OpenMP 4.5",
+    "lmp_help_packages": [
+      "EXTRA-COMPUTE",
+      "GPU",
+      "KSPACE",
+      "MOLECULE",
+      "OPENMP",
+      "RIGID"
+    ],
+    "lmp_help_version": "29 Aug 2024",
+    "price_usd_per_hour": "1.99",
+    "timestep_fs": "2.0",
+    "units_in_in_init": "real"
+  },
+  "note": "the box copy stage stopped the run",
+  "run_labels": [
+    "run c: tdm.in with listed edit 2 (no per-step sampling): cut by the time or cost guard (prod_c)",
+    "run b: tdm.in with listed edit 1 (pressure tensor only): cut by the time or cost guard (prod_b)",
+    "incomplete run: descriptive only, no verdict"
+  ],
+  "run_valid": false,
+  "runs": {
+    "dryrun": {
+      "decision": "RUNS",
+      "file": "run-dryrun_tag-m3.json",
+      "label": "incomplete run: descriptive only, no verdict",
+      "performance_ns_day": "13.384",
+      "run_valid": true
+    }
+  },
+  "stages": {
+    "copy": {
+      "reason": "the copy stage and the stages that must follow need about 10558 s; 7009 s are left before the time or budget limit",
+      "status": "STOPPED"
+    },
+    "dryrun": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 26.459
+    },
+    "extract": {
+      "status": "DONE"
+    }
+  },
+  "tag": "m3",
+  "trimmed_by_guard": [
+    "prod_b",
+    "prod_c"
+  ],
+  "voided_by": [
+    "stopped by the cost or time guard before the copy stage: the copy stage and the stages that must follow need about 10558 s; 7009 s are left before the time or budget limit",
+    "the run stopped with code 3: the box copy stage stopped the run"
+  ],
+  "what_this_file_is": "A restatement of the record files in this folder. It decides nothing; each decision lives in its own record.",
+  "written_utc": "2026-10-20T12:12:34+00:00"
+}

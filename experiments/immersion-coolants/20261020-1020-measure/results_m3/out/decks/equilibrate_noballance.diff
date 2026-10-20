@@ -1,0 +1,19 @@
+--- equilibrate.in
++++ equilibrate_noballance.in
+@@ -33,8 +33,6 @@
+ thermo_style    custom step temp press density vol lx ly lz pe etotal
+ 
+ # rebalance MPI domains (dilute packing)
+-comm_style      tiled
+-balance         1.1 rcb
+ 
+ min_style       cg
+ minimize        1.0e-4 1.0e-6 1000 10000
+@@ -42,7 +40,6 @@
+ velocity        all create ${T} ${seed} mom yes rot yes dist gaussian
+ fix             constrain_h all shake ${shake_tol} ${shake_iter} ${shake_order} m 1.008
+ # SHAKE before box-changing fixes
+-fix             load_balance all balance 2000 1.05 rcb
+ 
+ # stage 0: Langevin capped-displacement strain relaxation (reduced dt)
+ neigh_modify    one 10000 page 200000

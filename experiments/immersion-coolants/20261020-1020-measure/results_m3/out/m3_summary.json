@@ -1,0 +1,322 @@
+{
+  "controls": {
+    "I1": {
+      "decision": "PASS",
+      "file": "control-I1_tag-m3.json",
+      "run_valid": true
+    },
+    "I10": {
+      "decision": "PASS",
+      "file": "control-I10_tag-m3.json",
+      "run_valid": true
+    },
+    "I2": {
+      "decision": "PASS",
+      "file": "control-I2_tag-m3.json",
+      "run_valid": true
+    },
+    "I3": {
+      "decision": "PASS",
+      "file": "control-I3_tag-m3.json",
+      "run_valid": true
+    },
+    "I4": {
+      "decision": "PASS",
+      "file": "control-I4_tag-m3.json",
+      "run_valid": true
+    },
+    "I5": {
+      "decision": "PASS",
+      "file": "control-I5_tag-m3.json",
+      "run_valid": true
+    },
+    "I6": {
+      "decision": "PASS",
+      "file": "control-I6_tag-m3.json",
+      "run_valid": true
+    },
+    "I7": {
+      "decision": "PASS",
+      "file": "control-I7_tag-m3.json",
+      "run_valid": true
+    },
+    "I8": {
+      "decision": "PASS",
+      "file": "control-I8_tag-m3.json",
+      "run_valid": true
+    },
+    "I9": {
+      "decision": "PASS",
+      "file": "control-I9_tag-m3.json",
+      "run_valid": true
+    },
+    "R1": {
+      "decision": "RUNS_AGREE",
+      "file": "control-R1_tag-m3.json",
+      "run_valid": true
+    },
+    "deck_edits": {
+      "decision": "BUILT",
+      "file": "control-deck_edits_tag-m3.json",
+      "run_valid": true
+    },
+    "engine_packages": {
+      "decision": "LISTED",
+      "file": "control-engine_packages_tag-m3.json",
+      "run_valid": true
+    },
+    "equilibrate_edit3": {
+      "decision": "APPLIED",
+      "file": "control-equilibrate_edit3_tag-m3.json",
+      "run_valid": true
+    }
+  },
+  "endpoints": {
+    "E1": {
+      "decision": "PASS_ON_PARTS_PRESENT",
+      "file": "endpoint-E1_tag-m3.json",
+      "run_valid": true
+    },
+    "E2": {
+      "decision": "WITHIN_BAND",
+      "file": "endpoint-E2_tag-m3.json",
+      "run_valid": true
+    },
+    "E3": {
+      "decision": "REFUTED_BELOW",
+      "file": "endpoint-E3_tag-m3.json",
+      "run_valid": true
+    },
+    "E3b": {
+      "decision": "FAIL",
+      "file": "endpoint-E3b_tag-m3.json",
+      "run_valid": true
+    },
+    "E3c": {
+      "decision": "ABOVE_CAP",
+      "file": "endpoint-E3c_tag-m3.json",
+      "run_valid": true
+    },
+    "E4": {
+      "decision": "REPORTED",
+      "file": "endpoint-E4_tag-m3.json",
+      "run_valid": true
+    },
+    "E5": {
+      "decision": "REPORTED",
+      "file": "endpoint-E5_tag-m3.json",
+      "run_valid": true
+    },
+    "E6": {
+      "decision": "RUNS",
+      "file": "endpoint-E6_tag-m3.json",
+      "run_valid": true
+    },
+    "E7": {
+      "decision": "REPORTED",
+      "file": "endpoint-E7_tag-m3.json",
+      "run_valid": true
+    },
+    "E8": {
+      "decision": "PASS",
+      "file": "endpoint-E8_tag-m3.json",
+      "run_valid": true
+    }
+  },
+  "engine_compile": {
+    "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+    "cmake_source": "image",
+    "compile_ok": true,
+    "failure": null,
+    "failure_log": null,
+    "failure_log_tail": null,
+    "fft": "KISS",
+    "note": "restated from compile_record.txt; on a failed compile, the last 40 lines of the log named in failure_log",
+    "tarball": {
+      "bytes": "141582660",
+      "sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+      "url_mirror": "https://download.lammps.org/tars/lammps-29Aug2024.tar.gz",
+      "url_primary": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+      "url_used": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+      "version_h_line": "#define LAMMPS_VERSION \"29 Aug 2024\""
+    },
+    "wall_clock_s": {
+      "build": "112.927983971",
+      "cmake_pip_install": null,
+      "cmake_pip_install_not_read_because": "empty time stamp",
+      "configure": "2.775047919",
+      "download": "17.095214783",
+      "install": "0.247256230",
+      "total": "136.741374289",
+      "unpack": "2.586163637"
+    }
+  },
+  "exit_code": 0,
+  "guard_constants": {
+    "compile_cap_s": 1800,
+    "default_remote_timeout_s": 9000,
+    "engine_overhead_s_per_lammps_stage": 60.0,
+    "equilibration_steps_estimate": 280000,
+    "fixed_stage_estimates_s": {
+      "compile": 1800.0,
+      "copy": 10.0,
+      "dryrun": 300.0,
+      "endpoints": 60.0,
+      "extract": 5.0
+    },
+    "ns_per_day_assumed_before_any_measurement": 100.0,
+    "production_steps_estimate": 60000,
+    "seconds_billed_outside_the_on_box_run": 600.0,
+    "seconds_kept_free_before_remote_timeout": 120.0,
+    "source": "build choices recorded in the summary (gate addendum A4); the compile is planned at its 1,800 s cap (gate addendum A8); the step counts follow the -var values of gate addendum A12; the default window is 9,000 s (gate addendum A13)",
+    "stage_estimate_rate_margin": 1.25
+  },
+  "incomplete_run_label": null,
+  "labels": {
+    "atom_count": 11250,
+    "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+    "cuda_runtime_source": "nvcc --version: the CUDA toolkit the engine was compiled and linked with",
+    "cuda_runtime_version": "12.8",
+    "cuda_version_reported_by_driver": "12.8",
+    "engine_route": "compiled on the box from the official source tarball stable_29Aug2024 (EXEC_NOTE.md item 11; gate addendum A7)",
+    "engine_tarball_sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+    "engine_tarball_url": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+    "fft": "KISS",
+    "gpu_driver": "570.148.08",
+    "gpu_name": "NVIDIA A100-SXM4-40GB",
+    "gpu_package_precision_reported_by_lmp_h": "mixed",
+    "install_wall_clock_meaning": "the whole download-and-compile stage on the box, from its first to its last date stamp in compile_record.txt",
+    "install_wall_clock_s": "136.741374289",
+    "instance_type": "gpu_1x_a100_sxm4",
+    "labels": [
+      "one box, 11,250 atoms",
+      "LAMMPS 29Aug2024, compiled from source on the box, GPU package, CUDA sm_80",
+      "GPU package mixed precision"
+    ],
+    "lammps_version_line": "Large-scale Atomic/Molecular Massively Parallel Simulator - 29 Aug 2024",
+    "linked_libraries": [
+      "libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007218312c5000)",
+      "libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x000072182a600000)"
+    ],
+    "lmp_help_accelerator_configuration": [
+      "GPU package API: CUDA",
+      "GPU package precision: mixed",
+      "OPENMP package API: OpenMP",
+      "OPENMP package precision: double",
+      "OpenMP standard: OpenMP 4.5"
+    ],
+    "lmp_help_compatible_gpu_present": "yes",
+    "lmp_help_compiler": "GNU C++ 11.4.0 with OpenMP 4.5",
+    "lmp_help_packages": [
+      "EXTRA-COMPUTE",
+      "GPU",
+      "KSPACE",
+      "MOLECULE",
+      "OPENMP",
+      "RIGID"
+    ],
+    "lmp_help_version": "29 Aug 2024",
+    "price_usd_per_hour": "1.99",
+    "timestep_fs": "2.0",
+    "units_in_in_init": "real"
+  },
+  "note": "every stage finished",
+  "run_labels": [],
+  "run_valid": true,
+  "runs": {
+    "copy": {
+      "decision": "DONE",
+      "file": "run-copy_tag-m3.json",
+      "label": null,
+      "performance_ns_day": null,
+      "run_valid": true
+    },
+    "dryrun": {
+      "decision": "RUNS",
+      "file": "run-dryrun_tag-m3.json",
+      "label": null,
+      "performance_ns_day": "13.374",
+      "run_valid": true
+    },
+    "equilibrate": {
+      "decision": "RUNS",
+      "file": "run-equilibrate_tag-m3.json",
+      "label": null,
+      "performance_ns_day": "15.781",
+      "run_valid": true
+    },
+    "prod_a": {
+      "decision": "RUNS",
+      "file": "run-prod_a_tag-m3.json",
+      "label": null,
+      "performance_ns_day": "12.600",
+      "run_valid": true
+    },
+    "prod_b": {
+      "decision": "RUNS",
+      "file": "run-prod_b_tag-m3.json",
+      "label": null,
+      "performance_ns_day": "18.185",
+      "run_valid": true
+    },
+    "prod_c": {
+      "decision": "RUNS",
+      "file": "run-prod_c_tag-m3.json",
+      "label": null,
+      "performance_ns_day": "18.426",
+      "run_valid": true
+    }
+  },
+  "stages": {
+    "copy": {
+      "status": "DONE"
+    },
+    "dryrun": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 26.508
+    },
+    "endpoints": {
+      "status": "DONE"
+    },
+    "equilibrate": {
+      "attempt": 2,
+      "attempt1": {
+        "line": "ERROR: Cannot currently use pppm/gpu with fix balance. (src/lammps-stable_29Aug2024/src/GPU/pppm_gpu.cpp:118)",
+        "status": "ERROR_ON_BALANCE_LINES",
+        "wall_s": 17.643
+      },
+      "edit3_applied": true,
+      "line": null,
+      "status": "RUNS",
+      "wall_s": 2798.294
+    },
+    "extract": {
+      "status": "DONE"
+    },
+    "prod_a": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 780.53
+    },
+    "prod_b": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 569.612
+    },
+    "prod_c": {
+      "line": null,
+      "refusal_line": null,
+      "status": "RUNS",
+      "wall_s": 563.178
+    }
+  },
+  "tag": "m3",
+  "trimmed_by_guard": [],
+  "voided_by": [],
+  "what_this_file_is": "A restatement of the record files in this folder. It decides nothing; each decision lives in its own record.",
+  "written_utc": "2026-10-20T13:55:54+00:00"
+}

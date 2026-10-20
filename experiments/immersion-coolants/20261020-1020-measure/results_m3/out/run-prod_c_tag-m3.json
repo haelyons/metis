@@ -1,0 +1,260 @@
+{
+  "cell": {
+    "run": "prod_c",
+    "tag": "m3"
+  },
+  "decision": "RUNS",
+  "decision_rule": "The run's status: RUNS, NOT_RUN (run a refused by a listed error; the line kept), TRIMMED (an optional run cut by the guard), FAILED or STOPPED.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T13:55:54+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 2097,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/decks/tdm_prod_c.in",
+      "present": true,
+      "sha256": "d00d0aaf713d"
+    },
+    {
+      "bytes": 15419,
+      "n_items": 310,
+      "path": "/home/ubuntu/m3_run/results_m3/out/prod_c.deck.log",
+      "present": true,
+      "sha256": "b774b1ed5a17"
+    },
+    {
+      "bytes": 13447,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/prod_c.screen.txt",
+      "present": true,
+      "sha256": "708c87bfe61b"
+    },
+    {
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/runs/prod_c/Stress_perstep_T313.15K_run1_seg1.out",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/runs/prod_c/HeatFlux_perstep_T313.15K_run1_seg1.out",
+      "present": false,
+      "sha256": null
+    }
+  ],
+  "metric": "run c: tdm.in with listed edit 2 (no per-step sampling): status, Performance line, sanity control, sample row counts",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "mean_temp_K": "313.15 +/- 5"
+  },
+  "values": {
+    "atoms": 11250,
+    "attempt": 1,
+    "blocks": [
+      {
+        "atoms": 11250,
+        "finished": true,
+        "first_step": "50000",
+        "header": [
+          "Step",
+          "Temp",
+          "Press",
+          "Density",
+          "Volume",
+          "TotEng"
+        ],
+        "index": 0,
+        "last_step": "60000",
+        "loop_s": "93.6977",
+        "n_rows": 3,
+        "performance_line": "Performance: 18.442 ns/day, 1.301 hours/ns, 106.726 timesteps/s, 1.201 Matom-step/s",
+        "performance_ns_day": "18.442",
+        "steps": 10000
+      },
+      {
+        "atoms": 11250,
+        "finished": true,
+        "first_step": "0",
+        "header": [
+          "Step",
+          "Temp",
+          "Press",
+          "Density",
+          "Volume",
+          "TotEng"
+        ],
+        "index": 1,
+        "last_step": "50000",
+        "loop_s": "468.901",
+        "n_rows": 11,
+        "performance_line": "Performance: 18.426 ns/day, 1.303 hours/ns, 106.632 timesteps/s, 1.200 Matom-step/s",
+        "performance_ns_day": "18.426",
+        "steps": 50000
+      }
+    ],
+    "command": [
+      "/home/ubuntu/m3_run/engine/bin/lmp",
+      "-sf",
+      "gpu",
+      "-pk",
+      "gpu",
+      "1",
+      "-in",
+      "/home/ubuntu/m3_run/results_m3/decks/tdm_prod_c.in",
+      "-var",
+      "T",
+      "313.15",
+      "-var",
+      "timestep_fs",
+      "2.0",
+      "-var",
+      "warmup_steps",
+      "10000",
+      "-var",
+      "prod_steps",
+      "50000",
+      "-var",
+      "dump_every",
+      "5",
+      "-var",
+      "thermo_every",
+      "5000",
+      "-var",
+      "run_id",
+      "1",
+      "-var",
+      "seg",
+      "1",
+      "-var",
+      "system_dir",
+      "/home/ubuntu/m3_run/results_m3/system",
+      "-var",
+      "dump_dir",
+      "/home/ubuntu/m3_run/results_m3/runs/prod_c",
+      "-log",
+      "/home/ubuntu/m3_run/results_m3/out/prod_c.lammps.log"
+    ],
+    "cwd": "/home/ubuntu/m3_run/results_m3/system",
+    "deck": "/home/ubuntu/m3_run/results_m3/decks/tdm_prod_c.in",
+    "deck_sha256": "d00d0aaf713da7211891792fc739904e6fb34efbf6e9449e21ad0a5aa99ed92c",
+    "degenerate": [],
+    "device_lines": [
+      "- Using acceleration for pppm:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)",
+      "- Using acceleration for lj/cut/coul/long:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)",
+      "- Using acceleration for pppm:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)",
+      "- Using acceleration for lj/cut/coul/long:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)",
+      "- Using acceleration for pppm:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)",
+      "- Using acceleration for lj/cut/coul/long:",
+      "Device 0: NVIDIA A100-SXM4-40GB, 108 CUs, 39/39 GB, 1.4 GHZ (Mixed Precision)"
+    ],
+    "e8": {
+      "matching_lines": [],
+      "mean_temp_K": "311.7062290909090909090909091",
+      "n_thermo_rows": 11,
+      "pass": true,
+      "reasons": [],
+      "restart_ok": true,
+      "temperature_ok": true
+    },
+    "end_epoch": "1792504554.618511",
+    "error_lines": [],
+    "exit_code": 0,
+    "expected_rows_each_for_run_a_per_note": null,
+    "final_density": "0.79502765",
+    "heatflux_rows": null,
+    "labels": {
+      "atom_count": 11250,
+      "cmake_command": "/usr/bin/cmake -S /home/ubuntu/m3_run/engine_src/lammps-stable_29Aug2024/cmake -B /home/ubuntu/m3_run/engine_src/build -D CMAKE_BUILD_TYPE=Release -D BUILD_MPI=no -D BUILD_OMP=yes -D PKG_KSPACE=on -D PKG_MOLECULE=on -D PKG_RIGID=on -D PKG_EXTRA-COMPUTE=on -D PKG_OPENMP=on -D PKG_GPU=on -D GPU_API=cuda -D GPU_ARCH=sm_80 -D FFT=KISS -D CMAKE_INSTALL_PREFIX=/home/ubuntu/m3_run/engine",
+      "cuda_runtime_source": "nvcc --version: the CUDA toolkit the engine was compiled and linked with",
+      "cuda_runtime_version": "12.8",
+      "cuda_version_reported_by_driver": "12.8",
+      "engine_route": "compiled on the box from the official source tarball stable_29Aug2024 (EXEC_NOTE.md item 11; gate addendum A7)",
+      "engine_tarball_sha256": "6112e0cc352c3140a4874c7f74db3c0c8e30134024164509ecf3772b305fde2e",
+      "engine_tarball_url": "https://github.com/lammps/lammps/archive/refs/tags/stable_29Aug2024.tar.gz",
+      "fft": "KISS",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "gpu_package_precision_reported_by_lmp_h": "mixed",
+      "install_wall_clock_meaning": "the whole download-and-compile stage on the box, from its first to its last date stamp in compile_record.txt",
+      "install_wall_clock_s": "136.741374289",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "labels": [
+        "one box, 11,250 atoms",
+        "LAMMPS 29Aug2024, compiled from source on the box, GPU package, CUDA sm_80",
+        "GPU package mixed precision"
+      ],
+      "lammps_version_line": "Large-scale Atomic/Molecular Massively Parallel Simulator - 29 Aug 2024",
+      "linked_libraries": [
+        "libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007218312c5000)",
+        "libcuda.so.1 => /lib/x86_64-linux-gnu/libcuda.so.1 (0x000072182a600000)"
+      ],
+      "lmp_help_accelerator_configuration": [
+        "GPU package API: CUDA",
+        "GPU package precision: mixed",
+        "OPENMP package API: OpenMP",
+        "OPENMP package precision: double",
+        "OpenMP standard: OpenMP 4.5"
+      ],
+      "lmp_help_compatible_gpu_present": "yes",
+      "lmp_help_compiler": "GNU C++ 11.4.0 with OpenMP 4.5",
+      "lmp_help_packages": [
+        "EXTRA-COMPUTE",
+        "GPU",
+        "KSPACE",
+        "MOLECULE",
+        "OPENMP",
+        "RIGID"
+      ],
+      "lmp_help_version": "29 Aug 2024",
+      "per_atom_step_rate_atom_steps_per_s": "1.1996e+06",
+      "price_usd_per_hour": "1.99",
+      "run_labels_at_write": [],
+      "timestep_fs": "2.0",
+      "units_in_in_init": "real",
+      "variant_read": "prod_c"
+    },
+    "loop_s": "468.901",
+    "mean_temp_K": "311.7062290909090909090909091",
+    "per_atom_step_rate": "1.1996e+06",
+    "performance_line": "Performance: 18.426 ns/day, 1.303 hours/ns, 106.632 timesteps/s, 1.200 Matom-step/s",
+    "performance_ns_day": "18.426",
+    "restart_ok": true,
+    "restart_sha256_recorded_once": "93fdc49e6fe02d1d69842ff337b8eb4c17adfc328d272ae9bc65cbe8e4a7fc95",
+    "stage_wall_s": 563.178,
+    "start_epoch": "1792503991.440355",
+    "start_error": null,
+    "status": "RUNS",
+    "status_line": null,
+    "stress_rows": null,
+    "timed_out": false,
+    "total_wall_time_line": "0:09:23",
+    "variant": "prod_c",
+    "vars": {
+      "T": "313.15",
+      "dump_dir": "/home/ubuntu/m3_run/results_m3/runs/prod_c",
+      "dump_every": "5",
+      "prod_steps": "50000",
+      "run_id": "1",
+      "seg": "1",
+      "system_dir": "/home/ubuntu/m3_run/results_m3/system",
+      "thermo_every": "5000",
+      "timestep_fs": "2.0",
+      "warmup_steps": "10000"
+    },
+    "warning_lines": [],
+    "what": "run c: tdm.in with listed edit 2 (no per-step sampling)",
+    "whole_stage_wall_clock_ns_per_day": "18.40981004229568626615386254"
+  }
+}

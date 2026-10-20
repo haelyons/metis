@@ -1,0 +1,171 @@
+{
+  "cell": {
+    "control": "equilibrate_edit3",
+    "tag": "m3"
+  },
+  "decision": "APPLIED",
+  "decision_rule": "NOT_TRIGGERED if the committed equilibrate.in did not stop with an error whose first ERROR line names comm_style, balance, tiled or rcb. APPLIED if it did: that line is kept verbatim; exactly the lines 'comm_style tiled', 'balance 1.1 rcb' and 'fix load_balance ... rcb' are deleted in the copy results_m3/decks/equilibrate_noballance.in (sha256 and diff kept); the equilibration runs once more from the copy, and any error in that second attempt stops the run. APPLIED_NOT_RERUN if the cost or time guard stopped the run before the second attempt.",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-82-194",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T13:24:00+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 4066,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/data/MD-ML-thermophysical/MD/lammps/equilibrate.in",
+      "present": true,
+      "sha256": "1e79c3f7669b"
+    },
+    {
+      "bytes": 3965,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/decks/equilibrate_noballance.in",
+      "present": true,
+      "sha256": "2cf90c1713b5"
+    },
+    {
+      "bytes": 10259,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/equilibrate_attempt1.screen.txt",
+      "present": true,
+      "sha256": "fba58b1a6836"
+    },
+    {
+      "bytes": 11878,
+      "n_items": null,
+      "path": "/home/ubuntu/m3_run/results_m3/out/equilibrate_attempt1.deck.log",
+      "present": true,
+      "sha256": "645aabc8717c"
+    }
+  ],
+  "metric": "listed edit 3: does the committed equilibration deck stop on its load-balancing lines under the GPU package",
+  "notes": "",
+  "run_labels": [],
+  "run_valid": true,
+  "run_valid_voided_by": [],
+  "threshold": {
+    "trigger_names": [
+      "comm_style",
+      "balance",
+      "tiled",
+      "rcb"
+    ]
+  },
+  "values": {
+    "deleted_commands": [
+      "comm_style      tiled",
+      "balance         1.1 rcb",
+      "fix             load_balance all balance 2000 1.05 rcb"
+    ],
+    "diff": "--- equilibrate.in\n+++ equilibrate_noballance.in\n@@ -33,8 +33,6 @@\n thermo_style    custom step temp press density vol lx ly lz pe etotal\n \n # rebalance MPI domains (dilute packing)\n-comm_style      tiled\n-balance         1.1 rcb\n \n min_style       cg\n minimize        1.0e-4 1.0e-6 1000 10000\n@@ -42,7 +40,6 @@\n velocity        all create ${T} ${seed} mom yes rot yes dist gaussian\n fix             constrain_h all shake ${shake_tol} ${shake_iter} ${shake_order} m 1.008\n # SHAKE before box-changing fixes\n-fix             load_balance all balance 2000 1.05 rcb\n \n # stage 0: Langevin capped-displacement strain relaxation (reduced dt)\n neigh_modify    one 10000 page 200000\n",
+    "edited_copy": "/home/ubuntu/m3_run/results_m3/decks/equilibrate_noballance.in",
+    "edited_copy_sha256": "2cf90c1713b5d3f88a25dfe32c98d7b630938013ad26de2d169787f706f5a791",
+    "equilibrate_in": "/home/ubuntu/m3_run/data/MD-ML-thermophysical/MD/lammps/equilibrate.in",
+    "equilibrate_in_sha256": "1e79c3f7669b8ae2e994caacc6f56dc4bfac19737f6f61a3b0f68a94269816cb",
+    "first_attempt": {
+      "blocks": [
+        {
+          "atoms": 11250,
+          "finished": true,
+          "first_step": "0",
+          "header": [
+            "Step",
+            "Temp",
+            "Press",
+            "Density",
+            "Volume",
+            "Lx",
+            "Ly",
+            "Lz",
+            "PotEng",
+            "TotEng"
+          ],
+          "index": 0,
+          "last_step": "1000",
+          "loop_s": "16.9421",
+          "n_rows": 2,
+          "performance_line": null,
+          "performance_ns_day": null,
+          "steps": 1000
+        }
+      ],
+      "command": [
+        "/home/ubuntu/m3_run/engine/bin/lmp",
+        "-sf",
+        "gpu",
+        "-pk",
+        "gpu",
+        "1",
+        "-in",
+        "/home/ubuntu/m3_run/data/MD-ML-thermophysical/MD/lammps/equilibrate.in",
+        "-var",
+        "T",
+        "313.15",
+        "-var",
+        "P",
+        "1.0",
+        "-var",
+        "timestep_fs",
+        "2.0",
+        "-var",
+        "pushoff_steps",
+        "20000",
+        "-var",
+        "settle_steps",
+        "50000",
+        "-var",
+        "npt_steps",
+        "150000",
+        "-var",
+        "deform_steps",
+        "50000",
+        "-var",
+        "density_avg_start",
+        "100000",
+        "-var",
+        "density_sample_every",
+        "100",
+        "-var",
+        "density_sample_repeat",
+        "500",
+        "-var",
+        "density_sample_freq",
+        "150000",
+        "-var",
+        "thermo_every",
+        "5000",
+        "-var",
+        "run_id",
+        "1",
+        "-var",
+        "system_dir",
+        "/home/ubuntu/m3_run/results_m3/system",
+        "-log",
+        "/home/ubuntu/m3_run/results_m3/out/equilibrate.lammps.log"
+      ],
+      "deck": "/home/ubuntu/m3_run/data/MD-ML-thermophysical/MD/lammps/equilibrate.in",
+      "deck_sha256": "1e79c3f7669b8ae2e994caacc6f56dc4bfac19737f6f61a3b0f68a94269816cb",
+      "error_lines": [
+        "ERROR: Cannot currently use pppm/gpu with fix balance. (src/lammps-stable_29Aug2024/src/GPU/pppm_gpu.cpp:118)"
+      ],
+      "exit_code": 1,
+      "stage_wall_s": 17.643,
+      "status": "ERROR_ON_BALANCE_LINES",
+      "status_line": "ERROR: Cannot currently use pppm/gpu with fix balance. (src/lammps-stable_29Aug2024/src/GPU/pppm_gpu.cpp:118)"
+    },
+    "first_attempt_outputs": [
+      "equilibrate_attempt1.lammps.log",
+      "equilibrate_attempt1.screen.txt",
+      "equilibrate_attempt1.deck.log"
+    ],
+    "second_attempt": {
+      "deck_sha256": "2cf90c1713b5d3f88a25dfe32c98d7b630938013ad26de2d169787f706f5a791",
+      "status": "RUNS",
+      "status_line": null
+    },
+    "trigger_error_line_verbatim": "ERROR: Cannot currently use pppm/gpu with fix balance. (src/lammps-stable_29Aug2024/src/GPU/pppm_gpu.cpp:118)"
+  }
+}

@@ -7,6 +7,16 @@ Picked by the idea memo (`../_meta/harry.md`) over the note's other ideas: it re
 (viscosity, thermal conductivity), the twist behind the best card so far, and the field is being pushed to new fluids
 as fluorinated coolants are phased out. `seed.json` is the memo's option record; the root question is the note line.
 
+## Measure runs (added 2026-10-20)
+
+A PASS card's load-bearing number, run as a latent_skeptic run inside this experiment, so the card's own prediction or
+gate is resolved by a measurement and lands in `../_meta/LEDGER.jsonl`.
+
+| Run | Card | Phase | Outcome | Lambda |
+|---|---|---|---|---|
+| `20261020-1020-measure` | V1 "Force-field error floor" (`20261018-0342-card-2`, PASS 2/2) | p_bench throughput on the card's own protocol (LOPLS-AA, 250-molecule nonylcyclohexane box, 313.15 K, 2 fs, PPPM, SHAKE, pressure tensor and heat flux every 5 steps), one A100 SXM4, LAMMPS 29Aug2024 compiled on the box with the GPU package | card PROXY 250 ns/day **refuted**: 12.6 ns/day measured (19.8x below); the card's own p_bench gate (>= 150) **fails** and its re-plan text applies; plan re-prices from USD 941 to USD 18,671; anchor density 0.795 g/cm3 vs 0.805 (-1.2%, within 4%); the heat-flux sampling costs 32% of throughput (18.4 ns/day without it); the deck's load balancing cannot run under pppm/gpu; the coolant pilot's packing halt closes: the box packs in 12 s at the README's 0.3 g/cm3 | USD 3.26 (2 launches; the first stopped by the cost/time guard) |
+
+
 | Run | Kind | Result |
 |---|---|---|
 | `20261018-0037-loop` | loop | card done ($0.37); frame check crashed on a frame.js bug (fixed in 5360255) |

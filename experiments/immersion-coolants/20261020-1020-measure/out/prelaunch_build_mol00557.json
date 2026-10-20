@@ -1,0 +1,102 @@
+{
+ "step": "prelaunch_build",
+ "molecule": "mol_00557",
+ "smiles": "CCCCCCCCCC1CCCCC1",
+ "n_molecules": 250,
+ "packing_density_g_cm3": 0.3,
+ "seed": 61453,
+ "builder": "data/MD-ML-thermophysical/MD/builder/smiles2loplsaa.py",
+ "builder_sha256": "91cac1d5307eb3a0ab54be1cfd2fac3d01919bdd1cd35e7c75929bd016977008",
+ "env": "micromamba env m3build: python 3.10, rdkit 2025.09.5, packmol (conda-forge), on this workstation",
+ "attempt_1": {
+  "exit_code": 2,
+  "wall_s": 1,
+  "error": "Packmol is required but was not found on PATH (operator error: env bin not on PATH)"
+ },
+ "attempt_2": {
+  "exit_code": 0,
+  "wall_s": 12,
+  "command": "PATH=<env>/bin:$PATH python smiles2loplsaa.py -smiles CCCCCCCCCC1CCCCC1 -n 250 --density 0.3 --seed 61453 --out data/box_mol00557_n250_d0.30_s61453"
+ },
+ "metadata": {
+  "atom_types": [
+   "CT_CH3",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "CT_CH2",
+   "HC_CH3",
+   "HC_CH3",
+   "HC_CH3",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2",
+   "HC_CH2"
+  ],
+  "atoms_per_molecule": 45,
+  "box_length_angstrom": 66.27879986269502,
+  "density_g_cm3": 0.3,
+  "n_molecules": 250,
+  "net_charge_per_molecule": 0.0,
+  "parameter_sources": [
+   "L-OPLS hydrocarbons"
+  ],
+  "smiles": "CCCCCCCCCC1CCCCC1",
+  "type_counts": {
+   "angle_types": 7,
+   "atom_types": 4,
+   "bond_types": 4,
+   "dihedral_style": "hybrid opls multi/harmonic",
+   "dihedral_types": 13
+  }
+ },
+ "read0": {
+  "engine": "LAMMPS 29 Aug 2024, conda-forge cpu_py310_h956f9f1_mpi_openmpi_2",
+  "exit_code": 0,
+  "atoms": 11250,
+  "density_g_cm3": 0.29999997,
+  "errors": 0,
+  "log": "out/prelaunch_read0_mol00557.out"
+ },
+ "files_sha256": {
+  "in.data": "6766496720d3ae9f94ae54e81e1f90b77541c2f38b4422132c27be58a60b3979",
+  "in.init": "82b76f3ff4c9c5e9996babd220627df4e8a30ed93c7aa55cf0618666309762ae",
+  "in.settings": "030f7a5f5eeb7ca5e1ac55eec813c08df461a03bdeeb35120a248872e1cb7ab9",
+  "metadata.json": "6d79283334860f9d4d1b6147518c6b5c3c2ea41a5d519ea7d36a3d00f8c20528"
+ },
+ "decision": "E1 PASS: exit 0, |net charge| 0.0 < 1e-3, read_data without error, 11,250 atoms",
+ "recorded_by": "operator, 2026-10-20 10:29Z"
+}
