@@ -1,0 +1,44 @@
+{
+ "card_result_json_sha256": "3bda9fd89ac81cd09fa50ab298fa851160d0a9a2894489276adfa4dbd42c3cdb",
+ "numbers": [
+  {
+   "id": "batched_forward_ms",
+   "basis": "MEASURED",
+   "value": 88.36082099999487,
+   "unit": "ms",
+   "machine": "gpu_1x_a10 (NVIDIA A10, driver 570.148.08, jax 0.6.0)",
+   "output": "results_m1/out/raw/timing_rows.jsonl",
+   "note": "card GUESS was 2"
+  },
+  {
+   "id": "cpu_671_hours",
+   "basis": "MEASURED",
+   "value": 29.840626419333343,
+   "unit": "h",
+   "machine": "30 vCPU on gpu_1x_a10, JAX CPU backend",
+   "output": "results_m1/out/raw/timing_rows.jsonl + probe_blocks.jsonl",
+   "note": "card GUESS was 3"
+  },
+  {
+   "id": "mcmc_overhead",
+   "basis": "MEASURED",
+   "value": 1.0035422687732294,
+   "unit": "ratio",
+   "output": "results_m1/out/raw/probe_blocks.jsonl",
+   "note": "card DESIGN was 4; cpu 1.035"
+  }
+ ],
+ "predictions": {
+  "expected": "if_not",
+  "resolved": "if_not",
+  "main_run_hours": 2.463161632694446,
+  "speedup": 12.11476584534599
+ },
+ "phases": {
+  "gpu_bench": {
+   "gate_main_run_hours_le_6": "pass",
+   "ran": "2026-10-20",
+   "instance": "gpu_1x_a10"
+  }
+ }
+}

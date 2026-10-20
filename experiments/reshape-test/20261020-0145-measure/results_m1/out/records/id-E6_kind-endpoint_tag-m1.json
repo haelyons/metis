@@ -1,0 +1,79 @@
+{
+  "cell": {
+    "id": "E6",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "pass",
+  "decision_rule": "Card gate: pass if main_run_hours <= 6 (measured GPU overhead). Otherwise the card's text applies, 'Stop and replan: full Bayesian 671 is not affordable on one GPU', and every later record is written run_valid false.",
+  "env": {
+    "git_rev": null,
+    "host": "129-159-79-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T04:26:00+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 122119,
+      "n_items": 192,
+      "path": "results_m1/out/raw/timing_rows.jsonl",
+      "present": true,
+      "sha256": "6fa1ccb1cbe8"
+    },
+    {
+      "bytes": 47686,
+      "n_items": 66,
+      "path": "results_m1/out/raw/probe_blocks.jsonl",
+      "present": true,
+      "sha256": "be0ce7f7ab45"
+    },
+    {
+      "bytes": 263387,
+      "n_items": 2684,
+      "path": "results_m1/out/extract/params_distinct.json",
+      "present": true,
+      "sha256": "6e2d1c3b07b9"
+    },
+    {
+      "bytes": 793,
+      "n_items": null,
+      "path": "results_m1/out/extract/param_ranges.json",
+      "present": true,
+      "sha256": "a55eddd47ac6"
+    },
+    {
+      "bytes": 478016,
+      "n_items": 10593,
+      "path": "results_m1/out/extract/basin.json",
+      "present": true,
+      "sha256": "c5e301f7403f"
+    }
+  ],
+  "metric": "card gate: main_run_hours <= 6",
+  "notes": "",
+  "threshold": {
+    "max_main_run_hours": 6.0
+  },
+  "values": {
+    "gate_reading": "pass",
+    "hardware": {
+      "driver_version": "570.148.08",
+      "dtype": "float32 (JAX default)",
+      "gpu_count": 1,
+      "gpu_name": "NVIDIA A10",
+      "instance_type": "gpu_1x_a10",
+      "jax_version": "0.6.0",
+      "jaxlib_version": "0.6.0",
+      "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+      "price_usd_per_hour": 1.29,
+      "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "main_run_hours": 2.463161632694446,
+    "run_labels": [
+      "anchor by page value"
+    ],
+    "run_valid": true,
+    "run_void_reasons": []
+  }
+}

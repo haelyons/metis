@@ -1,0 +1,115 @@
+{
+  "cell": {
+    "id": "I3",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "PASS",
+  "decision_rule": "On each backend, a 100 ms time.sleep measured through the timing harness reads within 95..105 ms: PASS, else FAIL (run_valid false from here on).",
+  "env": {
+    "git_rev": null,
+    "host": "129-159-79-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:26:24+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 27708,
+      "n_items": 46,
+      "path": "results_m1/out/raw/timer_rows.jsonl",
+      "present": true,
+      "sha256": "e7c5bab627a4"
+    },
+    {
+      "bytes": 473,
+      "n_items": null,
+      "path": "results_m1/out/hardware_labels.json",
+      "present": true,
+      "sha256": "1572a683b149"
+    }
+  ],
+  "metric": "control: timing harness reads a 100 ms sleep correctly on each backend",
+  "notes": "",
+  "rows": [
+    {
+      "backend": "gpu",
+      "control": "I3",
+      "device": "cuda:0",
+      "driver_version": "570.148.08",
+      "dtype": "float32 (JAX default)",
+      "gpu_count": 1,
+      "gpu_name": "NVIDIA A10",
+      "instance_type": "gpu_1x_a10",
+      "jax_version": "0.6.0",
+      "jaxlib_version": "0.6.0",
+      "kind": "sleep_100ms",
+      "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+      "ms": 100.31871600000386,
+      "price_usd_per_hour": 1.29,
+      "run_labels": [
+        "anchor by page value"
+      ],
+      "run_valid": true,
+      "run_void_reasons": [],
+      "vcpu_count": 30,
+      "written_utc": "2026-10-20T03:26:09+00:00"
+    },
+    {
+      "backend": "cpu",
+      "control": "I3",
+      "device": "TFRT_CPU_0",
+      "driver_version": "570.148.08",
+      "dtype": "float32 (JAX default)",
+      "gpu_count": 1,
+      "gpu_name": "NVIDIA A10",
+      "instance_type": "gpu_1x_a10",
+      "jax_version": "0.6.0",
+      "jaxlib_version": "0.6.0",
+      "kind": "sleep_100ms",
+      "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+      "ms": 100.202467999992,
+      "price_usd_per_hour": 1.29,
+      "run_labels": [
+        "anchor by page value"
+      ],
+      "run_valid": true,
+      "run_void_reasons": [],
+      "vcpu_count": 30,
+      "written_utc": "2026-10-20T03:26:11+00:00"
+    }
+  ],
+  "threshold": {
+    "sleep_ms": 100.0,
+    "tolerance_ms": 5.0
+  },
+  "values": {
+    "hardware": {
+      "driver_version": "570.148.08",
+      "dtype": "float32 (JAX default)",
+      "gpu_count": 1,
+      "gpu_name": "NVIDIA A10",
+      "instance_type": "gpu_1x_a10",
+      "jax_version": "0.6.0",
+      "jaxlib_version": "0.6.0",
+      "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+      "price_usd_per_hour": 1.29,
+      "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "per_backend": {
+      "cpu": {
+        "ms": 100.202467999992,
+        "pass": true
+      },
+      "gpu": {
+        "ms": 100.31871600000386,
+        "pass": true
+      }
+    },
+    "run_labels": [
+      "anchor by page value"
+    ],
+    "run_valid": true,
+    "run_void_reasons": []
+  }
+}

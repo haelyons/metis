@@ -1,0 +1,31 @@
+{
+  "cell": {
+    "id": "E1",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "NOT_RUN: the run stopped before this stage",
+  "decision_rule": "airGR on L0123001, X=(165.05, 6.46, 422.50, 2.45), run period 1990-01-01..1990-02-28, default warm-up and initial states, NSE on Qmm: PASS if |NSE - 0.495| <= 0.02, else FAIL (page or period misread; timing void, run_valid false from here on). NOT_RUN if R or airGR could not be installed or run; the error text is kept and the run is labelled 'anchor by page value'.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [],
+  "metric": "airGR NSE on the 59-day run period (anchor)",
+  "notes": "placeholder so that a missing cell is visible",
+  "threshold": {
+    "center": 0.495,
+    "tolerance": 0.02
+  },
+  "values": {
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

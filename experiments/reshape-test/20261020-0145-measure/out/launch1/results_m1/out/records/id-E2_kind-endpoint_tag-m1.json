@@ -1,0 +1,32 @@
+{
+  "cell": {
+    "id": "E2",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "NOT_RUN: the run stopped before this stage",
+  "decision_rule": "JAX GR4J on the same inputs and period, on the GPU and on the CPU backend: PASS if every backend gives |NSE - 0.495| <= 0.02 AND mean absolute relative error of daily flow versus airGR < 0.01 on matching dates, with no non-finite or all-zero flow; else FAIL (timed model is not GR4J; timing void, run_valid false from here on). If airGR did not run, the NSE band alone decides, labelled 'page value only; no independent code ran'.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [],
+  "metric": "JAX GR4J NSE on the 59-day run period and daily-flow MARE versus airGR (anchor)",
+  "notes": "placeholder so that a missing cell is visible",
+  "threshold": {
+    "mare_max": 0.01,
+    "nse_center": 0.495,
+    "nse_tolerance": 0.02
+  },
+  "values": {
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

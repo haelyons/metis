@@ -1,0 +1,185 @@
+{
+  "cell": {
+    "id": "E2",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "PASS (page value only; no independent code ran)",
+  "decision_rule": "JAX GR4J on the same inputs and period, on the GPU and on the CPU backend: PASS if every backend gives |NSE - 0.495| <= 0.02 AND mean absolute relative error of daily flow versus airGR < 0.01 on matching dates, with no non-finite or all-zero flow; else FAIL (timed model is not GR4J; timing void, run_valid false from here on). If airGR did not run, the NSE band alone decides, labelled 'page value only; no independent code ran'.",
+  "env": {
+    "git_rev": null,
+    "host": "129-159-79-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:26:07+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 130610,
+      "n_items": 10593,
+      "path": "/home/ubuntu/m1_run/data/L0123001.rda",
+      "present": true,
+      "sha256": "e82399bbea6e"
+    },
+    {
+      "bytes": 2880343,
+      "n_items": null,
+      "path": "/home/ubuntu/m1_run/data/airGR_1.7.9.tar.gz",
+      "present": true,
+      "sha256": "7af0d1858a11"
+    },
+    {
+      "bytes": 3104,
+      "n_items": null,
+      "path": "results_m1/out/extract/anchor_airgr.R",
+      "present": true,
+      "sha256": "4d61a83fa779"
+    },
+    {
+      "bytes": 66,
+      "n_items": null,
+      "path": "results_m1/out/airgr_install_status.txt",
+      "present": true,
+      "sha256": "58d0d57671d5"
+    },
+    {
+      "n_items": 3,
+      "path": "results_m1/out/raw/airgr_output.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "bytes": 5682,
+      "n_items": 6,
+      "path": "results_m1/out/raw/anchor_rows.jsonl",
+      "present": true,
+      "sha256": "b96157fafc64"
+    },
+    {
+      "bytes": 147212,
+      "n_items": 6,
+      "path": "results_m1/out/raw/anchor_daily.jsonl",
+      "present": true,
+      "sha256": "6908dc8be893"
+    }
+  ],
+  "metric": "JAX GR4J NSE on the 59-day run period and daily-flow MARE versus airGR (anchor)",
+  "notes": "page value only; no independent code ran",
+  "rows": [
+    {
+      "X": [
+        165.05,
+        6.46,
+        422.5,
+        2.45
+      ],
+      "airgr_available": false,
+      "airgr_nse": null,
+      "all_zero_flow": false,
+      "arm": "anchor_jax",
+      "backend": "gpu",
+      "case": "anchor_cal",
+      "dates_match_airgr": null,
+      "device": "cuda:0",
+      "driver_version": "570.148.08",
+      "dtype": "float32 (JAX default)",
+      "first_call_ms_including_compile": 451.2166069999921,
+      "gpu_count": 1,
+      "gpu_name": "NVIDIA A10",
+      "instance_type": "gpu_1x_a10",
+      "jax_version": "0.6.0",
+      "jaxlib_version": "0.6.0",
+      "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+      "mare_excluded_days": null,
+      "mare_vs_airgr": null,
+      "n_days": 59,
+      "nonfinite_days": 0,
+      "nse": 0.4947751841761373,
+      "page_nse": 0.495,
+      "period_first": "1990-01-01",
+      "period_last": "1990-02-28",
+      "price_usd_per_hour": 1.29,
+      "run_labels": [
+        "anchor by page value"
+      ],
+      "run_valid": true,
+      "run_void_reasons": [],
+      "set": "anchor",
+      "vcpu_count": 30,
+      "warmup_first": "1989-01-01",
+      "warmup_n": 365,
+      "written_utc": "2026-10-20T03:26:07+00:00"
+    },
+    {
+      "X": [
+        165.05,
+        6.46,
+        422.5,
+        2.45
+      ],
+      "airgr_available": false,
+      "airgr_nse": null,
+      "all_zero_flow": false,
+      "arm": "anchor_jax",
+      "backend": "cpu",
+      "case": "anchor_cal",
+      "dates_match_airgr": null,
+      "device": "TFRT_CPU_0",
+      "driver_version": "570.148.08",
+      "dtype": "float32 (JAX default)",
+      "first_call_ms_including_compile": 107.18816800002173,
+      "gpu_count": 1,
+      "gpu_name": "NVIDIA A10",
+      "instance_type": "gpu_1x_a10",
+      "jax_version": "0.6.0",
+      "jaxlib_version": "0.6.0",
+      "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+      "mare_excluded_days": null,
+      "mare_vs_airgr": null,
+      "n_days": 59,
+      "nonfinite_days": 0,
+      "nse": 0.4947744556743169,
+      "page_nse": 0.495,
+      "period_first": "1990-01-01",
+      "period_last": "1990-02-28",
+      "price_usd_per_hour": 1.29,
+      "run_labels": [
+        "anchor by page value"
+      ],
+      "run_valid": true,
+      "run_void_reasons": [],
+      "set": "anchor",
+      "vcpu_count": 30,
+      "warmup_first": "1989-01-01",
+      "warmup_n": 365,
+      "written_utc": "2026-10-20T03:26:07+00:00"
+    }
+  ],
+  "threshold": {
+    "mare_max": 0.01,
+    "nse_center": 0.495,
+    "nse_tolerance": 0.02
+  },
+  "values": {
+    "airgr_ran": false,
+    "e2_label": "page value only; no independent code ran",
+    "per_backend": {
+      "cpu": {
+        "mare_vs_airgr": null,
+        "nse": 0.4947744556743169,
+        "pass": true,
+        "why": "ok"
+      },
+      "gpu": {
+        "mare_vs_airgr": null,
+        "nse": 0.4947751841761373,
+        "pass": true,
+        "why": "ok"
+      }
+    },
+    "run_labels": [
+      "anchor by page value"
+    ],
+    "run_valid": true,
+    "run_void_reasons": []
+  }
+}

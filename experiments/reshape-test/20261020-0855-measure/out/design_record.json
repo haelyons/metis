@@ -1,0 +1,174 @@
+{
+ "seed": "# QUESTION: does the PCR card's decision rule resolve to if_lever on its own hardware, and do its measured-later numbers hold?\n\n## The question\n\nThe card \"Cyclic reduction (PCR) \u00b7 Parallel cyclic reduction\" (P arm, planted root) predicts that feeding a GPU's width\nto one tridiagonal Newton correction shortens its wall-clock (`expected: if_lever`). Its decision rule: \"Lever if\nmedian PCR time < median Thomas time at n_max = 2^24 by at least 2x, and the PCR/Thomas speedup grows with N;\notherwise not.\" Thomas is the card's sequential baseline: a hand-written CUDA kernel, one thread per system, forward\nelimination then back substitution. PCR is parallel cyclic reduction, log2(N) rounds, one thread per equation per\nround. **Time both on one rented A100 SXM4 40 GB box at N in {2^10, 2^14, 2^18, 2^22, 2^24}, five seeds each, after\nboth match two independent references at N = 2^10 and 2^14, and read the card's rule.** Also read the card's three\nmeasured-later numbers: `res_measured` (GUESS 1e-13), `crossover_n` (GUESS 1,024), `speedup_at_nmax` (PROXY 28), and its\ncost line's \"need 2 h\".\n\nBoth outcomes are informative. if_lever confirms the card as written. if_not refutes it. A guess wrong by more than\n10x (residual) or a crossover above the first level is a finding about the pipeline's estimates whichever way the\ndecision falls. Two further readings are reported beside the card's rule and do not decide it: the shape of PCR's\ntime against N (the card's if_lever sentence says \"grows like log2(N)\"), and the card's rule re-read against the CPU\nfloor the card itself names (LAPACK dgtsv on the instance CPU).\n\n## Committed data\n\nNo file is downloaded. The systems are generated on the box by a committed rule:\n\n| Item | Rule |\n|---|---|\n| Matrix | tridiagonal, N equations; off-diagonals a_i, c_i of unit magnitude with seed-fixed random signs; diagonal b_i = 3 (so |b| - |a| - |c| = 1, the card's \"diagonal dominance margin 1.0\"); float64 |\n| Right-hand side | d_i standard normal, float64 |\n| Generator | numpy `default_rng(seed)`, seeds 0, 1, 2, 3, 4 (one per timing repeat); the anchor uses seed 0 |\n| Record | every generated system is reproducible from (N, seed); the first 8 values of a, b, c, d and the sha256 of each array are written per row |\n\nThe card record itself is the committed input: `../20261019-2344-tree/out/result.json`\nsha256 `48ac464c98a73069aab7af8efbd53021ca5439a193af666a2e1ac6d0d32ac6ae` (PLAN in\n`out/agents/0008-R1_physical_top_producer/reply.txt`, sha256 `5edcb633490ee446d7a77a8f32cf246efae31aab79919fe6b21ac4f6aa411b33`).\n\n## Anchor\n\nThe card's own `p1_anchor`: at N = 2^10 and 2^14, the hand-written Thomas and PCR solutions must each have relative\nresidual ||A x - d||_2 / ||d||_2 **<= 1e-10** (the card's `res_tol`), computed in float64 on the CPU from the generated\narrays, and must agree with two independent references on the same systems: NVIDIA cuSPARSE `gtsv2_nopivot` on the GPU\nand scipy `solve_banded` (LAPACK) on the CPU, each to **< 1e-8** relative difference in x (the card's `checks`). The two\nreferences must also agree with each other to < 1e-8 (the card's fourth check; validates the references).\n\nOut of band on either solver: that solver's timing rows are \"descriptive only; anchor failed\" and the card's rule is\nnot read (the card's own gate text applies: \"Fix the kernels and re-run the anchor before starting the sweep\"; no\nkernel is fixed mid-run).\n\n## What would refute each claim\n\n- Claim A (card GUESS `res_measured = 1e-13`): the measured max relative residual over the anchor levels and both\n  hand-written solvers. Holds if within [1e-14, 1e-12]; refuted outside (10x either way).\n- Claim B (card GUESS `crossover_n = 1,024`, \"PCR should already win at the smallest level\"): the crossover is the\n  smallest sweep level at which the lower quartile of the PCR/Thomas speedup over the five seeds exceeds 1 (the card's\n  noise rule). Holds if the crossover is 2^10; refuted if it is higher or does not occur.\n- Claim C (card `expected: if_lever`): refuted if, at N = 2^24, median Thomas ms / median PCR ms < 2, OR the speedup\n  does not grow with N. \"Grows with N\" is read as: speedup at 2^24 > speedup at 2^10 AND the least-squares slope of\n  log(speedup) against log2(N) over the five levels is positive. The noise rule: the lower quartile of the speedup at\n  2^24 must also exceed 2 for the lever reading to be \"a real difference\" in the card's words; if the median passes and\n  the lower quartile does not, the reading is if_lever with the label \"within noise\".\n- Claim D (card PROXY `speedup_at_nmax = 28`, from a 2009 GTX 280 against CPU LAPACK): the measured speedup at 2^24.\n  Holds if within [9.3, 84] (3x either way); refuted outside. A PROXY is cited for a different setting; this is a\n  report on how far it travelled, not a card prediction.\n- Claim E (card cost line: \"6 h time box; need 2 h\" for anchor plus sweep): the on-box wall-clock from the first anchor\n  solve to the last sweep row. Holds if within [0.67, 6] h; refuted if below 0.67 h (the plan over-bought by more than\n  3x) or above 6 h.\n- Shape reading (report only; tests the card's if_lever sentence \"wall-clock grows like log2(N)\", not its rule): the\n  per-doubling growth factor g = (median PCR ms at 2^24 / median PCR ms at 2^22)^(1/2). \"log-like\" if g <= 1.15,\n  \"linear-like\" if g >= 1.7, \"between\" otherwise.\n- CPU-floor reading (report only): the card's rule with median scipy `dgtsv` ms on the box's CPU in place of the\n  one-thread GPU Thomas. Reported as if_lever or if_not under that baseline, with the speedup at each level.\n- Copies reading (report only; the card's `baseline_copies` check): K independent systems solved at once by the\n  Thomas kernel, one thread per system, K = min(256, 2^28 / N). The card's claim holds if the batched solve's time is\n  within [0.9, 3] x the single-system time at every level (width raises throughput, one system's latency stays O(N)).\n- cuSPARSE reading (report only): median cuSPARSE `gtsv2_nopivot` ms at each level and its ratio to the hand-written PCR.\n\n## Scope\n\nOne GPU (A100 SXM4 40 GB, the card's hardware, at the card's rate of USD 1.99/h), one CPU core for the floor, float64,\none right-hand side, scalar tridiagonal systems with the generated structure. The card's phases `p1_anchor` and\n`p2_sweep` only. Out of scope: block-tridiagonal systems (`p3_block`), multi-GPU PCR (`p4_multi`), the parallel-in-time\nNewton loop the solve would sit inside, non-dominant or ill-conditioned matrices, float32, multiple right-hand sides,\nany tuning of the Thomas kernel beyond the card's \"one thread per system\" with the recurrence kept in registers.\n\n## Declared construct risks\n\n- The card's sequential baseline is one GPU thread. Against it, any parallel method wins at large N by construction;\n  the rule tests whether PCR is slower than the slowest arrangement of the sequential algorithm, not whether it is\n  faster than the sequential algorithm as anyone would run it. The CPU-floor reading is added so the reader can see the\n  difference; it does not change the card's verdict.\n- The Thomas kernel's constant factor depends on how the builder writes it (register use, loads per step). The card\n  says \"tuned with a register-cached recurrence and #pragma unroll\"; the build keeps the recurrence in registers and\n  reads each input once per step. Stated as \"the one-thread Thomas this build wrote\", not \"the fastest one-thread Thomas\".\n- Timing a sub-millisecond solve needs a block of back-to-back solves; the per-solve time then includes no host\n  synchronisation but does include kernel-launch gaps. Blocks are sized so each timed block is at least 50 ms; the\n  block size is recorded per row.\n- PCR's per-round kernels are the builder's; a different PCR (shared-memory tiling, hybrid with Thomas below a cutoff,\n  as cuSPARSE does) would be faster. The cuSPARSE reading bounds how far this PCR is from NVIDIA's.\n- The CPU floor is one core running LAPACK through scipy 1.8.0 as the image ships it (OpenBLAS or MKL unknown until\n  read on the box; recorded). It is a floor for \"sequential on this box\", not the best CPU.\n\n## How the card maps onto this record\n\n| Card (PLAN) field | Here |\n|---|---|\n| `anchor`, `checks` 1-4, `phases[p1_anchor].gate` | Anchor section; Claim A |\n| `predictions.decision_rule`, `expected`, `noise_rule` | Claim C |\n| `numbers[res_measured]` GUESS, `measured_by: p1_anchor` | Claim A |\n| `numbers[crossover_n]` GUESS, `measured_by: p2_sweep` | Claim B |\n| `numbers[speedup_at_nmax]` PROXY, `measured_by: p2_sweep` | Claim D |\n| `cost.lines[l_anchor_sweep]` hours 6, need 2 | Claim E |\n| `predictions.if_lever` sentence (\"grows like log2(N)\"), `checks` 5 | Shape reading |\n| `restructuring.baseline_sequential` (\"MKL dgtsv on the instance CPU as a floor\") | CPU-floor reading |\n| `restructuring.baseline_copies`, arm a4, `checks` 6 | Copies reading |\n| arm a3 (cuSPARSE as independent reference) | Anchor; cuSPARSE reading |\n| `held_fixed` | Scope |\n| `phases[p3_block]`, `phases[p4_multi]` | not run |\n",
+ "design": {
+  "hypothesis": "Measured on one rented A100 SXM4 40 GB box, the median wall-clock of one hand-written single-thread CUDA Thomas solve and of one hand-written parallel cyclic reduction (PCR) solve of a diagonally dominant tridiagonal system of N equations, N in {2^10, 2^14, 2^18, 2^22, 2^24}, five seeds each, substituted into the card's own decision rule (if_lever iff median Thomas ms / median PCR ms at 2^24 >= 2 AND the speedup grows with N), resolve to if_lever; the card's measured-later numbers (max relative residual GUESS 1e-13; crossover N GUESS 1,024; speedup at 2^24 PROXY 28; need 2 h) are read against the measured values.",
+  "models": [
+   "Thomas algorithm (forward elimination then back substitution), float64, hand-written CUDA kernel, ONE thread per system, recurrence kept in registers, each input read once per step; the card's baseline_sequential",
+   "Parallel cyclic reduction (PCR), float64, hand-written CUDA kernel(s), one thread per equation per round, log2(N) rounds, ping-pong buffers; the card's method under test",
+   "Batched Thomas: the same one-thread-per-system Thomas kernel over K independent systems at once, K = min(256, 2^28 / N) (GUESS: memory rule, the card leaves K unstated); the card's baseline_copies",
+   "NVIDIA cuSPARSE gtsv2_nopivot (hybrid PCR + Thomas) called through ctypes on the system libcusparse (CUDA 12), buffer allocated once outside timing; the card's independent GPU reference",
+   "scipy.linalg.solve_banded (LAPACK, CPU) as the independent CPU reference at the anchor levels; scipy.linalg.lapack.dgtsv (LAPACK tridiagonal, one core) as the CPU floor at every level (preinstalled scipy 1.8.0 on the image; the BLAS/LAPACK it links is read on the box and recorded)"
+  ],
+  "data": "No downloaded data. Systems generated on the box by committed rule: a_i, c_i unit magnitude with seed-fixed random signs; b_i = 3 (dominance margin 1.0); d_i standard normal; float64; numpy default_rng(seed), seeds 0..4 (one per repeat), anchor uses seed 0. Per row: N, seed, first 8 values of a, b, c, d and sha256 of each array. The card record ../20261019-2344-tree/out/result.json (sha256 48ac464c...2ae) is the committed input.",
+  "arms": [
+   "anchor: at N = 2^10 and 2^14, seed 0: Thomas, PCR, cuSPARSE gtsv2_nopivot, scipy solve_banded; for each: relative residual ||Ax-d||_2/||d||_2 in float64 numpy; pairwise relative difference in x against each reference",
+   "residual_sweep: at every sweep level and seed, one Thomas and one PCR solve each, relative residual recorded (report; free)",
+   "thomas_gpu: one system, N in {2^10, 2^14, 2^18, 2^22, 2^24}, seeds 0..4; per (N, seed): 2 untimed warm-up solves, then one timed block of R back-to-back solves, R = max(1, ceil(50 ms / warm-up ms)) (GUESS: block rule); ms per solve = block ms / R; cudaEvent before and after the block, cudaDeviceSynchronize after; median and interquartile range over seeds",
+   "pcr_gpu: same protocol",
+   "cusparse_gpu: same protocol, gtsv2_nopivot, buffer outside the block",
+   "thomas_batched_gpu: K systems at once, same protocol; K = min(256, 2^28 / N) = 256, 256, 256, 64, 16",
+   "cpu_dgtsv: scipy.linalg.lapack.dgtsv on the box's CPU, one call per solve, same block protocol with time.perf_counter; OMP_NUM_THREADS=1 and the BLAS/LAPACK vendor recorded",
+   "timers: a 100 ms time.sleep measured by the CPU timer within +/- 5 ms; a GPU block timed by cudaEvent and by wall-clock around a synchronise agree within 5%; a block of 2R solves takes 2x the block of R within 15% at N = 2^14"
+  ],
+  "endpoints": [
+   {
+    "metric": "E1 anchor: max relative residual of Thomas and PCR at N = 2^10 and 2^14 (seed 0); pairwise relative difference in x against cuSPARSE gtsv2_nopivot and scipy solve_banded; difference between the two references",
+    "threshold": "residuals <= 1e-10 (card res_tol) AND all pairwise differences < 1e-8 (card checks 1-4)",
+    "refuting_outcome": "any residual > 1e-10 or difference >= 1e-8: that solver's timing rows are labelled 'descriptive only; anchor failed' and E3 is not read for it; the card's own gate text applies ('Fix the kernels and re-run the anchor'); if the two references disagree, run_valid false everywhere"
+   },
+   {
+    "metric": "E2 card GUESS res_measured = 1e-13: measured max relative residual over the anchor levels and both hand-written solvers",
+    "threshold": "holds if within [1e-14, 1e-12]",
+    "refuting_outcome": "outside: the card's GUESS is off by more than 10x (direction reported)"
+   },
+   {
+    "metric": "E3 card decision: speedup(N) = median Thomas ms / median PCR ms; if_lever iff speedup(2^24) >= 2 AND speedup(2^24) > speedup(2^10) AND least-squares slope of ln(speedup) against log2(N) over the five levels > 0; label 'within noise' if the lower quartile of speedup(2^24) over seeds is <= 2",
+    "threshold": "if_lever as defined",
+    "refuting_outcome": "speedup(2^24) < 2 OR not growing: if_not; the card's expected outcome is refuted"
+   },
+   {
+    "metric": "E4 card GUESS crossover_n = 1,024: smallest level at which the lower quartile over seeds of speedup(N) exceeds 1",
+    "threshold": "holds if the crossover is 2^10",
+    "refuting_outcome": "crossover above 2^10 or none: the card's GUESS is refuted"
+   },
+   {
+    "metric": "E5 card PROXY speedup_at_nmax = 28: measured speedup(2^24)",
+    "threshold": "within [9.3, 84] (3x either way)",
+    "refuting_outcome": "outside: the PROXY did not travel (direction and ratio reported); not a card prediction"
+   },
+   {
+    "metric": "E6 shape of PCR time (report only; tests the card's if_lever sentence 'grows like log2(N)'): g = (median PCR ms at 2^24 / median PCR ms at 2^22)^(1/2)",
+    "threshold": "log-like if g <= 1.15; linear-like if g >= 1.7; between otherwise",
+    "refuting_outcome": "none (descriptive); 'linear-like' means the sentence is wrong even if E3 holds"
+   },
+   {
+    "metric": "E7 CPU-floor reading (report only): E3's rule with median cpu_dgtsv ms in place of Thomas ms",
+    "threshold": "if_lever or if_not under that baseline, with speedup_cpu(N) at every level",
+    "refuting_outcome": "none (descriptive); the card's verdict is E3"
+   },
+   {
+    "metric": "E8 copies reading (report only; card check 6): batched Thomas ms / single Thomas ms at each level, and throughput factor K / that ratio",
+    "threshold": "card claim holds if the ratio is within [0.9, 3] at every level",
+    "refuting_outcome": "none (descriptive); ratio outside the band is reported as 'batched solve changes one system's latency'"
+   },
+   {
+    "metric": "E9 cuSPARSE reading (report only): median cuSPARSE ms at each level and its ratio to hand-written PCR",
+    "threshold": "report",
+    "refuting_outcome": "none (descriptive)"
+   },
+   {
+    "metric": "E10 card cost line 'need 2 h': on-box wall-clock from the first anchor solve to the last sweep row, hours",
+    "threshold": "holds if within [0.67, 6] h",
+    "refuting_outcome": "below 0.67 h: the plan over-bought by more than 3x; above 6 h: the plan under-bought"
+   }
+  ],
+  "sampling": "Seeds 0..4 (numpy default_rng), one system per (N, seed); 2 warm-up solves then one timed block of R solves per (solver, N, seed); R from the 50 ms block rule (GUESS), recorded per row; medians and interquartile ranges over the five seeds; cudaEvent timing with a synchronise on GPU, perf_counter on CPU. Order on the box: toolchain check and compile; anchor (E1, E2); timers; residual_sweep; thomas_gpu, pcr_gpu, cusparse_gpu, thomas_batched_gpu, cpu_dgtsv, each over all levels ascending; endpoints. A cost guard before each stage.",
+  "layers_strengths": "not applicable (no model layers); sweep levels N = 1024, 16384, 262144, 4194304, 16777216 (the card's compute_axis levels)",
+  "budget_usd": 8,
+  "does_not_test": [
+   "The full parallel-in-time Newton loop (the card's own limits); only the tridiagonal solve is timed",
+   "Block-tridiagonal systems (card p3_block) and multi-GPU PCR (card p4_multi): optional phases, not run",
+   "A multi-thread GPU Thomas (e.g. one warp per system) or any tuning beyond one thread per system with registers: the card fixes the baseline as one thread per system; how wrong: a cooperative sequential kernel could cut the baseline's time several-fold and shrink every speedup",
+   "Non-dominant or ill-conditioned matrices, float32, multiple right-hand sides (card held_fixed)",
+   "The block rule R (GUESS): per-solve times for sub-millisecond solves include launch gaps; how wrong: at N = 2^10 PCR's 10 rounds are 10 launches, so its 'solve time' is mostly launch latency, inflating Thomas's apparent advantage at small N by up to about 2x",
+   "K for the batched arm (GUESS: 256 capped by 2^28 total equations): a different K changes the throughput factor, not the latency ratio",
+   "Thresholds 1.15 and 1.7 for E6 (GUESS): a log-like PCR from 2^22 to 2^24 would grow by 24/22 = 1.09 in rounds, hence 1.045 per doubling; 1.7 per doubling is within 15% of linear",
+   "Which BLAS/LAPACK scipy 1.8.0 links on the image (read on the box, recorded, not controlled)",
+   "Whether nvcc is on the image (MEMORY: Lambda Stack ships the CUDA toolkit); if absent the run halts, RUN_VALID false, no install"
+  ]
+ },
+ "diff": {
+  "departures": [
+   {
+    "id": "D1",
+    "departure": "The card's Thomas baseline is 'tuned with a register-cached recurrence and #pragma unroll'. The build writes one plain single-thread kernel with the recurrence in registers; no further tuning, no unroll search.",
+    "question": "Is the plain one-thread Thomas this build writes the baseline the card meant, or does 'tuned' require a search over variants before timing?"
+   },
+   {
+    "id": "D2",
+    "departure": "The card's p1_anchor else-branch says 'Fix the kernels and re-run the anchor before starting the sweep'. Here no kernel is fixed mid-run: a failing solver's timing rows are labelled descriptive only and E3 is not read for it.",
+    "question": "Should an anchor failure stop the box instead of continuing with labelled descriptive timing?"
+   },
+   {
+    "id": "D3",
+    "departure": "'The PCR/Thomas speedup grows with N' is made operational as speedup(2^24) > speedup(2^10) AND a positive least-squares slope of ln(speedup) against log2(N).",
+    "question": "Is that the reading of 'grows with N' the card's author intended, or should any single decrease between adjacent levels refute growth?"
+   },
+   {
+    "id": "D4",
+    "departure": "Report-only readings added that the card does not decide on: the CPU dgtsv floor (E7), PCR's growth shape (E6), residuals at every level, cuSPARSE ratio (E9), copies ratio (E8).",
+    "question": "Do the added report-only readings stay clearly separated from the card's verdict in every record and in TAKEAWAYS?"
+   },
+   {
+    "id": "D5",
+    "departure": "Timing uses blocks of R back-to-back solves sized to at least 50 ms (the card says five repeats, median; it does not say how a 50-microsecond solve is timed). K for the batched arm is set by a memory rule.",
+    "question": "Does the per-solve time including launch gaps serve the card's comparison at the small levels, or should launch latency be measured and subtracted?"
+   },
+   {
+    "id": "D6",
+    "departure": "The card's dramaturg verdict is REJECT (3 blocking, all citation items). The measurement proceeds on the committed record without a producer resample; the run is labelled 'card dramaturg: REJECT (citations)'.",
+    "question": "Is measuring a REJECT card acceptable when the unsupported items are the very predictions the measurement resolves?"
+   },
+   {
+    "id": "D7",
+    "departure": "Phases p3_block and p4_multi (optional in the card) are not run; the cost comparison (E10) is against the card's l_anchor_sweep line only.",
+    "question": "Accepted that E10 compares only the anchor-plus-sweep line's 'need 2 h'?"
+   }
+  ]
+ },
+ "triage": {
+  "claims": [
+   {
+    "id": "design-core",
+    "grounding": null,
+    "findings": [
+     {
+      "confound": "decidability by construction: forced/impossible endpoint or a different question than the seed",
+      "status": "RULED_OUT",
+      "crux": "E3 has pre-named refuting outcomes (speedup(2^24) < 2, or non-growth) that a real A100 measurement can produce, and the other endpoints (E2 band, E4, E5, E10) also have reachable refutations. The compared quantities are the seed's own Thomas against PCR. This rests on design structure only, because the evidence has no measured numbers."
+     },
+     {
+      "confound": "coordinates and scale: levels N=2^10..2^24, margin-1.0 diagonal dominance, ms units and the 50 ms block rule could in principle make cells degenerate or null",
+      "status": "NEEDS_RUN",
+      "crux": "No measured Thomas/PCR timings exist in the evidence. On paper the scale is non-degenerate: the E3 and E5 outcomes can each go either way, and E2 is likely refuted rather than null. I cannot name a committed number that rules the confound out."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [
+     "Run the specified sweep: thomas_gpu and pcr_gpu at all five levels (N=2^10..2^24). Inspect Thomas ms and PCR ms at 2^10 and 2^24 and the recorded R per row, confirming block times are well above timer resolution and that the speedup is not pinned by launch latency."
+    ],
+    "author_queue": [],
+    "runner_results": null
+   }
+  ],
+  "shared_queue": [],
+  "instrument_queue": [
+   "AUTHOR: validation control for instrument endpoint-1-readout vv1: held-out ground truth for \"E1 anchor: max relative residual of Thomas and PCR at N = 2^10 and 2^14 (seed 0); pairwise relative difference in x against cuSPARSE gtsv2_nopivot and scipy solve_banded; difference between the two references\"",
+   "AUTHOR: validation control for instrument endpoint-2-readout vv1: held-out ground truth for \"E2 card GUESS res_measured = 1e-13: measured max relative residual over the anchor levels and both hand-written solvers\"",
+   "AUTHOR: validation control for instrument endpoint-3-readout vv1: held-out ground truth for \"E3 card decision: speedup(N) = median Thomas ms / median PCR ms; if_lever iff speedup(2^24) >= 2 AND speedup(2^24) > speedup(2^10) AND least-squares slope of ln(speedup) against log2(N) over the five levels > 0; label 'within noise' if the lower quartile of speedup(2^24) over seeds is <= 2\"",
+   "AUTHOR: validation control for instrument endpoint-4-readout vv1: held-out ground truth for \"E4 card GUESS crossover_n = 1,024: smallest level at which the lower quartile over seeds of speedup(N) exceeds 1\"",
+   "AUTHOR: validation control for instrument endpoint-5-readout vv1: held-out ground truth for \"E5 card PROXY speedup_at_nmax = 28: measured speedup(2^24)\"",
+   "AUTHOR: validation control for instrument endpoint-6-readout vv1: held-out ground truth for \"E6 shape of PCR time (report only; tests the card's if_lever sentence 'grows like log2(N)'): g = (median PCR ms at 2^24 / median PCR ms at 2^22)^(1/2)\"",
+   "AUTHOR: validation control for instrument endpoint-7-readout vv1: held-out ground truth for \"E7 CPU-floor reading (report only): E3's rule with median cpu_dgtsv ms in place of Thomas ms\"",
+   "AUTHOR: validation control for instrument endpoint-8-readout vv1: held-out ground truth for \"E8 copies reading (report only; card check 6): batched Thomas ms / single Thomas ms at each level, and throughput factor K / that ratio\"",
+   "AUTHOR: validation control for instrument endpoint-9-readout vv1: held-out ground truth for \"E9 cuSPARSE reading (report only): median cuSPARSE ms at each level and its ratio to hand-written PCR\"",
+   "AUTHOR: validation control for instrument endpoint-10-readout vv1: held-out ground truth for \"E10 card cost line 'need 2 h': on-box wall-clock from the first anchor solve to the last sweep row, hours\""
+  ],
+  "authored": null,
+  "_run": "wf_da9ff4cd-543",
+  "_failures": [
+   "parallel[0] failed: agent type 'triage-reader' not found"
+  ]
+ },
+ "gate": "BUDGET_AND_DESIGN_APPROVAL: human commits a gate file answering, of record, every diff question, every non-reproducing grounding note, and every queued item (instrument validations included; \"accepted as-is\" is an answer) before mode=build."
+}

@@ -1,0 +1,71 @@
+{
+  "cell": {
+    "id": "E4",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "NO_VERDICT: incomplete run (descriptive reading: None)",
+  "decision_rule": "cpu_671_hours = 100000 * (median of the 30 timed CPU passes at 2,684 chains, ms) / 1000 / 3600 * measured CPU overhead: HOLDS if 1 <= hours <= 9, else REFUTED.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [
+    {
+      "n_items": null,
+      "path": "results_m1/out/raw/timing_rows.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "results_m1/out/raw/probe_blocks.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": 2684,
+      "path": "results_m1/out/extract/params_distinct.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "results_m1/out/extract/param_ranges.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": 10593,
+      "path": "results_m1/out/extract/basin.json",
+      "present": false,
+      "sha256": null
+    }
+  ],
+  "metric": "cpu_671_hours derived from the CPU forward-pass time and measured CPU overhead",
+  "notes": "",
+  "rows": [],
+  "threshold": {
+    "high_hours": 9.0,
+    "low_hours": 1.0
+  },
+  "values": {
+    "card_guess_hours": 3.0,
+    "cpu_671_hours": null,
+    "cpu_forward_ms": null,
+    "cpu_spread_ms": null,
+    "hardware": null,
+    "hardware_consistent": null,
+    "overhead_cpu": null,
+    "overhead_cpu_per_seed": [],
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

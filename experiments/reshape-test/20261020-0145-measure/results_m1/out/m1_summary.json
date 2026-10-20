@@ -1,0 +1,361 @@
+{
+ "decisions": {
+  "E1": {
+   "decision": "NOT_RUN",
+   "metric": "airGR NSE on the 59-day run period (anchor)",
+   "record": "id-E1_kind-endpoint_tag-m1.json",
+   "record_sha256": "ba0982f26c3a66bc30ffb27397d9a8341346b7d3e119d7effa362ee726302393",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "error_text": "apt-get exit code 100; R CMD INSTALL exit code not_tried\n--- last lines of apt_r.log ---\nGet:85 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-class amd64 7.3-20-1 [87.9 kB]\nGet:86 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-cluster amd64 2.1.2-2 [541 kB]\nGet:87 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-codetools all 0.2-18-1 [90.8 kB]\nGet:88 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-foreign amd64 0.8.82-1 [244 kB]\nGet:89 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-kernsmooth amd64 2.23-20-1 [90.3 kB]\nGet:90 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-lattice amd64 0.20-45-1 [1130 kB]\nGet:91 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-matrix amd64 1.4-0-1 [4305 kB]\nGet:92 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-nlme amd64 3.1.155-1 [2235 kB]\nGet:93 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-mgcv amd64 1.8-39-1 [2994 kB]\nGet:94 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-nnet amd64 7.3-17-1 [112 kB]\nGet:95 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-survival amd64 3.2-13-1 [6579 kB]\nGet:96 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-rpart amd64 4.1.16-1 [892 kB]\nGet:97 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-spatial amd64 7.3-15-1 [132 kB]\nGet:98 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-doc-html all 4.1.2-1ubuntu2 [557 kB]\nGet:99 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-recommended all 4.1.2-1ubuntu2 [2624 B]\nGet:100 http://archive.ubuntu.com/ubuntu jammy/universe amd64 tilix-common all 1.9.4-2build1 [281 kB]\nGet:101 http://archive.ubuntu.com/ubuntu jammy/universe amd64 tilix amd64 1.9.4-2build1 [681 kB]\nGet:102 http://archive.ubuntu.com/ubuntu jammy/main amd64 x11-utils amd64 7.7+5build2 [206 kB]\nGet:103 http://archive.ubuntu.com/ubuntu jammy/main amd64 x11-xserver-utils amd64 7.7+9build1 [170 kB]\nGet:104 http://archive.ubuntu.com/ubuntu jammy/main amd64 libauthen-sasl-perl all 2.1600-1.1 [43.1 kB]\nFetched 95.6 MB in 5s (17.5 MB/s)\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/libh/libhttp-daemon-perl/libhttp-daemon-perl_6.13-1ubuntu0.1_all.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/n/ncurses/libncurses-dev_6.3-2ubuntu0.1_amd64.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/n/ncurses/libncurses5-dev_6.3-2ubuntu0.1_amd64.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?",
+    "nse": null,
+    "page_value": 0.495
+   }
+  },
+  "E2": {
+   "decision": "PASS (page value only; no independent code ran)",
+   "metric": "JAX GR4J NSE on the 59-day run period and daily-flow MARE versus airGR (anchor)",
+   "record": "id-E2_kind-endpoint_tag-m1.json",
+   "record_sha256": "88984927edca5656518a77ac656e1313d304b15b4544391420c557b804b4200e",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "airgr_ran": false,
+    "e2_label": "page value only; no independent code ran"
+   }
+  },
+  "E3": {
+   "decision": "REFUTED",
+   "metric": "batched_forward_ms: median GPU forward-pass time at 2,684 chains",
+   "record": "id-E3_kind-endpoint_tag-m1.json",
+   "record_sha256": "1017d80820e94bd0432161a2993471f36f17f4fd4aa738227049061405df851c",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "batched_forward_ms": 88.36082099999487,
+    "card_guess_ms": 2.0,
+    "hardware": {
+     "driver_version": "570.148.08",
+     "dtype": "float32 (JAX default)",
+     "gpu_count": 1,
+     "gpu_name": "NVIDIA A10",
+     "instance_type": "gpu_1x_a10",
+     "jax_version": "0.6.0",
+     "jaxlib_version": "0.6.0",
+     "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+     "price_usd_per_hour": 1.29,
+     "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "n_passes": 30,
+    "spread_ms": {
+     "max": 88.77655300000242,
+     "median": 88.36082099999487,
+     "min": 88.28228800001625,
+     "n": 30,
+     "q1": 88.3191337499909,
+     "q3": 88.43278299998758
+    }
+   }
+  },
+  "E4": {
+   "decision": "REFUTED",
+   "metric": "cpu_671_hours derived from the CPU forward-pass time and measured CPU overhead",
+   "record": "id-E4_kind-endpoint_tag-m1.json",
+   "record_sha256": "ce4e548249be7871af39f427f085678d4ffab3cbba9b5a0c9f44f2e4f86898da",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "card_guess_hours": 3.0,
+    "cpu_671_hours": 29.840626419333343,
+    "cpu_forward_ms": 1037.4997004999927,
+    "cpu_spread_ms": {
+     "max": 1088.1366769999943,
+     "median": 1037.4997004999927,
+     "min": 998.2551070000056,
+     "n": 30,
+     "q1": 1023.3625662500074,
+     "q3": 1064.003863250001
+    },
+    "hardware": {
+     "driver_version": "570.148.08",
+     "dtype": "float32 (JAX default)",
+     "gpu_count": 1,
+     "gpu_name": "NVIDIA A10",
+     "instance_type": "gpu_1x_a10",
+     "jax_version": "0.6.0",
+     "jaxlib_version": "0.6.0",
+     "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+     "price_usd_per_hour": 1.29,
+     "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "overhead_cpu": 1.0354340830925455
+   }
+  },
+  "E5": {
+   "decision": "if_not",
+   "metric": "card decision: main_run_hours and GPU-over-CPU speedup",
+   "record": "id-E5_kind-endpoint_tag-m1.json",
+   "record_sha256": "05e671c3c8b6be7d9f56255b08110d1d89e4f1e67a2f340bf1cfdf9425d99701",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "batched_forward_ms": 88.36082099999487,
+    "card_expected": "if_not",
+    "cpu_671_hours": 29.840626419333343,
+    "cpu_forward_ms": 1037.4997004999927,
+    "hardware": {
+     "driver_version": "570.148.08",
+     "dtype": "float32 (JAX default)",
+     "gpu_count": 1,
+     "gpu_name": "NVIDIA A10",
+     "instance_type": "gpu_1x_a10",
+     "jax_version": "0.6.0",
+     "jaxlib_version": "0.6.0",
+     "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+     "price_usd_per_hour": 1.29,
+     "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "main_run_hours": 2.463161632694446,
+    "overhead_cpu": 1.0354340830925455,
+    "overhead_gpu": 1.0035422687732294,
+    "sensitivity_overhead_4": {
+     "cpu_671_hours": 115.27774449999917,
+     "label": "sensitivity line: design overhead 4 on both backends; does not decide",
+     "main_run_hours": 9.81786899999943,
+     "overhead": 4.0,
+     "reading": "if_not",
+     "speedup": 11.741625855876247
+    },
+    "speedup": 12.11476584534599
+   }
+  },
+  "E6": {
+   "decision": "pass",
+   "metric": "card gate: main_run_hours <= 6",
+   "record": "id-E6_kind-endpoint_tag-m1.json",
+   "record_sha256": "b4aad758d230e8bff227a533ce463085231e01b34beec943715debae4377a2e2",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "gate_reading": "pass",
+    "hardware": {
+     "driver_version": "570.148.08",
+     "dtype": "float32 (JAX default)",
+     "gpu_count": 1,
+     "gpu_name": "NVIDIA A10",
+     "instance_type": "gpu_1x_a10",
+     "jax_version": "0.6.0",
+     "jaxlib_version": "0.6.0",
+     "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+     "price_usd_per_hour": 1.29,
+     "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "main_run_hours": 2.463161632694446
+   }
+  },
+  "E7": {
+   "decision": "REPORT_ONLY: linear",
+   "metric": "GPU throughput scaling, chain-steps per second at 268, 1,340, 2,684 chains",
+   "record": "id-E7_kind-endpoint_tag-m1.json",
+   "record_sha256": "7c0c00c84543f4303e8181884a69e23eb04a042e5fd13352682335e2d90635f6",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "chain_steps_per_s": {
+     "1340": 118640123.90434578,
+     "268": 25304735.386604086,
+     "2684": 221740809.76455772
+    },
+    "hardware": {
+     "driver_version": "570.148.08",
+     "dtype": "float32 (JAX default)",
+     "gpu_count": 1,
+     "gpu_name": "NVIDIA A10",
+     "instance_type": "gpu_1x_a10",
+     "jax_version": "0.6.0",
+     "jaxlib_version": "0.6.0",
+     "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+     "price_usd_per_hour": 1.29,
+     "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "median_ms": {
+     "1340": 82.4510264999958,
+     "268": 77.31359249999059,
+     "2684": 88.36082099999487
+    },
+    "ratio_2684_over_268": 8.762818752174887,
+    "scaling_reading": "linear"
+   }
+  },
+  "I1": {
+   "decision": "NOT_RUN",
+   "metric": "control: airGR reproduces the page's held-out NSE values",
+   "record": "id-I1_kind-control_tag-m1.json",
+   "record_sha256": "608854cca30d07bc7ee8fae6891ba278eec9535a33bc8f3db1e11a67dddd4e76",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "error_text": "apt-get exit code 100; R CMD INSTALL exit code not_tried\n--- last lines of apt_r.log ---\nGet:85 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-class amd64 7.3-20-1 [87.9 kB]\nGet:86 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-cluster amd64 2.1.2-2 [541 kB]\nGet:87 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-codetools all 0.2-18-1 [90.8 kB]\nGet:88 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-foreign amd64 0.8.82-1 [244 kB]\nGet:89 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-kernsmooth amd64 2.23-20-1 [90.3 kB]\nGet:90 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-lattice amd64 0.20-45-1 [1130 kB]\nGet:91 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-matrix amd64 1.4-0-1 [4305 kB]\nGet:92 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-nlme amd64 3.1.155-1 [2235 kB]\nGet:93 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-mgcv amd64 1.8-39-1 [2994 kB]\nGet:94 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-nnet amd64 7.3-17-1 [112 kB]\nGet:95 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-survival amd64 3.2-13-1 [6579 kB]\nGet:96 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-rpart amd64 4.1.16-1 [892 kB]\nGet:97 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-spatial amd64 7.3-15-1 [132 kB]\nGet:98 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-doc-html all 4.1.2-1ubuntu2 [557 kB]\nGet:99 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-recommended all 4.1.2-1ubuntu2 [2624 B]\nGet:100 http://archive.ubuntu.com/ubuntu jammy/universe amd64 tilix-common all 1.9.4-2build1 [281 kB]\nGet:101 http://archive.ubuntu.com/ubuntu jammy/universe amd64 tilix amd64 1.9.4-2build1 [681 kB]\nGet:102 http://archive.ubuntu.com/ubuntu jammy/main amd64 x11-utils amd64 7.7+5build2 [206 kB]\nGet:103 http://archive.ubuntu.com/ubuntu jammy/main amd64 x11-xserver-utils amd64 7.7+9build1 [170 kB]\nGet:104 http://archive.ubuntu.com/ubuntu jammy/main amd64 libauthen-sasl-perl all 2.1600-1.1 [43.1 kB]\nFetched 95.6 MB in 5s (17.5 MB/s)\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/libh/libhttp-daemon-perl/libhttp-daemon-perl_6.13-1ubuntu0.1_all.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/n/ncurses/libncurses-dev_6.3-2ubuntu0.1_amd64.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/n/ncurses/libncurses5-dev_6.3-2ubuntu0.1_amd64.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?"
+   }
+  },
+  "I2": {
+   "decision": "PASS (page value only; no independent code ran)",
+   "metric": "control: JAX reproduces the held-out values and airGR daily flow; planted model rows",
+   "record": "id-I2_kind-control_tag-m1.json",
+   "record_sha256": "769f4fc22a20058a1f9a7627d5f77ec4ca24c0bad7d875c660e991209047ca72",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "airgr_ran": false,
+    "planted_model_rows": {
+     "all_pass": true,
+     "mass_balance_pass": true,
+     "mass_balance_residual_mm": -2.8421709430404007e-13,
+     "uh_sum_max_abs_error": 0.0,
+     "uh_sum_pass": true,
+     "zero_rain_max_net_rain_default_stores": 0.0,
+     "zero_rain_max_quickflow_empty_stores": 0.0,
+     "zero_rain_max_total_flow_empty_stores": 0.0,
+     "zero_rain_pass": true
+    }
+   }
+  },
+  "I3": {
+   "decision": "PASS",
+   "metric": "control: timing harness reads a 100 ms sleep correctly on each backend",
+   "record": "id-I3_kind-control_tag-m1.json",
+   "record_sha256": "cc76f71a1f5751e997918bb2cdca4a3832b559d32b360eae81e8538a9717dc13",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "hardware": {
+     "driver_version": "570.148.08",
+     "dtype": "float32 (JAX default)",
+     "gpu_count": 1,
+     "gpu_name": "NVIDIA A10",
+     "instance_type": "gpu_1x_a10",
+     "jax_version": "0.6.0",
+     "jaxlib_version": "0.6.0",
+     "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+     "price_usd_per_hour": 1.29,
+     "vcpu_count": 30
+    },
+    "hardware_consistent": true
+   }
+  },
+  "I4": {
+   "decision": "PASS",
+   "metric": "control: a 730-day scan takes 7% to 13% of a 7,300-day scan on each backend",
+   "record": "id-I4_kind-control_tag-m1.json",
+   "record_sha256": "063a659067f0432a6aac18fb7066ad30bfaaed287d26746d0887580eca83636d",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "hardware": {
+     "driver_version": "570.148.08",
+     "dtype": "float32 (JAX default)",
+     "gpu_count": 1,
+     "gpu_name": "NVIDIA A10",
+     "instance_type": "gpu_1x_a10",
+     "jax_version": "0.6.0",
+     "jaxlib_version": "0.6.0",
+     "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+     "price_usd_per_hour": 1.29,
+     "vcpu_count": 30
+    },
+    "hardware_consistent": true
+   }
+  },
+  "I5": {
+   "decision": "PASS",
+   "metric": "control: planted arithmetic for the card decision",
+   "record": "id-I5_kind-control_tag-m1.json",
+   "record_sha256": "189933296a6e34db05bc45c665ba6ef6f472a24d0b5bac51c73e88b5baa9bc2f",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "main_run_hours_ms2": 0.2222222222222222,
+    "main_run_hours_ms20": 2.2222222222222223,
+    "speedup_ms2": 13.5,
+    "speedup_ms20": 1.3499999999999999
+   }
+  },
+  "I6": {
+   "decision": "PASS",
+   "metric": "control: planted gate rows and run_valid propagation",
+   "record": "id-I6_kind-control_tag-m1.json",
+   "record_sha256": "a69aad265a0540cd429162ff0ba28f406ede4a8f8dc940a511dae201075033c9",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "decision_at_5_9": "pass",
+    "decision_at_6_1": "Stop and replan: full Bayesian 671 is not affordable on one GPU",
+    "final_state_run_valid": false,
+    "record_after_run_valid": false,
+    "record_at_5_9_run_valid": true,
+    "record_at_6_1_run_valid": false,
+    "row_after_run_valid": false,
+    "row_before_run_valid": true
+   }
+  },
+  "I7": {
+   "decision": "PASS",
+   "metric": "control: planted arithmetic for throughput and scaling ratio",
+   "record": "id-I7_kind-control_tag-m1.json",
+   "record_sha256": "8218d84ac1299d956b8db3cf13b1980720df387e712effcd3766736fa777a35d",
+   "run_labels": [
+    "anchor by page value"
+   ],
+   "run_valid": true,
+   "values_restated": {
+    "chain_steps_per_s": 326553333.3333334,
+    "equal_time_label": "linear",
+    "equal_time_ratio": 10.014925373134329
+   }
+  }
+ },
+ "incomplete": false,
+ "labels": [
+  "anchor by page value"
+ ],
+ "records_missing": [],
+ "records_present": 14,
+ "run_valid": true,
+ "tag": "m1",
+ "timing_labels": [],
+ "void_reasons": [],
+ "what_this_is": "a restatement of RUN_VALID.json and of the records under records/, for the launcher's criticals-first fetch; it decides nothing, the records do",
+ "written_utc": "2026-10-20T04:26:00+00:00"
+}

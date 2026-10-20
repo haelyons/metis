@@ -1,0 +1,31 @@
+{
+  "cell": {
+    "id": "I4",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "NOT_RUN: the run stopped before this stage",
+  "decision_rule": "On each backend at 2,684 chains, median of 10 timed 730-day passes / median of 10 timed 7,300-day passes lies in [0.07, 0.13]: PASS, else FAIL (run_valid false from here on).",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [],
+  "metric": "control: a 730-day scan takes 7% to 13% of a 7,300-day scan on each backend",
+  "notes": "placeholder so that a missing cell is visible",
+  "threshold": {
+    "high_ratio": 0.13,
+    "low_ratio": 0.07
+  },
+  "values": {
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

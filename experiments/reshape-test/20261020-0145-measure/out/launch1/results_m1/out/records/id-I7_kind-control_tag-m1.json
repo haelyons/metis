@@ -1,0 +1,42 @@
+{
+  "cell": {
+    "id": "I7",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "PASS",
+  "decision_rule": "Planted arithmetic: 2,684 x 7,300 chain-steps in 60 ms gives 3.2655e8 chain-steps per second; equal planted times at 268 and 2,684 chains give a ratio of 10 (to one decimal) read as linear. PASS if both hold.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 131505,
+      "n_items": null,
+      "path": "/home/ubuntu/m1_run/run_m1.py",
+      "present": true,
+      "sha256": "808f056c1b26"
+    }
+  ],
+  "metric": "control: planted arithmetic for throughput and scaling ratio",
+  "notes": "planted rows evaluated by this file's endpoint code",
+  "threshold": {
+    "chain_steps_per_s": 326550000.0,
+    "ratio": 10.0
+  },
+  "values": {
+    "chain_steps_per_s": 326553333.3333334,
+    "equal_time_label": "linear",
+    "equal_time_ratio": 10.014925373134329,
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

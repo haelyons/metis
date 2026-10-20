@@ -1,0 +1,41 @@
+{
+ "claims": [
+  {
+   "id": "design-core",
+   "grounding": null,
+   "findings": [
+    {
+     "confound": "decidability by construction",
+     "status": "RULED_OUT",
+     "crux": "Under the card's own guess bands (E3 [0.67,6] ms, E4 [1,9] h, DESIGN overhead 4), main_run_hours spans about 0.074-0.67 h and speedup spans about 1.5-120x, so both if_not and if_lever are reachable and no endpoint is forced."
+    },
+    {
+     "confound": "Coordinates and scale: the 7,300-step scan per pass, tiled identical forcing and units in the card's per-iteration derivation could pre-determine the if_not verdict regardless of the hypothesis.",
+     "status": "NEEDS_RUN",
+     "crux": "The evidence has no measured timings, only a design. Scan cost is data-independent, so tiled forcing cannot degenerate the result. But the card's ms-per-pass guess may mis-scale a 7,300-step sequential scan, and only E3 and E5 measured on the box settle that."
+    }
+   ],
+   "rejected_findings": [],
+   "run_queue": [
+    "the committed timing script (gpu_timing, cpu_timing and overhead_probe, seeds 1-3) with per-chain distinct parameters, then check E1 and E2 first and read E3 and E5 from the raw rows"
+   ],
+   "author_queue": [],
+   "runner_results": null
+  }
+ ],
+ "shared_queue": [],
+ "instrument_queue": [
+  "AUTHOR: validation control for instrument endpoint-1-readout vv1: held-out ground truth for \"E1 anchor_airgr NSE on the 59-day run period\"",
+  "AUTHOR: validation control for instrument endpoint-2-readout vv1: held-out ground truth for \"E2 anchor_jax: NSE on the same period, and mean absolute relative error of daily flow versus anchor_airgr over the period\"",
+  "AUTHOR: validation control for instrument endpoint-3-readout vv1: held-out ground truth for \"E3 batched_forward_ms at 2,684 chains on the GPU (median of 30 timed passes)\"",
+  "AUTHOR: validation control for instrument endpoint-4-readout vv1: held-out ground truth for \"E4 cpu_671_hours derived: 100000 * cpu_forward_ms / 1000 / 3600 * overhead_cpu\"",
+  "AUTHOR: validation control for instrument endpoint-5-readout vv1: held-out ground truth for \"E5 card decision: main_run_hours = 100000 * batched_forward_ms / 1000 / 3600 * overhead_gpu; speedup = cpu_671_hours / main_run_hours\"",
+  "AUTHOR: validation control for instrument endpoint-6-readout vv1: held-out ground truth for \"E6 card gate main_run_hours\"",
+  "AUTHOR: validation control for instrument endpoint-7-readout vv1: held-out ground truth for \"E7 scaling: GPU chain-steps per second at 268, 1,340, 2,684 chains\""
+ ],
+ "authored": null,
+ "_run": "wf_1afd659f-b55",
+ "_failures": [
+  "parallel[0] failed: agent({agentType}): agent type 'triage-reader' not found (reader not run; grounding null)"
+ ]
+}

@@ -1,0 +1,191 @@
+{
+ "card": {
+  "run": "experiments/reshape-test/20261019-2344-tree",
+  "pick": "R1\u00b7physical\u00b7Cyclic reduction (PCR)",
+  "result_json_sha256": "48ac464c98a73069aab7af8efbd53021ca5439a193af666a2e1ac6d0d32ac6ae",
+  "dramaturg": "REJECT (3 blocking, citations)"
+ },
+ "measured_by": {
+  "run": "experiments/reshape-test/20261020-0855-measure",
+  "box": "gpu_1x_a100_sxm4 (NVIDIA A100-SXM4-40GB, driver 570.148.08, CUDA 12.8), us-east-1, USD 1.99/h",
+  "run_valid": true,
+  "labels": [
+   "card dramaturg: REJECT (3 blocking, citations)",
+   "baseline: one CUDA thread per system, this build's kernel"
+  ]
+ },
+ "numbers": {
+  "res_measured": {
+   "card": {
+    "basis": "GUESS",
+    "value": 1e-13
+   },
+   "measured": {
+    "basis": "MEASURED",
+    "value": 3.1109912540540033e-16,
+    "record": "E2",
+    "verdict": "REFUTED (too pessimistic, 320x)"
+   }
+  },
+  "crossover_n": {
+   "card": {
+    "basis": "GUESS",
+    "value": 1024
+   },
+   "measured": {
+    "basis": "MEASURED",
+    "value": 1024,
+    "record": "E4",
+    "verdict": "HOLDS",
+    "label": "crossover at 2^10 is launch-bound (launch fraction 0.775)"
+   }
+  },
+  "speedup_at_nmax": {
+   "card": {
+    "basis": "PROXY",
+    "value": 28
+   },
+   "measured": {
+    "basis": "MEASURED",
+    "value": 348.3049877958905,
+    "record": "E5",
+    "verdict": "REFUTED (above; measured / 28 = 12.44)"
+   }
+  },
+  "l_anchor_sweep.need_hours": {
+   "card": {
+    "basis": "DESIGN",
+    "value": 2,
+    "hours_bought": 6
+   },
+   "measured": {
+    "basis": "MEASURED",
+    "value": 0.11910545163684422,
+    "record": "E10",
+    "verdict": "REFUTED (below: over-bought by more than 3x; 16.8x)"
+   }
+  },
+  "n_parallel_rounds": {
+   "card": {
+    "basis": "DERIVED",
+    "value": 24
+   },
+   "measured": {
+    "basis": "MEASURED",
+    "value": 24,
+    "note": "PCR launched log2(N) rounds; launch probe 0.0501 ms per launch at 2^24"
+   }
+  }
+ },
+ "predictions": {
+  "expected": {
+   "card": "if_lever",
+   "resolved": "if_lever",
+   "record": "E3",
+   "rule": "speedup(2^24) >= 2 AND grows with N",
+   "speedups_by_level": {
+    "1024": 8.540986788840167,
+    "16384": 95.89943496015222,
+    "262144": 517.527174941804,
+    "4194304": 395.38457774438325,
+    "16777216": 348.3049877958905
+   },
+   "slope_ln_speedup_per_log2N": 0.255653691157889,
+   "lower_quartile_top": 348.28862129983,
+   "adjacent_decreases": "2^18 -> 2^22 and 2^22 -> 2^24 (speedup falls above 2^18; under a strict 'every level grows' reading the rule would not hold)"
+  },
+  "if_lever_sentence": {
+   "card": "cyclic-reduction wall-clock grows like log2(N)",
+   "resolved": "refuted (report-only E6): per-doubling growth 2.135 between 2^22 and 2^24; PCR time is work-bound on one GPU"
+  },
+  "cpu_floor_reading": {
+   "role": "report-only E7",
+   "baseline": "scipy LAPACK dgtsv, one core, OpenBLAS 0.3.20",
+   "speedups_cpu_by_level": {
+    "1024": 0.5907048648185403,
+    "16384": 5.782147180309478,
+    "262144": 30.708453671787385,
+    "4194304": 18.411710053908486,
+    "16777216": 19.102597490644076
+   },
+   "resolved": "if_lever under the CPU baseline (19.1x at 2^24; CPU faster below about 2^12)"
+  },
+  "copies_reading": {
+   "role": "report-only E8",
+   "ratios_batched_over_single": [
+    1.0832066079788878,
+    1.7621551529459574,
+    1.8104799459312941,
+    1.0789708583507593,
+    1.0482049573058092
+   ],
+   "K": [
+    256,
+    256,
+    256,
+    64,
+    16
+   ],
+   "resolved": "HOLDS (within [0.9, 3])"
+  },
+  "cusparse_reading": {
+   "role": "report-only E9",
+   "pcr_over_cusparse_by_level": {
+    "1024": 2.353594550359228,
+    "16384": 1.093338101952349,
+    "262144": 1.6173441748370665,
+    "4194304": 5.982976940531662,
+    "16777216": 7.412174867802461
+   }
+  }
+ },
+ "medians_ms": {
+  "thomas_gpu": {
+   "1024": 0.2970090626242632,
+   "16384": 5.140275192260742,
+   "262144": 83.22969818115234,
+   "4194304": 1892.0120849609375,
+   "16777216": 7598.49560546875
+  },
+  "pcr_gpu": {
+   "1024": 0.03477456059437318,
+   "16384": 0.05360068278188094,
+   "262144": 0.16082188957615903,
+   "4194304": 4.785245028409091,
+   "16777216": 21.815638224283855
+  },
+  "cusparse_gpu": {
+   "1024": 0.01477508544921875,
+   "16384": 0.04902480091580767,
+   "262144": 0.09943578619706003,
+   "4194304": 0.7998100403816469,
+   "16777216": 2.943216884837431
+  },
+  "thomas_batched_gpu": {
+   "1024": 0.3217221792642172,
+   "16384": 9.057962417602539,
+   "262144": 150.68569946289062,
+   "4194304": 2041.4259033203125,
+   "16777216": 7964.78076171875
+  },
+  "cpu_dgtsv": {
+   "1024": 0.020541502115023348,
+   "16384": 0.3099270368099156,
+   "262144": 4.938591545458786,
+   "4194304": 88.10454399997525,
+   "16777216": 416.7353560000038
+  },
+  "launch_probe": {
+   "1024": 0.002695690342038046,
+   "16384": 0.0026904062903151493,
+   "262144": 0.002674789056865447,
+   "4194304": 0.013749329420568385,
+   "16777216": 0.05009825783024124
+  }
+ },
+ "anchor": {
+  "E1": "PASS",
+  "max_relative_residual": 3.1109912540540033e-16,
+  "references": "cuSPARSE gtsv2_nopivot and scipy solve_banded agree (I1_references PASS)"
+ }
+}

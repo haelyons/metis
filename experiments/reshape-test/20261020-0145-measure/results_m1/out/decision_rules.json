@@ -1,0 +1,87 @@
+{
+ "rules": {
+  "E1": "airGR on L0123001, X=(165.05, 6.46, 422.50, 2.45), run period 1990-01-01..1990-02-28, default warm-up and initial states, NSE on Qmm: PASS if |NSE - 0.495| <= 0.02, else FAIL (page or period misread; timing void, run_valid false from here on). NOT_RUN if R or airGR could not be installed or run; the error text is kept and the run is labelled 'anchor by page value'.",
+  "E2": "JAX GR4J on the same inputs and period, on the GPU and on the CPU backend: PASS if every backend gives |NSE - 0.495| <= 0.02 AND mean absolute relative error of daily flow versus airGR < 0.01 on matching dates, with no non-finite or all-zero flow; else FAIL (timed model is not GR4J; timing void, run_valid false from here on). If airGR did not run, the NSE band alone decides, labelled 'page value only; no independent code ran'.",
+  "E3": "Median of the 30 timed GPU passes at 2,684 chains (3 seeds x 10 repeats, distinct parameters, 7,300 days): HOLDS if 0.67 <= median <= 6 ms, else REFUTED (card guess off by more than 3x).",
+  "E4": "cpu_671_hours = 100000 * (median of the 30 timed CPU passes at 2,684 chains, ms) / 1000 / 3600 * measured CPU overhead: HOLDS if 1 <= hours <= 9, else REFUTED.",
+  "E5": "main_run_hours = 100000 * GPU median ms / 1000 / 3600 * measured GPU overhead; speedup = cpu_671_hours / main_run_hours. Decision if_not if main_run_hours >= 1 OR speedup < 20, else if_lever (the card's expected outcome is refuted). A sensitivity line repeats this with the design overhead 4 on both backends; it does not decide.",
+  "E6": "Card gate: pass if main_run_hours <= 6 (measured GPU overhead). Otherwise the card's text applies, 'Stop and replan: full Bayesian 671 is not affordable on one GPU', and every later record is written run_valid false.",
+  "E7": "GPU chain-steps per second = n_chains * 7300 / (median ms / 1000) at 268, 1,340 and 2,684 chains; ratio = throughput(2,684) / throughput(268). Report only: 'linear' if 8 <= ratio <= 12; 'GPU saturates below 2,684 chains' if ratio < 8; 'above linear' if ratio > 12.",
+  "I1": "airGR held-out values: generalist X=(291, 0.30, 109.10, 2.01) on 1990-01-01..1990-02-28 gives NSE 0.336 +/- 0.02 AND the Michel set X=(165.05, 6.46, 422.50, 2.45) on 1990-03-01..1999-12-31 gives NSE 0.57 +/- 0.02: PASS, else FAIL (run_valid false from here on). NOT_RUN if airGR did not run.",
+  "I2": "JAX on GPU and CPU reproduces both held-out values (same bands) AND matches airGR daily flow with MARE < 0.01 on both periods (skipped and labelled if airGR did not run), AND the planted model rows pass: zero rain gives zero quickflow; unit-hydrograph ordinates sum to 1 within 1e-9; mass balance closes within 1e-6 mm over a planted year. PASS, else FAIL (run_valid false from here on).",
+  "I3": "On each backend, a 100 ms time.sleep measured through the timing harness reads within 95..105 ms: PASS, else FAIL (run_valid false from here on).",
+  "I4": "On each backend at 2,684 chains, median of 10 timed 730-day passes / median of 10 timed 7,300-day passes lies in [0.07, 0.13]: PASS, else FAIL (run_valid false from here on).",
+  "I5": "Planted arithmetic: ms 2 with overhead 4 gives main_run_hours 0.2222; ms 20 gives 2.2222; with cpu_hours 3 the speedups are 13.5 and 1.35. PASS if the endpoint code reproduces all four.",
+  "I6": "Planted gate rows: main_run_hours 5.9 gives pass and 6.1 gives 'Stop and replan...'; the planted gate-failure row sets run_valid false in every record and row written after it (scratch folder). PASS if all hold.",
+  "I7": "Planted arithmetic: 2,684 x 7,300 chain-steps in 60 ms gives 3.2655e8 chain-steps per second; equal planted times at 268 and 2,684 chains give a ratio of 10 (to one decimal) read as linear. PASS if both hold."
+ },
+ "tag": "m1",
+ "thresholds": {
+  "E1": {
+   "center": 0.495,
+   "tolerance": 0.02
+  },
+  "E2": {
+   "mare_max": 0.01,
+   "nse_center": 0.495,
+   "nse_tolerance": 0.02
+  },
+  "E3": {
+   "high_ms": 6.0,
+   "low_ms": 0.67
+  },
+  "E4": {
+   "high_hours": 9.0,
+   "low_hours": 1.0
+  },
+  "E5": {
+   "main_run_hours_min_for_if_not": 1.0,
+   "speedup_min_for_if_lever": 20.0
+  },
+  "E6": {
+   "max_main_run_hours": 6.0
+  },
+  "E7": {
+   "relative_tolerance": 0.2,
+   "target_ratio": 10.0
+  },
+  "I1": {
+   "generalist_cal_nse": 0.336,
+   "michel_val_nse": 0.57,
+   "tolerance": 0.02
+  },
+  "I2": {
+   "generalist_cal_nse": 0.336,
+   "mare_max": 0.01,
+   "mass_balance_tol_mm": 1e-06,
+   "michel_val_nse": 0.57,
+   "tolerance": 0.02,
+   "uh_sum_tol": 1e-09
+  },
+  "I3": {
+   "sleep_ms": 100.0,
+   "tolerance_ms": 5.0
+  },
+  "I4": {
+   "high_ratio": 0.13,
+   "low_ratio": 0.07
+  },
+  "I5": {
+   "main_run_hours_ms2": 0.2222,
+   "main_run_hours_ms20": 2.2222,
+   "speedups": [
+    13.5,
+    1.35
+   ]
+  },
+  "I6": {
+   "pass_at": 5.9,
+   "stop_at": 6.1
+  },
+  "I7": {
+   "chain_steps_per_s": 326550000.0,
+   "ratio": 10.0
+  }
+ },
+ "written_utc": "2026-10-20T03:26:05+00:00"
+}

@@ -1,0 +1,72 @@
+{
+  "cell": {
+    "id": "I1",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "NOT_RUN",
+  "decision_rule": "airGR held-out values: generalist X=(291, 0.30, 109.10, 2.01) on 1990-01-01..1990-02-28 gives NSE 0.336 +/- 0.02 AND the Michel set X=(165.05, 6.46, 422.50, 2.45) on 1990-03-01..1999-12-31 gives NSE 0.57 +/- 0.02: PASS, else FAIL (run_valid false from here on). NOT_RUN if airGR did not run.",
+  "env": {
+    "git_rev": null,
+    "host": "129-159-79-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:26:05+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 130610,
+      "n_items": 10593,
+      "path": "/home/ubuntu/m1_run/data/L0123001.rda",
+      "present": true,
+      "sha256": "e82399bbea6e"
+    },
+    {
+      "bytes": 2880343,
+      "n_items": null,
+      "path": "/home/ubuntu/m1_run/data/airGR_1.7.9.tar.gz",
+      "present": true,
+      "sha256": "7af0d1858a11"
+    },
+    {
+      "bytes": 3104,
+      "n_items": null,
+      "path": "results_m1/out/extract/anchor_airgr.R",
+      "present": true,
+      "sha256": "4d61a83fa779"
+    },
+    {
+      "bytes": 66,
+      "n_items": null,
+      "path": "results_m1/out/airgr_install_status.txt",
+      "present": true,
+      "sha256": "58d0d57671d5"
+    },
+    {
+      "n_items": 3,
+      "path": "results_m1/out/raw/airgr_output.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "results_m1/out/raw/anchor_rows.jsonl",
+      "present": false,
+      "sha256": null
+    }
+  ],
+  "metric": "control: airGR reproduces the page's held-out NSE values",
+  "notes": "R or airGR could not be installed or run. The JAX anchor falls back to the page value 0.495; every later record carries the label 'anchor by page value'.",
+  "threshold": {
+    "generalist_cal_nse": 0.336,
+    "michel_val_nse": 0.57,
+    "tolerance": 0.02
+  },
+  "values": {
+    "error_text": "apt-get exit code 100; R CMD INSTALL exit code not_tried\n--- last lines of apt_r.log ---\nGet:85 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-class amd64 7.3-20-1 [87.9 kB]\nGet:86 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-cluster amd64 2.1.2-2 [541 kB]\nGet:87 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-codetools all 0.2-18-1 [90.8 kB]\nGet:88 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-foreign amd64 0.8.82-1 [244 kB]\nGet:89 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-kernsmooth amd64 2.23-20-1 [90.3 kB]\nGet:90 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-lattice amd64 0.20-45-1 [1130 kB]\nGet:91 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-matrix amd64 1.4-0-1 [4305 kB]\nGet:92 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-nlme amd64 3.1.155-1 [2235 kB]\nGet:93 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-mgcv amd64 1.8-39-1 [2994 kB]\nGet:94 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-nnet amd64 7.3-17-1 [112 kB]\nGet:95 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-survival amd64 3.2-13-1 [6579 kB]\nGet:96 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-rpart amd64 4.1.16-1 [892 kB]\nGet:97 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-cran-spatial amd64 7.3-15-1 [132 kB]\nGet:98 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-doc-html all 4.1.2-1ubuntu2 [557 kB]\nGet:99 http://archive.ubuntu.com/ubuntu jammy/universe amd64 r-recommended all 4.1.2-1ubuntu2 [2624 B]\nGet:100 http://archive.ubuntu.com/ubuntu jammy/universe amd64 tilix-common all 1.9.4-2build1 [281 kB]\nGet:101 http://archive.ubuntu.com/ubuntu jammy/universe amd64 tilix amd64 1.9.4-2build1 [681 kB]\nGet:102 http://archive.ubuntu.com/ubuntu jammy/main amd64 x11-utils amd64 7.7+5build2 [206 kB]\nGet:103 http://archive.ubuntu.com/ubuntu jammy/main amd64 x11-xserver-utils amd64 7.7+9build1 [170 kB]\nGet:104 http://archive.ubuntu.com/ubuntu jammy/main amd64 libauthen-sasl-perl all 2.1600-1.1 [43.1 kB]\nFetched 95.6 MB in 5s (17.5 MB/s)\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/libh/libhttp-daemon-perl/libhttp-daemon-perl_6.13-1ubuntu0.1_all.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/n/ncurses/libncurses-dev_6.3-2ubuntu0.1_amd64.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Failed to fetch http://security.ubuntu.com/ubuntu/pool/main/n/ncurses/libncurses5-dev_6.3-2ubuntu0.1_amd64.deb  404  Not Found [IP: 91.189.92.24 80]\nE: Unable to fetch some archives, maybe run apt-get update or try with --fix-missing?",
+    "run_labels": [
+      "anchor by page value"
+    ],
+    "run_valid": true,
+    "run_void_reasons": []
+  }
+}

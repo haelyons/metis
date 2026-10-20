@@ -66,6 +66,16 @@ Roots (the asker's voice, as EX1 and EX2):
 One run per pipeline arm: cheap-model verdicts have flipped between reruns before (immersion-coolants V3), so a single
 outcome is weak evidence. A replicate follows only if the result would change the next step.
 
+## Measure runs (added 2026-10-20)
+
+A PASS card's first measuring phase, run as a latent_skeptic run inside this experiment, so the card's own
+prediction is resolved by a measurement and lands in `../_meta/LEDGER.jsonl`.
+
+| Run | Card | Phase | Outcome | Lambda |
+|---|---|---|---|---|
+| `20261020-0145-measure` | O arm, R1 · physical, CAMELS multi-catchment calibration (`20261019-2345-tree`) | gpu_bench on `gpu_1x_a10` | card `expected: if_not` **held** by its own rule (main_run_hours 2.46 h, speedup 12.1x); both measured-later guesses refuted: 2 ms -> 88.4 ms (44x), 3 h -> 29.8 h (10x); GPU time flat in chains (77 / 82 / 88 ms at 268 / 1,340 / 2,684), so the 7,300-step recurrence, not throughput, bounds the GPU; airGR install failed (apt 404s), anchor by page value; launch 1 halted at setup (pip timeout) | USD 2.12 (2 launches) |
+| `20261020-0855-measure` | P arm, R1 · physical, Cyclic reduction (PCR) (`20261019-2344-tree`; dramaturg REJECT on citations, measured on the committed record) | p1_anchor + p2_sweep on `gpu_1x_a100_sxm4` (the card's hardware) | card `expected: if_lever` **held** by its own rule (PCR 348x faster than the one-thread GPU Thomas at 2^24, speedup growing in slope but falling above 2^18); residual guess 1e-13 -> 3.1e-16 (320x too pessimistic); crossover 1,024 holds but is launch-bound; proxy 28x -> 348x; "need 2 h" -> 7.1 min (17x over-bought). Report-only: PCR time super-linear at the top (2.1x per doubling), so "grows like log2(N)" is wrong even as the rule holds; against the CPU LAPACK floor PCR is 19x at 2^24 and slower below 2^12; cuSPARSE is 7.4x faster than this PCR | USD 0.48 (1 launch) |
+
 Cost cap: $8 of OpenCode Go in total.
 
 ## Runs

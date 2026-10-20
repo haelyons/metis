@@ -1,0 +1,45 @@
+{
+  "cell": {
+    "id": "I6",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "PASS",
+  "decision_rule": "Planted gate rows: main_run_hours 5.9 gives pass and 6.1 gives 'Stop and replan...'; the planted gate-failure row sets run_valid false in every record and row written after it (scratch folder). PASS if all hold.",
+  "env": {
+    "git_rev": null,
+    "host": "129-159-79-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T04:26:00+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 149684,
+      "n_items": null,
+      "path": "/home/ubuntu/m1_run/run_m1.py",
+      "present": true,
+      "sha256": "98854eeb46d1"
+    }
+  ],
+  "metric": "control: planted gate rows and run_valid propagation",
+  "notes": "planted rows evaluated by this file's endpoint code",
+  "threshold": {
+    "pass_at": 5.9,
+    "stop_at": 6.1
+  },
+  "values": {
+    "decision_at_5_9": "pass",
+    "decision_at_6_1": "Stop and replan: full Bayesian 671 is not affordable on one GPU",
+    "final_state_run_valid": false,
+    "record_after_run_valid": false,
+    "record_at_5_9_run_valid": true,
+    "record_at_6_1_run_valid": false,
+    "row_after_run_valid": false,
+    "row_before_run_valid": true,
+    "run_labels": [
+      "anchor by page value"
+    ],
+    "run_valid": true,
+    "run_void_reasons": []
+  }
+}

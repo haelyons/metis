@@ -1,0 +1,130 @@
+{
+  "cell": {
+    "id": "E4",
+    "kind": "endpoint",
+    "run": "m2"
+  },
+  "decision": "HOLDS (crossover at 2^10 is launch-bound)",
+  "decision_rule": "Crossover = smallest level at which the lower quartile over seeds of Thomas_ms / PCR_ms exceeds 1. HOLDS iff the crossover is 2^10. Higher or none: REFUTED. Label 'crossover at 2^10 is launch-bound' when the PCR launch fraction at 2^10 is > 0.5. NOT_READ if the anchor failed for either solver.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-47-224",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T09:58:53+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 65392,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/thomas_gpu.jsonl",
+      "present": true,
+      "sha256": "9d1b8fc1136d"
+    },
+    {
+      "bytes": 70936,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/pcr_gpu.jsonl",
+      "present": true,
+      "sha256": "f73af1752f60"
+    },
+    {
+      "bytes": 68537,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/cusparse_gpu.jsonl",
+      "present": true,
+      "sha256": "2ef01011a680"
+    },
+    {
+      "bytes": 68177,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/thomas_batched_gpu.jsonl",
+      "present": true,
+      "sha256": "39e4178392db"
+    },
+    {
+      "bytes": 62652,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/launch_probe.jsonl",
+      "present": true,
+      "sha256": "6f8826ec206a"
+    },
+    {
+      "bytes": 70403,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/cpu_dgtsv.jsonl",
+      "present": true,
+      "sha256": "68cbcae8d816"
+    }
+  ],
+  "metric": "card guess crossover_n = 1024: smallest level where the lower quartile of Thomas_ms / PCR_ms exceeds 1",
+  "notes": "",
+  "threshold": {
+    "crossover_must_be": 1024,
+    "launch_bound_above": 0.5
+  },
+  "values": {
+    "anchor_failed": [],
+    "crossover_N": 1024,
+    "decision": "HOLDS",
+    "label": "crossover at 2^10 is launch-bound",
+    "labels": {
+      "baseline": "baseline: one CUDA thread per system, this build's kernel",
+      "blas_lapack_vendor": "unnamed in scipy.show_config (generic blas/lapack names); see scipy_lapack_libraries",
+      "budget_left_usd": 6.0,
+      "card_dramaturg": "card dramaturg: REJECT (3 blocking, citations)",
+      "compile_command": "/usr/bin/nvcc -O3 -shared -Xcompiler -fPIC -o results_m2/build/libm2.so results_m2/build/m2_kernels.cu -lcusparse -lcudart -arch=sm_80",
+      "cuda_driver_api_version": "12.8",
+      "cuda_runtime_version": "12.8",
+      "cuda_runtime_version_runner_library": "12.8",
+      "cuda_runtime_version_via": "cudaRuntimeGetVersion via ctypes on /lib/x86_64-linux-gnu/libcudart.so.12",
+      "cusparse_available": true,
+      "cusparse_note": null,
+      "git_commit": "e7acf90c84dff22d16d35714cdddda98ad75506e",
+      "gpu_device_count": 1,
+      "gpu_driver": "570.148.08",
+      "gpu_memory": "40960 MiB",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "kernel_source_sha256": "bb768a4721c5af56d50446cea6f5289af1ae25f8f339ded20fd7143c233d5354",
+      "lambda_instance_id": "3be4cd7175024dcd8ffa23e50d300409",
+      "libcudart_path": "/lib/x86_64-linux-gnu/libcudart.so.12",
+      "mkl_num_threads": "1",
+      "numpy_version": "1.26.4",
+      "nvcc_arch_flag": "-arch=sm_80",
+      "nvcc_path": "/usr/bin/nvcc",
+      "nvcc_version": "12.8 (V12.8.93)",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "price_usd_per_hour": 1.99,
+      "python_version": "3.10.12",
+      "runner_sha256": "46faee5d4265b7cabb92166ae3da9e88d18b5a2f084ce4146aae7a671c661af1",
+      "scipy_lapack_libraries": {
+        "libblas.so.3": {
+          "path": "/lib/x86_64-linux-gnu/libblas.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3"
+        },
+        "liblapack.so.3": {
+          "path": "/lib/x86_64-linux-gnu/liblapack.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3"
+        },
+        "libopenblas.so.0": {
+          "path": "/lib/x86_64-linux-gnu/libopenblas.so.0",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so"
+        }
+      },
+      "scipy_version": "1.8.0",
+      "vcpu_count": 30
+    },
+    "launch_fraction_2e10": 0.7751903391337839,
+    "launch_fraction_2e24": 0.055114508939160756,
+    "lower_quartiles": [
+      8.540829997336468,
+      95.8980333535302,
+      517.49463009562,
+      395.36832393024724,
+      348.28862129983
+    ],
+    "one_reference_only": false,
+    "run_valid": true
+  }
+}

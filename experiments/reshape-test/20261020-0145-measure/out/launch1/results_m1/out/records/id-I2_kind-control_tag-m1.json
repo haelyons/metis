@@ -1,0 +1,35 @@
+{
+  "cell": {
+    "id": "I2",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "NOT_RUN: the run stopped before this stage",
+  "decision_rule": "JAX on GPU and CPU reproduces both held-out values (same bands) AND matches airGR daily flow with MARE < 0.01 on both periods (skipped and labelled if airGR did not run), AND the planted model rows pass: zero rain gives zero quickflow; unit-hydrograph ordinates sum to 1 within 1e-9; mass balance closes within 1e-6 mm over a planted year. PASS, else FAIL (run_valid false from here on).",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [],
+  "metric": "control: JAX reproduces the held-out values and airGR daily flow; planted model rows",
+  "notes": "placeholder so that a missing cell is visible",
+  "threshold": {
+    "generalist_cal_nse": 0.336,
+    "mare_max": 0.01,
+    "mass_balance_tol_mm": 1e-06,
+    "michel_val_nse": 0.57,
+    "tolerance": 0.02,
+    "uh_sum_tol": 1e-09
+  },
+  "values": {
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

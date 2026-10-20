@@ -1,0 +1,31 @@
+{
+  "cell": {
+    "id": "I3",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "NOT_RUN: the run stopped before this stage",
+  "decision_rule": "On each backend, a 100 ms time.sleep measured through the timing harness reads within 95..105 ms: PASS, else FAIL (run_valid false from here on).",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [],
+  "metric": "control: timing harness reads a 100 ms sleep correctly on each backend",
+  "notes": "placeholder so that a missing cell is visible",
+  "threshold": {
+    "sleep_ms": 100.0,
+    "tolerance_ms": 5.0
+  },
+  "values": {
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

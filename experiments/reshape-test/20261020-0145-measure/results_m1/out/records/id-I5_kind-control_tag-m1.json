@@ -1,0 +1,45 @@
+{
+  "cell": {
+    "id": "I5",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "PASS",
+  "decision_rule": "Planted arithmetic: ms 2 with overhead 4 gives main_run_hours 0.2222; ms 20 gives 2.2222; with cpu_hours 3 the speedups are 13.5 and 1.35. PASS if the endpoint code reproduces all four.",
+  "env": {
+    "git_rev": null,
+    "host": "129-159-79-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T04:26:00+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 149684,
+      "n_items": null,
+      "path": "/home/ubuntu/m1_run/run_m1.py",
+      "present": true,
+      "sha256": "98854eeb46d1"
+    }
+  ],
+  "metric": "control: planted arithmetic for the card decision",
+  "notes": "planted rows evaluated by this file's endpoint code",
+  "threshold": {
+    "main_run_hours_ms2": 0.2222,
+    "main_run_hours_ms20": 2.2222,
+    "speedups": [
+      13.5,
+      1.35
+    ]
+  },
+  "values": {
+    "main_run_hours_ms2": 0.2222222222222222,
+    "main_run_hours_ms20": 2.2222222222222223,
+    "run_labels": [
+      "anchor by page value"
+    ],
+    "run_valid": true,
+    "run_void_reasons": [],
+    "speedup_ms2": 13.5,
+    "speedup_ms20": 1.3499999999999999
+  }
+}

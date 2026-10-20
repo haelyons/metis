@@ -1,0 +1,114 @@
+{
+  "cell": {
+    "id": "I10",
+    "kind": "control",
+    "run": "m2"
+  },
+  "decision": "PASS",
+  "decision_rule": "PASS iff the endpoint arithmetic reproduces every planted known decision; otherwise FAIL, void.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-47-224",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T09:51:44+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 138132,
+      "n_items": null,
+      "path": "/home/ubuntu/m2_run/run_m2.py",
+      "present": true,
+      "sha256": "46faee5d4265"
+    }
+  ],
+  "metric": "planted arithmetic for E10 (cost line hours)",
+  "notes": "",
+  "threshold": {
+    "band_hours": [
+      0.67,
+      6.0
+    ]
+  },
+  "values": {
+    "anchor_failed": [],
+    "cases": [
+      {
+        "got": [
+          "REFUTED",
+          "below: the plan over-bought by more than 3x"
+        ],
+        "ok": true,
+        "planted_hours": 0.5,
+        "want": "REFUTED"
+      },
+      {
+        "got": [
+          "HOLDS",
+          null
+        ],
+        "ok": true,
+        "planted_hours": 2,
+        "want": "HOLDS"
+      },
+      {
+        "got": [
+          "REFUTED",
+          "above: the plan under-bought"
+        ],
+        "ok": true,
+        "planted_hours": 7,
+        "want": "REFUTED"
+      }
+    ],
+    "labels": {
+      "baseline": "baseline: one CUDA thread per system, this build's kernel",
+      "blas_lapack_vendor": "unnamed in scipy.show_config (generic blas/lapack names); see scipy_lapack_libraries",
+      "budget_left_usd": 6.0,
+      "card_dramaturg": "card dramaturg: REJECT (3 blocking, citations)",
+      "compile_command": "/usr/bin/nvcc -O3 -shared -Xcompiler -fPIC -o results_m2/build/libm2.so results_m2/build/m2_kernels.cu -lcusparse -lcudart -arch=sm_80",
+      "cuda_driver_api_version": "12.8",
+      "cuda_runtime_version": "12.8",
+      "cuda_runtime_version_runner_library": "12.8",
+      "cuda_runtime_version_via": "cudaRuntimeGetVersion via ctypes on /lib/x86_64-linux-gnu/libcudart.so.12",
+      "cusparse_available": true,
+      "cusparse_note": null,
+      "git_commit": "e7acf90c84dff22d16d35714cdddda98ad75506e",
+      "gpu_device_count": 1,
+      "gpu_driver": "570.148.08",
+      "gpu_memory": "40960 MiB",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "kernel_source_sha256": "bb768a4721c5af56d50446cea6f5289af1ae25f8f339ded20fd7143c233d5354",
+      "lambda_instance_id": "3be4cd7175024dcd8ffa23e50d300409",
+      "libcudart_path": "/lib/x86_64-linux-gnu/libcudart.so.12",
+      "mkl_num_threads": "1",
+      "numpy_version": "1.26.4",
+      "nvcc_arch_flag": "-arch=sm_80",
+      "nvcc_path": "/usr/bin/nvcc",
+      "nvcc_version": "12.8 (V12.8.93)",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "price_usd_per_hour": 1.99,
+      "python_version": "3.10.12",
+      "runner_sha256": "46faee5d4265b7cabb92166ae3da9e88d18b5a2f084ce4146aae7a671c661af1",
+      "scipy_lapack_libraries": {
+        "libblas.so.3": {
+          "path": "/lib/x86_64-linux-gnu/libblas.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3"
+        },
+        "liblapack.so.3": {
+          "path": "/lib/x86_64-linux-gnu/liblapack.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3"
+        },
+        "libopenblas.so.0": {
+          "path": "/lib/x86_64-linux-gnu/libopenblas.so.0",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so"
+        }
+      },
+      "scipy_version": "1.8.0",
+      "vcpu_count": 30
+    },
+    "one_reference_only": false,
+    "run_valid": true
+  }
+}

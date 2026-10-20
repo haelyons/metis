@@ -1,0 +1,141 @@
+{
+  "cell": {
+    "id": "gate_propagation",
+    "kind": "control",
+    "run": "m2"
+  },
+  "decision": "PASS",
+  "decision_rule": "PASS iff a planted Thomas anchor failure (residual 1e-9) labels Thomas rows and writes E3, E4, E5 NOT_READ, and a planted reference disagreement (1e-7) writes run_valid false into every record and row written after it. Otherwise FAIL and run_valid false.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-47-224",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T09:51:44+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 138132,
+      "n_items": null,
+      "path": "/home/ubuntu/m2_run/run_m2.py",
+      "present": true,
+      "sha256": "46faee5d4265"
+    }
+  ],
+  "metric": "planted gate failures: Thomas anchor residual 1e-9; references disagreeing by 1e-7",
+  "notes": "",
+  "threshold": {
+    "reference_difference": 1e-07,
+    "thomas_residual": 1e-09
+  },
+  "values": {
+    "anchor_failed": [],
+    "checks": [
+      {
+        "check": "Thomas failure: endpoints stage completes",
+        "ok": true
+      },
+      {
+        "check": "Thomas residual 1e-9 fails the anchor, PCR passes",
+        "ok": true
+      },
+      {
+        "check": "every Thomas timing row is labelled 'descriptive only; anchor failed'",
+        "ok": true
+      },
+      {
+        "check": "PCR rows are labelled 'anchor passed'",
+        "ok": true
+      },
+      {
+        "check": "E3, E4, E5 are NOT_READ",
+        "ok": true
+      },
+      {
+        "check": "report-only readings E6..E10 are still computed",
+        "ok": true
+      },
+      {
+        "check": "every later record carries the anchor failure",
+        "ok": true
+      },
+      {
+        "check": "run_valid follows the execution note (an anchor failure alone does not void)",
+        "ok": true
+      },
+      {
+        "check": "references at 1e-7 fail E1",
+        "ok": true
+      },
+      {
+        "check": "the record written before the gate keeps run_valid true",
+        "ok": true
+      },
+      {
+        "check": "the row written before the gate keeps run_valid true",
+        "ok": true
+      },
+      {
+        "check": "every record written after the gate has run_valid false",
+        "ok": true
+      },
+      {
+        "check": "every row written after the gate has run_valid false, per-arm files included",
+        "ok": true
+      },
+      {
+        "check": "the summary restates run_valid false",
+        "ok": true
+      }
+    ],
+    "labels": {
+      "baseline": "baseline: one CUDA thread per system, this build's kernel",
+      "blas_lapack_vendor": "unnamed in scipy.show_config (generic blas/lapack names); see scipy_lapack_libraries",
+      "budget_left_usd": 6.0,
+      "card_dramaturg": "card dramaturg: REJECT (3 blocking, citations)",
+      "compile_command": "/usr/bin/nvcc -O3 -shared -Xcompiler -fPIC -o results_m2/build/libm2.so results_m2/build/m2_kernels.cu -lcusparse -lcudart -arch=sm_80",
+      "cuda_driver_api_version": "12.8",
+      "cuda_runtime_version": "12.8",
+      "cuda_runtime_version_runner_library": "12.8",
+      "cuda_runtime_version_via": "cudaRuntimeGetVersion via ctypes on /lib/x86_64-linux-gnu/libcudart.so.12",
+      "cusparse_available": true,
+      "cusparse_note": null,
+      "git_commit": "e7acf90c84dff22d16d35714cdddda98ad75506e",
+      "gpu_device_count": 1,
+      "gpu_driver": "570.148.08",
+      "gpu_memory": "40960 MiB",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "kernel_source_sha256": "bb768a4721c5af56d50446cea6f5289af1ae25f8f339ded20fd7143c233d5354",
+      "lambda_instance_id": "3be4cd7175024dcd8ffa23e50d300409",
+      "libcudart_path": "/lib/x86_64-linux-gnu/libcudart.so.12",
+      "mkl_num_threads": "1",
+      "numpy_version": "1.26.4",
+      "nvcc_arch_flag": "-arch=sm_80",
+      "nvcc_path": "/usr/bin/nvcc",
+      "nvcc_version": "12.8 (V12.8.93)",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "price_usd_per_hour": 1.99,
+      "python_version": "3.10.12",
+      "runner_sha256": "46faee5d4265b7cabb92166ae3da9e88d18b5a2f084ce4146aae7a671c661af1",
+      "scipy_lapack_libraries": {
+        "libblas.so.3": {
+          "path": "/lib/x86_64-linux-gnu/libblas.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3"
+        },
+        "liblapack.so.3": {
+          "path": "/lib/x86_64-linux-gnu/liblapack.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3"
+        },
+        "libopenblas.so.0": {
+          "path": "/lib/x86_64-linux-gnu/libopenblas.so.0",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so"
+        }
+      },
+      "scipy_version": "1.8.0",
+      "vcpu_count": 30
+    },
+    "one_reference_only": false,
+    "run_valid": true
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "cell": {
+    "id": "E6",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "NOT_COMPUTABLE: main_run_hours missing",
+  "decision_rule": "Card gate: pass if main_run_hours <= 6 (measured GPU overhead). Otherwise the card's text applies, 'Stop and replan: full Bayesian 671 is not affordable on one GPU', and every later record is written run_valid false.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [
+    {
+      "n_items": null,
+      "path": "results_m1/out/raw/timing_rows.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "results_m1/out/raw/probe_blocks.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": 2684,
+      "path": "results_m1/out/extract/params_distinct.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "results_m1/out/extract/param_ranges.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": 10593,
+      "path": "results_m1/out/extract/basin.json",
+      "present": false,
+      "sha256": null
+    }
+  ],
+  "metric": "card gate: main_run_hours <= 6",
+  "notes": "",
+  "threshold": {
+    "max_main_run_hours": 6.0
+  },
+  "values": {
+    "hardware": null,
+    "hardware_consistent": null,
+    "main_run_hours": null,
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}

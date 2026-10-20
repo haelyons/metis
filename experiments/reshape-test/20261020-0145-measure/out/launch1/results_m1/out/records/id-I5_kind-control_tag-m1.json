@@ -1,0 +1,47 @@
+{
+  "cell": {
+    "id": "I5",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "PASS",
+  "decision_rule": "Planted arithmetic: ms 2 with overhead 4 gives main_run_hours 0.2222; ms 20 gives 2.2222; with cpu_hours 3 the speedups are 13.5 and 1.35. PASS if the endpoint code reproduces all four.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 131505,
+      "n_items": null,
+      "path": "/home/ubuntu/m1_run/run_m1.py",
+      "present": true,
+      "sha256": "808f056c1b26"
+    }
+  ],
+  "metric": "control: planted arithmetic for the card decision",
+  "notes": "planted rows evaluated by this file's endpoint code",
+  "threshold": {
+    "main_run_hours_ms2": 0.2222,
+    "main_run_hours_ms20": 2.2222,
+    "speedups": [
+      13.5,
+      1.35
+    ]
+  },
+  "values": {
+    "main_run_hours_ms2": 0.2222222222222222,
+    "main_run_hours_ms20": 2.2222222222222223,
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ],
+    "speedup_ms2": 13.5,
+    "speedup_ms20": 1.3499999999999999
+  }
+}

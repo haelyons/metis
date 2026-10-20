@@ -1,0 +1,76 @@
+{
+  "cell": {
+    "id": "E5",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "NO_VERDICT: incomplete run (descriptive reading: None)",
+  "decision_rule": "main_run_hours = 100000 * GPU median ms / 1000 / 3600 * measured GPU overhead; speedup = cpu_671_hours / main_run_hours. Decision if_not if main_run_hours >= 1 OR speedup < 20, else if_lever (the card's expected outcome is refuted). A sensitivity line repeats this with the design overhead 4 on both backends; it does not decide.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [
+    {
+      "n_items": null,
+      "path": "results_m1/out/raw/timing_rows.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "results_m1/out/raw/probe_blocks.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": 2684,
+      "path": "results_m1/out/extract/params_distinct.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": null,
+      "path": "results_m1/out/extract/param_ranges.json",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "n_items": 10593,
+      "path": "results_m1/out/extract/basin.json",
+      "present": false,
+      "sha256": null
+    }
+  ],
+  "metric": "card decision: main_run_hours and GPU-over-CPU speedup",
+  "notes": "",
+  "rows": [],
+  "threshold": {
+    "main_run_hours_min_for_if_not": 1.0,
+    "speedup_min_for_if_lever": 20.0
+  },
+  "values": {
+    "batched_forward_ms": null,
+    "card_expected": "if_not",
+    "cpu_671_hours": null,
+    "cpu_forward_ms": null,
+    "hardware": null,
+    "hardware_consistent": null,
+    "main_run_hours": null,
+    "overhead_cpu": null,
+    "overhead_cpu_per_seed": [],
+    "overhead_gpu": null,
+    "overhead_gpu_per_seed": [],
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ],
+    "sensitivity_overhead_4": null,
+    "speedup": null
+  }
+}

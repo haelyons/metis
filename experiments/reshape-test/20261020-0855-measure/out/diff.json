@@ -1,0 +1,39 @@
+{
+ "departures": [
+  {
+   "id": "D1",
+   "departure": "The card's Thomas baseline is 'tuned with a register-cached recurrence and #pragma unroll'. The build writes one plain single-thread kernel with the recurrence in registers; no further tuning, no unroll search.",
+   "question": "Is the plain one-thread Thomas this build writes the baseline the card meant, or does 'tuned' require a search over variants before timing?"
+  },
+  {
+   "id": "D2",
+   "departure": "The card's p1_anchor else-branch says 'Fix the kernels and re-run the anchor before starting the sweep'. Here no kernel is fixed mid-run: a failing solver's timing rows are labelled descriptive only and E3 is not read for it.",
+   "question": "Should an anchor failure stop the box instead of continuing with labelled descriptive timing?"
+  },
+  {
+   "id": "D3",
+   "departure": "'The PCR/Thomas speedup grows with N' is made operational as speedup(2^24) > speedup(2^10) AND a positive least-squares slope of ln(speedup) against log2(N).",
+   "question": "Is that the reading of 'grows with N' the card's author intended, or should any single decrease between adjacent levels refute growth?"
+  },
+  {
+   "id": "D4",
+   "departure": "Report-only readings added that the card does not decide on: the CPU dgtsv floor (E7), PCR's growth shape (E6), residuals at every level, cuSPARSE ratio (E9), copies ratio (E8).",
+   "question": "Do the added report-only readings stay clearly separated from the card's verdict in every record and in TAKEAWAYS?"
+  },
+  {
+   "id": "D5",
+   "departure": "Timing uses blocks of R back-to-back solves sized to at least 50 ms (the card says five repeats, median; it does not say how a 50-microsecond solve is timed). K for the batched arm is set by a memory rule.",
+   "question": "Does the per-solve time including launch gaps serve the card's comparison at the small levels, or should launch latency be measured and subtracted?"
+  },
+  {
+   "id": "D6",
+   "departure": "The card's dramaturg verdict is REJECT (3 blocking, all citation items). The measurement proceeds on the committed record without a producer resample; the run is labelled 'card dramaturg: REJECT (citations)'.",
+   "question": "Is measuring a REJECT card acceptable when the unsupported items are the very predictions the measurement resolves?"
+  },
+  {
+   "id": "D7",
+   "departure": "Phases p3_block and p4_multi (optional in the card) are not run; the cost comparison (E10) is against the card's l_anchor_sweep line only.",
+   "question": "Accepted that E10 compares only the anchor-plus-sweep line's 'need 2 h'?"
+  }
+ ]
+}

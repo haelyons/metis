@@ -1,0 +1,44 @@
+{
+ "claims": [
+  {
+   "id": "design-core",
+   "grounding": null,
+   "findings": [
+    {
+     "confound": "decidability by construction: forced/impossible endpoint or a different question than the seed",
+     "status": "RULED_OUT",
+     "crux": "E3 has pre-named refuting outcomes (speedup(2^24) < 2, or non-growth) that a real A100 measurement can produce, and the other endpoints (E2 band, E4, E5, E10) also have reachable refutations. The compared quantities are the seed's own Thomas against PCR. This rests on design structure only, because the evidence has no measured numbers."
+    },
+    {
+     "confound": "coordinates and scale: levels N=2^10..2^24, margin-1.0 diagonal dominance, ms units and the 50 ms block rule could in principle make cells degenerate or null",
+     "status": "NEEDS_RUN",
+     "crux": "No measured Thomas/PCR timings exist in the evidence. On paper the scale is non-degenerate: the E3 and E5 outcomes can each go either way, and E2 is likely refuted rather than null. I cannot name a committed number that rules the confound out."
+    }
+   ],
+   "rejected_findings": [],
+   "run_queue": [
+    "Run the specified sweep: thomas_gpu and pcr_gpu at all five levels (N=2^10..2^24). Inspect Thomas ms and PCR ms at 2^10 and 2^24 and the recorded R per row, confirming block times are well above timer resolution and that the speedup is not pinned by launch latency."
+   ],
+   "author_queue": [],
+   "runner_results": null
+  }
+ ],
+ "shared_queue": [],
+ "instrument_queue": [
+  "AUTHOR: validation control for instrument endpoint-1-readout vv1: held-out ground truth for \"E1 anchor: max relative residual of Thomas and PCR at N = 2^10 and 2^14 (seed 0); pairwise relative difference in x against cuSPARSE gtsv2_nopivot and scipy solve_banded; difference between the two references\"",
+  "AUTHOR: validation control for instrument endpoint-2-readout vv1: held-out ground truth for \"E2 card GUESS res_measured = 1e-13: measured max relative residual over the anchor levels and both hand-written solvers\"",
+  "AUTHOR: validation control for instrument endpoint-3-readout vv1: held-out ground truth for \"E3 card decision: speedup(N) = median Thomas ms / median PCR ms; if_lever iff speedup(2^24) >= 2 AND speedup(2^24) > speedup(2^10) AND least-squares slope of ln(speedup) against log2(N) over the five levels > 0; label 'within noise' if the lower quartile of speedup(2^24) over seeds is <= 2\"",
+  "AUTHOR: validation control for instrument endpoint-4-readout vv1: held-out ground truth for \"E4 card GUESS crossover_n = 1,024: smallest level at which the lower quartile over seeds of speedup(N) exceeds 1\"",
+  "AUTHOR: validation control for instrument endpoint-5-readout vv1: held-out ground truth for \"E5 card PROXY speedup_at_nmax = 28: measured speedup(2^24)\"",
+  "AUTHOR: validation control for instrument endpoint-6-readout vv1: held-out ground truth for \"E6 shape of PCR time (report only; tests the card's if_lever sentence 'grows like log2(N)'): g = (median PCR ms at 2^24 / median PCR ms at 2^22)^(1/2)\"",
+  "AUTHOR: validation control for instrument endpoint-7-readout vv1: held-out ground truth for \"E7 CPU-floor reading (report only): E3's rule with median cpu_dgtsv ms in place of Thomas ms\"",
+  "AUTHOR: validation control for instrument endpoint-8-readout vv1: held-out ground truth for \"E8 copies reading (report only; card check 6): batched Thomas ms / single Thomas ms at each level, and throughput factor K / that ratio\"",
+  "AUTHOR: validation control for instrument endpoint-9-readout vv1: held-out ground truth for \"E9 cuSPARSE reading (report only): median cuSPARSE ms at each level and its ratio to hand-written PCR\"",
+  "AUTHOR: validation control for instrument endpoint-10-readout vv1: held-out ground truth for \"E10 card cost line 'need 2 h': on-box wall-clock from the first anchor solve to the last sweep row, hours\""
+ ],
+ "authored": null,
+ "_run": "wf_da9ff4cd-543",
+ "_failures": [
+  "parallel[0] failed: agent type 'triage-reader' not found"
+ ]
+}

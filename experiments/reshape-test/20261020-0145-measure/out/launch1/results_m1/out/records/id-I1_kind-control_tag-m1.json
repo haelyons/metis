@@ -1,0 +1,32 @@
+{
+  "cell": {
+    "id": "I1",
+    "kind": "control",
+    "tag": "m1"
+  },
+  "decision": "NOT_RUN: the run stopped before this stage",
+  "decision_rule": "airGR held-out values: generalist X=(291, 0.30, 109.10, 2.01) on 1990-01-01..1990-02-28 gives NSE 0.336 +/- 0.02 AND the Michel set X=(165.05, 6.46, 422.50, 2.45) on 1990-03-01..1999-12-31 gives NSE 0.57 +/- 0.02: PASS, else FAIL (run_valid false from here on). NOT_RUN if airGR did not run.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-115-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T03:01:42+00:00"
+  },
+  "inputs": [],
+  "metric": "control: airGR reproduces the page's held-out NSE values",
+  "notes": "placeholder so that a missing cell is visible",
+  "threshold": {
+    "generalist_cal_nse": 0.336,
+    "michel_val_nse": 0.57,
+    "tolerance": 0.02
+  },
+  "values": {
+    "run_labels": [
+      "incomplete run: descriptive only, no verdict"
+    ],
+    "run_valid": false,
+    "run_void_reasons": [
+      "pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)"
+    ]
+  }
+}
