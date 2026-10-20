@@ -20,7 +20,13 @@ its result would feed. A loop proposes close variants and keeps a better one.
     CONTRACT.md        the spec
     idea/              the OpenCode runtime
       loop.js          one idea, one round: expand a one-line seed, card,
-                       frame check, three neighbours, screen, better variant
+                       frame check, three neighbours, screen, better variant.
+                       The framer's verdict routes the expansion (COMPUTE-BOUND
+                       deepens, NOT COMPUTE-BOUND widens and asks each option
+                       for a narrowing); src/screen.js gates every option before
+                       ranking (bears on the root question, open compute quantity,
+                       narrowing stated when not compute-bound) and ranks the rest
+                       by the main pick rule; nothing passing is a valid end
       wf.js            runs a dist script with OpenCode models
       frame.js         which programmes would use the result, and how well
       status.js        progress and spend of any run
@@ -55,6 +61,12 @@ COLD START
 2. node dut/pipeline/launch.js <name> loop
    (or card, or frame --card-file <card.md> --root "<question>";
    add --dry-run to see the run folder and command first)
+   A PASS card whose cost rests on a GUESS or PROXY is calibration_required
+   (result.json .calibration). node dut/pipeline/launch.js <name> measure
+   --card <card run dir> compiles that record into a latent_skeptic measure
+   folder (QUESTION.md, SEALED_PREDICTIONS.md, out/triage_args.json); the
+   measure run then resolves each input on a rented box and writes a ledger
+   row (experiments/_meta/LEDGER.jsonl, kind card_number_resolved).
 3. node dut/pipeline/idea/status.js --latest, or /idea-status inside OpenCode.
 4. Read out/loop.md, then each round's card/RESULT.md and frame/frame.md.
 

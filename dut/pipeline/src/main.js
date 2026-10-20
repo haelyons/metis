@@ -461,4 +461,19 @@ const header_counts = {
   })).map(c => CLUSTER[c.pick.key] ?? c.pick.key)).size,
 }
 const result_md = safe('result', () => render_result({ header_counts, table, frontier, cards, inventory, log: LOG }), header_counts)
-return { table, cards, inventory, frontier, log: LOG, result_md, price_sheet: SHEET }
+// calibration state per card (2026-10-21): a judged card whose cost rests on a load-bearing GUESS or PROXY is
+// calibration_required until a measure run resolves each input (ledger kind card_number_resolved); the record carries
+// what the measure run needs: the inputs, their measuring phase and its line, the anchor and the predictions
+const calibration = CTX.map(c => {
+  const ev = c.eval || {}, plan = c.plan || {}
+  const required = (ev.uncertain || []).map(u => {
+    const line = (ev.lines || []).find(l => l.phase === u.measured_by) || null
+    const phase = (plan.phases || []).find(p => p.id === u.measured_by) || null
+    return { id: u.id, basis: u.basis, value: u.value, differs_in: u.differs_in || [], measured_by: u.measured_by || null, cum_spend_through_measured_by: u.cum_spend_through_measured_by ?? null, k_budget: u.k_budget ?? null,
+      phase: phase && { id: phase.id, what: phase.what, gate: phase.gate || null, stop_rule: phase.stop_rule || null }, line: line && { id: line.id, hours: line.hours, usd: line.usd } }
+  })
+  const state = c.halted ? 'not_judged' : !(c.decision && c.decision.result === 'PASS') ? 'rejected' : required.length ? 'calibration_required' : 'no_unmeasured_input'
+  return { key: c.pick.key, title: c.pick.title, state, plan_usd: ev.planned ?? null, required, resolved: [],
+    anchor: plan.anchor || null, predictions: plan.predictions ? { if_lever: plan.predictions.if_lever, if_not: plan.predictions.if_not, noise_rule: plan.predictions.noise_rule, expected: plan.predictions.expected } : null }
+})
+return { table, cards, inventory, frontier, log: LOG, result_md, price_sheet: SHEET, calibration }

@@ -76,11 +76,13 @@ const parallel = thunks => Promise.all(thunks.map(t => Promise.resolve().then(t)
   const r = await fn(args, wrapped, parallel, null, () => {})
   if (r.error) { console.log('RUN ERROR', r); process.exit(1) }
   fs.writeFileSync(path.join(OUT, `RESULT-${mode}.md`), r.result_md)
+  fs.writeFileSync(path.join(OUT, `result-${mode}.json`), JSON.stringify(r))
   const errs = r.log.filter(l => /script error|render .* failed/.test(l))
   const checks = {
     'all four selftests pass': Object.values(selftests).every(x => x.ok),
     'no script errors': !errs.length && !threw,
     'return carries price_sheet (fix 4)': 'price_sheet' in r && (mode === 'nosheet' ? r.price_sheet === null : r.price_sheet.read_at === SHEET.read_at),
+    'calibration record per pick with a state': Array.isArray(r.calibration) && r.calibration.length === r.cards.length && r.calibration.every(c => ['not_judged', 'rejected', 'calibration_required', 'no_unmeasured_input'].includes(c.state)),
     'every card links its producer.md (fix 1)': r.cards.every(c => /\*\*Producer file\.\*\* \[producer\.md\]\(\/b\/seed-1\//.test(c)),
     'Picked column shows rank/n_options (fix 2)': /\| (top|random) \d+\/4 /.test(r.table),
     'seed row and header say seed (fix 6)': /^\| \[seed·idea·1\][^\n]*\| seed \|/m.test(r.table) && r.cards.some(c => c.includes('**1 · an idea from the human.** seed pick')),

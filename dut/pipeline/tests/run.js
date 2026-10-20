@@ -8,7 +8,7 @@ const vm = require('node:vm');
 const assert = require('node:assert/strict');
 
 const ROOT = path.resolve(__dirname, '..');
-const ORDER = ['text', 'schemas', 'cost', 'pick', 'gates', 'render', 'prompts'];
+const ORDER = ['text', 'schemas', 'cost', 'pick', 'gates', 'render', 'prompts', 'screen'];   // screen: the idea loop's gate, not bundled
 const filter = process.argv[2] || null;
 
 let src = '';

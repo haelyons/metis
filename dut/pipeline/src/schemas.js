@@ -66,6 +66,7 @@ const SCHEMA_OPTIONS = {
             description: 'One or two sentences: the chain one answer waits on (what each step waits for, roughly how many steps), how many independent runs the answer needs, how much of one GPU one run keeps busy; whether the steps must run in order, and if not, what change would let them run at the same time, what must be true of the system for that to pay off, and the nearest source that tried it, with its URL. Or "none: <why the work already splits into independent pieces>".',
           },
           source_urls: { type: 'array', items: { type: 'string' }, description: 'At most 3.' },
+          narrowing: { type: 'string', description: 'Optional, asked for by the idea loop when the root question is not compute-bound: what of the root question this option leaves aside, what the computed observable stands in for, and why its answer still moves the root question.' },
         },
         required: ['id', 'title', 'summary', 'root_link', 'compute_open', 'sequential', 'source_urls'],
       },

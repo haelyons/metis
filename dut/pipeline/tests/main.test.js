@@ -142,7 +142,7 @@
   test('main: fixed roots, every pick a row, call options, paths, what the critic and dramaturg see', () => {
     const w = world()
     const r = run(JSON.stringify({ seed: 7, base: '/b', fixed_roots: ['root a', 'root b'], seed_ideas: ['idea one'] }), w)
-    assert.deepEqual(Object.keys(r), ['table', 'cards', 'inventory', 'frontier', 'log', 'result_md', 'price_sheet'])   // price_sheet: integration fix 4
+    assert.deepEqual(Object.keys(r), ['table', 'cards', 'inventory', 'frontier', 'log', 'result_md', 'price_sheet', 'calibration'])   // price_sheet: integration fix 4; calibration: 2026-10-21
     assert.equal(byLabel(w, /^roots:/).length, 0)
     assert.equal(r.cards.length, 9)
     assert.equal(w.picks.length, 9)
