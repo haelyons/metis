@@ -167,3 +167,26 @@ seed:idea:seed: dramaturg (resample): agent returned null
 seed:idea:seed: dramaturg findings failed G-find after a resample; decided as returned
 seed:idea:seed: prose over 240 words (265)
 ```
+## Measured (added 2026-10-20 by the operator; not pipeline output)
+
+The card's load-bearing number, assumed MD throughput per GPU (250 ns/day, PROXY from the Amber JAC benchmark under a 2.4 safety factor), was measured on 2026-10-20 in `../20261020-1020-measure` (latent_skeptic run m3). The card record is untouched: `result.json` sha256 1b461dfd…; ledger rows 5 and 6 in `experiments/_meta/LEDGER.jsonl`; machine form in `../20261020-1020-measure/out/CARD_WRITEBACK_m3.json`.
+
+**What was run.** The card's own p_bench protocol on one molecule: LOPLS-AA, 250 nonylcyclohexane molecules (11,250 atoms), 313.15 K, 2 fs, PPPM, SHAKE, pressure tensor and heat flux every 5 steps. One A100 SXM4 40 GB (the card's GPU), LAMMPS 29Aug2024 compiled on the box with the GPU package (CUDA sm_80, mixed precision), one process, no MPI, no OpenMP threads. Lambda cost USD 3.26 over two launches.
+
+**Result.**
+
+| Card value | Measured | Record |
+|---|---|---|
+| throughput 250 ns/day [p], band 100 to 625 | 12.6 ns/day as written; 18.2 pressure tensor only; 18.4 no sampling | E3 |
+| p_bench gate: throughput ≥ 150 | FAIL (11.9× below) | E3b |
+| plan $940.98; headroom "budget reached if 1.1× lower" | 19.8× lower; plan at the measured rate about $18,700 (the storage line was scaled too, so slightly overstated); cap $1,000 | E3c |
+| scenario "throughput half the proxy" (125 ns/day) → $944.66 | the measured rate is 10× below that scenario | |
+| anchor: density within 4% of 0.805 g/cm3 | 0.795 g/cm3 (−1.2%), within band; 300 ps NPT, last 100 ps averaged | E2 |
+| anchor: eight-molecule Green–Kubo repeat (bias signs, viscosity within 20%) | not measured: one molecule, no viscosity or thermal conductivity computed | |
+| l_dry 4 h to build LAMMPS and dry-run | engine compiled on the box in about 2 min; box packed in 12 s | E7 |
+
+**The card's own fallback does not rescue it at this rate.** The gate's else-branch is "drop the extension tier and re-plan with 48 molecules at 3 replicas". By the card's derivations (ns_per_mol = 2 + 3 × 5 = 17; gpu_h_per_mol = 24 × 17 / throughput; $1.99 per GPU-hour), the 48 core molecules alone cost about $3,100 at 12.6 ns/day and about $2,100 at 18.4 ns/day, before the anchor and scoring phases. Operator arithmetic on the card's formulas, not a pipeline evaluation.
+
+**Caveat that bounds the reading.** The 12.6 ns/day is CPU-bound, not GPU-bound: bonded forces and SHAKE took 63% of wall time on one CPU thread while the GPU's pair work took 5% (post triage, reader: reproduces). On a multi-rank or KOKKOS build the same protocol could run several times faster; that was not measured. The number therefore refutes the card's figure for the engine the card named (LAMMPS, GPU package, a per-GPU rate) and sets a floor, not a ceiling, for this hardware. In atom-steps per second the gap to the Amber proxy is 50 to 100×, far beyond the 2.4 safety factor. Two further engine facts: the equilibration deck does not run under pppm/gpu as written (fix balance refused; its three load-balancing lines were removed), and the per-step sampling costs 32% of throughput (the pressure tensor alone about 1%, the heat flux the rest).
+
+**Pipeline verdict.** The dramaturg PASS 2/2 and the critic scores (lever 4, verifiable 5, open 5, reshape 1, stakes 3) judged citations and design; they stand as made and said nothing about whether 250 was right. The pipeline's own flags pointed the right way and were under-weighted: "thin headroom: the budget is reached if assumed MD throughput per GPU is 1.1× lower"; "uncut plan at the p_bench gate threshold costs $1,450.42, over budget"; the dramaturg's PARTIAL on num:throughput_ns_day (the page says 611.08, not 250). As a plan, the card fails at p_bench by its own rule, and its fallback is over the cap. The scientific question (an error floor near 25%, expected if_not) is untouched: no viscosity or thermal conductivity was computed. Status: PASS as a citation-checked design, FAIL as a priced plan. The re-plan branch is postponed by the owner (2026-10-20).
