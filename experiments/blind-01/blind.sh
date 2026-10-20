@@ -162,7 +162,9 @@ smoke() {   # args: models to try; default: the pipeline's producer and framer m
   local models="${*:-$($PY -c "import json,sys; c=json.load(open(sys.argv[1])); print(' '.join(dict.fromkeys([c['workflow']['main_model'], c['loop']['expand_model'], c['models']['research']])))" "$cfg")}"
   local d; d="$(mktemp -d)"
   for m in $models; do
-    local out; out="$(cd "$d" && XDG_CONFIG_HOME="$ocx" PWD="$d" timeout 120 opencode run --dir "$d" --pure --format json -m "$m" --agent qt-bare --title smoke "Reply with the single word ok" 2>/dev/null | $PY -c "
+    # output goes to a file, not a pipe: a child the server leaves behind can hold a pipe open past the timeout
+    ( cd "$d" && XDG_CONFIG_HOME="$ocx" PWD="$d" timeout -k 5 120 opencode run --dir "$d" --pure --format json -m "$m" --agent qt-bare --title smoke "Reply with the single word ok" > "$d/smoke.jsonl" 2>/dev/null )
+    local out; out="$($PY -c "
 import sys, json
 txt, err = [], []
 for l in sys.stdin:
@@ -171,7 +173,7 @@ for l in sys.stdin:
     p = o.get('part') or {}
     if p.get('type') == 'text': txt.append(p.get('text', ''))
     if o.get('type') == 'error': e = (o.get('error') or {}); err.append(str((e.get('data') or {}).get('message') or e.get('name') or 'error')[:80])
-print('ok' if 'ok' in ''.join(txt).lower() and not err else 'FAILED: ' + ('; '.join(err) or 'no reply within 120 s'))")"
+print('ok' if 'ok' in ''.join(txt).lower() and not err else 'FAILED: ' + ('; '.join(err) or 'no reply within 120 s'))" < "$d/smoke.jsonl")"
     echo "  $m: ${out:-FAILED: no output}"; case "$out" in ok) ;; *) ok=0 ;; esac
   done
   rm -rf "$d"; [ "$ok" = 1 ] && echo "smoke: ok" || { echo "smoke: a model the run needs is not answering; wait and retry, or \`start card --main <model>\` with one that is"; return 1; }
