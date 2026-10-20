@@ -301,6 +301,9 @@ async function producePick(c, dir) {
       c.pick = { ...c.pick, key: other.key, id: other.id, title: other.title }
     }
   }
+  // two cost-record errors REPAIR_EXPR cannot reach (it rewrites expressions only): a number defined under a question-set id,
+  // and a full_scale ratio_to that is not a number id; both are dropped with an annotation before the gate (blind-01, 2026-10-20)
+  plan = sanitizePlan(c, plan)
   // G-plan on the script's own evaluation; one repair call for a broken cost record, then halt
   let ev = cost_eval_plan(plan, GIVEN), g = gate_plan(plan, ev, c.pick, ARGS)
   if (g.action === 'repair') {
@@ -355,6 +358,19 @@ async function producePick(c, dir) {
   // criteria case 17: a lever this strong should decide in some phase
   const lever = (c.critique.scores || []).find(x => x.criterion === 'lever')
   if (c.critique.decides_by === 'none' && lever && typeof lever.value === 'number' && lever.value >= 4) ann(c, 'inconsistent: decides_by none with lever ≥ 4')
+}
+
+// drop what the repair call cannot fix, reading the errors cost_eval_plan reports: a producer number under a question-set
+// id ("reserved … is set by the question") and a full_scale[].ratio_to that names no number ("undefined" at that path)
+function sanitizePlan(c, plan) {
+  const errs = cost_eval_plan(plan, GIVEN).errors || []
+  const given = errs.filter(e => e.kind === 'reserved' && /^numbers\./.test(e.where) && /set by the question/.test(e.msg)).map(e => e.where.slice('numbers.'.length))
+  const bad = errs.filter(e => e.kind === 'undefined' && /^full_scale\.[^.]+\.ratio_to$/.test(e.where)).map(e => e.where.split('.')[1])
+  if (!given.length && !bad.length) return plan   // untouched: the record keeps the producer's own object
+  const p = JSON.parse(JSON.stringify(plan))
+  if (given.length) { p.numbers = (p.numbers || []).filter(n => !given.includes(n.id)); ann(c, `dropped the producer's definition of ${given.join(', ')}: set by the question`) }
+  for (const f of p.full_scale || []) if (bad.includes(f.id) && f.ratio_to) { ann(c, `full_scale.${f.id}.ratio_to dropped: "${f.ratio_to}" is not a number id`); delete f.ratio_to }
+  return p
 }
 
 // apply REPAIR_EXPR to a copy of the plan: new exprs for numbers, new hours/usd/need for lines
