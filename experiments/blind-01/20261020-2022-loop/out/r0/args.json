@@ -1,0 +1,31 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "W1",
+   "title": "In-silico enumeration of capsid–receptor complexes (AlphaFold-class sampling)",
+   "text": "Sampling capsid variant × receptor ectodomain pairs (AAVR PKD domains, LY6A/LY6C1, CA4, ALPL, LRP6, glycans) with AlphaFold-class modelling, docking and refinement to test whether a compact, transferable binding-signature class exists; the one AAV application used AlphaFold-Multimer plus RosettaRemodel and found its predicted PHP.C2–LY6C1 pose depend on the AlphaFold-Multimer version (https://pmc.ncbi.nlm.nih.gov/articles/PMC10115422).",
+   "root_link": "Bears on Q1 (measurability) and on whether a compact transferable binding-signature class exists — framer §6.1.",
+   "compute_open": "More parallel compute buys model runs/seeds per (variant × receptor) pair; the largest sampling reported in a cited source is 480 AlphaFold2 predictions per target (32 seeds × 5 models × 3 runs) (https://www.nature.com/articles/s41467-024-46715-9); above that it is unknown whether more seeds/MSA subsamples converge on one interface footprint or keep alternating, since the only AAV application found the predicted pose change with the AlphaFold-Multimer version (https://pmc.ncbi.nlm.nih.gov/articles/PMC10115422).",
+   "sequential": "none: each (variant × receptor) pair and each seed is an independent prediction job only about three recycle iterations deep, so the enumeration splits directly into independent pieces across GPUs.",
+   "source_urls": [
+    "https://www.nature.com/articles/s41467-024-46715-9",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC10115422"
+   ],
+   "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+   "kind": "physical"
+  }
+ ]
+}

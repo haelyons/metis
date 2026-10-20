@@ -1,0 +1,142 @@
+{
+ "name": "blind-01-r0",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2022-loop/out/r0/card",
+ "script": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2022-loop/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "2dde169831b4a6c725cbbe5caf100201cec04bde7075c4404b0cef1859891c89",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2022-loop/out/r0/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "W1",
+    "title": "In-silico enumeration of capsid–receptor complexes (AlphaFold-class sampling)",
+    "text": "Sampling capsid variant × receptor ectodomain pairs (AAVR PKD domains, LY6A/LY6C1, CA4, ALPL, LRP6, glycans) with AlphaFold-class modelling, docking and refinement to test whether a compact, transferable binding-signature class exists; the one AAV application used AlphaFold-Multimer plus RosettaRemodel and found its predicted PHP.C2–LY6C1 pose depend on the AlphaFold-Multimer version (https://pmc.ncbi.nlm.nih.gov/articles/PMC10115422).",
+    "root_link": "Bears on Q1 (measurability) and on whether a compact transferable binding-signature class exists — framer §6.1.",
+    "compute_open": "More parallel compute buys model runs/seeds per (variant × receptor) pair; the largest sampling reported in a cited source is 480 AlphaFold2 predictions per target (32 seeds × 5 models × 3 runs) (https://www.nature.com/articles/s41467-024-46715-9); above that it is unknown whether more seeds/MSA subsamples converge on one interface footprint or keep alternating, since the only AAV application found the predicted pose change with the AlphaFold-Multimer version (https://pmc.ncbi.nlm.nih.gov/articles/PMC10115422).",
+    "sequential": "none: each (variant × receptor) pair and each seed is an independent prediction job only about three recycle iterations deep, so the enumeration splits directly into independent pieces across GPUs.",
+    "source_urls": [
+     "https://www.nature.com/articles/s41467-024-46715-9",
+     "https://pmc.ncbi.nlm.nih.gov/articles/PMC10115422"
+    ],
+    "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+    "kind": "physical"
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/mimo-v2.6-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "3b4b5e52e361dae09b953c22ebe3b15b8af836c7",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-20T20:48:30.728Z",
+ "finished": "2026-10-20T21:11:11.184Z",
+ "totals": {
+  "cost_usd": 0.11700743500000002,
+  "tokens": 221971,
+  "calls": 3,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 2,
+    "cost_usd": 0.012555960000000001,
+    "tokens": 39374
+   },
+   "opencode-go/mimo-v2.6-pro": {
+    "calls": 1,
+    "cost_usd": 0.10445147500000002,
+    "tokens": 182597
+   }
+  }
+ }
+}
