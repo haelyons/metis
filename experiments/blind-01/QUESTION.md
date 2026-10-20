@@ -1,19 +1,29 @@
-# blind-01
-
-<!-- Fill this file outside the Claude session (your editor), so the operator does not see it.
-     1. Replace the FILL ME lines. Keep the colleague's own words verbatim; paraphrase nothing.
-     2. Then edit seed.json the same way and run: bash experiments/blind-01/blind.sh check
-     3. Kick off: bash experiments/blind-01/blind.sh start        (loop; or `start card`)
-     Delete this comment when done. The run kind and date are appended below by blind.sh. -->
+# blind-0
 
 ## Where it came from
 
-FILL ME: who raised it (role, not name, is fine), when, and in what form (chat messages, a call, a note).
+Raised by a PhD student colleague at UCL as a short chat/verbal idea about his lab’s AAV capsid work; refined over a follow-up exchange into a one-line research question he confirmed was “very close to his PhD.”
 
-## The problem, verbatim
+## The problem, near-verbatim
 
-FILL ME: the messages as written, in order. One block per message.
+> “Basically molecularly mapping the interaction between an agent (the ones we use in the lab) and surface receptors. To understand why certain variants can pass through a cell to the other side while others remain inside the cell. But it's complex and requires a dataset that I'm not sure how to obtain”
 
 ## Root question (one line)
 
-FILL ME: the question in the asker's words; the same line goes in seed.json as root_question.
+Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?
+
+## Starting comparison (open)
+
+A matched transcytosing-vs-retained AAV capsid pair in a brain endothelial barrier model, with receptor-binding and transcytosis readouts from the same system — suggested only as a first comparison; the workflow may find others.
+
+## Run
+
+20261020-1909-claude · kind claude · 2026-10-20
+
+## Run
+
+20261020-1915-loop · kind loop · 2026-10-20
+
+## Run
+
+20261020-1922-card · kind card · 2026-10-20

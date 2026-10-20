@@ -1,0 +1,62 @@
+{
+ "card": "blind-01",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-1922-card/out",
+ "stage": "done",
+ "started": "2026-10-20T19:22:41.058Z",
+ "calls": [
+  {
+   "id": "0001 run:price-sheet",
+   "stage": "Frame",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 55504,
+   "cost_usd": 0.009702849999999999,
+   "tokens": 39026,
+   "errors": []
+  },
+  {
+   "id": "0002 seed:idea:seed:producer",
+   "stage": "Produce",
+   "model": "opencode-go/mimo-v2.6-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 1645947,
+   "cost_usd": 0.151714167,
+   "tokens": 260561,
+   "errors": []
+  },
+  {
+   "id": "0003 seed:idea:seed:repair-expr",
+   "stage": "Produce",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 244558,
+   "cost_usd": 0.00829105,
+   "tokens": 21914,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.169708067,
+ "tokens": 321501,
+ "by_model": {
+  "opencode-go/glm-5.3-flash": {
+   "calls": 2,
+   "cost_usd": 0.0179939,
+   "tokens": 60940
+  },
+  "opencode-go/mimo-v2.6-pro": {
+   "calls": 1,
+   "cost_usd": 0.151714167,
+   "tokens": 260561
+  }
+ },
+ "done": true,
+ "updated": "2026-10-20T19:55:12.916Z",
+ "go": [
+  "opencode-go/glm-5.3-flash: $0.018 over 2 calls = 0.0% of its $60 monthly cap, 0.1% of a 5-hour window",
+  "opencode-go/mimo-v2.6-pro: $0.152 over 1 calls"
+ ]
+}

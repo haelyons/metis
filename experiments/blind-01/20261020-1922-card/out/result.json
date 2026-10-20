@@ -1,0 +1,181 @@
+{
+ "table": "| Pick | Result | Picked | Expected | Lever | Open → | Stakes → | Verifiable | Internals | Reshape → | Baseline | Decides at |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| [seed·idea·1](#card-seed-idea-1) Mapping AAV capsid-receptor interactions to explain barrier transcytosis versus intracellular retention | halted: cost record broken | seed | if_not | — | — → — | — → — | — | — | — → — | — | not judged · plan $0 · 0 GUESS |",
+ "cards": [
+  "<a id=\"card-seed-idea-1\"></a>**B1 · Mapping AAV capsid-receptor interactions to explain barrier transcytosis versus intracellular retention.** seed pick · compute tested: yes · plan expects: not the lever · halted: cost record broken\n\n**Question.** Which capsid-receptor binding signatures distinguish AAV variants that transcytose brain microvascular endothelial cells from those retained inside, and can a model predict this?\n\n**What is known.** A published in-silico AAV design method (ALICE) mapped receptor binding and CNS tropism for 6,387 capsid sequences [src_alice]; it never separated transcytosis from endothelial retention. No published dataset matches computed capsid-receptor binding signatures to transcytosis versus intracellular retention in brain endothelial cells at more than a handful of capsids [src_merkel2016].\n\n**Hypothesis.** Capsid-receptor binding signatures, not sequence alone, will classify which variants cross brain endothelium because receptor engagement drives transcytosis [src_tfr1_2023].\n\n**Restructuring.** Adaptive selection rounds: each of four rounds waits on the previous model before scoring its 250 pairs. Pair signatures do not depend on the model, so all four rounds' pairs are scored in one batch instead of sequentially.\n\n**If compute is the lever.** At 4,000 scored pairs accuracy reaches >=0.80, beating 1,000 pairs by >=0.10; batching takes 16 hours versus 64 for four sequential rounds.\n\n**If not.** Accuracy stays <=0.65 at 250, 1,000 and 4,000 pairs; sequential selection hits that ceiling at 1,000 pairs, so batching buys speed only.\n\n**Test.** Score 250, 1,000, 4,000 capsid-receptor pairs for binding signatures; classify published transcytosis versus retention under leave-one-capsid-family-out folds against sequence-only and affinity-rank baselines; time batch scoring versus four-round sequential scoring and side-by-side copies.\n\n*Compute axis.* Capsid-receptor pair signature evaluations the answer needs: 250–4,000 pair evaluations, 3 levels. Closest prior: 6,387 [src_alice].\n\n**Check first.** Predicted AAV1-AAVR contacts match published cryo-EM residues, and batch scoring matches four-round sequential accuracy within 0.03 [src_zhang2019]. Tolerance: contact-residue recall >=0.80 within 5 Angstrom; correct AAV1-over-AAV2 affinity order; |batch minus sequential| balanced accuracy <=0.03.\n\n**Would not show.** Labels come from few published capsids, so accuracy intervals are wide. Predicted signatures are structural approximations, not measured affinities. No wet-lab BMEC validation is paid for here.\n\n*Cost.* The cost record did not evaluate (2 errors); see the cost block.\n\n**Halted at cost record broken.** undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id\n\n**Cost block.**\n```\nCOST: computed by the pipeline from the plan's inputs\nTags: [q] set by the question [c] cited [p] cited for a different setting [m] measured by the producer [d] plan's choice [g] guess [=] computed\nBudget     [q] $1,000 Lambda on-demand credit · storage covered · tax not covered · prices read 2026-10-20\nErrors     undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id\n           quote at numbers.sec_pair_seed.quote: 20 does not appear in the quote \"NVIDIA H100 80GB HBM3 | 4.60 | 20.03 | 42.66 | 97.04\"; a value transformed from the page belongs in a DERIVED number\n```\n\n**Derivations.**\n```\nDerivations: the cost record did not evaluate.\n```\n\n**Producer says (not judged).** expected if_not (Matched published transcytosis-versus-retention labels number in the tens [src_merkel2016][src_tfr1_2023], so extra scored pairs densify features without adding label information.); compute_tested yes (The axis is the number of capsid-receptor pair signature evaluations (250, 1,000, 4,000), which parallel GPUs buy directly, and classifier accuracy is measured at each level.); decides no; searched yes.\n\n**Annotations.**\n- cost record repaired: 1 expression(s) rewritten; unknown ids ignored: fs_wetlab_panel\n- quote at numbers.sec_pair_seed.quote: 20 does not appear in the quote \"NVIDIA H100 80GB HBM3 | 4.60 | 20.03 | 42.66 | 97.04\"; a value transformed from the page belongs in a DERIVED number\n- prose over 280 words (286)\n\n**Root question (null).** Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?\n\n**Producer file.** [producer.md](/home/hal/dev/interp/metis/experiments/blind-01/20261020-1922-card/out/work/seed-1/seed/idea/0bdd3c5c/producer.md)"
+ ],
+ "inventory": "| Option | Title | Distance | Cluster | Total | Status | Reason |\n|---|---|---|---|---|---|---|",
+ "frontier": "None.",
+ "log": [
+  "pool: 0 candidate cluster(s); picked 0",
+  "seed:idea:seed: G-plan repair: undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id",
+  "seed:idea:seed: cost record repaired: 1 expression(s) rewritten; unknown ids ignored: fs_wetlab_panel",
+  "seed:idea:seed: quote at numbers.sec_pair_seed.quote: 20 does not appear in the quote \"NVIDIA H100 80GB HBM3 | 4.60 | 20.03 | 42.66 | 97.04\"; a value transformed from the page belongs in a DERIVED number",
+  "seed:idea:seed: halted at cost record broken: undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id",
+  "seed:idea:seed: prose over 280 words (286)"
+ ],
+ "result_md": "# Result\n\nPicks 1 · PASS 0 · on-goal cards U4 0 · U3 0 · halts: cost record broken 1\n\n## Table\n\n| Pick | Result | Picked | Expected | Lever | Open → | Stakes → | Verifiable | Internals | Reshape → | Baseline | Decides at |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| [seed·idea·1](#card-seed-idea-1) Mapping AAV capsid-receptor interactions to explain barrier transcytosis versus intracellular retention | halted: cost record broken | seed | if_not | — | — → — | — → — | — | — | — → — | — | not judged · plan $0 · 0 GUESS |\n\n## Frontier (listed, not produced)\n\nNone.\n\n## Cards\n\n<a id=\"card-seed-idea-1\"></a>**B1 · Mapping AAV capsid-receptor interactions to explain barrier transcytosis versus intracellular retention.** seed pick · compute tested: yes · plan expects: not the lever · halted: cost record broken\n\n**Question.** Which capsid-receptor binding signatures distinguish AAV variants that transcytose brain microvascular endothelial cells from those retained inside, and can a model predict this?\n\n**What is known.** A published in-silico AAV design method (ALICE) mapped receptor binding and CNS tropism for 6,387 capsid sequences [src_alice]; it never separated transcytosis from endothelial retention. No published dataset matches computed capsid-receptor binding signatures to transcytosis versus intracellular retention in brain endothelial cells at more than a handful of capsids [src_merkel2016].\n\n**Hypothesis.** Capsid-receptor binding signatures, not sequence alone, will classify which variants cross brain endothelium because receptor engagement drives transcytosis [src_tfr1_2023].\n\n**Restructuring.** Adaptive selection rounds: each of four rounds waits on the previous model before scoring its 250 pairs. Pair signatures do not depend on the model, so all four rounds' pairs are scored in one batch instead of sequentially.\n\n**If compute is the lever.** At 4,000 scored pairs accuracy reaches >=0.80, beating 1,000 pairs by >=0.10; batching takes 16 hours versus 64 for four sequential rounds.\n\n**If not.** Accuracy stays <=0.65 at 250, 1,000 and 4,000 pairs; sequential selection hits that ceiling at 1,000 pairs, so batching buys speed only.\n\n**Test.** Score 250, 1,000, 4,000 capsid-receptor pairs for binding signatures; classify published transcytosis versus retention under leave-one-capsid-family-out folds against sequence-only and affinity-rank baselines; time batch scoring versus four-round sequential scoring and side-by-side copies.\n\n*Compute axis.* Capsid-receptor pair signature evaluations the answer needs: 250–4,000 pair evaluations, 3 levels. Closest prior: 6,387 [src_alice].\n\n**Check first.** Predicted AAV1-AAVR contacts match published cryo-EM residues, and batch scoring matches four-round sequential accuracy within 0.03 [src_zhang2019]. Tolerance: contact-residue recall >=0.80 within 5 Angstrom; correct AAV1-over-AAV2 affinity order; |batch minus sequential| balanced accuracy <=0.03.\n\n**Would not show.** Labels come from few published capsids, so accuracy intervals are wide. Predicted signatures are structural approximations, not measured affinities. No wet-lab BMEC validation is paid for here.\n\n*Cost.* The cost record did not evaluate (2 errors); see the cost block.\n\n**Halted at cost record broken.** undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id\n\n**Cost block.**\n```\nCOST: computed by the pipeline from the plan's inputs\nTags: [q] set by the question [c] cited [p] cited for a different setting [m] measured by the producer [d] plan's choice [g] guess [=] computed\nBudget     [q] $1,000 Lambda on-demand credit · storage covered · tax not covered · prices read 2026-10-20\nErrors     undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id\n           quote at numbers.sec_pair_seed.quote: 20 does not appear in the quote \"NVIDIA H100 80GB HBM3 | 4.60 | 20.03 | 42.66 | 97.04\"; a value transformed from the page belongs in a DERIVED number\n```\n\n**Derivations.**\n```\nDerivations: the cost record did not evaluate.\n```\n\n**Producer says (not judged).** expected if_not (Matched published transcytosis-versus-retention labels number in the tens [src_merkel2016][src_tfr1_2023], so extra scored pairs densify features without adding label information.); compute_tested yes (The axis is the number of capsid-receptor pair signature evaluations (250, 1,000, 4,000), which parallel GPUs buy directly, and classifier accuracy is measured at each level.); decides no; searched yes.\n\n**Annotations.**\n- cost record repaired: 1 expression(s) rewritten; unknown ids ignored: fs_wetlab_panel\n- quote at numbers.sec_pair_seed.quote: 20 does not appear in the quote \"NVIDIA H100 80GB HBM3 | 4.60 | 20.03 | 42.66 | 97.04\"; a value transformed from the page belongs in a DERIVED number\n- prose over 280 words (286)\n\n**Root question (null).** Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?\n\n**Producer file.** [producer.md](/home/hal/dev/interp/metis/experiments/blind-01/20261020-1922-card/out/work/seed-1/seed/idea/0bdd3c5c/producer.md)\n\n## Inventory\n\n| Option | Title | Distance | Cluster | Total | Status | Reason |\n|---|---|---|---|---|---|---|\n\n## Log\n\n```\npool: 0 candidate cluster(s); picked 0\nseed:idea:seed: G-plan repair: undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id\nseed:idea:seed: cost record repaired: 1 expression(s) rewritten; unknown ids ignored: fs_wetlab_panel\nseed:idea:seed: quote at numbers.sec_pair_seed.quote: 20 does not appear in the quote \"NVIDIA H100 80GB HBM3 | 4.60 | 20.03 | 42.66 | 97.04\"; a value transformed from the page belongs in a DERIVED number\nseed:idea:seed: halted at cost record broken: undefined at full_scale.fs_wetlab_panel.ratio_to: \"budget_usd\" is not a number id\nseed:idea:seed: prose over 280 words (286)\n```",
+ "price_sheet": {
+  "read_at": "2026-10-20",
+  "instances": [
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 6.69,
+    "page_text": "8x — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | vCPUs 208 | RAM 2900 GiB | STORAGE 2 TiB SSD | PRICE/GPU/HR* $6.69"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 3.99,
+    "page_text": "8x — NVIDIA H100 SXM | VRAM/GPU 80 GB | vCPUs 208 | RAM 1800 GiB | STORAGE 2 TiB SSD | PRICE/GPU/HR* $3.99"
+   },
+   {
+    "gpu": "NVIDIA A100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 2.79,
+    "page_text": "8x — NVIDIA A100 SXM | VRAM/GPU 80 GB | vCPUs 240 | RAM 1800 GiB | STORAGE 19.5 TiB SSD | PRICE/GPU/HR* $2.79"
+   },
+   {
+    "gpu": "NVIDIA A100 SXM",
+    "gpu_memory_gb": 40,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "8x — NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $1.99"
+   },
+   {
+    "gpu": "NVIDIA Tesla V100",
+    "gpu_memory_gb": 16,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 0.79,
+    "page_text": "8x — NVIDIA Tesla V100 | VRAM/GPU 16 GB | vCPUs 88 | RAM 448 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $0.79"
+   },
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 6.79,
+    "page_text": "4x — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | vCPUs 104 | RAM 1440 GiB | STORAGE 11 TiB SSD | PRICE/GPU/HR* $6.79"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 4.09,
+    "page_text": "4x — NVIDIA H100 SXM | VRAM/GPU 80 GB | vCPUs 104 | RAM 900 GiB | STORAGE 11 TiB SSD | PRICE/GPU/HR* $4.09"
+   },
+   {
+    "gpu": "NVIDIA A100 PCIe",
+    "gpu_memory_gb": 40,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "4x — NVIDIA A100 PCIe | VRAM/GPU 40 GB | vCPUs 120 | RAM 900 GiB | STORAGE 1 TiB SSD | PRICE/GPU/HR* $1.99"
+   },
+   {
+    "gpu": "NVIDIA A6000",
+    "gpu_memory_gb": 48,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 1.09,
+    "page_text": "4x — NVIDIA A6000 | VRAM/GPU 48 GB | vCPUs 56 | RAM 400 GiB | STORAGE 1 TiB SSD | PRICE/GPU/HR* $1.09"
+   },
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 6.89,
+    "page_text": "2x — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | vCPUs 52 | RAM 720 GiB | STORAGE 5.5 TiB SSD | PRICE/GPU/HR* $6.89"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 4.19,
+    "page_text": "2x — NVIDIA H100 SXM | VRAM/GPU 80 GB | vCPUs 52 | RAM 450 GiB | STORAGE 5.5 TiB SSD | PRICE/GPU/HR* $4.19"
+   },
+   {
+    "gpu": "NVIDIA A100 PCIe",
+    "gpu_memory_gb": 40,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "2x — NVIDIA A100 PCIe | VRAM/GPU 40 GB | vCPUs 60 | RAM 450 GiB | STORAGE 1 TiB SSD | PRICE/GPU/HR* $1.99"
+   },
+   {
+    "gpu": "NVIDIA A6000",
+    "gpu_memory_gb": 48,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 1.09,
+    "page_text": "2x — NVIDIA A6000 | VRAM/GPU 48 GB | vCPUs 28 | RAM 200 GiB | STORAGE 1 TiB SSD | PRICE/GPU/HR* $1.09"
+   },
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 6.99,
+    "page_text": "1x — NVIDIA B200 SXM6 | VRAM/GPU 180 GB | vCPUs 26 | RAM 360 GiB | STORAGE 2.75 TiB SSD | PRICE/GPU/HR* $6.99"
+   },
+   {
+    "gpu": "NVIDIA GH200",
+    "gpu_memory_gb": 96,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 2.29,
+    "page_text": "1x — NVIDIA GH200 | VRAM/GPU 96 GB | vCPUs 64 | RAM 432 GiB | STORAGE 4 TiB SSD | PRICE/GPU/HR* $2.29"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 4.29,
+    "page_text": "1x — NVIDIA H100 SXM | VRAM/GPU 80 GB | vCPUs 26 | RAM 225 GiB | STORAGE 2.75 TiB SSD | PRICE/GPU/HR* $4.29"
+   },
+   {
+    "gpu": "NVIDIA H100 PCIe",
+    "gpu_memory_gb": 80,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 3.29,
+    "page_text": "1x — NVIDIA H100 PCIe | VRAM/GPU 80 GB | vCPUs 26 | RAM 225 GiB | STORAGE 1 TiB SSD | PRICE/GPU/HR* $3.29"
+   },
+   {
+    "gpu": "NVIDIA A100 SXM",
+    "gpu_memory_gb": 40,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "1x — NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 30 | RAM 220 GiB | STORAGE 512 GiB SSD | PRICE/GPU/HR* $1.99"
+   },
+   {
+    "gpu": "NVIDIA A100 PCIe",
+    "gpu_memory_gb": 40,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "1x — NVIDIA A100 PCIe | VRAM/GPU 40 GB | vCPUs 30 | RAM 225 GiB | STORAGE 512 GiB SSD | PRICE/GPU/HR* $1.99"
+   },
+   {
+    "gpu": "NVIDIA A10",
+    "gpu_memory_gb": 24,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.29,
+    "page_text": "1x — NVIDIA A10 | VRAM/GPU 24 GB | vCPUs 30 | RAM 226 GiB | STORAGE 1.3 TiB SSD | PRICE/GPU/HR* $1.29"
+   },
+   {
+    "gpu": "NVIDIA A6000",
+    "gpu_memory_gb": 48,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.09,
+    "page_text": "1x — NVIDIA A6000 | VRAM/GPU 48 GB | vCPUs 14 | RAM 100 GiB | STORAGE 512 GiB SSD | PRICE/GPU/HR* $1.09"
+   },
+   {
+    "gpu": "NVIDIA Quadro RTX 6000",
+    "gpu_memory_gb": 24,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 0.69,
+    "page_text": "1x — NVIDIA Quadro RTX 6000 | VRAM/GPU 24 GB | vCPUs 14 | RAM 46 GiB | STORAGE 512 GiB SSD | PRICE/GPU/HR* $0.69"
+   }
+  ],
+  "filesystem": {
+   "usd_gib_month": 0.2,
+   "page_text": "Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00. If you use 1,000 GiB continuously for a full day (24 hours), you'll be billed $6.67. Important: The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.",
+   "example": true
+  }
+ }
+}
