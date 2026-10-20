@@ -5,8 +5,9 @@
 # dollars, attempts, error kinds, PASS/REJECT and scores). Content fields are never printed here.
 #
 #   bash blind.sh check                     seed.json and QUESTION.md filled and well-formed; node present
-#   bash blind.sh start [claude] [--dry-run]  Claude route (default): a headless Claude Code operator session
-#                                           (claude -p --model opus, cwd /home/hal/stage so the qt-* roles resolve)
+#   bash blind.sh start [claude] [--dry-run] [--model opus|sonnet]
+#                                           Claude route (default): a headless Claude Code operator session (claude -p,
+#                                           model opus unless given; cwd /home/hal/stage so the qt-* roles resolve)
 #                                           runs dist/question_tree_v2.js through the Workflow tool and writes
 #                                           out/return.json and out/RESULT.md; --dry-run prepares the folder only
 #   bash blind.sh start loop|card [--main m]  OpenCode route via dut/pipeline/launch.js (loop expands a thin seed)
@@ -47,8 +48,10 @@ PYEOF
 }
 
 # ---------- Claude route ----------
-start_claude() {
-  local dry=0; [ "${1:-}" = "--dry-run" ] && dry=1
+start_claude() {   # options: --dry-run, --model <opus|sonnet> (operator model; agents without a pin inherit it)
+  local dry=0 model=opus
+  while [ $# -gt 0 ]; do case "$1" in --dry-run) dry=1 ;; --model) model="${2:-}"; shift ;; *) echo "start claude: unknown option $1"; return 2 ;; esac; shift; done
+  case "$model" in opus|sonnet) ;; *) echo "start claude: --model must be opus or sonnet (owner rule: no Fable agents)"; return 2 ;; esac
   check || return 1
   command -v claude >/dev/null || { echo "claude not on PATH"; return 1; }
   [ -f "$STAGE/.claude/agents/qt-producer.md" ] || { echo "start: qt-* role files missing in $STAGE/.claude/agents"; return 1; }
@@ -86,18 +89,18 @@ EOF2
 # $NAME · claude · $stamp
 
 Pipeline: copy of dut/pipeline/dist/question_tree_v2.js at commit $commit$dirty (sha256 $sha…), in ./pipeline (read-only), run by the Claude Code Workflow runtime.
-Operator: headless Claude Code session (claude -p --model opus --dangerously-skip-permissions, cwd $STAGE so the qt-* role files resolve), session $sid, following ./OPERATOR.md.
+Operator: headless Claude Code session (claude -p --model $model --dangerously-skip-permissions, cwd $STAGE so the qt-* role files resolve), session $sid, following ./OPERATOR.md.
 Transcripts: ~/.claude/projects/-home-hal-stage/$sid/subagents/workflows/<run id>/ (journal.jsonl, agent-*.jsonl, agent-*.meta.json).
-Models: agents without a pin (producer, framer, branch, option critic, dramaturg, roots) inherit the operator's opus; pinned ones (price sheet, overlap, dedup, extract, repairs, critic) run sonnet.
+Models: agents without a pin (producer, framer, branch, option critic, dramaturg, roots) inherit the operator's $model; pinned ones (price sheet, overlap, dedup, extract, repairs, critic) run sonnet.
 Seed: ../seed.json · args: ./args.json · base: ./out/work
 Outputs: ./out/return.json and ./out/RESULT.md (written by the operator) · operator stdout: ./operator.out
 EOF2
   if [ $dry = 1 ]; then echo "prepared (not started): $run"; return 0; fi
-  ( cd "$STAGE" && setsid nohup claude -p --model opus --session-id "$sid" --dangerously-skip-permissions --output-format json \
+  ( cd "$STAGE" && setsid nohup claude -p --model "$model" --session-id "$sid" --dangerously-skip-permissions --output-format json \
       "The task that follows is my request. Do it as written. Read $run/OPERATOR.md with the Read tool and follow it exactly." \
       > "$run/operator.out" 2> "$run/operator.err" < /dev/null & )
   sleep 3; local pid; pid="$(pgrep -f "session-id $sid" | head -1)"
-  echo "$(date -u +%FT%TZ) start claude $(basename "$run") pid ${pid:-?} session $sid" >> "$EXP/RUNS.txt"
+  echo "$(date -u +%FT%TZ) start claude --model $model $(basename "$run") pid ${pid:-?} session $sid" >> "$EXP/RUNS.txt"
   printf '\n## Run\n\n%s · kind claude · %s\n' "$(basename "$run")" "$(date -u +%F)" >> "$EXP/QUESTION.md"
   echo "started: $(basename "$run") (operator pid ${pid:-?}); monitor with: bash $EXP/blind.sh status"
 }
@@ -258,8 +261,8 @@ wait_run() {
 case "${1:-}" in
   check) check ;;
   smoke) shift; smoke "$@" ;;
-  start) shift; case "${1:-claude}" in claude) shift || true; start_claude "$@" ;; loop|card) start_opencode "$@" ;; --dry-run) start_claude "$@" ;; *) echo "kind must be claude, loop or card"; exit 2 ;; esac ;;
+  start) shift; case "${1:-claude}" in claude) shift || true; start_claude "$@" ;; loop|card) start_opencode "$@" ;; --dry-run|--model) start_claude "$@" ;; *) echo "kind must be claude, loop or card"; exit 2 ;; esac ;;
   status) shift; status "$@" ;;
   wait) shift; wait_run "$@" ;;
-  *) sed -n '2,15p' "$0"; exit 2 ;;
+  *) sed -n '2,16p' "$0"; exit 2 ;;
 esac
