@@ -1,0 +1,99 @@
+I have fetched all four source pages. The Wiley page for the Laloy & Vrugt paper returns HTTP 403 (bot-blocked) on both `/full/` and `/abs/`; an alternate PDF copy is binary and not text-extractable, so that quote cannot be verified.
+
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "note": "Research question the plan will measure; needs no source. The embedded '671 CAMELS catchments' is corroborated by the CAMELS page (also the plan's num:camels_n source)."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Hypothesis/prediction about GPU batching; no source required. The '671' figure is corroborated by the CAMELS page."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Plan's own MCMC design settings (100,000 serial proposal-accept steps, 4 chains per catchment); no external factual claim to source."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Method/design statement; 4 chains x 671 catchments = 2,684 chains is internally consistent arithmetic. No external fact to source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Conditional prediction ('if compute is the lever'); no source required for what the plan predicts."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Conditional prediction ('if compute is not the lever'); no source required."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Test/measurement plan (4 chains x 1e5 iterations, R-hat<1.2); no source required for what the plan will measure. '671 CAMELS catchments' corroborated by the CAMELS page."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "Quote appears verbatim. Page (Freitas, Mendes, Ilic 2022) is on the MGB hydrological model and MOCOM-UA (Multi-Objective Complex Evolution) calibration for two watersheds — a distributed model with an evolutionary optimizer, i.e. not batched MCMC across GR4J catchments. Supports '20x CPU speedup for calibration on one distributed model'."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "The cited source (s_mgb) describes a single paper (MGB + MOCOM-UA, 20x CPU). It cannot establish the universal negative claim that 'no published result times batched GPU MCMC on all 671 CAMELS catchments'; a single paper's difference is not evidence of absence."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "The parameter set corresponding to the best criterion is the following: X1 X2 X3 X4 = 165.05 6.46 422.50 2.45 ... The Nash-Sutcliffe Efficiency criterion computed on the calibration period is better (0.495) than with the generalist parameter sets.",
+      "note": "Page shows GR4J parameter set (165.05, 6.46, 422.50, 2.45) giving calibration NSE 0.495. Value 0.495 matches the page."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Scope/limits statement (GR4J only, US CAMELS, no single-chain mixing analysis); no external factual claim requiring a source."
+    },
+    {
+      "ref": "src:s_airgr_nse",
+      "status": "SUPPORTED",
+      "page_quote": "The Nash-Sutcliffe Efficiency criterion computed on the calibration period is better (0.495) than with the generalist parameter sets, but the one computed on the validation period is lower (0.57).",
+      "note": "Recorded quote appears verbatim (as the leading clause). Supports anchor_nse = 0.495."
+    },
+    {
+      "ref": "src:s_mgb",
+      "status": "SUPPORTED",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "Recorded quote appears verbatim in the abstract. Supports speedup_threshold = 20 (PROXY) for the calibration case."
+    },
+    {
+      "ref": "num:camels_n",
+      "status": "SUPPORTED",
+      "page_quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "note": "Recorded quote appears verbatim; page states 671 catchments.",
+      "page_value": 671
+    },
+    {
+      "ref": "num:dist_evals_per_catchment",
+      "status": "UNREACHABLE",
+      "page_quote": "",
+      "note": "Source URL (agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2011WR010608) returns HTTP 403 on both /full/ and /abs/; page could not be fetched to confirm the '50 million surrogate model evaluations' quote. An alternate PDF copy of the paper is binary and not text-extractable via the fetch tool."
+    }
+  ]
+}
+```

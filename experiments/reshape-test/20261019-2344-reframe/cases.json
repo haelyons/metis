@@ -1,0 +1,8 @@
+[
+ {
+  "id": "rr",
+  "root_question": "What limits Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains? Is compute a major blocker at some level, and could that be fixed with a shit ton of GPU parallelism?",
+  "input": "Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.",
+  "criterion": "It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count."
+ }
+]

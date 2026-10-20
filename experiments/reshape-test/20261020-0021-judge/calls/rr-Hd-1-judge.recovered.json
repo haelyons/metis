@@ -1,0 +1,37 @@
+[
+ {
+  "index": 1,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "Keep the daily recurrence exactly but vectorize the state update over thousands of parameter sets or catchments on a GPU",
+  "reason": "Daily time-step dependency is kept; parallelism only runs independent parameter sets side by side."
+ },
+ {
+  "index": 2,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "Replace one long chain with hundreds of independent chains launched together on a GPU",
+  "reason": "Independent chains are copies run side by side; each chain's iterations still wait sequentially."
+ },
+ {
+  "index": 3,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "At each step evaluate k candidate proposals from the current state in parallel on the GPU, then combine them via a statistically valid multi-proposal Metropolis-Hastings update",
+  "reason": "Proposals no longer wait on the current accept/reject decision; they are evaluated simultaneously and combined validly."
+ },
+ {
+  "index": 4,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "Build a GPU neural surrogate mapping parameters to likelihood values or summary signatures from offline simulator runs",
+  "reason": "Changes what is computed (approximate surrogate), but sequential steps are bypassed, not computed simultaneously; MCMC stays sequential."
+ },
+ {
+  "index": 5,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "run HMC or NUTS on GPU with multiple leapfrog trajectories in parallel, taking fewer sequential steps to reach the same effective sample size",
+  "reason": "Fewer sequential steps, but chain transitions still wait on each other; parallel trajectories are side-by-side copies."
+ }
+]

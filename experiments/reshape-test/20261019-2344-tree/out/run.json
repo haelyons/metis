@@ -1,0 +1,143 @@
+{
+ "name": "reshape-test",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-tree/out",
+ "script": "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-tree/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "2dde169831b4a6c725cbbe5caf100201cec04bde7075c4404b0cef1859891c89",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 1,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-tree/out/work",
+  "fixed_roots": [
+   "Can one long sequential simulation, like a single MCMC chain or a rainfall-runoff model stepped through decades of daily rainfall, be parallelised over time by guessing the whole trajectory and then correcting every step at once with Newton iterations, and does that only work when the system forgets its past? Is compute a major blocker at some level, and could that be fixed with a shit ton of GPU parallelism?"
+  ]
+ },
+ "models": {
+  "main": "opencode-go/deepseek-v4-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "ef1973786db908c54f4acb1140e18d1fb21a3f49",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-19T23:44:35.636Z",
+ "finished": "2026-10-20T00:19:50.763Z",
+ "totals": {
+  "cost_usd": 1.3499987299999998,
+  "tokens": 1351961,
+  "calls": 22,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 5,
+    "cost_usd": 0.06300528,
+    "tokens": 230485
+   },
+   "opencode-go/deepseek-v4-pro": {
+    "calls": 11,
+    "cost_usd": 1.25408316,
+    "tokens": 1051008
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 2,
+    "cost_usd": 0.00334642,
+    "tokens": 18396
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 2,
+    "cost_usd": 0.011185859999999999,
+    "tokens": 18497
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 2,
+    "cost_usd": 0.01837801,
+    "tokens": 33575
+   }
+  }
+ }
+}

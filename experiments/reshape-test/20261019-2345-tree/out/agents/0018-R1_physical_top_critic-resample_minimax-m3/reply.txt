@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "GR4J at CAMELS scale is a stand-in for expensive distributed or hierarchical models; only this regime is tested."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "card:method",
+      "reason": "20x threshold vs <5% seed noise; compute_axis 67→671 is 10x; compute-bought; chains/iterations/model/data fixed across arms."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 1,
+      "ref": "card:test_summary",
+      "reason": "Decision is on wall-clock time and speedup ratio — both are the method's own self-measurements with no external truth."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Freitas 2022 GPU-speedup result is on distributed MGB point calibration, not batched GR4J MCMC across 671 catchments."
+    },
+    {
+      "criterion": "reshape",
+      "value": 2,
+      "ref": "card:method",
+      "reason": "Batches 2,684 independent chains in one kernel pass, but each chain's 100k steps remain in serial order — regroups independent work only."
+    },
+    {
+      "criterion": "baseline",
+      "value": 3,
+      "ref": "plan:checks",
+      "reason": "Vectorized CPU arm exists and is separately phased; no direct GPU-vs-CPU result tolerance check appears in the checks list."
+    }
+  ],
+  "decides_by": "gpu_bench",
+  "decides_by_reason": "gpu_bench stop_rule requires both batched_forward_ms (GPU) and cpu_671_hours (CPU) measured, giving the two inputs the 20x / 1-hr decision rule needs."
+}
+```

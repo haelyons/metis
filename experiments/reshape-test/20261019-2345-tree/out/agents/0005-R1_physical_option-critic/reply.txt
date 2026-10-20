@@ -1,0 +1,92 @@
+{
+  "items": [
+    {
+      "id": "Single-chain MCMC mixing",
+      "distance": "SAME",
+      "distance_reason": "Asks directly about single-chain autocorrelation limiting calibration, a sub-question of root.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 5,
+          "reason": "Determines whether to spend on GPU parallelism or sampler changes for lumped models; either answer switches that choice."
+        },
+        {
+          "criterion": "open",
+          "value": 1,
+          "reason": "Names samples-per-second/tau but says published work already shows hardware does not shorten autocorrelation; no reachable open range."
+        },
+        {
+          "criterion": "reshape",
+          "value": 1,
+          "reason": "Only parallelism is independent chains; steps condition on previous state so they cannot be reordered."
+        }
+      ]
+    },
+    {
+      "id": "Ensemble / differential-evolution MCMC",
+      "distance": "SAME",
+      "distance_reason": "Asks whether more parallel chains and GPUs fix the root's long-chain problem.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 5,
+          "reason": "Choice to buy more GPUs for chains turns on whether N>25 improves coverage; either answer changes it."
+        },
+        {
+          "criterion": "open",
+          "value": 5,
+          "reason": "Names chain count; published measurements stop at N=25, and beyond it lies within reach."
+        },
+        {
+          "criterion": "reshape",
+          "value": 1,
+          "reason": "Only independent chains run simultaneously; sequential field says none."
+        }
+      ]
+    },
+    {
+      "id": "Expensive distributed forward models",
+      "distance": "SAME",
+      "distance_reason": "Asks what limits calibration for distributed forward models, a sub-question of the root's compute-blocker question.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 1,
+          "reason": "Settled that compute binds and pays off; no open choice turns on either answer now."
+        },
+        {
+          "criterion": "open",
+          "value": 1,
+          "reason": "Names evaluations/speedups; says settled, so published work covers the reachable compute range."
+        },
+        {
+          "criterion": "reshape",
+          "value": 1,
+          "reason": "Only parallelism is independent forward runs; embarrassingly parallel, so score 1."
+        }
+      ]
+    },
+    {
+      "id": "Large-sample multi-catchment calibration",
+      "distance": "ADJACENT",
+      "distance_reason": "Same subject (catchment calibration) but asks large-sample throughput, a different question from single-chain limits.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 5,
+          "reason": "Choice to buy cloud GPUs for all catchments' full Bayesian treatment turns on whether conclusions change."
+        },
+        {
+          "criterion": "open",
+          "value": 5,
+          "reason": "Names catchments; published stops at 671, and the unmeasured range starts within GPU reach."
+        },
+        {
+          "criterion": "reshape",
+          "value": 1,
+          "reason": "Only independent catchments run in parallel; sequential says none."
+        }
+      ]
+    }
+  ]
+}

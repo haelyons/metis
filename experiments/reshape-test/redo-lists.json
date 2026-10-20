@@ -1,0 +1,158 @@
+[
+ {
+  "case": "rr",
+  "label": "P-physical",
+  "reframes": [
+   {
+    "title": "Direct multiple shooting",
+    "summary": "The root question's scheme verbatim: guess the trajectory at every grid point, integrate each sub-interval from its guessed value in parallel, then force continuity with a Newton iteration (https://en.wikipedia.org/wiki/Direct_multiple_shooting_method).",
+    "sequential": "One answer is one trajectory needing k Newton iterations, each a forward substitution in which interval t's correction waits on interval t-1 (O(m) deep for m intervals), while the m segment integrations are independent and parallelise exactly; the correction chain is the only serial residue because J is block lower-bidiagonal (https://www.unige.ch/~gander/Preprints/parareal.pdf)."
+   },
+   {
+    "title": "Parareal",
+    "summary": "The cheap-Jacobian realisation of multiple shooting, introduced by Lions, Maday and Turinici: a coarse serial propagator predicts the trajectory and fine integrators correct each interval in parallel, iterating to convergence (https://parallel-in-time.org/methods/parareal.html).",
+    "sequential": "Each iteration marches a coarse propagator serially over all T subintervals (step t waits on t-1) while the T fine integrations are independent, so one run's depth is k\u00b7T with k set by the forward decay of the coarse-guess error (the forgetting rate), which Gander and Hairer show is superlinear only for contractive systems (https://www.unige.ch/~gander/Preprints/gander_plenary2007.pdf)."
+   },
+   {
+    "title": "MGRIT (XBraid)",
+    "summary": "The non-intrusive multigrid-reduction-in-time version of Parareal (shipped as XBraid), which coarsens the time grid rather than using a separate coarse model (https://computing.llnl.gov/projects/parallel-time-integration-multigrid).",
+    "sequential": "One run keeps the same coarse/fine structure as Parareal \u2014 a coarse-grid correction sweeps the time levels in order while fine-grid integrations are independent \u2014 and the iteration count is set by the contraction (forgetting) rate, not processor count, so the causal coarse sweep cannot be reordered without cyclic reduction (https://computing.llnl.gov/projects/parallel-time-integration-multigrid)."
+   },
+   {
+    "title": "ParaDiag / ParaExp (linear diagonalisation)",
+    "summary": "Direct time-parallel methods for linear dynamics: x_T = A^T x_0 is computed by diagonalisation or repeated squaring in O(log T) depth, giving exact parallel-in-time with no forgetting assumption (https://www.unige.ch/~gander/siamtoc3.php).",
+    "sequential": "none: the T sequential steps already collapse because the propagator A^T can be composed out of order by repeated squaring/diagonalisation in O(log T) parallel steps (https://www.unige.ch/~gander/siamtoc3.php)."
+   },
+   {
+    "title": "Parallel cyclic reduction",
+    "summary": "Parallel cyclic reduction solves the block-bidiagonal Newton correction (a tridiagonal/bidiagonal system) in O(log N) steps with N-fold parallelism, dropping the per-iteration depth of PinT methods from O(T) to O(log T) (https://courses.grainger.illinois.edu/cs554/fa2015/notes/09_tridiagonal_8up.pdf).",
+    "sequential": "The block-bidiagonal solve is a forward substitution in which row t waits on row t-1 (O(T) deep per iteration), but the rows need not run in order: cyclic reduction eliminates independent pairs simultaneously, which pays off only when the T equations can be halved each round and the machine has ~T processors to feed them (https://courses.grainger.illinois.edu/cs554/fa2015/notes/09_tridiagonal_8up.pdf)."
+   },
+   {
+    "title": "Speculative prefetching (MCMC)",
+    "summary": "The MCMC analog of guess+correct: speculatively evaluate many possible accept/reject branches in parallel, keep the true path, discard the rest, with a speedup that is bounded and constant-factor (https://lips.cs.princeton.edu/pdfs/angelino2014accelerating.pdf).",
+    "sequential": "One MH chain is a serial accept/reject sequence (each proposal waits on the previous accepted state, T steps per run), and prefetching speculates J future branches in parallel but keeps one path, giving O(log2 J) depth with J cores and expected speedup \u22481/\u03b1 \u2248 4.3 at the 0.234 acceptance rate, largest when rejection dominates (https://lips.cs.princeton.edu/pdfs/angelino2014accelerating.pdf; https://arxiv.org/abs/1403.7265)."
+   },
+   {
+    "title": "Regeneration / splitting (MCMC)",
+    "summary": "Splitting an MCMC sampler at regeneration times yields i.i.d. tours that can be simulated in parallel, avoiding the bias of many short independent chains (https://galton.uchicago.edu/~mykland/paperlinks/MyklandTierneyYu2291148.pdf).",
+    "sequential": "none: the tours between regeneration times are i.i.d. and already split into independent pieces that can run on separate processors, leaving only the mixing-governed length of one tour as the serial residue (https://galton.uchicago.edu/~mykland/paperlinks/MyklandTierneyYu2291148.pdf)."
+   },
+   {
+    "title": "Coupling from the past (CFTP)",
+    "summary": "Propp-Wilson exact sampling: run the chain from all possible states simultaneously under a monotone coupling, and coalescence certifies an exact draw, efficient only when coalescence (mixing) is fast (https://www.stat.berkeley.edu/~aldous/206-RWG/RWGpapers/propp_wilson.pdf).",
+    "sequential": "none: the coupled chains run from all states in parallel under one monotone update, so the work already splits across states, and the only serial quantity is the coalescence time, which is set by mixing, not compute (https://www.stat.berkeley.edu/~aldous/206-RWG/RWGpapers/propp_wilson.pdf)."
+   },
+   {
+    "title": "Many-chain / data-parallel sampling (TFP HMC)",
+    "summary": "GPUs/TPUs add width two ways \u2014 many chains at once and data-parallel gradient/log-density evaluation within one chain \u2014 but width does not shorten a single chain's critical path (https://statmodeling.stat.columbia.edu/2022/11/13/stan-and-tensorflow-for-fast-parallel-bayesian-inference/).",
+    "sequential": "none: many chains and within-chain data-parallel likelihoods are already independent pieces, so the answer already splits across GPUs, and the per-chain critical path (T \u00d7 per-step cost \u00d7 mixing overhead) is unchanged by width (https://statmodeling.stat.columbia.edu/2022/11/13/stan-and-tensorflow-for-fast-parallel-bayesian-inference/)."
+   },
+   {
+    "title": "GLUE / rainfall-runoff parameter calibration",
+    "summary": "The actual compute burden in daily-step rainfall-runoff modelling is Monte-Carlo parameter calibration and GLUE uncertainty analysis, parallelised with MPI/OpenMP/CUDA across parameter sets, explicitly not across time steps (https://doi.org/10.3390/w15152810).",
+    "sequential": "none: each parameter set is one cheap forward run of a lumped model and parameter sets are independent, so the work already splits into independent pieces with no serial time chain to shorten (https://doi.org/10.3390/w15152810)."
+   },
+   {
+    "title": "Chaotic / non-forgetting PinT",
+    "summary": "On chaotic systems (Lorenz, hyperbolic PDEs) the coarse-guess error is amplified forward, so Parareal diverges or its superlinear convergence stops, because chaotic initial value problems are inherently ill-conditioned (https://www.osti.gov/servlets/purl/1880928; https://arxiv.org/abs/2201.10441).",
+    "sequential": "The coarse propagator must march the time levels in order (step t waits on t-1), so one run's depth is T \u00d7 k iterations, and the positive-Lyapunov amplification means the iterations cannot be collapsed by reordering the causal chain; the nearest attempt at a fix is the coarse-grid-correction study in (https://arxiv.org/abs/2201.10441)."
+   }
+  ]
+ },
+ {
+  "case": "rr",
+  "label": "P-interp",
+  "reframes": [
+   {
+    "title": "Feature-level causal tracing turns the framer's forgetting condition into a measurement on the real system",
+    "summary": "Perturb one SAE feature (or hidden state) at layer/token t and trace its indirect effect at t+s; the decay of that effect with lag is the empirical forgetting rate (Lyapunov exponent / mixing) the framer says decides whether guess-then-correct converges. It is the harry lens's 'start two runs a hair apart' done at feature resolution, and it does not itself restructure the computation.",
+    "sequential": "none: the clean, corrupted, and restored forward passes for each (layer, token, feature, statement) perturbation are independent, so the analysis already splits into one forward pass per perturbation with no step waiting on another, each keeping a GPU busy with a single model forward pass."
+   },
+   {
+    "title": "SAE features give the linear basis that triggers the framer's no-forgetting parallel-in-time exception",
+    "summary": "If the residual-stream trajectory is a linear combination of sparse features, the per-step feature transition is (approximately) linear and x_T = A^T x_0 is computable in O(log T) depth by repeated squaring / diagonalisation (the framer's ParaDiag exception), with no forgetting needed. Goodfire-style SAEs supply the linear decomposition; the open question is whether the feature-to-feature transition is stable enough to compose out of order.",
+    "sequential": "none: checking linearity is a per-feature regression/probe fit that is independent across features, layers, and models, so it already splits into parallel pieces with no step waiting on another."
+   },
+   {
+    "title": "Feature steering is a learned correction operator that replaces the Newton step",
+    "summary": "Instead of a Newton correction J^{-1}F, correct a guessed trajectory by clamping an SAE feature at an intermediate layer (add a constant in the direction of that feature) and continue the forward pass; a single feature edit (Golden Gate Claude) reliably propagates through the remainder of generation, and the [-5,5] steering sweet spot is the empirical analog of the framer's forgetting/contraction condition, outside which the correction destabilises downstream.",
+    "sequential": "none: once an SAE and a candidate feature are fixed, each steering evaluation is one independent forward pass that splits across features, strengths, and prompts; the only prerequisite is the embarrassingly parallel SAE training and attribution, not a per-answer chain."
+   },
+   {
+    "title": "Autoregressive decoding is the LLM instantiation of the framer's problem, and guess-then-correct already works there, gated by the forgetting interp measures",
+    "summary": "Decoding K tokens is K serial forward passes, and the guess-whole-trajectory-then-correct solution is speculative decoding (draft several tokens ahead, verify in one parallel pass; 2-3x on T5-XXL, identical outputs) and Jacobi parallel decoding (initialise the whole sequence, refine all tokens in parallel to a fixed point; up to 38% speedup, ~2x on parallel resources). Both pay off exactly when the model forgets fast, i.e. the draft/target acceptance rate E[min(p,q)] is high, which is the quantity interp tools (tuned lens, causal tracing) measure.",
+    "sequential": "One decode still waits step-after-step: speculative decoding cuts the K-serial-token chain to roughly K/(gamma+1) rounds, each round drafting gamma tokens with a small model then verifying all gamma+1 candidate prefixes in one parallel pass of the target model (one run, the verify pass filling a GPU batch). The steps need not stay in order: Jacobi decoding initialises every token and refines them all in parallel each iteration, which pays off only if token dependencies are weak enough to reach a fixed point in few iterations, as tried by Santilli et al. (https://arxiv.org/abs/2305.10427)."
+   }
+  ]
+ },
+ {
+  "case": "rr",
+  "label": "R-harry",
+  "reframes": [
+   {
+    "reframe": "Change the unit of work from a chain to a population: parallel-tempered replicas or an SMC sampler with 10^3-10^4 interacting walkers on GPU. Each mutation step is embarrassingly parallel across the population, and swap/resample steps replace long serial traversals of correlated, multimodal parameter directions with population-level mixing, converting serial mixing time into parallel breadth.",
+    "question": "Across ~20 CAMELS catchments with GR4J/HBV (8-14 parameters), does a GPU parallel-tempering or SMC sampler with 1024-4096 replicas reach ESS=1000 in >=20x less wall-clock than a tuned DREAM-ZS chain, at equal error on posterior quantiles? Measured: wall-clock to ESS target and quantile error vs an overnight reference chain."
+   },
+   {
+    "reframe": "Change the objective from per-dataset chains to amortized inference: precompute one large bank of (parameter, simulated hydrograph) pairs fully in parallel, train a neural posterior estimator once, and get per-catchment posteriors in seconds. If exactness is required, use the learned posterior only as a proposal/preconditioner inside short delayed-acceptance chains with the true likelihood.",
+    "question": "Does neural posterior estimation trained on <=2x10^5 simulations reproduce reference MCMC parameter marginals (Wasserstein distance <10% of posterior std) and posterior-predictive coverage (90% intervals covering 88-92% of held-out flows) across >=50 unseen catchments, including high-flow regimes? Measured: marginal distances, simulation-based calibration rank histograms, predictive coverage."
+   },
+   {
+    "reframe": "Change what is measured from likelihood values to gradients: reimplement the model in a differentiable framework (or derive its adjoint) and use HMC/NUTS, with ensemble Kalman inversion as a gradient-light fallback. A gradient moves all parameters coherently, so the chain length needed for a given ESS stops scaling like d^2, and the expensive forward run is amortized over one informative step instead of one blind one.",
+    "question": "For a distributed catchment model at d~50 and d~500: (a) is the measured adjoint gradient cost <=4x one forward run with checkpointing, and (b) does HMC's wall-clock-to-ESS=200 advantage over DREAM-ZS grow with d as predicted? Measured: gradient-cost ratio, ESS/hour for both samplers at both dimensions, 5 catchments."
+   }
+  ]
+ },
+ {
+  "case": "rr",
+  "label": "Hd-3",
+  "reframes": [
+   {
+    "title": "Speculative branch-parallel MCMC for rainfall-runoff calibration",
+    "field": "Bayesian calibration of rainfall-runoff models",
+    "sequential_part": "The accept/reject step: a proposal is generated from the current state and its likelihood must be evaluated before the next state is known, so each draw waits on the previous draw.",
+    "restructure": "Evaluate several candidate next states in parallel (speculative branches) around the current state on the GPU; once acceptance is decided, keep the winning branch and discard wasted branches, hiding the sequential latency of one-at-a-time likelihood evaluations.",
+    "condition": "Branch overhead is low relative to one-at-a-time likelihood cost, the proposal branching factor is modest, and the simulator can be vectorized across candidate states.",
+    "baselines": "Standard serial Metropolis-Hastings on CPU and one GPU stream; compare effective sample size per wall-clock second and posterior quantiles for the same rainfall-runoff model.",
+    "first_test": "Run a 2-parameter rainfall-runoff likelihood for 10,000 chain steps at branch factor 1 vs 4 on one GPU; about 1 GPU-hour."
+   },
+   {
+    "title": "GPU-batched multi-chain DREAM_ZS ensemble MCMC",
+    "field": "Hydrological model parameter inference",
+    "sequential_part": "Each chain is Markovian and cannot skip its own history, but the chains are conditionally independent between exchange steps.",
+    "restructure": "Run hundreds of coupled chains in one GPU batch using differential-evolution proposals (DREAM_ZS); share proposal draws and synchronize only periodically, turning a long single chain into many short parallel chains.",
+    "condition": "Batched simulator kernels are efficient across all chains, and inter-chain communication or adaptation does not dominate the GPU cost.",
+    "baselines": "Single-chain Metropolis-Hastings at the same total simulation budget; compare effective sample size per second and multi-chain R-hat convergence.",
+    "first_test": "Measure effective sample size per second for 64 parallel chains of the rainfall-runoff model over 5,000 steps; about 1 GPU-hour."
+   },
+   {
+    "title": "Delayed-acceptance MCMC using a surrogate rainfall-runoff emulator",
+    "field": "Bayesian calibration of rainfall-runoff models",
+    "sequential_part": "Within a chain each step needs a possibly expensive full simulator run before the next state can be proposed; this serial chain is the bottleneck.",
+    "restructure": "Precompute a Gaussian-process or neural surrogate of the simulator log-likelihood, then use two-stage delayed acceptance: a cheap surrogate screen is evaluated first and only promising proposals trigger the full model.",
+    "condition": "The surrogate predicts accept/reject decisions accurately enough, and full-model runs are expensive enough that the surrogate cost is recovered by rejected full-model calls saved.",
+    "baselines": "Standard full-model Metropolis-Hastings; compare posterior moments, acceptance rates, and number of full simulator calls per effective sample.",
+    "first_test": "Fit a Gaussian-process surrogate to about 200 simulator runs on 2-3 parameters, then compare delayed-acceptance vs full MCMC for 1,000 steps; around 2 GPU-hours."
+   },
+   {
+    "title": "Divide-and-conquer subposterior MCMC over record shards",
+    "field": "Bayesian calibration of rainfall-runoff models on long river records",
+    "sequential_part": "A single MCMC chain must process the entire record, and the runoff simulator advances through time step by step, so wall-clock grows with record length and one chain is one serial path.",
+    "restructure": "Partition the observed streamflow record into temporal shards or by subcatchment, run independent subposterior chains for each shard in parallel, then combine them with consensus Monte Carlo to recover the full posterior; also parallelize within-shard forward simulation over time chunks.",
+    "condition": "Subposteriors are approximately Gaussian and overlap, the model is identifiable within each shard, and the number of shards is high enough to saturate the GPUs.",
+    "baselines": "Full-record single-chain MCMC; compare posterior means, 90% credible intervals, and predictive log-score on held-out flow.",
+    "first_test": "Split one catchment record into two temporal halves, run two shard chains for 2,000 post-burn samples, and compare the combined posterior mean with full-data MCMC; about 2 GPU-hours."
+   },
+   {
+    "title": "Amortized neural posterior estimation from batched rainfall-runoff simulations",
+    "field": "Bayesian calibration of rainfall-runoff models",
+    "sequential_part": "none",
+    "restructure": "Replace the serial MCMC chain with a simulation-on-demand training pipeline: batch thousands of parameter sets across the GPU to simulate corresponding hydrographs, train a conditional normalizing flow or similar neural posterior estimator to map observations to posterior samples, and infer any number of catchments in one forward pass.",
+    "condition": "The simulator can be vectorized over thousands of parameter sets on the available GPU, the parameter range covers the posterior mass, and enough simulations can be generated within the hackathon or prepared beforehand.",
+    "baselines": "Long MCMC chains for the same catchment; compare posterior means and variances, 90% interval coverage, and calibration on held-out flow events.",
+    "first_test": "Generate 10,000 parameter-output pairs for one catchment, train a small normalizing flow on a GPU, and measure posterior mean error against MCMC; about 3 GPU-hours."
+   }
+  ]
+ }
+]

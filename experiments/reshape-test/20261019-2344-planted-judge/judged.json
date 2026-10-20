@@ -1,0 +1,40 @@
+{
+ "judge": "opencode-go/glm-5.3",
+ "cost_usd": 0.0072,
+ "lists": [
+  {
+   "case": "planted",
+   "label": "planted",
+   "judged": [
+    {
+     "index": 1,
+     "kind": "copies",
+     "meets_criterion": "no",
+     "quote": "Split each daily time step's 2 million grid cells across 8 GPUs with domain decomposition, exchanging halos every step.",
+     "reason": "Splits work within each time step across GPUs; the step-after-step time dependency remains, and splitting single steps does not count."
+    },
+    {
+     "index": 2,
+     "kind": "reframe",
+     "meets_criterion": "yes",
+     "quote": "Guess all 10,000 states of one MCMC chain at once, then correct every state in parallel with Newton iterations until the chain matches the sequential one.",
+     "reason": "Replaces sequential chain steps with simultaneous guesses corrected by parallel Newton iterations, removing the chain-iteration dependency entirely."
+    },
+    {
+     "index": 3,
+     "kind": "reframe",
+     "meets_criterion": "yes",
+     "quote": "Each day's update of the linear reservoir model is an affine map, so compute all 36,500 days at once with a parallel prefix scan instead of the time loop.",
+     "reason": "Parallel prefix scan computes all daily updates simultaneously, removing the time-step dependency of the sequential loop."
+    },
+    {
+     "index": 4,
+     "kind": "copies",
+     "meets_criterion": "no",
+     "quote": "Run 4,096 independent MCMC chains side by side on the GPU, one per starting point, and pool their samples.",
+     "reason": "Only runs independent chains side by side; each chain still waits on its own steps, and parallel copies do not count."
+    }
+   ]
+  }
+ ]
+}

@@ -1,0 +1,48 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Residual reconstruction alone; building a parallel sampler needs unchecked next-token accuracy and transfer."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:compute_axis",
+      "reason": "Depth axis varies fixed architecture, not compute alone; other noise, CI, and fixed-input conditions hold."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "card:anchor",
+      "reason": "Anchor reproduces SAE round-trip and synthetic sequential result; scoring uses true sequential activations."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Published work reaches only ten-layer adjacent transport, not out-of-order full-depth composition across widths."
+    },
+    {
+      "criterion": "internals",
+      "value": 1,
+      "ref": "card:limits",
+      "reason": "No outputs-only comparator is named; the test measures residual activation linearity, not shipped model outputs."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "Sequential part is none; it parallelizes independent feature fits instead of removing a waiting chain."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring method is none, so baseline timing against non-method baselines does not apply."
+    }
+  ],
+  "decides_by": "phase_compose",
+  "decides_by_reason": "Phase_compose produces composed out-of-order R2 and CI, applying the 0.90 decision_rule for either outcome."
+}

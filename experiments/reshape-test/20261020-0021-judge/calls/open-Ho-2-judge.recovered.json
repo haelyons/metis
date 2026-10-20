@@ -1,0 +1,37 @@
+[
+ {
+  "index": 1,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "evaluate independent fine time-slices in parallel as GPU batches, then iterate the time grid until the trajectory correction converges",
+  "reason": "Parareal computes fine time-slices across many timesteps simultaneously, then iterates corrections; the step-after-step time dependency is removed."
+ },
+ {
+  "index": 2,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "Reformulate the algorithm as tiled wavefront kernels on a GPU: process anti-diagonals of tiles, keep boundary cells in shared memory",
+  "reason": "Reformulates the fill so tiles within each anti-diagonal run at once, but each diagonal still waits on the previous one."
+ },
+ {
+  "index": 3,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "Run thousands of independent chains in lockstep GPU batches; vectorize the target log-density over chains and data",
+  "reason": "Thousands of independent chains run side by side; each chain still advances one accept/reject step at a time."
+ },
+ {
+  "index": 4,
+  "kind": "other",
+  "meets_criterion": "no",
+  "quote": "Use a fixed-step GPU loop with parallel neuron updates, delayed ring buffers for spikes, atomic synaptic accumulation",
+  "reason": "The timestep loop stays sequential with delayed spike delivery; only neuron updates within each step are parallel — single-step splitting, not copies."
+ },
+ {
+  "index": 5,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "split the time domain into chunks run on separate GPU streams or tiles, solve corrections on a coarse time grid",
+  "reason": "MGRIT computes time-domain chunks simultaneously and iterates coarse-grid corrections, removing the serial one-timestep-at-a-time march."
+ }
+]

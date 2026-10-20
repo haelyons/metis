@@ -1,0 +1,39 @@
+{
+ "ts": "2026-10-20T00:26:40.135Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_156af2217001e6pSPL0VrRbdQS",
+  "x-opencode-session": "ses_ea950e0bfffeWDKpEKHynZoThm",
+  "x-opencode-session-id": "ses_ea950e0bfffeWDKpEKHynZoThm",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:32917",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "4782"
+ },
+ "body": {
+  "model": "glm-5.3",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the text you are given. You use no tools. You return only the JSON asked for.\nYou are powered by the model named glm-5.3. The exact model ID is opencode-go/glm-5.3\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reshape-test/20261020-0021-judge/calls\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Below are questions proposed for a research problem, each with the reframing behind it. Classify each one.\nkind: \\\"reframe\\\" if it changes what is computed, measured or ordered so that more compute buys something it did not before; \\\"copies\\\" if it only runs the same computation more times, on more items, or side by side; \\\"other\\\" otherwise.\nmeets_criterion: \\\"yes\\\" or \\\"no\\\" for this criterion: It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count.\nGive for each a quote from the proposal and a reason of at most 25 words. Decide only from the text below; do not use tools.\nProblem:\nBayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.\nProposals: [{\\\"index\\\":1,\\\"reframe\\\":\\\"Change the unit of work from a chain to a population: parallel-tempered replicas or an SMC sampler with 10^3-10^4 interacting walkers on GPU. Each mutation step is embarrassingly parallel across the population, and swap/resample steps replace long serial traversals of correlated, multimodal parameter directions with population-level mixing, converting serial mixing time into parallel breadth.\\\",\\\"question\\\":\\\"Across ~20 CAMELS catchments with GR4J/HBV (8-14 parameters), does a GPU parallel-tempering or SMC sampler with 1024-4096 replicas reach ESS=1000 in >=20x less wall-clock than a tuned DREAM-ZS chain, at equal error on posterior quantiles? Measured: wall-clock to ESS target and quantile error vs an overnight reference chain.\\\"},{\\\"index\\\":2,\\\"reframe\\\":\\\"Change the objective from per-dataset chains to amortized inference: precompute one large bank of (parameter, simulated hydrograph) pairs fully in parallel, train a neural posterior estimator once, and get per-catchment posteriors in seconds. If exactness is required, use the learned posterior only as a proposal/preconditioner inside short delayed-acceptance chains with the true likelihood.\\\",\\\"question\\\":\\\"Does neural posterior estimation trained on <=2x10^5 simulations reproduce reference MCMC parameter marginals (Wasserstein distance <10% of posterior std) and posterior-predictive coverage (90% intervals covering 88-92% of held-out flows) across >=50 unseen catchments, including high-flow regimes? Measured: marginal distances, simulation-based calibration rank histograms, predictive coverage.\\\"},{\\\"index\\\":3,\\\"reframe\\\":\\\"Change what is measured from likelihood values to gradients: reimplement the model in a differentiable framework (or derive its adjoint) and use HMC/NUTS, with ensemble Kalman inversion as a gradient-light fallback. A gradient moves all parameters coherently, so the chain length needed for a given ESS stops scaling like d^2, and the expensive forward run is amortized over one informative step instead of one blind one.\\\",\\\"question\\\":\\\"For a distributed catchment model at d~50 and d~500: (a) is the measured adjoint gradient cost <=4x one forward run with checkpointing, and (b) does HMC's wall-clock-to-ESS=200 advantage over DREAM-ZS grow with d as predicted? Measured: gradient-cost ratio, ESS/hour for both samplers at both dimensions, 5 catchments.\\\"}]\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"items\\\"],\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"index\\\",\\\"kind\\\",\\\"meets_criterion\\\",\\\"quote\\\",\\\"reason\\\"],\\\"properties\\\":{\\\"index\\\":{\\\"type\\\":\\\"integer\\\"},\\\"kind\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"reframe\\\",\\\"copies\\\",\\\"other\\\"]},\\\"meets_criterion\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"yes\\\",\\\"no\\\",\\\"NA\\\"]},\\\"quote\\\":{\\\"type\\\":\\\"string\\\"},\\\"reason\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\""
+   }
+  ],
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

@@ -1,0 +1,10 @@
+Below are questions proposed for a research problem, each with the reframing behind it. Classify each one.
+kind: "reframe" if it changes what is computed, measured or ordered so that more compute buys something it did not before; "copies" if it only runs the same computation more times, on more items, or side by side; "other" otherwise.
+meets_criterion: "yes" or "no" for this criterion: It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count.
+Give for each a quote from the proposal and a reason of at most 25 words. Decide only from the text below; do not use tools.
+Problem:
+Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.
+Proposals: [{"index":1,"title":"Split each step","summary":"Split each daily time step's 2 million grid cells across 8 GPUs with domain decomposition, exchanging halos every step."},{"index":2,"title":"Whole-chain Newton","summary":"Guess all 10,000 states of one MCMC chain at once, then correct every state in parallel with Newton iterations until the chain matches the sequential one."},{"index":3,"title":"Scan over days","summary":"Each day's update of the linear reservoir model is an affine map, so compute all 36,500 days at once with a parallel prefix scan instead of the time loop."},{"index":4,"title":"Many chains","summary":"Run 4,096 independent MCMC chains side by side on the GPU, one per starting point, and pool their samples."}]
+
+Return only one JSON value, with no other text, that matches this JSON Schema:
+{"type":"object","required":["items"],"properties":{"items":{"type":"array","items":{"type":"object","required":["index","kind","meets_criterion","quote","reason"],"properties":{"index":{"type":"integer"},"kind":{"type":"string","enum":["reframe","copies","other"]},"meets_criterion":{"type":"string","enum":["yes","no","NA"]},"quote":{"type":"string"},"reason":{"type":"string"}}}}}}

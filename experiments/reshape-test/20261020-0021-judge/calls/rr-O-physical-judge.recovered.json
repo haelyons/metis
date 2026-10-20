@@ -1,0 +1,30 @@
+[
+ {
+  "index": 1,
+  "kind": "other",
+  "meets_criterion": "no",
+  "quote": "each step conditions on the previous state, and more parallel compute cannot shorten the chain's integrated autocorrelation time, only how fast samples accumulate.",
+  "reason": "Identifies serial autocorrelation as a bottleneck parallelism cannot relieve; no reframe proposed, steps still run in order."
+ },
+ {
+  "index": 2,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "after burn-in the N chains' joint density factorizes and they are independent, so the ensemble already splits into N chains run simultaneously",
+  "reason": "Runs many independent chains simultaneously; that is side-by-side copies, which the criterion explicitly excludes."
+ },
+ {
+  "index": 3,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "the workload decomposes into thousands of independent model runs that are embarrassingly parallel across chains and parameter sets",
+  "reason": "Same forward model evaluated on many independent parameter sets and chains; more items, not removed step dependencies."
+ },
+ {
+  "index": 4,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "each catchment is independently calibratable, so GPU/cloud throughput directly determines how many catchments get a proper Bayesian treatment",
+  "reason": "Replicates the same per-catchment calibration across 671 independent catchments; side-by-side copies, each chain still serial."
+ }
+]

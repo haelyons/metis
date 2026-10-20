@@ -1,0 +1,99 @@
+I have completed my verification. Here is the final result.
+
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "note": "Plan research question; needs no source. Its only factual element ('671 CAMELS catchments') matches the CAMELS dataset page (Addor et al. 2017, HESS), so it is corroborated."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Plan hypothesis/prediction (what the plan predicts); needs no source. The '671 catchments' figure is corroborated by num:camels_n."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Plan's sequential-baseline design (4 chains x 100,000 proposal-accept steps), consistent with test_summary's '4 chains x 1e5 iterations'; a design choice, not a factual claim requiring a source."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Plan method; 2,684 = 671 x 4 chains is internally consistent; needs no source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "'>=20x over CPU' is the plan's proxy speedup threshold, corroborated by s_mgb's verified 'up to 20 × (CPU)' calibration speedup; 'finishes all 671 in under an hour' and 'compute is the lever' are the plan's predictions (no source needed)."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Conditional prediction of the plan (vectorized-CPU runtime); needs no source."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Plan's measurement protocol (4 chains x 1e5 iterations, R-hat<1.2); what the plan will measure, so no source needed. '671 CAMELS catchments' corroborated by num:camels_n."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "This work aims at performance optimizations on the MGB (“Modelo de Grandes Bacias”) hydrological model and the MOCOM-UA (Multi-Objective Complex Evolution) calibration method for two watersheds. ... Significant speedups of up to 20 × (CPU) were achieved for calibration ...",
+      "note": "Page confirms Freitas/Mendes/Ilic (2022), a single (large-basin/distributed) MGB model, MOCOM-UA calibration (not MCMC), and 20x CPU calibration speedup — i.e. not batched MCMC across many GR4J catchments."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "PARTIAL",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "s_mgb supports that the closest prior (Freitas 2022) is MOCOM-UA calibration of MGB, not batched GPU MCMC over 671 GR4J catchments, but a single source cannot establish the blanket negative 'no published result exists'; the 'crossover is unmeasured' is the plan's inference, not stated on the page."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "## X1 X2 X3 X4\n## 165.05 6.46 422.50 2.45 ... The Nash-Sutcliffe Efficiency criterion computed on the calibration period is better (0.495) than with the generalist parameter sets ...",
+      "note": "airGR page (sec. 3.1) shows parameter set (165.05, 6.46, 422.50, 2.45) yielding calibration NSE 0.495; matches the card's value 0.495."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Plan's own scope/limitations statement; needs no source."
+    },
+    {
+      "ref": "src:s_airgr_nse",
+      "status": "SUPPORTED",
+      "page_quote": "The Nash-Sutcliffe Efficiency criterion computed on the calibration period is better (0.495) than with the generalist parameter sets, but the one computed on the validation period is lower (0.57).",
+      "note": "Quote appears verbatim on the airGR page; it supports anchor_nse = 0.495."
+    },
+    {
+      "ref": "src:s_mgb",
+      "status": "SUPPORTED",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "Quote appears verbatim in the Illinois Experts abstract; it supports speedup_threshold = 20 (CPU)."
+    },
+    {
+      "ref": "num:camels_n",
+      "status": "SUPPORTED",
+      "page_quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "note": "Quote is verbatim in the HESS abstract; the page states 671 catchments, matching value 671.",
+      "page_value": 671
+    },
+    {
+      "ref": "num:dist_evals_per_catchment",
+      "status": "UNREACHABLE",
+      "page_quote": "",
+      "note": "Cited Wiley page returns HTTP 403 (Forbidden). A mirror (UvA DARE) exposes only the abstract, which confirms 'Four different case studies with increasing dimensionality up to 241 parameters' but does not contain the '50 million surrogate model evaluations' sentence; the full text could not be read, so the number could not be verified against the page."
+    }
+  ]
+}
+```

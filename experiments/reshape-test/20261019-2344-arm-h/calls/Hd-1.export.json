@@ -1,0 +1,195 @@
+{
+  "info": {
+    "id": "ses_ea96c854dffe7PeZXAyaA5skAn",
+    "slug": "stellar-river",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls",
+    "path": "experiments/reshape-test/20261019-2344-arm-h/calls",
+    "title": "Hd-1",
+    "agent": "qt-bare",
+    "model": {
+      "id": "deepseek-v4-pro",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.0117447,
+    "tokens": {
+      "input": 659,
+      "output": 1196,
+      "reasoning": 4516,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792453868210,
+      "updated": 1792453929638
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792453868440
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "deepseek-v4-pro"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_156937b980015Q8kyqk04GsOH5",
+        "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"A weekend hackathon on scientific parallelism, about 30 hours, on 21 November. GPUs are provided; their type is not yet\nknown. Teams may bring their own problem, and the thinking, data and baseline can be prepared beforehand.\n\nJudges score reshaping, a credible baseline, correctness and scientific value. A carefully explained failure to get a\nspeedup can still win, if its failure modes were predicted in advance.\n\nThe sponsors build systems that split workloads into subtasks and route each to the best chip, and low-latency\ninference chips. The question they care about: which parts of a workload are sequential, and must they be?\n\nPropose five projects for this hackathon in this domain: Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.. For each give: title; field; sequential_part, the part of the work that one answer waits on step after step, or \\\"none\\\"; restructure, how your project changes that (or what it runs in parallel); condition, what must hold for it to pay off; baselines, what the result is timed and checked against; first_test, the cheapest measurement to run first and its rough cost. Decide from what you know; do not use tools.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"proposals\\\"],\\\"properties\\\":{\\\"proposals\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"title\\\",\\\"field\\\",\\\"sequential_part\\\",\\\"restructure\\\",\\\"condition\\\",\\\"baselines\\\",\\\"first_test\\\"],\\\"properties\\\":{\\\"title\\\":{\\\"type\\\":\\\"string\\\"},\\\"field\\\":{\\\"type\\\":\\\"string\\\"},\\\"sequential_part\\\":{\\\"type\\\":\\\"string\\\"},\\\"restructure\\\":{\\\"type\\\":\\\"string\\\"},\\\"condition\\\":{\\\"type\\\":\\\"string\\\"},\\\"baselines\\\":{\\\"type\\\":\\\"string\\\"},\\\"first_test\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_156937baa001C7mKJTPrFs4Io0",
+          "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn",
+          "messageID": "msg_156937b980015Q8kyqk04GsOH5"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_156937b980015Q8kyqk04GsOH5",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.0117447,
+        "tokens": {
+          "total": 6371,
+          "input": 659,
+          "output": 1196,
+          "reasoning": 4516,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "deepseek-v4-pro",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792453874245,
+          "completed": 1792453929451
+        },
+        "finish": "stop",
+        "id": "msg_1569392450019c5sgcLwU8bhog",
+        "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn"
+      },
+      "parts": [
+        {
+          "snapshot": "e1bdeb411406095d47256ac067081ea627072a50",
+          "type": "step-start",
+          "id": "prt_15693b051001qJmcOZsb4fkLOt",
+          "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn",
+          "messageID": "msg_1569392450019c5sgcLwU8bhog"
+        },
+        {
+          "type": "reasoning",
+          "text": "We need answer JSON only. Need produce five proposals. Domain: Bayesian calibration of rainfall-runoff models for river catchments, needs long MCMC chains. Hackathon scientific parallelism. Need think deeply.\n\nWe need craft proposals with title, field, sequential_part, restructure, condition, baselines, first_test. Each concise but substantive.\n\nNeed understand domain: rainfall-runoff models (hydrological models) calibration using Bayesian MCMC. Long MCMC chains imply sequential Markov chain. The sequential part naturally MCMC chain. Need propose five projects in this domain. Need parallelism opportunities.\n\nPossible projects:\n1. Parallel MCMC chains (embarrassingly parallel) with convergence diagnostics / combining draws. Need restructure run multiple chains on GPUs, maybe use JAX/tensorflow probability, langevin/HMC on GPU. Sequential part: each chain itself sequential; but across chains none. Could use many short independent chains and monitor R-hat. Condition: GPU can run many chains batches; posterior multi-modal? Need credible baseline. First test: run N chains small toy hydrological model measure throughput.\n\n2. GPU-accelerated likelihood evaluation / parallel simulation across catchments and time? Rainfall-runoff model runs recursive over time: sequential over time for each catchment/parameter set. Batch many parameter sets across GPU. Sequential part: time-stepping recursion for each particle. Restructure: vectorize across many parameter particles, process time steps sequentially but vectorized over ensemble. Condition: many particles and large enough state dimension for GPU utilization. Baseline: CPU MCMC single chain with same likelihood model. First test: benchmark batched simulation of N particles on GPU vs CPU.\n\n3. Pre-fetching / speculative execution within MCMC: sequential chain cannot be skipped, but propose asynchronous prefetching of likelihood evaluations for candidate proposals? The chain is sequential because next proposal depends on current accept. However can use speculative MCMC / multi-proposal methods. Or \"prefetching\" run many candidate proposals branching from current state, with rollback after acceptance. Could use GPUs to evaluate many proposals speculatively. Condition: proposal evaluation dominant cost; speculative branches must be discarded when rejected, but ratio acceptance? There is known speculative MCMC. First test: measure ratio of candidate evaluations per accepted step vs cost.\n\n4. Emulation/surrogate model: Train GPU neural surrogate for rainfall-runoff simulator, use in MCMC to accelerate likelihood, while occasional exact checks. Sequential part reduced? The MCMC chain length remains sequential, but each step's simulator cost is replaced by network, allowing longer chains. Restructure: surrogate on GPU, perhaps batched predictions. Condition: surrogate accurate and calibrated; validation. Baseline: exact simulator MCMC. First test: train cheap surrogate on pre-generated dataset and measure prediction error and speed.\n\n5. Precomputation/caching and memoization of likelihood across parameter space? Or distributed particle filters? But in MCMC, maybe \"parallel tempering\" / replica exchange: sequential part is within each temperature chain, but propose running multiple chains at different temperatures, exchanging states at intervals. The exchange requires sequential coordination but parallelism between exchanges. Condition: posteriors multimodal/rugged. Baseline: single-chain MCMC.\n\nNeed choose five distinct. The prompt asks \"in this domain: Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.\" Need project proposals. Need include scientific parallelism, sequential part, restructure, condition, baselines, first_test.\n\nNeed answer only JSON. Need match schema. We can provide string values.\n\nNeed be careful not use too many quotes breaking JSON. But okay.\n\nLet's develop five.\n\nMaybe one about ensemble weather/forcing uncertainty? Rainfall-runoff models need long MCMC chains; but parallelizing across catchments is trivial. Need more interesting. The sponsors care \"which parts of workload are sequential, and must they be?\" So each proposal can identify sequential part and try restructure.\n\nPotential projects:\n\nA. \"Vectorized batched time-step simulation of rainfall-runoff ODE/PDE on GPU for MCMC likelihoods\" sequential_part: recursive time integration across days within a single parameter set; restructure: hold multiple parameter particles in memory and run time loop vectorized over particles using GPU; condition: state dimension and particle count large enough to saturate GPU, state update differentiable/vectorizable; baselines: CPU single thread/OpenMP simulator; first_test: measure wall time for 1000 batched particle simulations on GPU vs CPU.\n\nB. \"Massively parallel independent chains with rank-normalized convergence and early stopping\" sequential_part: each MCMC chain is sequential; restructure: run hundreds of short independent chains on GPU vectorized, combine after burn-in; condition: posteriors not strongly multimodal / need effective sample size; baselines: long single CPU chain; first_test: 100 chains x 10k iterations on GPU mini model with R-hat.\n\nC. \"Speculative proposal evaluation and branch-and-rollback MCMC\" sequential_part: accept/reject decision depends on previous step, causing sequential chain; restructure: evaluate many candidate proposal branches from current state simultaneously on GPU, pick first accepted by speculative execution (e.g., multi-proposal MCMC); condition: proposal evaluation cost dominates and acceptance rate not too low so branches useful; baselines: standard Metropolis single chain with same proposals; first_test: measure candidate evaluations per accepted step and speedup on a toy log-posterior.\n\nD. \"Physics-informed neural surrogate / neural likelihood emulator for rainfall-runoff simulator\" sequential_part: each MCMC likelihood evaluation requires running full rainfall-runoff model over time (sequential within evaluation); restructure: replace simulator with GPU neural surrogate trained on offline simulations; maybe perform MCMC on GPU; condition: surrogate generalization to high posterior density regions; baselines: exact simulator MCMC, posterior summaries; first_test: train small MLP on 10k offline runs, measure R^2/prediction time and MCMC posterior divergence.\n\nE. \"Parallel tempering / replica exchange across catchments and temperatures\" sequential_part: single Markov chain stuck in multimodal posterior; restructure: run chains at multiple temperatures/hyperparameter schedules in parallel on GPU, exchange states periodically; condition: posterior multimodality/rugged; baselines: single-chain MCMC; first_test: run 8 temperatures on a small catchment, measure mixing and exchange acceptance.\n\nBut need ensure five distinct and relevant. Could also propose:\nF. \"Gradient-based MCMC (HMC/NUTS) enabled by differentiable rainfall-runoff models on GPU\" sequential_part: random-walk MCMC needing long chains due to inefficient proposals; restructure: replace with HMC using differentiable simulator (autodiff), leveraging GPU to compute gradients, shorter chains; condition: model must be differentiable and gradients stable; baselines: random-walk Metropolis / existing MCMC; first_test: implement differentiable toy hydrological model, compare ESS/sec.\n\nThis is compelling because long chains needed due to inefficient Metropolis. Field: computational hydrology. sequential_part maybe \"one answer waits on step after step: random-walk chain\" and restructure \"introduce gradient-based proposals computed on GPU in batch; reduces sequential steps\".\n\nNeed choose five. Could include both B and A? Good.\n\nMaybe need not only GPU but distributed. Field maybe \"Bayesian hydrology\", \"scientific computing\", \"MCMC\", etc.\n\nLet's map exactly.\n\nNeed final JSON with proposals array of 5 objects. The field names:\n- title\n- field\n- sequential_part\n- restructure\n- condition\n- baselines\n- first_test\n\nNeed think what field means: probably \"field\" as scientific domain/area. Could be \"Bayesian hydrology / rainfall-runoff model calibration\" etc. For each maybe varied enough.\n\nLet's draft careful high-quality answers. Need not exceed length but include specifics. Since no tool. Need include rough cost in first_test. The prompt says \"the cheapest measurement to run first and its rough cost.\" So first_test string should include rough cost like \"~1 GPU-hour\", \"~30 min on a single GPU\", etc. Include cost.\n\nNeed make them credible.\n\nLet's craft each:\n\n1. Title: \"Batched time-step rainfall-runoff simulation on GPUs for ensemble likelihood evaluation\"\nfield: \"Computational hydrology / rainfall-runoff model calibration\"\nsequential_part: \"Within one parameter proposal, the runoff state must be updated recursively across daily time steps (the state at t depends on state at t-1).\"\nrestructure: \"Keep the temporal recurrence exactly, but vectorize the state update over many parameter sets/catchments simultaneously on GPU, so one time-step kernel processes thousands of particles at once; this turns the sequential-in-time loop into a short sequence of wide GPU kernels.\"\ncondition: \"The number of concurrent parameter sets is large enough (hundreds to thousands) and the per-step state update is dense enough to saturate GPU throughput; CPU-GPU transfer is amortized.\"\nbaselines: \"Single-thread CPU and OpenMP multi-core implementation of the same rainfall-runoff solver; compare wall-clock time and numerical agreement (solver outputs must match to machine precision or accepted tolerance).\"\nfirst_test: \"Benchmark one catchment model with 1,024 parameter sets over 30 years of daily data on GPU vs CPU; roughly 30-60 minutes of GPU time.\"\n\nNeed maybe state match. Okay.\n\n2. Title: \"Many short independent chains with rank-normalized convergence diagnostics\"\nfield: \"Bayesian MCMC for hydrological model calibration\"\nsequential_part: \"Each individual MCMC chain is inherently sequential; a single long chain waits on every previous sample.\"\nrestructure: \"Replace one long chain with hundreds of independent seeds run simultaneously on the GPU, periodically using rank-normalized R-hat and effective sample size to decide when ensemble mixing is sufficient; discard burn-in and pool draws.\"\ncondition: \"The posterior has reasonable basin mass (no isolated modes with very low probability connections) and proposal variance can be tuned per chain; GPU memory permits hundreds of chains.\"\nbaselines: \"A single long CPU chain of equal total iterations; compare R-hat, ESS/sec, posterior summary estimates of parameters and predictive discharge.\"\nfirst_test: \"Run 200 chains x 5,000 iterations on a small pre-existing rainfall-runoff posterior with a batched scalar/vectorized log-likelihood; roughly 1-2 GPU-hours.\"\n\nNeed condition mention no isolated modes. Good.\n\n3. Title: \"Speculative multi-branch proposal evaluation for sequential-hazard MCMC\"\nfield: \"Markov chain Monte Carlo algorithms / Bayesian calibration\"\nsequential_part: \"The accept/reject decision at step t determines the starting state for step t+1, so proposals cannot be evaluated in a later iteration until the current decision is known.\"\nrestructure: \"At each step evaluate k distinct candidate proposals from the same current state in parallel on the GPU, then combine them into one transition (multi-proposal / speculative Metropolis-Hastings) or use branch-and-rollback prefetching to reuse evaluations when a branch is accepted.\"\ncondition: \"Log-likelihood evaluation is much more expensive than the rest of the transition, and proposal acceptance rate is high enough that speculative branches are often useful (or the multi-proposal kernel is statistically valid).\"\nbaselines: \"Standard Metropolis-Hastings with one proposal per step using the same rainfall-runoff likelihood; compare effective sample size per GPU-second and posterior summary accuracy.\"\nfirst_test: \"Apply the multi-proposal kernel to a cheap analytical proxy for the hydrologic posterior plus one batched GPU likelihood run; measure candidates per accepted draw; roughly 1 GPU-hour.\"\n\nNeed ensure condition valid. Good.\n\n4. Title: \"Neural likelihood emulator for rainfall-runoff simulator acceleration\"\nfield: \"Scientific machine learning / hydrological model calibration\"\nsequential_part: \"Every MCMC likelihood call runs a full multi-year rainfall-runoff simulation with sequential daily recurrence, and chains need millions of such calls.\"\nrestructure: \"Pre-train a GPU neural network to emulate the simulator's parameter-to-likelihood (or parameter-to-signature) mapping on offline simulations; during MCMC evaluate the surrogate in batches, with occasional exact simulator refits/checks to prevent drift.\"\ncondition: \"The surrogate generalizes within the high-posterior region; emulator error is much smaller than posterior width; training data can cover the prior or an exploratory posterior.\"\nbaselines: \"Exact simulator MCMC runs; compare posterior means/covariances, predictive intervals, and time-to-completion. A carefully quantified failure is also a valid result.\"\nfirst_test: \"Generate 10,000 offline simulator runs for one catchment and train a small MLP; measure validation error and prediction speedup; roughly 2-4 GPU-hours including data generation.\"\n\nNeed maybe include failure? Good.\n\n5. Title: \"Gradient-based HMC/NUTS with differentiable rainfall-runoff models on GPU\"\nfield: \"Differentiable Bayesian inference in hydrology\"\nsequential_part: \"Random-walk Metropolis chains require very long sequential burn-in/mixing due to inefficient proposal directions in high-dimensional parameter space.\"\nrestructure: \"Rewrite the rainfall-runoff model in a differentiable framework (e.g., JAX) and reverse-mode autodifferentiate the log-likelihood through the daily recurrence; run HMC/NUTS on GPU, moving multiple leapfrog trajectories in parallel and reducing the number of sequential steps needed for the same ESS.\"\ncondition: \"The model and objective are differentiable with stable gradients; the staircase/threshold behaviors in common hydrological models can be smoothed; GPU memory holds multiple leapfrog trajectories.\"\nbaselines: \"Existing random-walk Metropolis or DE-MC chains on CPU; compare ESS/sec and posterior summary accuracy, and check leapfrog energy diagnostics.\"\nfirst_test: \"Implement the differentiable model for a single catchment, verify gradients with finite differences, and benchmark 100 warm-up trajectories on GPU; roughly 1 GPU-hour.\"\n\nPotential issue: \"batched time-step simulation\" and \"neural likelihood emulator\" both maybe okay. But five distinct includes two MCMC algorithm (independent chains, speculative) and two simulation acceleration (batched, surrogate), one differentiable HMC. Good.\n\nNeed maybe include \"sequential_part\" for HMC: \"one answer waits on step after step\" maybe chain. Fine.\n\nMaybe can include parallel tempering instead of speculative? Speculative is more aligned with sequential parts and branch. Maybe include both? We have 5. Could replace one with \"uncertainty across catchments\" but domain is calibrating for catchments. Maybe \"Parallel tempering across temperature ladder\" better than speculative? Let's evaluate.\n\nThe hackathon: \"sponsors build systems that split workloads into subtasks and route each to best chip, and low-latency inference chips. The question they care about: which parts of a workload are sequential, and must they be?\" It may be better to identify true sequential bottleneck. Parallel tempering is one answer. Speculative execution explicitly addresses sequential dependency. Good.\n\nMaybe propose \"Preconditioned conjugate gradient? no.\"\n\nNeed return only JSON. Ensure no backticks, no extra. The JSON schema uses escaped quotes but we'll output normal JSON.\n\nNeed maybe avoid newlines? JSON can include newlines fine.\n\nLet's refine each object.\n\nNeed possible \"field\" maybe specify domain and method. Fine.\n\nLet's write final JSON with title etc. Ensure all required strings. Use double quotes. No trailing commas.\n\nNeed maybe include price in each first_test: \"roughly 30 min on one GPU\", etc. Make cost rough. Good.\n\nLet's now craft exact final answer.\n\nNeed ensure JSON valid. Let's produce compact but readable. Each string can be long. Need escape internal quotes? Use no double quotes inside or maybe apostrophes. Avoid using double quotes in strings. Good.\n\nPotential issue: use \"R-hat\" and \"ESS/sec\" etc fine. Use apostrophes? fine.\n\nLet's compose final JSON.\n\nBut wait: The prompt says \"Return only one JSON value, with no other text, that matches this JSON Schema: ...\" Okay.\n\nNeed ensure no comments. \n\nLet's draft:\n\n{\n  \"proposals\": [\n    {\n      \"title\": \"Batched time-step rainfall-runoff simulation on GPUs for ensemble likelihood evaluation\",\n      \"field\": \"Computational hydrology and rainfall-runoff model calibration\",\n      \"sequential_part\": \"Within one parameter proposal, the watershed state must be updated recursively through daily time steps; each state depends on the previous day.\",\n      \"restructure\": \"Keep the daily recurrence exactly but vectorize the state update over thousands of parameter sets or catchments on a GPU, so the sequential time loop becomes a short sequence of wide parallel kernels.\",\n      \"condition\": \"Concurrent parameter sets number in the hundreds to thousands so the per-step update saturates GPU throughput, and CPU-GPU transfer cost is amortized across many likelihood evaluations.\",\n      \"baselines\": \"Single-thread CPU and OpenMP multi-core runs of the same solver; compare wall-clock time and numerical agreement of streamflow and objective values within a set tolerance.\",\n      \"first_test\": \"Benchmark one model with 1024 parameter sets over 30 years of daily forcing data on CPU vs GPU; roughly 30-60 minutes of GPU time.\"\n    },\n    ...\n  ]\n}\n\nSecond:\ntitle: \"Many short independent MCMC chains with rank-normalized early stopping\"\nfield: \"Bayesian inference for hydrological model calibration\"\nsequential_part: \"A single MCMC chain is inherently sequential; every sample waits on the previous accepted sample, so long chains cannot be shortened naively.\"\nrestructure: \"Replace one long chain with hundreds of independent chains launched together on a GPU, using vectorized log-likelihood calls, then pool draws after burn-in and monitor rank-normalized R-hat and effective sample size.\"\ncondition: \"The posterior basin supports mixing across seeds, proposal scales can be tuned or adapted, and GPU memory is sufficient for many chains; isolated modes are handled with multiple seeds or tempering if present.\"\nbaselines: \"A single long CPU chain with equal total iterations; compare R-hat, ESS per GPU-second, posterior parameter summaries, and predictive streamflow uncertainty intervals.\"\nfirst_test: \"Run 200 chains for 5000 iterations on a small existing rainfall-runoff posterior; roughly 1-2 GPU-hours.\"\n\nThird:\ntitle: \"Speculative multi-branch proposal evaluation for sequential-hazard MCMC\"\nfield: \"Markov chain Monte Carlo algorithms applied to Bayesian calibration\"\nsequential_part: \"The accept/reject decision at step t determines the starting point for step t+1, so the chain cannot evaluate the next proposal until the current decision is made.\"\nrestructure: \"At each step evaluate k candidate proposals from the current state in parallel on the GPU, then combine them via a statistically valid multi-proposal Metropolis-Hastings update, or use branch-and-rollback prefetching to reuse speculative evaluations.\"\ncondition: \"Log-likelihood evaluation dominates the runtime, and the acceptance rate and proposal diversity are high enough that parallel branches are useful for the chosen kernel.\"\nbaselines: \"Single-proposal Metropolis-Hastings with the same rainfall-runoff likelihood; compare effective sample size per GPU-second and posterior summary accuracy, and report wasted speculative evaluations.\"\nfirst_test: \"Test the multi-proposal kernel on a cheap analytic proxy for the hydrologic posterior plus one batched likelihood run; measure candidates per accepted draw; roughly 1 GPU-hour.\"\n\nFourth:\ntitle: \"Neural likelihood emulator for accelerating rainfall-runoff calibration\"\nfield: \"Scientific machine learning for hydrological model calibration\"\nsequential_part: \"Every MCMC likelihood call requires a multi-year rainfall-runoff simulation with sequential daily recurrence, and a long chain needs millions of such calls.\"\nrestructure: \"Build a GPU neural surrogate mapping parameters to likelihood values or summary signatures from offline simulator runs; evaluate the surrogate in large batches during MCMC, with periodic exact simulator re-evaluation to correct or diagnose drift.\"\ncondition: \"The surrogate is accurate inside the high-posterior region, its error is small relative to posterior width, and offline training runs cover the relevant prior or exploratory posterior region.\"\nbaselines: \"Exact simulator MCMC runs; compare posterior means, covariances, predictive intervals, and wall-clock time, and explicitly measure emulator-induced posterior shift.\"\nfirst_test: \"Generate 10,000 offline simulator runs for one catchment, train a small MLP or Gaussian process, and measure validation error and prediction speedup; roughly 2-4 GPU-hours including data generation.\"\n\nFifth:\ntitle: \"Differentiable gradient-based HMC on GPUs to shorten sequential chains\"\nfield: \"Differentiable Bayesian inference for rainfall-runoff models\"\nsequential_part: \"Random-walk Metropolis chains need very long sequential mixing because proposal directions are inefficient in high-dimensional parameter space.\"\nrestructure: \"Rewrite the rainfall-runoff recurrence in a differentiable framework and reverse-mode autodifferentiate the log-likelihood; run HMC or NUTS on GPU with multiple leapfrog trajectories in parallel, taking fewer sequential steps to reach the same effective sample size.\"\ncondition: \"The model and log-likelihood are differentiable with stable gradients, threshold or staircase terms can be smoothed, and GPU memory holds several leapfrog trajectories at once.\"\nbaselines: \"Existing random-walk Metropolis or DE-MC chains on CPU; compare effective sample size per second, posterior summary accuracy, and leapfrog energy diagnostics.\"\nfirst_test: \"Implement a differentiable single-catchment model, check gradients with finite differences, and benchmark 100 warm-up HMC trajectories; roughly 1 GPU-hour.\"\n\nThis is good.\n\nNeed maybe \"field\" values include method. Fine.\n\nNeed ensure all required keys are there. We have 5 objects.\n\nCould perhaps re-order maybe first independent chains? It's okay.\n\nNeed maybe no markdown. Output JSON only.\n\nLet's produce final.",
+          "time": {
+            "start": 1792453882302,
+            "end": 1792453922835
+          },
+          "id": "prt_15693b1be0011dprH3xK8NdkE7",
+          "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn",
+          "messageID": "msg_1569392450019c5sgcLwU8bhog"
+        },
+        {
+          "type": "text",
+          "text": "{\n  \"proposals\": [\n    {\n      \"title\": \"Batched time-step rainfall-runoff simulation on GPUs for ensemble likelihood evaluation\",\n      \"field\": \"Computational hydrology and rainfall-runoff model calibration\",\n      \"sequential_part\": \"Within one parameter proposal, the watershed state must be updated recursively through daily time steps; each state depends on the previous day.\",\n      \"restructure\": \"Keep the daily recurrence exactly but vectorize the state update over thousands of parameter sets or catchments on a GPU, so the sequential time loop becomes a short sequence of wide parallel kernels.\",\n      \"condition\": \"Concurrent parameter sets number in the hundreds to thousands so the per-step update saturates GPU throughput, and CPU-GPU transfer cost is amortized across many likelihood evaluations.\",\n      \"baselines\": \"Single-thread CPU and OpenMP multi-core runs of the same solver; compare wall-clock time and numerical agreement of streamflow and objective values within a set tolerance.\",\n      \"first_test\": \"Benchmark one model with 1024 parameter sets over 30 years of daily forcing data on CPU vs GPU; roughly 30-60 minutes of GPU time.\"\n    },\n    {\n      \"title\": \"Many short independent MCMC chains with rank-normalized early stopping\",\n      \"field\": \"Bayesian inference for hydrological model calibration\",\n      \"sequential_part\": \"A single MCMC chain is inherently sequential; every sample waits on the previous accepted sample, so long chains cannot be shortened naively.\",\n      \"restructure\": \"Replace one long chain with hundreds of independent chains launched together on a GPU, using vectorized log-likelihood calls, then pool draws after burn-in and monitor rank-normalized R-hat and effective sample size.\",\n      \"condition\": \"The posterior basin supports mixing across seeds, proposal scales can be tuned or adapted, and GPU memory is sufficient for many chains; isolated modes are handled with multiple seeds or tempering if present.\",\n      \"baselines\": \"A single long CPU chain with equal total iterations; compare R-hat, ESS per GPU-second, posterior parameter summaries, and predictive streamflow uncertainty intervals.\",\n      \"first_test\": \"Run 200 chains for 5000 iterations on a small existing rainfall-runoff posterior; roughly 1-2 GPU-hours.\"\n    },\n    {\n      \"title\": \"Speculative multi-branch proposal evaluation for sequential-hazard MCMC\",\n      \"field\": \"Markov chain Monte Carlo algorithms applied to Bayesian calibration\",\n      \"sequential_part\": \"The accept/reject decision at step t determines the starting point for step t+1, so the chain cannot evaluate the next proposal until the current decision is made.\",\n      \"restructure\": \"At each step evaluate k candidate proposals from the current state in parallel on the GPU, then combine them via a statistically valid multi-proposal Metropolis-Hastings update, or use branch-and-rollback prefetching to reuse speculative evaluations.\",\n      \"condition\": \"Log-likelihood evaluation dominates the runtime, and the acceptance rate and proposal diversity are high enough that parallel branches are useful for the chosen kernel.\",\n      \"baselines\": \"Single-proposal Metropolis-Hastings with the same rainfall-runoff likelihood; compare effective sample size per GPU-second and posterior summary accuracy, and report wasted speculative evaluations.\",\n      \"first_test\": \"Test the multi-proposal kernel on a cheap analytic proxy for the hydrologic posterior plus one batched likelihood run; measure candidates per accepted draw; roughly 1 GPU-hour.\"\n    },\n    {\n      \"title\": \"Neural likelihood emulator for accelerating rainfall-runoff calibration\",\n      \"field\": \"Scientific machine learning for hydrological model calibration\",\n      \"sequential_part\": \"Every MCMC likelihood call requires a multi-year rainfall-runoff simulation with sequential daily recurrence, and a long chain needs millions of such calls.\",\n      \"restructure\": \"Build a GPU neural surrogate mapping parameters to likelihood values or summary signatures from offline simulator runs; evaluate the surrogate in large batches during MCMC, with periodic exact simulator re-evaluation to correct or diagnose drift.\",\n      \"condition\": \"The surrogate is accurate inside the high-posterior region, its error is small relative to posterior width, and offline training runs cover the relevant prior or exploratory posterior region.\",\n      \"baselines\": \"Exact simulator MCMC runs; compare posterior means, covariances, predictive intervals, and wall-clock time, and explicitly measure emulator-induced posterior shift.\",\n      \"first_test\": \"Generate 10,000 offline simulator runs for one catchment, train a small MLP or Gaussian process, and measure validation error and prediction speedup; roughly 2-4 GPU-hours including data generation.\"\n    },\n    {\n      \"title\": \"Differentiable gradient-based HMC on GPUs to shorten sequential chains\",\n      \"field\": \"Differentiable Bayesian inference for rainfall-runoff models\",\n      \"sequential_part\": \"Random-walk Metropolis chains need very long sequential mixing because proposal directions are inefficient in high-dimensional parameter space.\",\n      \"restructure\": \"Rewrite the rainfall-runoff recurrence in a differentiable framework and reverse-mode autodifferentiate the log-likelihood; run HMC or NUTS on GPU with multiple leapfrog trajectories in parallel, taking fewer sequential steps to reach the same effective sample size.\",\n      \"condition\": \"The model and log-likelihood are differentiable with stable gradients, threshold or staircase terms can be smoothed, and GPU memory holds several leapfrog trajectories at once.\",\n      \"baselines\": \"Existing random-walk Metropolis or DE-MC chains on CPU; compare effective sample size per second, posterior summary accuracy, and leapfrog energy diagnostics.\",\n      \"first_test\": \"Implement a differentiable single-catchment model, check gradients with finite differences, and benchmark 100 warm-up HMC trajectories; roughly 1 GPU-hour.\"\n    }\n  ]\n}",
+          "time": {
+            "start": 1792453922862,
+            "end": 1792453928069
+          },
+          "id": "prt_15694502e001lse8cG8OCT22tU",
+          "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn",
+          "messageID": "msg_1569392450019c5sgcLwU8bhog"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "2395454b413561f052fd56e6e08c375c11f4712e",
+          "type": "step-finish",
+          "tokens": {
+            "total": 6371,
+            "input": 659,
+            "output": 1196,
+            "reasoning": 4516,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.0117447,
+          "id": "prt_156946702001cZH5fARvbxRC3F",
+          "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn",
+          "messageID": "msg_1569392450019c5sgcLwU8bhog"
+        },
+        {
+          "type": "patch",
+          "hash": "e1bdeb411406095d47256ac067081ea627072a50",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-1.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-1.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-1.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-2.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-2.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-2.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.http/001.response.txt"
+          ],
+          "id": "prt_1569469c5001O5dVUzQxCF33V5",
+          "sessionID": "ses_ea96c854dffe7PeZXAyaA5skAn",
+          "messageID": "msg_1569392450019c5sgcLwU8bhog"
+        }
+      ]
+    }
+  ]
+}

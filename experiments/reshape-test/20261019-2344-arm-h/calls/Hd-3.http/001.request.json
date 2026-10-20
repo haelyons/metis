@@ -1,0 +1,39 @@
+{
+ "ts": "2026-10-19T23:51:21.514Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_156938144001RVfU5OnQIUtz2j",
+  "x-opencode-session": "ses_ea96c86d1ffe0E4NYn543W7VIo",
+  "x-opencode-session-id": "ses_ea96c86d1ffe0E4NYn543W7VIo",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:34619",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "2682"
+ },
+ "body": {
+  "model": "deepseek-v4-pro",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the text you are given. You use no tools. You return only the JSON asked for.\nYou are powered by the model named deepseek-v4-pro. The exact model ID is opencode-go/deepseek-v4-pro\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"A weekend hackathon on scientific parallelism, about 30 hours, on 21 November. GPUs are provided; their type is not yet\nknown. Teams may bring their own problem, and the thinking, data and baseline can be prepared beforehand.\n\nJudges score reshaping, a credible baseline, correctness and scientific value. A carefully explained failure to get a\nspeedup can still win, if its failure modes were predicted in advance.\n\nThe sponsors build systems that split workloads into subtasks and route each to the best chip, and low-latency\ninference chips. The question they care about: which parts of a workload are sequential, and must they be?\n\nPropose five projects for this hackathon in this domain: Bayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.. For each give: title; field; sequential_part, the part of the work that one answer waits on step after step, or \\\"none\\\"; restructure, how your project changes that (or what it runs in parallel); condition, what must hold for it to pay off; baselines, what the result is timed and checked against; first_test, the cheapest measurement to run first and its rough cost. Decide from what you know; do not use tools.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"proposals\\\"],\\\"properties\\\":{\\\"proposals\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"title\\\",\\\"field\\\",\\\"sequential_part\\\",\\\"restructure\\\",\\\"condition\\\",\\\"baselines\\\",\\\"first_test\\\"],\\\"properties\\\":{\\\"title\\\":{\\\"type\\\":\\\"string\\\"},\\\"field\\\":{\\\"type\\\":\\\"string\\\"},\\\"sequential_part\\\":{\\\"type\\\":\\\"string\\\"},\\\"restructure\\\":{\\\"type\\\":\\\"string\\\"},\\\"condition\\\":{\\\"type\\\":\\\"string\\\"},\\\"baselines\\\":{\\\"type\\\":\\\"string\\\"},\\\"first_test\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\""
+   }
+  ],
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

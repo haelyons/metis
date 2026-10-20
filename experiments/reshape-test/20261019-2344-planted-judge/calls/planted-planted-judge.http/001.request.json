@@ -1,0 +1,39 @@
+{
+ "ts": "2026-10-19T23:44:49.065Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_1568da523001nU6n6Vn4PCt1es",
+  "x-opencode-session": "ses_ea9725b77ffe3wS1NFLeJO9dtN",
+  "x-opencode-session-id": "ses_ea9725b77ffe3wS1NFLeJO9dtN",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:39869",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "3191"
+ },
+ "body": {
+  "model": "glm-5.3",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the text you are given. You use no tools. You return only the JSON asked for.\nYou are powered by the model named glm-5.3. The exact model ID is opencode-go/glm-5.3\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-planted-judge/calls\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Below are questions proposed for a research problem, each with the reframing behind it. Classify each one.\nkind: \\\"reframe\\\" if it changes what is computed, measured or ordered so that more compute buys something it did not before; \\\"copies\\\" if it only runs the same computation more times, on more items, or side by side; \\\"other\\\" otherwise.\nmeets_criterion: \\\"yes\\\" or \\\"no\\\" for this criterion: It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count.\nGive for each a quote from the proposal and a reason of at most 25 words. Decide only from the text below; do not use tools.\nProblem:\nBayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.\nProposals: [{\\\"index\\\":1,\\\"title\\\":\\\"Split each step\\\",\\\"summary\\\":\\\"Split each daily time step's 2 million grid cells across 8 GPUs with domain decomposition, exchanging halos every step.\\\"},{\\\"index\\\":2,\\\"title\\\":\\\"Whole-chain Newton\\\",\\\"summary\\\":\\\"Guess all 10,000 states of one MCMC chain at once, then correct every state in parallel with Newton iterations until the chain matches the sequential one.\\\"},{\\\"index\\\":3,\\\"title\\\":\\\"Scan over days\\\",\\\"summary\\\":\\\"Each day's update of the linear reservoir model is an affine map, so compute all 36,500 days at once with a parallel prefix scan instead of the time loop.\\\"},{\\\"index\\\":4,\\\"title\\\":\\\"Many chains\\\",\\\"summary\\\":\\\"Run 4,096 independent MCMC chains side by side on the GPU, one per starting point, and pool their samples.\\\"}]\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"items\\\"],\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"index\\\",\\\"kind\\\",\\\"meets_criterion\\\",\\\"quote\\\",\\\"reason\\\"],\\\"properties\\\":{\\\"index\\\":{\\\"type\\\":\\\"integer\\\"},\\\"kind\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"reframe\\\",\\\"copies\\\",\\\"other\\\"]},\\\"meets_criterion\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"yes\\\",\\\"no\\\",\\\"NA\\\"]},\\\"quote\\\":{\\\"type\\\":\\\"string\\\"},\\\"reason\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\""
+   }
+  ],
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

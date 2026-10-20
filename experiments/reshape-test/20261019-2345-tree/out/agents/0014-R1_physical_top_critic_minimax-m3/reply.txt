@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 4,
+      "ref": "plan:scope_gap",
+      "reason": "GPU-vs-CPU result changes the buy-compute decision for Bayesian CAMELS calibration, but scope is GR4J/CAMELS only; distributed/hierarchical regimes excluded."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.decision_rule",
+      "reason": "GPU <1hr vs CPU 2-3hr gap dwarfs <5% noise; compute_axis is 67->671 (10x); arms vary only in compute with model/sampler/chains/iter held fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "card:anchor",
+      "reason": "Anchor reproduces airGR NSE 0.495 within +/-0.02 and R-hat<1.2; throughput itself has no independent truth beyond the run-to-run timing."
+    },
+    {
+      "criterion": "open",
+      "value": 4,
+      "ref": "card:left_open",
+      "reason": "Freitas 2022 shows 20x speedup on MGB distributed point opt, not batched MCMC over many GR4J catchments; gap is stated but prior covers partial magnitude."
+    },
+    {
+      "criterion": "reshape",
+      "value": 2,
+      "ref": "card:method",
+      "reason": "Plan batches all 2,684 chains into one fused kernel pass but each chain still runs 100k iterations serially; the per-chain dependency is not restructured."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "restructuring.method is none (catchments already independent), so criterion is NA per its own rule."
+    }
+  ],
+  "decides_by": "gpu_bench",
+  "decides_by_reason": "gpu_bench measures batched_forward_ms and CPU throughput with a main_run_hours gate; it is the earliest phase whose result tells whether GPU speedup crosses the 20x lever threshold."
+}
+```

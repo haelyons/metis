@@ -1,0 +1,121 @@
+{
+ "ts": "2026-10-20T00:17:20.288Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_156ab7088001B7958y6usemmy1",
+  "x-opencode-session": "ses_ea9549003ffeBy1B0juyY0Y3x7",
+  "x-opencode-session-id": "ses_ea9549003ffeBy1B0juyY0Y3x7",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:34465",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "11933"
+ },
+ "body": {
+  "model": "glm-5.3-flash",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.\nYou are powered by the model named glm-5.3-flash. The exact model ID is opencode-go/glm-5.3-flash\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-tree/out/agents/0022-R1_physical_top_dramaturg-2/cwd\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"For each item below, fetch its source and check that the recorded quote appears on the page and supports the item. A card item is a field of the plan in the producer's words, with the sources it cites: check each factual claim in it against those sources, and any value it carries against the page; what the plan will build, measure or predict needs no source, but a factual claim with no source is UNSUPPORTED. For a cost input, check that the page states the number for the setting given; whether it applies to this plan is not yours to judge. When the page states a different number for a num or rate item, give it as page_value. Decide only from the pages you fetch and the text below; do not read files. Return one status per item, under its ref: SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE, with the page sentence you relied on.\nItems, one per line:\n{\\\"ref\\\":\\\"card:question\\\",\\\"text\\\":\\\"Does feeding many GPUs to the block-tridiagonal Newton solve shorten its depth from T ordered steps to log2(T)?\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:hypothesis\\\",\\\"text\\\":\\\"Parallel cyclic reduction solves the tridiagonal Newton correction in log2(T) rounds instead of T, so GPU width shortens the sequential part [s3].\\\",\\\"sources\\\":[{\\\"id\\\":\\\"s3\\\",\\\"url\\\":\\\"https://docs.nvidia.com/cuda/cusolverdx/get_started/functions/gtsv.html\\\",\\\"quote\\\":\\\"The Thomas algorithm, based on LU decomposition, is efficient to solve tridiagonal systems but inherently sequential, while the PCR algorithm is more computationally expensive but parallelizable. The hybrid combination of the two algorithms is used to achieve the best performance for different problem sizes.\\\"}]}\n{\\\"ref\\\":\\\"card:sequential_part\\\",\\\"text\\\":\\\"The block-bidiagonal Newton correction is a forward substitution: each row waits on the previous, T ordered steps.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:method\\\",\\\"text\\\":\\\"Cyclic reduction halves the system each round and solves independent rows together, so log2(T) rounds replace T ordered steps [s3].\\\",\\\"sources\\\":[{\\\"id\\\":\\\"s3\\\",\\\"url\\\":\\\"https://docs.nvidia.com/cuda/cusolverdx/get_started/functions/gtsv.html\\\",\\\"quote\\\":\\\"The Thomas algorithm, based on LU decomposition, is efficient to solve tridiagonal systems but inherently sequential, while the PCR algorithm is more computationally expensive but parallelizable. The hybrid combination of the two algorithms is used to achieve the best performance for different problem sizes.\\\"}]}\n{\\\"ref\\\":\\\"card:if_lever\\\",\\\"text\\\":\\\"As equation count N grows, cyclic-reduction wall-clock grows like log2(N) and beats the sequential Thomas solve by a widening margin.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:if_not\\\",\\\"text\\\":\\\"At feasible N the parallel solver never beats sequential: extra work and memory traffic dominate, and one GPU has too few threads to hide them.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:test_summary\\\",\\\"text\\\":\\\"Time a sequential Thomas tridiagonal solve against parallel cyclic reduction on one A100, sweeping N=2^10 to 2^24, checking both match NVIDIA's gtsv reference and batched independent solves.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:closest_prior\\\",\\\"text\\\":\\\"Zhang, Cohen and Owens benchmarked cyclic reduction, PCR and recursive doubling on a GTX 280, finding PCR does fewer steps, more work, and 28x over sequential LAPACK [s2].\\\",\\\"sources\\\":[{\\\"id\\\":\\\"s2\\\",\\\"url\\\":\\\"https://research.nvidia.com/sites/default/files/pubs/2010-01_Fast-Tridiagonal-Solvers/Zhang_Fast_2009.pdf\\\",\\\"quote\\\":\\\"We find that CR enjoys linear algorithm complexity but suffers from more algorithmic steps and bank conflicts, while PCR and RD have fewer algorithmic steps but do more work each step.\\\"}]}\n{\\\"ref\\\":\\\"card:left_open\\\",\\\"text\\\":\\\"No published result times PCR against an on-GPU sequential Thomas on a modern A100 across N up to 2^24, so the crossover is unmeasured.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:anchor\\\",\\\"text\\\":\\\"Written PCR and Thomas kernels must match NVIDIA's gtsv tridiagonal solve and a CPU dense solve to 1e-10 relative residual.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:limits\\\",\\\"text\\\":\\\"Shows one tridiagonal solve's wall-clock scaling on one modern GPU, not the end-to-end parallel-in-time method, whose iteration count the dynamics sets.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"src:s3\\\",\\\"url\\\":\\\"https://docs.nvidia.com/cuda/cusolverdx/get_started/functions/gtsv.html\\\",\\\"quote\\\":\\\"The Thomas algorithm, based on LU decomposition, is efficient to solve tridiagonal systems but inherently sequential, while the PCR algorithm is more computationally expensive but parallelizable. The hybrid combination of the two algorithms is used to achieve the best performance for different problem sizes.\\\",\\\"supports\\\":\\\"Thomas is sequential and PCR is parallel (the depth claim); NVIDIA ships a PCR+Thomas hybrid, used as the independent reference.\\\"}\n{\\\"ref\\\":\\\"src:s2\\\",\\\"url\\\":\\\"https://research.nvidia.com/sites/default/files/pubs/2010-01_Fast-Tridiagonal-Solvers/Zhang_Fast_2009.pdf\\\",\\\"quote\\\":\\\"We find that CR enjoys linear algorithm complexity but suffers from more algorithmic steps and bank conflicts, while PCR and RD have fewer algorithmic steps but do more work each step.\\\",\\\"supports\\\":\\\"PCR has fewer (logarithmic) steps but more work per step; the prior GPU benchmark and the 28x speedup proxy.\\\"}\n{\\\"ref\\\":\\\"num:speedup_at_nmax\\\",\\\"name\\\":\\\"PCR/Thomas speedup at n_max\\\",\\\"value\\\":28,\\\"unit\\\":\\\"x\\\",\\\"basis\\\":\\\"PROXY\\\",\\\"quote\\\":\\\"Our GPU solvers achieve up to a 28x speedup over a sequential LAPACK solver, and a 12x speedup over a multi-threaded CPU solver.\\\",\\\"page_setting\\\":\\\"2009 NVIDIA GTX 280 vs sequential LAPACK dgtsv (CPU), at their largest N\\\",\\\"differs_in\\\":[\\\"2009 GTX 280 (30 SMs) vs 2020 A100 (108 SMs, 1555 GB/s)\\\",\\\"baseline CPU LAPACK dgtsv vs my on-GPU Thomas kernel\\\",\\\"their N ~ hundreds vs my N up to 2^24\\\"],\\\"url\\\":\\\"https://research.nvidia.com/sites/default/files/pubs/2010-01_Fast-Tridiagonal-Solvers/Zhang_Fast_2009.pdf\\\"}\n{\\\"ref\\\":\\\"num:per_gpu_usd_h_a100\\\",\\\"name\\\":\\\"A100 SXM 40GB price at Lambda\\\",\\\"value\\\":1.99,\\\"unit\\\":\\\"USD/GPU/hour\\\",\\\"basis\\\":\\\"CITED\\\",\\\"quote\\\":\\\"Instances pricing, \\\\\"1x\\\\\" tab: row \\\\\"NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99\\\\\" (columns: Plan | VRAM/GPU | vCPUs | RAM | STORAGE | PRICE/GPU/HR*)\\\",\\\"page_setting\\\":\\\"Lambda on-demand, A100 SXM 40GB, 1-GPU plan\\\",\\\"url\\\":\\\"https://lambda.ai/pricing\\\"}\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"description\\\":\\\"One entry per item sent, with its ref unchanged.\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"ref\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"\\\\\"card:<field>\\\\\", \\\\\"src:<source id>\\\\\", \\\\\"num:<number id>\\\\\" or \\\\\"rate:<rate id>\\\\\", as sent.\\\"},\\\"status\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"SUPPORTED\\\",\\\"PARTIAL\\\",\\\"UNSUPPORTED\\\",\\\"CONTRADICTED\\\",\\\"UNREACHABLE\\\"]},\\\"page_quote\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The text on the page this status rests on.\\\"},\\\"note\\\":{\\\"type\\\":\\\"string\\\"},\\\"page_value\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"num and rate items: the value the page states.\\\"}},\\\"required\\\":[\\\"ref\\\",\\\"status\\\",\\\"page_quote\\\",\\\"note\\\"]}}},\\\"required\\\":[\\\"items\\\"]}\""
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

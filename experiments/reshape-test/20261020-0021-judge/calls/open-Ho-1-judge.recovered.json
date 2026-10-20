@@ -1,0 +1,37 @@
+[
+ {
+  "index": 1,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "Run fast bonded/nonbonded substeps concurrently with one speculative slow force evaluation using extrapolated positions; commit substeps and roll back only when a rare collision or large-force rejection triggers a resimulation.",
+  "reason": "Extrapolated-position speculation changes the computation and overlaps fast substeps with the slow force step, removing the timestep barrier."
+ },
+ {
+  "index": 2,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "Use ParaExp/PFASST-style parallel-in-time splitting: a coarse propagator provides initial values so fine timestep chunks integrate concurrently on multiple GPUs, and corrections iterate only where coarse error is large.",
+  "reason": "Coarse propagator guesses plus corrections change the computation; fine timestep chunks integrate simultaneously, breaking serial time integration."
+ },
+ {
+  "index": 3,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "Peel the de Bruijn graph in parallel across independent components, and speculatively extend multiple branches at each fork; commit the branch with best read-depth and mismatch support, rolling back rejected alternatives.",
+  "reason": "Speculation changes the computation: fork alternatives extend simultaneously instead of one-edge-at-a-time walking dependent on committed sequence."
+ },
+ {
+  "index": 4,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "Replace label propagation with union-find plus pointer jumping and tree contraction: GPU blocks merge edges in parallel, then resolve parent chains via atomic compare-and-swap until roots stabilize.",
+  "reason": "Union-find with pointer jumping computes chain resolution simultaneously across particles, removing the step-by-step label propagation cascade."
+ },
+ {
+  "index": 5,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "Use algebraic tensor factorization and persistent kernels to flatten the contraction DAG; distribute occupied and virtual blocks across GPUs and overlap communication with compute to shorten the critical path.",
+  "reason": "Factorization reorders contractions so GPUs shorten one iteration's critical path, but iterations stay sequential and gains come from intra-step GPU splitting."
+ }
+]

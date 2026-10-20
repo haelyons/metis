@@ -1,0 +1,123 @@
+{
+  "judge": "claude-opus-5-5 subagent",
+  "lists": [
+    {
+      "file": "open-Ho-1-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "Run fast bonded/nonbonded substeps concurrently with one speculative slow force evaluation using extrapolated positions", "reason": "Speculatively computes the next slow-force step from extrapolated positions while fast substeps proceed, overlapping consecutive time steps with rollback."},
+        {"index": 2, "kind": "reframe", "meets_criterion": "yes", "quote": "fine timestep chunks integrate concurrently on multiple GPUs", "reason": "Parallel-in-time coarse/fine splitting integrates successive time chunks of one assimilation window simultaneously."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "yes", "quote": "speculatively extend multiple branches at each fork; commit the branch with best read-depth and mismatch support, rolling back rejected alternatives", "reason": "Speculative extension computes walk steps beyond a fork before the branch decision commits, overlapping consecutive steps with rollback."},
+        {"index": 4, "kind": "reframe", "meets_criterion": "yes", "quote": "Replace label propagation with union-find plus pointer jumping and tree contraction", "reason": "Pointer jumping collapses the serial label-propagation cascade along linked chains into logarithmic-depth parallel rounds."},
+        {"index": 5, "kind": "reframe", "meets_criterion": "no", "quote": "Use algebraic tensor factorization and persistent kernels to flatten the contraction DAG; distribute occupied and virtual blocks across GPUs", "reason": "Shortens the critical path inside each CCSD iteration; iterations stay serial, so this splits a single step across GPUs."}
+      ]
+    },
+    {
+      "file": "open-Ho-2-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "Use Parareal/MGRIT in time with a coarse semi-empirical propagator and fine GPU DFT propagators; evaluate independent fine time-slices in parallel", "reason": "Parareal/MGRIT computes fine time slices of one trajectory concurrently, removing the timestep-after-timestep dependency."},
+        {"index": 2, "kind": "copies", "meets_criterion": "no", "quote": "process anti-diagonals of tiles, keep boundary cells in shared memory, pack multiple queries per thread block, and shard a reference database across GPUs", "reason": "Wavefront keeps the anti-diagonal dependency intact; gains come from within-step parallelism and batching many queries side by side."},
+        {"index": 3, "kind": "copies", "meets_criterion": "no", "quote": "Run thousands of independent chains in lockstep GPU batches", "reason": "Independent chains side by side; each chain remains sequential."},
+        {"index": 4, "kind": "other", "meets_criterion": "no", "quote": "Use a fixed-step GPU loop with parallel neuron updates, delayed ring buffers for spikes, atomic synaptic accumulation", "reason": "Parallelizes work within each timestep; the fixed-step loop still advances one step after another."},
+        {"index": 5, "kind": "reframe", "meets_criterion": "yes", "quote": "split the time domain into chunks run on separate GPU streams or tiles, solve corrections on a coarse time grid", "reason": "MGRIT/space-time multigrid computes time chunks concurrently with coarse-grid corrections, removing the serial timestep dependency."}
+      ]
+    },
+    {
+      "file": "open-Ho-3-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "attempt a ParaReal-style coarse predictor-corrector to parallelize across time steps", "reason": "Besides replicas and domain decomposition, it explicitly proposes Parareal to compute successive MD time steps concurrently."},
+        {"index": 2, "kind": "copies", "meets_criterion": "no", "quote": "Run many independent chains across GPUs, vectorize the log-likelihood over particles", "reason": "Independent chains side by side plus within-step vectorization; a single chain's steps stay serial."},
+        {"index": 3, "kind": "copies", "meets_criterion": "no", "quote": "Split the ligand library across all GPUs and CPU cores", "reason": "Embarrassingly parallel distribution over independent ligands; no sequential dependency is addressed."},
+        {"index": 4, "kind": "copies", "meets_criterion": "no", "quote": "Parallelize the inner likelihood computation over alignment sites and across many candidate topologies on GPUs, and run several independent searches", "reason": "Within-step likelihood parallelism and independent searches side by side; the accept-then-propose search path remains serial."},
+        {"index": 5, "kind": "copies", "meets_criterion": "no", "quote": "Run all ensemble members concurrently on GPUs while also accelerating each member's time-stepping", "reason": "Ensemble members run side by side and each step is accelerated; the forecast-analysis cycle stays sequential."}
+      ]
+    },
+    {
+      "file": "rr-Hd-1-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "copies", "meets_criterion": "no", "quote": "Keep the daily recurrence exactly but vectorize the state update over thousands of parameter sets or catchments", "reason": "Daily recurrence kept; parallelism is across independent parameter sets side by side."},
+        {"index": 2, "kind": "copies", "meets_criterion": "no", "quote": "Replace one long chain with hundreds of independent chains launched together on a GPU", "reason": "Independent chains side by side; no single chain's iterations are computed concurrently."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "yes", "quote": "use branch-and-rollback prefetching to reuse speculative evaluations", "reason": "Multi-proposal updates and prefetching evaluate future chain steps before the current accept/reject resolves, overlapping consecutive iterations."},
+        {"index": 4, "kind": "reframe", "meets_criterion": "no", "quote": "Build a GPU neural surrogate mapping parameters to likelihood values", "reason": "Makes each likelihood call cheaper; the chain still advances one accept/reject step after another."},
+        {"index": 5, "kind": "reframe", "meets_criterion": "no", "quote": "taking fewer sequential steps to reach the same effective sample size", "reason": "Gradients reduce how many serial steps are needed; parallel leapfrog trajectories are side-by-side copies, steps remain sequential."}
+      ]
+    },
+    {
+      "file": "rr-Hd-2-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "copies", "meets_criterion": "no", "quote": "Run many independent chains simultaneously on one or more GPUs", "reason": "Independent chains side by side; each chain's iterations remain serial."},
+        {"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "compute batched likelihoods for many parameter vectors concurrently on the GPU", "reason": "Surrogate cheapens and batches likelihood evaluations; chain iterations remain sequential."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "propagate, reweight, and resample particles level by level, parallelizing the per-particle likelihood and proposal work", "reason": "Parallelism is across particles within each level; tempering levels remain sequential, no serial steps computed concurrently."},
+        {"index": 4, "kind": "reframe", "meets_criterion": "yes", "quote": "use associative scans or linearized operators to parallelize the time recurrence", "reason": "Associative scans compute the hydrologic time recurrence in parallel, removing the step-after-step dependency of one simulation."},
+        {"index": 5, "kind": "copies", "meets_criterion": "no", "quote": "Parallelize independent catchment-level MCMC samplers over many GPUs or workers", "reason": "Independent per-catchment chains side by side; each chain stays sequential."}
+      ]
+    },
+    {
+      "file": "rr-Hd-3-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "Evaluate several candidate next states in parallel (speculative branches) around the current state on the GPU", "reason": "Speculative branching evaluates future chain states before the current acceptance resolves, overlapping successive MCMC iterations."},
+        {"index": 2, "kind": "copies", "meets_criterion": "no", "quote": "Run hundreds of coupled chains in one GPU batch using differential-evolution proposals", "reason": "Many chains side by side; each chain's iterations remain serial."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "a cheap surrogate screen is evaluated first and only promising proposals trigger the full model", "reason": "Cuts per-step cost by screening proposals; chain iterations still proceed one after another."},
+        {"index": 4, "kind": "reframe", "meets_criterion": "yes", "quote": "also parallelize within-shard forward simulation over time chunks", "reason": "Splitting the record into temporal shards and time chunks computes portions of the serial time recurrence concurrently."},
+        {"index": 5, "kind": "reframe", "meets_criterion": "no", "quote": "Replace the serial MCMC chain with a simulation-on-demand training pipeline", "reason": "Replaces the chain with independent batched simulations plus training; no sequential steps are computed at the same time."}
+      ]
+    },
+    {
+      "file": "rr-O-interp-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "other", "meets_criterion": "no", "quote": "SAEs for different layers are mutually independent and would run concurrently on separate GPUs", "reason": "Interpretability study; parallelism is independent per-layer SAEs side by side, no sequential chain is broken."},
+        {"index": 2, "kind": "other", "meets_criterion": "no", "quote": "the per-feature steering measurements are fully independent and could be batched/vectorized across the dictionary", "reason": "Batches independent steering runs side by side; the attribution-then-steering order and any MCMC chain remain sequential."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "run MCMC on the active variables only", "reason": "Reparameterization shortens the chain via lower autocorrelation; only independent gradient samples run in parallel, chain stays serial."}
+      ]
+    },
+    {
+      "file": "rr-O-physical-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "other", "meets_criterion": "no", "quote": "the only way to run them at the same time is to run many independent chains in parallel", "reason": "Diagnoses the serial bottleneck but offers only independent chains, which buy coverage, not concurrent steps."},
+        {"index": 2, "kind": "copies", "meets_criterion": "no", "quote": "the ensemble already splits into N chains run simultaneously", "reason": "Runs many chains side by side; per-chain sequence and autocorrelation are unchanged."},
+        {"index": 3, "kind": "copies", "meets_criterion": "no", "quote": "the workload decomposes into thousands of independent model runs that are embarrassingly parallel across chains and parameter sets", "reason": "Embarrassingly parallel independent forward runs; no step-after-step dependency is removed."},
+        {"index": 4, "kind": "copies", "meets_criterion": "no", "quote": "each catchment is independently calibratable", "reason": "Independent calibrations per catchment side by side; each calibration's chain remains serial."}
+      ]
+    },
+    {
+      "file": "rr-P-interp-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "other", "meets_criterion": "no", "quote": "it does not itself restructure the computation", "reason": "Measures forgetting rate via independent perturbation passes; explicitly does not restructure any sequential computation."},
+        {"index": 2, "kind": "reframe", "meets_criterion": "yes", "quote": "x_T = A^T x_0 is computable in O(log T) depth by repeated squaring / diagonalisation", "reason": "Proposes composing linear step transitions out of order, collapsing T serial steps to logarithmic depth."},
+        {"index": 3, "kind": "other", "meets_criterion": "no", "quote": "correct a guessed trajectory by clamping an SAE feature at an intermediate layer (add a constant in the direction of that feature) and continue the forward pass", "reason": "Correction propagates through a continued serial forward pass; parallelism is independent steering evaluations side by side."},
+        {"index": 4, "kind": "reframe", "meets_criterion": "yes", "quote": "Jacobi decoding initialises every token and refines them all in parallel each iteration", "reason": "Speculative and Jacobi decoding compute multiple sequential token steps concurrently, then verify or iterate to a fixed point."}
+      ]
+    },
+    {
+      "file": "rr-P-physical-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "reframe", "meets_criterion": "yes", "quote": "guess the trajectory at every grid point, integrate each sub-interval from its guessed value in parallel, then force continuity with a Newton iteration", "reason": "Guessed interval starts let all sub-intervals of one trajectory integrate concurrently, removing the time-step chain."},
+        {"index": 2, "kind": "reframe", "meets_criterion": "yes", "quote": "a coarse serial propagator predicts the trajectory and fine integrators correct each interval in parallel", "reason": "Parareal computes fine integrations over all time intervals simultaneously, with a cheap serial coarse sweep."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "yes", "quote": "a coarse-grid correction sweeps the time levels in order while fine-grid integrations are independent", "reason": "Multigrid-in-time integrates fine time intervals concurrently, removing the strict timestep-after-timestep dependency."},
+        {"index": 4, "kind": "reframe", "meets_criterion": "yes", "quote": "x_T = A^T x_0 is computed by diagonalisation or repeated squaring in O(log T) depth", "reason": "Composes linear propagators out of order, computing T serial steps in logarithmic parallel depth."},
+        {"index": 5, "kind": "reframe", "meets_criterion": "yes", "quote": "cyclic reduction eliminates independent pairs simultaneously", "reason": "Replaces the O(T)-deep forward substitution with O(log T) parallel elimination, computing dependent rows simultaneously."},
+        {"index": 6, "kind": "reframe", "meets_criterion": "yes", "quote": "speculatively evaluate many possible accept/reject branches in parallel, keep the true path, discard the rest", "reason": "Prefetching computes future MH steps before current accept/reject decisions resolve, running chain iterations concurrently."},
+        {"index": 7, "kind": "reframe", "meets_criterion": "yes", "quote": "Splitting an MCMC sampler at regeneration times yields i.i.d. tours that can be simulated in parallel", "reason": "Segments of one chain between regenerations are computed concurrently, breaking dependence across tours without short-chain bias."},
+        {"index": 8, "kind": "reframe", "meets_criterion": "no", "quote": "run the chain from all possible states simultaneously under a monotone coupling", "reason": "Runs coupled copies from all states side by side for exact sampling; coalescence time steps remain sequential."},
+        {"index": 9, "kind": "copies", "meets_criterion": "no", "quote": "width does not shorten a single chain's critical path", "reason": "Many chains and within-step data parallelism; explicitly leaves the single chain's serial path unchanged."},
+        {"index": 10, "kind": "copies", "meets_criterion": "no", "quote": "parallelised with MPI/OpenMP/CUDA across parameter sets, explicitly not across time steps", "reason": "Parallel across independent parameter sets only; no step-after-step dependency is removed."},
+        {"index": 11, "kind": "other", "meets_criterion": "no", "quote": "the iterations cannot be collapsed by reordering the causal chain", "reason": "Describes where parallel-in-time fails on chaotic systems; proposes no working removal of the serial dependency."}
+      ]
+    },
+    {
+      "file": "rr-R-harry-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "reframe", "meets_criterion": "no", "quote": "converting serial mixing time into parallel breadth", "reason": "Population methods run many interacting walkers side by side; mutation and resample/swap rounds still proceed sequentially."},
+        {"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "precompute one large bank of (parameter, simulated hydrograph) pairs fully in parallel, train a neural posterior estimator once", "reason": "Replaces chains with independent simulations side by side plus training; no sequential steps computed concurrently."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "no", "quote": "Change what is measured from likelihood values to gradients", "reason": "Gradients reduce required chain length; HMC steps and leapfrog integration still run one after another."}
+      ]
+    },
+    {
+      "file": "rr-R-independent-judge.prompt.md",
+      "items": [
+        {"index": 1, "kind": "reframe", "meets_criterion": "no", "quote": "Draw parameters from a proposal, run the model in massively parallel GPU batches, and train a neural posterior estimator once", "reason": "Replaces chains with independent simulations side by side plus training; no sequential steps computed concurrently."},
+        {"index": 2, "kind": "reframe", "meets_criterion": "no", "quote": "emulating the map from parameters to that quantity with a Gaussian process, choosing evaluation points actively", "reason": "Targets the decision quantity with fewer evaluations; active selection is itself sequential and no serial steps are parallelized."},
+        {"index": 3, "kind": "reframe", "meets_criterion": "yes", "quote": "decompose the record into near-independent hydrologic events (with short warm-ups) plus recession blocks, calibrate each block in parallel", "reason": "Cutting the decades-long time recurrence into warm-started blocks computes segments of the serial simulation concurrently."}
+      ]
+    }
+  ]
+}

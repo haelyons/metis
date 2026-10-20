@@ -1,0 +1,54 @@
+{
+  "QUESTIONS": { "items": [{ "question": "What limits faster weather forecasts at kilometre scale?" }, { "question": "Can probes catch reward hacking early?" }] },
+  "OVERLAP": { "pairs": [{ "a": "R2", "b": "R5", "shared_subject": "kilometre-scale weather simulation" }] },
+  "VERDICT": {
+    "verdict": "COMPUTE-BOUND",
+    "compute_signals": [{ "subproblem": "ensemble size in data assimilation", "what_compute_buys": "more members per forecast cycle" }]
+  },
+  "OPTIONS": {
+    "items": [
+      { "id": "W1", "title": "Privacy auditing and membership inference", "summary": "Audits retrain many shadow models.",
+        "root_link": "Bears on whether reviews can check privacy claims.",
+        "compute_open": "Shadow models: published audits stop at 256 https://example.org/lira; unknown above that.", "sequential": "Each shadow model trains step after step, but an audit needs 256 of them, so copies side by side fill the GPUs.",
+        "source_urls": ["https://example.org/lira"] },
+      { "id": "W2", "title": "Checking machine-unlearning claims", "summary": "Unlearning checks need retrained references.",
+        "root_link": "none", "compute_open": "settled: one retrain suffices https://example.org/unlearn", "sequential": "none: each check is one independent retrain.", "source_urls": [] },
+      { "id": "W3", "title": "Training-data attribution and data valuation", "summary": "Attribution needs many retrains.",
+        "root_link": "none", "compute_open": "none", "sequential": "none: each retrain is an independent job.", "source_urls": [] }
+    ]
+  },
+  "OPTION_SCORES": {
+    "items": [
+      { "id": "W1", "distance": "SAME", "distance_reason": "Reviews of the same papers.",
+        "scores": [{ "criterion": "stakes", "value": 4, "reason": "decides which audits labs buy" }, { "criterion": "open", "value": 5, "reason": "no sweep above 256 shadow models" }] }
+    ]
+  },
+  "DEDUP": { "clusters": [{ "topic": "privacy audits by retraining", "members": ["R1:physical:W1"] }] },
+  "PRICE_SHEET": {
+    "read_at": "2026-10-16",
+    "instances": [
+      { "gpu": "A100", "gpu_memory_gb": 40, "n_gpus": 1, "per_gpu_usd_h": 1.29, "page_text": "1x A100 40GB $1.29/GPU/hr" },
+      { "gpu": "A100", "gpu_memory_gb": 80, "n_gpus": 8, "per_gpu_usd_h": 1.79, "page_text": "8x A100 80GB $1.79/GPU/hr" },
+      { "gpu": "H100", "gpu_memory_gb": 80, "n_gpus": 1, "per_gpu_usd_h": 2.49, "page_text": "1x H100 PCIe $2.49/GPU/hr" },
+      { "gpu": "H100", "gpu_memory_gb": 80, "n_gpus": 8, "per_gpu_usd_h": 3.99, "page_text": "8x H100 SXM $3.99/GPU/hr" },
+      { "gpu": "B200", "gpu_memory_gb": 180, "n_gpus": 8, "per_gpu_usd_h": 4.99, "page_text": "8x B200 $4.99/GPU/hr" }
+    ],
+    "filesystem": { "usd_gib_month": 0.2, "page_text": "$0.20 per GiB per month", "example": true }
+  },
+  "FINDINGS": {
+    "items": [
+      { "ref": "card:question", "status": "SUPPORTED", "page_quote": "Success was still rising at 20,000 steps.", "note": "" },
+      { "ref": "num:steps_per_h", "status": "CONTRADICTED", "page_quote": "about 2,000 steps per hour", "note": "the page states a lower rate", "page_value": 2000 }
+    ]
+  },
+  "CRITIQUE": {
+    "scores": [
+      { "criterion": "stakes", "value": 4, "ref": "card:if_lever", "reason": "a lab would buy more training on it" },
+      { "criterion": "lever", "value": "NA", "ref": "plan:compute_axis", "reason": "no compute axis in this exempt branch" }
+    ],
+    "decides_by": "P2",
+    "decides_by_reason": "the sweep yields both outcomes"
+  },
+  "REPAIR_FIELDS": { "fields": { "predictions.if_lever": "Success at 32,000 steps beats 8,000 steps by more than 5 points." } },
+  "REPAIR_EXPR": { "numbers": [{ "id": "t_main", "expr": "steps / steps_per_h" }], "lines": [{ "id": "sweep", "hours": "t_main" }] }
+}

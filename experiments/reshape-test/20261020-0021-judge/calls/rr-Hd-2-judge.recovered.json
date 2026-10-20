@@ -1,0 +1,37 @@
+[
+ {
+  "index": 1,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "Run many independent chains simultaneously on one or more GPUs, each chain on its own device or thread",
+  "reason": "Independent chains are the same computation run side by side; each chain stays strictly sequential, removing no step dependency."
+ },
+ {
+  "index": 2,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "compute batched likelihoods for many parameter vectors concurrently on the GPU, vectorizing surrogate evaluation across parameters and time windows",
+  "reason": "Surrogate changes what is computed, enabling batched GPU likelihoods; the chain still waits on each likelihood, and batching is across parameter vectors."
+ },
+ {
+  "index": 3,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "propagate, reweight, and resample particles level by level, parallelizing the per-particle likelihood and proposal work",
+  "reason": "SMC changes the sampler, but tempering levels remain sequential; per-particle work is independent items evaluated side by side."
+ },
+ {
+  "index": 4,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "where possible, use associative scans or linearized operators to parallelize the time recurrence",
+  "reason": "Associative scans reassociate the recurrence so time steps are computed simultaneously, removing the step-after-step dependency."
+ },
+ {
+  "index": 5,
+  "kind": "copies",
+  "meets_criterion": "no",
+  "quote": "Parallelize independent catchment-level MCMC samplers over many GPUs or workers",
+  "reason": "Independent catchment samplers run side by side; each chain remains sequential, and async aggregation avoids waiting rather than parallelizing steps."
+ }
+]

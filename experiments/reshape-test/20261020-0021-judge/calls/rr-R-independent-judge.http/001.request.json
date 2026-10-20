@@ -1,0 +1,39 @@
+{
+ "ts": "2026-10-20T00:21:33.869Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_156af0e93001HpD3KXNIBO1jot",
+  "x-opencode-session": "ses_ea950f548ffey4eycquK9bFAkN",
+  "x-opencode-session-id": "ses_ea950f548ffey4eycquK9bFAkN",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:36511",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "4497"
+ },
+ "body": {
+  "model": "glm-5.3",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the text you are given. You use no tools. You return only the JSON asked for.\nYou are powered by the model named glm-5.3. The exact model ID is opencode-go/glm-5.3\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reshape-test/20261020-0021-judge/calls\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Below are questions proposed for a research problem, each with the reframing behind it. Classify each one.\nkind: \\\"reframe\\\" if it changes what is computed, measured or ordered so that more compute buys something it did not before; \\\"copies\\\" if it only runs the same computation more times, on more items, or side by side; \\\"other\\\" otherwise.\nmeets_criterion: \\\"yes\\\" or \\\"no\\\" for this criterion: It removes a step-after-step dependency that one answer waits on (time steps, chain iterations or solver iterations), so that those steps are computed at the same time. Running independent copies side by side, or splitting each single step across GPUs, does not count.\nGive for each a quote from the proposal and a reason of at most 25 words. Decide only from the text below; do not use tools.\nProblem:\nBayesian calibration of rainfall-runoff models for river catchments, which needs long MCMC chains.\nProposals: [{\\\"index\\\":1,\\\"reframe\\\":\\\"Change the unit of work from chain steps to independent simulator runs: amortized simulation-based inference. Draw parameters from a proposal, run the model in massively parallel GPU batches, and train a neural posterior estimator once (ideally across hundreds of catchments). Inference for any basin is then one forward pass, and every extra GPU-hour lowers posterior error instead of adding correlated samples.\\\",\\\"question\\\":\\\"For a benchmark set (e.g., 10 CAMELS basins with a GR4J-type model), how many simulations N does neural posterior estimation need before the C2ST classifier accuracy between NPE posterior samples and a 1e6-step DREAM reference posterior falls below 0.55 (chance level)?\\\"},{\\\"index\\\":2,\\\"reframe\\\":\\\"Change what is measured: target the decision quantity directly — e.g., the posterior of the 1%-exceedance (100-year) flood quantile — by emulating the map from parameters to that quantity with a Gaussian process, choosing evaluation points actively, and using importance weighting toward the tail. Compute is spent only where it changes the answer.\\\",\\\"question\\\":\\\"Does GP emulation with active point selection estimate the posterior mean and 95% interval of the 100-year flood quantile to within ±5% relative error using ≤1e3 model evaluations, where brute MCMC propagation needs ≥1e5, across 10 basins?\\\"},{\\\"index\\\":3,\\\"reframe\\\":\\\"Cut and reorder the unit of work: decompose the record into near-independent hydrologic events (with short warm-ups) plus recession blocks, calibrate each block in parallel, and combine the block posteriors (consensus Bayes), or use an event-only likelihood. The serial unit shrinks from decades to days, and blocks are embarrassingly parallel.\\\",\\\"question\\\":\\\"Per parameter: what fraction of posterior information (inverse posterior variance, or integrated parameter sensitivity) is carried by event and recession segments covering ≤10% of timesteps, and what is the Wasserstein-2 distance between the block-combined posterior and the full-record posterior, in units of posterior standard deviation?\\\"}]\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"items\\\"],\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"index\\\",\\\"kind\\\",\\\"meets_criterion\\\",\\\"quote\\\",\\\"reason\\\"],\\\"properties\\\":{\\\"index\\\":{\\\"type\\\":\\\"integer\\\"},\\\"kind\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"reframe\\\",\\\"copies\\\",\\\"other\\\"]},\\\"meets_criterion\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"yes\\\",\\\"no\\\",\\\"NA\\\"]},\\\"quote\\\":{\\\"type\\\":\\\"string\\\"},\\\"reason\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\""
+   }
+  ],
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

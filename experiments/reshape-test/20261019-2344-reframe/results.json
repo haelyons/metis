@@ -1,0 +1,137 @@
+{
+ "model": "opencode-go/kimi-k3",
+ "judge": "opencode-go/glm-5.3",
+ "cost_usd": 0.4084,
+ "results": [
+  {
+   "case": "rr",
+   "lens": "harry",
+   "reframes": [
+    {
+     "bottleneck": "Wall-clock to a target effective sample size is set by the serial autocorrelation time of one chain. Running K independent chains in parallel replicates burn-in K times and yields the same posterior more precisely but no faster per unit of new information; more GPUs buy more of the same samples.",
+     "assumption": "Calibration must be one or a few long independent chains exploring the exact posterior by local (random-walk or crossover) moves.",
+     "reframe": "Change the unit of work from a chain to a population: parallel-tempered replicas or an SMC sampler with 10^3-10^4 interacting walkers on GPU. Each mutation step is embarrassingly parallel across the population, and swap/resample steps replace long serial traversals of correlated, multimodal parameter directions with population-level mixing, converting serial mixing time into parallel breadth.",
+     "question": "Across ~20 CAMELS catchments with GR4J/HBV (8-14 parameters), does a GPU parallel-tempering or SMC sampler with 1024-4096 replicas reach ESS=1000 in >=20x less wall-clock than a tuned DREAM-ZS chain, at equal error on posterior quantiles? Measured: wall-clock to ESS target and quantile error vs an overnight reference chain.",
+     "measure": "Cheapest test: lumped model at ~1 ms per likelihood, so the whole study fits one GPU. Implement 16-32 temperatures x 64-128 walkers (JAX/blackjax or custom), 20 catchments, compare wall-clock to ESS=1000 and to reference quantiles from a long DREAM run. Cost: ~2-3 weeks engineering + <$50 GPU. Kill criterion: <5x advantage on the hardest, most multimodal catchments means the serial bottleneck was never real.",
+     "compute_after": "Wall-clock stays flat as the population grows until the GPU saturates, then scales across GPUs. Extra compute buys more temperatures (higher swap acceptance) and more particles (lower SMC variance), i.e. shorter time-to-answer and better tail exploration rather than more identical samples.",
+     "exact": "Yes. Replica-exchange and SMC samplers are asymptotically exact for the same posterior; no likelihood approximation is introduced.",
+     "expected": "Large gains (10-100x wall-clock) exactly where rainfall-runoff posteriors are multimodal/strongly correlated from equifinality (threshold and exchange parameters); little gain on easy near-Gaussian posteriors, where DREAM already mixes in ~10^4 steps.",
+     "fails_if": "Posteriors are unimodal and cheap to mix so there is no serial bottleneck to remove; or likelihoods are so cheap that kernel-launch and swap-synchronization overhead eats the gain; or the true blocker is an expensive distributed forward model, which this does not touch.",
+     "closest_prior": "Parallel tempering / replica-exchange MCMC (Geyer 1991; Earl & Deem 2005); SMC samplers (Del Moral, Doucet & Jasra 2006); DREAM/DREAM-ZS (Vrugt et al.) as the hydrology incumbent; emcee (Foreman-Mackey 2013) and GPU population-MCMC practice in astronomy.",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "no",
+      "quote": "Each mutation step is embarrassingly parallel across the population, and swap/resample steps replace long serial traversals of correlated, multimodal parameter directions with population-level mixing, converting serial mixing time into parallel breadth.",
+      "reason": "Reframes sampling so compute buys mixing, but sampler sweeps still run sequentially; the population is coupled copies side by side, not serial steps computed simultaneously."
+     }
+    },
+    {
+     "bottleneck": "Every catchment, event set, or climate scenario pays the full serial chain from scratch: cost = datasets x chains x steps x likelihood cost. For regional studies over thousands of catchments this multiplies a cost that GPUs cannot shorten because the chain is serial.",
+     "assumption": "The posterior must be recomputed independently per dataset by iterative evaluation of the exact likelihood.",
+     "reframe": "Change the objective from per-dataset chains to amortized inference: precompute one large bank of (parameter, simulated hydrograph) pairs fully in parallel, train a neural posterior estimator once, and get per-catchment posteriors in seconds. If exactness is required, use the learned posterior only as a proposal/preconditioner inside short delayed-acceptance chains with the true likelihood.",
+     "question": "Does neural posterior estimation trained on <=2x10^5 simulations reproduce reference MCMC parameter marginals (Wasserstein distance <10% of posterior std) and posterior-predictive coverage (90% intervals covering 88-92% of held-out flows) across >=50 unseen catchments, including high-flow regimes? Measured: marginal distances, simulation-based calibration rank histograms, predictive coverage.",
+     "measure": "Lumped-model test first: 2x10^5 GR4J simulations at ~1 ms each is minutes-hours on one node (<$50); train a small normalizing-flow NPE with the sbi toolkit (~1 GPU-day); validate against long reference chains on 50 catchments. Total ~2-4 weeks, <$500. The expensive variant (distributed model, ~5 min/run) needs ~10^6 core-hours, $3k-8k of cloud; run it only if the lumped test passes. If amortization fails even on the cheap smooth model, stop.",
+     "compute_after": "All serial cost moves into the embarrassingly parallel simulation bank plus one training run; more compute linearly improves surrogate fidelity and tail coverage, and per-catchment inference cost no longer scales with chain length at all.",
+     "exact": "No for pure NPE (approximate posterior). Exactness is recoverable via delayed-acceptance or importance reweighting with the true likelihood on a small final set of samples.",
+     "expected": "For lumped models with smooth parameter-to-flow maps, marginals match within a few percent; weakest in extreme-flow regimes underrepresented in the prior bank and when the error model (Box-Cox + AR(1) residuals) dominates posterior shape but is absent from the training simulator.",
+     "fails_if": "Catchments differ enough in data length, missing records, error structure, and regime that one amortized model underfits and per-case retraining costs more than just running DREAM; then nothing is saved.",
+     "closest_prior": "Simulation-based inference / NPE (Papamakarios & Murray 2016; Lueckmann et al. 2017; Cranmer, Brehmer & Louppe 2020; sbi toolkit); GP and polynomial-chaos emulators used with SWAT-class hydrologic models; delayed-acceptance MCMC (Christen & Fox 2005); adjacent hydrology practice of LSTM-based parameter regionalization (Kratzert et al.).",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "yes",
+      "quote": "All serial cost moves into the embarrassingly parallel simulation bank plus one training run; more compute linearly improves surrogate fidelity and tail coverage, and per-catchment inference cost no longer scales with chain length at all.",
+      "reason": "Eliminates the per-dataset serial chain: posteriors no longer wait on chain iterations, and the formerly serial simulation work is computed simultaneously in one parallel bank."
+     }
+    },
+    {
+     "bottleneck": "For spatially distributed rainfall-runoff models with 10^2-10^3+ gridded parameters, random-walk proposals shrink with dimension and required chain length grows roughly like d^2, so at any budget the chain never mixes; simultaneously each likelihood costs minutes to hours. More GPUs only buy more of a non-converged chain.",
+     "assumption": "Inference must use derivative-free proposals (Metropolis, DREAM) on a black-box forward model.",
+     "reframe": "Change what is measured from likelihood values to gradients: reimplement the model in a differentiable framework (or derive its adjoint) and use HMC/NUTS, with ensemble Kalman inversion as a gradient-light fallback. A gradient moves all parameters coherently, so the chain length needed for a given ESS stops scaling like d^2, and the expensive forward run is amortized over one informative step instead of one blind one.",
+     "question": "For a distributed catchment model at d~50 and d~500: (a) is the measured adjoint gradient cost <=4x one forward run with checkpointing, and (b) does HMC's wall-clock-to-ESS=200 advantage over DREAM-ZS grow with d as predicted? Measured: gradient-cost ratio, ESS/hour for both samplers at both dimensions, 5 catchments.",
+     "measure": "Cheapest version: a differentiable conceptual-distributed model (EXP-HYDRO / differentiable-HBV style, JAX or PyTorch) is a 2-4 week build; run NUTS (NumPyro/blackjax) vs DREAM at d=50 and d=500 on 5 catchments, one GPU, days of runtime, <$200. Kill criteria: adjoint cost >10x forward even with checkpointing over ~10^4 timesteps, or HMC fails to beat DREAM at d=500.",
+     "compute_after": "GPU parallelizes forward/adjoint passes over space and forcing batches and runs many leapfrogs; each added unit of compute now attacks a chain whose required length grows slowly with d, so compute converts into reachable dimension (calibrating parameter fields previously uncalibratable) instead of more samples of the same low-dimensional posterior.",
+     "exact": "HMC with Metropolis correction is exact MCMC for the same posterior; adjoint gradients are exact to floating point. The EKI/EnKS fallback is approximate (Gaussian-ensemble) and should be labeled as such.",
+     "expected": "Adjoint at 2-4x forward cost with checkpointing; HMC advantage modest at d~10 (DREAM is fine there) and orders of magnitude at d~500. Main risk is memory over long time series, handled by sqrt-step checkpointing. Note the store dynamics are contractive, which keeps adjoints stable over long horizons.",
+     "fails_if": "The posterior is discontinuous or stiffly multimodal (threshold parameters, rain/no-rain switching) so HMC trajectories stall and adaptation fails; or the production model is non-differentiable legacy code whose rewrite cost exceeds any plausible sampling gain.",
+     "closest_prior": "HMC/NUTS (Neal 2011; Hoffman & Gelman 2014); differentiable hydrologic modeling and differentiable parameter learning (Shen et al.; EXP-HYDRO lineage); adjoint/4D-Var calibration tradition in land-surface and meteorological data assimilation; ensemble Kalman inversion (Iglesias, Law & Stuart 2013) as the derivative-free comparator.",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "no",
+      "quote": "Change what is measured from likelihood values to gradients: reimplement the model in a differentiable framework (or derive its adjoint) and use HMC/NUTS, with ensemble Kalman inversion as a gradient-light fallback.",
+      "reason": "Genuine reframe (gradients buy reachable dimension), but HMC chains still iterate step-after-step; GPU parallelism only splits each forward/adjoint step, which does not count."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  },
+  {
+   "case": "rr",
+   "lens": "independent",
+   "reframes": [
+    {
+     "bottleneck": "MCMC is serial: each likelihood evaluation waits on the previous one, and effective sample size grows as T/τ_int, where the autocorrelation time τ_int is fixed by posterior geometry (parameter correlation, equifinality, multimodality), not by hardware. For lumped rainfall-runoff models each step costs milliseconds, so the blocker is mixing, not per-step compute; more GPUs only run more of the same correlated chains and leave τ_int untouched.",
+     "assumption": "The posterior must be approximated by a Markov chain built from scratch for each catchment, and the only way to spend compute is more steps or more chains.",
+     "reframe": "Change the unit of work from chain steps to independent simulator runs: amortized simulation-based inference. Draw parameters from a proposal, run the model in massively parallel GPU batches, and train a neural posterior estimator once (ideally across hundreds of catchments). Inference for any basin is then one forward pass, and every extra GPU-hour lowers posterior error instead of adding correlated samples.",
+     "question": "For a benchmark set (e.g., 10 CAMELS basins with a GR4J-type model), how many simulations N does neural posterior estimation need before the C2ST classifier accuracy between NPE posterior samples and a 1e6-step DREAM reference posterior falls below 0.55 (chance level)?",
+     "measure": "Run one long DREAM reference chain per basin (1e5–1e6 evaluations at ~5–50 ms each: a few CPU-hours), then generate N = 1e3, 1e4, 1e5, 1e6 parallel simulations (minutes on one GPU), train the estimator (~1 GPU-hour), and record C2ST and MMD versus the reference as a function of N. Rough cost: about 1 GPU-day plus 1 CPU-day total.",
+     "compute_after": "Each additional GPU-hour raises N and directly reduces posterior approximation error with near-linear parallel scaling; amortized across catchments, the marginal cost of calibrating a new basin approaches zero.",
+     "exact": "Success = C2ST < 0.55 and posterior-predictive NSE within 0.01 of the MCMC reference at N ≤ 1e5 simulations for at least 8 of 10 basins.",
+     "expected": "For a 6–10 parameter lumped model with a smooth likelihood, NPE reaches tolerance at N ≈ 1e4–1e5, i.e., minutes of GPU time versus days of serial MCMC, with the advantage compounding when one network serves many basins.",
+     "fails_if": "Including error-model/observation-noise parameters makes the posterior sharply multimodal so C2ST stays above 0.55 even at N ≥ 1e6, or basins outside the training distribution require per-basin retraining that consumes the amortization gain.",
+     "closest_prior": "Cranmer, Brehmer & Louppe 2020 (simulation-based inference review) and Lueckmann et al. 2017 (neural posterior estimation); DREAM(ZS) as the incumbent sampler (Vrugt et al. 2009); recent neural-density-estimation applications to conceptual hydrological models.",
+     "judge": {
+      "index": 1,
+      "kind": "reframe",
+      "meets_criterion": "yes",
+      "quote": "Change the unit of work from chain steps to independent simulator runs: amortized simulation-based inference.",
+      "reason": "Replaces serial MCMC chain iterations with independent simulator runs batched simultaneously on GPUs; extra compute now cuts posterior error, not correlated samples."
+     }
+    },
+    {
+     "bottleneck": "The objective is the full joint parameter posterior, so every chain step pays for a full-record simulation and spends samples resolving equifinality ridges that barely move any decision-relevant prediction; the tail predictions that actually matter (flood design quantiles) converge slowest. Compute buys more samples of quantities nobody uses.",
+     "assumption": "One must first estimate the entire parameter posterior and only afterwards propagate it to predictions; the quantity to be estimated is fixed as the posterior itself.",
+     "reframe": "Change what is measured: target the decision quantity directly — e.g., the posterior of the 1%-exceedance (100-year) flood quantile — by emulating the map from parameters to that quantity with a Gaussian process, choosing evaluation points actively, and using importance weighting toward the tail. Compute is spent only where it changes the answer.",
+     "question": "Does GP emulation with active point selection estimate the posterior mean and 95% interval of the 100-year flood quantile to within ±5% relative error using ≤1e3 model evaluations, where brute MCMC propagation needs ≥1e5, across 10 basins?",
+     "measure": "On one basin, obtain ground truth from a long DREAM run propagated to the quantile (a few CPU-hours). Then run the active-learning GP at budgets of 250–2000 evaluations, repeat 10 times for variance, and record relative RMSE versus evaluation count. Rough cost: one laptop-weekend, about 2 CPU-days.",
+     "compute_after": "Additional evaluations are placed where the functional is most uncertain or most tail-heavy, so added compute shrinks error on the decision quantity itself — including the rare tail where plain MCMC is weakest — rather than lengthening a chain.",
+     "exact": "Success = relative error of the quantile's posterior mean and interval ≤5% with ≥90% confidence at ≤1e3 evaluations, i.e., at least 100x fewer evaluations than the MCMC reference.",
+     "expected": "For smooth, low-dimensional functionals of a lumped model, expect a 10–100x reduction in required evaluations; the gain shrinks if the quantile is controlled by a wide, flat parameter region (strong predictive equifinality).",
+     "fails_if": "The parameter-to-quantile map is discontinuous or oscillatory (threshold, snow, or switching processes), so emulation needs about as many points as MCMC, or stakeholders genuinely need the full joint posterior for multiple changing objectives.",
+     "closest_prior": "Kandasamy et al. 2017 (Bayesian active learning for posterior estimation); GP and polynomial-chaos emulation of hydrological models (Reichert et al. 2011; Razavi et al. 2012 review); subset simulation for rare-event estimation (Au & Beck 2001).",
+     "judge": {
+      "index": 2,
+      "kind": "reframe",
+      "meets_criterion": "no",
+      "quote": "Change what is measured: target the decision quantity directly — e.g., the posterior of the 1%-exceedance (100-year) flood quantile — by emulating the map from parameters to that quantity with a Gaussian process, choosing evaluation points actively.",
+      "reason": "Changes the measured quantity and concentrates evaluations on the tail; no chain, time-step, or solver iteration dependency is removed or parallelized."
+     }
+    },
+    {
+     "bottleneck": "Both per-step cost and chain length scale with the full continuous record: the model's state recursion forces a decades-long sequential simulation for every likelihood call, and the likelihood weights every timestep equally even though only a few percent of timesteps (storm events, recessions) constrain the parameters. The dependency over time is the part that waits, and it need not.",
+     "assumption": "Calibration must run the model continuously over the whole record, and all timesteps are equally informative; cutting time necessarily biases inference.",
+     "reframe": "Cut and reorder the unit of work: decompose the record into near-independent hydrologic events (with short warm-ups) plus recession blocks, calibrate each block in parallel, and combine the block posteriors (consensus Bayes), or use an event-only likelihood. The serial unit shrinks from decades to days, and blocks are embarrassingly parallel.",
+     "question": "Per parameter: what fraction of posterior information (inverse posterior variance, or integrated parameter sensitivity) is carried by event and recession segments covering ≤10% of timesteps, and what is the Wasserstein-2 distance between the block-combined posterior and the full-record posterior, in units of posterior standard deviation?",
+     "measure": "On one basin: compute per-timestep Jacobians of simulated flow with respect to parameters (one simulation plus adjoint or finite differences — minutes), aggregate information by segment type; then calibrate event-only and full-record posteriors (a few CPU-hours each) and compare W2 distance, coverage, and wall-clock per effective sample. Rough cost: 1–2 CPU-days.",
+     "compute_after": "After the cut, more compute parallelizes across events, recessions, and basins simultaneously, and each likelihood call is a short recursion — GPUs reduce wall-clock directly instead of producing more correlated draws of a slow serial chain.",
+     "exact": "Success = segments covering ≤10% of timesteps carry ≥90% of per-parameter information, AND the combined event posterior lies within W2 ≤ 0.1 posterior standard deviations of the full-record posterior, with a ≥10x reduction in serial simulation length per likelihood call.",
+     "expected": "Quickflow, routing, and event-scale parameters are identified almost entirely from events; baseflow and water-balance parameters from recession and low-flow blocks — a two-block decomposition should retain nearly all information while cutting serial length 5–20x.",
+     "fails_if": "A slow store (groundwater or snow) with memory longer than any block couples events across seasons, so block posteriors cannot be merged without bias and the full-record recursion is genuinely necessary.",
+     "closest_prior": "Consensus and embarrassingly parallel MCMC (Scott et al. 2016; Neiswanger et al. 2014); hydrologic-signature and event-based calibration literature (McMillan et al. on signatures; limits-of-acceptability work); parallel-in-time integration methods as the general family.",
+     "judge": {
+      "index": 3,
+      "kind": "reframe",
+      "meets_criterion": "yes",
+      "quote": "Cut and reorder the unit of work: decompose the record into near-independent hydrologic events (with short warm-ups) plus recession blocks, calibrate each block in parallel, and combine the block posteriors (consensus Bayes).",
+      "reason": "Breaks the decades-long timestep recursion into independent event and recession blocks calibrated simultaneously; the serial time dependency within each likelihood evaluation is removed."
+     }
+    }
+   ],
+   "ok": true,
+   "judged": true
+  }
+ ]
+}

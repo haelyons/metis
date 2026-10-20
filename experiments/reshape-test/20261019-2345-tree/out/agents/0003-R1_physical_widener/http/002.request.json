@@ -1,0 +1,284 @@
+{
+ "ts": "2026-10-19T23:48:22.903Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_15690d694001fwPlVVwbWGFmeb",
+  "x-opencode-session": "ses_ea96f2aacffejuVGd9fxYld7LY",
+  "x-opencode-session-id": "ses_ea96f2aacffejuVGd9fxYld7LY",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:44099",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "27936"
+ },
+ "body": {
+  "model": "deepseek-v4-pro",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.\nYou are powered by the model named deepseek-v4-pro. The exact model ID is opencode-go/deepseek-v4-pro\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Read /home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work/seed-1/R1/framer.md. What sorts of related problems are compute constrained? Cite a URL for every factual claim. Write to /home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work/seed-1/R1/physical-widener.md. Return JSON: [{id, title, summary}]. Count a related problem as compute constrained when it is still open whether more parallel compute would change its answer, not only when compute is already known to bind there. List both kinds, and mark the second kind settled in compute_open. Also count a problem whose answer takes long because its steps run one after another, even where more hardware would not change the answer, only how soon it arrives. For each option also return root_link: one sentence on which part of the question in /home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work/seed-1/R1/framer.md it bears on, or \\\"none\\\". Return compute_open: one sentence naming the quantity more parallel compute would buy for it (samples, ensemble members, resolution, model runs, model size, search width or seeds), the largest amount of it that any source you cite reports, with that source's URL, and what is still unknown about its effect on the answer above that amount; or \\\"settled:\\\" followed by what is known and its source URL; or \\\"none\\\". Return sequential: the part of the work that one answer waits on step after step (what each step waits for, and roughly how many steps one run takes), how many independent runs the answer needs, and how much of one GPU a single run keeps busy; then whether those steps must run in order, and if not, what change to the computation would let them run at the same time, what would have to be true of the system for that change to pay off, and the nearest source that has tried it, with its URL; or \\\"none:\\\" followed by why the work already splits into independent pieces. Return up to three source URLs. Use the option's heading label in your file as its id.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"description\\\":\\\"One entry per concrete option named in the file. No notes, summaries, verdicts, or status items.\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The heading label used for this option in the file.\\\"},\\\"title\\\":{\\\"type\\\":\\\"string\\\"},\\\"summary\\\":{\\\"type\\\":\\\"string\\\"},\\\"root_link\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One sentence: which part of the root question this bears on, or \\\\\"none\\\\\".\\\"},\\\"compute_open\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One sentence: the quantity more parallel compute would increase here (samples, ensemble members, resolution, model runs, model size, search width; for interpretability: models, layers, features, prompts, seeds analysed), where published measurements of its effect stop, with a source URL, and what is unknown above that. Or \\\\\"settled: <what is known> <URL>\\\\\". Or \\\\\"none\\\\\".\\\"},\\\"sequential\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One or two sentences: the chain one answer waits on (what each step waits for, roughly how many steps), how many independent runs the answer needs, how much of one GPU one run keeps busy; whether the steps must run in order, and if not, what change would let them run at the same time, what must be true of the system for that to pay off, and the nearest source that tried it, with its URL. Or \\\\\"none: <why the work already splits into independent pieces>\\\\\".\\\"},\\\"source_urls\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"At most 3.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"title\\\",\\\"summary\\\",\\\"root_link\\\",\\\"compute_open\\\",\\\"sequential\\\",\\\"source_urls\\\"]}}},\\\"required\\\":[\\\"items\\\"]}\""
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_00_zFikrUKDEyb808PKN9gV6188",
+      "type": "function",
+      "function": {
+       "name": "read",
+       "arguments": "{\"filePath\":\"/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work/seed-1/R1/framer.md\"}"
+      }
+     }
+    ],
+    "reasoning_content": "Let me start by reading the framer.md file to understand the question."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_00_zFikrUKDEyb808PKN9gV6188",
+    "content": "<path>/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work/seed-1/R1/framer.md</path>\n<type>file</type>\n<content>\n1: # What actually limits Bayesian calibration of rainfall-runoff models — and whether \"a shit ton of GPUs\" fixes it\n2: \n3: ## 1. My understanding, relayed before answering\n4: \n5: Rainfall-runoff (RR) models map precipitation (and potential evapotranspiration) onto streamflow at a catchment outlet. The workhorse class for calibration studies is the lumped conceptual model — GR4J is the canonical example, with exactly **four** calibrated parameters and a simple production-store + unit-hydrograph structure evaluated a few thousand arithmetic steps per decade of daily data (Perrin, Michel & Andréassian 2003, https://www.sciencedirect.com/science/article/abs/pii/S0022169403002257). Bayesian calibration treats parameters as random and uses Markov chain Monte Carlo (MCMC) to sample the posterior p(θ | data).\n6: \n7: Two facts dominate this literature:\n8: \n9: 1. **Equifinality** — many different parameter sets reproduce the observed hydrograph almost equally well, so the posterior is broad, correlated, and often multimodal rather than a tight Gaussian around a single optimum. Beven & Binley (1992) state it directly: \"within the limitations of a given model structure and errors in boundary conditions and field observations, different sets of values may be equally likely as simulators of a catchment\" (https://onlinelibrary.wiley.com/doi/10.1002/hyp.3360060305).\n10: 2. **Peculiar response surfaces** — hydrological model parameters are \"highly correlated and interdependent,\" which is precisely what makes naive samplers mix slowly; summarizing/exploring the posterior is the stated bottleneck that \"hindered widespread use of Bayesian techniques in hydrology\" (Marshall, Nott & Sharma 2004, https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2003WR002378). MCMC inefficiency is \"frequently caused by an inappropriate selection of the proposal distribution\" — a geometric/algorithmic problem, not a hardware one (Vrugt et al. 2009, https://research.wur.nl/en/publications/accelerating-markov-chain-monte-carlo-simulation-by-differential-).\n11: \n12: MCMC samples are autocorrelated. The information content of a chain of length N is the effective sample size ESS = N / (1 + 2Σρ_k), where ρ_k are lag autocorrelations; slow mixing inflates the integrated autocorrelation time τ and forces long chains to reach any target ESS (Stan Reference Manual, https://mc-stan.org/docs/2_31/reference-manual/effective-sample-size.html). The integrated autocorrelation time is defined as the number of correlated samples needed, on average, to produce one independent draw (LaplacesDemon IAT/ESS documentation, https://search.r-project.org/CRAN/refmans/LaplacesDemon/help/ESS.html). So \"needs long MCMC chains\" is a symptom of large τ — a statistical property — not directly a statement about hardware speed.\n13: \n14: ## 2. Predictions (stated before checking)\n15: \n16: - **P1:** For a single lumped conceptual catchment, one forward run is so cheap that the likelihood is effectively free; the binding constraint is τ (mixing), not FLOPs.\n17: - **P2:** The \"long chains\" requirement is a property of posterior geometry (correlation/equifinality/multimodality) and, secondarily, of numerical implementation; it is reduced by better samplers/reparameterizations, not by more cores.\n18: - **P3:** GPUs help only where the problem decomposes into independent units of work: many chains (ensemble MCMC), many particles (SMC), many catchments (large-sample), or many forward runs (GLUE / expensive models). They cannot shorten a *single* chain's autocorrelation.\n19: - **P4:** There are genuinely compute-bound levels — expensive distributed/high-dimensional models and large-sample (CAMELS-scale) studies — where more parallel compute changes what is even attempted.\n20: \n21: ## 3. Analysis\n22: \n23: ### 3.1 Why chains are long: geometry and numerics, not throughput\n24: \n25: The reason hydrology needed MCMC at all — and found it hard — is that the posterior of a conceptual RR model is difficult to summarize and explore because parameters are strongly correlated (Marshall et al. 2004, https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2003WR002378). Equifinality formalizes this as \"equal finality\": many parameter pathways reproduce the observed runoff (Beven & Binley 1992, https://onlinelibrary.wiley.com/doi/10.1002/hyp.3360060305). The DREAM paper's motivating diagnosis is that slow mixing \"is frequently caused by an inappropriate selection of the proposal distribution,\" and its remedy is a self-adaptive differential-evolution proposal that tunes scale and orientation during the search — i.e., a better *algorithm*, not more *hardware* (Vrugt et al. 2009, https://research.wur.nl/en/publications/accelerating-markov-chain-monte-carlo-simulation-by-differential-).\n26: \n27: Autocorrelation is the currency here: τ is set by the target's geometry and the sampler, and is invariant to how many parallel chains you run. Running more chains increases the number of samples per wall-clock second, but each chain still pays the same τ per independent draw. That is why \"just add GPUs\" is not, by itself, a fix for slow mixing — it changes throughput, not τ.\n28: \n29: There is also a subtlety specific to hydrology: **cheap numerics corrupt MCMC**. First-order, explicit, fixed-step integration of water-balance dynamics makes the model \"computationally cheap\" (explicitly desirable for MCMC), but that cheapness introduces artificial bimodality in marginal posteriors and causes \"slow convergence of the MCMC algorithm\" plus unreliable Gelman–Rubin diagnostics (Schoups et al. 2010, https://agupubs.onlinelibrary.wiley.com/doi/pdfdirect/10.1029/2009WR008648). Here the fix is a better ODE integrator (adaptive-step, second-order, or operator splitting), again not more compute.\n30: \n31: ### 3.2 The per-evaluation cost is not the binding constraint (lumped models)\n32: \n33: GR4J has four parameters and a compact store/unit-hydrograph structure (Perrin et al. 2003, https://www.sciencedirect.com/science/article/abs/pii/S0022169403002257; INRAE webGR, https://webgr.inrae.fr/eng/tools/hydrological-models/daily-hydrological-model-gr4j). A multi-decade daily simulation is a few thousand arithmetic steps. Tellingly, the original GLUE paper could call its procedure \"computationally intensive\" only because it ran on a 1992 \"local parallel processing computer\" (Beven & Binley 1992, https://onlinelibrary.wiley.com/doi/10.1002/hyp.3360060305) — the same embarrassingly parallel random sampling is trivial on any modern machine. For this model class, the bottleneck is the number of *serial* MCMC iterations needed to overcome τ, not the cost of each iteration.\n34: \n35: ### 3.3 What \"a shit ton of GPU parallelism\" actually buys\n36: \n37: MCMC within a single chain is inherently sequential (each state conditions on the previous one), so the only exploitable parallelism is across independent units of work. That covers three regimes:\n38: \n39: - **(a) Ensemble / differential-evolution MCMC.** DREAM \"runs multiple different chains simultaneously for global exploration\" (Vrugt et al. 2009, https://research.wur.nl/en/publications/accelerating-markov-chain-monte-carlo-simulation-by-differential-). Jeremiah et al. note that parallel chains \"with different starting points enable the sampler to simultaneously explore multiple regions of the parameter space, thereby improving the posterior coverage over that of a single chain\" (https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2010WR010217). GPUs/cloud make thousands of chains cheap, which helps multimodal coverage and yields cross-chain convergence diagnostics — a real, but bounded, improvement (it does not reduce τ).\n40: \n41: - **(b) Expensive forward models.** For spatially distributed models with hundreds-to-thousands of parameters, the cost of the forward model dominates, and \"high-performance computing\"/distributed computing delivers a \"spectacular performance improvement\" for the MT-DREAM(ZS) sampler on problems up to 241 parameters (Laloy & Vrugt 2012, https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2011wr010608). GPU-optimized large-basin models report ~20× CPU speedups for calibration and ~65× GPU speedups for simulations (Freitas et al. 2022, https://experts.illinois.edu/en/publications/performance-optimization-of-the-mgb-hydrological-model-for-multi-). At the SWAT end of the spectrum, calibration \"could take days to complete, even on the finest standalone machines\" (nhess 2012, https://nhess.copernicus.org/articles/12/2411/2012/nhess-12-2411-2012.pdf). This level is genuinely compute-bound, and parallelism is the fix because calibration decomposes into thousands of independent model runs.\n42: \n43: - **(c) Large-sample studies.** CAMELS provides 671 US catchments (Addor et al. 2017, https://hess.copernicus.org/articles/21/5293/2017/hess-21-5293-2017.html), each independently calibratable — the definition of an embarrassingly parallel workload in which GPU/cloud throughput directly determines how many catchments can be afforded a *proper* Bayesian treatment rather than point optimization.\n44: \n45: ### 3.4 What compute cannot buy\n46: \n47: Three hard limits are not computable away:\n48: \n49: 1. **Structural error and input (rainfall) uncertainty.** The model is wrong and the rainfall is mismeasured. Renard et al. (2010) report that \"poor identifiability may arise when the inference scheme represents rainfall and structural errors using separate probabilistic models,\" and emphasize \"the inherent limitations of inferring inaccurate hydrologic models using rainfall-runoff data with large unknown errors\" (https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2009WR008328). Explicitly accounting for precipitation error \"significantly alters the posterior distribution\" of the watershed parameters (Vrugt et al. 2008, https://research.wur.nl/en/publications/treatment-of-input-uncertainty-in-hydrologic-modeling-doing-hydro). These are modeling/likelihood changes (e.g., the Bayesian total error analysis of Kavetski, Kuczera & Franks 2006, https://doi.org/10.1029/2005WR004368), not FLOPs changes.\n50: \n51: 2. **Intrinsic autocorrelation of a single chain.** τ is a property of target and sampler. Better samplers reduce it — adaptive Metropolis for correlated parameters (Marshall et al. 2004, https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2003WR002378), differential evolution (Vrugt et al. 2009), and gradient-based Hamiltonian Monte Carlo enabled by automatic differentiation of GR4J (Krapu et al. 2022, https://agupubs.onlinelibrary.wiley.com/doi/10.1029/2021WR031377). These are the actual levers on \"long chains\"; hardware is not one of them.\n52: \n53: 3. **Data quantity/quality.** No sampler recovers parameters the record cannot identify (Beven & Binley 1992, https://onlinelibrary.wiley.com/doi/10.1002/hyp.3360060305; Renard et al. 2010, https://agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2009WR008328).\n54: \n55: ## 4. Synthesis\n56: \n57: For the canonical problem that generates \"long MCMC chains\" — Bayesian calibration of a lumped conceptual model on one catchment — the binding constraint is statistical (posterior geometry, equifinality, autocorrelation, structural/input error), while the per-iteration cost is negligible. GPUs change throughput, not τ; the efficient fix is a better sampler, a reparameterization, a better integrator, or an explicit error model. So the headline answer is NOT COMPUTE-BOUND. But at two real levels — expensive distributed/high-dimensional models, and large-sample multi-catchment studies — compute is a genuine, currently-binding blocker, and there the workload is embarrassingly parallel across parameter sets, chains, and catchments, so massive GPU/cloud parallelism directly changes what can be attempted and concluded. Those are captured below as compute signals, not as the primary limiter of the \"long chains\" question.\n58: \n59: VERDICT: NOT COMPUTE-BOUND\n\n(End of file - total 59 lines)\n</content>"
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "edit",
+     "description": "Performs exact string replacements in files. \n\nUsage:\n- You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file. \n- When editing text from Read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. The line number prefix format is: line number + colon + space (e.g., `1: `). Everything after that space is the actual file content to match. Never include any part of the line number prefix in the oldString or newString.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.\n- The edit will FAIL if `oldString` is not found in the file with an error \"oldString not found in content\".\n- The edit will FAIL if `oldString` is found multiple times in the file with an error \"Found multiple matches for oldString. Provide more surrounding lines in oldString to identify the correct match.\" Either provide a larger string with more surrounding context to make it unique or use `replaceAll` to change every instance of `oldString`. \n- Use `replaceAll` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to modify"
+       },
+       "oldString": {
+        "type": "string",
+        "description": "The text to replace"
+       },
+       "newString": {
+        "type": "string",
+        "description": "The text to replace it with (must be different from oldString)"
+       },
+       "replaceAll": {
+        "type": "boolean",
+        "description": "Replace all occurrences of oldString (default false)"
+       }
+      },
+      "required": [
+       "filePath",
+       "oldString",
+       "newString"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "glob",
+     "description": "- Fast file pattern matching tool that works with any codebase size\n- Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\"\n- Returns matching file paths\n- Use this tool when you need to find files by name patterns\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n- You have the capability to call multiple tools in a single response. It is always better to speculatively perform multiple searches as a batch that are potentially useful.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The glob pattern to match files against"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter \"undefined\" or \"null\" - simply omit it for the default behavior. Must be a valid directory path if provided."
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "grep",
+     "description": "- Fast content search tool that works with any codebase size\n- Searches file contents using regular expressions\n- Supports full regex syntax (eg. \"log.*Error\", \"function\\s+\\w+\", etc.)\n- Filter files by pattern with the include parameter (eg. \"*.js\", \"*.{ts,tsx}\")\n- Returns file paths and line numbers with matching lines\n- Use this tool when you need to find files containing specific patterns\n- If you need to identify/count the number of matches within files, use the Bash tool with `rg` (ripgrep) directly. Do NOT use `grep`.\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The regex pattern to search for in file contents"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. Defaults to the current working directory."
+       },
+       "include": {
+        "type": "string",
+        "description": "File pattern to include in the search (e.g. \"*.js\", \"*.{ts,tsx}\")"
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "read",
+     "description": "Read a file or directory from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter should be an absolute path.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Use the grep tool to find specific content in large files or files with long lines.\n- If you are unsure of the correct file path, use the glob tool to look up filenames by glob pattern.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\". For directories, entries are returned one per line (without line numbers) with a trailing `/` for subdirectories.\n- Any line longer than 2000 characters is truncated.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.\n- This tool can read image files and PDFs and return them as file attachments.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file or directory to read"
+       },
+       "offset": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The line number to start reading from (1-indexed)"
+       },
+       "limit": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The maximum number of lines to read (defaults to 2000)"
+       }
+      },
+      "required": [
+       "filePath"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "write",
+     "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the Read tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "content": {
+        "type": "string",
+        "description": "The content to write to the file"
+       },
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to write (must be absolute, not relative)"
+       }
+      },
+      "required": [
+       "content",
+       "filePath"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

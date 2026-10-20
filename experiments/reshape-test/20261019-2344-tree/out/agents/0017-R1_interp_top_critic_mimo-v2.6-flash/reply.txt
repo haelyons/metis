@@ -1,0 +1,50 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Single open model and residual reconstruction, not a shipped sampler or production model; a choice about buying GPU-scale parallel-in-time hinges on steps the test doesn't check."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:compute_axis",
+      "reason": "Gap 0.9 vs ~0.5 exceeds the CI rule and inputs are held fixed, but varied depth is a fixed model property, not compute bought; arms also vary SAE width."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:scored_against",
+      "reason": "Scored against true sequential forward-pass activations (exact planted truth), with anchor reproducing SAE round-trip and synthetic composition plus published adjacent-layer R2."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Closest prior stops at 10-layer leap, per-feature, small model; it did not compose out of order over full depth, and the plan states this gap."
+    },
+    {
+      "criterion": "internals",
+      "value": 1,
+      "ref": "plan:arms",
+      "reason": "No outputs-only method (e.g., next-token performance) is compared on the same items; only alternative internal readouts and sequential ground truth appear."
+    },
+    {
+      "criterion": "reshape",
+      "value": 3,
+      "ref": "plan:restructuring.sequential_part",
+      "reason": "Out-of-order composition removes layer order, but restructuring claims none; per-layer fits are just independent work side by side, though per-layer R2 precedes composition."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "plan:restructuring.method",
+      "reason": "restructuring.method is none, which the criterion allows to be scored NA."
+    }
+  ],
+  "decides_by": "phase_compose",
+  "decides_by_reason": "It prints composed R2 at 42 layers with a 95% CI; either CI side of 0.90 applies decision_rule. Earlier phases only set up or measure per-layer fits."
+}
+```

@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Measures scalar tridiagonal solve, not full Newton-in-time loop; adoption depends on unmeasured iteration count and block size."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.noise_rule",
+      "reason": "2x threshold with quartiles, 16384x N span, fixed hardware/structure; arms differ only method."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "card:anchor",
+      "reason": "PCR and Thomas are checked against cuSPARSE/scipy exact references with 1e-10 tolerance before sweep."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "No prior times PCR against on-GPU Thomas on A100 to N=2^24; gap stated."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:closest_prior",
+      "reason": "Prior already reports GPU cyclic reduction for tridiagonal systems; plan rebuilds known dependency removal."
+    },
+    {
+      "criterion": "baseline",
+      "value": 5,
+      "ref": "card:anchor",
+      "reason": "Tuned CUDA Thomas, same-GPU batched copies, anchored to references, and p2 times all arms."
+    }
+  ],
+  "decides_by": "p2_sweep",
+  "decides_by_reason": "p2_sweep records all N medians, satisfying decision rule for either lever or not."
+}

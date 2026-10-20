@@ -1,0 +1,42 @@
+[reshape-test] R1: NOT COMPUTE-BOUND, 3 compute signal(s) -> WIDENER + INTERP
+[reshape-test] R1:physical: reshape route
+[reshape-test] R1:interp: no reshape option
+[reshape-test] pool: 0 candidate cluster(s); picked 0
+[reshape-test] R1:physical:top: option_title mismatch: plan "Cyclic reduction (PCR)", pick "Parallel cyclic reduction" (re-key if it is another option in this branch)
+[reshape-test] R1:physical:top: hypothesis: a sentence of 22 words
+[reshape-test] R1:physical:top: predictions.if_not: a sentence of 25 words
+[reshape-test] R1:physical:top: test_summary: a sentence of 27 words
+[reshape-test] R1:physical:top: novelty.closest_prior: a sentence of 28 words
+[reshape-test] R1:physical:top: novelty.left_open: a sentence of 24 words
+[reshape-test] R1:physical:top: limits: a sentence of 21 words
+[reshape-test] R1:interp:top: quote at numbers.params_llama2.quote: 7000000000 does not appear in the quote "we develop and release Llama 2, a collection of pretrained and fine-tuned large language models (LLMs) ranging in scale from 7 billion to 70 billion parameters."; a value transformed from the page belongs in a DERIVED number
+[reshape-test] R1:interp:top: quote at numbers.sae_w16.quote: 16384 does not appear in the quote "| 9B PT | 2^14 | All | All | All | 4B | (42 layers)"; a value transformed from the page belongs in a DERIVED number
+[reshape-test] R1:interp:top: quote at numbers.sae_w131.quote: 131072 does not appear in the quote "| 9B PT | ... | 2^17 | All | All | All | 8B | (42 layers)"; a value transformed from the page belongs in a DERIVED number
+[reshape-test] R1:interp:top: quote at numbers.sae_w1m.quote: 1048576 does not appear in the quote "| 9B PT | ... | 2^20 | ✗ | ✗ | { 9, 20, 31} | 16B | (42 layers)"; a value transformed from the page belongs in a DERIVED number
+[reshape-test] R1:interp:top: quote at numbers.recon_var_published.quote: 0.65 does not appear in the quote "For all three SAEs, the average number of features active (i.e. with nonzero activations) on a given token was fewer than 300, and the SAE reconstruction explained at least 65% of the variance of the model activations."; a value transformed from the page belongs in a DERIVED number
+[reshape-test] R1:interp:top: quote at numbers.gpu_eff_tflops.quote: 200 does not appear in the quote "TF32 Tensor Core | 989 TFLOPS* ... * Shown with sparsity. Specifications 1/2 lower without sparsity."; a value transformed from the page belongs in a DERIVED number
+[reshape-test] R1:interp:top: gate in phase_compose fails at the plan's own value: composed out-of-order reconstruction R² at 42 layers is 0.5, needs ≥ 0.9; expected path: record if_not and write up; the width sweep becomes optional.
+[reshape-test] R1:interp:top: prior_max_level 10 is not in the quote of s_ato
+[reshape-test] R1:interp:top: question: a sentence of 23 words
+[reshape-test] R1:interp:top: hypothesis: a sentence of 21 words
+[reshape-test] R1:interp:top: test_summary: a sentence of 36 words
+[reshape-test] R1:interp:top: novelty.closest_prior: a sentence of 25 words
+[reshape-test] R1:interp:top: novelty.left_open: a sentence of 23 words
+[reshape-test] R1:interp:top: limits: a sentence of 22 words
+[reshape-test] R1:interp:top: card fields failing: novelty.closest_prior (compute-hours)
+[reshape-test] R1:interp:top: novelty.closest_prior: rewritten by the field repair
+[reshape-test] R1:interp:top: card field novelty.closest_prior still fails: compute-hours
+[reshape-test] R1:physical:top: dramaturg: degenerate: card:question; degenerate: card:test_summary; degenerate: card:anchor; degenerate: card:limits
+[reshape-test] R1:interp:top: dramaturg: degenerate: card:if_lever; degenerate: card:if_not; degenerate: card:limits
+[reshape-test] R1:physical:top: dramaturg (resample): degenerate: card:question; degenerate: card:test_summary; degenerate: card:anchor; degenerate: card:limits
+[reshape-test] R1:physical:top: dramaturg findings failed G-find after a resample; decided as returned
+[reshape-test] render card R1:interp:Linear feature representation -> parallel-in-time for free failed: Cannot read properties of null (reading 'toFixed')
+reshape-test: done · $1.350 · 1,351,961 tokens · 22 agent calls
+opencode-go/glm-5.3-flash: $0.063 over 5 calls = 0.1% of its $60 monthly cap, 0.5% of a 5-hour window
+opencode-go/deepseek-v4-pro: $1.254 over 11 calls = 8.4% of its $15 monthly cap, 41.8% of a 5-hour window
+opencode-go/mimo-v2.6-flash: $0.003 over 2 calls = 0.0% of its $60 monthly cap, 0.0% of a 5-hour window
+opencode-go/minimax-m3: $0.011 over 2 calls = 0.0% of its $60 monthly cap, 0.1% of a 5-hour window
+opencode-go/qwen3.8-flash: $0.018 over 2 calls = 0.1% of its $30 monthly cap, 0.3% of a 5-hour window
+/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-tree/out
+
+[exit 0]

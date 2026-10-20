@@ -1,0 +1,33 @@
+HTTP 200
+{"date":"Tue, 20 Oct 2026 00:10:17 GMT","content-type":"text/event-stream","transfer-encoding":"chunked","connection":"keep-alive","cache-control":"no-cache","cf-placement":"remote-IAD","x-opencode-log-id":"01a156a4-ff0e-76ee-8e2f-db3e6c857740","x-zen-model":"glm-5.3-flash","server":"cloudflare","cf-ray":"a4d3cc6b3a95290c-CLT"}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"role":"assistant","content":""}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":"I"}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" need to fetch pages: the airGR param sets page, the MGB experts"}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":".illinois.edu page, the HESS CAMELS page, and the"}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"reasoning_content":" AGU Laloy & Vrugt page. Let me fetch all in parallel."}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"id":"chatcmpl-tool-baff887ab741248d","type":"function","function":{"name":"webfetch","arguments":"{\"url\": \"https://hydrogr.github.io/airGR/page_"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":0,"function":{"arguments":"3_param_sets_GR4J.html\"}"}},{"index":1,"id":"chatcmpl-tool-8e398c2d3e61c202","type":"function","function":{"name":"webfetch","arguments":"{\"url\": \"https://"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":1,"function":{"arguments":"experts.illinois.edu/en/publications/performance-optimization-of-the-mgb"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":1,"function":{"arguments":"-hydrological-model-for-multi-/\"}"}},{"index":2,"id":"chatcmpl-tool-a7f30deded0ae611","type":"function","function":{"name":"webfetch","arguments":"{\"url\": \"https://"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":2,"function":{"arguments":"hess.copernicus.org/articles/21/5293/2017/h"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":2,"function":{"arguments":"ess-21-5293-2017.html\"}"}},{"index":3,"id":"chatcmpl-tool-95c127777ae61173","type":"function","function":{"name":"webfetch"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":null,"logprobs":null,"delta":{"tool_calls":[{"index":3,"function":{"arguments":"{\"url\": \"https://agupubs.onlinelibrary.wiley.com/doi/full/"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[{"index":0,"finish_reason":"tool_calls","logprobs":null,"delta":{"tool_calls":[{"index":3,"function":{"arguments":"10.1029/2011WR010608\"}"}}]}}]}
+
+data: {"id":"chatcmpl-c81c12a81b8b619c9e571a6df0f51bc9","object":"chat.completion.chunk","created":1792455017,"model":"glm-5.3-flash","choices":[],"usage":{"prompt_tokens":2662,"completion_tokens":191,"total_tokens":2853,"prompt_tokens_details":{"cached_tokens":0},"completion_tokens_details":{"reasoning_tokens":50}}}
+
+data: [DONE]
+

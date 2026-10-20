@@ -1,0 +1,112 @@
+{
+  "items": [
+    {
+      "id": "Measure the forgetting rate by feature-level causal tracing",
+      "distance": "SAME",
+      "distance_reason": "It directly measures the forgetting rate that answers the root's 'does it only work when it forgets its past' sub-question.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 3,
+          "reason": "Refines whether guess-then-correct converges; no specific build choice hinges on the measurement."
+        },
+        {
+          "criterion": "open",
+          "value": 5,
+          "reason": "Names features/layers/prompts as quantity; published stops at GPT-2 XL and one SAE layer; next scales reachable."
+        },
+        {
+          "criterion": "internals",
+          "value": 4,
+          "reason": "Names hidden-state/feature indirect-effect decay, but does not explicitly say why outputs miss it."
+        },
+        {
+          "criterion": "reshape",
+          "value": 1,
+          "reason": "Sequential says none; only independent per-perturbation forward passes, no step-waiting chain."
+        }
+      ]
+    },
+    {
+      "id": "Linear feature representation -> parallel-in-time for free",
+      "distance": "SAME",
+      "distance_reason": "Asks whether linear feature transitions enable the root's O(log T) parallel-in-time exception.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 5,
+          "reason": "Yes would enable parallel-in-time inference, shifting a build choice; no would block that route."
+        },
+        {
+          "criterion": "open",
+          "value": 5,
+          "reason": "Names models/layers/features; published stops at LLaMA-2 7B and one SAE layer; next layers reachable."
+        },
+        {
+          "criterion": "internals",
+          "value": 4,
+          "reason": "Names feature-to-feature linear transition, but does not state what outputs miss."
+        },
+        {
+          "criterion": "reshape",
+          "value": 1,
+          "reason": "Sequential says none; linearity checks are independent per-feature regressions, no step-waiting chain."
+        }
+      ]
+    },
+    {
+      "id": "Feature steering as the guess-then-correct operator",
+      "distance": "SAME",
+      "distance_reason": "Proposes feature steering as the root's guess-then-correct correction operator, a sub-question.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 3,
+          "reason": "Refines whether steering composes; feature steering already works, so one answer is likely."
+        },
+        {
+          "criterion": "open",
+          "value": 5,
+          "reason": "Names features/strengths/prompts; published stops at 29 features and Goodfire layer 50; more sweeps reachable."
+        },
+        {
+          "criterion": "internals",
+          "value": 4,
+          "reason": "Names SAE feature direction and sweet spot; why outputs miss it not stated."
+        },
+        {
+          "criterion": "reshape",
+          "value": 1,
+          "reason": "Sequential says none; steering evaluations are independent forward passes, only prereqs parallel."
+        }
+      ]
+    },
+    {
+      "id": "Speculative and Jacobi decoding: the working guess-then-correct",
+      "distance": "SAME",
+      "distance_reason": "Restates the root's guess-whole-trajectory-then-correct problem for autoregressive LLM decoding.",
+      "scores": [
+        {
+          "criterion": "stakes",
+          "value": 5,
+          "reason": "Whether acceptance scales decides deploying speculative/Jacobi decoding on frontier inference, a real build/buy choice."
+        },
+        {
+          "criterion": "open",
+          "value": 5,
+          "reason": "Names prompts/draft-target pairs; published stops at T5-XXL and translation; frontier scaling unmeasured within reach."
+        },
+        {
+          "criterion": "internals",
+          "value": 1,
+          "reason": "Names acceptance rate, an output-observable quantity; no hidden internal information or why outputs miss it."
+        },
+        {
+          "criterion": "reshape",
+          "value": 3,
+          "reason": "Names K-token chain and parallel Jacobi/speculative restructure, but verify pass already fills a GPU batch."
+        }
+      ]
+    }
+  ]
+}

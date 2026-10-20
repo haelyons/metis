@@ -1,0 +1,196 @@
+{
+  "info": {
+    "id": "ses_ea96c8e3dffeEqGp09EMv1WGxJ",
+    "slug": "clever-garden",
+    "projectID": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+    "directory": "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls",
+    "path": "experiments/reshape-test/20261019-2344-arm-h/calls",
+    "title": "Ho-2",
+    "agent": "qt-bare",
+    "model": {
+      "id": "deepseek-v4-pro",
+      "providerID": "opencode-go",
+      "variant": "default"
+    },
+    "version": "1.18.34",
+    "summary": {
+      "additions": 0,
+      "deletions": 0,
+      "files": 0
+    },
+    "cost": 0.01016598,
+    "tokens": {
+      "input": 643,
+      "output": 1285,
+      "reasoning": 3635,
+      "cache": {
+        "read": 0,
+        "write": 0
+      }
+    },
+    "permission": [
+      {
+        "permission": "question",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_enter",
+        "pattern": "*",
+        "action": "deny"
+      },
+      {
+        "permission": "plan_exit",
+        "pattern": "*",
+        "action": "deny"
+      }
+    ],
+    "time": {
+      "created": 1792453865922,
+      "updated": 1792453934764
+    }
+  },
+  "messages": [
+    {
+      "info": {
+        "role": "user",
+        "time": {
+          "created": 1792453867781
+        },
+        "agent": "qt-bare",
+        "model": {
+          "providerID": "opencode-go",
+          "modelID": "deepseek-v4-pro"
+        },
+        "summary": {
+          "diffs": []
+        },
+        "id": "msg_156937905001S2aKPWSsqSRebW",
+        "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ"
+      },
+      "parts": [
+        {
+          "type": "text",
+          "text": "\"A weekend hackathon on scientific parallelism, about 30 hours, on 21 November. GPUs are provided; their type is not yet\nknown. Teams may bring their own problem, and the thinking, data and baseline can be prepared beforehand.\n\nJudges score reshaping, a credible baseline, correctness and scientific value. A carefully explained failure to get a\nspeedup can still win, if its failure modes were predicted in advance.\n\nThe sponsors build systems that split workloads into subtasks and route each to the best chip, and low-latency\ninference chips. The question they care about: which parts of a workload are sequential, and must they be?\n\nPropose five projects for this hackathon, from any field of science. For each give: title; field; sequential_part, the part of the work that one answer waits on step after step, or \\\"none\\\"; restructure, how your project changes that (or what it runs in parallel); condition, what must hold for it to pay off; baselines, what the result is timed and checked against; first_test, the cheapest measurement to run first and its rough cost. Decide from what you know; do not use tools.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"proposals\\\"],\\\"properties\\\":{\\\"proposals\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"required\\\":[\\\"title\\\",\\\"field\\\",\\\"sequential_part\\\",\\\"restructure\\\",\\\"condition\\\",\\\"baselines\\\",\\\"first_test\\\"],\\\"properties\\\":{\\\"title\\\":{\\\"type\\\":\\\"string\\\"},\\\"field\\\":{\\\"type\\\":\\\"string\\\"},\\\"sequential_part\\\":{\\\"type\\\":\\\"string\\\"},\\\"restructure\\\":{\\\"type\\\":\\\"string\\\"},\\\"condition\\\":{\\\"type\\\":\\\"string\\\"},\\\"baselines\\\":{\\\"type\\\":\\\"string\\\"},\\\"first_test\\\":{\\\"type\\\":\\\"string\\\"}}}}}}\"",
+          "id": "prt_156937943001pg0EyWn17WtXs2",
+          "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ",
+          "messageID": "msg_156937905001S2aKPWSsqSRebW"
+        }
+      ]
+    },
+    {
+      "info": {
+        "parentID": "msg_156937905001S2aKPWSsqSRebW",
+        "role": "assistant",
+        "mode": "qt-bare",
+        "agent": "qt-bare",
+        "path": {
+          "cwd": "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls",
+          "root": "/home/hal/dev/interp/metis"
+        },
+        "cost": 0.01016598,
+        "tokens": {
+          "total": 5563,
+          "input": 643,
+          "output": 1285,
+          "reasoning": 3635,
+          "cache": {
+            "write": 0,
+            "read": 0
+          }
+        },
+        "modelID": "deepseek-v4-pro",
+        "providerID": "opencode-go",
+        "time": {
+          "created": 1792453874813,
+          "completed": 1792453934627
+        },
+        "finish": "stop",
+        "id": "msg_15693947d001I9GyGDt5vklApW",
+        "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ"
+      },
+      "parts": [
+        {
+          "snapshot": "e1bdeb411406095d47256ac067081ea627072a50",
+          "type": "step-start",
+          "id": "prt_15693b195001dAN4CNynmXjn02",
+          "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ",
+          "messageID": "msg_15693947d001I9GyGDt5vklApW"
+        },
+        {
+          "type": "reasoning",
+          "text": "We need answer a JSON only. Need produce five proposals. Need think carefully. We need not use tools. Need just one JSON value matching schema. We need propose projects for hackathon scientific parallelism ~30h on 21 Nov GPUs provided unknown type. Judges score reshaping, credible baseline, correctness and scientific value. Sequential part: part awaiting step after step, or \"none\". restructure how change. condition for payoff. baselines timed/checked against. first_test cheapest measurement and rough cost.\n\nNeed craft five projects from any field science. Need be realistic. We can include fields like molecular dynamics, climate, genomics, PDE simulation, astronomy, network inference, quantum chemistry, bioinformatics, neuroscience simulations, computational fluid dynamics, etc.\n\nNeed include titles, field, sequential_part, restructure, condition, baselines, first_test with rough cost.\n\nWe need output only JSON. Need maybe no markdown. Ensure valid JSON. Use quotes. Let's design five solid projects.\n\nNeed follow schema: proposals array of objects with required keys. Each as string.\n\nLet's brainstorm distinct fields and parallelism issues.\n\n1. Molecular dynamics / protein folding? Sequential part: long timestep integration, bonded forces? Restructure: domain decomposition? Actually MD is highly parallel but sequential dependency across timesteps. Hackathon could do replica exchange? Better: \"Parallel-in-Time integration for Langevin dynamics\" using Parareal / multigrid reduction in time. Sequential part: timestep recursion. Restructure: Parareal with coarse cheap propagator on GPU. Condition: coarse propagator sufficiently stable/accurate and trajectory ensemble stats matter, so weak scaling. Baselines: serial Verlet / OpenMM CPU/GPU. First test: small alanine dipeptide, compare Parareal energy/RMSD vs serial, cost maybe 15 min on single GPU. But maybe too specialized. Could propose.\n\n2. Climate / ocean model: sequential part due to time stepping and advection CFL? Restructure: domain decomposition plus space-time parallel multigrid. Condition: many ensembles or long simulation. Baseline: MPI domain-decomposed Fortran model. First test: shallow water equations on GPU, cost ~2 GPU-hours. Good.\n\n3. Genomics / sequence alignment? Sequential part: dynamic programming in Smith-Waterman has dependencies along diagonals; can use wavefront parallelism. Restructure: wavefront blocking on GPU, splitting across anti-diagonals, tiling. Condition: long reads and large databases, memory bandwidth sufficient. Baselines: SSE2/AVX2 striped SW (Farrar), GPU CUDASW++. First test: align 1M 100bp reads to 1Mbp reference, measure GCUPS, cost ~1 GPU-hour prep and 10 min run. But \"scientific value\"? credible.\n\n4. Bayesian inference / MCMC? Sequential part: Markov chain accepts/rejects serially. Restructure: run many chains / parallel tempering / embarrassingly parallel chains with GPU batch likelihood. Condition: chains independent, likelihood vectorizable. Baselines: Stan or PyMC single-chain CPU/GPU. First test: logistic regression on simulated data, compare ESS/sec, cost 10 min. Or model.\n\n5. Computational neuroscience spiking network simulation? Sequential part: spike propagation and synaptic event handling; time step sequential. Restructure: custom event-driven GPU with parallel sort and atomics, or fixed-step with Axon. Condition: sparse connectivity, large networks, low synchronization cost. Baseline: Brian2/NEST single thread / CPU. First test: 100k neurons random network 1 sec bio time, measure wall time and firing stats, cost ~5 GPU-min after setup.\n\n6. CFD lattice Boltzmann? Sequential part: time stepping and collision-stream. Similar.\n\n7. Quantum chemistry /electronic structure: Sequential part? Self-consistent field loop? Restructure: GPU batch many configurations / parallel diagonalization. Condition.\n\n8. Astronomy: N-body gravity. Sequential part: pairwise force accumulation? Space tree.\n\nNeed choose five distinct with clear sequential part and restructure including parallel-in-time for one maybe. Ensure not all domain decomposition. Need maybe propose one where sequential part is \"none\" causing fully parallel, but schema wants. Could include a project with sequential_part \"none\" e.g. embarrassingly parallel parameter sweep? But judges care about sequential parts maybe. The prompt: sequential_part, the part work one answer waits on step after step, or \"none\"; restructure, how project changes that (or what it runs in parallel). We can have one with none.\n\nNeed maybe include one from \"scientific parallelism\" and sponsors build systems that split workloads into subtasks and route each to best chip, and low-latency inference chips. They care about which parts of a workload are sequential, and must they be? So proposals should highlight identifying sequential bottlenecks and possibly restructuring. Could include an \"inferencing\" project? But field must science. Maybe scientific workloads on heterogeneous hardware. We can design around \"sequential part\" and \"must they be?\".\n\nNeed produce five projects; may include:\n- Parallel-in-time weather prediction\n- Wavefront parallel sequence alignment\n- MCMC many chains\n- Spiking neural network simulation\n- Molecular dynamics enhanced sampling\n\nLet's iterate.\n\nProject 1 title: \"PinT-Allen: Parallel-in-time integration for ab initio molecular dynamics\"\nField: computational chemistry / molecular dynamics\nsequential_part: sequential update of nuclear positions and electronic wavefunction from step to step in Born-Oppenheimer MD (S^2) maybe.\nrestructure: Parareal/MGRIT decomposition over time with GPU batches of independent electronic structure evaluations; coarse propagator uses semi-empirical or previous converged wavefunction.\ncondition: high cost per SCF step and long trajectories; coarse propagator has low error; system not chaotic on coarse interval (or stochastic tolerance).\nbaselines: serial/pinned GPU Born-Oppenheimer MD in CP2K or VASP; compare radial distribution functions, energies, RMSD.\nfirst_test: 32 water molecules, 1000 steps, semi-empirical coarse, 1 GPU-hour, compare first 10 Parareal iterations.\n\nActually \"one answer waits on step after step\" true.\n\nProject 2: \"Wavefront Smith-Waterman for long-read error correction\"\nField: genomics/bioinformatics\nsequential_part: dynamic programming cell depends on north/west/northwest; anti-diagonal wavefront sequential.\nrestructure: tiled wavefront algorithm on GPU: partition query/target into tiles, process anti-diagonals, reuse cells in shared memory, use CUDA/HIP, maybe multiple GPUs over database shards.\ncondition: long reads (PacBio/Nanopore) and large candidate sets; enough shared memory/register; kernel overhead small.\nbaselines: Farrar striped SW (AVX2), CUDASW++ 3.0, Parasail; compare identical CIGAR/score.\nfirst_test: align 100k 5kb reads to 10Mb reference on one unknown GPU; measure GCUPS vs CPU, cost ~$5-10 compute.\n\nProject 3: \"Many-chain Bayesian inference with GPU batched likelihoods\"\nField: Bayesian statistics / scientific inference\nsequential_part: each Markov chain must accept/reject serially, causing low GPU utilization.\nrestructure: run thousands of independent chains in lockstep batches on GPU; vectorize log-likelihood over chains and data; use random seeds/halton; maybe adaptive SMC.\ncondition: model likelihood can be vectorized over chains and data; memory enough for batch; no strong chain interdependence.\nbaselines: Stan single-chain CPU, PyMC GPU sample, compare ESS/sec, R_hat, posterior quantiles.\nfirst_test: 8 schools or logistic regression with 100k rows, 256 chains, measure ESS/sec and R_hat, cost one GPU-hour.\n\nProject 4: \"Event-driven simulation of sparse spiking cortical microcircuits\"\nField: computational neuroscience\nsequential_part: time step integration and spike delivery are step-by-step; event queue and synaptic current updates sequential.\nrestructure: fixed-step GPU simulation with parallel synaptic event sorting using atomics and delayed buffers; subdivide neurons and synapses; use tiny event kernels, exploit sparse adjacency (CSR), maybe route heavy/light on different chip types (heterogeneous).\ncondition: large sparse networks with low mean firing rates; synapse/neuron ratio high; latency hiding.\nbaselines: NEST/Brian2 single thread CPU and GeNN/Auryn GPU; compare spike trains with van Rossum distance, firing rates, runtime.\nfirst_test: 100k Izhikevich neurons, 1M synapses, 1s bio time; measure wall time vs CPU and spike count, cost 5 GPU-min after setup.\n\nProject 5: \"Space-time multigrid for shallow-water ocean-atmosphere dynamics\"\nField: climate/ocean modeling\nsequential_part: explicit timestep update CFL-limited; each step waits on previous fields.\nrestructure: MGRIT/Space-time parallel multigrid on GPU: distribute time chunks to GPUs, iterate global time-grid; use coarse time steps for communication.\ncondition: multiple GPUs or one GPU with thousands of time steps; coarse model accurate; hyperbolic CFL issues controlled with implicit coarse or diffusion.\nbaselines: single-GPU serial time-stepping / MPI domain-decomposed shallow water model; compare convergence, energy conservation.\nfirst_test: 2D shallow-water wave with 256x256, 1000 steps, Parareal iterations vs serial; cost 2 GPU-hours.\n\nNeed perhaps include more variety? We need exactly five. This is good.\n\nBut need maybe condition strings concise but comprehensive. Include first_test rough cost explicitly. Need maybe mention unknown GPU type in first_test? They asked cheapest measurement and rough cost. We can say \"single GPU, ~$X or N GPU-min/hours\".\n\nNeed ensure JSON valid, no trailing commas. Could maybe include field names as strings. Need output only JSON. Before final, think if any possible issues with schema. Each property string. We'll make sure no newline raw problems? Fine.\n\nNeed perhaps include \"sequential_part\" maybe the answer waits on step after step, or none. Use detailed but one string. restructure project changes that. condition must hold. baselines what timed/checked against. first_test cheapest measurement run first and rough cost.\n\nNeed maybe no markdown code fences? The instruction says return only one JSON value no other text. So output JSON object with proposals. Could pretty print. Fine.\n\nLet's maybe refine each.\n\nProject 1 title maybe \"PinT-AIMD: Parallel-in-time ab initio molecular dynamics for water\"\nfield: \"computational chemistry / molecular dynamics\"\nsequential_part: \"Born-Oppenheimer MD advances nuclear positions one timestep at a time; each SCF wavefunction optimization waits on previous nuclear geometry and electron density.\"\nrestructure: \"Use Parareal/MGRIT in time with coarse semi-empirical propagator and fine GPU DFT propagators; evaluate independent fine time-slices in parallel as GPU batches, iterate the time-grid until trajectory correction converges.\"\ncondition: \"Fine SCF cost dominates over communication; coarse model sufficiently accurate on ~1 ps intervals; sampling/statistical properties tolerate parallel-in-time correction or short chaotic horizon.\"\nbaselines: \"Standard serial CPU/GPU Born-Oppenheimer MD (CP2K or VASP) for same system; check radial distribution functions, velocity autocorrelation, energy drift, and RMSD.\"\nfirst_test: \"32-water test run, 1000 steps, semi-empirical coarse, one GPU: measure first 10 Parareal iterations vs serial trajectory; ~1 GPU-hour.\"\n\nCould be too technical but fine.\n\nProject 2:\ntitle: \"Anti-diagonal tiled Smith-Waterman for long-read candidate filtering\"\nfield: \"genomics / bioinformatics\"\nsequential_part: \"Smith-Waterman dynamic programming has a wavefront dependency: each cell needs north, west, and north-west cells, so the fill is inherently anti-diagonal sequential.\"\nrestructure: \"Reformulate as tiled wavefront kernels on GPU: process anti-diagonals of tiles, keep boundary cells in shared memory, pack multiple queries per block, and shard a reference database across GPUs.\"\ncondition: \"Long reads and many candidate alignments keep all SMs busy; tile size fits shared memory; scoring and backtracking can be separated to avoid serial traceback bottleneck.\"\nbaselines: \"Farrar striped SW (AVX2), CUDASW++ 3.0/Parasail on CPU/GPU; compare exact scores, CIGAR strings, and GCUPS for same dataset.\"\nfirst_test: \"Align 100k 5kb reads to a 10 Mbp reference on one GPU; record GCUPS and score matches vs CPU; roughly $5-10 GPU time.\"\n\nProject 3:\ntitle: \"Lockstep many-chain MCMC with batched GPU likelihoods for scientific regression\"\nfield: \"Bayesian statistics / scientific inference\"\nsequential_part: \"A single Markov chain is sequential: each proposal depends on previous accept/reject and target density.\"\nrestructure: \"Run thousands of independent chains in lockstep GPU batches; vectorize target log-density over chains and data; keep warmup and adaptation synchronized; then aggregate posterior diagnostics.\"\ncondition: \"Model can be expressed as elementwise/matrix operations broadast over chains and data; enough GPU memory for batch states; chains are independent enough that synchronization overhead is small.\"\nbaselines: \"Stan single-chain CPU/GPU, PyMC/JAX GPU sampler, and naive multi-core chains; compare ESS/sec, R-hat, and posterior quantiles.\"\nfirst_test: \"Logistic regression with 100k rows and moderate dims, 256 chains; measure ESS/sec and R-hat vs one serial chain; ~1 GPU-hour.\"\n\nProject 4:\ntitle: \"Sparse event-driven cortical microcircuit on a GPU\"\nfield: \"computational neuroscience\"\nsequential_part: \"Neurons update step by step and spikes must be delivered at the next timestep; event queues and synaptic currents have serial ordering constraints.\"\nrestructure: \"Use a fixed-step GPU loop with parallel neuron updates, delayed ring buffers for spikes, atomics for synaptic accumulation, and CSX adjacency; optionally route the small sequential control loop to CPU while heavy synaptic kernels run on GPU.\"\ncondition: \"Network is large and sparse with low firing rates; synaptic count dominates neuron count; communication and atomic contention remain below compute cost.\"\nbaselines: \"NEST/Brian2 single-thread CPU (and GeNN where available) for identical network; compare spike trains (van Rossum distance), firing rates, and wall time.\"\nfirst_test: \"100k Izhikevich neurons with 1M random sparse synapses, 1s biological time on one GPU; compare spike count and runtime vs CPU; ~5-10 GPU-min after build.\"\n\nProject 5:\ntitle: \"Space-time parallel multigrid for shallow-water ocean dynamics\"\nfield: \"climate / ocean modeling\"\nsequential_part: \"Explicit time stepping is CFL-limited: each grid update waits on the previous timestep; long horizons serialize millions of small steps.\"\nrestructure: \"Apply MGRIT/space-time multigrid on GPUs: split the time domain into chunks run on separate GPU streams/tiles, solve corrections on a coarse time grid, and iterate to converge near serial accuracy.\"\ncondition: \"Problem is large enough to amortize iteration overhead; coarse time integrator is stable/diffusive enough for hyperbolic modes; convergence factor is bounded so parallel speedup exceeds serial.\"\nbaselines: \"Single-GPU/MPI domain-decomposed shallow-water solver and a verified time-marching reference; compare mass/energy conservation and RMS field error.\"\nfirst_test: \"2D double-gyre or wave propagation at 256x256, 1000 steps, compare 5 Parareal iterations with serial reference; roughly 1-2 GPU-hours.\"\n\nThis seems good.\n\nNeed ensure no invalid characters. Maybe use \"MGRIT\" not needing escape. Use \"CUDASW++\" plus plus fine. Use \"R-hat\" okay. Use quotes around. Need no double quotes inside strings unless escaped. We'll avoid or escape. For title maybe no quotes. Strings include \"8 schools\"? not needed. Good.\n\nCould maybe make one project with sequential_part \"none\" due to prompt. But our five all have sequential part. It's okay, proposals can show sequential. Maybe one could have \"none\"; but not necessary. The schema allows. We may include one \"none\" to demonstrate. But perhaps better to have all meaningful sequential part. The prompt \"or none\" means if no sequential part. Could have one project where sequential part is none but restructure runs embarrassingly parallel. However, such project may have less \"reshaping\" but could help. We don't need. Keep five strong.\n\nNeed maybe think about judges scoring \"credible baseline\" and \"scientific value.\" Our baselines credible. Good.\n\nNeed maybe avoid over-claiming. first_test rough cost. Good.\n\nNow output JSON. Need no extra text. Final with JSON. Ensure valid JSON. Let's write pretty. Make sure keys exactly.\n\nOne potential concern: Schema says \"all required\": title, field, sequential_part, restructure, condition, baselines, first_test. All string. We'll output array length 5.\n\nNeed maybe include \"proposals\" as root. Use braces. Let's produce.",
+          "time": {
+            "start": 1792453882527,
+            "end": 1792453919768
+          },
+          "id": "prt_15693b29f001cWY0GNXYjldDLb",
+          "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ",
+          "messageID": "msg_15693947d001I9GyGDt5vklApW"
+        },
+        {
+          "type": "text",
+          "text": "{\n  \"proposals\": [\n    {\n      \"title\": \"PinT-AIMD: Parallel-in-time ab initio molecular dynamics for water\",\n      \"field\": \"computational chemistry / molecular dynamics\",\n      \"sequential_part\": \"Born-Oppenheimer MD advances nuclear positions one timestep at a time; each SCF wavefunction optimization waits on the previous nuclear geometry and electron density.\",\n      \"restructure\": \"Use Parareal/MGRIT in time with a coarse semi-empirical propagator and fine GPU DFT propagators; evaluate independent fine time-slices in parallel as GPU batches, then iterate the time grid until the trajectory correction converges.\",\n      \"condition\": \"Fine electronic-structure cost dominates over communication; the coarse model is accurate enough over short time intervals; trajectory statistics tolerate parallel-in-time correction or a short chaotic horizon.\",\n      \"baselines\": \"Standard serial CPU/GPU Born-Oppenheimer MD in CP2K or VASP for the same system; check radial distribution functions, velocity autocorrelation, energy drift, and RMSD.\",\n      \"first_test\": \"Run 32 water molecules for 1000 steps with a semi-empirical coarse propagator on one GPU; measure the first 10 Parareal iterations against the serial trajectory. Rough cost: about 1 GPU-hour.\"\n    },\n    {\n      \"title\": \"Anti-diagonal tiled Smith-Waterman for long-read candidate filtering\",\n      \"field\": \"genomics / bioinformatics\",\n      \"sequential_part\": \"Smith-Waterman dynamic programming has a wavefront dependency: each cell needs its north, west, and north-west neighbors, so the fill is inherently anti-diagonal sequential.\",\n      \"restructure\": \"Reformulate the algorithm as tiled wavefront kernels on a GPU: process anti-diagonals of tiles, keep boundary cells in shared memory, pack multiple queries per thread block, and shard a reference database across GPUs.\",\n      \"condition\": \"Long reads and many candidate alignments keep all streaming multiprocessors busy; tile size fits shared memory; scoring and traceback can be separated so traceback does not serialize the whole kernel.\",\n      \"baselines\": \"Farrar striped Smith-Waterman with AVX2, CUDASW++ 3.0, and Parasail on CPU/GPU; compare exact scores, CIGAR strings, and GCUPS on the same dataset.\",\n      \"first_test\": \"Align 100k 5kb reads to a 10 Mbp reference on one GPU; record GCUPS and score matches against the CPU baseline. Rough cost: about $5-10 of GPU time.\"\n    },\n    {\n      \"title\": \"Lockstep many-chain MCMC with batched GPU likelihoods for scientific regression\",\n      \"field\": \"Bayesian statistics / scientific inference\",\n      \"sequential_part\": \"A single Markov chain is sequential: each proposal depends on the previous accept/reject decision and target density.\",\n      \"restructure\": \"Run thousands of independent chains in lockstep GPU batches; vectorize the target log-density over chains and data; keep warmup and adaptation synchronized, then aggregate posterior diagnostics from all chains.\",\n      \"condition\": \"The model can be expressed as elementwise or matrix operations broadcast over chains and data; GPU memory is sufficient for the batch state; chains are independent enough that synchronization overhead remains small.\",\n      \"baselines\": \"Stan single-chain CPU/GPU, PyMC or JAX GPU sampler, and a naive multi-core chain implementation; compare ESS/sec, R-hat, and posterior quantiles.\",\n      \"first_test\": \"Logistic regression with 100k rows and moderate dimensionality, using 256 chains on one GPU; measure ESS/sec and R-hat against one serial chain. Rough cost: about 1 GPU-hour.\"\n    },\n    {\n      \"title\": \"Sparse event-driven cortical microcircuit on a GPU\",\n      \"field\": \"computational neuroscience\",\n      \"sequential_part\": \"Neurons update step by step, and spikes must be delivered at later timesteps; event queues and synaptic current accumulation have serial ordering constraints.\",\n      \"restructure\": \"Use a fixed-step GPU loop with parallel neuron updates, delayed ring buffers for spikes, atomic synaptic accumulation, and compressed sparse adjacency; optionally keep the small sequential control loop on the CPU while heavy synaptic kernels run on the GPU.\",\n      \"condition\": \"The network is large and sparse with low firing rates; synaptic count dominates neuron count; communication and atomic contention remain below the kernel compute cost.\",\n      \"baselines\": \"NEST or Brian2 single-thread CPU simulation, and GeNN where available, for an identical network; compare spike trains using the van Rossum distance, firing rates, and wall time.\",\n      \"first_test\": \"Simulate 100k Izhikevich neurons with 1M random sparse synapses for 1 second of biological time on one GPU; compare spike count and runtime with the CPU baseline. Rough cost: about 5-10 GPU-min after build.\"\n    },\n    {\n      \"title\": \"Space-time parallel multigrid for shallow-water ocean dynamics\",\n      \"field\": \"climate / ocean modeling\",\n      \"sequential_part\": \"Explicit time stepping is CFL-limited: each grid update waits on the previous timestep, so long horizons serialize millions of small steps.\",\n      \"restructure\": \"Apply MGRIT or space-time multigrid on GPUs: split the time domain into chunks run on separate GPU streams or tiles, solve corrections on a coarse time grid, and iterate until the result matches serial accuracy.\",\n      \"condition\": \"The problem is large enough to amortize iteration overhead; the coarse time integrator is stable or diffusive enough for hyperbolic modes; the convergence factor is bounded so parallel speedup exceeds serial execution.\",\n      \"baselines\": \"A single-GPU or MPI domain-decomposed shallow-water solver and a verified time-marching reference; compare mass and energy conservation and RMS field error.\",\n      \"first_test\": \"Run 2D wave propagation or a double-gyre at 256x256 for 1000 steps; compare five Parareal iterations with the serial reference. Rough cost: about 1-2 GPU-hours.\"\n    }\n  ]\n}",
+          "time": {
+            "start": 1792453919800,
+            "end": 1792453926639
+          },
+          "id": "prt_156944438001xUyOEB20ducZIn",
+          "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ",
+          "messageID": "msg_15693947d001I9GyGDt5vklApW"
+        },
+        {
+          "reason": "stop",
+          "snapshot": "d014d6178a810b2e91b5c388d7c699038982235a",
+          "type": "step-finish",
+          "tokens": {
+            "total": 5563,
+            "input": 643,
+            "output": 1285,
+            "reasoning": 3635,
+            "cache": {
+              "write": 0,
+              "read": 0
+            }
+          },
+          "cost": 0.01016598,
+          "id": "prt_156947ba9001e4EIfrGKCPGDJh",
+          "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ",
+          "messageID": "msg_15693947d001I9GyGDt5vklApW"
+        },
+        {
+          "type": "patch",
+          "hash": "e1bdeb411406095d47256ac067081ea627072a50",
+          "files": [
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-1.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-1.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-1.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-1.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-2.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Hd-3.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-1.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-2.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-2.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-2.http/001.response.txt",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.events.jsonl",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.export.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.http/001.request.json",
+            "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2344-arm-h/calls/Ho-3.http/001.response.txt"
+          ],
+          "id": "prt_156947de2001KIIdDELB2A27Cw",
+          "sessionID": "ses_ea96c8e3dffeEqGp09EMv1WGxJ",
+          "messageID": "msg_15693947d001I9GyGDt5vklApW"
+        }
+      ]
+    }
+  ]
+}

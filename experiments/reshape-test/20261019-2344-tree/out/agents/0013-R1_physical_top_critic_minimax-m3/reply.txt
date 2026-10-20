@@ -1,0 +1,44 @@
+```json
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "plan:scope_gap",
+      "reason": "Inner tridiagonal solve affects GPU-vs-CPU build choice, but the PinT loop's iteration count (set by forgetting) is not tested here."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.if_lever",
+      "reason": "Difference (widening margin vs never beats) exceeds noise; N spans 16384x; arms differ only in method on same GPU; matrix, precision, GPU, RHS fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:anchor",
+      "reason": "Independent cuSPARSE gtsv2_nopivot and scipy solve_banded references, with residual reproduction in p1_anchor at 1e-10 before sweep."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "plan:novelty.left_open",
+      "reason": "Closest prior (Zhang 2009 GTX 280, hundreds of equations) stops short of A100 and N up to 2^24 with on-GPU Thomas baseline; gap stated."
+    },
+    {
+      "criterion": "reshape",
+      "value": 5,
+      "ref": "plan:restructuring.condition",
+      "reason": "Names row-waits-on-row dependency, justifies parallel halving, condition (diagonal dominance + threads) measured in p1_anchor before p2_sweep spend."
+    },
+    {
+      "criterion": "baseline",
+      "value": 5,
+      "ref": "plan:restructuring.baseline_sequential",
+      "reason": "Tuned hand-written CUDA Thomas with unroll, batched Thomas on same A100, anchor checks both to 1e-10, p2_sweep times every arm as wall-clock."
+    }
+  ],
+  "decides_by": "p2_sweep",
+  "decides_by_reason": "Speedup curve across all N including n_max with PCR/Thomas growth is needed to apply the decision_rule; produced only in p2_sweep."
+}
+```

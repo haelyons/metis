@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 5,
+      "ref": "card:test_summary",
+      "reason": "GPU versus CPU time for all 671 directly decides whether compute buys Bayesian calibration."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.decision_rule",
+      "reason": "Thresholds differ beyond noise; catchment axis spans 10x; compute buys quantity; sampling inputs are held fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:scored_against",
+      "reason": "Published NSE anchor plus independent CPU baseline and numeric thresholds make the timing outcome objectively verifiable."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior is single distributed MGB calibration, not batched GPU MCMC across 671 CAMELS GR4J catchments."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:method",
+      "reason": "The plan only runs independent catchment chains side-by-side; it removes no sequential step-after-step dependency."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring.method is none; only independent side-by-side chains; sequential/copy baseline conditions do not apply."
+    }
+  ],
+  "decides_by": "main_full_bayes",
+  "decides_by_reason": "Full GPU 671 wall-clock, needed with CPU baseline for either decision-rule outcome, is known only after main_full_bayes."
+}

@@ -1,0 +1,418 @@
+{
+  "option_title": "Reparameterize the calibration with active subspaces to shorten the MCMC chain",
+  "question": "Does the rainfall-runoff calibration posterior have a low-dimensional active subspace, and does running MCMC only on it shorten chains more than more GPUs do?",
+  "hypothesis": "A few data-informed directions carry the rainfall-runoff posterior's variation, so MCMC on them mixes faster and beats parallel copies.",
+  "compute_axis": {
+    "quantity": "gradient samples drawn to estimate the active subspace",
+    "unit": "gradient samples",
+    "levels": [100, 300, 1000, 10000, 100000]
+  },
+  "held_fixed": [
+    "GR4J four-parameter daily lumped model",
+    "10-year daily synthetic rainfall-runoff record",
+    "Gaussian prior on standardized parameters",
+    "1 percent Gaussian data noise",
+    "500000 forward evaluations per MCMC arm",
+    "10 conditional-average samples per MCMC step",
+    "10 inactive prior samples per reconstructed parameter draw"
+  ],
+  "predictions": {
+    "if_lever": "More parallel gradient samples make the eigenvalue gap widen enough that the reparameterized chain's ESS beats both baselines only at high counts.",
+    "if_not": "The eigenvalue gap is already clear at 300 gradient samples, so more samples leave the ESS verdict unchanged: compute is not the lever.",
+    "decision_rule": "Compute is the lever only if the spectral gap (ratio of the two largest estimated eigenvalues) at 100000 samples is at least 2x that at 300, or the accelerated chain's minimum ESS at 100000 is at least 2x that at 300; otherwise compute is not the lever.",
+    "noise_rule": "Each spectral estimate is repeated with 10 independent prior-sample batches (bootstrap ranges, as in the published procedure); each MCMC run uses 3 seeds, and a difference is declared only when ranges do not overlap.",
+    "expected": "if_not",
+    "expected_why": "Published demos already find the dominant gap at 300-1000 samples, and the framer holds that autocorrelation is set by posterior geometry, not by sample count."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "The plan sweeps the number of gradient samples from 100 to 100000, the quantity more parallel GPUs buy, and checks whether it changes the eigenvalue gap and the ESS verdict.",
+  "scored_against": "A long serial Metropolis-Hastings reference chain on the same GR4J posterior (posterior mean and covariance within tolerance), plus the published two-parameter quadratic reproduction.",
+  "arms": [
+    {"id": "as_mcmc", "what": "Active-subspace reparameterized MCMC: parallel gradient samples, then Metropolis on the one or two active variables with prior-sampled inactive variables"},
+    {"id": "vanilla", "what": "Serial random-walk Metropolis on all four GR4J parameters (baseline sequential)"},
+    {"id": "vanilla_copies", "what": "Independent vanilla Metropolis chains side by side, one per GPU (baseline copies)"}
+  ],
+  "baseline": {
+    "what": "Vanilla random-walk Metropolis on all four GR4J parameters, 500000 forward evaluations, proposal variance tuned to roughly 25 percent acceptance",
+    "value": 604,
+    "source_id": "s5"
+  },
+  "anchor": {
+    "what": "Reproduce the published two-parameter quadratic: epsilon 0.01 gives a one-dimensional active subspace; epsilon 0.95 gives no gap.",
+    "published_value": 1,
+    "tolerance": "recovered leading eigenvalue ratio at least 100 for epsilon 0.01 and at most 10 for epsilon 0.95",
+    "source_id": "s6",
+    "independent_code": "Published scripts at bitbucket.org/paulcon/accelerating-mcmc-with-active-subspaces"
+  },
+  "checks": [
+    "JAX GR4J matches the webGR equations exactly (production store, unit hydrographs, routing store, groundwater exchange)",
+    "Two-parameter quadratic anchor reproduces the published one-dimensional active subspace and eigenvalue gap",
+    "Accelerated chain's posterior mean and covariance match a long serial reference chain within tolerance",
+    "Accelerated chain's minimum ESS reproduces the published 604-to-81986 magnitude jump"
+  ],
+  "phases": [
+    {
+      "id": "pilot",
+      "what": "Implement JAX GR4J and the active-subspace estimator; time one forward-plus-backward and one 1000-sample spectral estimate; measure the GR4J eigenvalue spectrum",
+      "stop_rule": "time box, end by timer",
+      "gate": {"on": "gr4j_gap", "op": ">=", "value": 3, "else": "GR4J likelihood has no dominant active subspace; skip the MCMC comparison and the large-sample sweep, and report compute did not change the answer"}
+    },
+    {
+      "id": "reproduce",
+      "what": "Reproduce the published two-parameter quadratic anchor and the ESS comparison to validate the pipeline",
+      "stop_rule": "pass the anchor gate or stop to debug",
+      "gate": {"on": "repro_gap", "op": ">=", "value": 100, "else": "stop and debug the active-subspace code before spending on the main sweep"}
+    },
+    {
+      "id": "spectrum_sweep",
+      "what": "Sweep gradient-sample counts 100 to 100000 on GR4J and record the eigenvalue gap at each level",
+      "stop_rule": "all five levels done"
+    },
+    {
+      "id": "mcmc_compare",
+      "what": "Run the active-subspace MCMC against the serial vanilla chain and side-by-side vanilla copies; measure minimum ESS per forward evaluation and wall-clock",
+      "stop_rule": "all three arms at 500000 forward evaluations"
+    },
+    {
+      "id": "camels",
+      "what": "Optional: repeat the spectral estimate and accelerated MCMC across 671 CAMELS catchments to test whether the subspace is consistently low-dimensional",
+      "stop_rule": "time box, end by timer"
+    }
+  ],
+  "numbers": [
+    {
+      "id": "m_gr4j",
+      "name": "GR4J parameter count",
+      "unit": "parameters",
+      "basis": "CITED",
+      "value": 4,
+      "source_id": "s10",
+      "quote": "The GR4J model has four parameters to optimise during calibration",
+      "page_setting": "INRAE webGR GR4J model description"
+    },
+    {
+      "id": "m_pivot_300",
+      "name": "published gradient samples recovering a one-dimensional subspace",
+      "unit": "gradient samples",
+      "basis": "CITED",
+      "value": 300,
+      "source_id": "s8",
+      "quote": "The matrix C^ from ([4]) is estimated with M=300 gradient samples. The particular quantity of interest has a dominant one-dimensional active subspace",
+      "page_setting": "100-parameter Poisson PDE, Constantine-Eftekhari-Wakin 2015"
+    },
+    {
+      "id": "m_pivot_1000",
+      "name": "published gradient samples for the 100-parameter two-dimensional demo",
+      "unit": "gradient samples",
+      "basis": "CITED",
+      "value": 1000,
+      "source_id": "s3",
+      "quote": "We use N=1000 gradient samples in the computation ([11]).",
+      "page_setting": "100-parameter Poisson PDE, Constantine-Kent-Bui-Thanh 2016"
+    },
+    {
+      "id": "ess_vanilla_pub",
+      "name": "published vanilla minimum ESS over 100 components",
+      "unit": "samples",
+      "basis": "CITED",
+      "value": 604,
+      "source_id": "s5",
+      "quote": "The much larger effective sample sizes for the active subspace-accelerated chains is due to the independent sampling according to the prior on the inactive variables.",
+      "page_setting": "Table 1 of the paper: vanilla 604, AS2/0.1 81986, AS2/0.3 47281"
+    },
+    {
+      "id": "ess_accel_pub",
+      "name": "published accelerated minimum ESS (two-dimensional subspace, variance 0.1)",
+      "unit": "samples",
+      "basis": "CITED",
+      "value": 81986,
+      "source_id": "s5",
+      "quote": "The much larger effective sample sizes for the active subspace-accelerated chains is due to the independent sampling according to the prior on the inactive variables.",
+      "page_setting": "Table 1 of the paper: vanilla 604, AS2/0.1 81986, AS2/0.3 47281"
+    },
+    {
+      "id": "ckb_cpu_hours",
+      "name": "published CPU hours for one active-subspace chain",
+      "unit": "CPU hours",
+      "basis": "PROXY",
+      "value": 120,
+      "source_id": "s4",
+      "quote": "Each case ran 50k steps of the Markov chain, which used 500k forward model evaluations and 120 CPU hours.",
+      "page_setting": "100-parameter Poisson PDE forward model on two CPUs",
+      "differs_in": ["100-parameter Poisson PDE forward model, not the 4-parameter GR4J; used only as an upper-bound scale reference"]
+    },
+    {
+      "id": "gr4j_forward_us",
+      "name": "GR4J forward-plus-backward time on one GPU",
+      "unit": "microseconds",
+      "basis": "GUESS",
+      "value": 50,
+      "rests_on": "GR4J is a few thousand arithmetic steps per decade of daily data, so one vectorized forward-plus-backward is tens of microseconds; JAX compilation dominates the wall clock",
+      "measured_by": "pilot"
+    },
+    {
+      "id": "n_camels",
+      "name": "CAMELS catchment count",
+      "unit": "catchments",
+      "basis": "CITED",
+      "value": 671,
+      "source_id": "s11",
+      "quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "page_setting": "CAMELS data set description, Addor et al. 2017"
+    },
+    {
+      "id": "nmcmc_evals",
+      "name": "forward evaluations per MCMC arm",
+      "unit": "forward evaluations",
+      "basis": "DESIGN",
+      "value": 500000
+    },
+    {
+      "id": "mg_cond",
+      "name": "conditional-average samples per MCMC step",
+      "unit": "samples",
+      "basis": "CITED",
+      "value": 10,
+      "source_id": "s14",
+      "quote": "We choose M=10 for Step 2 in Algorithm [4], which is sufficient for one-to-two digits of accuracy from the Monte Carlo estimates g^eps(y^).",
+      "page_setting": "Constantine-Kent-Bui-Thanh 2016, section 5.6"
+    },
+    {
+      "id": "gr4j_gap",
+      "name": "GR4J eigenvalue gap at 1000 gradient samples (pilot output)",
+      "unit": "dimensionless",
+      "basis": "GUESS",
+      "value": 8,
+      "rests_on": "GR4J's four-parameter posterior is strongly correlated and equifinal, so a dominant data-informed direction is expected, as in the published misfits",
+      "measured_by": "pilot"
+    },
+    {
+      "id": "repro_gap",
+      "name": "recovered eigenvalue ratio in the two-parameter anchor at epsilon 0.01",
+      "unit": "dimensionless",
+      "basis": "GUESS",
+      "value": 10000,
+      "rests_on": "the anchor's eigenvalue ratio scales as one over epsilon squared for small epsilon",
+      "measured_by": "reproduce"
+    },
+    {
+      "id": "gap_factor",
+      "name": "decision-rule factor on gap or ESS",
+      "unit": "dimensionless",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "camels_evals",
+      "name": "forward evaluations for the 671-catchment sweep",
+      "unit": "forward evaluations",
+      "basis": "DERIVED",
+      "expr": "n_camels * (m_pivot_1000 + 50000 * mg_cond)"
+    },
+    {
+      "id": "camels_wall_hours",
+      "name": "wall-clock hours for the 671-catchment sweep on 8 GPUs",
+      "unit": "hours",
+      "basis": "DERIVED",
+      "expr": "camels_evals * gr4j_forward_us / 1e6 / 3600 / 8"
+    }
+  ],
+  "cost": {
+    "rates": [
+      {"id": "r_a6000", "gpu": "NVIDIA A6000", "gpu_memory_gb": 48, "n_gpus": 1, "per_gpu_usd_h": 1.09},
+      {"id": "r_a100x8", "gpu": "NVIDIA A100 SXM", "gpu_memory_gb": 80, "n_gpus": 8, "per_gpu_usd_h": 2.79}
+    ],
+    "lines": [
+      {
+        "id": "L_pilot",
+        "phase": "pilot",
+        "what": "Implement and time the JAX GR4J pipeline and the 1000-sample spectral estimate on one GPU",
+        "kind": "work",
+        "rate": "r_a6000",
+        "hours": 2,
+        "need": 0.5
+      },
+      {
+        "id": "L_reproduce",
+        "phase": "reproduce",
+        "what": "Reproduce the two-parameter anchor and the published ESS comparison",
+        "kind": "work",
+        "rate": "r_a6000",
+        "hours": 2,
+        "need": 0.5
+      },
+      {
+        "id": "L_sweep",
+        "phase": "spectrum_sweep",
+        "what": "Sweep gradient samples 100 to 100000 and record the eigenvalue gap at each level",
+        "kind": "work",
+        "rate": "r_a6000",
+        "hours": 2,
+        "need": 0.2
+      },
+      {
+        "id": "L_mcmc",
+        "phase": "mcmc_compare",
+        "what": "Run the three arms (accelerated, serial vanilla, side-by-side copies) at 500000 evaluations",
+        "kind": "work",
+        "rate": "r_a6000",
+        "hours": 4,
+        "need": 1,
+        "condition": "gr4j_gap >= 3"
+      },
+      {
+        "id": "L_camels",
+        "phase": "camels",
+        "what": "Optional 671-catchment sweep on 8 GPUs",
+        "kind": "work",
+        "rate": "r_a100x8",
+        "hours": 2,
+        "need": "camels_wall_hours",
+        "optional": true,
+        "condition": "gr4j_gap >= 3"
+      },
+      {
+        "id": "L_storage",
+        "phase": "camels",
+        "what": "CAMELS daily forcing and results storage",
+        "kind": "storage",
+        "usd": "5 * fs_usd_gib_month"
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "no_gap",
+        "what": "GR4J shows no dominant eigenvalue gap; the MCMC comparison and large-sample sweep are skipped",
+        "set": {"gr4j_gap": 1}
+      }
+    ],
+    "yields": ["m_pivot_1000", "nmcmc_evals", "n_camels"],
+    "spend_cap_usd": 200,
+    "total_stated": 56.54
+  },
+  "full_scale": [
+    {
+      "id": "fs_distributed",
+      "what": "Active-subspace reparameterization of a hundreds-of-parameter distributed model across all 671 catchments, the genuinely compute-bound regime",
+      "usd": "4 * budget_usd",
+      "ratio_to": "budget_usd"
+    }
+  ],
+  "outside_budget": [
+    {"what": "human time designing, writing, and debugging the JAX pipeline and analysis", "qty": 8, "unit": "hours"},
+    {"what": "download bandwidth for CAMELS daily forcing and attributes", "qty": 3, "unit": "GiB"}
+  ],
+  "restructuring": {
+    "sequential_part": "Four serial steps: draw gradient samples, average outer products, eigendecompose, then run the active-variable Markov chain.",
+    "method": "Gradient samples are mutually independent, so they run concurrently across GPUs; only the eigendecomposition and the short low-dimensional chain remain serial.",
+    "condition": "The GR4J negative log-likelihood must show a spectral gap (few large eigenvalues) so the active variables are few and the per-step conditional average is cheap; the pilot measures this spectrum before the main spend.",
+    "condition_phase": "pilot",
+    "baseline_sequential": "Fastest serial run: JAX-compiled random-walk Metropolis on all four GR4J parameters, proposal variance tuned to roughly 25 percent acceptance, 500000 forward evaluations.",
+    "baseline_copies": "Independent vanilla Metropolis chains started from dispersed points, one per GPU, run side by side on the same instance, timed in wall-clock per effective sample."
+  },
+  "scope_gap": [
+    "Only a four-parameter daily lumped model and CAMELS catchments; the result says nothing about expensive distributed models with hundreds of parameters or likelihoods with explicit input and structural error."
+  ],
+  "novelty": {
+    "closest_prior": "Constantine, Kent and Bui-Thanh's active-subspace MCMC: a 100-parameter forward model, 1000 gradient samples, 500k evaluations; minimum ESS rose 604 to 81986 versus vanilla.",
+    "closest_source_id": "s1",
+    "prior_max_level": 1000,
+    "left_open": "Whether a single linear subspace still captures rainfall-runoff posteriors whose cheap fixed-step integrators add artificial bimodality, and above 1000 gradient samples.",
+    "decides": "partly",
+    "searched": true
+  },
+  "limits": [
+    "Only synthetic and CAMELS daily lumped models; won't prove active subspaces work for distributed, high-dimensional, or input-error-dominated calibrations."
+  ],
+  "test_summary": "Reproduce the published active-subspace MCMC, then run it on four-parameter GR4J while sweeping gradient samples 100 to 100000, against a serial vanilla Metropolis chain and side-by-side vanilla chains, comparing eigenvalue gaps and effective sample size per evaluation.",
+  "sources": [
+    {
+      "id": "s1",
+      "url": "https://arxiv.org/html/1510.00024v2",
+      "quote": "With this information, one can run the sequential MCMC on the active variables while sampling independently according to the prior on the inactive variables.",
+      "supports": "The reparameterization: run MCMC only on the data-informed active variables and sample the prior elsewhere."
+    },
+    {
+      "id": "s2",
+      "url": "https://arxiv.org/html/1510.00024v2",
+      "quote": "we demonstrate the active subspace-accelerated MCMC on two computational examples: (i) a two-dimensional parameter space with a quadratic forward model and one-dimensional active subspace and (ii) a 100-dimensional parameter space with a PDE-based forward model and a two-dimensional active subspace.",
+      "supports": "Published demonstration scale: up to a 100-parameter forward model with a two-dimensional active subspace."
+    },
+    {
+      "id": "s3",
+      "url": "https://arxiv.org/html/1510.00024v2",
+      "quote": "We use N=1000 gradient samples in the computation ([11]).",
+      "supports": "Largest published gradient-sample count (1000) used to estimate the active subspace."
+    },
+    {
+      "id": "s4",
+      "url": "https://arxiv.org/html/1510.00024v2",
+      "quote": "Each case ran 50k steps of the Markov chain, which used 500k forward model evaluations and 120 CPU hours.",
+      "supports": "Published serial cost of the active-subspace chain and the 500k forward-evaluation budget."
+    },
+    {
+      "id": "s5",
+      "url": "https://arxiv.org/html/1510.00024v2",
+      "quote": "The much larger effective sample sizes for the active subspace-accelerated chains is due to the independent sampling according to the prior on the inactive variables.",
+      "supports": "The published ESS comparison (Table 1: vanilla 604, accelerated 81986) that the anchor reproduces."
+    },
+    {
+      "id": "s6",
+      "url": "https://arxiv.org/html/1510.00024v2",
+      "quote": "The gap between the eigenvalues suggests an active one-dimensional active subspace.",
+      "supports": "The two-parameter quadratic anchor with epsilon 0.01 has a one-dimensional active subspace; epsilon 0.95 has none."
+    },
+    {
+      "id": "s7",
+      "url": "https://ar5iv.labs.arxiv.org/html/1506.04190",
+      "quote": "In practice, these measurements can be estimated by finite differences using only two function evaluations, regardless of the dimension of the function's input space.",
+      "supports": "Gradient samples cost two forward evaluations each (or one adjoint pass), so the M samples are embarrassingly parallel."
+    },
+    {
+      "id": "s8",
+      "url": "https://ar5iv.labs.arxiv.org/html/1506.04190",
+      "quote": "The matrix C^ from ([4]) is estimated with M=300 gradient samples. The particular quantity of interest has a dominant one-dimensional active subspace",
+      "supports": "Published demonstration recovering a dominant one-dimensional subspace with 300 gradient samples."
+    },
+    {
+      "id": "s9",
+      "url": "https://doi.org/10.1029/2009WR008648",
+      "quote": "for a case study with a spatially lumped conceptual rainfall-runoff model, it introduces artificial bimodality in the marginal posterior parameter distributions, which is not present in numerically accurate implementations of the same model.",
+      "supports": "The open question: cheap fixed-step integrators add artificial bimodality that may break the single-linear-subspace assumption."
+    },
+    {
+      "id": "s10",
+      "url": "https://webgr.inrae.fr/eng/tools/hydrological-models/daily-hydrological-model-gr4j",
+      "quote": "The GR4J model has four parameters to optimise during calibration: X1 (production store maximal capacity), X2 (catchment water exchange coefficient), X3 (one-day maximal capacity of routing reservoir), X4 (HU1 unit hydrograph time base).",
+      "supports": "GR4J is a four-parameter daily lumped model, the cheap forward model to reparameterize."
+    },
+    {
+      "id": "s11",
+      "url": "https://hess.copernicus.org/articles/21/5293/2017/hess-21-5293-2017.html",
+      "quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "supports": "The optional large-sample sweep across 671 catchments."
+    },
+    {
+      "id": "s12",
+      "url": "https://lambda.ai/pricing",
+      "quote": "NVIDIA A6000 | VRAM/GPU: 48 GB | vCPUs: 14 | RAM: 100 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $1.09 (1x GPU table)",
+      "supports": "The 1-GPU rate for the pilot, anchor, sweep, and MCMC phases."
+    },
+    {
+      "id": "s13",
+      "url": "https://lambda.ai/pricing",
+      "quote": "NVIDIA A100 SXM | VRAM/GPU: 80 GB | vCPUs: 240 | RAM: 1800 GiB | STORAGE: 19.5 TiB SSD | PRICE/GPU/HR*: $2.79 (8x GPU table)",
+      "supports": "The 8-GPU rate for the optional large-sample sweep."
+    },
+    {
+      "id": "s14",
+      "url": "https://arxiv.org/html/1510.00024v2",
+      "quote": "We choose M=10 for Step 2 in Algorithm [4], which is sufficient for one-to-two digits of accuracy from the Monte Carlo estimates g^eps(y^).",
+      "supports": "Conditional-average sample count (10) per MCMC step."
+    }
+  ],
+  "files_read": [
+    "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work/seed-1/R1/interp.md",
+    "/home/hal/dev/interp/metis/experiments/reshape-test/20261019-2345-tree/out/work/seed-1/R1/framer.md"
+  ]
+}

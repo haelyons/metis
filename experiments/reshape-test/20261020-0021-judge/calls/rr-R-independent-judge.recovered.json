@@ -1,0 +1,23 @@
+[
+ {
+  "index": 1,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "Change the unit of work from chain steps to independent simulator runs: amortized simulation-based inference. Draw parameters from a proposal, run the model in massively parallel GPU batches",
+  "reason": "Eliminates chain iterations the posterior waited on; independent simulations run simultaneously and inference becomes one forward pass."
+ },
+ {
+  "index": 2,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "Change what is measured: target the decision quantity directly — e.g., the posterior of the 1%-exceedance (100-year) flood quantile ... Compute is spent only where it changes the answer.",
+  "reason": "Changes measurement target and compute allocation; no serial dependency is removed, and active point selection remains sequential."
+ },
+ {
+  "index": 3,
+  "kind": "reframe",
+  "meets_criterion": "yes",
+  "quote": "decompose the record into near-independent hydrologic events (with short warm-ups) plus recession blocks, calibrate each block in parallel ... The serial unit shrinks from decades to days, and blocks are embarrassingly parallel.",
+  "reason": "Cuts the decades-long timestep dependency into short blocks calibrated simultaneously; the record's serial chain no longer gates the answer."
+ }
+]

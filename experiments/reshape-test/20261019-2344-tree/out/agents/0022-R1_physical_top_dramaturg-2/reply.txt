@@ -1,0 +1,98 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — no page relied on; the plan's own research question needs no source.",
+      "note": "The question's framing (sequential depth T vs parallel log2(T) depth) is consistent with the fetched s3 page ('The Thomas algorithm ... inherently sequential, while the PCR algorithm is more computationally expensive but parallelizable') and with the Zhang paper's 'PCR takes 12n log 2 n operations and log 2 n steps to finish'; nothing fetched contradicts it."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "PARTIAL",
+      "page_quote": "The Thomas algorithm, based on LU decomposition, is efficient to solve tridiagonal systems but inherently sequential, while the PCR algorithm is more computationally expensive but parallelizable.",
+      "note": "The cited s3 page (fetched) supports the load-bearing contrast — Thomas inherently sequential, PCR parallelizable — hence 'GPU width shortens the sequential part'. But the page nowhere states the round counts 'log2(T) rounds instead of T'; that quantitative claim is absent from the cited source (it appears in the uncited Zhang et al. paper: 'CR requires 2 log 2 n - 1 steps while the Thomas algorithm requires 2n steps')."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — the plan's own description of the baseline method it builds on; no source cited and none required.",
+      "note": "A method premise, not an external claim. Consistent with the fetched pages: the s3 page calls the Thomas solve 'inherently sequential', and the Zhang paper gives the serial Thomas algorithm 2n steps, so nothing contradicts the T-ordered-steps picture."
+    },
+    {
+      "ref": "card:method",
+      "status": "PARTIAL",
+      "page_quote": "The Thomas algorithm, based on LU decomposition, is efficient to solve tridiagonal systems but inherently sequential, while the PCR algorithm is more computationally expensive but parallelizable.",
+      "note": "s3 supports the sequential-Thomas vs parallel-PCR contrast that motivates replacing T ordered steps, but the cited page says nothing about cyclic reduction halving the system each round, solving independent rows together, or the log2(T) round count — those mechanism claims are not covered by the cited source (the uncited Zhang paper states 'CR requires 2 log 2 n - 1 steps while the Thomas algorithm requires 2n steps' and 'PCR takes 12n log 2 n operations and log 2 n steps to finish')."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — the plan's predicted outcome for its own experiment; a prediction needs no source.",
+      "note": "Not contradicted by anything fetched: the Zhang paper reports PCR finishes in 'log 2 n steps' and that 'the overall execution time depends primarily on the number of algorithmic steps rather than the amount of work per step'."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — the plan's anticipated failure mode (the alternative outcome it tests against); needs no source.",
+      "note": "Its 'extra work' element matches the Zhang paper's finding that 'PCR and RD have fewer algorithmic steps but do more work each step'; nothing fetched contradicts the contingency."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "GTSV_NO_PIVOT (General Tridiagonal system SolVe) function solves a system of linear equations for general tridiagonal matrices.",
+      "note": "What the plan will measure needs no source; the NVIDIA gtsv tridiagonal reference it names exists (the fetched s3 page documents GTSV_NO_PIVOT, a hybrid PCR+Thomas solver), and the A100, sweep range and comparisons are the plan's own choices."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "We find that CR enjoys linear algorithm complexity but suffers from more algorithmic steps and bank conflicts, while PCR and RD have fewer algorithmic steps but do more work each step. ... Our GPU solvers achieve up to a 28x speedup over a sequential LAPACK solver, and a 12x speedup over a multi-threaded CPU solver. ... We implement the five tridiagonal solvers on an NVIDIA GTX 280 GPU.",
+      "note": "All elements verified in the Zhang–Cohen–Owens paper (cited PDF's text read via its indexed full text after the direct fetch returned unextractable PDF bytes): authors Zhang/Cohen/Owens; CR, PCR and RD implemented on an NVIDIA GTX 280 (30 multiprocessors); PCR does fewer steps but more work ('PCR requires fewer algorithmic steps than CR but does asymptotically more work per step'); and 'up to a 28x speedup over a sequential LAPACK solver' — stated for their GPU solvers overall, not for PCR alone."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "N/A — no source cited for the item.",
+      "note": "A negative claim about the published literature (no published result times PCR against an on-GPU sequential Thomas on a modern A100 up to 2^24) is a factual claim and is given with no source; the fetched pages (NVIDIA gtsv docs, Zhang et al. 2009/2010, Lambda pricing) neither state nor establish that absence."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "cuSolverDx gtsv_no_pivot function does not perform any pivoting and uses a combination of the Parallel Cyclic Reduction (PCR) and Thomas algorithms to solve the tridiagonal system of equations.",
+      "note": "The plan's own acceptance criterion needs no source; the NVIDIA gtsv tridiagonal reference it requires exists per the fetched s3 page, and the 1e-10 relative-residual tolerance is the plan's own choice."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "N/A — the plan's own scope statement; needs no source.",
+      "note": "Describes what the experiment does and does not cover (single-solve wall-clock scaling vs the end-to-end parallel-in-time method); a framing claim, not a sourced factual assertion."
+    },
+    {
+      "ref": "src:s3",
+      "status": "SUPPORTED",
+      "page_quote": "cuSolverDx gtsv_no_pivot function does not perform any pivoting and uses a combination of the Parallel Cyclic Reduction (PCR) and Thomas algorithms to solve the tridiagonal system of equations. The Thomas algorithm, based on LU decomposition, is efficient to solve tridiagonal systems but inherently sequential, while the PCR algorithm is more computationally expensive but parallelizable. The hybrid combination of the two algorithms is used to achieve the best performance for different problem sizes.",
+      "note": "The recorded quote appears verbatim on the fetched page and supports the stated use: Thomas sequential, PCR parallel, and NVIDIA shipping a PCR+Thomas hybrid (gtsv_no_pivot) usable as the independent reference. The page does not itself give log2(T) round counts."
+    },
+    {
+      "ref": "src:s2",
+      "status": "SUPPORTED",
+      "page_quote": "We find that CR enjoys linear algorithm complexity but suffers from more algorithmic steps and bank conflicts, while PCR and RD have fewer algorithmic steps but do more work each step.",
+      "note": "The quote appears verbatim in the paper's abstract; the direct fetch of the cited PDF returned unextractable compressed bytes, so verification used the indexed full text of the same document — the cited research.nvidia.com PDF URL itself surfaces in the index with this abstract text, as do the ACM DL and author copies. Supports the PCR fewer-steps/more-work characterization, the prior GPU benchmark, and the 28x proxy; the solvers were implemented on an NVIDIA GTX 280."
+    },
+    {
+      "ref": "num:speedup_at_nmax",
+      "status": "SUPPORTED",
+      "page_value": 28,
+      "page_quote": "Our GPU solvers achieve up to a 28x speedup over a sequential LAPACK solver, and a 12x speedup over a multi-threaded CPU solver.",
+      "note": "The paper states exactly 28x for the recorded page_setting (GTX 280-era GPU solvers vs sequential LAPACK, 'up to'); the recorded value matches. As a PROXY its transfer to the plan's A100 setting is not judged here. Verified via the indexed full text of the cited PDF after the direct fetch returned unextractable bytes."
+    },
+    {
+      "ref": "num:per_gpu_usd_h_a100",
+      "status": "SUPPORTED",
+      "page_value": 1.99,
+      "page_quote": "NVIDIA A100 SXM40 GB30220 GiB512 GiB SSD$1.99",
+      "note": "On the fetched Lambda pricing page, the Instances '1x' tab row reads exactly this under the columns Plan | VRAM/GPU | vCPUs | RAM | STORAGE | PRICE/GPU/HR — an NVIDIA A100 SXM 40 GB instance with 30 vCPUs, 220 GiB RAM, 512 GiB SSD at $1.99 per GPU-hour, matching the recorded value and setting (on-demand, 1-GPU plan)."
+    }
+  ]
+}
+```

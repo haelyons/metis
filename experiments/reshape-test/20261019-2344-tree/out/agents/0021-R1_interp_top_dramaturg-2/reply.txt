@@ -1,0 +1,134 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "The idea is to diagonalize the time stepping matrix, keeping the matrices for the space discretization unchanged, and then to solve all time steps in parallel.",
+      "note": "Quote appears verbatim on the ParaDiag page (abstract of Gander et al. 2021, ref [2], reproduced there). The research question itself is the plan's own and needs no source; the cited source grounds the diagonalization-based parallel-in-time idea the question builds on."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "The idea is to diagonalize the time stepping matrix, keeping the matrices for the space discretization unchanged, and then to solve all time steps in parallel.",
+      "note": "Quote appears on the page and supports the parallel-in-time/diagonalization foundation; the near-linearity-in-SAE-features premise and the O(log T)/no-forgetting claim are the plan's hypothesis under test and need no source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; none needed - success criterion for the plan's own measurement)",
+      "note": "Pure conditional prediction of the planned experiment; the 90% threshold is the plan's decision rule. The referenced 42-layer count of Gemma 2 9B is independently confirmed by Table 1 of arXiv:2408.00118 (see num:layers_gemma9b)."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "(no source cited; none needed - failure criterion for the plan's own measurement)",
+      "note": "Pure conditional prediction of the planned experiment; nothing factual to source."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "Comparing the per-feature R2 between full-rank operators shows that those trained for small leaps (k=1, k=4 for target layer 10) successfully transport a significant number of features (R2>0.95).",
+      "note": "The fitting/composing/scoring pipeline (Gemma 2 9B, Gemma Scope, repeated squaring) is what the plan will build and needs no source. The cited 'published adjacent-layer transport R2 of 0.95' matches the paper's per-feature R2 > 0.95 for small leaps (k=1 and k=4, target layer 10); the paper reports this for a significant number of features rather than a single point value."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "We conduct experiments using Gemma 2 2B model ... Per-feature R2 of operators depend on both the target layer depth and the leap size k ... even at k=10 the increase is 7.1% of max degradation ... This compute-light (no finetuning, <50 GPU-h) method ...",
+      "note": "All elements check out: per-feature R2 of linear layer-to-layer maps, leaps evaluated up to k=10 (Figures 2-4 and results text include k=10), small open model = Gemma 2 2B, and <50 GPU-h from the abstract. The carried value 10 matches the maximum leap evaluated."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "UNSUPPORTED",
+      "page_quote": "(no source cited for the factual gap claims)",
+      "note": "The card makes factual claims about what prior work did not do but cites no source, so per the rule it is unsupported. For what it is worth, the ATO full text (fetched for src:s_ato) is consistent with it: a single Gemma 2 2B model, fixed 16,384-dim Gemma Scope SAEs, a single same-token j-policy, and Limitations stating 'we evaluated only a narrow set of layers and offsets on a single model'; no out-of-order composition, SAE-width sweep, or cross-context time-invariance test appears in the paper. Attaching [s_ato] to this card would make it supported."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "For all three SAEs, the average number of features active (i.e. with nonzero activations) on a given token was fewer than 300, and the SAE reconstruction explained at least 65% of the variance of the model activations.",
+      "note": "Carried value 0.65 matches the page's published reconstruction ceiling (at least 65% of variance; Claude 3 Sonnet SAEs of 1M/4M/34M features). The <1e-5 round-trip and synthetic-linearity checks are plan-set validation targets and need no source. Page verified via a search-engine scrape of the exact URL after direct fetch twice exceeded the 5MB response limit."
+    },
+    {
+      "ref": "card:limits",
+      "status": "UNSUPPORTED",
+      "page_quote": "(no source cited for the factual claim)",
+      "note": "The scope statements ('holds for open Gemma/LLaMA models and released SAEs', 'it measures linearity, not a shipped parallel sampler') need no source, but 'not Claude 3 Sonnet's 34M features' is a factual claim with no cited source. It is in fact corroborated by the s_scaling_mono page ('We trained three SAEs of varying sizes: 1,048,576 (~1M), 4,194,304 (~4M), and 33,554,432 (~34M) features', Scaling Monosemanticity on Claude 3 Sonnet), but this card does not cite it."
+    },
+    {
+      "ref": "src:s_pdiag",
+      "status": "SUPPORTED",
+      "page_quote": "The idea is to diagonalize the time stepping matrix, keeping the matrices for the space discretization unchanged, and then to solve all time steps in parallel.",
+      "note": "Appears verbatim on the page (abstract of Gander et al. 2021, ref [2], reproduced on the ParaDiag methods page)."
+    },
+    {
+      "ref": "src:s_ato",
+      "status": "SUPPORTED",
+      "page_quote": "In this work, we propose Activation Transport Operators (ATO), linear maps from upstream to downstream residuals k layers later, evaluated in feature space using downstream SAE decoder projections. ... This compute-light (no finetuning, <50 GPU-h) method ... Most linear transport occurs in nearby layers and deteriorates over large distances",
+      "note": "All three fragments appear on the fetched pages: the first two in the abstract (abs page and HTML full text), the third as the Results section heading 'Most linear transport occurs in nearby layers and deteriorates over large distances'."
+    },
+    {
+      "ref": "src:s_scaling_mono",
+      "status": "SUPPORTED",
+      "page_quote": "We trained three SAEs of varying sizes: 1,048,576 (~1M), 4,194,304 (~4M), and 33,554,432 (~34M) features. ... For all three SAEs, the average number of features active (i.e. with nonzero activations) on a given token was fewer than 300, and the SAE reconstruction explained at least 65% of the variance of the model activations.",
+      "note": "Both sentences appear verbatim on the page. Direct webfetch of transformer-circuits.pub exceeded the 5MB response limit twice; content was verified from a search-engine scrape of the same URL (https://transformer-circuits.pub/2024/scaling-monosemanticity)."
+    },
+    {
+      "ref": "num:layers_gemma9b",
+      "status": "SUPPORTED",
+      "page_quote": "Parameters | 2B | 9B | 27B ... d_model | 2304 | 3584 | 4608 ... Layers | 26 | 42 | 46 (Table 1, 9B column)",
+      "page_value": 42,
+      "note": "Gemma 2 paper Table 1 lists 42 layers for the 9B model, matching the recorded value."
+    },
+    {
+      "ref": "num:d_model_gemma9b",
+      "status": "SUPPORTED",
+      "page_quote": "d_model | 2304 | 3584 | 4608 (Table 1, 9B column: 3584)",
+      "page_value": 3584,
+      "note": "Gemma 2 paper Table 1 lists d_model 3584 for the 9B model."
+    },
+    {
+      "ref": "num:params_gemma9b",
+      "status": "SUPPORTED",
+      "page_quote": "Parameters | 2B | 9B | 27B (Table 1); abstract: 'ranging in scale from 2 billion to 27 billion parameters'",
+      "page_value": 9000000000,
+      "note": "The 9B designation is stated in Table 1 and the abstract; Table 2's component counts (917,962,752 embedding + 8,324,201,984 non-embedding = 9,242,164,736) round to the 9B figure."
+    },
+    {
+      "ref": "num:params_llama2",
+      "status": "SUPPORTED",
+      "page_quote": "In this work, we develop and release Llama 2, a collection of pretrained and fine-tuned large language models (LLMs) ranging in scale from 7 billion to 70 billion parameters.",
+      "page_value": 7000000000,
+      "note": "Abstract sentence appears verbatim; the scale range begins at 7 billion parameters, matching the 7B value for LLaMA-2 7B."
+    },
+    {
+      "ref": "num:sae_w16",
+      "status": "SUPPORTED",
+      "page_quote": "9B PT | 2^14 | All | All | All | 4B | (42 layers) (Table 1: width 2^14 = 16.4K SAEs on all attention, MLP and residual sites of all 42 layers of Gemma 2 9B PT, trained on 4B tokens)",
+      "page_value": 16384,
+      "note": "2^14 = 16,384 features; the table row matches the recorded quote including the 42-layer parenthetical."
+    },
+    {
+      "ref": "num:sae_w131",
+      "status": "SUPPORTED",
+      "page_quote": "9B PT | 2^17 | All | All | All | 8B (42 layers) (Table 1)",
+      "page_value": 131072,
+      "note": "2^17 = 131,072 features on all sites of all 42 layers for 9B PT, trained on 8B tokens, exactly as recorded."
+    },
+    {
+      "ref": "num:sae_w1m",
+      "status": "SUPPORTED",
+      "page_quote": "9B PT | 2^20 | X | X | {9, 20, 31} | 16B (42 layers) (Table 1)",
+      "page_value": 1048576,
+      "note": "2^20 = 1,048,576 features, residual site only at layers {9, 20, 31} for 9B PT, trained on 16B tokens - matches the item's name and quote."
+    },
+    {
+      "ref": "num:gpu_eff_tflops",
+      "status": "PARTIAL",
+      "page_quote": "TF32 Tensor Core | 989 TFLOPS* ... * Shown with sparsity. Specifications 1/2 lower without sparsity.",
+      "page_value": 494.5,
+      "note": "The datasheet states the H100 SXM peak TF32 throughput as 989 TFLOPS with sparsity, i.e. half (~494.5 TFLOPS) dense - it nowhere states the item's 200 TFLOPS effective for SAE encode, which remains a proxy assumption (as the item itself flags via basis PROXY and differs_in). Direct fetch of the Cisco-hosted PDF returned HTTP 403; the specifications table was verified from a search-engine scrape of the same URL."
+    }
+  ]
+}
+```

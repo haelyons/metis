@@ -1,0 +1,97 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "note": "The only checkable factual claim, the 671 CAMELS catchments, matches Addor et al. 2017 (HESS abstract), which I fetched; the rest is a plan question needing no source."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "note": "Plan-level reasoning about GPU batching (what the plan will do) needs no source; the checkable figure 'all 671' matches the CAMELS abstract."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "Time full Bayesian MCMC (4 chains x 1e5 iterations, R-hat<1.2) for 671 CAMELS catchments on one GPU...",
+      "note": "Describes the plan's own protocol (100,000 serial steps per chain, four chains/catchment), not an external factual claim; consistent with the parallel-chain setup in Laloy & Vrugt 2012, which notes convergence is declared at R<=1.2 ('If R<=1.2 for all j, stop'). No page source required for plan design."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "This method, entitled differential evolution adaptive Metropolis (DREAM), runs multiple different Markov chains in parallel and uses a discrete proposal distribution to evolve the sampler to the posterior distribution.",
+      "note": "Plan design (independent chains run side by side); no external factual claim to check. Corresponding batching arithmetic (671x4=2,684) is consistent."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "The >=20x value matches Freitas et al. 2022 ('up to 20 × (CPU) ... for calibration'; 65x GPU for larger simulations); the under-an-hour finish is the plan's own prediction and needs no source."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "Vectorized CPU finishes all 671 in a couple of hours, so throughput does not decide which catchments get full Bayesian treatment.",
+      "note": "Plan-level design predication about its own CPU baseline; contains no external factual claim to check against a page."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "Convergence is declared when R<=1.2 for all j...",
+      "note": "Describes what the plan will measure (design, no source needed) using figures previously checked: 671 catchments (CAMELS abstract) and the plan's own 4-chain/1e5-iteration protocol."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "This work aims at performance optimizations on the MGB ('Modelo de Grandes Bacias') hydrological model and the MOCOM-UA (Multi-Objective Complex Evolution) calibration method for two watersheds. Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "Freitas et al. 2022 page confirms the 20x CPU calibration speedup and that the work is GPU optimization of a single distributed hydrological model (MGB), not batched MCMC across many GR4J catchments. Year 2022 (Feb) matches 'Freitas et al. 2022'."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "The optimizations target state-of-the-art CPU/GPU systems, exploiting techniques that include AVX-512 vectorization, and multi-core (CPU) and many-core (GPU) parallelisms. Significant speedups of up to 20 × (CPU) were achieved for calibration...",
+      "note": "The s_mgb page describes distributed-model calibration optimization only; nothing on it reports batched GPU MCMC giving 671 CAMELS catchments full Bayesian GR4J treatment, consistent with the gap claim."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "The parameter set corresponding to the best criterion is the following: X1 165.05, X2 6.46, X3 422.50, X4 2.45. The Nash-Sutcliffe Efficiency criterion computed on the calibration period is better (0.495) than with the generalist parameter sets...",
+      "note": "airGR page shows exactly parameter set X=(165.05, 6.46, 422.50, 2.45) and calibration NSE 0.495 for its example basin."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "This study also involves assessments of the limitations of the source data sets used to compute catchment attributes, as well as detailed descriptions of how the attributes were computed.",
+      "note": "Scope/limit statements of the plan itself (GR4J only, US CAMELS unless global stretch, no single-chain mixing claims); no external factual claim to check."
+    },
+    {
+      "ref": "src:s_airgr_nse",
+      "status": "SUPPORTED",
+      "page_quote": "The Nash-Sutcliffe Efficiency criterion computed on the calibration period is better (0.495)",
+      "note": "Verbatim on the airGR page, in the Calibration_Michel section with parameter set X=(165.05, 6.46, 422.50, 2.45); supports anchor_nse=0.495."
+    },
+    {
+      "ref": "src:s_mgb",
+      "status": "SUPPORTED",
+      "page_quote": "Significant speedups of up to 20 × (CPU) were achieved for calibration, while the scalability analysis indicated 24 × (CPU) and 65 × (GPU) for simulations with larger problem sizes.",
+      "note": "Verbatim in the abstract of the Illinois Experts record for Freitas et al. 2022; supports speedup_threshold=20 (as the proxy value)."
+    },
+    {
+      "ref": "num:camels_n",
+      "status": "SUPPORTED",
+      "page_quote": "We present a new data set of attributes for 671 catchments in the contiguous United States (CONUS) minimally impacted by human activities.",
+      "note": "Addor et al. 2017 abstract states exactly 671 catchments; matches the recorded value.",
+      "page_value": 671
+    },
+    {
+      "ref": "num:dist_evals_per_catchment",
+      "status": "UNREACHABLE",
+      "page_quote": "High‐dimensional posterior exploration of hydrologic models using multiple‐try DREAM(ZS) and high‐performance computing - Laloy - 2012 - Water Resources Research",
+      "note": "The cited Wiley page (agupubs.onlinelibrary.wiley.com/doi/full/10.1029/2011WR010608) blocks fetching (403/CAPTCHA) via direct, DOI, Semantic Scholar, and proxy routes; an open author copy (UCI) and a Wayback capture of the full text were reachable only down to section [34] before truncation, so the quoted sentence about Keating et al. (2010) and 'about 50 million surrogate model evaluations' (in case study 4, the 241-parameter groundwater model) could not be read or verified. The 241-parameter groundwater model of Keating et al. (2010) is confirmed in the abstract and intro ('Four different case studies with increasing dimensionality up to 241 parameters are used...')."
+    }
+  ]
+}
+```

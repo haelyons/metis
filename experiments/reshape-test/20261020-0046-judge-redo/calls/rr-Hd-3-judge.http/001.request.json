@@ -1,0 +1,39 @@
+{
+ "ts": "2026-10-20T01:01:43.438Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_156d40dfb0015RFdjd2ACkTE25",
+  "x-opencode-session": "ses_ea92bf3c9ffeixgu9DseaIfv7i",
+  "x-opencode-session-id": "ses_ea92bf3c9ffeixgu9DseaIfv7i",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:43479",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "772"
+ },
+ "body": {
+  "model": "glm-5.3",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the text you are given. You use no tools. You return only the JSON asked for.\nYou are powered by the model named glm-5.3. The exact model ID is opencode-go/glm-5.3\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/reshape-test/20261020-0046-judge-redo/calls\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Your reply could not be used: timeout after 15 min. Reply again with only the JSON asked for.\""
+   }
+  ],
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

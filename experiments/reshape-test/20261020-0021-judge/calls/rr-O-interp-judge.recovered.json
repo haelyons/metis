@@ -1,0 +1,23 @@
+[
+ {
+  "index": 1,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "Only the within-layer chain must run in order (SAE training waits on that layer's activations), but SAEs for different layers are mutually independent and would run concurrently on separate GPUs",
+  "reason": "Changes the measurement to feature-level non-identifiability, but only independent per-layer SAEs run side by side; the serial within-layer chain remains."
+ },
+ {
+  "index": 2,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "Attribution must precede steering, but the per-feature steering measurements are fully independent and could be batched/vectorized across the dictionary",
+  "reason": "New intervention-based measurement, but parallelism is only batching independent steering runs; the train-SAE-attribution-steering chain stays sequential."
+ },
+ {
+  "index": 3,
+  "kind": "reframe",
+  "meets_criterion": "no",
+  "quote": "The M gradient samples are mutually independent and only the active-variable MCMC must run serially",
+  "reason": "Reparameterization shortens the serial chain but its iterations still run one after another; parallel gradient samples are independent copies."
+ }
+]
