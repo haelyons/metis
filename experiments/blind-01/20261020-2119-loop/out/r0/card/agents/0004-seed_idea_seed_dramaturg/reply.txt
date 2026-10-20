@@ -1,0 +1,130 @@
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "We identify LRP6 as a previously-unreported and highly-conserved target for BBB transcytosis by AAV9-X1.1 (PMC11381518); We identify alkaline phosphatase (ALPL) as the primary receptor used by VCAP-102 to cross the BBB and demonstrate that direct binding of VCAP-102 to human ALPL can initiate receptor-mediated transcytosis in a cell barrier model (bioRxiv 2024.03.12.584703 abstract)",
+      "note": "This is the plan's research question about what it will compute and measure, not a factual claim, so it needs no source. Its premises (AAV capsids crossing brain endothelium via LRP6/ALPL; pH-dependent capsid-receptor release) are on the cited literature pages."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple). / We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ∼20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5.",
+      "note": "Both recorded quotes appear verbatim on their pages (PMC11381518 Fig. 4c legend; bioRxiv 2024.03.12.584703 PDF text retrieved via search index after direct fetch returned 429). They support the AlphaFold epitope-geometry precedent and the measured pH-dependent dissociation of one capsid-receptor pair. The claim that these features separate transcytosing from retained capsids is the plan's hypothesis/prediction and needs no source; the pages' transcytosis framing ('LRP6 as blood-brain barrier transcytosis receptor'; 'ALPL is the primary receptor used by VCAP-102 to cross the BBB') is consistent with it."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "Time steps that are chosen for simulations are typically on the order of femtoseconds (10–15s) for reasons concerning numerical stability and simulation quality... The number of sequential operations needed to achieve these time scales can grow to be at least 10^9–10^12.",
+      "note": "Quote appears verbatim on PMC9281402 and supports the 10^9–10^12 sequential, ordered integration steps of one trajectory. The 2-fs step is the plan's own integration setting and falls within the page's 'on the order of femtoseconds' statement."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "In a system with multiple metastable states and good separation of timescales, individual trajectories will decorrelate within a metastable state much faster than they transition between states. / ...most compute platforms have better weak scaling than strong scaling (one could double the system \"size\" or in this case run 2 systems and get better performance than running the original system with twice as many compute elements). / problems that previously required the generation of a few long trajectories are nowadays often addressed by ensemble methods that instead need a large number of shorter trajectories.",
+      "note": "Both recorded quotes appear verbatim (PMC9476681; arXiv:1903.05918v1). The Kasson page additionally states the weak-scaling argument for ensembles, supporting 'weak scaling beats one long run'; the Kutzner page supports many short trajectories replacing a few long ones."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ∼20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5.",
+      "note": "Quote appears on the bioRxiv preprint and supports the pH-resolved release behavior of the measured pair. The lever thresholds (32 x 10-ns replicas, AUC >= 0.9, pH ratio > 2, agreement with the 320-ns run) are the plan's predicted outcome under the lever, not claims about published results, so they need no source; the page states no such values."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "(no page statement required: predicted outcome of the plan's own experiment)",
+      "note": "This is the plan's predicted negative-branch outcome of its own runs (score at 8-32 replicas, its own 320-ns control), i.e. what the plan predicts/measure, not a factual claim about prior work; no source is required and no fetched page contradicts it."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "We applied AlphaFold-Multimer52 to build models of LRP6-AAV interaction complexes, which predicted that the X1 and CAP-Mac VR-VIII peptides bind LRP6 YWTD domain 1 (Fig. 4c)... SPR of mouse LRP6 extracellular domain fragments was consistent with the model predictions, with interaction observed for LRP6-E1E2 but not LRP6-E3E4 (Fig. 4d). / ...VCAP-102 directly interacts with ALPL with an affinity (KD) of ∼20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5.",
+      "note": "The method pipeline (ColabFold/AlphaFold-Multimer, 24 complexes, 32 x 10-ns GROMACS replicas at pH 7.4/5.5, 8 V100s, 320-ns sequential comparison) is what the plan will build and run, needing no source. The comparison targets it names are on the pages: AlphaFold-Multimer binding/domain results (E1E2 not E3E4) on PMC11381518 and pH-release kinetics on the bioRxiv preprint (retrieved via search index; direct fetch 429)."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Figure 1A shows that the wall-clock time efficiency of adaptive sampling scales linearly up to 5,000 simulations per iteration. / ...adaptive sampling requires about half as much computer time to achieve the same model quality as one long simulation. / Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1",
+      "page_value": 5000,
+      "note": "Both recorded quotes appear verbatim (PMC3637129; PMC11381518). The Bowman page states the villin adaptive-sampling model matched the gold-standard/one long reference model with linear wall-clock scaling up to 5,000 simulations per iteration; the stated value 5,000 matches the page. The LRP6 work used 5 AlphaFold models per peptide, as stated."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "PARTIAL",
+      "page_quote": "We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ∼20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5.",
+      "note": "The quote appears on the bioRxiv preprint (PDF text retrieved via search index; direct fetch returned 429) and supports that one capsid-receptor pair (VCAP-102/ALPL) has measured pH-resolved kinetics. The open question itself needs no source. But the exclusivity claim 'only one pair has measured pH kinetics' is not stated on the page; the same preprint notes such behavior is common among other known receptor-ligand transport systems ('VCAP-102 binds ALPL with an affinity of ~20 nM at pH 7.4 and is rapidly released at pH 5. These properties are common among other known receptor ligands...'), so the quote supports one pair but not 'only one' across the field."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple). / We applied AlphaFold-Multimer52 to build models of LRP6-AAV interaction complexes, which predicted that the X1 and CAP-Mac VR-VIII peptides bind LRP6 YWTD domain 1 (Fig. 4c)... SPR of mouse LRP6 extracellular domain fragments was consistent with the model predictions, with interaction observed for LRP6-E1E2 but not LRP6-E3E4 (Fig. 4d).",
+      "note": "Recorded quote appears verbatim on PMC11381518 and supports the reproduction anchor: AlphaFold-Multimer predicts X1 and CAP-Mac peptides engaging LRP6 domain E1, with SPR confirming E1E2 binding and no E3E4 binding. The carried value 'E1 preferred over E3E4 for both X1 and CAP-Mac peptides' matches the page (note E1E2 is the minimal stable fragment, so the experimental discrimination is E1E2 vs E3E4)."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "(no page statement required: scope limits of the plan's own computed experiments)",
+      "note": "These are statements of what the plan will and will not do (10-ns contact-survival proxies rather than millisecond off-rates, peptide-domain fragments in water, its six pairs, no cell-level transcytosis in this work). They are plan scope, not factual claims about prior work, so no source is required; nothing on the fetched pages contradicts them. Note the 'six pairs' framing is narrower than the 24 complexes named in test_summary, an internal inconsistency for the producer to reconcile, not a page conflict."
+    },
+    {
+      "ref": "src:s_lrp6",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple).",
+      "note": "Quote appears verbatim in Fig. 4c of PMC11381518. It supports the method precedent (5 models, up to 20 recycles), the anchor target (E1-selective over E3E4, further confirmed by SPR of E1E2 vs E3E4 fragments on the same page), and the af_models (5) values."
+    },
+    {
+      "ref": "src:s_moyer",
+      "status": "SUPPORTED",
+      "page_quote": "We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ∼20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5.",
+      "note": "Direct fetches of biorxiv.org returned HTTP 429, but the search index returned the text of the same preprint PDF (biorxiv.org/content/10.1101/2024.03.12.584703v1.full.pdf) containing this quote verbatim (the Fig. 4c,d sentence). It documents the pH-resolved pair (KD ~20 nM at pH 7.4, rapid dissociation at pH 5.5) that the plan's computed pH ratio is scored against; the journal version (Mol Ther 2025) carries the same numbers."
+    },
+    {
+      "ref": "src:s_bowman",
+      "status": "SUPPORTED",
+      "page_quote": "Figure 1A shows that the wall-clock time efficiency of adaptive sampling scales linearly up to 5,000 simulations per iteration.",
+      "note": "Quote appears verbatim on PMC3637129 and supports novelty.closest_prior / prior_max_level: adaptive-sampling wall-clock scaling linear up to 5,000 parallel simulations per iteration (villin MSM)."
+    },
+    {
+      "ref": "src:s_jones",
+      "status": "SUPPORTED",
+      "page_quote": "The number of sequential operations needed to achieve these time scales can grow to be at least 10^9–10^12.",
+      "note": "Quote appears verbatim on PMC9281402 (in the MD algorithm overview, after 'Time steps... typically on the order of femtoseconds'), supporting the sequential part: a trajectory is a long ordered chain of integration steps, each waiting on the last."
+    },
+    {
+      "ref": "num:per_gpu_v100_usd_h",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA Tesla V100 | 16 GB | 88 | 448 GiB | 5.8 TiB SSD | $0.79 (Instances pricing, 8 GPU tab)",
+      "page_value": 0.79,
+      "note": "Lambda Instances pricing, 8-GPU tab lists NVIDIA Tesla V100, 16 GB VRAM/GPU, 88 vCPUs, 448 GiB RAM, 5.8 TiB SSD, $0.79/GPU/hr, matching the stated setting and value."
+    },
+    {
+      "ref": "num:per_gpu_a100_usd_h",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A100 SXM | 40 GB | 124 | 1800 GiB | 5.8 TiB SSD | $1.99 (Instances pricing, 8 GPU tab)",
+      "page_value": 1.99,
+      "note": "Lambda Instances pricing, 8-GPU tab lists NVIDIA A100 SXM 40 GB at $1.99/GPU/hr (the 80 GB A100 SXM is $2.79), matching the recorded value for the 40 GB part in the stated setting."
+    },
+    {
+      "ref": "num:mem_bench_aggr_ns_day",
+      "status": "SUPPORTED",
+      "page_quote": "2 | Gold6148F × 2 ‡ | 2 × 20 | 2.4 | V100×2 | 300.76 | 19.95 | 23 200  ... A benchmark protocol matching both requirements is: running N simulations on nodes with N GPUs in parallel, each using 1/N of the available CPU cores or hardware threads, and reporting the aggregate performance, i.e. the sum of the performances of the individual simulations.",
+      "page_value": 300.76,
+      "note": "arXiv:1903.05918v1 Table 3 (GROMACS 2018, average over two runs) gives MEM (81,743 atoms, 2 fs) aggregate throughput 300.76 ns/day on a two-Gold6148F node with two Tesla V100 GPUs running two independent simulations, exactly as quoted and valued. The stated proxies/differences (soluble complex vs membrane protein; Lambda CPU vs Gold6148F) are acknowledged, not page conflicts."
+    },
+    {
+      "ref": "num:rib_aggr_ns_day_v100x2",
+      "status": "SUPPORTED",
+      "page_quote": "2 | Gold6148F × 2 ‡ | 2 × 20 | 2.4 | V100×2 | 300.76 | 19.95 | 23 200 (RIB: 2,136,412 atoms, 4 fs)",
+      "page_value": 19.95,
+      "note": "arXiv:1903.05918v1 Table 3 gives RIB aggregate throughput 19.95 ns/day on the two-V100 node (4-fs step with virtual sites), matching the recorded value; used as a larger-system price proxy as described."
+    },
+    {
+      "ref": "num:af_models",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1",
+      "page_value": 5,
+      "note": "PMC11381518 states 5 structural models per peptide (with up to 20 recycles), matching the value 5 in the stated setting (AlphaFold modelling of AAV VR-VIII peptides against LRP6 domains)."
+    }
+  ]
+}

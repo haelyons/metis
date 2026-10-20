@@ -1,0 +1,133 @@
+All pages fetched (the biorxiv page blocked direct fetch with HTTP 429, but its full text was retrieved via the search provider's live crawl of the same URL). All recorded quotes verified verbatim. Here is the result:
+
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "A question about what the plan will predict; carries no sourced factual claim, so no source is required. Its premise (capsid-receptor binding, pH-resolved release, brain-endothelium crossing)is consistent with the pages behind s_lrp6 and s_moyer, which the plan's other cards cite."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ~20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5",
+      "note": "s_moyer quote verified verbatim on the biorxiv page (fetched via live crawl after direct fetch returned 429)and supports the pH-resolved binding/release premise. s_lrp6 quote verified verbatim in the Fig. 4 caption: 'Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1...' supporting the AlphaFold epitope-geometry premise. The separation claim itself is the hypothesis, needing no source."
+    },
+    {
+      "ref": "card:sequential_part",
+      "status": "SUPPORTED",
+      "page_quote": "The number of sequential operations needed to achieve these time scales can grow to be at least 109–1012.",
+      "note": "s_jones quote verified verbatim in Section 2.1 (109-1012 is the page's rendering of 10^9-10^12). The page also states that timesteps are 'typically on the order of femtoseconds', consistent with the plan's 2-fs framing; the specific 2-fs step is a build choice needing no source."
+    },
+    {
+      "ref": "card:method",
+      "status": "SUPPORTED",
+      "page_quote": "problems that previously required the generation of a few long trajectories are nowadays often addressed by ensemble methods that instead need a large number of shorter trajectories.",
+      "note": "s_kutzner_ens quote verified verbatim in the arXiv paper's introduction. s_kasson quote also verified verbatim ('In a system with multiple metastable states and good separation of timescales, individual trajectories will decorrelate within a metastable state much faster than they transition between states.'), and Kasson adds 'most compute platforms have better weak scaling than strong scaling', supporting the weak-scaling claim."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ~20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5",
+      "note": "The AUC >= 0.9, pH ratio > 2, 32 replicas and 320-ns comparison are the lever's own predictions/targets, needing no source. The cited s_moyer page supports the underlying fact that the pair shows pH-resolved binding (stable at pH 7.4, rapid dissociation at pH 5.5), which is what the ratio is scored against; the s_moyer quote verified verbatim."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "A counterfactual prediction of the plan (what happens if the lever fails); carries no externally sourced factual claim, so no source is required."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "We applied AlphaFold-Multimer52 to build models of LRP6-AAV interaction complexes, which predicted that the X1 and CAP-Mac VR-VIII peptides bind LRP6 YWTD domain 1 (Fig. 4c). While the cooperative folding of E1 and E2 complicates testing of individual domains53, SPR of mouse LRP6 extracellular domain fragments was consistent with the model predictions, with interaction observed for LRP6-E1E2 but not LRP6-E3E4",
+      "note": "The computational design (24 complexes, 32 replicates, GROMACS on 8 V100s, 320-ns comparators)is what the plan will run, needing no source. The published results the plan compares against are all supported: s_lrp6 page confirms the AlphaFold models, the 5-model/20-recycle method, and LRP6 domain (E1E2 not E3E4) binding for X1 and CAP-Mac; s_moyer page (fetched via live crawl, quote verbatim) confirms published binding (KD ~20nm at pH 7.4) and pH-release (rapid dissociation at pH 5.5)."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Figure 1A shows that the wall-clock time efficiency of adaptive sampling scales linearly up to 5,000 simulations per iteration.",
+      "note": "s_bowman quote verified verbatim; value 5000 matches the page exactly (also confirmed: 'adaptive sampling with N simulations per iteration can reduce the wall-clock time necessary to achieve a given model quality by a factor of N for N as high as 5,000', and the paper compares adaptive sampling convergence to 'the gold-standard model from Ref 19', i.e. the long-run basis). s_lrp6 quote verified verbatim supporting 'capsid work used 5 AlphaFold models per peptide'."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ~20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5",
+      "note": "s_moyer quote verified verbatim. On the page the only measured pH-resolved kinetics are for the single VCAP-102/ALPL pair; no other pair has measured pH kinetics. The open classification question itself needs no source."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple).",
+      "note": "Quote verified verbatim in the Fig. 4c caption. The value 'E1 preferred over E3E4 for both X1 and CAP-Mac peptides' matches the page: model prediction of binding to LRP6 YWTD domain 1, confirmed by 'SPR of mouse LRP6 extracellular domain fragments... with interaction observed for LRP6-E1E2 but not LRP6-E3E4 (Fig. 4d)' and 'AAV9-X1.1 and CAP-Mac bind only to LRP6-E1E2'. Note the page tests E1E2 jointly (E1/E2 fold cooperatively), not E1 alone, which the page itself acknowledges."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "A self-description of the plan's scope and limitations (proxy timescale, fragment-level systems, no cell-level transcytosis). The settled facts it relies on (only one pair with measured pH kinetics) are supported by s_moyer via card:left_open; the rest are build choices needing no source."
+    },
+    {
+      "ref": "src:s_lrp6",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple).",
+      "note": "Quote verified verbatim in the Fig. 4c caption of PMC11381518. Its 'supports' field also checks out: 5 models / 20 recycles stated on the page; anchor target supported by 'SPR... with interaction observed for LRP6-E1E2 but not LRP6-E3E4' and 'AAV9-X1.1 and CAP-Mac bind only to LRP6-E1E2'."
+    },
+    {
+      "ref": "src:s_moyer",
+      "status": "SUPPORTED",
+      "page_quote": "We observed direct capsid-receptor interaction in a cell-free assay using Surface Plasmon Resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (KD) of ~20nm at pH7.4 (Fig. 4c). Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5",
+      "note": "Quote verified verbatim in the biorxiv 2024.03.12.584703v1 full text (direct fetch rate-limited with HTTP 429; content retrieved via the search provider's live crawl of the same URL). Methods section confirms the pH 7.4 vs pH 5.5 (20 mM MES/150 mM NaCl) dissociation setup; the 'supports' field claim that this is the only measured pH-resolved pair on the page checks out."
+    },
+    {
+      "ref": "src:s_bowman",
+      "status": "SUPPORTED",
+      "page_quote": "Figure 1A shows that the wall-clock time efficiency of adaptive sampling scales linearly up to 5,000 simulations per iteration.",
+      "note": "Quote verified verbatim in Section 3.1 of PMC3637129; the 5,000 value is restated in the figure legend ('The black line is a best fit to the linear portion of the data (circles), which extends up to 5,000 simulations per iteration') and in Section 3.3 (villin 'scales linearly up to 5,000 simulations per iteration')."
+    },
+    {
+      "ref": "src:s_jones",
+      "status": "SUPPORTED",
+      "page_quote": "The number of sequential operations needed to achieve these time scales can grow to be at least 109–1012.",
+      "note": "Quote verified verbatim in Section 2.1 of PMC9281402 (10^9-10^12 rendered without super script markers in the text layer); the surrounding sentence states timesteps are 'typically on the order of femtoseconds', supporting the sequential-integration framing."
+    },
+    {
+      "ref": "num:per_gpu_v100_usd_h",
+      "status": "SUPPORTED",
+      "page_value": 0.79,
+      "page_quote": "NVIDIA Tesla V10016 GB88448 GiB5.8 TiB SSD$0.79",
+      "note": "The Lambda instances pricing page lists Tesla V100 (16 GB VRAM, 88 vCPUs, 448 GiB RAM, 5.8 TiB SSD) at $0.79/GPU/hr in the 8x-GPU instances block, exactly as the recorded quote states for the 8 GPU setting."
+    },
+    {
+      "ref": "num:per_gpu_a100_usd_h",
+      "status": "SUPPORTED",
+      "page_value": 1.99,
+      "page_quote": "NVIDIA A100 SXM40 GB1241800 GiB5.8 TiB SSD$1.99",
+      "note": "The Lambda instances pricing page lists A100 SXM 40 GB (124 vCPUs, 1800 GiB RAM, 5.8 TiB SSD) at $1.99/GPU/hr in the same 8x-GPU instances block as the V100 line, exactly as the recorded quote states."
+    },
+    {
+      "ref": "num:mem_bench_aggr_ns_day",
+      "status": "SUPPORTED",
+      "page_value": 300.76,
+      "page_quote": "2 Gold6148F × 2 ‡ 2 × 20 2.4 V100×2 300.76 19.95 23 200",
+      "note": "arXiv 1903.05918v1 Table 3 row reads MEM 300.76 ns/day, RIB 19.95 ns/day for the Gold6148F x2 node with Telsa V100x2. The page confirms the settings: MEM is 81,743 atoms with 2 fs timestep (Table 1), and the protocol is 'running N simulations on nodes with N GPUs in parallel... and reporting the aggregate performance, i.e. the sum of the performances of the individual simulations', matching the two-independent-run aggregate framing."
+    },
+    {
+      "ref": "num:rib_aggr_ns_day_v100x2",
+      "status": "SUPPORTED",
+      "page_value": 19.95,
+      "page_quote": "2 Gold6148F × 2 ‡ 2 × 20 2.4 V100×2 300.76 19.95 23 200",
+      "note": "arXiv 1903.05918v1 Table 3 confirms RIB at 19.95 ns/day on the V100x2 (Gold6148F x2) node; Table 1 confirms RIB is 2,136,412 atoms with 4 fs timestep, matching the recorded page_setting including the noted 4-fs step difference."
+    },
+    {
+      "ref": "num:af_models",
+      "status": "SUPPORTED",
+      "page_value": 5,
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1",
+      "note": "PMC11381518 Fig. 4c caption states 5 structural models per peptide with up to 20 recycles, matching value 5 and the registered page_setting."
+    }
+  ]
+}
+```

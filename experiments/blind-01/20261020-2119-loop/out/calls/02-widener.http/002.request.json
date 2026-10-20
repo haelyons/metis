@@ -1,0 +1,284 @@
+{
+ "ts": "2026-10-20T21:28:05.683Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_15b36d0310016u2FYJ5ceA2OoH",
+  "x-opencode-session": "ses_ea4c9302dffe7KwexszcNTFq5A",
+  "x-opencode-session-id": "ses_ea4c9302dffe7KwexszcNTFq5A",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:39651",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "48000"
+ },
+ "body": {
+  "model": "mimo-v2.6-pro",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.\nYou are powered by the model named mimo-v2.6-pro. The exact model ID is opencode-go/mimo-v2.6-pro\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/expand\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"Read /home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/expand/framer.md. What sorts of related problems are compute constrained? Cite a URL for every factual claim. Write to /home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/expand/physical-widener.md. Return JSON: [{id, title, summary}]. Count a related problem as compute constrained when it is still open whether more parallel compute would change its answer, not only when compute is already known to bind there. List both kinds, and mark the second kind settled in compute_open. Also count a problem whose answer takes long because its steps run one after another, even where more hardware would not change the answer, only how soon it arrives. For each option also return root_link: one sentence on which part of the question in /home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/expand/framer.md it bears on, or \\\"none\\\". Return compute_open: one sentence naming the quantity more parallel compute would buy for it (samples, ensemble members, resolution, model runs, model size, search width or seeds), the largest amount of it that any source you cite reports, with that source's URL, and what is still unknown about its effect on the answer above that amount; or \\\"settled:\\\" followed by what is known and its source URL; or \\\"none\\\". Return sequential: the part of the work that one answer waits on step after step (what each step waits for, and roughly how many steps one run takes), how many independent runs the answer needs, and how much of one GPU a single run keeps busy; then whether those steps must run in order, and if not, what change to the computation would let them run at the same time, what would have to be true of the system for that change to pay off, and the nearest source that has tried it, with its URL; or \\\"none:\\\" followed by why the work already splits into independent pieces. Return up to three source URLs. Use the option's heading label in your file as its id.\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"description\\\":\\\"One entry per concrete option named in the file. No notes, summaries, verdicts, or status items.\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"id\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The heading label used for this option in the file.\\\"},\\\"title\\\":{\\\"type\\\":\\\"string\\\"},\\\"summary\\\":{\\\"type\\\":\\\"string\\\"},\\\"root_link\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One sentence: which part of the root question this bears on, or \\\\\"none\\\\\".\\\"},\\\"compute_open\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One sentence: the quantity more parallel compute would increase here (samples, ensemble members, resolution, model runs, model size, search width; for interpretability: models, layers, features, prompts, seeds analysed), where published measurements of its effect stop, with a source URL, and what is unknown above that. Or \\\\\"settled: <what is known> <URL>\\\\\". Or \\\\\"none\\\\\".\\\"},\\\"sequential\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"One or two sentences: the chain one answer waits on (what each step waits for, roughly how many steps), how many independent runs the answer needs, how much of one GPU one run keeps busy; whether the steps must run in order, and if not, what change would let them run at the same time, what must be true of the system for that to pay off, and the nearest source that tried it, with its URL. Or \\\\\"none: <why the work already splits into independent pieces>\\\\\".\\\"},\\\"source_urls\\\":{\\\"type\\\":\\\"array\\\",\\\"items\\\":{\\\"type\\\":\\\"string\\\"},\\\"description\\\":\\\"At most 3.\\\"}},\\\"required\\\":[\\\"id\\\",\\\"title\\\",\\\"summary\\\",\\\"root_link\\\",\\\"compute_open\\\",\\\"sequential\\\",\\\"source_urls\\\"]}}},\\\"required\\\":[\\\"items\\\"]}\""
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_fe6521a1d56f456ebcd37500",
+      "type": "function",
+      "function": {
+       "name": "read",
+       "arguments": "{\"filePath\":\"/home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/expand/framer.md\"}"
+      }
+     }
+    ],
+    "reasoning_content": "Let me start by reading the framer.md file."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_fe6521a1d56f456ebcd37500",
+    "content": "<path>/home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/expand/framer.md</path>\n<type>file</type>\n<content>\n1: # Framer — Capsid–receptor mapping on BMECs as a determinant of AAV transcytosis vs. intracellular retention\n2: \n3: **Question under framing:** *Can molecular mapping of AAV capsid–receptor interactions on brain microvascular endothelial cells (BMECs) determine which AAV variants transcytose across the blood–brain barrier versus remain intracellular, and for which capsid–receptor binding signatures?*\n4: \n5: I will not answer until the problem is defined and worked through. Structure: (0) fix the terms; (1) relay current understanding; (2) state predictions; (3) decompose the causal problem; (4) analyze; (5) locate where parallel compute would and would not matter; (6) verdict.\n6: \n7: ---\n8: \n9: ## 0. Definitions and scope — what the question is actually asking\n10: \n11: **0.1 \"Molecular mapping of capsid–receptor interactions on BMECs.\"**\n12: I read this as a *binding map*: a table of (capsid variant) × (BMEC surface molecule) entries with molecular resolution — receptor identity, binding site/epitope, affinity and kinetics (k_a, k_d, K_D), stoichiometry/avidity, glycan-versus-protein dependence, pH-sensitivity, and ideally structure. Technologies that produce such maps today include unbiased human membrane-proteome/secretome cell microarrays, which can assay more than 90% of the known human membrane proteome and secretome (https://www.nature.com/articles/s41467-024-52149-0); receptor pull-down selections coupled to NGS (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8); surface plasmon resonance and bio-layer interferometry of purified ectodomains (ALPL–capsid K_D ≈ 20 nM at pH 7.4 measured by SPR: https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9; TfR1–capsid kinetics by BLI: https://pmc.ncbi.nlm.nih.gov/articles/PMC10769326); glycan arrays (used to identify AAVrh.10 sulfated LacNAc binding: https://pmc.ncbi.nlm.nih.gov/articles/PMC8577363); genetic loss-of-function screens (AAVR discovery by haploid genetic screen: https://pubmed.ncbi.nlm.nih.gov/26814968); and structural mapping by cryo-EM of capsids (https://www.rcsb.org/structure/7UD4) plus cryo-electron tomography and AlphaFold-Multimer models of capsid–interactor complexes (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518).\n13: \n14: **0.2 \"Transcytose versus remain intracellular.\"**\n15: The outcome of interest is apical-to-basolateral passage of an intact, still-functional particle across a polarized BMEC layer, as measured in primary human brain microvascular endothelial cell transwell models (https://pubmed.ncbi.nlm.nih.gov/27718541). This must be kept distinct from at least four other fates of an internalized particle: (i) *endothelial transduction* — nuclear delivery and transgene expression in the BMEC itself (https://onlinelibrary.wiley.com/doi/10.1111/jnc.13898); (ii) *apical recycling* back to blood; (iii) *retrograde traffic* to the trans-Golgi network (the canonical productive route for AAV transduction: https://pmc.ncbi.nlm.nih.gov/articles/PMC8413391/); and (iv) *lysosomal degradation*. Brain endothelial cells route internalized cargo between recycling, retrograde/TGN, and lysosomal destinations (https://link.springer.com/article/10.1186/s12987-019-0134-9; https://pmc.ncbi.nlm.nih.gov/articles/PMC12363266/), and lysosomal degradation is the dominant fate for most macromolecules taken up by these cells (https://link.springer.com/article/10.1186/s12987-019-0134-9). \"Remain intracellular\" in the question is therefore a *class* of fates (retention + degradation + TGN-diverted transduction), not one thing.\n16: \n17: **0.3 \"Determine\" — the operative verb.**\n18: Two readings, which I will answer separately in §4:\n19: - **(D-sufficiency)** Is the binding map a *sufficient statistic* for fate, such that knowing the map fixes the classification of each variant?\n20: - **(D-practical)** Can a classifier built on binding-derived features be made accurate enough to be *useful* (e.g., to prioritize variants, or to declare a signature class)?\n21: \n22: **0.4 \"Binding signatures.\"**\n23: The multivariate pattern of binding features — receptor identity and topology, epitope geometry relative to the natural ligand, kinetic regime (especially pH-resolved off-rate), avidity/valency regime, glycan class, and the capsid context in which the binding element is presented — that co-occurs with a fate.\n24: \n25: **0.5 Made precise, the question is:** is there a function *f*: binding-signature → {transcytose, retain} that is (i) derivable from molecular binding data and (ii) accurate; and if so, what does its domain (the set of signatures for which *f* is trustworthy) look like?\n26: \n27: ---\n28: \n29: ## 1. Current understanding (relayed before any analysis)\n30: \n31: ### 1.1 What physically must happen\n32: \n33: Systemic AAV penetration into brain parenchyma involves three steps: receptor binding at the brain endothelial cell surface, receptor-mediated internalization, and transcytosis to the brain parenchyma (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8). The BBB is formed mainly by BMECs joined by tight junctions, together with pericytes and astrocytic end-feet, and restricts passage of large molecules including AAV particles (https://pmc.ncbi.nlm.nih.gov/articles/PMC10975205). Brain endothelial cells uniquely both form tight junctions and *actively suppress* transcellular vesicle trafficking relative to peripheral endothelia (https://pmc.ncbi.nlm.nih.gov/articles/PMC12024798). Transcytosis is classically partitioned into receptor-mediated transcytosis (RMT) and non-selective adsorptive transcytosis (https://pmc.ncbi.nlm.nih.gov/articles/PMC12024798), and the receptors involved include insulin receptor, transferrin receptor and LDL receptor family members (https://pmc.ncbi.nlm.nih.gov/articles/PMC6513804).\n34: \n35: ### 1.2 The known capsid–receptor pairs relevant to BMECs\n36: \n37: - **AAVR (KIAA0319L)** is an essential, broadly required AAV entry receptor identified by an unbiased haploid genetic screen, and it rapidly endocytoses from the plasma membrane and traffics to the trans-Golgi network (https://pubmed.ncbi.nlm.nih.gov/26814968). Different serotypes engage different AAVR ectodomain polylactosamine/protein-doughnut (PKD) domains — AAV5 primarily via PKD1, AAV2 via PKD2, AAV1 and AAV8 via a combination (https://journals.asm.org/doi/10.1128/jvi.00391-17). Cell-surface attachment is AAVR-independent and AAVR engagement may occur after endocytosis (https://pmc.ncbi.nlm.nih.gov/articles/PMC8413391/).\n38: - **Glycan attachment.** AAV9 uses terminal N-linked galactose as its primary receptor (https://www.jci.org/articles/view/57367), with the galactose-binding pocket mapped to N470, D271, N272, Y446 and W503 at the base of the three-fold protrusions (https://journals.asm.org/doi/10.1128/jvi.00448-12); N272A and W503A abolish galactose-dependent transduction (https://journals.asm.org/doi/10.1128/jvi.00448-12), and intact galactose binding has been reported to be important for BBB crossing and brain transduction (https://pmc.ncbi.nlm.nih.gov/articles/PMC13462111). AAVrh.10 binds sulfated LacNAc/keratan sulfate at a pocket equivalent to the AAV9 galactose site and can also use terminal galactose (https://pmc.ncbi.nlm.nih.gov/articles/PMC8577363). Heparan sulfate proteoglycan is used by AAV2, AAV3, AAV6 and AAV13, and sialic acid by AAV1, AAV4, AAV5 and AAV6 (https://pmc.ncbi.nlm.nih.gov/articles/PMC8577363).\n39: - **Mouse BBB: LY6A (SCA-1).** AAV-PHP.B/PHP.eB cross the mouse BBB by binding the GPI-anchored protein LY6A on brain endothelial cells (https://pmc.ncbi.nlm.nih.gov/articles/PMC6520463; https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0225206). LY6A expression on brain microvasculature is strain-dependent (high in C57BL/6J, substantially reduced in BALB/cJ), which is what made the receptor identifiable (https://pmc.ncbi.nlm.nih.gov/articles/PMC6520463). Ectopic LY6A expression raises PHP.eB binding/transduction ≥30-fold even in cells lacking galactose and AAVR (https://pmc.ncbi.nlm.nih.gov/articles/PMC6855452). Whether LY6A engagement is *sufficient* for transcytosis, or whether transcytosis still depends on AAVR, was explicitly left unresolved (https://pmc.ncbi.nlm.nih.gov/articles/PMC6855452). A related protein, LY6C1, can be co-opted by engineered inserts and works across both mouse strains (https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.3002112).\n40: - **Human/primate-conserved RMT receptors engaged by engineered capsids.**\n41:   - *TfR1*: BI-hTFR1, an AAV9-based 7-mer insert variant, binds human transferrin receptor and is actively transported across human brain endothelial cells, giving 40–50× greater CNS reporter expression than AAV9 in human TFRC knock-in mice, with the gain absent in wild-type mice (https://www.science.org/doi/10.1126/science.adm8386). It binds the apical domain of TfR1 at a site distinct from transferrin, so it does not compete with the natural ligand (https://www.businesswire.com/news/home/20240104444092/en/Apertura-Gene-Therapy-Unveils-Novel-Engineered-AAV-Capsids-Targeting-Human-Transferrin-Receptor-1-for-Neurological-Gene-Therapy-Delivery).\n42:   - *LRP6*: an unbiased human cell-surface interactome screen identified LRP6 as the BBB transcytosis receptor used by AAV9-X1.1 and AAV.CAP-Mac; the VR-VIII inserted peptides bind LRP6 YWTD domains 1–2, and LRP6 is highly conserved in humans (https://www.nature.com/articles/s41467-024-52149-0).\n43:   - *CA-IV (CA4)*: variants 9P31/9P36 use the primate-conserved GPI-linked enzyme carbonic anhydrase IV, expressed on the luminal surface of brain endothelium (https://pmc.ncbi.nlm.nih.gov/articles/PMC10975205); engineered AAV-hCA4-IV77 gives ~100-fold greater brain transduction than AAV9 in mice expressing human CA-IV (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8).\n44:   - *ALPL*: the TRACER-evolved capsid VCAP-102 uses tissue-nonspecific alkaline phosphatase as its primary receptor; direct binding triggers receptor-mediated transcytosis in a cell-barrier model, the complex dissociates rapidly at pH 5.5 (consistent with basolateral release after endosomal acidification), and ALPL inhibition blocks transcytosis (https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9).\n45: - **Species restriction is the rule, not the exception.** Nearly all published mouse BBB-crossing AAV capsids act through LY6A or LY6C1, which are not present in primates (https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.3002112); LY6A is absent from primate endothelium (https://pmc.ncbi.nlm.nih.gov/articles/PMC8370029). AAV-BR1 (insert NRGTEWD) targets brain endothelium in mice but not in Sprague-Dawley rats (https://www.nature.com/articles/s41434-025-00563-4).\n46: \n47: ### 1.3 Documented dissociations between binding and transcytosis (the core of my prior)\n48: \n49: - **Crossing without transducing.** In primary human BMVEC transwells, AAV9 penetrates the barrier more effectively than AAV2 while *transducing the endothelium less well*; AAV9 crosses by an active, cell-mediated process without disrupting TEER, tight-junction proteins or inflammatory status (https://pubmed.ncbi.nlm.nih.gov/27718541; https://pmc.ncbi.nlm.nih.gov/articles/PMC5298820). The accompanying editorial highlights the inverse relationship: AAV9 shuttles across BMVECs with minimal BMVEC transduction, whereas AAV2 is blocked and instead transduces the endothelium (https://onlinelibrary.wiley.com/doi/10.1111/jnc.13898).\n50: - **Binding ≠ transport in vivo.** In the TRACER screen, correlation between capsid performance and mouse brain microvascular endothelial cell binding was limited to one unique sequence group; the authors conclude monolayer BMVEC cultures are a poor predictor of in vivo transport across the BBB (https://pmc.ncbi.nlm.nih.gov/articles/PMC7841218).\n51: - **In vitro rank ≠ in vivo rank.** In the CA-IV campaign, two top-performing capsids in \"humanized\" mice ranked relatively low in the in vitro selection and outperformed several top-ranked in vitro candidates (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8).\n52: - **Same capsid, same receptor, opposite fate.** AAV9-X1.1 targets LRP6 in both rodents and primates, yet in rodents it primarily transduces endothelial cells rather than crossing, while in neonatal non-human primates the same capsid–receptor pair yields productive transcytosis and neuronal targeting (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8).\n53: - **Sorting, not binding, decides fate.** For transferrin-receptor cargos, high-affinity or bivalent binding prevents transcytosis and drives lysosomal delivery, whereas monovalent/low-affinity formats are sorted for transcytosis (https://pmc.ncbi.nlm.nih.gov/articles/PMC6513804). A monovalent TfR Brain Shuttle construct localizes to intracellular sorting tubules and transcytoses, while a bivalent construct clusters, fails to enter tubules and is degraded; forcing tubule entry via Rab17 overexpression is sufficient to convert the degradative construct into a transcytosing one (https://www.cell.com/cell-reports/fulltext/S2211-1247(17)31707-2). Endosomal tubular sorting networks route cargo away from lysosomes toward recycling, MVB or TGN destinations (https://pmc.ncbi.nlm.nih.gov/articles/PMC12363266/).\n54: - **\"Signature\" is capsid-contextual, not a portable motif.** Transferring the PHP.B 7-mer insert from AAV9 to AAV1 does not transfer Ly6a binding; a contiguous interface between the insert and surrounding HVR-VIII residues is required (https://journals.asm.org/doi/10.1128/jvi.01164-21). A PHP.B insert in an AAV5 backbone is not sufficient for the particle to cross the endothelial barrier, leading to the proposal that the insert facilitates endothelial engagement while another co-receptor enables apical-to-basolateral trafficking of the AAV9 context (https://pmc.ncbi.nlm.nih.gov/articles/PMC8370029).\n55: - **One structural feature can move two receptor interactions in opposite directions.** The 2.24 Å cryo-EM structure of PHP.eB shows the 7-mer loop adopts a bent conformation set by engineered lysine–aspartate contacts; loop topology tracks AAVR-PKD2 binding strength, and PHP.eB simultaneously gains LY6A binding and weakens AAVR engagement (https://www.rcsb.org/structure/7UD4; https://pmc.ncbi.nlm.nih.gov/articles/PMC9382559).\n56: \n57: ### 1.4 Assays and model systems in use\n58: \n59: Primary human BMVEC transwells (https://pubmed.ncbi.nlm.nih.gov/27718541); hCMEC/D3 + primary astrocytes + iPSC-derived cortical neuron tri-cultures with barcoded capsid-shuffled libraries and a siRNA screen that identified genes affecting AAV transcytosis (https://www.cell.com/molecular-therapy-family/methods/fulltext/S2329-0501(22)00127-9); MDCK cells engineered to overexpress ALPL, in which VCAP-102 transcytoses efficiently while parental AAV9 does not and parental MDCK cells support neither (https://www.voyagertherapeutics.com/wp-content/uploads/2024/05/POSTER-Voyager_ASGCT_2024_FINAL_Ishan.pdf); \"humanized\" mice expressing a human receptor in brain endothelium for in vivo transcytosis-based selection (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8); RNA-driven (TRACER) and Cre-based (CREATE) directed-evolution platforms (https://pmc.ncbi.nlm.nih.gov/articles/PMC7841218; https://pmc.ncbi.nlm.nih.gov/articles/PMC10975205); and machine-learning sequence-to-function atlases such as Fit4Function, whose models trained on mouse in vivo and human in vitro data predicted macaque biodistribution (https://www.nature.com/articles/s41467-024-50555-y), alongside ML-guided capsid engineering generally (https://pubmed.ncbi.nlm.nih.gov/40176349; https://www.nature.com/articles/s41587-020-00793-4).\n60: \n61: ---\n62: \n63: ## 2. Predictions (stated before analysis)\n64: \n65: - **P1 — Asymmetry of exclusion vs. confirmation.** A binding map will be good at *ruling out* (a capsid that binds nothing on BMECs will not transcytose) and weak at *ruling in*. I predict no complete overlap of signatures with transcytosis competence.\n66: - **P2 — Affinity alone will not discriminate.** The fate-discriminating features will be kinetics and avidity regime (including pH-resolved off-rate), not K_D at a single pH or a single equilibrium measurement.\n67: - **P3 — Receptor topology will be predictive.** GPI-anchored, raft-associated engagement (LY6A/LY6C1 in mouse; CA-IV in primate/human) will form one signature class; transmembrane RMT receptors engaged at apical epitopes away from the natural ligand site (TfR1 apical domain, LRP6 YWTD E1E2, ALPL) will form another. Both will be enriched for transcytosis; neither will be sufficient.\n68: - **P4 — Avidity will be non-monotonic.** Signatures implying strong multivalent clustering of a transmembrane receptor will be *anti*-predictive of transcytosis and pro-predictive of lysosomal routing, by analogy with the TfR affinity/valence rules.\n69: - **P5 — Glycan-only signatures will be pro-retention.** Attachment signatures dominated by galactose/sialic acid/HSPG without a protein RMT partner will correlate with endothelial transduction or intracellular handling rather than transcytosis (with AAV9 as the instructive exception that shows the map is incomplete).\n70: - **P6 — Irreducible false positives.** Any classifier derived from binding data alone will have false positives that can only be removed by functional transcytosis readouts; I predict the residual error is not computable away.\n71: - **P7 — Mouse signatures will not translate.** Signatures derived from LY6A/LY6C1 will fail in human BMECs.\n72: - **P8 — The highest-value single addition to a binding map** will be a pH-resolved kinetic profile (on-rate at pH 7.4, off-rate at pH 7.4 vs. pH 5.5–6.0), because basolateral release after endosomal acidification is a documented mechanism (ALPL–VCAP-102: https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9).\n73: \n74: ---\n75: \n76: ## 3. Problem decomposition\n77: \n78: **3.1 The causal chain, with the mapping's purchase points.**\n79: \n80: `blood encounter → apical attachment (glycan + protein) → receptor engagement → internalization route (clathrin / caveolae / CLIC-GEEC / macropinocytosis) → endosomal sorting decision → {transcytotic tubule & basolateral release | apical recycling | retrograde/TGN → nuclear import → endothelial transduction | lysosome}`\n81: \n82: A binding map covers only the first three links. The literature says the fate decision is made at link 5: brain endothelial cells route internalized cargo between recycling, TGN and lysosomal fates (https://link.springer.com/article/10.1186/s12987-019-0134-9), and transcytosis-competent cargos must avoid the lysosomal network that otherwise captures most macromolecules (https://link.springer.com/article/10.1186/s12987-019-0134-9; https://pmc.ncbi.nlm.nih.gov/articles/PMC12363266/).\n83: \n84: **3.2 What a binding map does capture.** Receptor identity and topology; epitope/steric relationship to natural ligands; affinity and kinetics, including pH-sensitivity; avidity/valency; glycan class; capsid-context presentation (loop topology, insert geometry); species orthology of the receptor; competition with endogenous ligands.\n85: \n86: **3.3 What it does not capture (latent variables).** Which endosomal subdomain the receptor–ligand complex partitions into (early endosome vs. late endosome/lysosome vs. sorting tubule); Rab/retromer/tubule machinery engagement (Rab17 overexpression alone can flip a degradative construct to transcytosing: https://www.cell.com/cell-reports/fulltext/S2211-1247(17)31707-2); receptor recycling rate and polarized recycling destination; cell-state and species-specific expression (LY6A strain restriction: https://pmc.ncbi.nlm.nih.gov/articles/PMC6520463); glycocalyx shielding; hemodynamic and shear effects; pericyte/astrocyte induction of BBB phenotype; and the post-endocytic requirement for AAVR in productive infection vs. mere passage (AAVR's role in entry is established, but whether LY6A-mediated passage is AAVR-independent was left open: https://pmc.ncbi.nlm.nih.gov/articles/PMC6855452; AAVR engagement may occur after endocytosis: https://pmc.ncbi.nlm.nih.gov/articles/PMC8413391/).\n87: \n88: **3.4 The mapping problem, split.**\n89: (a) *Coverage*: which (capsid, receptor) pairs bind at all — solvable by high-throughput interactome mapping.\n90: (b) *Signature → fate*: the classification problem posed by the question — this is where sufficiency is in doubt.\n91: (c) *Generalization across species and cell states* — where most published signatures break.\n92: \n93: ---\n94: \n95: ## 4. Analysis\n96: \n97: ### 4.1 (D-sufficiency) Is the binding map a sufficient statistic for fate? No.\n98: \n99: Three independent lines of counterexample, any one of which breaks sufficiency:\n100: \n101: 1. **Same map, different fate.** AAV9-X1.1 engages LRP6 in both rodents and primates, yet primarily transduces endothelial cells in rodents while transcytosing and targeting neurons in neonatal NHPs (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8). A binding map of AAV9-X1.1 on BMEC LRP6 is identical in the two cases; the fates differ.\n102: 2. **Binding rank does not transport.** Monolayer BMVEC binding predicted in vivo BBB transport for only one sequence group (https://pmc.ncbi.nlm.nih.gov/articles/PMC7841218); top in vitro CA-IV binders were outperformed in vivo by lower-ranked variants (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8).\n103: 3. **Fate is set by sorting, not attachment.** Bivalent/high-affinity TfR engagement drives lysosomes while monovalent/low-affinity engagement transcytoses, and Rab17-driven tubule entry can convert the former into the latter (https://pmc.ncbi.nlm.nih.gov/articles/PMC6513804; https://www.cell.com/cell-reports/fulltext/S2211-1247(17)31707-2). A static binding signature does not encode the tubule-entry propensity it induces.\n104: \n105: Additionally, the object being mapped is context-dependent: the PHP.B 7-mer does not transfer Ly6a binding from AAV9 to AAV1 without its flanking HVR-VIII interface (https://journals.asm.org/doi/10.1128/jvi.01164-21), and in an AAV5 backbone the same insert does not confer endothelial crossing (https://pmc.ncbi.nlm.nih.gov/articles/PMC8370029). A \"signature\" recorded as a portable peptide motif is therefore not a stable object; it must be recorded as a capsid-contextual surface.\n106: \n107: **Conclusion (D-sufficiency):** the binding map is *necessary but not sufficient*. It cannot by itself determine transcytosis vs. intracellular retention.\n108: \n109: ### 4.2 (D-practical) Is the map informative? Yes — asymmetrically.\n110: \n111: - **Exclusion works.** Non-binders fail: AAV2, which does not appreciably cross or transduce brain endothelium in vivo, is out-penetrated by AAV9 in human BMVEC transwells (https://pubmed.ncbi.nlm.nih.gov/27718541); parental AAV9 does not transcytose in the MDCK-ALPL model while VCAP-102 does (https://www.voyagertherapeutics.com/wp-content/uploads/2024/05/POSTER-Voyager_ASGCT_2024_FINAL_Ishan.pdf).\n112: - **Receptor-class signatures carry real signal.** Capsids engineered to bind LY6A or LY6C1 are strongly enriched for mouse brain transduction in a strain- and expression-dependent way (https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.3002112); capsids with the LRP6-binding VR-VIII peptide class show conserved BBB-crossing behavior in NHPs (https://www.nature.com/articles/s41467-024-52149-0); the TfR1 apical-epitope class gives receptor-dependent, actively transported brain delivery (https://www.science.org/doi/10.1126/science.adm8386); the ALPL class shows pH-dependent release consistent with basolateral discharge (https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9).\n113: - **The field has converged on a \"target-a-receptor\" design grammar**, i.e., binding maps are already being used prospectively to generate transcytosis-competent capsids (receptor-targeted engineering against LY6A/LY6C1, TfR1, CA-IV, ALPL: https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.3002112; https://www.science.org/doi/10.1126/science.adm8386; https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8; https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9) — which is evidence that the map is *actionable* even though it is not *decisive*.\n114: \n115: ### 4.3 The binding-signature classes that survive the evidence\n116: \n117: Predictions P3, P4, P8 survive; P2 survives in refined form (kinetics + pH-resolved off-rate matter more than equilibrium K_D); P5 needs qualification (AAV9's galactose engagement is reported to be important for BBB crossing, so glycan attachment is not purely pro-retention — https://pmc.ncbi.nlm.nih.gov/articles/PMC13462111 — but glycan-only classes still lack a demonstrated RMT mechanism).\n118: \n119: A signature class *S* is **transcytosis-competent** to the degree it has:\n120: \n121: 1. **A receptor that is (i) expressed on the luminal/apical surface of BMECs and (ii) known or plausible to enter RMT routes** — e.g., TfR1 (https://www.science.org/doi/10.1126/science.adm8386), LRP6 (https://www.nature.com/articles/s41467-024-52149-0), CA-IV (https://pmc.ncbi.nlm.nih.gov/articles/PMC10975205), ALPL (https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9), or a GPI-anchored raft protein (LY6A/LY6C1 in mouse: https://pmc.ncbi.nlm.nih.gov/articles/PMC6520463; CA-IV in human).\n122: 2. **An epitope that does not compete with the natural ligand** (BI-hTFR1 binds the apical TfR1 domain away from the transferrin site: https://www.businesswire.com/news/home/20240104444092/en/Apertura-Gene-Therapy-Unveils-Novel-Engineered-AAV-Capsids-Targeting-Human-Transferrin-Receptor-1-for-Neurological-Gene-Therapy-Delivery) and that is presented on an accessible capsid surface given the *specific* capsid loop context (https://journals.asm.org/doi/10.1128/jvi.01164-21).\n123: 3. **A pH-resolved kinetic profile consistent with capture at pH 7.4 and release at endosomal pH** (rapid ALPL–VCAP-102 dissociation at pH 5.5: https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9).\n124: 4. **An avidity regime in the permissive window** — enough to trigger internalization, not so multivalent/clustered as to be sorted to lysosomes (TfR valence/affinity rules: https://pmc.ncbi.nlm.nih.gov/articles/PMC6513804; https://www.cell.com/cell-reports/fulltext/S2211-1247(17)31707-2).\n125: 5. **Species-matched receptor orthology and expression** (LY6A absent from primate endothelium: https://pmc.ncbi.nlm.nih.gov/articles/PMC8370029; LY6A/LY6C1 not present in primates: https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.3002112; AAV-BR1 fails in rats: https://www.nature.com/articles/s41434-025-00563-4).\n126: \n127: A signature class is **pro-retention / pro-endothelial-transduction** when it is dominated by attachment glycans without an RMT partner (AAV2-like HSPG handling: https://pmc.ncbi.nlm.nih.gov/articles/PMC5298820), or when it implies high-avidity clustering of a transmembrane receptor (https://pmc.ncbi.nlm.nih.gov/articles/PMC6513804), or when the receptor's default routing in that species is degradative.\n128: \n129: ### 4.4 Answer\n130: \n131: **Can molecular mapping determine transcytosis vs. intracellular retention?** Not in the sufficiency sense. The binding map is a *necessary, high-value, asymmetric* classifier: excellent for exclusion and for enriching priors by receptor class, incapable of fixing fate, because the fate decision is made by post-endocytic sorting machinery and by species/cell-state variables that are not functions of the capsid–receptor complex alone. The documented same-signature/different-fate case of AAV9-X1.1 (https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8) is the cleanest single disproof.\n132: \n133: **For which binding signatures does mapping get closest to determinative?** For signatures that specify *receptor class + epitope geometry + pH-resolved kinetics + avidity regime + capsid context*, and that are evaluated in a species-matched system. Concretely: apical, non-ligand-competing engagement of a conserved RMT receptor (TfR1 apical domain, LRP6 YWTD E1E2, ALPL, CA-IV) with a pH-sensitive off-rate and moderate avidity, presented by the specific capsid loop context in which it was selected — this class is enriched for transcytosis. GPI-anchored LY6A/LY6C1 engagement is a *mouse-only* transcytosis signature (https://pmc.ncbi.nlm.nih.gov/articles/PMC6520463; https://journals.plos.org/plosbiology/article?id=10.1371%2Fjournal.pbio.3002112). Glycan-attachment-only signatures and high-avidity clustering signatures are pro-retention (https://pmc.ncbi.nlm.nih.gov/articles/PMC6513804). Even in the best class, the map's residuals must be resolved by functional transcytosis assays (transwell flux, humanized-receptor in vivo selection), which is exactly the practice the field has adopted (https://www.cell.com/molecular-therapy-family/methods/fulltext/S2329-0501(22)00127-9; https://www.cell.com/cell-reports/fulltext/S2211-1247(25)01190-8).\n134: \n135: **Answer in one sentence:** molecular mapping can *partition* the space and *enrich* for transcytosis-competent capsid–receptor signatures, and can *exclude* non-binders, but it cannot *determine* fate, and the signatures where it is nearly determinative are the ones that add pH-resolved kinetics, epitope topology, avidity regime and capsid context to receptor identity.\n136: \n137: ---\n138: \n139: ## 5. Where more parallel compute would and would not change this\n140: \n141: **Would not change:** the sufficiency conclusion. The disproofs are experimental (AAV9-X1.1 species divergence; BMVEC binding vs. in vivo transport; TfR valence sorting), and the latent variables are cellular, not computational. No amount of simulation of capsid–receptor complexes yields the Rab17/tubule partition of a complex in a polarized human BMEC (https://www.cell.com/cell-reports/fulltext/S2211-1247(17)31707-2).\n142: \n143: **Could change (in degree, not in kind):**\n144: 1. **Structural/biophysical coverage of the signature space.** Exhaustive AlphaFold-Multimer/cryo-ET/MD modeling of capsid–receptor–glycan complexes across thousands of variants and receptors, at multiple pH values, could turn \"epitope geometry and pH-resolved kinetics\" from a per-complex experiment into a computed prior (methods precedent: https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518; https://www.rcsb.org/structure/7UD4).\n145: 2. **Sequence-to-function models over capsid space.** Fit4Function-style ML trained on paired binding *and* transcytosis labels could compress the 7-mer/12-mer insert space and design multi-trait libraries with lower false-positive rates (https://www.nature.com/articles/s41467-024-50555-y; https://pubmed.ncbi.nlm.nih.gov/40176349).\n146: 3. **Kinetic/stochastic models of endosomal sorting.** Parallel simulation of receptor–cargo–endosome partitioning (recycling vs. tubule vs. lysosome) parameterized by measured affinities and valences could predict the P4 non-monotonic avidity window without exhaustive transwell assays (framework: https://www.cell.com/cell-reports/fulltext/S2211-1247(17)31707-2; https://pmc.ncbi.nlm.nih.gov/articles/PMC12363266/).\n147: \n148: ---\n149: \n150: ## 6. Verdict\n151: \n152: The question is answerable now by reasoning over existing evidence: binding is necessary but not sufficient; fate is decided by post-endocytic sorting and species/cell-state context; and the near-determinative signatures are identifiable as a class (apical, non-competing RMT-receptor epitopes with pH-sensitive release and permissive avidity, in the correct capsid context). The binding constraint is experimental measurement of intracellular sorting fates and human-relevant transcytosis, not computation.\n153: \n154: VERDICT: NOT COMPUTE-BOUND\n\n(End of file - total 154 lines)\n</content>"
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "edit",
+     "description": "Performs exact string replacements in files. \n\nUsage:\n- You must use your `Read` tool at least once in the conversation before editing. This tool will error if you attempt an edit without reading the file. \n- When editing text from Read tool output, ensure you preserve the exact indentation (tabs/spaces) as it appears AFTER the line number prefix. The line number prefix format is: line number + colon + space (e.g., `1: `). Everything after that space is the actual file content to match. Never include any part of the line number prefix in the oldString or newString.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- Only use emojis if the user explicitly requests it. Avoid adding emojis to files unless asked.\n- The edit will FAIL if `oldString` is not found in the file with an error \"oldString not found in content\".\n- The edit will FAIL if `oldString` is found multiple times in the file with an error \"Found multiple matches for oldString. Provide more surrounding lines in oldString to identify the correct match.\" Either provide a larger string with more surrounding context to make it unique or use `replaceAll` to change every instance of `oldString`. \n- Use `replaceAll` for replacing and renaming strings across the file. This parameter is useful if you want to rename a variable for instance.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to modify"
+       },
+       "oldString": {
+        "type": "string",
+        "description": "The text to replace"
+       },
+       "newString": {
+        "type": "string",
+        "description": "The text to replace it with (must be different from oldString)"
+       },
+       "replaceAll": {
+        "type": "boolean",
+        "description": "Replace all occurrences of oldString (default false)"
+       }
+      },
+      "required": [
+       "filePath",
+       "oldString",
+       "newString"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "glob",
+     "description": "- Fast file pattern matching tool that works with any codebase size\n- Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\"\n- Returns matching file paths\n- Use this tool when you need to find files by name patterns\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n- You have the capability to call multiple tools in a single response. It is always better to speculatively perform multiple searches as a batch that are potentially useful.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The glob pattern to match files against"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter \"undefined\" or \"null\" - simply omit it for the default behavior. Must be a valid directory path if provided."
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "grep",
+     "description": "- Fast content search tool that works with any codebase size\n- Searches file contents using regular expressions\n- Supports full regex syntax (eg. \"log.*Error\", \"function\\s+\\w+\", etc.)\n- Filter files by pattern with the include parameter (eg. \"*.js\", \"*.{ts,tsx}\")\n- Returns file paths and line numbers with matching lines\n- Use this tool when you need to find files containing specific patterns\n- If you need to identify/count the number of matches within files, use the Bash tool with `rg` (ripgrep) directly. Do NOT use `grep`.\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The regex pattern to search for in file contents"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. Defaults to the current working directory."
+       },
+       "include": {
+        "type": "string",
+        "description": "File pattern to include in the search (e.g. \"*.js\", \"*.{ts,tsx}\")"
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "read",
+     "description": "Read a file or directory from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter should be an absolute path.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Use the grep tool to find specific content in large files or files with long lines.\n- If you are unsure of the correct file path, use the glob tool to look up filenames by glob pattern.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\". For directories, entries are returned one per line (without line numbers) with a trailing `/` for subdirectories.\n- Any line longer than 2000 characters is truncated.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.\n- This tool can read image files and PDFs and return them as file attachments.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file or directory to read"
+       },
+       "offset": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The line number to start reading from (1-indexed)"
+       },
+       "limit": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The maximum number of lines to read (defaults to 2000)"
+       }
+      },
+      "required": [
+       "filePath"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "write",
+     "description": "Writes a file to the local filesystem.\n\nUsage:\n- This tool will overwrite the existing file if there is one at the provided path.\n- If this is an existing file, you MUST use the Read tool first to read the file's contents. This tool will fail if you did not read the file first.\n- ALWAYS prefer editing existing files in the codebase. NEVER write new files unless explicitly required.\n- NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.\n- Only use emojis if the user explicitly requests it. Avoid writing emojis to files unless asked.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "content": {
+        "type": "string",
+        "description": "The content to write to the file"
+       },
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file to write (must be absolute, not relative)"
+       }
+      },
+      "required": [
+       "content",
+       "filePath"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

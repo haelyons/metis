@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Computed proxies only; transcytosis choice needs full capsids and cell data, so outcome affects next step indirectly."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:compute_axis.levels",
+      "reason": "Replica levels 8–32 span only 4×, below required 10× compute span, though held_fixed otherwise supports."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:scored_against",
+      "reason": "External published labels, with prior anchor reproduction within tolerance, independently verify outcomes."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior villin/capsid work lacks AAV pH-resolved classification; stated gap makes result open."
+    },
+    {
+      "criterion": "reshape",
+      "value": 5,
+      "ref": "plan:restructuring.condition_phase",
+      "reason": "Pilot measures tau before ensemble; method replaces sequential dependency; prior lacks AAV system."
+    },
+    {
+      "criterion": "baseline",
+      "value": 5,
+      "ref": "plan:phases",
+      "reason": "Tuned baseline, same-GPU copies, occupancy check, and timed phases give measured gains."
+    }
+  ],
+  "decides_by": "p_score",
+  "decides_by_reason": "Decision rule needs AUC/ratio over 8,16,32; p_score assembles those, unlike pilot/anchor phases."
+}

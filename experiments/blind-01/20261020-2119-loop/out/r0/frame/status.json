@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/r0/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/mimo-v2.6-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-20T22:12:16.540Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/mimo-v2.6-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 477532,
+   "cost_usd": 0.057294401,
+   "tokens": 108359,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 170528,
+   "cost_usd": 0.032452692,
+   "tokens": 156999,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 272378,
+   "cost_usd": 0.04156779,
+   "tokens": 199699,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 62226,
+   "cost_usd": 0.0027492,
+   "tokens": 4336,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 101728,
+   "cost_usd": 0.00177086,
+   "tokens": 8086,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 49958,
+   "cost_usd": 0.00618678,
+   "tokens": 7682,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.14202172300000002,
+ "tokens": 485161,
+ "by_model": {
+  "opencode-go/mimo-v2.6-pro": {
+   "calls": 1,
+   "cost_usd": 0.057294401,
+   "tokens": 108359
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.032452692,
+   "tokens": 156999
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.04156779,
+   "tokens": 199699
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00618678,
+   "tokens": 7682
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.0027492,
+   "tokens": 4336
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.00177086,
+   "tokens": 8086
+  }
+ },
+ "done": true,
+ "updated": "2026-10-20T22:26:34.131Z",
+ "best": {
+  "name": "Voyager Therapeutics — TRACER capsid discovery platform / NeuroShuttle",
+  "step": "Identification of the cell-surface receptor each BBB-penetrant TRACER capsid engages on brain vasculature, and whether that binding initiates receptor-mediated transcytosis, so capsids with a human-conserved receptor can be nominated as IV-delivered CNS gene therapy vectors (e.g. VY1706 tau-silencing program, ALPL-VYGR-NeuroShuttle).",
+  "sum": 11,
+  "fit": 3,
+  "change": 3,
+  "new": 5
+ }
+}

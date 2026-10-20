@@ -1,0 +1,121 @@
+{
+ "ts": "2026-10-20T22:20:20.319Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_15b66ae2a001Q8bf0UQy0cR9me",
+  "x-opencode-session": "ses_ea4995236ffe359cT2X0N360aM",
+  "x-opencode-session-id": "ses_ea4995236ffe359cT2X0N360aM",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:45945",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "18870"
+ },
+ "body": {
+  "model": "deepseek-v4.1-flash",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.\nYou are powered by the model named deepseek-v4.1-flash. The exact model ID is opencode-go/deepseek-v4.1-flash\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/r0/frame\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Oct 20 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"For each item below, fetch its source and check that the recorded quote appears on the page and supports the item. A card item is a field of the plan in the producer's words, with the sources it cites: check each factual claim in it against those sources, and any value it carries against the page; what the plan will build, measure or predict needs no source, but a factual claim with no source is UNSUPPORTED. For a cost input, check that the page states the number for the setting given; whether it applies to this plan is not yours to judge. When the page states a different number for a num or rate item, give it as page_value. Decide only from the pages you fetch and the text below; do not read files. Return one status per item, under its ref: SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE, with the page sentence you relied on.\nItems, one per line:\np1:step: Voyager Therapeutics — TRACER capsid discovery platform / NeuroShuttle has this step in its pipeline: Identification of the cell-surface receptor each BBB-penetrant TRACER capsid engages on brain vasculature, and whether that binding initiates receptor-mediated transcytosis, so capsids with a human-conserved receptor can be nominated as IV-delivered CNS gene therapy vectors (e.g. VY1706 tau-silencing program, ALPL-VYGR-NeuroShuttle). | source: https://www.voyagertherapeutics.com/pipeline-overview/ | recorded quote: \\\"To address this problem, Voyager has discovered novel capsids and identified associated receptors that potentially enable exceptional delivery across the blood-brain barrier following intravenous dosing.\\\"\np1:activity: Voyager reported Q2 2026 results on 6 August 2026: FDA cleared the IND for VY1706, a TRACER-derived BBB-crossing capsid gene therapy, with dosing expected in Q4 2026; the capsid discovery team presented eight ASGCT 2026 abstracts including receptor-based potency-assay cell lines. | source: https://ir.voyagertherapeutics.com/news-releases/news-release-details/voyager-reports-second-quarter-2026-financial-and-operating/ | recorded quote: \\\"VY1706 (tau silencing gene therapy): The U.S. Food and Drug Administration (FDA) cleared Voyager's Investigational New Drug (IND) application, enabling initiation of a clinical trial in adults with early AD in the United States. Dosing is expected to begin Q4 2026.\\\"\np1:c1: Receptor mechanism is determined today by RNA-guided in vivo biopanning at library scale: a ~4E7-variant AAV9 peptide-display library is passaged in cynomolgus macaques and reduced to a focused set for further work, by the Capsid Discovery team (Tyler Moyer, Mathieu Nonnenmacher, Todd Carter). | source: https://www.cell.com/molecular-therapy-family/molecular-therapy/fulltext/S1525-0016(25)00373-9 | recorded quote: \\\"After a second round of in vivo selection, we performed a library enrichment analysis and identified 1,500 variants of interest (Figure 1 A, step 6).\\\"\np1:c2: Capsid-receptor binding and the pH-release step are measured by surface plasmon resonance at the two pH values of the transcytosis pathway, one pair at a time, rather than by simulation. | source: https://www.cell.com/molecular-therapy-family/molecular-therapy/fulltext/S1525-0016(25)00373-9 | recorded quote: \\\"We observed direct capsid-receptor interaction in a cell-free assay using surface plasmon resonance (SPR) analysis with recombinant ALPL, showing that VCAP-102 directly interacts with ALPL with an affinity (K D) of ∼20 nm at pH 7.4 (Figure 4 C).\\\"\np1:c3: Transcytosis versus retention is decided with a cell-barrier assay, not with molecular simulation. | source: https://www.cell.com/molecular-therapy-family/molecular-therapy/fulltext/S1525-0016(25)00373-9 | recorded quote: \\\"We established a capsid transcytosis model using Madin-Darby canine kidney cells (MDCK) in a Transwell migration assay.\\\"\np1:c4: Receptor knowledge is used operationally to build potency-assay cell lines overexpressing the capsid-specific receptor. | source: https://www.voyagertherapeutics.com/wp-content/uploads/2026/05/POSTER_Voyager_ExploitinganAAVCapsidSpecificReceptortoDevelopStableCellLinesforTransductionBasedAssaysforGeneTherapies_May_2026_FINAL.pdf | recorded quote: \\\"Voyager's discovery of receptors specific for the TRACER TM capsids provides an exciting new avenue to improve transduction and develop proprietary cell lines for assays.\\\"\np1:done: Voyager has already run the wet-lab analogue of the card's target: the single published pH-resolved capsid-receptor kinetics pair (VCAP-102 binding ALPL at pH 7.4 with rapid dissociation at pH 5.5) plus an ALPL-dependent Transwell transcytosis readout, but it has not published computed pH-resolved MD contact lifetimes classifying transcytosis versus retention across variants. | source: https://www.cell.com/molecular-therapy-family/molecular-therapy/fulltext/S1525-0016(25)00373-9 | recorded quote: \\\"Rapid dissociation of the ALPL-VCAP-102 complex was observed at pH 5.5 (Figure 4 D), which could point to a mechanism of capsid release on the basolateral side of brain endothelial cells triggered by the acidification of endosomes along the endocytosis/transcytosis pathway.\\\"\np2:step: Dyno Therapeutics — AI capsid design with BBB-mechanism diversity has this step in its pipeline: The BBB mechanism layer of AI capsid design: determining which blood-brain-barrier transport receptor an engineered capsid engages (human TfR1 for Dyno-yp2, ALPL for Dyno-9zh, or other Dyno-discovered receptors) and whether that engagement is conserved in human orthologues, before capsids are handed to CNS gene therapy partners. | source: https://www.dynotx.com/news/dyno-therapeutics-launches-dyno-yp2-a-top-performing-tfr1-mediated-aav-capsid-to-further-diversify-cns-delivery-portfolio | recorded quote: \\\"In parallel with its work on TfR1-mediated delivery, Dyno is advancing capsids that engage additional BBB transport pathways, including several BBB-receptors discovered by Dyno, as well as approaches involving alkaline phosphatase (ALPL), a compelling and distinct mechanism with translational relevance across species.\\\"\np2:activity: Dyno announced two new capsids and AI-platform updates at the ASGCT Annual Meeting on 13 May 2026, including Dyno-9zh which crosses the BBB via ALPL binding, and presented further multi-mechanism data in October 2026. | source: https://www.dynotx.com/news/dyno-therapeutics-launches-two-new-aav-capsids-and-ai-platform-for-rare-disease-therapeutic-development-at-the-2026-american-society-of-gene-cell-therapy-asgct-annual-meeting | recorded quote: \\\"Dyno Therapeutics, Inc., a genetic technologies company applying artificial intelligence (AI) to solve the grand challenge of in vivo gene delivery, today announced the launch of two new adeno-associated virus (AAV) gene delivery capsids for central nervous system (CNS) and muscular delivery, alongside updated in vivo results for previously released capsids Dyno-yp2 (CNS) and Dyno-bn8 (muscle).\\\"\np2:c1: Today the capsid-to-mechanism step is anchored in high-throughput in vivo screening at industrial scale rather than in molecular simulation. | source: https://dynotx.substack.com/p/a-computational-leap-over-an-in-vivo | recorded quote: \\\"Usually, 10,000 to 10 million pooled sequences are screened in mice or non-human primates (NHP) to identify the best-performing capsids in terms of tissue targeting.\\\"\np2:c2: Design models are trained on in vivo measurement data from NHP experiments, optimized for cross-species translatability among other properties. | source: https://www.dynotx.com/news/dyno-therapeutics-launches-two-new-aav-capsids-and-ai-platform-for-rare-disease-therapeutic-development-at-the-2026-american-society-of-gene-cell-therapy-asgct-annual-meeting | recorded quote: \\\"Trained on billions of in vivo non-human primate (NHP) measurements, Dyno's platform engineers AAV capsids optimized for selective delivery, liver detargeting, cross-species translatability and manufacturability.\\\"\np2:c3: Receptor mechanism for a released capsid is validated empirically by binding of the capsid to human and NHP receptor orthologues, not by computing pH-resolved contact lifetimes. | source: https://www.dynotx.com/news/dyno-therapeutics-launches-two-new-aav-capsids-and-ai-platform-for-rare-disease-therapeutic-development-at-the-2026-american-society-of-gene-cell-therapy-asgct-annual-meeting | recorded quote: \\\"Demonstrates exceptional cross-species performance, through head-to-head comparison across NHPs and mice and validated binding to human Alkaline Phosphatase (ALPL), supporting human translatability\\\"\np2:c4: Structure-based reasoning is available in Dyno's stack through open-weight protein structure models run on its Dyno Phi agentic platform, which would be the natural insertion point for a computed transcytosis-versus-retention score. | source: https://www.dynotx.com/news/dyno-therapeutics-launches-two-new-aav-capsids-and-ai-platform-for-rare-disease-therapeutic-development-at-the-2026-american-society-of-gene-cell-therapy-asgct-annual-meeting | recorded quote: \\\"Phi now enables therapeutic developers to run frontier open-weight protein structure models, applying filters and experimentally calibrated reasoning to support genetic medicine development\\\"\np2:done: Dyno publicly describes sequence- and structure-based generative design plus empirical receptor validation for its BBB capsids, but no public page, paper or repository shows a pH-resolved MD contact-lifetime classification of transcytosis versus retention; whether such a compute experiment has been run internally is not public. | source: https://www.dynotx.com/news/dyno-therapeutics-launches-dyno-yp2-a-top-performing-tfr1-mediated-aav-capsid-to-further-diversify-cns-delivery-portfolio | recorded quote: \\\"Dyno's novel generative AI models, trained on billions of in vivo measurements, most recently accelerated with NVIDIA hardware and software, using Hopper GPUs on DGX Cloud and libraries such as TransformerEngine, integrate sequence- and structure-based approaches to engineer functional capsids for new and promising BBB-crossing mechanisms with exceptional efficiency.\\\"\np3:step: Gradinaru laboratory, California Institute of Technology — AAV capsid–receptor mapping program has this step in its pipeline: Unbiased mapping of the human cell-surface and secreted proteins each engineered AAV binds (capsid–receptor interactome on brain endothelium-relevant receptors such as LRP6), plus structural and computational resolution of the capsid–receptor binding site, to explain which engineered capsids cross the BBB and by what binding signature. | source: https://www.nature.com/articles/s41467-024-52149-0 | recorded quote: \\\"Here, we adapt an unbiased human cell microarray platform to determine the extracellular and cell surface interactomes of natural and engineered AAVs.\\\"\np3:activity: The lab continues to publish on AAV capsid–receptor structure and BBB tropism: Brittain et al. in Molecular Therapy (28 March 2026) on the structural basis of liver de-targeting and neuronal tropism of CNS-targeted capsids, after Lin et al. in Cell Reports (31 October 2025) on human CA-IV-targeted AAVs. | source: https://doi.org/10.1016/j.ymthe.2026.03.030 | recorded quote: \\\"Overall, we provide a framework for using structural information to guide rational engineering of gene delivery vectors to achieve safe and effective delivery.\\\"\np3:c1: The receptor-discovery step runs at proteome scale: a pooled six-capsid screen against over 6400 human proteins covering more than 90% of the membrane proteome and secretome, with hits deconvoluted per capsid. | source: https://www.nature.com/articles/s41467-024-52149-0 | recorded quote: \\\"After these controls, we then tested the six-capsid pool in a full screen of over 6400 proteins, including 6019 human plasma membrane proteins and secreted and cell surface-tethered proteins, as well as 397 heterodimers.\\\"\np3:c2: Binding signatures are assigned computationally with AlphaFold-Multimer models of capsid peptides against receptor domains, using 5 structural models per peptide — the exact computation the card's check-first test targets. | source: https://www.nature.com/articles/s41467-024-52149-0 | recorded quote: \\\"We applied AlphaFold-Multimer to build models of LRP6-AAV interaction complexes, which predicted that the X1 and CAP-Mac VR-VIII peptides bind LRP6 YWTD domain 1 (Fig. 4c).\\\"\np3:c3: Predicted domain usage is confirmed experimentally by SPR of receptor domain fragments rather than by simulation of contact kinetics. | source: https://www.nature.com/articles/s41467-024-52149-0 | recorded quote: \\\"While the cooperative folding of E1 and E2 complicates testing of individual domains, SPR of mouse LRP6 extracellular domain fragments was consistent with the model predictions, with interaction observed for LRP6-E1E2 but not LRP6-E3E4 (Fig. 4d).\\\"\np3:c4: Structural work is at atomic resolution and used for rational capsid engineering: cryo-EM structures of CAP-B10 and AAV9-X1.1 with AAVR PKD2 at 2.2–2.2 Å guided variant design validated in vivo. | source: https://doi.org/10.1016/j.ymthe.2026.03.030 | recorded quote: \\\"Here, we solved cryoelectron microscopy (cryo-EM) structures of CAP-B10 and its complex with the adeno-associated virus receptor (AAVR) domain PKD2, at 2.22- and 2.20-Å resolutions, respectively.\\\"\np3:c5: Transcytosis relevance is validated in cells and animals (Lrp6 conditional knockout mice, human and macaque primary brain microvascular endothelial cells, hPSC-derived neurons), not by computed contact lifetimes. | source: https://www.nature.com/articles/s41467-024-52149-0 | recorded quote: \\\"Finally, we functionally validate LRP6 capsid interactions in vivo in mice, in the human BBB via primary cell culture, and beyond the BBB using human pluripotent stem cell (hPSC)-derived neurons.\\\"\np3:done: This lab has already run the card's check-first computation and its experimental counterpart — AlphaFold-Multimer of X1 and CAP-Mac peptides against LRP6 domains predicting YWTD domain 1, confirmed by SPR binding LRP6-E1E2 but not E3E4 — but has not published pH-resolved MD contact lifetimes or any replica-MD classifier of transcytosis versus intracellular retention. | source: https://www.nature.com/articles/s41467-024-52149-0 | recorded quote: \\\"Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple).\\\"\nReturn only JSON: {\\\"items\\\": [{\\\"ref\\\": \\\"\\\", \\\"status\\\": \\\"SUPPORTED | PARTIAL | UNSUPPORTED | CONTRADICTED | UNREACHABLE\\\", \\\"page_quote\\\": \\\"\\\", \\\"note\\\": \\\"\\\"}]}\""
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

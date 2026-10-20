@@ -1,0 +1,32 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "Structural coverage of capsid–receptor–glycan complexes",
+   "title": "Structural coverage of capsid–receptor–glycan complexes",
+   "text": "Exhaustive AlphaFold-Multimer, cryo-ET and MD modelling of capsid–receptor–glycan complexes across many variants, receptors and pH values would turn epitope geometry and pH-resolved kinetics from a per-complex experiment into a computed prior (method precedent: https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518).",
+   "root_link": "Bears on the \"for which capsid–receptor binding signatures\" half of the question — whether the epitope-geometry and pH-resolved-kinetics components of a signature can be computed instead of measured per complex.",
+   "compute_open": "Model runs (capsid–receptor–glycan complexes predicted per pH condition): the largest amount a cited source reports is AlphaFold-Multimer runs of 5 structural models per capsid peptide with up to 20 recycles, paired with cryo-ET sub-tomogram averaging of 85,135 symmetry-expanded particles (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and what is still unknown above that amount is whether any scale of computed coverage recovers epitope geometry and pH-resolved off-rates accurately enough to classify transcytosis versus retention, since the only quantitative pH-resolved benchmark in hand is a single measured pair (ALPL–VCAP-102, K_D ≈ 20 nM at pH 7.4 with rapid dissociation at pH 5.5: https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9).",
+   "sequential": "One run is a chain of roughly 10^9–10^12 integration steps at about 2 fs each, every step waiting on the previous coordinates, and a full answer needs several independent replicas per (capsid, receptor, pH) condition, with one replica keeping a GPU-resident MD engine busy for its whole length (https://pmc.ncbi.nlm.nih.gov/articles/PMC9281402/). The steps must run in order inside a single trajectory, but the answer can be assembled instead from many short independent trajectories started at the same time, which pays off when metastable states separate timescales so replicas decorrelate and weak scaling of independent runs beats strong scaling of one run (https://pmc.ncbi.nlm.nih.gov/articles/PMC9476681/); the nearest source that tried it is adaptive-sampling Markov state modelling, where wall-clock efficiency scaled linearly up to 5,000 parallel simulations per iteration (https://pmc.ncbi.nlm.nih.gov/articles/PMC3637129/).",
+   "source_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC9281402/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC3637129/"
+   ],
+   "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+   "kind": "physical"
+  }
+ ]
+}

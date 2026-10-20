@@ -1,0 +1,158 @@
+{
+ "name": "blind-01-r0",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/r0/card",
+ "script": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "8e81d0538861d4f589a4f119b5498758ee0514a62b15b98442d690372a0c5a83",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out/r0/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "Structural coverage of capsid–receptor–glycan complexes",
+    "title": "Structural coverage of capsid–receptor–glycan complexes",
+    "text": "Exhaustive AlphaFold-Multimer, cryo-ET and MD modelling of capsid–receptor–glycan complexes across many variants, receptors and pH values would turn epitope geometry and pH-resolved kinetics from a per-complex experiment into a computed prior (method precedent: https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518).",
+    "root_link": "Bears on the \"for which capsid–receptor binding signatures\" half of the question — whether the epitope-geometry and pH-resolved-kinetics components of a signature can be computed instead of measured per complex.",
+    "compute_open": "Model runs (capsid–receptor–glycan complexes predicted per pH condition): the largest amount a cited source reports is AlphaFold-Multimer runs of 5 structural models per capsid peptide with up to 20 recycles, paired with cryo-ET sub-tomogram averaging of 85,135 symmetry-expanded particles (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and what is still unknown above that amount is whether any scale of computed coverage recovers epitope geometry and pH-resolved off-rates accurately enough to classify transcytosis versus retention, since the only quantitative pH-resolved benchmark in hand is a single measured pair (ALPL–VCAP-102, K_D ≈ 20 nM at pH 7.4 with rapid dissociation at pH 5.5: https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9).",
+    "sequential": "One run is a chain of roughly 10^9–10^12 integration steps at about 2 fs each, every step waiting on the previous coordinates, and a full answer needs several independent replicas per (capsid, receptor, pH) condition, with one replica keeping a GPU-resident MD engine busy for its whole length (https://pmc.ncbi.nlm.nih.gov/articles/PMC9281402/). The steps must run in order inside a single trajectory, but the answer can be assembled instead from many short independent trajectories started at the same time, which pays off when metastable states separate timescales so replicas decorrelate and weak scaling of independent runs beats strong scaling of one run (https://pmc.ncbi.nlm.nih.gov/articles/PMC9476681/); the nearest source that tried it is adaptive-sampling Markov state modelling, where wall-clock efficiency scaled linearly up to 5,000 parallel simulations per iteration (https://pmc.ncbi.nlm.nih.gov/articles/PMC3637129/).",
+    "source_urls": [
+     "https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518",
+     "https://pmc.ncbi.nlm.nih.gov/articles/PMC9281402/",
+     "https://pmc.ncbi.nlm.nih.gov/articles/PMC3637129/"
+    ],
+    "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+    "kind": "physical"
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/mimo-v2.6-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "20df6eb730f771f2ddd8d8e69ed3ec2529c3c77e",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-20T21:39:09.946Z",
+ "finished": "2026-10-20T22:12:16.442Z",
+ "totals": {
+  "cost_usd": 0.251802672,
+  "tokens": 557363,
+  "calls": 9,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 4,
+    "cost_usd": 0.04862339,
+    "tokens": 199299
+   },
+   "opencode-go/mimo-v2.6-pro": {
+    "calls": 2,
+    "cost_usd": 0.17501929200000002,
+    "tokens": 310040
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 1,
+    "cost_usd": 0.00205338,
+    "tokens": 11787
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 1,
+    "cost_usd": 0.01685508,
+    "tokens": 20362
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 1,
+    "cost_usd": 0.00925153,
+    "tokens": 15875
+   }
+  }
+ }
+}

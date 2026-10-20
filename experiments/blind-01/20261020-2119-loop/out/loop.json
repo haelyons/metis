@@ -1,0 +1,169 @@
+{
+ "name": "blind-01",
+ "seed": {
+  "id": "B1",
+  "title": "Mapping AAV capsid-receptor interactions to explain barrier transcytosis versus intracellular retention",
+  "text": "Basically molecularly mapping the interaction between an agent (the ones we use in the lab) and surface receptors, to understand why certain variants can pass through a cell to the other side while others remain inside the cell. It is complex and requires a dataset that I'm not sure how to obtain. The gap is a matched dataset linking capsid-receptor binding signatures to transcytosis versus intracellular retention in brain microvascular endothelial cells.",
+  "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+  "kind": "physical",
+  "root_link": "not given",
+  "compute_open": "not given",
+  "sequential": "not given",
+  "source_urls": []
+ },
+ "expanded": {
+  "verdict": "NOT COMPUTE-BOUND",
+  "chosen": {
+   "id": "Structural coverage of capsid–receptor–glycan complexes",
+   "title": "Structural coverage of capsid–receptor–glycan complexes",
+   "text": "Exhaustive AlphaFold-Multimer, cryo-ET and MD modelling of capsid–receptor–glycan complexes across many variants, receptors and pH values would turn epitope geometry and pH-resolved kinetics from a per-complex experiment into a computed prior (method precedent: https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518).",
+   "root_link": "Bears on the \"for which capsid–receptor binding signatures\" half of the question — whether the epitope-geometry and pH-resolved-kinetics components of a signature can be computed instead of measured per complex.",
+   "compute_open": "Model runs (capsid–receptor–glycan complexes predicted per pH condition): the largest amount a cited source reports is AlphaFold-Multimer runs of 5 structural models per capsid peptide with up to 20 recycles, paired with cryo-ET sub-tomogram averaging of 85,135 symmetry-expanded particles (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and what is still unknown above that amount is whether any scale of computed coverage recovers epitope geometry and pH-resolved off-rates accurately enough to classify transcytosis versus retention, since the only quantitative pH-resolved benchmark in hand is a single measured pair (ALPL–VCAP-102, K_D ≈ 20 nM at pH 7.4 with rapid dissociation at pH 5.5: https://www.cell.com/molecular-therapy/fulltext/S1525-0016(25)00373-9).",
+   "sequential": "One run is a chain of roughly 10^9–10^12 integration steps at about 2 fs each, every step waiting on the previous coordinates, and a full answer needs several independent replicas per (capsid, receptor, pH) condition, with one replica keeping a GPU-resident MD engine busy for its whole length (https://pmc.ncbi.nlm.nih.gov/articles/PMC9281402/). The steps must run in order inside a single trajectory, but the answer can be assembled instead from many short independent trajectories started at the same time, which pays off when metastable states separate timescales so replicas decorrelate and weak scaling of independent runs beats strong scaling of one run (https://pmc.ncbi.nlm.nih.gov/articles/PMC9476681/); the nearest source that tried it is adaptive-sampling Markov state modelling, where wall-clock efficiency scaled linearly up to 5,000 parallel simulations per iteration (https://pmc.ncbi.nlm.nih.gov/articles/PMC3637129/).",
+   "source_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC9281402/",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC3637129/"
+   ]
+  },
+  "screen": [
+   {
+    "id": "Structural coverage of capsid–receptor–glycan complexes",
+    "title": "Structural coverage of capsid–receptor–glycan complexes",
+    "changes": "",
+    "stakes": 5,
+    "open": 5,
+    "reshape": 3,
+    "total": 10,
+    "distance": "SAME"
+   },
+   {
+    "id": "Sequence-to-function ML on binding and transcytosis labels",
+    "title": "Sequence-to-function ML on binding and transcytosis labels",
+    "changes": "",
+    "stakes": 4,
+    "open": 5,
+    "reshape": 1,
+    "total": 9,
+    "distance": "ADJACENT"
+   },
+   {
+    "id": "In-silico search of the capsid insert space",
+    "title": "In-silico search of the capsid insert space",
+    "changes": "",
+    "stakes": 1,
+    "open": 1,
+    "reshape": 1,
+    "total": 2,
+    "distance": "ADJACENT"
+   },
+   {
+    "id": "Stochastic simulation of post-endocytic sorting",
+    "title": "Stochastic simulation of post-endocytic sorting",
+    "changes": "",
+    "stakes": 5,
+    "open": 5,
+    "reshape": 3,
+    "total": 10,
+    "distance": "SAME"
+   }
+  ]
+ },
+ "loop_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2119-loop/out",
+ "screen": [
+  {
+   "id": "O",
+   "title": "Structural coverage of capsid–receptor–glycan complexes",
+   "changes": "",
+   "stakes": 5,
+   "open": 5,
+   "reshape": 3,
+   "total": 10,
+   "distance": "SAME"
+  },
+  {
+   "id": "V1",
+   "title": "Full glycosylated capsid–receptor–glycan complexes instead of peptide fragments",
+   "changes": "Changes the system studied from peptide–receptor-domain fragments in water to full glycosylated capsid–receptor–glycan complexes, closing the gap that GPI-anchored ALPL, glycosylated LRP6, CA-IV and the 60-mer capsid context are absent; it also makes the result directly relevant to Voyager's ALPL-NeuroShuttle and the Gradinaru lab's LRP6 mapping.",
+   "stakes": 5,
+   "open": 3,
+   "reshape": 3,
+   "total": 8,
+   "distance": "SAME"
+  },
+  {
+   "id": "V2",
+   "title": "Cell-level Transwell transcytosis as the comparison",
+   "changes": "Changes the comparison it is judged against from self-defined 10-ns contact labels and 320-ns runs to cell-level Transwell transcytosis plus receptor knockout, closing the gap that no programme has a computed classifier validated against cell-level transcytosis; aimed at Voyager's TRACER platform and the Gradinaru lab.",
+   "stakes": 5,
+   "open": 1,
+   "reshape": 3,
+   "total": 6,
+   "distance": "SAME"
+  },
+  {
+   "id": "V3",
+   "title": "Millisecond pH-resolved off-rates and release probabilities, not ten-ns contact survival",
+   "changes": "Changes the quantity more compute buys from ten-ns contact-survival proxies to pH-resolved off-rates and endosomal-release probabilities with error bars at 5,000 parallel simulations per iteration, closing the gap that ten-ns proxies are not the millisecond-scale off-rates or release steps that determine transcytosis.",
+   "stakes": 5,
+   "open": 5,
+   "reshape": 3,
+   "total": 10,
+   "distance": "SAME"
+  }
+ ],
+ "chosen": null,
+ "rounds": [
+  {
+   "tag": "r0",
+   "judged": true,
+   "verdict": "PASS 2/2",
+   "critic": {
+    "lever": 3,
+    "open": 5,
+    "stakes": 3,
+    "verifiable": 5,
+    "internals": null,
+    "reshape": 5,
+    "baseline": 5
+   },
+   "critic_sum": 21,
+   "plan": "$946 at p_score · plan $946 · 2 GUESS",
+   "frame_best": {
+    "name": "Voyager Therapeutics — TRACER capsid discovery platform / NeuroShuttle",
+    "step": "Identification of the cell-surface receptor each BBB-penetrant TRACER capsid engages on brain vasculature, and whether that binding initiates receptor-mediated transcytosis, so capsids with a human-conserved receptor can be nominated as IV-delivered CNS gene therapy vectors (e.g. VY1706 tau-silencing program, ALPL-VYGR-NeuroShuttle).",
+    "sum": 11,
+    "fit": 3,
+    "change": 3,
+    "new": 5
+   },
+   "frame_programmes": [
+    {
+     "name": "Voyager Therapeutics — TRACER capsid discovery platform / NeuroShuttle",
+     "step": "Identification of the cell-surface receptor each BBB-penetrant TRACER capsid engages on brain vasculature, and whether that binding initiates receptor-mediated transcytosis, so capsids with a human-conserved receptor can be nominated as IV-delivered CNS gene therapy vectors (e.g. VY1706 tau-silencing program, ALPL-VYGR-NeuroShuttle).",
+     "sum": 11
+    },
+    {
+     "name": "Dyno Therapeutics — AI capsid design with BBB-mechanism diversity",
+     "step": "The BBB mechanism layer of AI capsid design: determining which blood-brain-barrier transport receptor an engineered capsid engages (human TfR1 for Dyno-yp2, ALPL for Dyno-9zh, or other Dyno-discovered receptors) and whether that engagement is conserved in human orthologues, before capsids are handed to CNS gene therapy partners.",
+     "sum": 11
+    },
+    {
+     "name": "Gradinaru laboratory, California Institute of Technology — AAV capsid–receptor mapping program",
+     "step": "Unbiased mapping of the human cell-surface and secreted proteins each engineered AAV binds (capsid–receptor interactome on brain endothelium-relevant receptors such as LRP6), plus structural and computational resolution of the capsid–receptor binding site, to explain which engineered capsids cross the BBB and by what binding signature.",
+     "sum": 10
+    }
+   ],
+   "gaps": [
+    "No programme has published a computed classifier of AAV capsid transcytosis versus endothelial retention validated against cell-level transcytosis; both Voyager and the Gradinaru lab decide this with Transwell assays, knockout mice or NHP in vivo screens, so the card's AUC is measured against its own labels and is uncalibrated to their decision endpoints.",
+    "The card tests peptide–receptor-domain fragments in water and so does not cover the glycosylated capsid–receptor–glycan complexes its title claims: GPI-anchored ALPL, glycosylated LRP6 and CA-IV, and the full 60-mer capsid context are absent.",
+    "Only one measured pH-kinetics pair exists (VCAP-102–ALPL, Voyager/Moyer 2025) to anchor the pH-ratio > 2 criterion; transferability of that release mechanism to LRP6-, TfR1- or CA-IV-binding capsids is untested.",
+    "The compute axis (8–32 replicas of 10 ns per condition) is orders of magnitude below the screening scales these programmes operate at (~4E7-variant TRACER libraries, >6400-protein interactome screens, 10^4–10^7 pooled in vivo capsid designs at Dyno), so even a working score is not yet a screening tool.",
+    "Ten-ns contact-survival proxies are not the millisecond-scale off-rates or endosomal release steps that determine transcytosis; if the pH ratio does not separate, the card's 'if not' outcome is likely, leaving all three programmes unchanged.",
+    "Species context is unaddressed: the card uses human fragments only, while all three programmes select on orthologue binding and humanized or NHP models (LRP6 ~98% human/mouse identity, ALPL >92% across species, CA-IV only ~55% mouse/human)."
+   ],
+   "cost_usd": 0.142
+  }
+ ],
+ "loop_calls_cost_usd": 0.1697
+}
