@@ -289,6 +289,7 @@ async function producePick(c, dir) {
     plan = await agent(P_EXTRACT(c.producer_path, dir), at('extract', 'Produce', { schema: SCHEMA_PLAN, agentType: ROLE['qt-extract'], model: 'sonnet', effort: 'low' }))
   }
   if (!plan) return halt(c, 'schema', ['no valid PLAN from the producer or the extract fallback'])
+  if (typeof plan.limits === 'string') plan.limits = [plan.limits]   // the schema admits a string; the record keeps a list
   // handoff: a plan for another option of this branch is re-keyed to it; halt only if that option's cluster already has a pick (flow §2.3)
   const norm = t => txt_normalize_title(t || '')
   if (plan.option_title && norm(plan.option_title) !== norm(o.title)) {

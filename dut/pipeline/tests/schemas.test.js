@@ -130,4 +130,11 @@
     ]) assert.ok(desc(n, path), `SCHEMA_${n} ${path} has no description`)
     for (const n of NAMES) assert.ok(!JSON.stringify(schemaOf(n)).includes('—'), `SCHEMA_${n} has an em-dash`)
   })
+
+  test('schemas: PLAN.limits accepts a single string as well as a list (2026-10-21)', () => {
+    const errs = v => validate(SCHEMA_PLAN, v).filter(e => /limits/.test(e))
+    assert.deepEqual(errs({ limits: ['a', 'b'] }), [])
+    assert.deepEqual(errs({ limits: 'only one' }), [])
+    assert.ok(errs({ limits: 3 }).length >= 1)
+  })
 })()

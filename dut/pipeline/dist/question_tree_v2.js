@@ -395,7 +395,8 @@ const SCHEMA_PLAN = (() => {
       decides: { type: 'string', enum: ['no', 'partly', 'yes'], description: 'Does closest_prior already decide the outcome at your compute levels?' },
       searched: { type: 'boolean', description: 'Did web search return results while you planned?' },
     }, ['closest_prior', 'left_open', 'decides', 'searched']),
-    limits: strs(`What the result would not show. Card field: plain words, at most 30 words in all, no labels from your files.`),
+    // a list of strings; a single string is accepted and main.js wraps it (mimo returned one twice, 2026-10-21)
+    limits: { anyOf: [strs(`What the result would not show. Card field: plain words, at most 30 words in all, no labels from your files.`), { type: 'string' }] },
     test_summary: str(card(45)),
     sources: arr(obj({
       id: str(), url: str(),
@@ -2865,6 +2866,7 @@ async function producePick(c, dir) {
     plan = await agent(P_EXTRACT(c.producer_path, dir), at('extract', 'Produce', { schema: SCHEMA_PLAN, agentType: ROLE['qt-extract'], model: 'sonnet', effort: 'low' }))
   }
   if (!plan) return halt(c, 'schema', ['no valid PLAN from the producer or the extract fallback'])
+  if (typeof plan.limits === 'string') plan.limits = [plan.limits]   // the schema admits a string; the record keeps a list
   // handoff: a plan for another option of this branch is re-keyed to it; halt only if that option's cluster already has a pick (flow §2.3)
   const norm = t => txt_normalize_title(t || '')
   if (plan.option_title && norm(plan.option_title) !== norm(o.title)) {

@@ -286,7 +286,8 @@ const SCHEMA_PLAN = (() => {
       decides: { type: 'string', enum: ['no', 'partly', 'yes'], description: 'Does closest_prior already decide the outcome at your compute levels?' },
       searched: { type: 'boolean', description: 'Did web search return results while you planned?' },
     }, ['closest_prior', 'left_open', 'decides', 'searched']),
-    limits: strs(`What the result would not show. Card field: plain words, at most 30 words in all, no labels from your files.`),
+    // a list of strings; a single string is accepted and main.js wraps it (mimo returned one twice, 2026-10-21)
+    limits: { anyOf: [strs(`What the result would not show. Card field: plain words, at most 30 words in all, no labels from your files.`), { type: 'string' }] },
     test_summary: str(card(45)),
     sources: arr(obj({
       id: str(), url: str(),
