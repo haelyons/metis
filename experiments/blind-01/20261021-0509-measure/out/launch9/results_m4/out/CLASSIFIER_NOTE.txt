@@ -1,0 +1,3 @@
+Triage of the anchor failure of launch 9 (read-only classifier, confidence medium): cause class b (b = anchor computation defect), fix target runner.
+FIX: Docked poses are in the docking tool's origin-centred frame; apply its recorded translation, or superpose onto the native frame, before scoring in the anchor stage.
+Apply exactly this fix in the runner at the anchor stage; change nothing else. The anchor record must then carry the corrected measured value and its decision against the threshold the directive states.
