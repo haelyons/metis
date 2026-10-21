@@ -1,0 +1,5 @@
+Operator's mechanical findings on build 21 (no content read):
+1. Build 21 (opus, 2 min, review-fix bounded to review 11's one BLOCKING finding against items 6 and 9): run_m4.py changed by 2 diff lines vs build 20 (5,013 lines, sha 588eb04f…); onbox_m4.sh unchanged (8d7b9d29…); one FIX line reported. No stray files; no key-file mentions. Author's tests (48, third revision) compile.
+2. Review 11's eight ADVISORY findings were not addressed by instruction; judge them as before (REQUIRED FOR LAUNCH items only can block).
+3. Environment of record unchanged (lock f2b089a164ab…); launcher unchanged.
+4. Launch 7 follows a PASS (zero REQUIRED blocking findings) with the environment of record on gpu_1x_a100_sxm4 in us-east-1 (else the cheapest single GPU with capacity in us-east-1 at or under USD 2.50), REMOTE_TIMEOUT 7200, BUDGET_LEFT_USD 5, HOLD_SECONDS 2400. Spend USD 4.48.

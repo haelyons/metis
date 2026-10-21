@@ -2907,7 +2907,7 @@ def may_reuse_download(state: RunState, path) -> bool:
         return False
     recorded = recorded_download_sha256(state, path)
     if not recorded:
-        return True
+        return False
     return sha256_file(path) == recorded
 
 

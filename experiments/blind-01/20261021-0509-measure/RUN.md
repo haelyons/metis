@@ -215,3 +215,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:07Z build 20 checks: selftest exit 0
 - 21:08Z review 11 of build 20: FAIL, 1 blocking (run_m4.py vs items 6 and 9), 8 advisory. Operator route: review-fix build 21 bounded to that finding (items already in the directive; no new ruling), review 12, launch 7.
 - 21:08Z stage build on wf.js run 18: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1853535
+- 21:11Z build 21 checks: selftest exit 0
+- 21:11Z review 11 of build 21 requested
+- 21:11Z stage review on wf.js run 8: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1858245
+- 21:11Z build 21 (review-fix, opus, 2 min): 2 diff lines in run_m4.py, 1 FIX line; review 12 started.
