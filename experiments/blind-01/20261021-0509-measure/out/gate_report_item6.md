@@ -1,0 +1,5 @@
+# Operator's note to the gate (mechanical)
+
+Reviews 11 and 13 each returned exactly one BLOCKING finding against directive item 6 (both files); review-fix builds 21 and 23 bounded to that finding changed 2 lines and then 0 lines, the builder reporting the item satisfied. Builder and reviewer disagree on item 6. Launch 7's box is holding (RESUME re-runs the failed dry-run stage) until about 22:04Z; build 22 fixed that stage (33 lines, review 13: the only blocking finding was item 6).
+
+Rulings asked, in at most ten minutes: (a) restate item 6 as one mechanical check (file, what to look for, pass condition) so builder and reviewer read it the same way, or mark it REPORTING ONLY if a record is valid without it; (b) say whether the operator may ship the build 22/23 files to the held box and RESUME now (the dry-run fix of record is in them), with item 6 handled per (a); (c) append the ruling as the next addendum to GATE_COMMIT.md and update EXEC_NOTE.md item 6 only. Reply with exactly one line: `gate written: <answers> answers, <items> items`.

@@ -236,3 +236,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:39Z review 13 of build 23 requested
 - 21:39Z stage review on wf.js run 10: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1900962
 - 21:39Z build 23 (review-fix): run_m4.py 0 / onbox_m4.sh 0 diff lines; review 14 started.
+- 21:40Z gate 18 (addendum) requested
+- 21:40Z stage gate on wf.js run 14: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1900962
+- 21:40Z build 23 changed nothing and reports item 6 already satisfied (stop); reviews 11 and 13 block on item 6: builder and reviewer disagree. Gate asked (run 14) to restate item 6 mechanically or mark it REPORTING ONLY and to say whether the build 22 files may be shipped to the held box and RESUMEd. Review 14 running in parallel.
