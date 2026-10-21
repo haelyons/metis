@@ -1,0 +1,139 @@
+{
+  "cell": {
+    "endpoint": "anchor",
+    "stage": "anchor",
+    "tag": "m4"
+  },
+  "decision": "VOID",
+  "decision_rule": "PASS when the pose reproduces the published placement (contact overlap at least 0.50 or interface backbone RMSD at most 5.0 angstrom) AND serial and parallel agree (top-pose RMSD at most 2.0 angstrom with identical bind or no-bind calls); otherwise FAIL, every input is void and the run stops; VOID when the run ended before the check could be made",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-94-139",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T17:00:40+00:00"
+  },
+  "inputs": [
+    {
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/rows_anchor_tag-m4.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "bytes": 433559,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/pip_report_tag-m4.json",
+      "present": true,
+      "sha256": "969ac9b568d9"
+    },
+    {
+      "path": "/home/ubuntu/m4_run/results_m4/out/pip_report_tag-m4.json",
+      "sha256_full": "969ac9b568d97239994c73e75025c3876b427020e6712b87f3d65ca1ad8357c9",
+      "what": "pip download report, full sha256"
+    },
+    {
+      "bytes": 977,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/apt_packages_tag-m4.json",
+      "present": true,
+      "sha256": "a5fd7e44699d"
+    },
+    {
+      "bytes": 455220,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/data/6IHB.pdb",
+      "present": true,
+      "sha256": "d3f489cc062d"
+    }
+  ],
+  "kind": "anchor",
+  "metric": "contact overlap with the published complex at 4.5 angstrom, or interface backbone displacement, with serial and parallel agreement",
+  "notes": "",
+  "notes_list": [
+    "serial-versus-parallel RMSD is over the whole receptor chain, not the interface"
+  ],
+  "run_valid": false,
+  "run_valid_voided_by": "the smoke check failed: [\"jax unusable: expected str, bytes or os.PathLike object, not NoneType\", \"colabfold_batch --help exited 1\"]",
+  "tag": "m4",
+  "threshold": {
+    "max_interface_backbone_rmsd_a": 5.0,
+    "max_serial_parallel_rmsd_a": 2.0,
+    "min_contact_overlap": 0.5
+  },
+  "values": {
+    "docking_order": [
+      "lightdock3_setup.py (prepare)",
+      "lightdock3.py (simulate)",
+      "lgd_generate_conformations.py (generate the pose structures)",
+      "lgd_rank.py (rank)"
+    ],
+    "engine": {
+      "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+      "alphafold_params_sha256": "36d4b0220f3c735f3296d301152b738c9776d16981d054845a68a1370b26cfe3",
+      "build_flags": {
+        "alphafold_early_stopping": "off",
+        "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+        "alphafold_models": 5,
+        "alphafold_msa_mode": "single_sequence",
+        "alphafold_params_sha256": "36d4b0220f3c735f3296d301152b738c9776d16981d054845a68a1370b26cfe3",
+        "alphafold_recycles": 20,
+        "docking_code": "lightdock",
+        "docking_version": "0.9.4",
+        "jax_cuda_plugin_version": "0.4.35",
+        "jax_version": "0.4.35",
+        "jax_wheel_build_tags": "jax-0.4.35-py3-none-any.whl,jaxlib-0.4.35-cp310-cp310-manylinux2014_x86_64.whl,jax_cuda12_plugin-0.4.35-cp310-cp310-manylinux2014_x86_64.whl,jax_cuda12_pjrt-0.4.35-py3-none-manylinux2014_x86_64.whl",
+        "jaxlib_version": "0.4.35",
+        "md_engine": "OpenMM",
+        "md_engine_version": "8.1.1",
+        "md_platform": "CUDA",
+        "md_precision": "mixed",
+        "pinned_requirements": [
+          "jax==0.4.35",
+          "jaxlib==0.4.35",
+          "jax-cuda12-plugin[with_cuda]==0.4.35",
+          "jax-cuda12-pjrt==0.4.35",
+          "colabfold==1.5.5",
+          "alphafold-colabfold==2.3.6",
+          "openmm==8.1.1",
+          "openmm-cuda==8.1.1.12",
+          "lightdock==0.9.4"
+        ]
+      },
+      "docking_code": "lightdock",
+      "docking_version": "0.9.4",
+      "jax_cuda_plugin_version": "0.4.35",
+      "jax_version": "0.4.35",
+      "jax_wheel_build_tags": "jax-0.4.35-py3-none-any.whl,jaxlib-0.4.35-cp310-cp310-manylinux2014_x86_64.whl,jax_cuda12_plugin-0.4.35-cp310-cp310-manylinux2014_x86_64.whl,jax_cuda12_pjrt-0.4.35-py3-none-manylinux2014_x86_64.whl",
+      "jaxlib_version": "0.4.35",
+      "md_engine": "OpenMM",
+      "md_engine_version": "8.1.1",
+      "md_platform": "CUDA",
+      "md_precision": "mixed"
+    },
+    "independent_code": "not run: single docking code",
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-21T17:00:40Z",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T17:00:40Z"
+    },
+    "measured": null,
+    "null_reasons": {
+      "measured": "anchor stage not reached: the smoke check failed: [\"jax unusable: expected str, bytes or os.PathLike object, not NoneType\", \"colabfold_batch --help exited 1\"]"
+    },
+    "published": "AAVR-PKD2 bound to the AAV2 spike region adjacent to the icosahedral three-fold axis (PDB 6IHB)",
+    "tolerance": {
+      "calls_must_be_identical": true,
+      "max_interface_backbone_rmsd_a": 5.0,
+      "max_serial_parallel_rmsd_a": 2.0,
+      "min_contact_overlap": 0.5
+    },
+    "unit": "fraction of published contacts, and angstrom",
+    "void_reason": "anchor stage not reached: the smoke check failed: [\"jax unusable: expected str, bytes or os.PathLike object, not NoneType\", \"colabfold_batch --help exited 1\"]",
+    "voided_by": "anchor stage not reached: the smoke check failed: [\"jax unusable: expected str, bytes or os.PathLike object, not NoneType\", \"colabfold_batch --help exited 1\"]"
+  }
+}

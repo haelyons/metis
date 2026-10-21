@@ -141,3 +141,4 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:50Z build 16 checks: selftest exit 0
 - 16:51Z LAUNCH 2: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1409008, log out/launcher_m4_L2.log
 - 16:51Z review 9 of build 16 (wf.js, claude/sonnet): PASS, 0 blocking, 6 advisory; LAUNCH 2 issued under the environment of record.
+- 17:03Z LAUNCH 2 of record: A100 SXM4 us-east-1, box 5849a448…, 16:51Z to 17:02Z, 0.19 h, USD 0.37 est, on-box exit 2 at the install stage within 60 s (RUN_VALID run_valid false; endpoint and anchor records VOID; stages_done empty), box terminated. Outputs under out/launch2/. Cap spent: USD 0.67 of 10.
