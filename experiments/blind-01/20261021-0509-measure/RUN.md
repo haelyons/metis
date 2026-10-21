@@ -223,3 +223,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:15Z review 12 of build 21: PASS, 0 blocking, 8 advisory. LAUNCH 7 issued.
 - 21:15Z LAUNCH 7: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1863990, log out/launcher_m4_L7.log
 - 21:27Z session classify8 started (model sonnet, pid 1881486, session dce50fde)
+- 21:29Z LAUNCH 7 (A100): env_check PASS, tests 48/48, downloads and controls, then the dry-run stage failed with a different message from launch 6 (a missing output file, with run numbers); box HELD at 21:24Z (RESUME re-runs in this build). Classifier 8 (high confidence): not the same failure; engine produced output; runner code defect. Fix build 22 bounded to that stage with the live evidence and the triage note.
+- 21:29Z stage build on wf.js run 19: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1885498
