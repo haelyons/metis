@@ -1,0 +1,68 @@
+{
+  "cell": {
+    "stage": "tests",
+    "tag": "m4"
+  },
+  "decision": "PASS",
+  "decision_rule": "the tests pass only by exiting zero inside their ceiling; a non-zero exit, a timeout or a missing file ends the run as broken infrastructure",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-80-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T22:01:28+00:00"
+  },
+  "inputs": [
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    },
+    {
+      "bytes": 75361,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/tests/tests_m4.py",
+      "present": true,
+      "sha256": "773e1f6a8347"
+    }
+  ],
+  "kind": "tests",
+  "metric": "the exit code of the tests written from the directive by an author who never saw this program",
+  "notes": "the tests passed",
+  "notes_list": [],
+  "run_valid": true,
+  "run_valid_voided_by": null,
+  "tag": "m4",
+  "threshold": {
+    "ceiling_s": 300,
+    "exit_code": 0
+  },
+  "values": {
+    "exit_code": 0,
+    "kind": "tests_stage",
+    "log": "/home/ubuntu/m4_run/results_m4/out/tool_logs/tests_tests_m4.log",
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-21T22:01:27Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 1,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T22:01:13Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "null_reasons": {},
+    "seconds": 14.068,
+    "stdout_tail": "TEST void_failure_table_rows: PASS\nTEST void_stop_semantics: PASS\nTEST lock_check_planted: PASS\nTEST hold_sequence_planted: PASS\nTEST controls_worked_values: PASS\nTEST md_rate_disagreement_rule: PASS\nTEST consistency_ceiling_sum: PASS\nTEST consistency_bands_two_places: PASS\nTEST consistency_gate_and_c1_band: PASS\nTEST consistency_budget_numbers: PASS\nTEST consistency_sample_counts: PASS\nTEST consistency_estimate_floors_fit: PASS\nTEST consistency_tool_timeout_margin: PASS\nTEST consistency_marginal_rule: PASS\nTEST consistency_record_file_names: PASS\nTEST consistency_item21_precedence: PASS\nelapsed_s: 14.0\ntests: 48 of 48 passed\nTESTS: 48 of 48 passed\nTESTS: PASS",
+    "tests_file": "/home/ubuntu/m4_run/tests/tests_m4.py",
+    "tests_file_sha256": "773e1f6a83473dd2017911ecdabd4bcc3b31e37689d334927a864f1edd7173ec",
+    "tests_passed": 48,
+    "tests_total": 48,
+    "timed_out": false
+  }
+}

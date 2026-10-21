@@ -3469,6 +3469,17 @@ def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path
     """
     work = Path(work)
     work.mkdir(parents=True, exist_ok=True)
+    # Each docking run gets its own copy of the two structures inside its own
+    # working directory. The preparation step writes its processed files beside
+    # the structure files it is given; with one shared copy the second run finds
+    # the first run's files already there, reports an error, and writes no
+    # configuration file for the search step to open.
+    local_receptor = work / Path(receptor_pdb).name
+    local_ligand = work / Path(ligand_pdb).name
+    for src, dest in ((receptor_pdb, local_receptor), (ligand_pdb, local_ligand)):
+        if Path(src).resolve() != dest.resolve():
+            shutil.copyfile(str(src), str(dest))
+    receptor_pdb, ligand_pdb = local_receptor, local_ligand
     bin_dir = state.venv_bin()
     swarms, glowworms, steps = DOCKING_SWARMS, DOCKING_GLOWWORMS, DOCKING_STEPS
     started = state.clock()
@@ -3497,6 +3508,15 @@ def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path
     if not setup.get("ok"):
         raise HarnessFailure("the docking setup failed",
                              f"exit {setup.get('rc')}, see {setup.get('log')}")
+    # The preparation step can report an error in its output and still exit 0.
+    # An error line means it wrote no configuration file, so it is a failure.
+    setup_errors = [line.strip() for line in setup.get("stdout", "").splitlines()
+                    if "ERROR" in line]
+    if setup_errors:
+        raise HarnessFailure(
+            "the docking setup failed",
+            f"exit {setup.get('rc')} with an error line in its output: "
+            f"{setup_errors[0]}; see {setup.get('log')}")
 
     sim = call(
         [str(bin_dir / "lightdock3.py"), "setup.json", str(steps), "-c", str(max(1, cores))],
