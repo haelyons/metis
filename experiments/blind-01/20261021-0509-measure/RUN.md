@@ -267,3 +267,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:19Z session classify9 started (model sonnet, pid 1963147, session 5c9ce2b4)
 - 22:21Z classifier 9 on the anchor miss: cause class b (anchor computation defect: a coordinate-frame handling step missing before scoring), fix target runner, medium confidence (ratio class 3: the expected value is zero or the miss exceeds 10x). Operator disclosure: the classifier's free-text fix line contained method words and the operator's probe printed it raw; from here free-text fields are never printed, only letters and counts. Fix build 26 bounded to the anchor stage.
 - 22:21Z stage build on wf.js run 24: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1966109
+- 22:25Z build 26 checks: selftest exit 0
+- 22:25Z review 16 of build 26 requested
+- 22:25Z stage review on wf.js run 13: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1972262
+- 22:25Z build 26 (fix at the anchor stage, opus, 3 min): 56 diff lines in run_m4.py, 3 FIX lines; review 17 started.

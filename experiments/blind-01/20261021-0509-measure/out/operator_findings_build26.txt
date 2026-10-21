@@ -1,0 +1,5 @@
+Operator's mechanical findings on build 26 (no content read):
+1. Build 26 (opus, 3 min, fix build bounded to the anchor stage with a classifier's note): run_m4.py changed by 56 diff lines vs build 25 (5,116 lines, sha c6617c8b…); onbox_m4.sh unchanged (8d7b9d29…); three FIX lines reported. No stray files; no key-file mentions; the author's 48 tests compile (they passed on the box in launches 6 to 9).
+2. Launch 9 (out/launch9/): environment PASS, tests PASS, downloads, controls, and for the first time the dry-run stage PASSED; the anchor record then decided FAIL with a measured value far from the expected one (ratio class: over 10x or an expected value of zero); exit 4 per the contract; inputs VOID. Classifier (medium confidence): an anchor computation defect, a coordinate-frame step missing before scoring, fix target runner.
+3. Verify build 26 implements exactly that at the anchor stage per the directive's anchor item, keeps the decision rule and threshold as stated, and changes nothing else.
+4. Environment of record and launcher unchanged. Launch 10 follows a PASS (zero REQUIRED blocking findings); spend USD 6.34.

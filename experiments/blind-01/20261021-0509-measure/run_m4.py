@@ -3637,6 +3637,55 @@ def split_published_structure(state: RunState, pdb_text: str) -> dict:
     }
 
 
+def pose_frame_shift(native_capsid_atoms: list, pose_capsid_atoms: list) -> dict:
+    """Translation that carries a docked pose into the published structure's frame.
+
+    The docking code works in a frame of its own, centred on the origin, and
+    writes its poses there. Scoring such a pose against the published structure
+    without moving it first measures the gap between two coordinate frames, not
+    how well the pose reproduces the published placement. The capsid half is
+    held rigid by the docking code and appears in both files, so the shift that
+    puts the pose's capsid atoms onto the published capsid atoms is the shift
+    the whole pose needs. Atoms are matched by chain letter, residue number,
+    insertion code and atom name; preparation drops atoms, so only atoms present
+    in both are used, and their mean displacement is the shift.
+    """
+    native_by_key = {}
+    for a in native_capsid_atoms:
+        native_by_key.setdefault(
+            (a["chain"], a["resseq"], a.get("icode", ""), a["name"]), a)
+    sums = [0.0, 0.0, 0.0]
+    matched = 0
+    for b in pose_capsid_atoms:
+        a = native_by_key.get(
+            (b["chain"], b["resseq"], b.get("icode", ""), b["name"]))
+        if a is None:
+            continue
+        matched += 1
+        sums[0] += a["x"] - b["x"]
+        sums[1] += a["y"] - b["y"]
+        sums[2] += a["z"] - b["z"]
+    if matched:
+        return {"dx": sums[0] / matched, "dy": sums[1] / matched,
+                "dz": sums[2] / matched, "matched_atoms": matched,
+                "basis": "capsid atoms matched by chain, residue and atom name"}
+    if native_capsid_atoms and pose_capsid_atoms:
+        # The docking code may rename chains or renumber residues. The capsid is
+        # the same body in both files, so its centre still fixes the shift.
+        def centre(atoms):
+            n = float(len(atoms))
+            return (sum(a["x"] for a in atoms) / n,
+                    sum(a["y"] for a in atoms) / n,
+                    sum(a["z"] for a in atoms) / n)
+        nx, ny, nz = centre(native_capsid_atoms)
+        px, py, pz = centre(pose_capsid_atoms)
+        return {"dx": nx - px, "dy": ny - py, "dz": nz - pz,
+                "matched_atoms": 0,
+                "basis": "centres of the capsid atoms; no atom names matched"}
+    return {"dx": 0.0, "dy": 0.0, "dz": 0.0, "matched_atoms": 0,
+            "basis": "no capsid atoms in the pose; the pose is left where it is"}
+
+
 def score_pose_against_native(native_role_atoms: list, pose_text: str,
                               capsid_atoms: list, receptor_chain_guess=None) -> dict:
     """Compare one docked pose with the published placement.
@@ -3654,6 +3703,12 @@ def score_pose_against_native(native_role_atoms: list, pose_text: str,
         raise HarnessFailure("the docked pose holds no receptor-role chain",
                              f"chains in the pose: {chains_in_pose}")
     pose_roles = map_chain_roles(pose_atoms, pose_map)
+    # The pose is written in the docking code's own frame. Put it back into the
+    # published structure's frame before any contact or distance is computed.
+    shift = pose_frame_shift(capsid_atoms,
+                             [a for a in pose_roles if a["role"] == "capsid"])
+    pose_roles = [dict(a, x=a["x"] + shift["dx"], y=a["y"] + shift["dy"],
+                       z=a["z"] + shift["dz"]) for a in pose_roles]
     if not [a for a in pose_roles if a["role"] == "capsid"]:
         pose_roles = pose_roles + [
             dict(a, role="capsid") for a in map_chain_roles(
@@ -3670,6 +3725,7 @@ def score_pose_against_native(native_role_atoms: list, pose_text: str,
         "n_pose_contacts": len(pose_contacts),
         "call": "bind" if (overlap >= ANCHOR_OVERLAP_MIN
                            or iface <= ANCHOR_IFACE_RMSD_MAX) else "no-bind",
+        "frame_shift": shift,
         "pose_role_atoms": pose_roles,
     }
 
