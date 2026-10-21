@@ -1,4 +1,5 @@
-Operator's mechanical findings on build 23 (no content read):
-1. Build 23 (opus, review-fix bounded to review 13's one BLOCKING finding against item 6 in both files). See the diff counts in RUN.md; no stray files; no key-file mentions; the author's 48 tests compile.
-2. Review 13's three ADVISORY findings were not addressed by instruction.
-3. Plan after a PASS: ship run_m4.py and onbox_m4.sh to the held A100 (box of launch 7) and RESUME re-runs from the failed dry-run stage.
+Operator's mechanical findings for review 15 (build 23 files = build 22's runner, build 20's on-box script; no content read):
+1. Directive change since review 14: gate addendum 18 restated item 6 as one mechanical check and authorised running these files. Judge item 6 under its current wording only.
+2. On-box evidence from launch 7 (out/launch7/): environment of record PASS; tests 48/48 PASS; downloads and three controls recorded; the dry-run stage failed; build 22 changed 33 lines of run_m4.py for that stage (reviewed in review 13 with item 6 as the only blocking finding). The on-box script's hold did not re-run on RESUME (it finished), contrary to addendum 17: treat that as a finding against the on-box script for the NEXT build (build 24 is planned for it) and mark it REQUIRED or REPORTING per the directive; it does not affect the validity of a run that does not hold.
+3. Files: run_m4.py 5,040 lines (sha bd6b7ea7…), onbox_m4.sh 979 lines (8d7b9d29…); no stray files; no key-file mentions; the author's 48 tests compile.
+4. Launch 8 follows a PASS (zero REQUIRED blocking findings) with the environment of record (lock f2b089a164ab…), REMOTE_TIMEOUT 7200, BUDGET_LEFT_USD min(5, remaining), HOLD_SECONDS 2400, gpu_1x_a100_sxm4 in us-east-1 else the cheapest single GPU with capacity there. Spend USD 5.49.
