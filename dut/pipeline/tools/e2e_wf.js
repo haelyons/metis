@@ -25,6 +25,7 @@ const stub = {
     if (label === 'gamma') return f === 'opencode' ? bad(['refusal'], true) : ok({ v: `gamma by ${f}` })
     if (label === 'delta') return ok(null, `delta text by ${f} as ${agent}`)
     if (label === 'eps') return f === 'opencode' ? bad(['$: missing "v"']) : ok({ v: `eps by ${f}` })   // schema failure -> repair turn -> understudy
+    if (label === 'zeta') return f === 'opencode' ? ok({ runner_py: 'STOP: the directive contradicts itself; nothing written', onbox_sh: 'STOP' }) : ok({ runner_py: process.env.E2E_EXISTING_FILE, onbox_sh: process.env.E2E_EXISTING_FILE })
     if (label.startsWith('nested')) return ok({ v: `${label} by ${f}` })
     return ok({ v: `${label} by ${f}` })
   },
@@ -42,8 +43,9 @@ const b = await agent('beta', { label: 'beta', schema: S, model: 'sonnet' })
 const c = await agent('gamma', { label: 'gamma', schema: S, model: 'opus' })
 const d = await agent('delta', { label: 'delta', agentType: 'triage-reader' })
 const e = await agent('eps', { label: 'eps', schema: S })
+const z = await agent('zeta', { label: 'zeta', schema: { type: 'object', required: ['runner_py', 'onbox_sh'], properties: { runner_py: { type: 'string' }, onbox_sh: { type: 'string' } } } })
 const n = await workflow({ scriptPath: './nested.js' }, { k: 2 })
-return { a, b, c, d, e, n }
+return { a, b, c, d, e, z, n }
 `
 const NESTED = `export const meta = { name: 'nested', description: 'nested test' }
 const x = await agent('n1', { label: 'nested-1', schema: ${S} })
@@ -64,16 +66,17 @@ for (const mode of modes) {
   const cfg = JSON.parse(fs.readFileSync(path.join(ROOT, 'idea', 'config.json'), 'utf8'))
   cfg.understudy.families.opencode.models = { strong: 'opencode-go/stub-pro', main: 'opencode-go/stub-pro', cheap: 'opencode-go/stub-flash' }
   cfg.workflow.main_model = 'opencode-go/stub-pro'; cfg.workflow.cheap_model = 'opencode-go/stub-flash'; cfg.workflow.label_rules = []
+  cfg.understudy.routes = [{ match: '^zeta$', declined_if: 'no_files' }]
   fs.writeFileSync(path.join(dir, 'config.json'), JSON.stringify(cfg))
   const out = path.join(dir, 'run')
   const r = spawnSync('node', [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(dir, 'main.js'), '--args', path.join(dir, 'args.json'), '--out', out, '--config', path.join(dir, 'config.json'), '--profile', 'latent_skeptic', ...flags[mode]],
-    { encoding: 'utf8', env: { ...process.env, WF_STUB: __filename } })
+    { encoding: 'utf8', env: { ...process.env, WF_STUB: __filename, E2E_EXISTING_FILE: path.join(dir, 'main.js') } })
   console.log(`== ${mode} (exit ${r.status})`)
   if (r.status !== 0) { console.log(r.stdout.slice(-800), r.stderr.slice(-1200)); failures++; continue }
   const res = JSON.parse(fs.readFileSync(path.join(out, 'result.json'), 'utf8')), J = rows(path.join(out, 'journal.jsonl'))
   const started = J.filter(x => x.type === 'started'), und = J.filter(x => x.type === 'understudy'), shadow = J.filter(x => x.type === 'shadow')
   const byLabel = Object.fromEntries(started.map(s => [s.label, s]))
-  check(started.length === 6, `6 agent calls started (${started.length})`)
+  check(started.length === 7, `7 agent calls started (${started.length})`)
   check(J.some(x => x.type === 'workflow' && x.depth === 1), 'nested workflow journaled at depth 1')
   check(res.n && res.n.k === 2 && res.n.nested_nesting_threw === true, 'nested script ran with its args and a second nesting level threw')
   check(res.a && /alpha by/.test(res.a.v), 'alpha returned')
@@ -85,14 +88,15 @@ for (const mode of modes) {
     check(res.b && /beta by claude/.test(res.b.v), 'beta answered by the claude understudy after the opencode timeout')
     check(res.c === null, 'gamma refused by opencode and halted (on_refusal halt)')
     check(res.e && /eps by claude/.test(res.e.v), 'eps answered by the understudy after a schema failure and a repair turn')
-    check(und.length === 2 && und.every(x => x.ok) && und.map(x => x.label).sort().join() === 'beta,eps', `2 understudy rows, both ok (${und.map(x => x.label).join()})`)
+    check(und.length === 3 && und.every(x => x.ok) && und.map(x => x.label).sort().join() === 'beta,eps,zeta', `3 understudy rows, all ok (${und.map(x => x.label).join()})`)
+    check(res.z && res.z.runner_py.endsWith('main.js') && und.some(x => x.label === 'zeta' && x.kind === 'declined'), 'zeta: a schema-valid stop report with no files is kind declined and hands over')
     check(stub.calls.filter(c => c.title === 'eps' && c.repair).length === 0 || true, 'repair turn recorded by the stub')   // stub runs in the child; its calls are not visible here
     const failed = J.filter(x => x.type === 'failed'); check(failed.length === 1 && failed[0].kind === 'refusal', 'one failed row of kind refusal')
     const md = fs.readFileSync(path.join(out, 'UNDERSTUDY.md'), 'utf8'); check(/refusals 1/.test(md) && /\| beta \|/.test(md), 'UNDERSTUDY.md written with the refusal count and the beta row')
   }
   if (mode === 'refusal') check(res.c && /gamma by claude/.test(res.c.v) && und.some(x => x.label === 'gamma' && x.kind === 'refusal'), 'gamma handed to the understudy when on_refusal is understudy')
   if (mode === 'shadow') {
-    check(shadow.length === 6 && fs.existsSync(path.join(out, 'shadow.jsonl')), `6 shadow rows (${shadow.length})`)
+    check(shadow.length === 7 && fs.existsSync(path.join(out, 'shadow.jsonl')), `7 shadow rows (${shadow.length})`)
     check(shadow.find(x => x.label === 'alpha').agree === false && shadow.find(x => x.label === 'alpha').fields_differ.join() === 'v', 'alpha: both families returned, values differ in field v')
     check(res.b && /beta by claude/.test(res.b.v) && und.some(x => x.label === 'beta' && x.shadow), 'beta: primary failed, the shadow understudy value was used')
     check(res.c === null, 'gamma: refusal still halts in shadow mode')
@@ -101,9 +105,9 @@ for (const mode of modes) {
     check(started.every(s => s.model.startsWith('claude/')), 'every primary is a claude model')
     check(byLabel.alpha.understudy.startsWith('opencode-go/'), 'understudies are opencode models')
     check(und.length === 0 && res.b && res.c && res.e, 'no understudy needed; all answered')
-    const status = JSON.parse(fs.readFileSync(path.join(out, 'status.json'), 'utf8')); check(status.by_family.claude && status.by_family.claude.calls === 6, 'by_family totals on claude')
+    const status = JSON.parse(fs.readFileSync(path.join(out, 'status.json'), 'utf8')); check(status.by_family.claude && status.by_family.claude.calls === 7, 'by_family totals on claude')
   }
-  if (mode === 'primary-only') check(und.length === 0 && res.b === null && res.c === null && res.e === null, 'no understudy: beta, gamma and eps are null')
+  if (mode === 'primary-only') check(und.length === 0 && res.b === null && res.c === null && res.e === null && res.z === null, 'no understudy: beta, gamma, eps and zeta are null')
 }
 console.log(failures ? `\n${failures} check(s) FAILED` : '\nall checks passed')
 process.exit(failures ? 1 : 0)

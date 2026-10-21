@@ -81,7 +81,8 @@
       "exit",
       "runner",
       "nojson",
-      "schema"
+      "schema",
+      "declined"
     ],
     "families": {
       "opencode": {
@@ -95,7 +96,13 @@
         }
       }
     },
-    "routes": [],
+    "routes": [
+      {
+        "match": "^build$",
+        "declined_if": "no_files",
+        "_doc": "a build reply whose runner_py/onbox_sh name no existing file declined the work; hands over"
+      }
+    ],
     "profiles": {
       "metis": {
         "default": "qt-bare",

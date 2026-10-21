@@ -1,0 +1,127 @@
+{
+  "models": {
+    "research": "opencode-go/mimo-v2.6-pro",
+    "dramaturg": [
+      "opencode-go/deepseek-v4.1-flash",
+      "opencode-go/glm-5.3-flash"
+    ],
+    "critic": [
+      "opencode-go/qwen3.8-flash",
+      "opencode-go/mimo-v2.6-flash",
+      "opencode-go/minimax-m3"
+    ]
+  },
+  "timeouts_min": {
+    "research": 30,
+    "dramaturg": 15,
+    "critic": 6
+  },
+  "runs_dir": "/home/hal/dev/interp/metis/experiments/_scratch/frame",
+  "result_md": "/home/hal/stage/runs-v4/seed-1/RESULT.md",
+  "roots_args": "/home/hal/dev/interp/metis/experiments/question-tree/replay/args_F.json",
+  "workflow": {
+    "main_model": "opencode-go/mimo-v2.6-pro",
+    "cheap_model": "opencode-go/glm-5.3-flash",
+    "by_role": {},
+    "max_concurrency": 4,
+    "timeouts_min": {
+      "qt-bare": 10,
+      "qt-web": 25,
+      "qt-research": 40,
+      "qt-producer": 60,
+      "qt-extract": 15
+    },
+    "runs_dir": "/home/hal/dev/interp/metis/experiments/_scratch/wf",
+    "label_rules": [
+      {
+        "match": ":critic(-resample)?$",
+        "panel": [
+          "opencode-go/qwen3.8-flash",
+          "opencode-go/mimo-v2.6-flash",
+          "opencode-go/minimax-m3"
+        ],
+        "merge": "critique"
+      },
+      {
+        "match": ":dramaturg-2(-resample)?$",
+        "model": "opencode-go/glm-5.3-flash"
+      }
+    ]
+  },
+  "go_monthly_caps_usd": {
+    "kimi-k3": 15,
+    "glm-5.3": 15,
+    "glm-5.3-flash": 60,
+    "deepseek-v4-pro": 15,
+    "deepseek-v4.1-flash": 80,
+    "qwen3.8-max": 15,
+    "qwen3.8-flash": 30,
+    "minimax-m3": 60,
+    "mimo-v2.6-flash": 60
+  },
+  "go_caps_note": "OpenCode Go plan, read 2026-10-17 from https://opencode.ai/docs/go/: monthly dollar cap per model; 5-hour window 20%, weekly 50%.",
+  "loop": {
+    "runs_dir": "/home/hal/dev/interp/metis/experiments/_scratch/loop",
+    "generator": "opencode-go/deepseek-v4.1-flash",
+    "screen": [
+      "opencode-go/qwen3.8-flash",
+      "opencode-go/mimo-v2.6-flash",
+      "opencode-go/minimax-m3"
+    ],
+    "expand_model": "opencode-go/mimo-v2.6-pro"
+  },
+  "experiments_dir": "/home/hal/dev/interp/metis/experiments",
+  "understudy": {
+    "_doc": "see idea/understudy.js header; CLI --family/--mode/--on-refusal/--profile override per run",
+    "primary_family": "opencode",
+    "mode": "fallback",
+    "on_refusal": "halt",
+    "retry_on": [
+      "timeout",
+      "exit",
+      "runner",
+      "nojson",
+      "schema"
+    ],
+    "families": {
+      "opencode": {
+        "models": {}
+      },
+      "claude": {
+        "models": {
+          "strong": "claude/opus",
+          "main": "claude/sonnet",
+          "cheap": "claude/sonnet"
+        }
+      }
+    },
+    "routes": [],
+    "profiles": {
+      "metis": {
+        "default": "qt-bare",
+        "by_label": []
+      },
+      "latent_skeptic": {
+        "default": "ls-general",
+        "by_label": [
+          {
+            "match": "^build$",
+            "role": "ls-builder"
+          },
+          {
+            "match": "^write$",
+            "role": "ls-writer"
+          }
+        ]
+      }
+    },
+    "timeouts_min": {
+      "triage-reader": 15,
+      "triage-runner": 30,
+      "triage-author": 20,
+      "ls-general": 15,
+      "ls-builder": 60,
+      "ls-writer": 20
+    }
+  }
+}

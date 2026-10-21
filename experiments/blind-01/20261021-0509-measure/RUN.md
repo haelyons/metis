@@ -37,3 +37,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 10:01Z session gate4 started (model sonnet, pid 831571, session 6963d2d7)
 - 10:02Z session classify1 started (model sonnet, pid 833098, session 2f84a757)
 - 10:04Z classify1: build 3's stop and gate4's non-reply were both platform safeguard stops (build cites EXEC_NOTE item 36, added by addendum 1); no ruling appended; operator does not read or rephrase the item; owner decision
+- 11:47Z owner decision of record: build 4 runs on the OpenCode family (wf.js, claude understudy); the owner states the content is not sensitive in the safety sense, that Claude is over-calibrated on it, and that it is personally sensitive to them; the operator raised the safeguard point and proceeds on the owner's reaffirmed instruction
+- 11:47Z stage build on wf.js run 1: flags [--family opencode --mode fallback], pid 949493
+- 11:49Z build 4 wf run 1 (OpenCode primary) stopped by the operator after the owner's note: the intended order is Claude first, understudy when required; restarting as run 2 with --family claude --on-refusal understudy and a declined-reply handover
+- 11:50Z stage build on wf.js run 2: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 954788

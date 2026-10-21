@@ -19,12 +19,15 @@
 //                    maps to a tier, so the same script gets the same tier in either family
 //   families.<f>.by_role { role: model }             per-role override inside a family
 //   families.claude.tools { role: "Tool,Tool" }      the Claude tool list per role (defaults below)
-//   routes           [{ match: <label regex> | role: <role>, primary_family?, primary?, understudy?, mode? }]
+//   routes           [{ match: <label regex> | role: <role>, primary_family?, primary?, understudy?, mode?, declined_if? }]
+//                    declined_if names a predicate on a schema-valid reply that still means the model declined the work:
+//                    "no_files" (the reply's path-like fields, e.g. runner_py/onbox_sh, name no existing file: a build that
+//                    stopped and reported instead of writing) ; such a reply is kind "declined" and hands over like a failure
 //   profiles.<name>  { default: <role>, by_label: [{ match, role }] }   which role a call without agentType plays
 //   timeouts_min     { role: minutes }
 
 const TIER = { opus: 'strong', sonnet: 'main', haiku: 'cheap' }
-const KINDS = ['none', 'refusal', 'timeout', 'exit', 'runner', 'nojson', 'schema']
+const KINDS = ['none', 'refusal', 'timeout', 'exit', 'runner', 'nojson', 'schema', 'declined']   // declined: a schema-valid reply that declines the work (route predicate declined_if)
 const CLAUDE_OK = new Set(['sonnet', 'opus', 'haiku'])   // owner rule 2026-10-20: no Fable agents in any workflow
 
 const familyOf = m => (/^claude\//.test(String(m)) ? 'claude' : 'opencode')
@@ -44,7 +47,7 @@ const CLAUDE_TOOLS = {
 }
 
 const DEFAULTS = {
-  primary_family: 'opencode', mode: 'fallback', on_refusal: 'halt', retry_on: ['timeout', 'exit', 'runner', 'nojson', 'schema'],
+  primary_family: 'opencode', mode: 'fallback', on_refusal: 'halt', retry_on: ['timeout', 'exit', 'runner', 'nojson', 'schema', 'declined'],
   families: { opencode: { models: {} }, claude: { models: { strong: 'claude/opus', main: 'claude/sonnet', cheap: 'claude/sonnet' } } },
   routes: [], profiles: { metis: { default: 'qt-bare', by_label: [] } }, timeouts_min: {},
 }
@@ -77,7 +80,19 @@ function resolve(cfg, { label, role, pinned, familyOverride, modeOverride }) {
   let mode = modeOverride || (route && route.mode) || cfg.mode
   if (mode === 'swap') { [primary, understudy] = [understudy, primary]; mode = 'fallback' }
   if (primary && understudy && familyOf(primary) === familyOf(understudy)) understudy = modelFor(otherFamily(familyOf(primary)), tier)
-  return { primary, understudy, mode, tier, route: route ? (route.match || route.role) : null }
+  return { primary, understudy, mode, tier, route: route ? (route.match || route.role) : null, declined_if: (route && route.declined_if) || null }
+}
+
+// a schema-valid reply that still declines the work; `exists` resolves a path-like string against the call's cwd
+function declined(pred, value, exists) {
+  if (!pred || value == null) return false
+  if (pred === 'no_files') {
+    const paths = []
+    const walk = v => { if (typeof v === 'string') { if (/\.(py|sh|js|json|md)\s*$/.test(v.trim()) && v.trim().length < 300 && !/\n/.test(v.trim())) paths.push(v.trim()) } else if (v && typeof v === 'object') Object.values(v).forEach(walk) }
+    walk(value)
+    return paths.length > 0 ? !paths.some(exists) : true
+  }
+  throw new Error(`unknown declined_if predicate "${pred}"`)
 }
 
 // the kind of a failed call, from the runner's errors and flags
@@ -130,9 +145,16 @@ function selftest() {
   assert.equal(handover(withDefaults({ on_refusal: 'understudy' }), 'fallback', 'refusal'), true)
   assert.equal(handover(cfg, 'primary-only', 'timeout'), false); assert.equal(handover(cfg, 'fallback', 'none'), false)
   assert.equal(handover(withDefaults({ retry_on: ['timeout'] }), 'fallback', 'schema'), false)
+  const ex = p => p === '/x/run_m4.py'
+  assert.equal(declined('no_files', { runner_py: '/x/run_m4.py', onbox_sh: '/x/onbox_m4.sh' }, ex), false)
+  assert.equal(declined('no_files', { runner_py: 'STOP: the directive contradicts itself; no file written', onbox_sh: 'STOP' }, ex), true)
+  assert.equal(declined('no_files', { built: { runner_py: '/x/missing.py' } }, ex), true)
+  assert.equal(declined(null, {}, ex), false); assert.throws(() => declined('bogus', {}, ex))
+  assert.equal(handover(cfg, 'fallback', 'declined'), true)
+  assert.equal(resolve(withDefaults({ routes: [{ match: '^build$', declined_if: 'no_files' }] }), { label: 'build', role: 'ls-builder' }).declined_if, 'no_files')
   assert.equal(claudeTools(cfg, 'qt-bare'), ''); assert.equal(claudeTools(cfg, 'ls-builder'), 'Read,Write,Edit,Glob,Grep,Bash'); assert.equal(claudeTools(cfg, 'unknown-role'), 'Read,Glob,Grep')
-  console.log('understudy selftest: 30 checks passed')
+  console.log('understudy selftest: 37 checks passed')
 }
 
-module.exports = { TIER, KINDS, familyOf, otherFamily, claudeModel, withDefaults, roleFor, resolve, classify, handover, claudeTools, CLAUDE_TOOLS }
+module.exports = { TIER, KINDS, familyOf, otherFamily, claudeModel, withDefaults, roleFor, resolve, classify, handover, declined, claudeTools, CLAUDE_TOOLS }
 if (require.main === module && process.argv.includes('--selftest')) selftest()

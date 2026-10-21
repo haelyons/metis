@@ -100,7 +100,7 @@ let counter = 0
 
 // one model's attempt at a call: up to two turns (the second repairs a reply that could not be used); the accounting
 // lands on the call's status record and on the model's and family's totals
-async function callModel({ model, role, label, full, opts, dir, cwd, rec, repairable }) {
+async function callModel({ model, role, label, full, opts, dir, cwd, rec, repairable, declinedIf }) {
   const fam = U.familyOf(model)
   const sub = fam === 'claude' ? { tools: U.claudeTools(UCFG, role), systemPrompt: rolePrompt(role), addDirs: [ARGS.base, ...(ARGS.cwd ? [ARGS.cwd] : []), ...(ARGS.add_dirs || [])] } : {}
   const timeoutMs = (CFG.timeouts_min[role] || UCFG.timeouts_min[role] || 20) * 60000
@@ -126,7 +126,10 @@ async function callModel({ model, role, label, full, opts, dir, cwd, rec, repair
       if (res.refusal || !repairable) break   // no repair turn after a refusal
     }
   } catch (e) { errors = [`runner error: ${e.message}`] }
-  const kind = U.classify(res, errors)
+  let kind = U.classify(res, errors)
+  if (kind === 'none' && declinedIf && U.declined(declinedIf, value, p => fs.existsSync(path.isAbsolute(p) ? p : path.join(cwd, p)))) {
+    kind = 'declined'; errors = ['declined: the reply names no existing file (declined_if no_files)']; value = null
+  }
   if (kind !== 'none') { const bm = status.by_model[model]; if (bm) { bm.failed++; if (kind === 'refusal') bm.refusals++ } const bf = status.by_family[fam]; if (bf) { bf.failed++; if (kind === 'refusal') bf.refusals++ } }
   if (kind === 'refusal') status.refusals++
   await runner.exportSession(model, session, path.join(dir, 'export.json'))
@@ -168,7 +171,7 @@ async function agent(prompt, opts = {}) {
   fs.writeFileSync(path.join(dir, 'prompt.md'), full)
   const cwd = (FILE_ROLES.has(role) || /^(ls-|triage-)/.test(role)) ? (ARGS.cwd || ARGS.base) : path.join(dir, 'cwd')
   fs.mkdirSync(cwd, { recursive: true })
-  const common = { role, label, full, opts, cwd, rec, repairable: true }
+  const common = { role, label, full, opts, cwd, rec, repairable: true, declinedIf: r.declined_if }
   let first, second = null, producer = null, value = null, errors = []
   if (mode === 'shadow' && understudy) {
     const udir = path.join(dir, 'understudy'); fs.mkdirSync(udir, { recursive: true })
