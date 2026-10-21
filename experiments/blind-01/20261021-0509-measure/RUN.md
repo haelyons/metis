@@ -162,3 +162,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 18:52Z stage build on wf.js run 14: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1607496
 - 18:52Z TESTS 1: claim-blind author on wf.js (flags [--family claude --on-refusal understudy])
 - 19:00Z build 17 checks: selftest exit 0
+- 19:01Z build 17 (wf.js, opus, 54 s) changed nothing: its report stops on the build contract's 'two new files, edit nothing existing' sentence against the directive's in-place edit (7 mentions). Operator fix of record: in-place builds prepend one sentence to the directive text passed to the builder saying the two paths are overwritten in place; EXEC_NOTE.md itself unchanged. Build 18 follows. Test author (opus, 7 min): tests/tests_m4.py, 47 tests, needs GPU, compiles, black-box.
+- 19:02Z stage build on wf.js run 15: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1622680

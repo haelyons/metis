@@ -1,0 +1,181 @@
+{
+  "_note": "W11 (R3, PASS). Card fields copied verbatim from options-and-card.md §4.2; other PLAN fields from run/R3/physical/37e545fc/producer.md. cost/numbers converted from cost-sim/p10.json: rate instance -> gpu + gpu_memory_gb; line kind lambda_other -> storage (st) and allotment (chaos); number source -> source_id. eval values are gplan.js output on p10.json (lines, planned, numbers, full_scale, k values, cum spend); scenarios dropped from both. findings, decisions and critique are illustrative.",
+  "pick": { "key": "R3:physical:W11", "root": "R3", "branch": "physical", "kind": "random", "rank": 8, "total": 8, "tie_note": null, "replaced": [], "id": "W11", "title": "Ensemble data assimilation of fault stress" },
+  "n_options": 11,
+  "option": {
+    "key": "R3:physical:W11", "id": "W11", "root": "R3", "branch": "physical",
+    "title": "Ensemble data assimilation of fault stress",
+    "summary": "Assimilate surface deformation into an ensemble of fault simulations to estimate stress and forecast ruptures.",
+    "root_link": "Tests whether forecast skill is limited by compute or by observing stress at depth.",
+    "compute_open": "Ensemble members: published skill curves stop at 150 members https://academic.oup.com/gji/article/217/3/1453/5307884; skill above that, under model error, is unknown.",
+    "source_urls": ["https://academic.oup.com/gji/article/217/3/1453/5307884"],
+    "compute_open_status": "open", "total": 8,
+    "distance": "SAME", "distance_reason": "Forecasting earthquakes is the root question's object of study.",
+    "scores": [
+      { "criterion": "stakes", "value": 3, "reason": "Refines whether to buy ensemble members or sensors, but only in a synthetic world." },
+      { "criterion": "open", "value": 5, "reason": "Skill beyond 150 members is unmeasured and reachable on one machine." }
+    ]
+  },
+  "root_question": "Why can't we predict earthquakes days or hours ahead? Is the cause physics that is chaotic at root, or mostly a data problem? Would huge foundation models trained with heavy GPU parallelism on waveforms, GPS strain and fault simulations get anywhere? Or is compute not the blocker?",
+  "plan": {
+    "option_title": "Ensemble data assimilation of fault stress",
+    "question": "On a simulated fault with known physics, does earthquake-forecast skill keep rising as the ensemble grows, or level off early?",
+    "hypothesis": "Skill levels off at tens to hundreds of members, because model error and unobserved stress at depth limit it first.",
+    "compute_axis": { "quantity": "ensemble size", "unit": "members", "levels": [16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 16384] },
+    "held_fixed": ["truth regime", "observation network", "alarm rule"],
+    "predictions": {
+      "if_lever": "With model error or particle filters, skill keeps rising past 1,024 members by more than a deep stress sensor adds.",
+      "if_not": "Skill plateaus by 256 members in every Kalman-filter arm. Model error or a deep sensor moves skill more than ensemble size does.",
+      "decision_rule": "Plateau size is the smallest ensemble whose area skill score is within one standard error of the largest; not the lever if it is at most 256 in every Kalman arm.",
+      "noise_rule": "Standard error of the area skill score across 5 independent truths.",
+      "expected": "if_not",
+      "expected_why": "Both prior studies found 20 to 30 members resolve the significant spread."
+    },
+    "compute_tested": "yes",
+    "compute_tested_why": "Only ensemble size varies within each arm.",
+    "scored_against": "earthquakes in the hidden true run",
+    "arms": [
+      { "id": "E1", "what": "perfect model, skill against ensemble size" },
+      { "id": "E2", "what": "model error, skill against ensemble size" },
+      { "id": "E3", "what": "stress sensors at depth" },
+      { "id": "E4", "what": "particle filter against Kalman filter" }
+    ],
+    "baseline": { "what": "periodic recurrence with an updated mean interval", "source_id": "s3" },
+    "anchor": { "what": "The simulator must match the independent QDYN code's recurrence interval within 1%. The filter must match an exact Kalman filter on a linear toy.", "tolerance": "1%", "independent_code": "QDYN", "source_id": "s7" },
+    "checks": ["Kernel residual below 1e-6 for rigid motion.", "Rank histograms close to flat in the perfect-model arm."],
+    "phases": [
+      { "id": "P0a", "what": "build on own CPU" },
+      { "id": "P0b", "what": "measure GPU timings on 1x H100; tune noise", "stop_rule": "1.5-3x worse: trimmed plan; worse than 3x: also cut the particle arm and two error types" },
+      { "id": "P1", "what": "production runs, all arms", "stop_rule": "run the perfect-model arm first; stop if calibration fails; nothing new once spend would pass $950" },
+      { "id": "P2", "what": "second pass" },
+      { "id": "ST", "what": "storage" }
+    ],
+    "numbers": [
+      { "id": "seis_steps", "name": "seismic accepted steps, D_c 2 mm pilot run", "unit": "steps", "basis": "MEASURED", "value": 122477, "command": "python3 bp1qd.py", "output": "pilot/dc2_25.log", "machine": "shared 4-core workstation", "differs_in": ["workload: noise-free truth"], "measured_by": "P0b" },
+      { "id": "acc_steps", "name": "accepted steps, same run", "unit": "steps", "basis": "MEASURED", "value": 144891, "output": "pilot/dc2_25.log", "machine": "same" },
+      { "id": "events", "name": "events in the run", "unit": "events", "basis": "MEASURED", "value": 18, "output": "pilot/dc2_25.log", "machine": "same" },
+      { "id": "years", "name": "simulated years", "unit": "yr", "basis": "MEASURED", "value": 700, "output": "pilot/dc2_25.log", "machine": "same" },
+      { "id": "rej", "name": "rejected-step fraction", "unit": "1", "basis": "MEASURED", "value": 0.184, "output": "pilot/dc2_25.log", "machine": "same" },
+      { "id": "r_rhs", "name": "RHS evaluations per attempted step", "unit": "1", "basis": "MEASURED", "value": 6, "output": "pilot/dc2_25.log", "machine": "same" },
+      { "id": "t_r", "name": "mean interval, period-four cycle", "unit": "yr", "basis": "MEASURED", "value": 31.2, "output": "pilot/dc2_25.log", "machine": "same" },
+      { "id": "s_eq", "name": "seismic steps per event", "unit": "steps", "basis": "DERIVED", "expr": "seis_steps / events" },
+      { "id": "s_int", "name": "interseismic steps per year", "unit": "steps/yr", "basis": "DERIVED", "expr": "(acc_steps - seis_steps) / years" },
+      { "id": "s_win", "name": "serial accepted steps in the busiest window", "unit": "steps", "basis": "DERIVED", "expr": "acc_steps / events" },
+      { "id": "t_a", "name": "assimilated years per run", "unit": "yr", "basis": "DESIGN", "value": 1000 },
+      { "id": "w", "name": "assimilation window", "unit": "yr", "basis": "DESIGN", "value": 1 },
+      { "id": "m_tot", "name": "member-runs, all arms", "unit": "runs", "basis": "DESIGN", "value": 321840 },
+      { "id": "t_m", "name": "GPU s per member per RHS (H100 FP64)", "unit": "s", "basis": "GUESS", "value": 3e-7, "rests_on": "5.1 MFLOP per member-RHS at about a quarter of FP64 tensor peak", "measured_by": "P0b" },
+      { "id": "t_0", "name": "latency floor per batched RHS", "unit": "s", "basis": "GUESS", "value": 0.0003, "rests_on": "a chain of roughly 10-30 small kernels", "measured_by": "P0b" },
+      { "id": "att", "name": "attempted steps per member-run", "unit": "steps", "basis": "DERIVED", "expr": "(1 + rej) * (t_a / t_r * s_eq + t_a * s_int)" },
+      { "id": "thru_gpuh", "name": "throughput work", "unit": "GPU-h", "basis": "DERIVED", "expr": "m_tot * r_rhs * att * t_m / 3600" },
+      { "id": "lat_h", "name": "latency floor per GPU", "unit": "h", "basis": "DERIVED", "expr": "(t_a / w) * (1 + rej) * s_win * r_rhs * t_0 / 3600" },
+      { "id": "model_wall", "name": "modelled production wall time on 8x H100", "unit": "h", "basis": "DERIVED", "expr": "thru_gpuh / 8 + lat_h" },
+      { "id": "nocomp_gpuh", "name": "throughput work without compaction", "unit": "GPU-h", "basis": "DERIVED", "expr": "m_tot * (t_a / w) * (1 + rej) * s_win * r_rhs * t_m / 3600" },
+      { "id": "fs_gib", "name": "filesystem size", "unit": "GiB", "basis": "DESIGN", "value": 100 },
+      { "id": "fs_rate", "name": "Lambda filesystem price", "unit": "usd/GiB-month", "basis": "PROXY", "value": 0.2, "source_id": "s_billing", "quote": "$0.20 per GiB per month", "page_setting": "worked example", "differs_in": ["example price"], "measured_by": "P0b" }
+    ],
+    "cost": {
+      "rates": [
+        { "id": "r_h100x1", "gpu": "H100 SXM", "gpu_memory_gb": 80, "n_gpus": 1, "per_gpu_usd_h": 4.29 },
+        { "id": "r_h100x8", "gpu": "H100 SXM", "gpu_memory_gb": 80, "n_gpus": 8, "per_gpu_usd_h": 3.99 }
+      ],
+      "lines": [
+        { "id": "p0b", "phase": "P0b", "what": "measure GPU timings", "kind": "work", "rate": "r_h100x1", "hours": "6" },
+        { "id": "p1", "phase": "P1", "what": "production, all arms", "kind": "work", "rate": "r_h100x8", "hours": "12", "need": "model_wall" },
+        { "id": "p2", "phase": "P2", "what": "second pass, re-runs, sweeps", "kind": "work", "rate": "r_h100x8", "hours": "8" },
+        { "id": "st", "phase": "ST", "what": "filesystem, 1 month", "kind": "storage", "usd": "fs_gib * fs_rate" },
+        { "id": "chaos", "phase": "P2", "what": "reduced D_c = 1 mm chaos arm", "kind": "allotment", "usd": "110", "optional": true }
+      ],
+      "scenarios": [],
+      "yields": [],
+      "spend_cap_usd": 950,
+      "total_stated": 684
+    },
+    "full_scale": [{ "id": "nocomp", "what": "the same runs without regrouping unfinished members", "usd": "(nocomp_gpuh / 8) * r_h100x8" }],
+    "outside_budget": [],
+    "scope_gap": ["Synthetic data only: says nothing about observing a real fault's stress."],
+    "novelty": {
+      "closest_prior": "The one perfect-model study used 150 ensemble members and found 20 captured most of the spread.",
+      "closest_source_id": "s3",
+      "prior_max_level": 150,
+      "left_open": "No source reviewed reports skill beyond 150 members, under model error, or with a particle filter.",
+      "decides": "partly",
+      "searched": false
+    },
+    "limits": [
+      "All data are synthetic.",
+      "Neither outcome shows whether stress on a real fault can be observed, which the verdict rests on.",
+      "Results depend on a noise level not yet tuned."
+    ],
+    "test_summary": "A GPU simulator runs thousands of copies of a standard benchmark fault at once. Kalman and particle filters assimilate noisy surface velocities from a hidden \"true\" run. Only ensemble size varies within each arm. Baselines: no memory, periodic recurrence, pattern repeat, no assimilation, and an oracle.",
+    "sources": [
+      { "id": "s3", "url": "https://academic.oup.com/gji/article/217/3/1453/5307884", "quote": "as little as 20 ensemble members", "supports": "closest prior" },
+      { "id": "s7", "url": "https://github.com/ydluo/qdyn", "quote": "SEAS benchmark examples", "supports": "anchor" },
+      { "id": "s_billing", "url": "https://docs.lambda.ai/public-cloud/billing/", "quote": "$0.20 per GiB per month", "supports": "storage price" }
+    ],
+    "files_read": ["physical-widener.md"]
+  },
+  "eval": {
+    "ok": true, "errors": [],
+    "numbers": { "seis_steps": 122477, "acc_steps": 144891, "events": 18, "years": 700, "rej": 0.184, "r_rhs": 6, "t_r": 31.2, "s_eq": 6804.277777777777, "s_int": 32.02, "s_win": 8049.5, "t_a": 1000, "w": 1, "m_tot": 321840, "t_m": 3e-7, "t_0": 0.0003, "att": 296125.2982336182, "thru_gpuh": 47.65248299175384, "lat_h": 4.7653039999999995, "model_wall": 10.721864373969229, "nocomp_gpuh": 1533.66543936, "fs_gib": 100, "fs_rate": 0.2 },
+    "rates": { "r_h100x1": 4.29, "r_h100x8": 31.92 },
+    "rate_corrections": [],
+    "lines": [
+      { "id": "p0b", "phase": "P0b", "kind": "work", "hours": 6, "usd": 25.74, "optional": false, "instead_of": [], "time_box": false, "need_h": null, "margin": null },
+      { "id": "p1", "phase": "P1", "kind": "work", "hours": 12, "usd": 383.04, "optional": false, "instead_of": [], "time_box": true, "need_h": 10.721864373969229, "margin": 1.119 },
+      { "id": "p2", "phase": "P2", "kind": "work", "hours": 8, "usd": 255.36, "optional": false, "instead_of": [], "time_box": false, "need_h": null, "margin": null },
+      { "id": "st", "phase": "ST", "kind": "storage", "hours": null, "usd": 20, "optional": false, "instead_of": [], "time_box": false, "need_h": null, "margin": null },
+      { "id": "chaos", "phase": "P2", "kind": "allotment", "hours": null, "usd": 110, "optional": true, "instead_of": [], "time_box": false, "need_h": null, "margin": null }
+    ],
+    "planned": 684.14, "planned_with_options": 794.14, "alternatives": [], "unallocated": 315.86,
+    "scenarios": [], "yields": [], "gates": [],
+    "uncertain": [
+      { "id": "seis_steps", "basis": "MEASURED", "value": 122477, "differs_in": ["workload: noise-free truth"], "measured_by": "P0b", "cum_spend_through_measured_by": 25.74, "k_budget": 10.36, "k_box": 2.24, "dir": "higher" },
+      { "id": "t_m", "basis": "GUESS", "value": 3e-7, "differs_in": [], "measured_by": "P0b", "cum_spend_through_measured_by": 25.74, "k_budget": 2.61, "k_box": 1.21, "dir": "higher" },
+      { "id": "t_0", "basis": "GUESS", "value": 0.0003, "differs_in": [], "measured_by": "P0b", "cum_spend_through_measured_by": 25.74, "k_budget": 3.02, "k_box": 1.27, "dir": "higher" },
+      { "id": "fs_rate", "basis": "PROXY", "value": 0.2, "differs_in": ["example price"], "measured_by": "P0b", "cum_spend_through_measured_by": 25.74, "k_budget": 14.29, "k_box": null, "dir": "higher" }
+    ],
+    "full_scale": [{ "id": "nocomp", "what": "the same runs without regrouping unfinished members", "usd": 6119.33, "multiple_of_budget": 6.12, "ratio_to_value": null }],
+    "flags": ["time box p2 (8 h, 37% of plan): need not estimated"],
+    "log": []
+  },
+  "given": {
+    "budget_usd": 1000, "budget_covers_storage": true, "budget_covers_tax": false,
+    "price_sheet": {
+      "read_at": "2026-10-16",
+      "instances": [
+        { "gpu": "H100 SXM", "gpu_memory_gb": 80, "n_gpus": 1, "per_gpu_usd_h": 4.29, "page_text": "1x H100 SXM 80 GB $4.29/GPU/hr" },
+        { "gpu": "H100 SXM", "gpu_memory_gb": 80, "n_gpus": 8, "per_gpu_usd_h": 3.99, "page_text": "8x H100 SXM 80 GB $3.99/GPU/hr" }
+      ],
+      "filesystem": { "usd_gib_month": 0.2, "page_text": "$0.20 per GiB per month", "example": true }
+    }
+  },
+  "findings": [
+    { "items": [
+      { "ref": "card:closest_prior", "status": "SUPPORTED", "page_quote": "as little as 20 ensemble members", "note": "150-member EnKF; 20 members captured most of the diversity." },
+      { "ref": "card:anchor", "status": "SUPPORTED", "page_quote": "SEAS benchmark examples", "note": "QDYN ships the BP1 benchmark." },
+      { "ref": "src:s3", "status": "SUPPORTED", "page_quote": "as little as 20 ensemble members", "note": "" },
+      { "ref": "num:fs_rate", "status": "PARTIAL", "page_quote": "for example, $0.20 per GiB per month", "note": "The page gives this as a worked example, not a list price." }
+    ] },
+    { "items": [
+      { "ref": "card:closest_prior", "status": "SUPPORTED", "page_quote": "as little as 20 ensemble members", "note": "" },
+      { "ref": "card:left_open", "status": "UNSUPPORTED", "page_quote": "", "note": "No page checked states that no study goes beyond 150 members." }
+    ] }
+  ],
+  "decision": { "result": "PASS", "blocking": [], "listed": [{ "ref": "num:fs_rate", "status": "PARTIAL" }] },
+  "decision2": { "result": "PASS", "blocking": [], "listed": [{ "ref": "card:left_open", "status": "UNSUPPORTED" }] },
+  "critique": {
+    "scores": [
+      { "criterion": "stakes", "value": 3, "ref": "card:if_not", "reason": "Either outcome moves members against sensors, but only through a synthetic world." },
+      { "criterion": "lever", "value": 5, "ref": "plan:compute_axis", "reason": "Axis spans 1,024x; only ensemble size varies; noise rule uses five truths." },
+      { "criterion": "verifiable", "value": 5, "ref": "card:anchor", "reason": "Scored against a hidden true run after matching an independent code within 1%." },
+      { "criterion": "open", "value": 5, "ref": "card:closest_prior", "reason": "The quoted prior stops at 150 members; the plan states the gap." }
+    ],
+    "decides_by": "P1",
+    "decides_by_reason": "Production gives skill against ensemble size in every arm; the second pass only re-runs."
+  },
+  "beyond_prior": true,
+  "annotations": ["time box p2 (8 h, 37% of plan): need not estimated"],
+  "halted": null,
+  "producer_path": "run/R3/physical/37e545fc/producer.md"
+}
