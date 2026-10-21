@@ -260,3 +260,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:05Z LAUNCH 8 of record: A100 us-east-1, 21:50Z to 2026-10-21T22:05:07Z, USD 0.5 est, exit 2 at the dry-run stage (the engine command of the second invocation exited 2); hold ended by the operator after the evidence was copied. Outputs under out/launch8/. m4 Lambda spend: USD 5.99. Build 25 (fix, opus, 2 min): 20 diff lines in run_m4.py, 3 FIX lines (per-invocation working directories; stdout error lines fail the step).
 - 22:05Z review 15 of build 25 requested
 - 22:06Z stage review on wf.js run 12: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1942991
+- 22:08Z build 25 checks: selftest exit 0
+- 22:08Z review 16 of build 25: PASS, 0 blocking, 7 advisory. LAUNCH 9 issued (build 25: per-invocation working directories at the dry-run stage).
+- 22:08Z LAUNCH 9: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=4.01, pid 1946845, log out/launcher_m4_L9.log
