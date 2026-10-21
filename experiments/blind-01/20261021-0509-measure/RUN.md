@@ -248,3 +248,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:49Z build 23 checks: selftest exit 0
 - 21:50Z review 15 (same files, item 6 as restated): PASS, 0 blocking, 6 advisory. LAUNCH 8 issued.
 - 21:50Z LAUNCH 8: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=4.51, pid 1917582, log out/launcher_m4_L8.log
+- 21:55Z stage build on wf.js run 21: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1925491
+- 21:55Z stage build on wf.js run 22: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1925491
+- 21:56Z build 25 (wf run 22) started by a stale deferred job alongside build 24; killed within 2 minutes, its run folder marked .killed, its args removed; build 24 (run 21) continues alone.
