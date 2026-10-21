@@ -1,0 +1,5 @@
+Operator's mechanical findings on build 7 (no content read):
+1. Environment name read on-box that the launcher does not forward and the on-box script does not set at line start: M4_BASE. Verify it has a default or is set before use. The launcher forwards PRICE_USD_PER_HOUR, BUDGET_LEFT_USD, INSTANCE_TYPE, REMOTE_TIMEOUT, HF_TOKEN, LAMBDA_INSTANCE_ID, GIT_COMMIT only.
+2. One line mentions a key-file name or pattern (.keys, LAMBDA_KEY or HF_KEY): key mention: run_m4.py line 5389 string-literal ['.keys'] reads a file: False. Verify it does not read .keys or print a key (standing rule 8).
+3. Files written by the build: run_m4.py (5,444 lines) and onbox_m4.sh (311 lines) only. Selftest 418 of 418 PASS under the operator's run (out/selftest_build7.log, 4.7 s).
+4. The directive now carries addendum 5 (25 revised items, 10 new, 47 in all); frozen/ONBOX_CONTRACT.md is binding through standing rule 5.

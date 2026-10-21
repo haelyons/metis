@@ -53,3 +53,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 13:18Z build 6 checks: selftest exit 0
 - 13:19Z launcher copies written from m3's (declared points only)
 - 13:19Z stage build on wf.js run 4: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1063698
+- 13:51Z build 7 checks: selftest exit 0
+- 13:52Z review 3 of build 7 requested
+- 13:52Z session review3 started (model sonnet, pid 1111306, session e357077f)
