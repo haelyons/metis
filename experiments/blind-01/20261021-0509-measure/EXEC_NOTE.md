@@ -1,14 +1,17 @@
-# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3) and build 6 (addendum 5)
+# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5) and build 7 (addendum 6)
 
 Binding order: GATE_COMMIT.md answers first (the original answers 1 to 14, then addendum 3 answers B1 to B15, then addendum 5
-answers E1 to E28), this note second, `out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and nothing
-here loosens it. Where silent, the design record binds as written, GUESS values included. The build does not read GATE_COMMIT.md
+answers E1 to E28, then addendum 6 answers F1 to F22), this note second, `out/design_record.json` third;
+`frozen/ONBOX_CONTRACT.md` binds under rule 5 and nothing here loosens it (where it states a docking command order, that order is
+followed, item 52). Where silent, the design record binds as written, GUESS values included. The build does not read GATE_COMMIT.md
 itself; the checklist below carries every gate change the build must implement. This is the measure run m4 of card
 seed:idea:1: one rented single-GPU box, a timer check, an anchor redocking of AAVR-PKD2 onto AAV2 against PDB 6IHB, then four
 inputs (AlphaFold-Multimer hours per run, MD ns/day, auxiliary hours per pair, storage GiB) each read against the card's own
 band. The cap is USD 10 for the whole run, at most two launches. Nothing here has run yet. Items marked `(revised, addendum 3)`
-changed build 2's behaviour and items marked `(revised, addendum 5)` change build 6's; items 38 to 47 are new in addendum 5;
-items 31 to 37 came with addendum 3; the rest stand.
+changed build 2's behaviour, items marked `(revised, addendum 5)` changed build 6's, items marked `(revised, addendum 6)` change
+build 7's; items 48 to 54 are new in addendum 6; items 38 to 47 came with addendum 5; items 31 to 37 came with addendum 3; the
+rest stand. Items 6, 8, 28 and 29 are restated in addendum 6 as single testable requirements; review judges the build against those
+texts.
 
 ## Where to write
 
@@ -18,7 +21,7 @@ The run directory is `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0
 (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does; `ONBOX_CONTRACT.md` is the binding
 execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and are not written by the build.
 
-## Checklist of gate changes the build must carry (47 entries)
+## Checklist of gate changes the build must carry (54 entries)
 
 1. **Order on the box.** install and downloads (with the smoke check, item 33); R1 controls (60 s sleep, empty run,
    unit-and-scale print); anchor (serial, then parallel); per-pair docking and analysis (aux timing); AlphaFold timings
@@ -37,42 +40,60 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
    Records written before the decision that fails carry run_valid true; the run is marked invalid before the failing record is
    written, so a failing sleep record, a failing anchor record and every record after carry run_valid false, and
    `RUN_VALID.json` and the summary agree (E15). Every record's `inputs` lists its rows file, the pip report with its sha256 and
-   the apt hash file (item 34), and the pair evidence file where it applies (item 40).
+   the apt hash file (item 34), and the pair evidence file where it applies (item 40). The records the shell writes on an early
+   abort have the same keys (item 54).
 4. **Selftest (rule 7) (revised, addendum 3).** `python3 run_m4.py --selftest`: stdlib only, no GPU, no network, under 300 s;
    prints `selftest: N of M checks passed`, a line `selftest: files sha256 run_m4.py <hash> onbox_m4.sh <hash>` (item 36), then
    exactly `selftest: PASS` or `selftest: FAIL` as its last line; non-zero exit on FAIL. Planted cases for every parser and for
-   the gate-failure (void) path (items 21 to 29, 31 and 47 list them).
+   the gate-failure (void) path (items 21 to 29, 31, 47, 48 and 49 list them).
 5. **Secrets (rule 8) (revised, addendum 3).** Nothing reads `.keys`; nothing prints its environment (no `env`, `printenv` or
    `set` dump; `env.txt` lists only named non-secret variables); `HF_TOKEN` is used by downloads only: `onbox_m4.sh` unsets
    `HF_TOKEN` and `HUGGING_FACE_HUB_TOKEN` after the downloads, and `run_tool` gives every child a copied environment with both
    removed. Selftest: a planted environment with both variables gives a child environment without them. (B7)
-6. **Labels (rule 9) (revised, addendum 5).** Every measured record carries instance type (`INSTANCE_TYPE`), GPU name and driver
-   (nvidia-smi), CUDA runtime version (the driver's "CUDA Version" from the nvidia-smi header, parsed, plus the JAX CUDA plugin
-   package version; a value that cannot be had is null with a reason, never omitted), engine version and build flags
-   (AlphaFold implementation and its parameter archive sha256, JAX, jaxlib and CUDA-plugin versions and wheel build tags, docking
-   code and version, MD engine, version, precision and platform), start and end wall-clock (UTC, of the stage or run that
-   produced the value, not the record's write time), price per hour. Every C record also carries "stand-in pairs built from 6IHB
-   chains, not the card's pairs", "one GPU; one box; 3 pairs; no multi-GPU scaling" and `n`. C1 adds "no-MSA: alignment search
-   time excluded; understates the card's setting"; C2 the atom count of each complex, the engine precision, platform and version,
-   `timestep_fs`, `production_ns` and the per-complex wall-clock and engine rates; C3 "producer's reading of aux hours"; C4
-   "linear in runs; intermediates kept; MD length 0.5 ns". The anchor adds `independent_code: "not run: single docking code"`.
-   Every record written after a guard, ceiling or timeout stop carries "incomplete run: unmeasured inputs are VOID, not holding"
-   (item 35). Selftest: every record kind the selftest flow writes carries every label key. (E10, E11)
-7. **Nothing interactive; downloads; command (rule 10) (revised, addendum 5).** No prompts anywhere; `sudo` only for declared apt
+6. **Labels (rule 9) (revised, addendum 6; restated as one requirement).** The runner keeps one constant, `REQUIRED_LABEL_KEYS`,
+   mapping each record kind it writes through provenance.py (anchor, C1, C2, C3, C4, sleep control, empty-run control,
+   unit-and-scale) to the keys that its `values.machine` (and, for C records and the anchor, `values.engine`) must hold. A key is
+   never omitted: a value that cannot be had is null and `values.null_reasons[<key>]` is a non-empty string. Taken together the
+   lists for every kind cover these nine labels, each by at least one key whose name contains the stated word: instance type
+   (`instance`), GPU name (`gpu`), driver (`driver`), CUDA runtime version (`cuda`: the driver's "CUDA Version" from the nvidia-smi
+   header, parsed, plus the JAX CUDA plugin package version), engine versions (`version`), build flags (`flags` or `tags`:
+   AlphaFold implementation and its parameter archive sha256, JAX, jaxlib and CUDA-plugin versions and wheel build tags, docking
+   code and version, MD engine, version, precision and platform), start and end wall-clock (`start`, `end`: UTC, of the stage or
+   run that produced the value, not the record's write time), price per hour (`price`). The control kinds need only the
+   machine-level keys (instance, GPU, driver, CUDA, start, end, price); the anchor and C kinds need all. Every C record also
+   carries "stand-in pairs built from 6IHB chains, not the card's pairs", "one GPU; one box; 3 pairs; no multi-GPU scaling" and
+   `n`. C1 adds "no-MSA: alignment search time excluded; understates the card's setting"; C2 the atom count of each complex, the
+   engine precision, platform and version, `timestep_fs`, `production_ns` and the per-complex wall-clock and engine rates; C3
+   "producer's reading of aux hours"; C4 "linear in runs; intermediates kept; MD length 0.5 ns". The anchor adds
+   `independent_code: "not run: single docking code"`. Every record written after a guard, ceiling or timeout stop carries
+   "incomplete run: unmeasured inputs are VOID, not holding" (item 35). Planted selftest case: the selftest flow writes every
+   record kind, and for each asserts that every key in `REQUIRED_LABEL_KEYS[kind]` is present, that every null has a reason, and
+   that the nine-label coverage holds; a planted record with one key removed fails the check, and a planted null without a reason
+   fails it. (E10, E11, F20)
+7. **Nothing interactive; downloads; command (rule 10) (revised, addendum 6).** No prompts anywhere; `sudo` only for declared apt
    packages (the build declares them in `onbox_m4.sh`, `python3-venv` among them), called as
    `sudo -n env DEBIAN_FRONTEND=noninteractive apt-get ...`; `apt-get update` called the same way is allowed as the first step of
    those installs and no other sudo call is (B11, E20); downloads only from the sources in item 14, URL and sha256 recorded for
-   each (pip and apt too, item 34); no unrecorded download, so no `pip install --upgrade pip` (E14); the on-box command the
-   build returns (`onbox_command`) is one line the operator runs verbatim through `remote_run_m4.sh`.
-8. **Broken infrastructure (rule 4) (revised, addendum 5).** Ubuntu 22.04, CUDA 12.8, driver 570, python 3.10, torch 2.7 are
-   preinstalled; anything else is installed by `onbox_m4.sh` inside the time cap. Any failure of install, download, GPU check,
-   smoke check (item 33), tool start, or install-total ceiling (item 28), and any real tool failure (non-zero exit, crash,
-   missing output, no parsable ranked pose, unparsable rank table): exit non-zero with a void record (run_valid false, summary
-   written, `RUN_DONE` with the exit code); never patch around, never substitute a tool or a source. `onbox_m4.sh` sets its exit
-   trap before the venv step, so an abort before `run_m4.py` starts still writes a minimal void record, `RUN_VALID.json` (false)
-   and `RUN_DONE` with exit 2 from the shell itself (E14). A tool call that merely exceeds its stage allowance is not broken
-   infrastructure: it is a ceiling stop (item 29). Exit codes: 2 infrastructure or harness failure, 3 cost or time guard stop, 4
-   anchor miss.
+   each (pip and apt too, item 34); no unrecorded download, so `pip install --upgrade pip` is not used; the one pip bootstrap
+   allowed is the recorded one of item 50 (F14); the on-box command the build returns (`onbox_command`) is one line the operator
+   runs verbatim through `remote_run_m4.sh`.
+8. **Broken infrastructure (rule 4) (revised, addendum 6; restated as one requirement).** Ubuntu 22.04, CUDA 12.8, driver 570,
+   python 3.10, torch 2.7 are preinstalled; anything else is installed by `onbox_m4.sh` inside the time cap. Every outcome maps to
+   exactly one row of this table, and the table is the only source of exit code, `run_valid` and `RUN_DONE` status:
+
+   | Event | Exit | run_valid | `RUN_DONE` per-input status |
+   |---|---|---|---|
+   | install, download, GPU check, smoke check, tool start, install-total ceiling, apt or pip call over its limit, real tool failure (non-zero exit, crash, missing output), no parsable ranked pose, unparsable rank table, sleep check failed, shell abort before the runner starts | 2 | false | `void_by_failure:<kind>` for every input not decided before it |
+   | anchor compared and tolerance missed | 4 | false | `void_by_anchor_miss` for C1 to C4 |
+   | guard refusal, stage ceiling, tool-call timeout, outer timeout (124, or 137 at the deadline) left at least one input unmeasured | 3 | as it was | `unmeasured_by_stop:<kind>` for those inputs, `decided` or `void_by_rule:<reason>` for the others |
+   | every input decided, or void by rule with no stop (not an A100, zero spread, marginal) | 0 | true | `decided` or `void_by_rule:<reason>` |
+
+   Never patch around, never substitute a tool or a source: after a failing tool call no second tool and no second source is
+   tried. Each failure row writes a void record (summary and `RUN_DONE` included) before exit. `onbox_m4.sh` sets its exit trap
+   before the venv step, so an abort before `run_m4.py` starts still writes the shell's void record (item 54) with exit 2. A tool
+   call that merely exceeds its stage allowance is a ceiling stop (item 29), not a failure. Planted selftest cases: one stage-flow
+   case per table row (items 31 and 48), each asserting exit code, `run_valid` and the status strings; a planted failing tool whose
+   call count is asserted equal to 1 (no fallback tried). (E14, F5, F20)
 9. **Caps (rules 1, 2) (revised, addendum 5).** `onbox_m4.sh` reads `PRICE_USD_PER_HOUR`, `BUDGET_LEFT_USD` and `REMOTE_TIMEOUT`
    from its environment, with no default that exceeds `BUDGET_LEFT_USD=5` or `REMOTE_TIMEOUT=7200`, and stops cleanly, writing a
    void record for unfinished work, before projected spend reaches `BUDGET_LEFT_USD` or elapsed time reaches `REMOTE_TIMEOUT`.
@@ -96,8 +117,8 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
 13. **AlphaFold protocol (answer 3) (revised, addendum 5).** One GPU; 5 models; exactly 20 recycles with early stopping off;
     single-sequence input only; no sequence database download and no remote alignment service. Measured = mean wall-clock hours of
     the whole prediction call per run, first-model compile included (the decision value); rows also carry the compile-excluded
-    figure when the log gives per-model times. The parameter files are in place before any timed call (item 39), so no download
-    or extraction time can enter the call.
+    figure when the log gives per-model times. The parameter files are in place before any timed call (items 39 and 51), so no
+    download or extraction time can enter the call.
 14. **Allowed download sources (answer 3).** The PDB entry 6IHB from RCSB; the AlphaFold parameter archive from the
     AlphaFold project's own storage address; Python wheels through pip and declared packages through apt. Each URL and sha256
     recorded. Any other host is not allowed; a failed download stops the run (item 8).
@@ -105,11 +126,17 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     4.5 A, interface residues, distance to the nearest threefold axis, site class) and writing the call-table row; installs,
     downloads and setup excluded; mean over the finished pairs (3 if all finish). One pip-installable docking code, name and
     version recorded.
-16. **Storage (answer 4) (revised, addendum 5).** n_storage_gib = apparent bytes written for one grid run (AlphaFold outputs of
+16. **Storage (answer 4) (revised, addendum 6).** n_storage_gib = apparent bytes written for one grid run (AlphaFold outputs of
     one run; the whole per-pair docking output directory tree, with setup files, copied structures, swarm directories, rank tables
-    and every pose file; MD trajectory and every log of one 0.5 ns segment, the engine rate file included, frame interval
-    recorded), intermediates kept, x 216, / 2^30; the decision value. The record also carries the 432-run figure, the
-    intermediates-deleted figure and MD bytes per ns, as information. (E6, E25)
+    and every pose file; the MD bytes: the trajectory file plus every log of the 0.5 ns segment, namely the engine rate
+    (reporter) file, the tool's stdout and stderr logs and the worker's build and run JSON files), intermediates kept, x 216,
+    / 2^30; the decision value. The MD worker writes the trajectory with OpenMM's `DCDReporter` every 5,000 steps (10 ps at 2 fs,
+    50 frames), and `frame_interval_ps` is recorded on the MD row and in C4's values; the interval is not tuned toward the band.
+    `system.xml`, `solvated.pdb` and any checkpoint are not in the decision value and are reported as `md_setup_bytes`. The
+    record also carries the 432-run figure, the intermediates-deleted figure and MD bytes per ns (MD bytes over 0.5), as
+    information. Planted: an `md_` directory with a 1,000-byte trajectory, a 100-byte reporter file, a 24-byte log, a 5,000-byte
+    `system.xml` and a 7,000-byte `solvated.pdb` gives MD bytes 1,124 and `md_setup_bytes` 12,000; the worker source text names
+    `DCDReporter`. (E6, E25, F3)
 17. **MD protocol (answers 5, 10) (revised, addendum 5).** One docked complex per sampled pair, built as item 41 says: the pair's
     capsid-role chains merged with the top-ranked docking pose of the receptor, explicit solvent, water padding chosen so the
     atom count is inside 120,000 to 180,000; minimise, short equilibration, then a 0.5 ns production segment; one velocity seed
@@ -121,13 +148,16 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     decision VOID with `marginal: true`; the raw value is kept in `measured`.
 19. **Non-A100 GPU (design, does_not_test).** If the GPU is not an A100 (instance fallback), C1 and C2 are VOID with the raw
     number kept and the label "not an A100"; C3 and C4 are still decided and labelled with the GPU.
-20. **Controls first (answer 7) (revised, addendum 5).** After install: planted 60 s sleep (error at most 5 percent, else
+20. **Controls first (answer 7) (revised, addendum 6).** After install: planted 60 s sleep (error at most 5 percent, else
     run_valid false, exit 2); empty-input run, which times the harness itself (the same timer, work-directory creation and
     record path as a real call, around a no-op command, with no AlphaFold, JAX, TensorFlow or docking import) and measures the
     bytes in the directory that call created (time under 2 s and bytes under 1 MiB, else the excess is subtracted from later
-    values, only that harness overhead, and the label "setup overhead subtracted"); one unit-and-scale record (raw AlphaFold
-    seconds, MD engine rate lines with the wall-clock ns/day beside them, raw bytes per artifact). No band is compared before
-    these are written. (E7)
+    values, only that harness overhead, and the label "setup overhead subtracted"); one unit-and-scale record, written after the
+    controls and before any band comparison, which holds worked examples of the unit and scale conversions and says so: its
+    `values.kind` is `"worked_examples"` and `values.raw_values_in` names the rows files that hold the raw AlphaFold seconds, the
+    MD engine rate lines with the wall-clock ns/day beside them, and the raw bytes per artifact (those values cannot exist before
+    the controls, so they are not copied into a second record). Planted: the record has both keys and `raw_values_in` names the
+    AlphaFold, MD and storage rows files. (E7, F9)
 21. **Anchor readout (answer 8; revised, addendum 5).** Contact overlap = fraction of 6IHB interface residue-residue contacts
     (heavy-atom pair at most 4.5 A) that the pose makes; pass if overlap at least 0.50 or interface backbone RMSD at most 5.0 A,
     and serial vs parallel top-pose RMSD at most 2.0 A with identical bind/no-bind calls. Selftest, planted: (0.50, RMSD 9.0)
@@ -144,7 +174,7 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     routes, no overlap (E8): a docking call over its allowance is a ceiling stop (exit 3, anchor undecided, C1 to C4 VOID
     "unmeasured, not holding", run_valid as it was); a docking tool that fails, or leaves no parsable ranked pose, is a harness
     failure (exit 2, run_valid false, raw output kept); exit 4 only when a pose was obtained and compared and the tolerance was
-    missed. `anchor_decision` never receives a missing pose.
+    missed. `anchor_decision` never receives a missing pose. The docking steps and the recorded parameters are item 52.
 22. **C1 selftest (answer 9) (revised, addendum 5).** 1,800 s per run gives 0.5 h; means 0.5 PASS, 1.5 FAIL, 0.1 FAIL, 1.2 VOID
     (marginal; `gate_pass` false), 0.21 VOID, 1.1 PASS with `gate_pass` false and the fallback text, 0.9 PASS with `gate_pass`
     true; n=2 runs VOID with `gate_pass` null; 3 runs missing one pair VOID with `gate_pass` null.
@@ -155,74 +185,91 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     0.5 PASS; 2.5 PASS; 7,200 s install plus 1,800 s docking gives 0.5 h.
 25. **C4 selftest (answer 12) (revised, addendum 5).** 1,073,741,824 bytes per run = 1.0 GiB x 216 = 216.0 PASS (432-run figure
     432.0); 0.1 gives 21.6 FAIL; 4.0 gives 864.0 FAIL; 2.9 gives 626.4 VOID; 0.35 gives 75.6 PASS; files of 1,000 and 24 bytes sum
-    to 1,024; a planted docking tree with a nested swarm directory and a top-level `setup.json` sums every file (E25).
+    to 1,024; a planted docking tree with a nested swarm directory and a top-level `setup.json` sums every file (E25); the MD
+    bytes case of item 16.
 26. **Harness selftest (answer 13).** 62.9 s for the 60 s sleep passes; 63.1 s fails (run_valid false, exit 2); timings (1,800,
     1,830, 1,790) pass the spread check; (1,800, 1,800, 1,800) fails and gives C1 VOID with "zero spread across seeds: wrong
     variance source" while other inputs stand; relative SD 0.6 gives the label "seed spread high; mean is uncertain" only;
     empty run 0.5 s and 100 KiB pass, 5 s or 2 MiB trigger the subtraction label.
-27. **Cost and time selftest (answer 14; revised, addendum 5).** 3,600 s at 1.99 gives 1.99; 7,200 s gives 3.98; with price
+27. **Cost and time selftest (answer 14; revised, addendum 6).** 3,600 s at 1.99 gives 1.99; 7,200 s gives 3.98; with price
     1.99, budget 5, timeout 7,200 the guard stops at the time cap (5 / 1.99 h = 9,045 s is above it); with price 2.50 both caps
     coincide at 7,200 s; with 3.00 the dollar cap stops at 6,000 s; a stage whose estimated remaining time exceeds the time left
     is not started, the guard writes VOID (unmeasured) records for unfinished inputs, keeps finished ones, exits 3, and leaves
     run_valid as it was. The guard is called with an estimate (item 43). The gate-failure (void) path is also planted for: anchor
     miss, sleep failure, install failure, download failure, smoke-check failure. The stage flow itself (not only the functions)
-    is planted in items 31 and 47.
-28. **Stage ceilings (GATE_COMMIT answer B8; revised, addendum 5).** In seconds: install and downloads with the smoke check
-    1,800; controls and anchor 700; per-pair docking and analysis 600 in total, at most 250 per pair; AlphaFold 2,000; MD 1,600,
-    at most 600 per complex; endpoints 100; margin 400; total 7,200. A stage's allowance is the lesser of its ceiling and the
-    time left minus the margin and the endpoints slot. The install ceiling is a running total: every apt, pip, download,
-    extraction and smoke-check call takes `min(its own limit, 1,800 minus install seconds used, the allowance above)`, and
-    exhausting it ends the stage with exit 2 (broken infrastructure, void record, A2(a)), not exit 3. A later stage that hits its
-    ceiling stops and its unfinished inputs are VOID ("unmeasured, not holding", with the full incomplete-run label, item 35).
-    A docking pair that reaches its 250 s is kept as a row with `truncated: true`, not counted in the mean; C3 stays decided if at
-    least 2 pairs finished, else VOID. Selftest: planted install calls whose per-call limits sum past 1,800 s stop at 1,800 s. (E2)
-29. **Gate-failure and guard-stop paths (answers 8, 13, 14; revised, addendum 5).** run_valid false when the anchor misses (exit
-    4), the sleep check fails (exit 2), or infrastructure breaks (exit 2); it propagates to every later record, `RUN_VALID.json`
-    and `m4_summary.json`. A guard stop does NOT set it false: a time-guard refusal to start a stage or unit, a stage ceiling, a
-    tool call exceeding its stage allowance, or the outer timeout voids the unfinished inputs, keeps finished inputs' decisions,
-    leaves run_valid as it was, labels later records "incomplete run: ...", and the run ends with exit 3. `fail_stage` sets
-    run_valid false only for exit 2 and 4. Each early return in `stage_af2`, `stage_aux` and `stage_md` raises `GuardStop` or
-    records the stop in run state that `run_stages` reads; a stage that stopped on a ceiling, guard or timeout is not in
-    `stages_done` even when it returned normally (C3 still decided on 2 finished pairs, item 28); later stages whose own guard
-    allows still start; `stage_endpoints` always runs. Exit 3 is returned only when a guard, ceiling, tool-timeout or
-    outer-timeout stop left an input unmeasured; a VOID by rule with no stop (not an A100, zero spread, marginal) ends with exit
-    0, and `RUN_DONE` carries the exit code and the void reason per input; exit 0 otherwise only when every input was decided
-    by measurement. A timed-out tool's row is kept with `incomplete: true` and is not counted in a mean. (B1, B2, B3, E17, E22)
+    is planted in items 31, 47 and 48. The reported spend is item 53.
+28. **Stage ceilings (GATE_COMMIT answer B8; revised, addendum 6; restated as one requirement).** One table and one formula. Ceilings
+    in seconds: install and downloads with the smoke check 1,800 (a running total); controls 700 and anchor 700 (two stages
+    with separate allowances; in practice the controls take about 70 s, so the pair uses about 770 s and the margin absorbs the
+    70 s); per-pair docking and analysis 600 in total, at most 250 per pair; AlphaFold 2,000; MD 1,600, at most 600 per complex;
+    endpoints 100; margin 400. The ceilings of the seven slots sum to 7,200; that sum is not the guarantee. The guarantee is the
+    allowance: `allowance(stage) = max(0, min(ceiling(stage), REMOTE_TIMEOUT - elapsed_since_T0 - 400 - 100))`, and a stage whose
+    allowance is below its first unit's estimate (item 43) is not started. Install: every apt, pip, download, extraction and
+    smoke-check call is run under `timeout -k 10 <limit>` with `limit = min(its own limit, 1,800 - install seconds used,
+    allowance)`; exhausting the total, or any call over its limit, is exit 2 (item 8), never 3. Every apt call in `onbox_m4.sh`
+    obeys this too; `apt-get update` may retry (at most 10 tries, 15 s apart), each try under its own `timeout`, the whole loop
+    at most 300 s (F7). Docking: a pair that reaches 250 s is kept as a row with `truncated: true`, is not counted in the mean,
+    and the loop continues with the next pair until the stage allowance is gone (F4); C3 is decided if at least 2 pairs
+    finished, else VOID. A later stage that hits its ceiling stops and its unfinished inputs are `unmeasured_by_stop`.
+    Planted: `allowance` with REMOTE_TIMEOUT 7,200 gives install 1,800 at elapsed 0, AlphaFold 700 at elapsed 6,000 (7,200 - 6,000
+    - 500) and 0 at elapsed 6,800 (clamped, not negative, stage not started); install calls with limits 1,000, 1,000 and 1,000 get
+    1,000, 800 and 0 (the third is not started and the stage is exit 2); docking with pair 1 capped and pairs 2 and 3 finished
+    attempts all 3 pairs, n=2, C3 decided, and with pairs 1 and 2 capped attempts all 3, n=1, C3 VOID. (E2, F4, F7, F8, F20)
+29. **Gate-failure and guard-stop paths (answers 8, 13, 14; revised, addendum 6; restated as one requirement).** A stop is exactly
+    one of: guard refusal to start a stage or unit, a stage ceiling, a tool call exceeding its allowance, the outer timeout. A
+    failure (exit 2) and an anchor miss (exit 4) are not stops. When a stop happens, all six hold, and each has a planted flow in
+    item 31 or 48: (1) the stage that stopped is not in `stages_done`, even when it returned normally; (2) the inputs it left
+    unfinished are `unmeasured_by_stop:<kind>` and their records are VOID with the full incomplete-run label (item 35), while every
+    input already decided keeps its decision and its record; (3) `run_valid` is not changed, and the stop never sets it false;
+    (4) a timed-out tool's row is kept with `incomplete: true` and is not counted in a mean; (5) later stages whose own guard
+    allows still start, and `stage_endpoints` always runs (a stop in docking continues with the next pair, F4); (6) the exit is 3
+    if at least one input is `unmeasured_by_stop` at the end, else 0. Each early return in `stage_af2`, `stage_aux` and `stage_md`
+    raises `GuardStop` or records the stop in run state that `run_stages` reads. `fail_stage` sets `run_valid` false only for
+    exit 2 and 4. After an outer timeout `--finalize` follows item 49. Planted: flows (b), (c), (d), (i), (j) of item 31 and the
+    finalize and shell flows of items 48 and 49. (B1, B2, B3, E17, E22, F2, F4, F20)
 30. **Summary and spread (answers 5, 6; revised, addendum 5).** `m4_summary.json` is written without `sort_keys` and its first
     key is `what_this_run_decides`, stating that the run decides the stand-in protocol only; it then restates every record, the
     gate result and the fallback text (item 11); carries no decision of its own; carries the label "seed spread high; mean is
     uncertain" for any pair with relative SD over 50 percent; and carries the full "incomplete run" label after an early stop. No
     relaunch is made for spread. Selftest reads the written file as text and checks the first key. (E9)
-31. **Stage-flow selftest (new, addendum 3, B15).** `run_stages` takes its stage functions and tool runner by injection; the
-    selftest runs the whole flow with fakes and asserts exit code, run_valid, per-input decisions and labels for: (a) all stages
-    finish: exit 0, run_valid true; (b) a time-guard stop in AlphaFold after 2 of 9 runs: exit 3, run_valid true, C1 VOID with
-    raw rows kept, C2 to C4 decided; (c) a tool timeout in MD on the third complex: exit 3, run_valid true, C2 decided on n=2,
-    others untouched; (d) a ceiling stop in docking: exit 3, C3 decided on the finished pairs or VOID below 2; (e) a real tool
-    failure: exit 2, run_valid false, all inputs VOID; (f) anchor miss: exit 4, run_valid false, C1 to C4 VOID; (g) sleep
-    failure: exit 2; (h) install, smoke-check and download failure: exit 2; (i) the outer-timeout route (rc 124): exit 3,
-    run_valid true. Addendum 5 adds: (j) docking timeout in the anchor: exit 3, anchor undecided; (k) docking with no parsable
-    pose: exit 2, run_valid false; (l) not-an-A100 or zero spread with no stop: exit 0 with the VOIDs.
-32. **Process groups and outer timeout (new, addendum 3, B12; revised, addendum 5).** Every tool call (colabfold, the docking
-    code, the OpenMM worker) runs in its own process group and a timeout kills the group; when the outer `timeout` on `run_m4.py`
-    returns 124, or 137 with elapsed time since T0 at least the outer deadline minus 5 s, `onbox_m4.sh` kills the recorded
-    process groups before the endpoints stage and routes the outcome as a guard stop, exit 3, not as `fail`/exit 2; rc 137
-    earlier than that is a failure (exit 2). Each pgid is recorded with its leader's `/proc/<pid>/stat` start time and command
-    name, removed when the tool returns, and signalled only if the leader is alive and both still match (a skipped entry goes to
-    the log). The inner tool timeout is at least 100 s shorter than the outer kill (outer kill = stop_at minus elapsed minus
-    600; inner = stop_at minus elapsed minus 700) so the inner fires first; an outer firing is itself a recorded event.
-    Selftest: a planted tool that sleeps past its allowance is killed with its child and the result is a ceiling stop; planted
-    rc 137 at the deadline gives exit 3, at 100 s exit 2; a stale pgid entry with a different start time is not signalled. (E23)
-33. **Smoke check in the install stage (new, addendum 3, B6; revised, addendum 5).** After every install and inside the 1,800 s
+31. **Stage-flow selftest (new, addendum 3, B15; revised, addendum 6).** `run_stages` takes its stage functions and tool runner by
+    injection; the selftest runs the whole flow with fakes and asserts exit code, run_valid, per-input decisions, labels and the
+    `RUN_DONE` status strings of item 8 for: (a) all stages finish: exit 0, run_valid true; (b) a time-guard stop in AlphaFold
+    after 2 of 9 runs: exit 3, run_valid true, C1 VOID with raw rows kept, C2 to C4 decided; (c) a tool timeout in MD on the
+    third complex: exit 3, run_valid true, C2 decided on n=2, others untouched; (d) a ceiling stop in docking: exit 3, C3 decided
+    on the finished pairs or VOID below 2; (e) a real tool failure: exit 2, run_valid false, all undecided inputs
+    `void_by_failure`; (f) anchor miss: exit 4, run_valid false, C1 to C4 `void_by_anchor_miss`; (g) sleep failure: exit 2; (h)
+    install, smoke-check and download failure: exit 2; (i) the outer-timeout route (rc 124): exit 3, run_valid true. Addendum 5
+    adds: (j) docking timeout in the anchor: exit 3, anchor undecided; (k) docking with no parsable pose: exit 2, run_valid
+    false; (l) not-an-A100 or zero spread with no stop: exit 0 with the VOIDs.
+32. **Process groups and outer timeout (new, addendum 3, B12; revised, addendum 6).** Every tool call (colabfold, the docking
+    code, the OpenMM worker) runs in its own process group and a timeout kills the group; when the outer `timeout` on
+    `run_m4.py` returns 124, or 137 with elapsed time since T0 at least the outer deadline minus 5 s, `onbox_m4.sh` kills the
+    recorded process groups, runs `run_m4.py --finalize` (item 49) before the endpoints stage's records are final, and routes the
+    outcome as a guard stop, exit 3, not as `fail`/exit 2; rc 137 earlier than that is a failure (exit 2). The route is written
+    so that `set -e` cannot abort it: the `--finalize` call and the outer `timeout` call are `RC=0; ... || RC=$?` (item 48).
+    Each pgid is recorded with its leader's `/proc/<pid>/stat` start time and command name, removed when the tool returns, and
+    signalled only if the leader is alive and both still match (a skipped entry goes to the log). The inner tool timeout is at
+    least 100 s shorter than the outer kill (outer kill = stop_at minus elapsed minus 600; inner = stop_at minus elapsed minus
+    700) so the inner fires first; an outer firing is itself a recorded event. Selftest: a planted tool that sleeps past its
+    allowance is killed with its child and the result is a ceiling stop; planted rc 137 at the deadline gives exit 3, at 100 s
+    exit 2; a stale pgid entry with a different start time is not signalled; the shell-level rc 124 flow of item 48. (E23, F1)
+33. **Smoke check in the install stage (new, addendum 3, B6; revised, addendum 6).** After every install and inside the 1,800 s
     install ceiling: import of the AlphaFold-Multimer stack and JAX with a GPU device listed; `colabfold_batch --help`; the
-    docking code's entry point `--help`; OpenMM imported with `Platform.getPlatformByName("CUDA")` succeeding; and each tool
-    resolved by `shutil.which` against the venv PATH with its absolute path recorded (item 38). A failure is exit 2 with a void
-    record before any GPU stage. Every package is pinned by version in the install line; the build chooses the package form
-    whose metadata carries the CUDA platform for OpenMM and what the smoke check imports for colabfold, and a JAX build
-    compatible with the pinned `colabfold`, without substituting a tool; the smoke check decides, not recollection. No trial
-    docking is run in the install stage. (E12, E13)
+    docking code's entry point `--help` and its conformation-generating script's `--help` (item 52); OpenMM imported with
+    `Platform.getPlatformByName("CUDA")` succeeding; and each tool resolved by `shutil.which` against the venv PATH with its
+    absolute path recorded (item 38). A failure is exit 2 with a void record before any GPU stage. Every package is pinned in the
+    install line as `name==version` (extras in brackets allowed); the OpenMM requirement is written in the form that pulls the
+    CUDA platform (the pinned release's CUDA extra, or a sibling pinned requirement whose distribution name starts `openmm-cuda`),
+    and which form was chosen is stated in a comment on `PIP_PINS`; colabfold takes the form whose metadata carries what the
+    smoke check imports, with a JAX build compatible with the pinned `colabfold`, without substituting a tool. The smoke check
+    decides in the box; the operator's metadata check decides before launch 1. No trial docking is run in the install stage.
+    Planted: a `PIP_PINS` parser case in which the OpenMM entry carries an extra or has an `openmm-cuda*` sibling, and an entry
+    without `==` fails the selftest. (E12, E13, F6)
 34. **Downloads recorded in full (new, addendum 3, B13; revised, addendum 5).** pip installs run with `--report`; the report (URL
     and archive hash of each wheel) is kept under `results_m4/out/` and its sha256 is cited in every record's `inputs` (E24); each
-    apt package is recorded with version and the SHA256 from `apt-cache show`; the direct downloads keep URL and sha256.
+    apt package is recorded with version and the SHA256 from `apt-cache show`; the direct downloads keep URL and sha256; the pip
+    bootstrap of item 50, when it runs, is recorded the same way.
 35. **Incomplete-run label (new, addendum 3, B9).** The constant "incomplete run: unmeasured inputs are VOID, not holding" exists
     beside `LABEL_UNMEASURED = "unmeasured, not holding"`; every record and the summary written after a guard, ceiling or
     timeout stop carries the full label. Selftest: a planted early-stopped run's records all contain it.
@@ -236,15 +283,15 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
 38. **Tools resolve through the venv (new, addendum 5, E1, E12, E14).** `onbox_m4.sh` exports `PATH="${VENV}/bin:${PATH}"` before
     the first stage; `run_m4.py` builds `child_env` with the venv bin directory (taken from `sys.executable`'s directory) first
     and calls `colabfold_batch`, `lightdock3.py`, `lightdock3_setup.py` and `lgd_*` by absolute venv path where it can; an
-    unresolved tool is exit 2 in the install stage. `python3-venv` is a declared apt package; the venv's bundled pip is used with
-    no `--upgrade pip`. Selftest: a planted venv directory with an executable stub resolves through `child_env`, not through the
-    bare inherited PATH.
+    unresolved tool is exit 2 in the install stage. `python3-venv` is a declared apt package; the venv's bundled pip is used,
+    after the item 50 check. Selftest: a planted venv directory with an executable stub resolves through `child_env`, not through
+    the bare inherited PATH.
 39. **Parameter archive extracted, no download in a timed call (new, addendum 5, E3).** The install stage verifies the AlphaFold
-    parameter archive's sha256 (recorded), extracts it into `<data>/params`, the same `--data` directory colabfold is given, and
-    verifies the multimer parameter files for the 5 models are present before the smoke check ends; missing is exit 2.
-    Extraction time is install time, never C1 time. A timed call whose log shows a download or extraction gets
-    `download_in_timed_call: true` on its row, is not counted, and C1 is VOID "download inside timed call". Selftest: a planted
-    archive extracts to the expected layout; a planted "Downloading" log line sets the flag.
+    parameter archive's sha256 (recorded), extracts it into `<data>/params`, the same `--data` directory colabfold is given,
+    writes the completion marker(s) of item 51, and verifies the multimer parameter files for the 5 models are present before the
+    smoke check ends; missing is exit 2. Extraction time is install time, never C1 time. A timed call whose log shows a download
+    or extraction gets `download_in_timed_call: true` on its row, is not counted, and C1 is VOID "download inside timed call".
+    Selftest: a planted archive extracts to the expected layout; a planted "Downloading" log line sets the flag.
 40. **Stand-in pair checks and evidence (new, addendum 5, E4).** After building the pairs, assert: each total length in 750 to
     1,000; the three sequences pairwise different; the three lengths pairwise at least 20 residues apart; one capsid-role set and
     one receptor-role set per pair. More than one copy of a capsid chain may be used to reach the range; if the range or the
@@ -253,16 +300,16 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     and copies of the three FASTA files into `results_m4/out/`; each C record cites that file's hash in `inputs`. Selftest: a
     planted short capsid chain fails the range; equal-length pairs fail the spread; planted good pairs pass and the evidence file
     parses.
-41. **MD on the merged complex; engine rate file parsed (new, addendum 5, E5, E6).** The MD input is the pair's capsid-role chains
-    from the stand-in pair file merged with the top-ranked docking pose of the receptor, one structure, chain roles preserved;
-    assert both roles present and a nonzero capsid heavy-atom count before solvation, else exit 2. Water padding is estimated from
-    the solute's extent so the built system has 120,000 to 180,000 atoms, verified on the built system, one rebuild allowed inside
-    the complex's 600 s; if it cannot be met, C2 VOID with the atom count kept. The worker's StateDataReporter file is copied to
-    `results_m4/out/` and is the file parsed for the engine's ns/day (the tool's stdout log is not); a rate file with no
-    parsable rate line gives `engine_ns_per_day: null` and the label "engine rate line missing" and C2 still rests on the
-    wall-clock figure. Selftest: a receptor-only pose is refused; a merged complex passes the role check; a planted reporter
-    file in its real column layout parses; one without a rate line gives null and the label; 129 against 100 fires the
-    disagreement label.
+41. **MD on the merged complex; engine rate file parsed (new, addendum 5, E5, E6; revised, addendum 6).** The MD input is the
+    pair's capsid-role chains from the stand-in pair file merged with the top-ranked docking pose of the receptor, one
+    structure, chain roles preserved; assert both roles present and a nonzero capsid heavy-atom count before solvation, else exit
+    2. Water padding is estimated from the solute's extent so the built system has 120,000 to 180,000 atoms, verified on the built
+    system, one rebuild allowed inside the complex's 600 s; if it cannot be met, C2 VOID with the atom count kept. The worker's
+    StateDataReporter file is copied to `results_m4/out/` and is the file parsed for the engine's ns/day (the tool's stdout log is
+    not); a rate file with no parsable rate line gives `engine_ns_per_day: null` and the label "engine rate line missing" and C2
+    still rests on the wall-clock figure. The worker also writes the DCD trajectory of item 16. Selftest: a receptor-only pose
+    is refused; a merged complex passes the role check; a planted reporter file in its real column layout parses; one without a
+    rate line gives null and the label; 129 against 100 fires the disagreement label.
 42. **Docking pose: top-ranked or nothing (new, addendum 5, E8, E13).** The top pose is the first row of the tool's own rank list
     by its score; a missing named pose file or an unparsable rank table is exit 2 with the raw table kept in `results_m4/out/`;
     the lexicographically first pose is never a fallback. The first use of the docking output in the anchor stage is the rank
@@ -278,53 +325,124 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
 45. **Caches under the run directory (new, addendum 5, E20).** `PIP_CACHE_DIR`, `XDG_CACHE_HOME`, `MPLCONFIGDIR`, `TMPDIR` and
     any JAX or colabfold cache variable the build sets point under `~/m4_run/`. The frozen bootstrap's `~/.local` installs are
     the operator's and are not the build's to change.
-46. **Exit-code vocabulary in `RUN_DONE` (new, addendum 5, E22).** `RUN_DONE` carries the exit code and, per input C1 to C4,
-    decided, void-by-rule with its reason, or unmeasured by a named stop, so A2(a) and A2(b) are readable from it alone.
-47. **The selftest runs the real stage bodies (new, addendum 5, E28; binding).** Besides the injected-fake flows (item 31), the
-    selftest runs the real `stage_*` bodies with the tool runner, clock and filesystem roots injected and fake tool executables
-    in a planted venv bin directory (stdlib only, no GPU, no network, still under 300 s). It asserts at least: tools resolve
-    through the venv PATH (item 38); the parameter directory is populated before a timed call (item 39); the pair assertions
-    (item 40); the MD input holds both chain roles and the reporter file is parsed (item 41); the empty-run control times the
-    harness (item 20); the three docking failure routes (item 21); the install total ceiling (item 28); and the first key of
-    `m4_summary.json` (item 30).
+46. **Exit-code vocabulary in `RUN_DONE` (new, addendum 5, E22; revised, addendum 6).** `RUN_DONE` carries the exit code and, per
+    input C1 to C4, exactly one status of the item 8 table: `decided`, `void_by_rule:<reason>`, `unmeasured_by_stop:<stop kind>`,
+    `void_by_anchor_miss` or `void_by_failure:<kind>`, so A2(a), A2(b) and A2(c) are readable from it alone. After exit 4 no input
+    is `unmeasured_by_stop`; each voided record also carries `voided_by`. Planted: the anchor-miss and failure flows of item 31
+    assert the strings. (F16)
+47. **The selftest runs the real stage bodies (new, addendum 5, E28; binding; revised, addendum 6).** Besides the injected-fake
+    flows (item 31), the selftest runs the real `stage_*` bodies with the tool runner, clock and filesystem roots injected and
+    fake tool executables in a planted venv bin directory (stdlib only, no GPU, no network, still under 300 s). It asserts at
+    least: tools resolve through the venv PATH (item 38); the parameter directory is populated, with its marker file(s), before a
+    timed call (items 39, 51); the pair assertions (item 40); the MD input holds both chain roles, the reporter file is parsed and
+    the trajectory and `frame_interval_ps` are recorded (items 41, 16); the empty-run control times the harness (item 20); the
+    three docking failure routes (item 21) and the docking call order simulate, generate, rank (item 52); the pair loop continues
+    past a capped pair (item 28); the install total ceiling (item 28); the pip version branch (item 50); the spend arithmetic
+    (item 53); and the first key of `m4_summary.json` (item 30).
+48. **Shell-level routing, bounded apt, and the test hook (new, addendum 6, F1, F5, F7, F17).** In `onbox_m4.sh`: (a) no command
+    whose non-zero status is an expected outcome (`run_m4.py`, `run_m4.py --finalize`, the outer `timeout`, the process-group
+    kill helper) is run bare under `set -e`; each is `RC=0; <command> || RC=$?` and the route table reads `RC`; the EXIT trap
+    acts only while `FINISHED=0`, and every normal route sets `FINISHED=1` before its own `exit`. (b) `write_minimal_void
+    <code>` writes run_valid false for code 2 and 4, run_valid true for code 3 unless an existing `RUN_VALID.json` says false
+    (then false is kept), and is never called with 0; it is called only when the runner has not written `RUN_DONE`; when the
+    runner wrote `RUN_DONE` and `RUN_VALID.json` the shell rewrites neither, and its exit code equals the `RUN_DONE` code; a
+    runner that returns 0 with no `RUN_DONE` is treated as code 2. The "no time left after setting up" route is code 3,
+    run_valid true. (c) Every apt call is bounded as item 28 says. (d) Test hook: one block in `onbox_m4.sh` between the lines
+    `# BEGIN TEST HOOKS` and `# END TEST HOOKS`, whose first line tests `M4_SHELL_TEST`, is the only place `M4_TEST_*`
+    variables are read. When `M4_SHELL_TEST=1`, `M4_TEST_ROOT` replaces `~/m4_run`, `M4_TEST_RUNNER` replaces the python runner
+    command (and its `--finalize` form receives `--finalize` as an argument), `M4_TEST_INSTALL_CEILING_S` replaces 1,800, and
+    `M4_TEST_BIN` is put first on PATH; the venv step, pip installs, downloads and the GPU check are skipped, and the apt steps
+    run through whatever `sudo` the test PATH supplies. Without `M4_SHELL_TEST=1` nothing changes. The selftest checks the
+    block markers and that every `M4_TEST_` occurrence lies between them, then runs `bash onbox_m4.sh` through `subprocess` in a
+    temporary root (a missing `bash` is a FAIL) for these planted flows, each asserting the script's exit code, the content of
+    `RUN_VALID.json` and `RUN_DONE`, and which files were left untouched: runner stub rc 0 with its own `RUN_DONE` 0 and
+    `RUN_VALID.json` true: exit 0, both files byte-identical to the stub's; rc 3 with its own files: exit 3, files untouched
+    (the trap did not run); rc 3 with no files: exit 3, run_valid true, full incomplete-run label; rc 4 with no files: exit 4,
+    run_valid false; rc 2: exit 2, run_valid false; rc 0 with no `RUN_DONE`: exit 2; rc 124 at the deadline: the finalize stub is
+    called once and the exit is 3; rc 137 at 100 s: exit 2; `REMOTE_TIMEOUT=10`: exit 3, run_valid true; a stub `sudo` that
+    sleeps 60 s with `M4_TEST_INSTALL_CEILING_S=3`: exit 2 within 30 s with the void record present; a static check that no line
+    invoking the runner lacks `|| RC=$?`. Still no GPU and no network; the whole selftest under 300 s.
+49. **`--finalize` rebuilds status from disk (new, addendum 6, F2, F17).** `run_m4.py --finalize` builds its `RunState` from
+    `results_m4/out/`, not fresh: for the anchor and each C<i> it reads the record, and a record with decision PASS or FAIL, or
+    VOID with `marginal` or a rule reason, is `decided` or `void_by_rule` and is never rewritten (byte-identical afterwards); a
+    missing record, or one that carries `LABEL_UNMEASURED`, is `unmeasured_by_stop:outer_timeout`; `run_valid` is false if
+    `RUN_VALID.json` or any record says false, else true; a FAIL anchor record gives exit 4, `run_valid` false without a FAIL
+    anchor gives exit 2, otherwise exit 3 when at least one input is unmeasured and 0 when none is. Finalize writes only the
+    missing records, `m4_summary.json`, `RUN_VALID.json` and `RUN_DONE`, all with the full incomplete-run label when exit is 3.
+    Selftest: a planted output directory with a decided C3 record and no other record gives C3 `decided` (record unchanged), C1,
+    C2 and C4 `unmeasured_by_stop:outer_timeout`, run_valid true, exit 3; a directory with a FAIL anchor gives exit 4; a directory
+    with all four decided gives exit 0.
+50. **Recorded pip bootstrap (new, addendum 6, F14).** Before the first pinned install, read `pip --version` of the venv: pip 22.2
+    or later proceeds directly; an earlier pip runs one bootstrap inside the install total: `pip download pip==24.0 --no-deps`
+    into a directory under `~/m4_run/` with the verbose log kept, the wheel's sha256 computed by the runner, URL (from the log),
+    sha256 and seconds written to the downloads file, then that local wheel installed with `--no-index`; every later install
+    uses `--report`. No other pip upgrade. An unparsable version string is exit 2. Selftest: "pip 22.0.2 from ..." selects the
+    bootstrap, "pip 23.0.1 from ..." does not, a garbage string is exit 2, and the recorded bootstrap entry has URL, sha256 and
+    seconds.
+51. **Parameter completion marker (new, addendum 6, F12).** After extraction (item 39) the build opens the installed colabfold's
+    own download module (the Python source file under the venv's package directory), reads the completion-marker file name(s) it
+    checks, writes exactly those marker file(s) into `<data>/params`, and records the names it found; if the module names no
+    marker it writes none and records "no marker named". Marker names are never hard-coded from memory. Selftest: a planted
+    module source naming one marker yields that file; naming two yields both; naming none yields none and the record.
+52. **Docking steps and parameters (new, addendum 6, F13).** The docking sequence for the anchor and for every pair is: simulate,
+    then the docking package's conformation-generating script, then `lgd_rank.py`, unless `frozen/ONBOX_CONTRACT.md` states a
+    different order, in which case the contract's order is followed and recorded in the anchor record
+    (`values.docking_order`). The swarm count and other docking parameters are the same for the anchor and the pairs, are written
+    to the anchor record as `values.docking_parameters`, and are not restrained toward the published 6IHB interface. A missing
+    pose file stays exit 2 (item 42); an anchor miss with a pose obtained and compared stays exit 4. Selftest: the fake
+    docking tool records its call order and it is simulate, generate, rank; a fake that skips generation gives exit 2 (no pose
+    file); the anchor record has `docking_parameters` and `docking_order`.
+53. **Spend report (new, addendum 6, F10).** `estimated_spend_usd` = seconds since T0 x `PRICE_USD_PER_HOUR` / 3,600; the pre-T0
+    seconds are reported beside it and not added (T0 already includes the bootstrap, item 44). Selftest: 3,600 s since T0 with 300
+    s pre-T0 gives 1.99 (not 2.16), and 7,200 s gives 3.98.
+54. **The shell's void records carry the rule-6 keys (new, addendum 6, F11).** The shell's minimal void (item 8, row 1, and the
+    code-3 route of item 48) writes `env.txt` (named non-secret variables, including the `REMOTE_TIMEOUT` seen), `m4_summary.json`
+    (first key `what_this_run_decides`), an anchor record and C1 to C4 records each with the provenance.py keys, `values.measured`
+    null, `values.unit`, `values.card_value`, `values.band`, `decision` VOID and `run_valid` per item 48(b), plus
+    `RUN_VALID.json` and `RUN_DONE`. It writes through `frozen/provenance.py` when that imports under the system `python3`
+    (stdlib), else by hand with the same keys. Selftest: the item 48 flows read these files and check the keys.
 
 ## Box
 
 - Instance: `gpu_1x_a100_sxm4` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity; else the cheapest single GPU
   with capacity at no more than USD 2.50/h; the operator records which.
-- Launcher (revised, addendum 5): the operator's per-launch copy `lambda_run_m4.sh` (made from `frozen/lambda_run.sh` at the
-  header's declared points only; the header declares the four added variables and any added fetch line, such as the one for
-  `results_m4/out/RUN_VALID.json`): remote dir `m4_run/`; payload `run_m4.py onbox_m4.sh remote_run_m4.sh frozen/provenance.py`
-  and `data/` recursively if it exists; forwarded env `PRICE_USD_PER_HOUR BUDGET_LEFT_USD REMOTE_TIMEOUT INSTANCE_TYPE`; fetch
-  from `m4_run/results_m4/out/`. `remote_run_m4.sh` is `frozen/remote_run.sh` with only its `cd` line changed to `~/m4_run`; its
-  bootstrap time is counted by the build (item 44).
+- Launcher (revised, addendum 6): the operator's per-launch copy `lambda_run_m4.sh` (made from `frozen/lambda_run.sh` at the
+  header's declared points only; the header declares the four added variables, any added fetch line, such as the one for
+  `results_m4/out/RUN_VALID.json`, and the changed `REMOTE_TIMEOUT` default of 7200): remote dir `m4_run/`; payload `run_m4.py
+  onbox_m4.sh remote_run_m4.sh frozen/provenance.py` and `data/` recursively if it exists; forwarded env `PRICE_USD_PER_HOUR
+  BUDGET_LEFT_USD REMOTE_TIMEOUT INSTANCE_TYPE`; fetch from `m4_run/results_m4/out/`. `remote_run_m4.sh` is
+  `frozen/remote_run.sh` with only its `cd` line changed to `~/m4_run`; its bootstrap time is counted by the build (item 44).
 - Caps: `REMOTE_TIMEOUT=7200`; `BUDGET_LEFT_USD=5` per launch; two launches at most within USD 10.
 - Payload layout on the box: `~/m4_run/run_m4.py`, `~/m4_run/onbox_m4.sh`, `~/m4_run/frozen/provenance.py`, `~/m4_run/data/...`
   if shipped. Results under `~/m4_run/results_m4/out/`.
 - The build's `onbox_command` is a single line the operator runs verbatim on the box through `remote_run_m4.sh`
   (`bash remote_run_m4.sh bash onbox_m4.sh`).
 
-## Local selftest (revised, addendum 5)
+## Local selftest (revised, addendum 6)
 
 `python3 run_m4.py --selftest` is stdlib-only and runs under `timeout 300`: no GPU, no network. It covers every parser
 (engine rate line and reporter file, MD log and production wall-clock, AlphaFold timing rows, docking rank and contact tables,
-byte counts, nvidia-smi labels including the CUDA version header, pip report, `etimes`), the marginal rule, the planted cases of
-items 21 to 27, the stage-flow cases of item 31, the real-stage-body cases of item 47, the process-group kill of item 32, the
-child-environment and venv-PATH cases of items 5 and 38, the incomplete-run label of item 35, the void path of item 29, record
-writing through `frozen/provenance.py`, and the file-hash line of item 36. No local tool run (no AlphaFold, docking or MD).
+byte counts, nvidia-smi labels including the CUDA version header, pip report, pip version string, `etimes`, the colabfold marker
+names), the marginal rule, the planted cases of items 21 to 27, the stage-flow cases of item 31, the real-stage-body cases of
+item 47, the shell-level flows of item 48 (it runs `bash onbox_m4.sh` under the test hook), the finalize flows of item 49, the
+process-group kill of item 32, the child-environment and venv-PATH cases of items 5 and 38, the incomplete-run label of item 35,
+the void path of items 8 and 29, the label-key check of item 6, record writing through `frozen/provenance.py`, and the file-hash
+line of item 36. No local tool run (no AlphaFold, docking or MD).
 
-## What the runner writes (`results_m4/out/`) (revised, addendum 5)
+## What the runner writes (`results_m4/out/`) (revised, addendum 6)
 
 - `endpoint-anchor_tag-m4.json` and `endpoint-C1_tag-m4.json` to `endpoint-C4_tag-m4.json`, plus one provenance.py record
   for each control (60 s sleep, empty run, unit-and-scale), each with `cell`, `inputs` with hashes, `metric`, `values`,
-  `threshold`, `decision_rule` written before values, `decision`, `run_valid`.
+  `threshold`, `decision_rule` written before values, `decision`, `run_valid`; the labels of item 6; the anchor's
+  `docking_parameters` and `docking_order` (item 52).
 - Raw rows, one JSON line each (`rows_<arm>_tag-m4.jsonl`): every AlphaFold run (pair, seed, wall-clock, per-model times when
   available, `incomplete` when timed out, `download_in_timed_call`), every docking and analysis timing (`truncated` when it hit
-  its per-pair cap), every MD segment (complex, atom count, steps, wall-clock, engine rate or null), every storage measurement
-  (artifact, apparent bytes).
-- `pairs_tag-m4.json` and the three pair FASTA files (item 40); the MD reporter files and the raw docking rank tables (items 41,
-  42).
+  its per-pair cap), every MD segment (complex, atom count, steps, wall-clock, engine rate or null, `frame_interval_ps`), every
+  storage measurement (artifact, apparent bytes).
+- `pairs_tag-m4.json` and the three pair FASTA files (item 40); the MD reporter files, the DCD trajectory's size record and the
+  raw docking rank tables (items 41, 42, 16).
 - `RUN_VALID.json`; `env.txt` (named non-secret variables only, including the `REMOTE_TIMEOUT` seen and the pre-T0 seconds);
   `m4_summary.json` (first key `what_this_run_decides`); download, install, smoke-check and tool logs; the pip report and the
-  apt package hashes (item 34); the `RUN_DONE` marker with the exit code (3 after any guard, ceiling or timeout stop with inputs
-  unmeasured) and the per-input status (item 46).
+  apt package hashes (item 34), the pip bootstrap entry when it ran (item 50), the colabfold marker record (item 51); the
+  `RUN_DONE` marker with the exit code (3 after any guard, ceiling or timeout stop with inputs unmeasured) and the per-input
+  status of item 8 (item 46).

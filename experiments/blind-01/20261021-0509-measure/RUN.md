@@ -59,3 +59,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 13:53Z build 7 checks: selftest exit 0
 - 13:59Z gate 6 (addendum) requested
 - 13:59Z stage gate on wf.js run 2: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1123134
+- 14:07Z build 7 checks: selftest exit 0
+- 14:08Z launcher copies written from m3's (declared points only)
+- 14:08Z stage build on wf.js run 5: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1135509

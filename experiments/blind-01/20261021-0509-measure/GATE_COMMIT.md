@@ -61,10 +61,10 @@ item, 0 author items, 7 instrument items, 0 shared items: 14 answers.
    slot, 3 seeds each: 9 AlphaFold timings, 3 MD timings, 3 auxiliary timings, 3 storage measurements. QUESTION.md names no
    structure for the 9 card pairs, so the pairs are stand-ins and every record says so ("stand-in pairs built from 6IHB chains,
    not the card's pairs"). The build builds each stand-in as a hetero-multimer from chains of the 6IHB entry (capsid-protein and
-   PKD2 chain copies), with total length inside 750 to 1,000 residues and the three lengths spread across that range as far as the
-   entry allows; it records chain ids, sequences, lengths and file hash. AlphaFold runs go seed-major (all three pairs at seed 0,
-   then seed 1, then seed 2) so a time stop leaves every pair covered. Minimums for a decision: C1 needs at least 3 completed
-   runs covering all 3 pairs; C2 at least 2 complexes (the median of two is their mean; the record says n=2); C3 at least 2
+   PKD2 chain copies), with total length inside 750 to 1,000 residues and the three lengths spread across that range as far as
+   the entry allows; it records chain ids, sequences, lengths and file hash. AlphaFold runs go seed-major (all three pairs at seed 0,
+   then seed 1, then seed 2) so a time stop leaves every pair covered. Minimums for a decision: C1 needs at least 3
+   completed runs covering all 3 pairs; C2 at least 2 complexes (the median of two is their mean; the record says n=2); C3 at least 2
    pairs; C4 at least one run of each artifact type it scales; below a minimum the record is VOID with the raw rows kept. The
    card's seed-to-seed SD of calls and the 9-pair spread are not measured; the labels say so.
 
@@ -597,3 +597,237 @@ Build 5 authorised
 OPERATOR: declare in the header of `lambda_run_m4.sh` the added fetch line for `results_m4/out/RUN_VALID.json` (or remove it; the out directory fetch already covers the file) and re-diff the file against `frozen/lambda_run.sh` before launch 1.
 OPERATOR: leave `remote_run_m4.sh` as `frozen/remote_run.sh` with only the `cd` line changed to `~/m4_run`; the build now counts the bootstrap time itself, so no change to the frozen bootstrap is needed.
 OPERATOR: before launch 1 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk; keep `REMOTE_TIMEOUT=7200`, `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (or the chosen instance's price, at most 2.50) and `INSTANCE_TYPE` forwarded as before.
+
+---
+
+## Addendum 6 (2026-10-21)
+
+Rules on `out/gate_report_build7.md`: the operator's mechanical note (three rulings asked: (a), (b), (c)) and review 3 of build 7
+(execution layer, run on `wf.js`; verdict FAIL: 7 BLOCKING, 10 ADVISORY, 4 operator findings it verified, an 8-point checklist
+summary). Inputs added for this addendum: that report, this file as it stood, `EXEC_NOTE.md` as it stood, and the task text of
+this session, which is not a source of rulings. The gate ran nothing and did not read `run_m4.py`, `onbox_m4.sh` or
+`frozen/ONBOX_CONTRACT.md`; each ruling rests on the reviewer's line references, taken as reported, and the reviewer's
+"unverified" and "as far as I recall" findings are ruled as risks with a mechanical test or an operator check, never on the
+recollection itself. The two shape-example files named in the task are outside this session's readable directory; this addendum
+follows the shape of the sections above. Every earlier section stands except where an answer below says it is superseded: F14
+supersedes the "no `pip install --upgrade pip`" sentence of E14, and F8 restates the controls and anchor ceiling of B8. Answers
+are numbered F1 to F22: F1 to F7 the blocking findings (report numbers 1 to 7), F8 to F17 the advisory findings (report numbers 8
+to 17), F18 the four operator findings, F19 the checklist summary, F20 to F22 the operator's three asks (a), (b), (c). Counts: 22
+answers. The line `Build 6 authorised` at the end is the launcher's literal string for the next build; it does not renumber the
+earlier builds (the build it authorises is build 8).
+
+**Decision on budget and build (addendum).** GO stands. No GPU money has been spent: no launch record is among the inputs and
+review 3 ran nothing. Cap arithmetic unchanged: 2 launches x 2.00 h x USD 1.99 = USD 7.96; with 600 s outside each, 2 x (7,200 +
+600) s = 15,600 s = 4.333 h x 1.99 = USD 8.62; under the USD 10 cap with USD 1.38 left; `BUDGET_LEFT_USD=5` per launch above the
+3.98 a launch can cost. No ruling below adds a launch, a download source or install time beyond the 1,800 s install total (the
+pip bootstrap of F14 and the bounded apt calls of F7 sit inside it). Findings 1, 2, 3, 4, 5 and 7 would each have spent a launch
+with a wrong outcome or an unscorable record; finding 6 would have spent the install stage; that is why they are binding.
+
+### Blocking findings (F1 to F7)
+
+1. **F1 (finding 1, BLOCKING: `set -e` aborts `onbox_m4.sh` on the runner's exit 3; the trap then overwrites the outcome).**
+   ACCEPTED. In `onbox_m4.sh` no command whose non-zero status is an expected outcome (`run_m4.py`, `run_m4.py --finalize`, the
+   outer `timeout`, any `kill_recorded_groups` helper) is ever run bare under `set -e`: each is written in the form
+   `RC=0; <command> || RC=$?` (or runs between `set +e` and `set -e`), and the route table after it reads `RC`. The EXIT trap acts
+   only while `FINISHED=0`; every normal route (runner rc 0, 2, 3, 4, outer timeout 124 or 137) sets `FINISHED=1` before the script's
+   own `exit`. The outer-timeout route ends as exit 3 with run_valid as it was. Tests: item 48 of EXEC_NOTE (shell-level flows) and a
+   static check that no line invoking the runner lacks the `|| RC=$?` form.
+
+2. **F2 (finding 2, BLOCKING: `--finalize` builds a fresh `RunState`; decided inputs are reported unmeasured).** ACCEPTED. The
+   finalize path rebuilds status from the records on disk, as EXEC_NOTE item 49 states: decided records are read and never
+   rewritten, `run_valid` is read from `RUN_VALID.json` and the records (false if any says false), the anchor decision from its
+   record, and only inputs with no decided record become `unmeasured_by_stop:outer_timeout`. A relaunch of a decided input
+   stays unauthorised (A2), which is why a wrong "unmeasured" there is blocking. Test: a planted output directory holding a decided C3
+   and no other record; finalize reports C3 decided (and its record byte-identical afterwards), C1, C2 and C4 unmeasured, run_valid
+   true, exit 3.
+
+3. **F3 (finding 3, BLOCKING: C4's MD bytes are not the quantity item 16 defines; no trajectory, no frame interval).** ACCEPTED.
+   The MD worker writes a trajectory with OpenMM's `DCDReporter` at a fixed frame interval of 10 ps (5,000 steps at 2 fs, 50
+   frames over the 0.5 ns segment), recorded as `frame_interval_ps` on the MD row and in C4's values; the interval is a recorded
+   choice and is not tuned toward the band. The MD bytes of C4 are the apparent bytes of the trajectory file plus every log of the
+   segment (the reporter file, the tool's stdout and stderr logs, the worker's build and run JSON files); `system.xml`,
+   `solvated.pdb` and any checkpoint are not in the decision value and are reported as `md_setup_bytes` (information).
+   `md_bytes_per_ns` is the MD bytes over the 0.5 ns production. Test: item 16 and item 47 as revised (a planted `md_` directory
+   with a 1,000-byte trajectory, 100-byte reporter file, 24-byte log, 5,000-byte `system.xml` and 7,000-byte `solvated.pdb`
+   gives MD bytes 1,124 and `md_setup_bytes` 12,000; the worker's source text names `DCDReporter`; a real-stage-body run with a
+   fake worker that writes a trajectory records a non-null `frame_interval_ps`).
+
+4. **F4 (finding 4, BLOCKING: a pair at its 250 s cap ends the pair loop, so pairs 2 and 3 never run).** ACCEPTED. The pair loop
+   keeps the capped pair as a `truncated: true` row and continues with the next pair; it stops only when the stage allowance is
+   gone or the guard refuses a unit (estimate above allowance, item 43). C3 is decided when at least 2 pairs finished (not
+   truncated), else VOID with every row kept. Test, in the real `stage_aux` body with a fake docking runner: pair 1 capped, pairs 2
+   and 3 finished gives 3 rows (one truncated), n=2, C3 decided; pairs 1 and 2 capped and pair 3 finished gives 3 rows, n=1, C3
+   VOID; the number of attempted pairs equals 3 in both.
+
+5. **F5 (finding 5, BLOCKING: `write_minimal_void` always writes run_valid false, including for exit 3 and exit 0).** ACCEPTED.
+   `write_minimal_void <code>` follows the item 8 table: code 2 and code 4 write `run_valid: false`; code 3 writes
+   `run_valid: true` unless an existing `RUN_VALID.json` says false, in which case false is kept (a guard stop leaves run_valid as it
+   was); code 0 is never passed (a runner that returns 0 without a `RUN_DONE` is treated as code 2). The shell calls it only when
+   the runner has not written `RUN_DONE`; when the runner wrote `RUN_DONE` and `RUN_VALID.json`, the shell neither rewrites them nor
+   lets the trap rewrite them, and its own exit code equals the one in `RUN_DONE`. The "no time left after setting up" path
+   (the code-3 call at report line 226) writes run_valid true, exit 3, label "incomplete run: unmeasured inputs are VOID, not
+   holding". Test: item 48 flows.
+
+6. **F6 (finding 6, BLOCKING: `PIP_PINS` names plain `openmm==8.2.0`; item 33 requires the CUDA-carrying form).** ACCEPTED, and
+   made mechanical because the reviewer's recollection is not a ruling and the gate cannot read package metadata. The build
+   writes the OpenMM requirement in the form that pulls the CUDA platform: the pinned release's CUDA extra (`openmm[cuda12]` if
+   that extra is declared by 8.2.0) or a sibling pinned requirement whose distribution name starts `openmm-cuda`; which form it
+   chose, and that it is a choice, is stated in a comment on `PIP_PINS`. Every entry of `PIP_PINS` is `name==version`
+   (extras in brackets allowed). The metadata question (does the pinned release declare the extra, is the CUDA plugin
+   distribution's name as written) is decided by the operator's check before launch 1 (Operator actions); a mismatch is a build
+   re-run under A2(a)'s rule, never a hand edit. The smoke check of item 33 stays the in-box test. Test: a planted `PIP_PINS`
+   parser case: the OpenMM entry carries an extra or has an `openmm-cuda*` sibling; an entry without `==` fails the selftest.
+
+7. **F7 (finding 7, BLOCKING: `apt-get update` and `apt-get install` have no `timeout`).** ACCEPTED. Every apt call in
+   `onbox_m4.sh` runs as `timeout -k 10 <limit> sudo -n env DEBIAN_FRONTEND=noninteractive apt-get ...`, with
+   `limit = min(its own limit, 1,800 minus install seconds used so far, REMOTE_TIMEOUT minus elapsed minus 500)` (item 28's
+   install running total, kept in the shell as seconds since T0 minus the seconds at install start, not only counted afterwards).
+   `apt-get update` keeps its retries (at most 10 tries, 15 s apart) but each try takes its own `timeout` and the whole update
+   loop is bounded at 300 s. A call that times out, or an exhausted install total, is exit 2 with a void record (E2; A2(a)); no
+   guard exists yet at this point, so the shell writes the void record itself (F11). Test: item 48 (a planted `sudo` that
+   sleeps 60 s with the test install ceiling at 3 s ends the script as exit 2 within 30 s with the void record).
+
+### Advisory findings (F8 to F17)
+
+8. **F8 (finding 8, ADVISORY: controls and anchor take separate 700 s allowances, up to about 770 s together).** ACCEPTED AS BUILT, with
+   item 28 restated to say what is true: controls and anchor are two stages with separate allowances (the controls take about 70 s
+   in practice: the 60 s sleep and the empty run), the combined use is bounded by 1,400 s in the worst case and about 770 s in
+   practice; the 400 s margin absorbs the 70 s. What guarantees the 7,200 s is the allowance clamp (the lesser of ceiling and time
+   left minus margin and endpoints slot), not the ceiling sum, and item 28 now says so. No code change; planted clamp cases are in
+   item 28.
+
+9. **F9 (finding 9, ADVISORY: the unit-and-scale record holds worked examples only; item 20 lists raw values that cannot exist
+   before the controls).** ACCEPTED; the directive was self-contradictory and is corrected, not the build. The record written
+   after the controls states what it holds: `values.kind: "worked_examples"` and `values.raw_values_in` listing the rows files that
+   will hold the raw AlphaFold seconds, engine rate lines and bytes. The raw values are not copied into a second record. Item
+   20 and answer 7(c) are read that way (the raw values exist in the rows files and the band comparison still waits for the
+   controls). Test: the planted record has both keys and `raw_values_in` names the AlphaFold, MD and storage rows files.
+
+10. **F10 (finding 10, ADVISORY: `spend_usd` adds `pre_t0_seconds` although T0 already includes the bootstrap).** ACCEPTED; numbered
+    item 53. `estimated_spend_usd` = (seconds since T0) x price / 3,600 and nothing else; the pre-T0 seconds are reported
+    beside it, not added. The guard already used `stop_at_s`. Test: planted elapsed 3,600 s with pre-T0 300 s gives 1.99, not 2.14;
+    7,200 s gives 3.98.
+
+11. **F11 (finding 11, ADVISORY: the shell's minimal void records lack `unit`, `card_value`, `band`, and no `env.txt` or
+    `m4_summary.json` is written on an early abort).** ACCEPTED, because rule 6 asks a script to score the records without a model
+    and a shell abort is a launch outcome. Numbered item 54: the shell's minimal void writes `env.txt` (named non-secret variables,
+    including the `REMOTE_TIMEOUT` seen), `m4_summary.json` (first key `what_this_run_decides`), an anchor record and C1 to C4
+    records, each with the provenance.py keys, `values.measured` null, `values.unit`, `values.card_value`, `values.band`, `decision`
+    VOID, `run_valid` per F5, and `RUN_VALID.json` and `RUN_DONE`. It writes through `frozen/provenance.py` when that imports under
+    the system `python3` (stdlib), else with the same keys by hand. Test: item 48 flows read these files.
+
+12. **F12 (finding 12, ADVISORY, unverified: no completion marker in `params/`, so colabfold may fetch its own archive inside the
+    first timed call and C1 is VOID with exit 0).** ACCEPTED as a risk and made a numbered item (51), because that outcome would
+    consume the launch with no relaunch authorised. After extraction the build reads the installed colabfold's own download
+    module in the venv (the Python source file under the package directory) for the completion-marker file name(s) it checks,
+    writes exactly those marker files into `<data>/params`, and records the names it found; if the module names no marker, it
+    writes none and records "no marker named". Marker names are never hard-coded from memory. The E3 rule stands (a download in a
+    timed call voids C1). Pre-authorisation A2 gains (c) below. Test: a planted package source naming a marker yields that marker
+    file; one naming none yields none and the record; a planted module naming two markers writes both.
+
+13. **F13 (finding 13, ADVISORY, unverified: no conformation-generating step; `-s 2` swarms; an anchor miss is probable).** ACCEPTED in
+    part. (a) The build restores the docking step that writes the pose files, between simulation and ranking (simulate, then the
+    docking package's conformation-generating script, then `lgd_rank.py`), unless `frozen/ONBOX_CONTRACT.md` states a different
+    order, in which case the contract's order is followed and recorded. The smoke check adds that script's `--help` and its
+    `shutil.which` path. A missing pose file stays exit 2 (E8b). (b) The swarm count and other docking parameters are the build's
+    engineering choice, are the same for the anchor and for the pair dockings, are recorded in the anchor record
+    (`values.docking_parameters`), and are not restrained toward the published interface: restraining to 6IHB contacts would make
+    the anchor trivially pass and is not authorised. A miss with a pose obtained and compared is exit 4 and a result; no relaunch (A2).
+    Item 52. Test: the planted docking call sequence is simulate, generate, rank in that order; the anchor record has
+    `docking_parameters`; a fake docking tool that skips generation gives exit 2 (no pose file).
+
+14. **F14 (finding 14, ADVISORY, unverified: `pip install --report` needs pip 22.2 or later; Ubuntu 22.04's venv pip may be
+    22.0.2; E14 forbids upgrading).** ACCEPTED, and E14's ban is superseded in this one respect, because failing the first install
+    step as exit 2 would spend a launch on a known toolchain gap. Item 50: the build reads `pip --version`; if it is 22.2 or later
+    it proceeds; if earlier it runs one recorded bootstrap inside the install total: download `pip==24.0` with `pip download
+    pip==24.0 --no-deps` into a directory under `~/m4_run/` with the verbose log kept, compute the wheel's sha256 itself, record
+    URL (from the log), hash and wall-clock in the downloads file, then install that local wheel with `--no-index`; every later
+    install uses `--report`. No other pip upgrade is allowed. The source is PyPI, which is already a named source (item 14).
+    Test: planted `pip --version` strings: "pip 22.0.2 ..." selects the bootstrap, "pip 23.0.1 ..." does not, and a garbage string is
+    exit 2; the bootstrap's recorded entry has URL, sha256 and seconds.
+
+15. **F15 (finding 15, ADVISORY: the launcher copy keeps `REMOTE_TIMEOUT=${REMOTE_TIMEOUT:-5400}`).** ACCEPTED; operator matter, no
+    build change. The launch environment sets `REMOTE_TIMEOUT=7200` explicitly, and the copy's default is changed to 7200 and declared
+    in its header (Operator actions). The build already labels an unset value (item 9).
+
+16. **F16 (finding 16, ADVISORY: after an anchor miss C1 to C4 are written "unmeasured, not holding" and `RUN_DONE` says
+    `unmeasured_by_a_stop`).** ACCEPTED; item 46 is revised. `RUN_DONE` names, per input, exactly one of `decided`,
+    `void_by_rule:<reason>`, `unmeasured_by_stop:<stop kind>`, `void_by_anchor_miss`, `void_by_failure:<kind>`. After exit 4 every
+    input is `void_by_anchor_miss` and none is `unmeasured_by_stop`; after exit 2 every input not decided before the failure is
+    `void_by_failure:<kind>`. The record labels stay as before and each voided record also carries `voided_by`. Test: the planted
+    anchor-miss flow (f) and failure flow (e) assert these strings.
+
+17. **F17 (finding 17, ADVISORY: the selftest never runs the shell script or `--finalize`).** ACCEPTED and made binding, because
+    findings 1, 2 and 5 sit entirely in that gap. Item 48 adds a shell-level layer and item 49 a finalize layer, both inside the
+    selftest. The shell layer runs `onbox_m4.sh` itself through `subprocess` (stdlib; `bash` is required, a missing `bash` is a
+    selftest FAIL, not a skip) in a temporary root, with planted runner exit codes, under the test hook defined in item 48. Still
+    no GPU, no network, under 300 s.
+
+### Operator findings and checklist summary (F18, F19)
+
+18. **F18 (the four operator findings, verified by the reviewer).** ACCEPTED AS-IS. (1) `M4_BASE` is read only as a fallback after
+    `--base` and the script always passes `--base`: not a defect. (2) The `.keys` text at `run_m4.py:5389` is a selftest regex over
+    the program's own source; nothing reads `.keys`: not a defect. (3) Only `run_m4.py` and `onbox_m4.sh` are new under the run
+    directory: consistent with rule 5. (4) The contract binding: stands; on its docking order the answer is F13(a) (the contract's
+    order wins where it states one).
+
+19. **F19 (checklist summary, points 1 to 8).** ACCEPTED. Point 1 (EXEC_NOTE items 16, 28, 29, 32, 33 and 46 not carried) is answered
+    by F1 to F7 and F16 and those items are revised in EXEC_NOTE. Point 2 (cost and time; apt is the unbounded step) is F7. Point
+    3 (finalize loses decided status) is F2. Points 4 to 6 (secrets clean; writes only under `~/m4_run/`; launcher differs only at
+    declared points) and 8 (`onbox_command` is `bash remote_run_m4.sh bash onbox_m4.sh`) read as carried; nothing changes
+    except F15's launcher default. Point 7 (selftest log ends `selftest: PASS`, 418 of 418, hashes agree with the build return):
+    accepted as evidence; the operator's local re-run and hash comparison (B14) remains the check, and the next count will be
+    higher because items 48 and 49 add cases.
+
+### The operator's three asks (F20 to F22)
+
+20. **F20 (ask (a): each item cited in two or more reviews restated as one unambiguous, mechanically testable requirement with a planted
+    selftest case, or dropped with the reason).** ACCEPTED; none is dropped, because each carries a standing rule (items 6, 8 and 29
+    carry rules 6, 4 and 3 and 4; item 28 carries rule 2). In EXEC_NOTE, items 28 and 29 (cited in all three reviews) and items 6 and 8
+    (cited in two) are rewritten in place, marked `(revised, addendum 6)`: item 6 as a per-record-kind key list held in one constant
+    that the selftest checks against every record the flow writes; item 8 as a table of events with exit code, run_valid and
+    `RUN_DONE` status; item 28 as a ceiling table plus one allowance formula with planted clamp values; item 29 as six numbered
+    consequences of a stop, each with its planted flow. Review 4 judges the build against those restated texts, not against the older prose.
+
+21. **F21 (ask (b): every advisory finding accepted as-is for launch 1 of record, or made a numbered item).** Rulings: F8 accepted as
+    built (item 28 restated, no code change); F9 numbered as the corrected wording of item 20 (no new item); F10 numbered item 53; F11
+    numbered item 54; F12 numbered item 51; F13 numbered item 52; F14 numbered item 50; F15 accepted as an operator matter (no build
+    item); F16 numbered as the revision of item 46; F17 numbered items 48 and 49. No advisory is left unanswered and none is deferred
+    silently. The four findings the reviewer marked "unverified" (F12, F13, F14, and F6's metadata) are ruled as mechanical items and
+    operator checks, not as facts.
+
+22. **F22 (ask (c): is build 8 authorised; may launch 1 proceed on build 8 if review 4 reports zero blocking findings whatever its
+    advisory ones).** BUILD 8 IS AUTHORISED (the literal line below). YES: if review 4 of build 8 reports zero BLOCKING findings, launch
+    1 may proceed on build 8 with its advisory findings recorded in RUN.md and not ruled again, provided all of: (i) the build's own
+    selftest passes and the operator's local re-run prints the same two sha256 values as the files on disk (B14); (ii) the operator
+    actions below are done; (iii) review 4 had `frozen/ONBOX_CONTRACT.md` on its read list (E26) and states it checked against it;
+    (iv) A1's instance and cap limits hold. "Blocking" means a finding that would make a launch end with the wrong exit code or
+    run_valid, an unscorable or missing record, a repeat of a decided input, a spend past the caps, or a read of a secret; an advisory
+    is anything else. If review 4 reports any blocking finding, the gate rules again in an addendum 7, and no launch happens. No GPU
+    money is spent by builds or reviews, so this loop costs no launch budget.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Cap: 7,200 s = 2.00 h x 1.99 = 3.98; two
+launches 7.96; with 600 s each outside 8.62; under 10. Ceilings unchanged: 1,800 + 700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200;
+the controls (about 70 s) add to that only against the 400 s margin (F8), and the allowance clamp is what holds the total. F7: the
+update loop bound 300 s and each install call limit sit inside the 1,800 s install total. F10 planted: 300 s of bootstrap is already
+inside T0, so 3,600 s since T0 is USD 1.99 (3,600 / 3,600 x 1.99), and the wrong figure the finding describes is (3,600 + 300) / 3,600
+x 1.99 = 2.156. F3 planted: 1,000 + 100 + 24 = 1,124 and 5,000 + 7,000 = 12,000; 50 frames x 10 ps = 0.5 ns. F4 planted: pair caps
+250 + 250 leave 100 s of the 600 s stage total, above the 60 s pair estimate, so a third pair still starts. Counting: the report has
+17 numbered findings (7 blocking, 10 advisory), 4 operator findings, an 8-point summary and 3 asks; answers F1 to F22 cover all.
+The report's checklist point 7 (418 of 418) was not re-run; the gate cannot.
+
+**Pre-authorisation (addendum).** A1 stands unchanged. A2 stands with one addition: **A2(c)** launch 2 is also authorised, within the
+same USD 10 total, if launch 1 ended with C1 VOID for `download_in_timed_call` (no measurement exists for it; the cause is recorded in
+RUN.md and the build is re-run if its code changes); launch 2 then reruns the anchor first and only the unfinished inputs. A shell
+abort before `run_m4.py` starts (exit 2 with the shell's void record, F11) is a halt under A2(a). Not authorised, as before: a
+relaunch to double seeds, to repeat a decided input, to change a band, or after an anchor miss. No launch is authorised until the
+new build exists, its selftest passes with matching hashes (B14), review 4 meets F22, and the operator has done the actions below.
+
+Build 6 authorised
+
+## Operator actions
+
+OPERATOR: the three lines of addendum 5 stand (declare the `RUN_VALID.json` fetch line in the header of `lambda_run_m4.sh`; `remote_run_m4.sh` is `frozen/remote_run.sh` with only the `cd` line changed to `~/m4_run`; re-run `python3 run_m4.py --selftest` locally and compare the two sha256 values with the files on disk before launch 1).
+OPERATOR: set `REMOTE_TIMEOUT=7200` in the launch environment and change line 41 of `lambda_run_m4.sh` from `${REMOTE_TIMEOUT:-5400}` to `${REMOTE_TIMEOUT:-7200}`, declared in the file's header with the other changed points (F15).
+OPERATOR: before launch 1 read the package-index metadata for every requirement in `PIP_PINS` of `run_m4.py` (each pinned version exists; each extra named in a requirement is declared by that release; any `openmm-cuda*` sibling name exists) and write the result into RUN.md; a mismatch is a build re-run, not a hand edit (F6).
+OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of review 4 (F22).
