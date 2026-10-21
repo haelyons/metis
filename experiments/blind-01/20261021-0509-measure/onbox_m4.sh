@@ -940,6 +940,9 @@ hold_open() {
   fi
   mv "$OUT" "$RUN_DIR/results_m4/held_attempt_1"
   mkdir -p "$OUT"
+  # The note of how the hold ended belongs with the restarted attempt too.
+  [ -f "$RUN_DIR/results_m4/held_attempt_1/HOLD_END" ] && \
+    cp "$RUN_DIR/results_m4/held_attempt_1/HOLD_END" "$OUT/HOLD_END"
   HELD_ATTEMPTS=1
   ENV_TXT_WRITTEN=0
   say "the first attempt is kept in results_m4/held_attempt_1; restarting once"

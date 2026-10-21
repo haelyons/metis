@@ -1,0 +1,6 @@
+Operator's mechanical findings on build 20 (no content read):
+1. Build 20 (opus, 7 min, in place on the directive regenerated after launch 6): run_m4.py 5,013 lines (+326 diff lines vs build 18), onbox_m4.sh 979 lines (+55); the on-box script now mentions RESUME 3 times. No stray files; no key-file mentions. Author's tests (third revision, 48 tests, 1,695 lines) compile; they passed 48/48 on the box in launch 6.
+2. Launch 6 evidence (out/launch6/): env_check PASS; tests PASS; downloads and three controls recorded; the dry-run stage failed and voided the run; the hold was inspect-only and RESUME ended the run. Build 20 is the gate's response (addendum 17 in GATE_COMMIT.md; directive items 1 to 31; '## Build 20: exactly these changes').
+3. Verify: the fix to the failed stage follows the directive's ruling; RESUME re-runs from the failed stage with the files as they are; the hold honours HOLD_SECONDS as forwarded; the records contract, guard and anchor logic unchanged except where the directive says.
+4. Environment of record unchanged (lock f2b089a164ab…); launcher unchanged since launch 3 except the tests payload paths.
+5. Launch 7 follows a PASS (zero REQUIRED blocking findings); the cap is the owner's extended budget (USD 4.48 spent).

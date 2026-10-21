@@ -208,3 +208,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 20:56Z gate run 12 on launch 6: EXEC_NOTE.md regenerated (31 items, '## Build 20: exactly these changes', RESUME 8 and HOLD_SECONDS 5 mentions) but no addendum appended and an off-format reply; build 20 started on the directive; the gate asked again for the ruling of record (addendum 16).
 - 20:57Z launch 6: inspect-only hold ended early by the operator (RESUME) after the live records were copied; nothing further to inspect on the box.
 - 21:01Z LAUNCH 6 of record: A100 us-east-1, 20:31Z to 2026-10-21T21:00:47Z, USD 1.0 est, exit 2 after setup, tests (48/48), downloads and controls; failed at the dry-run stage; box terminated. Outputs under out/launch6/ (live copies under out/launch6/live). m4 Lambda spend: USD 4.48.
+- 21:04Z build 20 checks: selftest exit 0
+- 21:04Z review 10 of build 20 requested
+- 21:04Z stage review on wf.js run 7: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1847932
+- 21:04Z build 20 (opus, 7 min): +326/+55 diff lines, RESUME re-run wiring present; gate addendum 17 (10 answers, 31 items). Review 11 started.
