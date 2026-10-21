@@ -510,8 +510,9 @@ launch() {
   cd "$MDIR" || return 1
   local n; n=$(ls out/launch*.json 2>/dev/null | wc -l); n=$((n+1))
   local spent; spent=$($PY -c 'import json,glob; print(round(sum((json.load(open(j)).get("usd_est") or 0) for j in glob.glob("out/launch*.json")+glob.glob("out/envbuild*.json")), 2))')   # launches and environment builds
-  local left; left=$($PY -c "print(round(10 - $spent, 2))"); [ "$($PY -c "print(1 if $left > 0.5 else 0)")" = 1 ] || { echo "launch $n refused: USD $spent of the USD 10 calibration cap already spent (owner rule)"; return 1; }
-  budget=$($PY -c "print(min(float('$budget'), $left))"); echo "calibration cap: USD $spent spent, USD $left left; this launch's BUDGET_LEFT_USD=$budget"
+  local cap=${CAP_USD:-20}   # owner 2026-10-21 evening: budget extended beyond the USD 10 calibration cap; more compute is guaranteed when the cap is hit
+  local left; left=$($PY -c "print(round($cap - $spent, 2))"); [ "$($PY -c "print(1 if $left > 0.5 else 0)")" = 1 ] || { echo "launch $n refused: USD $spent of the USD $cap cap already spent"; return 1; }
+  budget=$($PY -c "print(min(float('$budget'), $left))"); echo "cap USD $cap: USD $spent spent, USD $left left; this launch's BUDGET_LEFT_USD=$budget"
   [ -r .keys ] || { echo "no readable .keys"; return 1; }
   for f in "lambda_run_$TAG.sh" "remote_run_$TAG.sh" "onbox_$TAG.sh" "run_$TAG.py" frozen/provenance.py; do [ -f "$f" ] || { echo "missing $f"; return 1; }; done
   local rv; rv=$(ls out/review_build*.json 2>/dev/null | sort -V | tail -1); [ -n "$rv" ] && grep -q '"PASS"' "$rv" || { echo "latest review is not PASS ($rv)"; return 1; }

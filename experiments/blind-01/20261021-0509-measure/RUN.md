@@ -274,3 +274,4 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:27Z build 26 checks: selftest exit 0
 - 22:27Z review 17 of build 26: PASS, 0 blocking, 6 advisory. LAUNCH 10 issued (build 26: anchor-stage fix).
 - 22:27Z LAUNCH 10: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=3.66, pid 1975813, log out/launcher_m4_L10.log
+- 22:28Z cap of record raised from USD 10 to USD 20 for later launches (owner 2026-10-21: budget extended, fine to hit the cap, more compute guaranteed); launch 10 already carries BUDGET_LEFT_USD 3.66 under the old arithmetic (about 1.84 h at USD 1.99/h, inside the 2 h window).
