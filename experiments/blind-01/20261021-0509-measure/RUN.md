@@ -201,3 +201,8 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 20:49Z gate 16 (addendum) requested
 - 20:49Z stage gate on wf.js run 12: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1824904
 - 20:49Z build 19 (fix build, opus, 4 min) changed nothing; gate addendum requested on launch 6's failed stage with the live evidence, the classifier's letters and the builder's non-change; also asks for RESUME-re-runs and the hold length.
+- 20:54Z build 19 checks: selftest exit 0
+- 20:55Z stage build on wf.js run 17: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1833502
+- 20:56Z gate 17 (addendum) requested
+- 20:56Z stage gate on wf.js run 13: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1833502
+- 20:56Z gate run 12 on launch 6: EXEC_NOTE.md regenerated (31 items, '## Build 20: exactly these changes', RESUME 8 and HOLD_SECONDS 5 mentions) but no addendum appended and an off-format reply; build 20 started on the directive; the gate asked again for the ruling of record (addendum 16).

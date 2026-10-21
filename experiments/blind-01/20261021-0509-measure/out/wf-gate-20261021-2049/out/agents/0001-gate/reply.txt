@@ -1,0 +1,14 @@
+`GATE_COMMIT.md` is not finished, so I have not sent the one-line reply the task asks for.
+
+- **`EXEC_NOTE.md` is written.** It is regenerated with 31 items: 27 required for launch and 4 reporting only. The closing section is "Build 20: exactly these changes".
+- **`GATE_COMMIT.md` has no Addendum 16 yet.** The Edit tool is disabled in this session. The file is about 100k tokens long, so rewriting it in full with Write would be unreliable. I did not append with Bash, because the task says to run nothing.
+- **The addendum is drafted but not saved anywhere.** I would need to re-send it. It has 11 answers (S1–S11), the line `Build 16 authorised`, and an operator-actions section.
+
+The key rulings in the draft:
+
+- **Defect and fix:** the launch-6 failure is a bug in `run_m4.py`. `parse_rank_table` drops every row whose field count differs from the header's, so it reports "a header but no rows". The four docking tools had all exited 0. The fix is in item 26 of `EXEC_NOTE.md`: read the table as written and never drop a row.
+- **Failure evidence:** I could not read the raw rank table, because it is missing from `out/launch6_live/`. A second defect at the pose step is possible. I added a diagnostic file so the next failure can be classified.
+- **Restart and hold:** RESUME restarts the runner once from its first stage. The hold wait gets a clock-based loop, signal traps and a `HOLD_END` record explaining why it ended.
+- **Budget and launches:** USD 4.18 is spent, USD 5.82 remains, and one more launch at its caps costs USD 4.311. No launch follows it.
+
+Decision for you: should I append the addendum with a Bash `cat >>`, or will you re-enable Edit?
