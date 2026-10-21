@@ -453,16 +453,18 @@ PYEOF
 }
 
 # ---------- tests: a claim-blind author writes the acceptance tests from the directive (measure/tests_stage.js); the builder never sees them ----------
-tests() {
-  pop_via "$@"
+tests() {   # [--failures <tests record json>] revises the tests after a box run
+  pop_via "$@"; set -- "${REST[@]}"; local fr="" rest2=(); while [ $# -gt 0 ]; do case "$1" in --failures) fr="$(realpath "$2")"; shift ;; *) rest2+=("$1") ;; esac; shift; done; REST=("${rest2[@]}")
   cd "$MDIR" || return 1; mkdir -p tests
   local n; n=$(ls out/tests*_args.json 2>/dev/null | wc -l); n=$((n+1))
   [ -f "tests/tests_$TAG.py" ] && { mkdir -p "out/tests$((n-1))"; cp "tests/tests_$TAG.py" "out/tests$((n-1))/"; }
-  $PY - "$MDIR" "$TAG" "$n" <<'PYEOF'
+  $PY - "$MDIR" "$TAG" "$n" "$fr" <<'PYEOF'
 import json, sys
-m, tag, n = sys.argv[1:4]
-json.dump({"directive": f"{m}/EXEC_NOTE.md", "contract": f"{m}/frozen/ONBOX_CONTRACT.md", "design_record": f"{m}/out/design_record.json", "question": f"{m}/QUESTION.md",
-           "out_file": f"{m}/tests/tests_{tag}.py", "tag": tag, "results_dir_on_box": f"results_{tag}/out"}, open(f"{m}/out/tests{n}_args.json", "w"), indent=1)
+m, tag, n, fr = sys.argv[1:5]
+a = {"directive": f"{m}/EXEC_NOTE.md", "contract": f"{m}/frozen/ONBOX_CONTRACT.md", "design_record": f"{m}/out/design_record.json", "question": f"{m}/QUESTION.md",
+     "out_file": f"{m}/tests/tests_{tag}.py", "tag": tag, "results_dir_on_box": f"results_{tag}/out"}
+if fr: a["failure_report"] = fr
+json.dump(a, open(f"{m}/out/tests{n}_args.json", "w"), indent=1)
 print(f"out/tests{n}_args.json written")
 PYEOF
   logrun "TESTS $n: claim-blind author on wf.js (flags [${REST[*]}])"
