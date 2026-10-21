@@ -94,7 +94,13 @@ function fileTokens(value) {
 }
 function declined(pred, value, exists) {
   if (!pred || value == null) return false
-  if (pred === 'no_files') { const t = fileTokens(value); return t.length > 0 && !t.some(exists) }
+  if (pred === 'no_files') {
+    // judge the fields that are meant to hold the written files (runner_py, onbox_sh, *_py, *_sh, files...) when present,
+    // else the whole reply; a command field naming an existing helper script must not rescue a stop report
+    const sub = (value && typeof value === 'object' && !Array.isArray(value)) ? Object.fromEntries(Object.entries(value).filter(([k]) => /(_py|_sh|_js|_files?|_paths?)$/i.test(k) || /^(files?|paths?)$/i.test(k))) : {}
+    const t = fileTokens(Object.keys(sub).length ? sub : value)
+    return t.length > 0 && !t.some(exists)
+  }
   throw new Error(`unknown declined_if predicate "${pred}"`)
 }
 
@@ -155,12 +161,14 @@ function selftest() {
   assert.equal(declined('no_files', { runner_py: 'STOP: nothing written; /x/other.py would have been the runner', onbox_sh: 'STOP' }, ex), true)
   assert.equal(declined('no_files', { runner_py: 'STOP: the directive contradicts itself', onbox_sh: 'STOP' }, ex), false)   // names no file: not judged
   assert.equal(declined('no_files', { built: { runner_py: '/x/missing.py' } }, ex), true)
+  assert.equal(declined('no_files', { runner_py: 'STOP: /x/missing.py not written', onbox_sh: 'STOP: /x/missing.sh not written', onbox_command: 'bash remote_run_m4.sh bash /x/missing.sh', expected: '' }, p => p === 'remote_run_m4.sh'), true)   // a helper named in the command does not rescue a stop
+  assert.equal(declined('no_files', { runner_py: 'Wrote /x/run_m4.py', onbox_sh: 'Wrote /x/missing.sh', onbox_command: 'bash x.sh' }, ex), false)
   assert.deepEqual(fileTokens({ a: 'run x.py and /p/q/r.sh, then "z.json".', b: 1 }).sort(), ['/p/q/r.sh', 'x.py', 'z.json'])
   assert.equal(declined(null, {}, ex), false); assert.throws(() => declined('bogus', {}, ex))
   assert.equal(handover(cfg, 'fallback', 'declined'), true)
   assert.equal(resolve(withDefaults({ routes: [{ match: '^build$', declined_if: 'no_files' }] }), { label: 'build', role: 'ls-builder' }).declined_if, 'no_files')
   assert.equal(claudeTools(cfg, 'qt-bare'), ''); assert.equal(claudeTools(cfg, 'ls-builder'), 'Read,Write,Edit,Glob,Grep,Bash'); assert.equal(claudeTools(cfg, 'unknown-role'), 'Read,Glob,Grep')
-  console.log('understudy selftest: 40 checks passed')
+  console.log('understudy selftest: 42 checks passed')
 }
 
 module.exports = { TIER, KINDS, familyOf, otherFamily, claudeModel, withDefaults, roleFor, resolve, classify, handover, declined, fileTokens, claudeTools, CLAUDE_TOOLS }

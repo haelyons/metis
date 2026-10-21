@@ -12,7 +12,8 @@
 #                           --family, --mode, --on-refusal pass through) under out/wf-<stage>-<stamp>/
 #   gate [--addendum <f>] [--via wf ...]   headless gate writer (read/write tools only): GATE_COMMIT.md + EXEC_NOTE.md; --via wf runs
 #                           the same instruction file as one agent() call on wf.js (measure/prompt_stage.js, role ls-writer)
-#   build                   headless operator: Workflow mode build -> run_<tag>.py onbox_<tag>.sh; then bash -n,
+#   build [--keep]          headless operator: Workflow mode build -> run_<tag>.py onbox_<tag>.sh; then bash -n,
+#                           (--keep leaves the previous build's files in place for a directive that asks for edits)
 #                           py_compile, the selftest to a log, hashes
 #   review [--via wf ...]   headless reviewer (read/write tools only): checklist -> out/review_build<N>.{md,json}; --via wf as for gate
 #   launcher                lambda_run_<tag>.sh + remote_run_<tag>.sh from m3's per-launch copies, declared points only
@@ -219,9 +220,12 @@ EOF2
 build() {
   [ -s "$MDIR/GATE_COMMIT.md" ] && [ -s "$MDIR/EXEC_NOTE.md" ] || { echo "no GATE_COMMIT.md / EXEC_NOTE.md yet"; return 1; }
   pop_via "$@"
+  local keep=0 rest2=(); for a in "${REST[@]}"; do [ "$a" = --keep ] && keep=1 || rest2+=("$a"); done; REST=("${rest2[@]}")
   local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); n=$((n+1)); local name="build$n"
-  if [ -f "$MDIR/run_$TAG.py" ] || [ -f "$MDIR/onbox_$TAG.sh" ]; then   # archive the previous build's files
-    mkdir -p "$MDIR/out/build$((n-1))"; mv -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files archived under out/build$((n-1))/"
+  if [ -f "$MDIR/run_$TAG.py" ] || [ -f "$MDIR/onbox_$TAG.sh" ]; then   # the previous build's files: archived, or kept in place for an incremental build (--keep)
+    mkdir -p "$MDIR/out/build$((n-1))"
+    if [ $keep = 1 ]; then cp -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files copied to out/build$((n-1))/ and KEPT in place (--keep)"
+    else mv -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files archived under out/build$((n-1))/"; fi
   fi
   $PY - "$MDIR" "$TAG" "$n" <<'PYEOF'
 import json, sys

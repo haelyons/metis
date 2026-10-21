@@ -62,3 +62,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 14:07Z build 7 checks: selftest exit 0
 - 14:08Z launcher copies written from m3's (declared points only)
 - 14:08Z stage build on wf.js run 5: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1135509
+- 14:11Z build 8 (wf run 1402): opus stopped in 18 s, no files; its report counts 2 'missing/not found' phrases and the directive refers to build 7 (in place 1, rewrite 1); the operator had archived build 7's files before the build. Files restored; build 9 runs with --keep (files left in place) and the tightened declined predicate (file-bearing fields only), Claude first, mimo understudy on a stop.
+- 14:12Z stage build on wf.js run 6: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1140515
