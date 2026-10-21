@@ -17,6 +17,7 @@
 #                           py_compile, the selftest to a log, hashes
 #   review [--via wf ...]   headless reviewer (read/write tools only): checklist -> out/review_build<N>.{md,json}; --via wf as for gate
 #   launcher                lambda_run_<tag>.sh + remote_run_<tag>.sh from m3's per-launch copies, declared points only
+#   tests [--via wf flags]  claim-blind author writes tests/tests_<tag>.py from the directive and contract (builder never sees it)
 #   fix --fs <name> [--via wf flags]  bounded fixer on a held box (HOLD marker): env and glue only, git commits on the box, verifier after
 #   envbuild --fs <name>    build the environment of record once on a box onto the named filesystem (measure/env_build.sh):
 #                           pins and apt lists of record as data; hold-open for a fixer on failure; results_env/out/env_report.json
@@ -387,7 +388,7 @@ envbuild() {
   echo "env payload: pins $(wc -l < env/pins.txt), apt $(wc -l < env/apt.txt), env_build.sh $(wc -l < env/env_build.sh) lines (sha256 $(sha256sum env/env_build.sh | cut -c1-12)…)"
   ENV_FS_NAME="$fs" launcher_env || return 1
   [ -r .keys ] || { echo "no readable .keys"; return 1; }
-  pgrep -f "lambda_run_env.sh" >/dev/null && { echo "an env launcher is already running"; return 1; }
+  pgrep -f "lambda_run_env[.]sh" >/dev/null && { echo "an env launcher is already running"; return 1; }
   local n; n=$(ls out/envbuild*.json 2>/dev/null | wc -l); n=$((n+1))
   local spent; spent=$($PY -c 'import json,glob; print(round(sum((json.load(open(j)).get("usd_est") or 0) for j in glob.glob("out/launch*.json")+glob.glob("out/envbuild*.json")), 2))'); echo "cap: USD $spent spent so far (extended budget; recorded)"
   echo "== capacity"; rm -f out/.capacity.json.fallback
@@ -399,16 +400,16 @@ envbuild() {
   $PY -c 'import json,sys; json.dump({"n":int(sys.argv[1]),"kind":"envbuild","type":sys.argv[2],"region":sys.argv[3],"timeout_s":int(sys.argv[4]),"hold_s":int(sys.argv[5]),"price_usd_h":float(sys.argv[6]),"fs":sys.argv[7],"started":sys.argv[8],"log":sys.argv[9]}, open(sys.argv[10],"w"), indent=1)' \
     "$n" "$type" "$region" "$timeout" "$hold" "$price" "$fs" "$(now)" "$log" "out/envbuild$n.json"
   ( REMOTE_TIMEOUT=$timeout HOLD_SECONDS=$hold ENV_FS="/lambda/nfs/$fs" ENV_TAG="$TAG" PRICE_USD_PER_HOUR=$price INSTANCE_TYPE=$type setsid nohup bash lambda_run_env.sh "$type" "$region" env_build.sh results_env > "$log" 2>&1 < /dev/null & )
-  sleep 5; local pid; pid=$(pgrep -f "lambda_run_env.sh" | head -1)
+  sleep 5; local pid; pid=$(pgrep -f "lambda_run_env[.]sh" | head -1)
   logrun "ENVBUILD $n: $type @ $region, filesystem $fs, REMOTE_TIMEOUT=$timeout, HOLD_SECONDS=$hold, pid ${pid:-?}, log $log"
   echo "envbuild $n started: pid ${pid:-?}, log $log"
 }
 env_status() {   # masked view of an env build: launcher lines, hold marker, env_report summary when fetched
   cd "$MDIR" || return 1
   for j in out/envbuild*.json; do [ -s "$j" ] || continue; local log; log=$($PY -c 'import json,sys; print(json.load(open(sys.argv[1]))["log"])' "$j")
-    echo "  $j: $($PY -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["type"], "@", d["region"], "fs", d["fs"], "started", d["started"], "ended", d.get("ended") or "-")' "$j"); launcher $(pgrep -f "lambda_run_env.sh" >/dev/null && echo running || echo exited)"
+    echo "  $j: $($PY -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["type"], "@", d["region"], "fs", d["fs"], "started", d["started"], "ended", d.get("ended") or "-")' "$j"); launcher $(pgrep -f "lambda_run_env[.]sh" >/dev/null && echo running || echo exited)"
     [ -f "$log" ] && launch_tail "$log" | tail -6 | sed 's/^/      /'
-    local ip; ip=$(awk '{print $2}' .last_lambda_instance 2>/dev/null); [ -n "$ip" ] && pgrep -f "lambda_run_env.sh" >/dev/null && echo "      box: $(timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "ls $TAG_run/HOLD $TAG_run/RESUME 2>/dev/null | tr '\n' ' '; echo; tail -2 $TAG_run/out/run_detached.log 2>/dev/null | grep -oE '^\[env\] [0-9:]+ [a-z]+:?' " 2>/dev/null | tr '\n' ' ')"
+    local ip; ip=$(awk '{print $2}' .last_lambda_instance 2>/dev/null); [ -n "$ip" ] && pgrep -f "lambda_run_env[.]sh" >/dev/null && echo "      box: $(timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "ls ${TAG}_run/HOLD ${TAG}_run/RESUME 2>/dev/null | tr '\n' ' '; echo; tail -2 ${TAG}_run/out/run_detached.log 2>/dev/null | grep -oE '^\[env\] [0-9:]+ [a-z]+:?' " 2>/dev/null | tr '\n' ' ')"
   done
   [ -f results_env/out/env_report.json ] && $PY -c "
 import json; r=json.load(open('results_env/out/env_report.json')); print('  env_report: status', r.get('status'), '| imports ok', r.get('all_imports_ok'), '| dists', len(r.get('dists') or []), '| modules failing', sum(1 for d in (r.get('dists') or []) for m in d.get('modules', []) if not m.get('ok')), '| lock', (r.get('lock_sha256') or '')[:12], '| commits', r.get('git_commits'), '| elapsed', r.get('elapsed_s'), 's')"
@@ -443,6 +444,24 @@ PYEOF
   logrun "FIX $n requested on the held box (fixer_stage.js, flags [${rest2[*]}])"
   ( cd "$REPO" && setsid nohup node dut/pipeline/launch.js "$NAME_EXP" stage --measure "$MDIR" --stage fix "${rest2[@]}" > "$SESS/wf-fix$n.out" 2>&1 < /dev/null & )
   sleep 4; echo "fixer started (run $n); watch with: measure.sh status"
+}
+
+# ---------- tests: a claim-blind author writes the acceptance tests from the directive (measure/tests_stage.js); the builder never sees them ----------
+tests() {
+  pop_via "$@"
+  cd "$MDIR" || return 1; mkdir -p tests
+  local n; n=$(ls out/tests*_args.json 2>/dev/null | wc -l); n=$((n+1))
+  [ -f "tests/tests_$TAG.py" ] && { mkdir -p "out/tests$((n-1))"; cp "tests/tests_$TAG.py" "out/tests$((n-1))/"; }
+  $PY - "$MDIR" "$TAG" "$n" <<'PYEOF'
+import json, sys
+m, tag, n = sys.argv[1:4]
+json.dump({"directive": f"{m}/EXEC_NOTE.md", "contract": f"{m}/frozen/ONBOX_CONTRACT.md", "design_record": f"{m}/out/design_record.json", "question": f"{m}/QUESTION.md",
+           "out_file": f"{m}/tests/tests_{tag}.py", "tag": tag, "results_dir_on_box": f"results_{tag}/out"}, open(f"{m}/out/tests{n}_args.json", "w"), indent=1)
+print(f"out/tests{n}_args.json written")
+PYEOF
+  logrun "TESTS $n: claim-blind author on wf.js (flags [${REST[*]}])"
+  ( cd "$REPO" && setsid nohup node dut/pipeline/launch.js "$NAME_EXP" stage --measure "$MDIR" --stage tests "${REST[@]}" > "$SESS/wf-tests$n.out" 2>&1 < /dev/null & )
+  sleep 4; echo "tests author started (run $n)"
 }
 
 # ---------- launch ----------
@@ -487,7 +506,7 @@ launch() {
   echo "$st" | grep -q '^selftest: PASS' || { echo "pre-launch selftest did not PASS"; return 1; }
   local want; want=$(echo "$st" | grep -oE '[0-9a-f]{64}' | sort); local have; have=$(sha256sum "run_$TAG.py" "onbox_$TAG.sh" | awk '{print $1}' | sort)
   [ "$want" = "$have" ] && echo "pre-launch selftest PASS; its printed hashes match the files on disk" || { echo "pre-launch selftest hashes differ from the files on disk"; return 1; }
-  pgrep -f "lambda_run_$TAG.sh" >/dev/null && { echo "a launcher is already running"; return 1; }
+  pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null && { echo "a launcher is already running"; return 1; }
   [ "$timeout" -le 7200 ] || { echo "timeout above 7,200 s (owner rule)"; return 1; }
   echo "== capacity"; rm -f out/.capacity.json.fallback
   if ! lambda_capacity "$type" "$region" 2.50; then
@@ -499,7 +518,7 @@ launch() {
   $PY -c 'import json,sys; json.dump({"n":int(sys.argv[1]),"type":sys.argv[2],"region":sys.argv[3],"timeout_s":int(sys.argv[4]),"budget_left_usd":float(sys.argv[5]),"price_usd_h":float(sys.argv[6]),"started":sys.argv[7],"log":sys.argv[8]}, open(sys.argv[9],"w"), indent=1)' \
     "$n" "$type" "$region" "$timeout" "$budget" "$price" "$(now)" "$log" "out/launch$n.json"
   ( REMOTE_TIMEOUT=$timeout PRICE_USD_PER_HOUR=$price BUDGET_LEFT_USD=$budget INSTANCE_TYPE=$type setsid nohup bash "lambda_run_$TAG.sh" "$type" "$region" "onbox_$TAG.sh" "results_$TAG" > "$log" 2>&1 < /dev/null & )
-  sleep 5; local pid; pid=$(pgrep -f "lambda_run_$TAG.sh" | head -1)
+  sleep 5; local pid; pid=$(pgrep -f "lambda_run_${TAG}[.]sh" | head -1)
   logrun "LAUNCH $n: $type @ $region, REMOTE_TIMEOUT=$timeout, BUDGET_LEFT_USD=$budget, pid ${pid:-?}, log $log"
   echo "launch $n started: pid ${pid:-?}, log $log"
 }
@@ -510,7 +529,7 @@ launch_finish() {   # fills end/hours/usd into out/launch<n>.json once the launc
   $PY - "$MDIR" <<'PYEOF'
 import json, sys, glob, os, datetime, re
 m = sys.argv[1]
-for j in sorted(glob.glob(f"{m}/out/launch*.json")):
+for j in sorted(glob.glob(f"{m}/out/launch*.json") + glob.glob(f"{m}/out/envbuild*.json")):
     d = json.load(open(j))
     if d.get("ended"): continue
     log = f"{m}/{d['log']}"
@@ -523,7 +542,7 @@ for j in sorted(glob.glob(f"{m}/out/launch*.json")):
     d.update({"ended": t1.strftime("%Y-%m-%dT%H:%M:%SZ"), "hours_wall": round(h, 3), "usd_est": round(h * d["price_usd_h"], 2), "rc": rc.group(1) if rc else None,
               "instance_id": (re.search(r"\[launch\] id=(\S+)", txt) or [None, None])[1], "terminated": "[teardown] terminate accepted" in txt})
     json.dump(d, open(j, "w"), indent=1)
-    print("launch %d: ended %s, %.2f h wall, USD %.2f est, rc %s, terminate %s" % (d["n"], d["ended"], h, d["usd_est"], d["rc"], "accepted" if d["terminated"] else "NOT CONFIRMED"))
+    print("%s %d: ended %s, %.2f h wall, USD %.2f est, rc %s, terminate %s" % (d.get("kind", "launch"), d["n"], d["ended"], h, d["usd_est"], d["rc"], "accepted" if d["terminated"] else "NOT CONFIRMED"))
 PYEOF
 }
 
@@ -662,7 +681,7 @@ import json,sys; d=json.load(open(sys.argv[1])); print('keys', sorted(d.keys())[
   for r in out/review_build*.json; do [ -s "$r" ] && echo "  $r: $(cat "$r" | tr -d '\n ' | cut -c1-80)"; done
   env_status
   for j in out/launch*.json; do [ -s "$j" ] || continue; local log; log=$($PY -c 'import json,sys; print(json.load(open(sys.argv[1]))["log"])' "$j")
-    echo "  $j: $($PY -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["type"], "@", d["region"], "started", d["started"], "ended", d.get("ended") or "-", "usd_est", d.get("usd_est", "-"), "rc", d.get("rc", "-"))' "$j"); launcher $(pgrep -f "lambda_run_$TAG.sh" >/dev/null && echo running || echo exited)"
+    echo "  $j: $($PY -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["type"], "@", d["region"], "started", d["started"], "ended", d.get("ended") or "-", "usd_est", d.get("usd_est", "-"), "rc", d.get("rc", "-"))' "$j"); launcher $(pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null && echo running || echo exited)"
     [ -f "$log" ] && launch_tail "$log" | tail -8 | sed 's/^/      /'; done
   [ -d "results_$TAG/out" ] && echo "  results_$TAG/out: $(ls results_$TAG/out | wc -l) files; endpoints $(ls results_$TAG/out/endpoint-*_tag-$TAG.json 2>/dev/null | wc -l); RUN_DONE $(cat results_$TAG/RUN_DONE 2>/dev/null || echo -); RUN_VALID $($PY -c "import json; print(json.load(open('results_$TAG/out/RUN_VALID.json')).get('run_valid'))" 2>/dev/null || echo -)"
   [ -s out/PREDICTIONS_SCORED.md ] && echo "  scored: $(grep -cE '^- P[0-9]+' out/PREDICTIONS_SCORED.md) predictions; $(grep -oE 'Base rate update: .*' out/PREDICTIONS_SCORED.md)"
@@ -674,9 +693,9 @@ wait_stage() {
   local stage="$1" t=0 max=${2:-14400}
   while [ $t -lt $max ]; do
     case "$stage" in
-      launch) if ! pgrep -f "lambda_run_$TAG.sh" >/dev/null; then launch_finish; echo "launch exited after $((t/60)) min"; return 0; fi ;;
-      envbuild) if ! pgrep -f "lambda_run_env.sh" >/dev/null; then echo "env build exited after $((t/60)) min"; env_status; return 0; fi ;;
-      hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env.sh" >/dev/null; then echo "env build exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
+      launch) if ! pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null; then launch_finish; echo "launch exited after $((t/60)) min"; return 0; fi ;;
+      envbuild) if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then launch_finish; echo "env build exited after $((t/60)) min"; env_status; return 0; fi ;;
+      hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then echo "env build exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
       wf) if ! wf_running; then echo "wf.js stage exited after $((t/60)) min"; ls "$MDIR"/out/build*_args.json >/dev/null 2>&1 && [ -f "$MDIR/run_$TAG.py" ] && [ "$(ls "$MDIR"/out/wf-build-* -d 2>/dev/null | wc -l)" -ge 1 ] && build_checks; return 0; fi ;;
       *) local last; last=$(ls "$SESS"/$stage*.json 2>/dev/null | sort | tail -1); [ -n "$last" ] || { echo "no $stage session"; return 1; }
          if ! session_running "$(basename "$last" .json)"; then echo "$stage session exited after $((t/60)) min"; [ "$stage" = build ] && build_checks; return 0; fi ;;
@@ -694,6 +713,6 @@ ask() {   # name instruction-file: one read/write-only sonnet session following 
 case "$CMD" in
   ask) ask "$@" ;;
   prepare) prepare "$@" ;; design) design "$@" ;; gate) gate "$@" ;; build) build "$@" ;; build-checks) build_checks ;; review) review "$@" ;;
-  launcher) launcher ;; launch) launch "$@" ;; envbuild) envbuild "$@" ;; fix) fix "$@" ;; score) score ;; post) post "$@" ;; status) status ;; wait) wait_stage "$@" ;;
+  launcher) launcher ;; launch) launch "$@" ;; envbuild) envbuild "$@" ;; fix) fix "$@" ;; tests) tests "$@" ;; score) score ;; post) post "$@" ;; status) status ;; wait) wait_stage "$@" ;;
   *) sed -n 2,22p "$0"; exit 2 ;;
 esac

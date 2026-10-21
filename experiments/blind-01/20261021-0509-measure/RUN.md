@@ -148,3 +148,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 17:05Z classifier (read-only sonnet, letters only): launch 2's void came from an import check after a completed install; fix class: a different pin or wheel; not launch 1's cause; medium confidence. Gate addendum requested.
 - 17:11Z build 16 checks: selftest exit 0
 - 17:11Z gate addendum 14 (wf.js, claude/sonnet, 5 min): 7 answers, 102 items, build 17 authorised; of record: launch 2 exit 2 at the install stage (import check after a completed install), USD 0.37; cap spent USD 0.67 of 10.
+- 17:53Z envbuild: no A100 capacity in us-east-1 (the filesystem's region); built on gpu_1x_a10 (USD 1.29/h) instead; caveat of record: a source-built CUDA extension compiled on the A10 targets its architecture unless the build emits PTX or multiple targets; the main launch's capability check decides.
+- 17:54Z ENVBUILD 1: gpu_1x_a10 @ us-east-1, filesystem metis-env-us-east-1, REMOTE_TIMEOUT=5400, HOLD_SECONDS=2400, pid 1518848, log out/launcher_env_E1.log
