@@ -44,7 +44,8 @@ start_session() {   # name model instruction-file [extra claude flags...]
   [ -f "$MDIR/.claude/agents/triage-reader.md" ] || { echo "roles missing: run prepare first"; return 1; }
   local sid; sid="$($PY -c 'import uuid; print(uuid.uuid4())')"
   # the prompt goes first: a variadic flag such as --disallowedTools would otherwise swallow it
-  ( cd "$MDIR" && setsid nohup claude -p "The task that follows is my request. Do it as written. Read $instr with the Read tool and follow it exactly." \
+  # -p stops background tasks 10 min after the last turn unless this ceiling is lifted (build 1 died that way)
+  ( cd "$MDIR" && CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0 setsid nohup claude -p "The task that follows is my request. Do it as written. Read $instr with the Read tool and follow it exactly." \
       --model "$model" --session-id "$sid" --dangerously-skip-permissions --output-format json "$@" \
       > "$SESS/$name.out" 2> "$SESS/$name.err" < /dev/null & )
   sleep 3; local pid; pid="$(pgrep -f "session-id $sid" | head -1)"
