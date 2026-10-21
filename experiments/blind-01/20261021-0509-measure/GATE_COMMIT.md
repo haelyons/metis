@@ -416,10 +416,10 @@ layer.
    `inputs`. Selftest: a planted short capsid chain fails the range assertion; planted equal-length pairs fail the spread
    assertion; planted good pairs pass and the evidence file parses.
 
-5. **E5 (finding 5, BLOCKING: MD runs on the receptor alone, not on a docked complex).** ACCEPTED. The MD input is the merged
-   complex: the pair's capsid-role chains from the stand-in pair file plus the top-ranked docking pose of the receptor, written as
-   one structure, with the chain roles preserved; the build asserts both roles are present and the heavy-atom count of the
-   capsid part is nonzero before solvation, else exit 2. Water padding is chosen so the solvated total is inside 120,000 to
+5. **E5 (finding 5, BLOCKING: MD runs on the receptor alone, not on a docked complex).** ACCEPTED. The MD input is the
+   merged complex: the pair's capsid-role chains from the stand-in pair file plus the top-ranked docking pose of the receptor,
+   written as one structure, with the chain roles preserved; the build asserts both roles are present and the heavy-atom count of
+   the capsid part is nonzero before solvation, else exit 2. Water padding is chosen so the solvated total is inside 120,000 to
    180,000 atoms (estimated from the solute's extent before building, then verified on the built system; one rebuild allowed
    inside the complex's 600 s). If the target cannot be met, C2 is VOID with the atom count kept, per answer 10; the
    range is not widened. Selftest: a planted receptor-only pose is refused; a planted merged complex passes the role check; a
@@ -831,3 +831,142 @@ OPERATOR: the three lines of addendum 5 stand (declare the `RUN_VALID.json` fetc
 OPERATOR: set `REMOTE_TIMEOUT=7200` in the launch environment and change line 41 of `lambda_run_m4.sh` from `${REMOTE_TIMEOUT:-5400}` to `${REMOTE_TIMEOUT:-7200}`, declared in the file's header with the other changed points (F15).
 OPERATOR: before launch 1 read the package-index metadata for every requirement in `PIP_PINS` of `run_m4.py` (each pinned version exists; each extra named in a requirement is declared by that release; any `openmm-cuda*` sibling name exists) and write the result into RUN.md; a mismatch is a build re-run, not a hand edit (F6).
 OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of review 4 (F22).
+
+---
+
+## Addendum 7 (2026-10-21)
+
+Rules on `out/gate_report_build9.md`: the operator's mechanical note (three rulings asked: (a), (b), (c)) and review 4 of build 9
+(execution layer, run on `wf.js`; verdict FAIL: 1 BLOCKING, 3 ADVISORY, a "verified, no finding" list). Inputs added for this
+addendum: that report, this file as it stood, `EXEC_NOTE.md` as it stood, and the task text of this session, which is not a
+source of rulings. The gate ran nothing and did not read `run_m4.py`, `onbox_m4.sh`, `frozen/ONBOX_CONTRACT.md` or
+`out/pip_pins_check_build9.txt`; each ruling rests on the reviewer's and the operator's line references, taken as reported. The
+two shape-example files named in the task are outside this session's readable directory; this addendum follows the shape of the
+sections above. Every earlier section stands except where an answer below says it is superseded: G3 settles where the contract
+and the directive differ, and G2 records that F7's third apt-limit term is not required for launch 1. Answers are numbered G1 to
+G8: G1 the blocking finding (report number 1), G2 to G4 the advisory findings (report numbers 2 to 4), G5 the "verified, no
+finding" list, G6 to G8 the operator's three asks (a), (b), (c). Counts: 8 answers. The line `Build 7 authorised` at the end is the
+launcher's literal string for the next build; it does not renumber the earlier builds (the build it authorises is build 10).
+
+**Decision on budget and build (addendum).** GO stands. No GPU money has been spent: no launch record is among the inputs and
+review 4 ran nothing. Cap arithmetic unchanged: 2 launches x 2.00 h x USD 1.99 = USD 7.96; with 600 s outside each, 2 x (7,200 +
+600) s = 15,600 s = 4.333 h x 1.99 = USD 8.62; under the USD 10 cap with USD 1.38 left; `BUDGET_LEFT_USD=5` per launch above the
+3.98 a launch can cost. No ruling below adds a launch, a download source, a package source or install time beyond the 1,800 s
+install total. Finding 1 would have spent a launch (USD 3.98 at most, with the box paid for) on a run that ends at the smoke check
+with no measurement and consumes A2(a); that is why it is binding.
+
+### Blocking finding (G1)
+
+1. **G1 (finding 1, BLOCKING: `run_m4.py:405` writes `openmm[cuda12]==8.2.0`; the pinned release declares no `cuda12` extra, so pip
+   installs the plain package and the smoke check fails after the box is paid for).** ACCEPTED; it is a build re-run, not a hand
+   edit (F6). The build changes the OpenMM requirement in `PIP_PINS` and its comment (`run_m4.py:381-392` and `405`): the form
+   with a bracketed extra is no longer acceptable for OpenMM. The requirement is a pair of pinned entries, the plain OpenMM
+   distribution at the pinned version and a sibling pinned requirement whose distribution name starts `openmm-cuda`
+   (`name==version`). The build chooses that sibling's name and version from the operator's index listing (Operator actions),
+   which it reads as an input, and from nothing it recalls: it uses no network, and it does not guess a name or a version that the
+   listing does not show as existing. If the listing shows no distribution whose name starts `openmm-cuda`, the build changes
+   nothing, returns a statement saying so, and the gate rules again in an addendum 8; no launch happens. The comment on `PIP_PINS`
+   states which form was chosen, that it is a choice, and the listing file's name. The smoke check
+   (`Platform.getPlatformByName("CUDA")`) stays as it is and is still the in-box test. Test, in the selftest: the `PIP_PINS`
+   parser case of item 33 now requires an `openmm-cuda*` entry and rejects a bracketed extra on the OpenMM entry; every entry
+   stays `name==version`.
+
+### Advisory findings (G2 to G4)
+
+2. **G2 (finding 2, ADVISORY: `apt_limit` implements two of F7's three terms; the "no time left" check comes after the apt stage).**
+   ACCEPTED AS-IS for launch 1 of record, no code change. The reviewer shows it cannot bind at the authorised settings: with
+   `REMOTE_TIMEOUT=7200` and `BUDGET_LEFT_USD=5` apt is capped at 1,800 s in total and 300 s for the update loop, the elapsed
+   bootstrap is far below 4,900 s, and spend stays inside the caps (F22's advisory definition). The condition that keeps it
+   advisory is made binding on the launch instead of the build: launch 1 and launch 2 run with `REMOTE_TIMEOUT=7200` exactly (see
+   Pre-authorisation); a smaller value is not authorised. EXEC_NOTE item 48(c) is revised to say the third term is not required of
+   the shell, so review 5 does not cite it again. The selftest flow for `REMOTE_TIMEOUT=10` is accepted as it stands.
+
+3. **G3 (finding 3, ADVISORY: `frozen/ONBOX_CONTRACT.md` items 2, 3 and 9 versus the directive).** SETTLED IN THE DIRECTIVE, by a
+   ruling of record; the build does not change. Where the contract and EXEC_NOTE items 8, 20, 43 and 46 differ, the gate rules
+   that those items win: exit codes are 0, 2, 3 and 4 and there is no exit 5; the runner and the shell write `RUN_DONE` under
+   items 8 and 48; the guard uses the estimate floors of item 43 and no timed dry run on the real input; the per-run environment
+   file is `env.txt` (item 3) and no `env_<tag>.json` is required. Reason: each of these is a mechanical choice that spends no money
+   without a valid record, which the reviewer confirms, and the contract's own rule that the directive may tighten but not loosen is
+   met here by the gate itself, as the owner's delegate, naming each point it relaxes; every other contract item stays binding
+   as E26 says. This is recorded as EXEC_NOTE item 56. Review 5 checks the build against the contract and the directive
+   with this ruling applied and does not cite these points again.
+
+4. **G4 (finding 4, ADVISORY: when the runner dies without `RUN_DONE`, `write_minimal_void` marks all four inputs void in
+   `RUN_VALID.json` and the summary even where decided C records are on disk).** ACCEPTED, and made a numbered item (55) although the
+   reviewer rated it advisory, for the reason of F2: A2 and the operator read the per-input status from `RUN_DONE` and
+   `RUN_VALID.json` alone (item 46), and a decided input shown as void invites a relaunch that A2 does not authorise. The change is
+   local to the shell's void path (`onbox_m4.sh:284-287`): before writing, `write_minimal_void` reads each C record already on
+   disk; a record with decision PASS or FAIL, or VOID with `marginal` or a rule reason, is shown in `RUN_VALID.json`
+   `inputs_status`, in `RUN_DONE` and in a summary the shell has to write as `decided` or `void_by_rule:<reason>`, and the
+   record is never rewritten (`put` keeps not overwriting); only inputs with no such record are `void_by_failure:<kind>` (code 2) or
+   `unmeasured_by_stop:<kind>` (code 3), as item 8 says. The exit code and `run_valid` are unchanged (item 48(b)). Test: a new
+   shell-level flow of item 48: a runner stub that writes a decided C3 record and exits 2 with no `RUN_DONE` gives exit 2,
+   `run_valid` false, C3 `decided`, its record byte-identical, and C1, C2 and C4 `void_by_failure`; the same stub with exit 3 gives C3
+   `decided` and C1, C2, C4 `unmeasured_by_stop`.
+
+### The "verified, no finding" list and the operator's three asks (G5 to G8)
+
+5. **G5 (the reviewer's "verified, no finding" list).** ACCEPTED AS-IS; nothing changes. It covers: operator finding 1 (the
+   `M4_TEST_*` names read only inside the test-hook block, only with `M4_SHELL_TEST` exactly `1`, none forwarded by the launcher;
+   `M4_BASE` a fallback after `--base`); operator finding 2 (the `.keys` text at `run_m4.py:6983` is a selftest regex over the
+   program's own source; no environment dump; `env.txt` named variables only); `HF_TOKEN` unset before the runner starts and
+   stripped from every child; the caps (price default 1.99, `BUDGET_LEFT_USD` clamped to at most 5, `REMOTE_TIMEOUT` to at most 7,200,
+   an unset one labelled, STOP_AT and the outer kill as built); the launcher and bootstrap copies differ from the frozen files only at
+   declared points and `onbox_command` is `bash remote_run_m4.sh bash onbox_m4.sh`; the selftest log (658 of 658, last line
+   `selftest: PASS`, hashes matching the files then); the shell routes (no `set -e`, `RC=0; ... || RC=$?` everywhere, the trap acting
+   only while `FINISHED=0`, sudo only for declared apt, nothing written outside `~/m4_run/`); and downloads only from RCSB, the
+   AlphaFold storage address, pip and apt with URL and hash recorded. The seven pins other than OpenMM exist on the index with none
+   missing or unpinned; the operator's check is accepted as evidence for that, and it is repeated on build 10 (Operator actions).
+
+6. **G6 (ask (a): rule on the one blocking finding; if it is a code change, authorise build 10 as an in-place edit limited to that
+   change and to any advisory item chosen as binding).** BUILD 10 IS AUTHORISED (the literal line below), as an in-place edit of
+   build 9's `run_m4.py` and `onbox_m4.sh`, limited to: the G1 change to `PIP_PINS` and its comment, the G4 change to
+   `write_minimal_void`, the selftest cases those two changes need (the `PIP_PINS` parser case, the two shell flows of G4), and
+   the selftest's own count and hash lines, which move. Every other line stays as build 9 has it, selftest cases included; the
+   build does not refactor, rename or reorder anything. The build's return states the real line counts, the two sha256 values
+   (B14), the new selftest count, and the exact lines changed. This is EXEC_NOTE item 57. A changed line outside that list is a
+   blocking finding in review 5.
+
+7. **G7 (ask (b): each advisory finding accepted as-is for launch 1 of record, or made a numbered item).** Rulings: advisory 2
+   (G2) accepted as-is, with the launch condition `REMOTE_TIMEOUT=7200` and a revision of item 48(c) so the directive says what is
+   built; advisory 3 (G3) settled in the directive as item 56, no build change; advisory 4 (G4) made item 55. No advisory is left
+   unanswered and none is deferred silently. Advisories recorded in RUN.md and not ruled again if they recur in review 5: G2's and
+   G3's, as ruled here.
+
+8. **G8 (ask (c): is launch 1 pre-authorised on build 10 when review 5 reports zero blocking findings, with the launch environment
+   restated).** YES. If review 5 of build 10 reports zero BLOCKING findings (as F22 defines blocking), launch 1 may proceed on
+   build 10 with its advisory findings recorded in RUN.md and not ruled again, provided all of: (i) the build's own selftest
+   passes and the operator's local re-run prints the same two sha256 values as the files on disk (B14); (ii) the operator actions
+   below are done, the package-index check on build 10 included, and its result (every pin found, no `EXTRA-NOT-DECLARED`, none
+   missing) is written into RUN.md; (iii) review 5 had `frozen/ONBOX_CONTRACT.md` on its read list and states it checked against
+   it with G3 applied; (iv) A1's instance and cap limits hold. The launch environment of record, to be set by the operator and
+   recorded on every record: `REMOTE_TIMEOUT=7200`, `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99`,
+   `INSTANCE_TYPE=gpu_1x_a100_sxm4`, region us-east-1; if that instance has no capacity, the cheapest single GPU with capacity at
+   no more than USD 2.50/h, with `INSTANCE_TYPE` and `PRICE_USD_PER_HOUR` set to its values and the other three unchanged. If review
+   5 reports any blocking finding, the gate rules again in an addendum 8 and no launch happens. No GPU money is spent by builds or
+   reviews, so this loop costs no launch budget.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Cap: 7,200 s = 2.00 h x 1.99 = 3.98; two
+launches 7.96; with 600 s each outside 8.62; under 10. Ceilings unchanged and still sum to 7,200: 1,800 + 700 + 600 + 2,000 +
+1,600 + 100 + 400 = 7,200. G2: 5 / 1.99 h = 9,045 s above 7,200 s, so the time cap binds before the dollar cap and apt's own 1,800 s
+total (plus 300 s for the update loop, inside it) is below the 7,200 - 500 = 6,700 s that F7's third term would allow at elapsed 0;
+the term can bind only if `REMOTE_TIMEOUT` is below about 2,300 s, which is why 7,200 exactly is made a launch condition. G4 planted:
+one decided C3 record on disk and three missing give one `decided` and three `void_by_failure` (or `unmeasured_by_stop`); the
+count is 4. Counting: the report has 4 numbered findings (1 blocking, 3 advisory), a "verified, no finding" list, and 3 asks;
+answers G1 to G8 cover all. The report's selftest count (658 of 658) and the index check were not re-run; the gate cannot.
+
+**Pre-authorisation (addendum).** A1 stands unchanged. A2 stands with (a), (b), (c) as before; a smoke-check failure from a package
+that did not install is under A2(a). Both launches run with `REMOTE_TIMEOUT=7200` exactly (G2); a smaller value is not authorised.
+Not authorised, as before: a relaunch to double seeds, to repeat a decided input, to change a band, or after an anchor miss. No
+launch is authorised until build 10 exists, its selftest passes with matching hashes (B14), review 5 meets G8, and the operator has
+done the actions below.
+
+Build 7 authorised
+
+## Operator actions
+
+OPERATOR: write an index listing, before build 10 is made, of every distribution on the package index whose name starts `openmm-cuda` (names and available versions) and of the extras declared by the pinned OpenMM release, into `out/pip_pins_openmm_listing.txt`; build 10 reads that file and `out/pip_pins_check_build9.txt` as inputs and uses no network (G1).
+OPERATOR: after build 10, re-run the package-index check on every requirement in `PIP_PINS` of `run_m4.py` (each pinned version exists, each extra named is declared, each `openmm-cuda*` name exists) and write the result into RUN.md; any mismatch is a build re-run, not a hand edit (F6, G8).
+OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of review 5 and state G3's ruling to it (G8).
+OPERATOR: before launch 1 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); the earlier lines of addenda 5 and 6 (the `RUN_VALID.json` fetch line declared, `remote_run_m4.sh` with only its `cd` line changed, `lambda_run_m4.sh` default `REMOTE_TIMEOUT` 7200 declared in its header) stand.
+OPERATOR: launch environment of record for both launches: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (G8).

@@ -376,6 +376,11 @@ launch() {
   for f in "lambda_run_$TAG.sh" "remote_run_$TAG.sh" "onbox_$TAG.sh" "run_$TAG.py" frozen/provenance.py; do [ -f "$f" ] || { echo "missing $f"; return 1; }; done
   local rv; rv=$(ls out/review_build*.json 2>/dev/null | tail -1); [ -n "$rv" ] && grep -q '"PASS"' "$rv" || { echo "latest review is not PASS ($rv)"; return 1; }
   local bh; bh=$(ls out/BUILT_HASHES_build*.txt | tail -1); ( cd "$MDIR" && sha256sum -c --quiet "$bh" ) || { echo "built files changed since $bh"; return 1; }
+  # gate ruling (addenda 5 to 7): re-run the selftest before launch and compare its printed sha256 values with the files on disk
+  local st; st=$(timeout 300 $PY "run_$TAG.py" --selftest 2>&1 | tee "out/selftest_prelaunch_L$n.log" | grep -E '^selftest: (PASS|FAIL|files sha256)')
+  echo "$st" | grep -q '^selftest: PASS' || { echo "pre-launch selftest did not PASS"; return 1; }
+  local want; want=$(echo "$st" | grep -oE '[0-9a-f]{64}' | sort); local have; have=$(sha256sum "run_$TAG.py" "onbox_$TAG.sh" | awk '{print $1}' | sort)
+  [ "$want" = "$have" ] && echo "pre-launch selftest PASS; its printed hashes match the files on disk" || { echo "pre-launch selftest hashes differ from the files on disk"; return 1; }
   pgrep -f "lambda_run_$TAG.sh" >/dev/null && { echo "a launcher is already running"; return 1; }
   [ "$timeout" -le 7200 ] || { echo "timeout above 7,200 s (owner rule)"; return 1; }
   echo "== capacity"; lambda_capacity "$type" "$region" || { echo "no capacity for the requested type; pick another with --type/--region"; return 1; }

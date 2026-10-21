@@ -1,17 +1,18 @@
-# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5) and build 7 (addendum 6)
+# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5), build 7 (addendum 6) and build 9 (addendum 7)
 
 Binding order: GATE_COMMIT.md answers first (the original answers 1 to 14, then addendum 3 answers B1 to B15, then addendum 5
-answers E1 to E28, then addendum 6 answers F1 to F22), this note second, `out/design_record.json` third;
-`frozen/ONBOX_CONTRACT.md` binds under rule 5 and nothing here loosens it (where it states a docking command order, that order is
-followed, item 52). Where silent, the design record binds as written, GUESS values included. The build does not read GATE_COMMIT.md
-itself; the checklist below carries every gate change the build must implement. This is the measure run m4 of card
-seed:idea:1: one rented single-GPU box, a timer check, an anchor redocking of AAVR-PKD2 onto AAV2 against PDB 6IHB, then four
-inputs (AlphaFold-Multimer hours per run, MD ns/day, auxiliary hours per pair, storage GiB) each read against the card's own
-band. The cap is USD 10 for the whole run, at most two launches. Nothing here has run yet. Items marked `(revised, addendum 3)`
-changed build 2's behaviour, items marked `(revised, addendum 5)` changed build 6's, items marked `(revised, addendum 6)` change
-build 7's; items 48 to 54 are new in addendum 6; items 38 to 47 came with addendum 5; items 31 to 37 came with addendum 3; the
-rest stand. Items 6, 8, 28 and 29 are restated in addendum 6 as single testable requirements; review judges the build against those
-texts.
+answers E1 to E28, then addendum 6 answers F1 to F22, then addendum 7 answers G1 to G8), this note second,
+`out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and nothing here loosens it except at the points
+item 56 names (where it states a docking command order, that order is followed, item 52). Where silent, the design record binds as
+written, GUESS values included. The build does not read GATE_COMMIT.md itself; the checklist below carries every gate change the
+build must implement. This is the measure run m4 of card seed:idea:1: one rented single-GPU box, a timer check, an anchor
+redocking of AAVR-PKD2 onto AAV2 against PDB 6IHB, then four inputs (AlphaFold-Multimer hours per run, MD ns/day, auxiliary hours
+per pair, storage GiB) each read against the card's own band. The cap is USD 10 for the whole run, at most two launches. Nothing
+here has run yet. Items marked `(revised, addendum 3)` changed build 2's behaviour, items marked `(revised, addendum 5)` changed
+build 6's, items marked `(revised, addendum 6)` changed build 7's, items marked `(revised, addendum 7)` change build 9's; items 55
+to 57 are new in addendum 7; items 48 to 54 came with addendum 6; items 38 to 47 came with addendum 5; items 31 to 37 came with
+addendum 3; the rest stand. Build 10 is an in-place edit of build 9 limited to what item 57 lists. Items 6, 8, 28 and 29 are
+restated in addendum 6 as single testable requirements; review judges the build against those texts.
 
 ## Where to write
 
@@ -19,18 +20,20 @@ The run directory is `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0
 `onbox_m4.sh` there, by absolute path. Write nothing anywhere else. Read the design record at
 `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/design_record.json` and the conventions in `frozen/`
 (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does; `ONBOX_CONTRACT.md` is the binding
-execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and are not written by the build.
+execution contract). Build 10 also reads, as inputs, `out/pip_pins_openmm_listing.txt` and `out/pip_pins_check_build9.txt` (item
+33, item 57), and edits the existing `run_m4.py` and `onbox_m4.sh` of build 9 in place. `lambda_run_m4.sh` and `remote_run_m4.sh`
+are the operator's files and are not written by the build.
 
-## Checklist of gate changes the build must carry (54 entries)
+## Checklist of gate changes the build must carry (57 entries)
 
 1. **Order on the box.** install and downloads (with the smoke check, item 33); R1 controls (60 s sleep, empty run,
    unit-and-scale print); anchor (serial, then parallel); per-pair docking and analysis (aux timing); AlphaFold timings
    (seed-major); MD timings; storage; endpoints. A guard before every stage. (GATE_COMMIT answers 7, 14.)
 2. **Files (rule 5).** The build writes exactly `run_m4.py` and `onbox_m4.sh` in
    `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure` (absolute path), and reads the design record and
-   `frozen/`. Payload shipped to the box: `run_m4.py onbox_m4.sh remote_run_m4.sh frozen/provenance.py`, and `data/` recursively
-   if it exists, all under `~/m4_run/`. Results under `~/m4_run/results_m4/out/`, which the launcher fetches. Nothing else is on
-   the box.
+   `frozen/` (and, for build 10 only, the two operator files named under "Where to write"). Payload shipped to the box:
+   `run_m4.py onbox_m4.sh remote_run_m4.sh frozen/provenance.py`, and `data/` recursively if it exists, all under `~/m4_run/`.
+   Results under `~/m4_run/results_m4/out/`, which the launcher fetches. Nothing else is on the box.
 3. **Records (rule 6) (revised, addendum 5).** For each input C1 to C4 one provenance.py record
    `results_m4/out/endpoint-C<i>_tag-m4.json`; its `values` carries `measured` (a number in the card's unit: C1 h per run, C2
    ns/day, C3 h per pair, C4 GiB), `unit`, `card_value` (0.5, 129, 1, 200) and `band` ([0.2, 1.25], [51.6, 322.5], [0.3333, 3],
@@ -45,7 +48,7 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
 4. **Selftest (rule 7) (revised, addendum 3).** `python3 run_m4.py --selftest`: stdlib only, no GPU, no network, under 300 s;
    prints `selftest: N of M checks passed`, a line `selftest: files sha256 run_m4.py <hash> onbox_m4.sh <hash>` (item 36), then
    exactly `selftest: PASS` or `selftest: FAIL` as its last line; non-zero exit on FAIL. Planted cases for every parser and for
-   the gate-failure (void) path (items 21 to 29, 31, 47, 48 and 49 list them).
+   the gate-failure (void) path (items 21 to 29, 31, 47, 48, 49 and 55 list them).
 5. **Secrets (rule 8) (revised, addendum 3).** Nothing reads `.keys`; nothing prints its environment (no `env`, `printenv` or
    `set` dump; `env.txt` lists only named non-secret variables); `HF_TOKEN` is used by downloads only: `onbox_m4.sh` unsets
    `HF_TOKEN` and `HUGGING_FACE_HUB_TOKEN` after the downloads, and `run_tool` gives every child a copied environment with both
@@ -91,15 +94,16 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
    Never patch around, never substitute a tool or a source: after a failing tool call no second tool and no second source is
    tried. Each failure row writes a void record (summary and `RUN_DONE` included) before exit. `onbox_m4.sh` sets its exit trap
    before the venv step, so an abort before `run_m4.py` starts still writes the shell's void record (item 54) with exit 2. A tool
-   call that merely exceeds its stage allowance is a ceiling stop (item 29), not a failure. Planted selftest cases: one stage-flow
-   case per table row (items 31 and 48), each asserting exit code, `run_valid` and the status strings; a planted failing tool whose
-   call count is asserted equal to 1 (no fallback tried). (E14, F5, F20)
+   call that merely exceeds its stage allowance is a ceiling stop (item 29), not a failure. "Not decided before it" is read from
+   the records on disk (item 55). Planted selftest cases: one stage-flow case per table row (items 31 and 48), each asserting
+   exit code, `run_valid` and the status strings; a planted failing tool whose call count is asserted equal to 1 (no fallback
+   tried). (E14, F5, F20)
 9. **Caps (rules 1, 2) (revised, addendum 5).** `onbox_m4.sh` reads `PRICE_USD_PER_HOUR`, `BUDGET_LEFT_USD` and `REMOTE_TIMEOUT`
    from its environment, with no default that exceeds `BUDGET_LEFT_USD=5` or `REMOTE_TIMEOUT=7200`, and stops cleanly, writing a
    void record for unfinished work, before projected spend reaches `BUDGET_LEFT_USD` or elapsed time reaches `REMOTE_TIMEOUT`.
    Hard cap USD 10 for the run, at most two launches. It records the `REMOTE_TIMEOUT` it sees in `env.txt` and
    `m4_summary.json`; if unset it uses 7200 and labels "REMOTE_TIMEOUT not forwarded; default 7200 used" (item 37). Elapsed
-   time counts from the start of the bootstrap (item 44). (B4, E19)
+   time counts from the start of the bootstrap (item 44). Both launches run with `REMOTE_TIMEOUT=7200` exactly (G2). (B4, E19)
 10. **Scope (rule 3).** Measure the inputs on the card's own protocol; no production phase, no 54-run pilot, no 216-run grid;
     anchor first; a missed anchor voids the inputs (run_valid false propagates to every later record).
 11. **Gate scope (answer 1) (revised, addendum 5).** The card's gate (`af2_h_per_run <= 1`) is applied to C1 only: C1 values carry
@@ -198,23 +202,25 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     run_valid as it was. The guard is called with an estimate (item 43). The gate-failure (void) path is also planted for: anchor
     miss, sleep failure, install failure, download failure, smoke-check failure. The stage flow itself (not only the functions)
     is planted in items 31, 47 and 48. The reported spend is item 53.
-28. **Stage ceilings (GATE_COMMIT answer B8; revised, addendum 6; restated as one requirement).** One table and one formula. Ceilings
-    in seconds: install and downloads with the smoke check 1,800 (a running total); controls 700 and anchor 700 (two stages
-    with separate allowances; in practice the controls take about 70 s, so the pair uses about 770 s and the margin absorbs the
-    70 s); per-pair docking and analysis 600 in total, at most 250 per pair; AlphaFold 2,000; MD 1,600, at most 600 per complex;
-    endpoints 100; margin 400. The ceilings of the seven slots sum to 7,200; that sum is not the guarantee. The guarantee is the
-    allowance: `allowance(stage) = max(0, min(ceiling(stage), REMOTE_TIMEOUT - elapsed_since_T0 - 400 - 100))`, and a stage whose
-    allowance is below its first unit's estimate (item 43) is not started. Install: every apt, pip, download, extraction and
-    smoke-check call is run under `timeout -k 10 <limit>` with `limit = min(its own limit, 1,800 - install seconds used,
-    allowance)`; exhausting the total, or any call over its limit, is exit 2 (item 8), never 3. Every apt call in `onbox_m4.sh`
-    obeys this too; `apt-get update` may retry (at most 10 tries, 15 s apart), each try under its own `timeout`, the whole loop
-    at most 300 s (F7). Docking: a pair that reaches 250 s is kept as a row with `truncated: true`, is not counted in the mean,
-    and the loop continues with the next pair until the stage allowance is gone (F4); C3 is decided if at least 2 pairs
-    finished, else VOID. A later stage that hits its ceiling stops and its unfinished inputs are `unmeasured_by_stop`.
-    Planted: `allowance` with REMOTE_TIMEOUT 7,200 gives install 1,800 at elapsed 0, AlphaFold 700 at elapsed 6,000 (7,200 - 6,000
-    - 500) and 0 at elapsed 6,800 (clamped, not negative, stage not started); install calls with limits 1,000, 1,000 and 1,000 get
-    1,000, 800 and 0 (the third is not started and the stage is exit 2); docking with pair 1 capped and pairs 2 and 3 finished
-    attempts all 3 pairs, n=2, C3 decided, and with pairs 1 and 2 capped attempts all 3, n=1, C3 VOID. (E2, F4, F7, F8, F20)
+28. **Stage ceilings (GATE_COMMIT answer B8; revised, addendum 6 and addendum 7; restated as one requirement).** One table and one
+    formula. Ceilings in seconds: install and downloads with the smoke check 1,800 (a running total); controls 700 and anchor 700
+    (two stages with separate allowances; in practice the controls take about 70 s, so the pair uses about 770 s and the margin
+    absorbs the 70 s); per-pair docking and analysis 600 in total, at most 250 per pair; AlphaFold 2,000; MD 1,600, at most 600 per
+    complex; endpoints 100; margin 400. The ceilings of the seven slots sum to 7,200; that sum is not the guarantee. The guarantee
+    is the allowance: `allowance(stage) = max(0, min(ceiling(stage), REMOTE_TIMEOUT - elapsed_since_T0 - 400 - 100))`, and a stage
+    whose allowance is below its first unit's estimate (item 43) is not started. Install, in `run_m4.py`: every pip, download,
+    extraction and smoke-check call is run under `timeout -k 10 <limit>` with `limit = min(its own limit, 1,800 - install seconds
+    used, allowance)`; exhausting the total, or any call over its limit, is exit 2 (item 8), never 3. Every apt call in
+    `onbox_m4.sh` is bounded by `min(its own limit, 1,800 - install seconds used)`; the third term, `REMOTE_TIMEOUT - elapsed -
+    500`, is not required of the shell (revised, addendum 7: it cannot bind at `REMOTE_TIMEOUT=7200`, which both launches use);
+    `apt-get update` may retry (at most 10 tries, 15 s apart), each try under its own `timeout`, the whole loop at most 300 s (F7).
+    Docking: a pair that reaches 250 s is kept as a row with `truncated: true`, is not counted in the mean, and the loop
+    continues with the next pair until the stage allowance is gone (F4); C3 is decided if at least 2 pairs finished, else VOID. A
+    later stage that hits its ceiling stops and its unfinished inputs are `unmeasured_by_stop`. Planted: `allowance` with
+    REMOTE_TIMEOUT 7,200 gives install 1,800 at elapsed 0, AlphaFold 700 at elapsed 6,000 (7,200 - 6,000 - 500) and 0 at elapsed
+    6,800 (clamped, not negative, stage not started); install calls with limits 1,000, 1,000 and 1,000 get 1,000, 800 and 0 (the
+    third is not started and the stage is exit 2); docking with pair 1 capped and pairs 2 and 3 finished attempts all 3 pairs, n=2,
+    C3 decided, and with pairs 1 and 2 capped attempts all 3, n=1, C3 VOID. (E2, F4, F7, F8, F20, G2)
 29. **Gate-failure and guard-stop paths (answers 8, 13, 14; revised, addendum 6; restated as one requirement).** A stop is exactly
     one of: guard refusal to start a stage or unit, a stage ceiling, a tool call exceeding its allowance, the outer timeout. A
     failure (exit 2) and an anchor miss (exit 4) are not stops. When a stop happens, all six hold, and each has a planted flow in
@@ -254,18 +260,23 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     700) so the inner fires first; an outer firing is itself a recorded event. Selftest: a planted tool that sleeps past its
     allowance is killed with its child and the result is a ceiling stop; planted rc 137 at the deadline gives exit 3, at 100 s
     exit 2; a stale pgid entry with a different start time is not signalled; the shell-level rc 124 flow of item 48. (E23, F1)
-33. **Smoke check in the install stage (new, addendum 3, B6; revised, addendum 6).** After every install and inside the 1,800 s
-    install ceiling: import of the AlphaFold-Multimer stack and JAX with a GPU device listed; `colabfold_batch --help`; the
-    docking code's entry point `--help` and its conformation-generating script's `--help` (item 52); OpenMM imported with
-    `Platform.getPlatformByName("CUDA")` succeeding; and each tool resolved by `shutil.which` against the venv PATH with its
+33. **Smoke check in the install stage (new, addendum 3, B6; revised, addendum 6 and addendum 7).** After every install and inside
+    the 1,800 s install ceiling: import of the AlphaFold-Multimer stack and JAX with a GPU device listed; `colabfold_batch
+    --help`; the docking code's entry point `--help` and its conformation-generating script's `--help` (item 52); OpenMM imported
+    with `Platform.getPlatformByName("CUDA")` succeeding; and each tool resolved by `shutil.which` against the venv PATH with its
     absolute path recorded (item 38). A failure is exit 2 with a void record before any GPU stage. Every package is pinned in the
-    install line as `name==version` (extras in brackets allowed); the OpenMM requirement is written in the form that pulls the
-    CUDA platform (the pinned release's CUDA extra, or a sibling pinned requirement whose distribution name starts `openmm-cuda`),
-    and which form was chosen is stated in a comment on `PIP_PINS`; colabfold takes the form whose metadata carries what the
-    smoke check imports, with a JAX build compatible with the pinned `colabfold`, without substituting a tool. The smoke check
-    decides in the box; the operator's metadata check decides before launch 1. No trial docking is run in the install stage.
-    Planted: a `PIP_PINS` parser case in which the OpenMM entry carries an extra or has an `openmm-cuda*` sibling, and an entry
-    without `==` fails the selftest. (E12, E13, F6)
+    install line as `name==version` (extras in brackets allowed, except for OpenMM). The OpenMM requirement is written as two
+    pinned entries: the plain OpenMM distribution at the pinned version and a sibling pinned requirement whose distribution name
+    starts `openmm-cuda`; a bracketed extra on the OpenMM entry is not accepted, because the pinned release declares none (the
+    operator's index check of build 9 found `extra cuda12 not in []`). The sibling's name and version are taken from the
+    operator's listing `out/pip_pins_openmm_listing.txt`, read as an input, and never from memory or the network; if that
+    listing shows no `openmm-cuda*` distribution the build changes nothing and returns that statement (the gate then rules
+    again). Which form was chosen is stated in a comment on `PIP_PINS`, with the listing's file name. colabfold takes the form
+    whose metadata carries what the smoke check imports, with a JAX build compatible with the pinned `colabfold`, without
+    substituting a tool. The smoke check decides in the box; the operator's metadata check decides before launch 1. No trial
+    docking is run in the install stage. Planted: a `PIP_PINS` parser case in which the OpenMM requirement has an `openmm-cuda*`
+    sibling passes, an OpenMM entry carrying a bracketed extra fails, and an entry without `==` fails the selftest. (E12, E13,
+    F6, G1)
 34. **Downloads recorded in full (new, addendum 3, B13; revised, addendum 5).** pip installs run with `--report`; the report (URL
     and archive hash of each wheel) is kept under `results_m4/out/` and its sha256 is cited in every record's `inputs` (E24); each
     apt package is recorded with version and the SHA256 from `apt-cache show`; the direct downloads keep URL and sha256; the pip
@@ -339,29 +350,31 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
     three docking failure routes (item 21) and the docking call order simulate, generate, rank (item 52); the pair loop continues
     past a capped pair (item 28); the install total ceiling (item 28); the pip version branch (item 50); the spend arithmetic
     (item 53); and the first key of `m4_summary.json` (item 30).
-48. **Shell-level routing, bounded apt, and the test hook (new, addendum 6, F1, F5, F7, F17).** In `onbox_m4.sh`: (a) no command
-    whose non-zero status is an expected outcome (`run_m4.py`, `run_m4.py --finalize`, the outer `timeout`, the process-group
-    kill helper) is run bare under `set -e`; each is `RC=0; <command> || RC=$?` and the route table reads `RC`; the EXIT trap
-    acts only while `FINISHED=0`, and every normal route sets `FINISHED=1` before its own `exit`. (b) `write_minimal_void
-    <code>` writes run_valid false for code 2 and 4, run_valid true for code 3 unless an existing `RUN_VALID.json` says false
-    (then false is kept), and is never called with 0; it is called only when the runner has not written `RUN_DONE`; when the
-    runner wrote `RUN_DONE` and `RUN_VALID.json` the shell rewrites neither, and its exit code equals the `RUN_DONE` code; a
-    runner that returns 0 with no `RUN_DONE` is treated as code 2. The "no time left after setting up" route is code 3,
-    run_valid true. (c) Every apt call is bounded as item 28 says. (d) Test hook: one block in `onbox_m4.sh` between the lines
-    `# BEGIN TEST HOOKS` and `# END TEST HOOKS`, whose first line tests `M4_SHELL_TEST`, is the only place `M4_TEST_*`
-    variables are read. When `M4_SHELL_TEST=1`, `M4_TEST_ROOT` replaces `~/m4_run`, `M4_TEST_RUNNER` replaces the python runner
-    command (and its `--finalize` form receives `--finalize` as an argument), `M4_TEST_INSTALL_CEILING_S` replaces 1,800, and
-    `M4_TEST_BIN` is put first on PATH; the venv step, pip installs, downloads and the GPU check are skipped, and the apt steps
-    run through whatever `sudo` the test PATH supplies. Without `M4_SHELL_TEST=1` nothing changes. The selftest checks the
-    block markers and that every `M4_TEST_` occurrence lies between them, then runs `bash onbox_m4.sh` through `subprocess` in a
-    temporary root (a missing `bash` is a FAIL) for these planted flows, each asserting the script's exit code, the content of
-    `RUN_VALID.json` and `RUN_DONE`, and which files were left untouched: runner stub rc 0 with its own `RUN_DONE` 0 and
-    `RUN_VALID.json` true: exit 0, both files byte-identical to the stub's; rc 3 with its own files: exit 3, files untouched
-    (the trap did not run); rc 3 with no files: exit 3, run_valid true, full incomplete-run label; rc 4 with no files: exit 4,
-    run_valid false; rc 2: exit 2, run_valid false; rc 0 with no `RUN_DONE`: exit 2; rc 124 at the deadline: the finalize stub is
-    called once and the exit is 3; rc 137 at 100 s: exit 2; `REMOTE_TIMEOUT=10`: exit 3, run_valid true; a stub `sudo` that
-    sleeps 60 s with `M4_TEST_INSTALL_CEILING_S=3`: exit 2 within 30 s with the void record present; a static check that no line
-    invoking the runner lacks `|| RC=$?`. Still no GPU and no network; the whole selftest under 300 s.
+48. **Shell-level routing, bounded apt, and the test hook (new, addendum 6, F1, F5, F7, F17; revised, addendum 7).** In
+    `onbox_m4.sh`: (a) no command whose non-zero status is an expected outcome (`run_m4.py`, `run_m4.py --finalize`, the outer
+    `timeout`, the process-group kill helper) is run bare under `set -e`; each is `RC=0; <command> || RC=$?` and the route table
+    reads `RC`; the EXIT trap acts only while `FINISHED=0`, and every normal route sets `FINISHED=1` before its own `exit`. (b)
+    `write_minimal_void <code>` writes run_valid false for code 2 and 4, run_valid true for code 3 unless an existing
+    `RUN_VALID.json` says false (then false is kept), and is never called with 0; it is called only when the runner has not
+    written `RUN_DONE`; when the runner wrote `RUN_DONE` and `RUN_VALID.json` the shell rewrites neither, and its exit code equals
+    the `RUN_DONE` code; a runner that returns 0 with no `RUN_DONE` is treated as code 2. The "no time left after setting up"
+    route is code 3, run_valid true. The per-input statuses it writes follow item 55. (c) Every apt call is bounded as item 28
+    says (revised, addendum 7: its own limit and the 1,800 s install total; the `REMOTE_TIMEOUT` term is not required of the
+    shell). (d) Test hook: one block in `onbox_m4.sh` between the lines `# BEGIN TEST HOOKS` and `# END TEST HOOKS`, whose first
+    line tests `M4_SHELL_TEST`, is the only place `M4_TEST_*` variables are read. When `M4_SHELL_TEST=1`, `M4_TEST_ROOT`
+    replaces `~/m4_run`, `M4_TEST_RUNNER` replaces the python runner command (and its `--finalize` form receives `--finalize` as
+    an argument), `M4_TEST_INSTALL_CEILING_S` replaces 1,800, and `M4_TEST_BIN` is put first on PATH; the venv step, pip installs,
+    downloads and the GPU check are skipped, and the apt steps run through whatever `sudo` the test PATH supplies. Without
+    `M4_SHELL_TEST=1` nothing changes. The selftest checks the block markers and that every `M4_TEST_` occurrence lies between
+    them, then runs `bash onbox_m4.sh` through `subprocess` in a temporary root (a missing `bash` is a FAIL) for these planted
+    flows, each asserting the script's exit code, the content of `RUN_VALID.json` and `RUN_DONE`, and which files were left
+    untouched: runner stub rc 0 with its own `RUN_DONE` 0 and `RUN_VALID.json` true: exit 0, both files byte-identical to the
+    stub's; rc 3 with its own files: exit 3, files untouched (the trap did not run); rc 3 with no files: exit 3, run_valid true,
+    full incomplete-run label; rc 4 with no files: exit 4, run_valid false; rc 2: exit 2, run_valid false; rc 0 with no
+    `RUN_DONE`: exit 2; rc 124 at the deadline: the finalize stub is called once and the exit is 3; rc 137 at 100 s: exit 2;
+    `REMOTE_TIMEOUT=10`: exit 3, run_valid true; a stub `sudo` that sleeps 60 s with `M4_TEST_INSTALL_CEILING_S=3`: exit 2 within
+    30 s with the void record present; a static check that no line invoking the runner lacks `|| RC=$?`; and the two flows of
+    item 55. Still no GPU and no network; the whole selftest under 300 s.
 49. **`--finalize` rebuilds status from disk (new, addendum 6, F2, F17).** `run_m4.py --finalize` builds its `RunState` from
     `results_m4/out/`, not fresh: for the anchor and each C<i> it reads the record, and a record with decision PASS or FAIL, or
     VOID with `marginal` or a rule reason, is `decided` or `void_by_rule` and is never rewritten (byte-identical afterwards); a
@@ -395,12 +408,34 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
 53. **Spend report (new, addendum 6, F10).** `estimated_spend_usd` = seconds since T0 x `PRICE_USD_PER_HOUR` / 3,600; the pre-T0
     seconds are reported beside it and not added (T0 already includes the bootstrap, item 44). Selftest: 3,600 s since T0 with 300
     s pre-T0 gives 1.99 (not 2.16), and 7,200 s gives 3.98.
-54. **The shell's void records carry the rule-6 keys (new, addendum 6, F11).** The shell's minimal void (item 8, row 1, and the
-    code-3 route of item 48) writes `env.txt` (named non-secret variables, including the `REMOTE_TIMEOUT` seen), `m4_summary.json`
-    (first key `what_this_run_decides`), an anchor record and C1 to C4 records each with the provenance.py keys, `values.measured`
-    null, `values.unit`, `values.card_value`, `values.band`, `decision` VOID and `run_valid` per item 48(b), plus
-    `RUN_VALID.json` and `RUN_DONE`. It writes through `frozen/provenance.py` when that imports under the system `python3`
-    (stdlib), else by hand with the same keys. Selftest: the item 48 flows read these files and check the keys.
+54. **The shell's void records carry the rule-6 keys (new, addendum 6, F11; revised, addendum 7).** The shell's minimal void (item
+    8, row 1, and the code-3 route of item 48) writes `env.txt` (named non-secret variables, including the `REMOTE_TIMEOUT`
+    seen), `m4_summary.json` (first key `what_this_run_decides`), an anchor record and C1 to C4 records each with the
+    provenance.py keys, `values.measured` null, `values.unit`, `values.card_value`, `values.band`, `decision` VOID and
+    `run_valid` per item 48(b), plus `RUN_VALID.json` and `RUN_DONE`; a record that already decided on disk is not written
+    again and is not shown as void (item 55). It writes through `frozen/provenance.py` when that imports under the system
+    `python3` (stdlib), else by hand with the same keys. Selftest: the item 48 flows read these files and check the keys.
+55. **The shell's void path keeps decided inputs decided (new, addendum 7, G4).** When `write_minimal_void` runs (the runner
+    died or never started, so no `RUN_DONE`), it first reads each C<i> record already on disk. A record with decision PASS or
+    FAIL, or VOID with `marginal` or a rule reason, is `decided` or `void_by_rule:<reason>` in `RUN_VALID.json`
+    `inputs_status`, in `RUN_DONE` and in the summary the shell writes if none exists, and is never rewritten. Only an input with
+    no such record is `void_by_failure:<kind>` (code 2) or `unmeasured_by_stop:<kind>` (code 3), as item 8 says; code 4 stays
+    `void_by_anchor_miss` for all four. The exit code and `run_valid` are exactly those of item 48(b); only the per-input
+    status changes. Planted, two shell-level flows of item 48: a runner stub that writes a decided C3 record and exits 2 with no
+    `RUN_DONE` gives exit 2, `run_valid` false, C3 `decided` with its record byte-identical, and C1, C2, C4 `void_by_failure`;
+    the same stub exiting 3 gives C3 `decided` and C1, C2, C4 `unmeasured_by_stop`.
+56. **Contract and directive precedence (new, addendum 7, G3).** Where `frozen/ONBOX_CONTRACT.md` differs from items 8, 20, 43
+    and 46, these items win, by a ruling of record of the gate: exit codes are 0, 2, 3 and 4 (no exit 5); the runner and the
+    shell write `RUN_DONE` (items 8, 48); the guard uses the estimate floors of item 43 and no timed dry run on the real input;
+    the per-run environment file is `env.txt` and no `env_<tag>.json` is required. Every other contract item (stage order,
+    guards, record fields, selftest contract, failure checks) stays binding. Review checks against the contract with this item
+    applied and does not cite these four points. No build change.
+57. **Build 10 scope (new, addendum 7, G6).** Build 10 is an in-place edit of build 9's `run_m4.py` and `onbox_m4.sh`, limited to:
+    the OpenMM change to `PIP_PINS` and its comment (item 33); the `write_minimal_void` change (item 55); the selftest cases those
+    two changes need (the `PIP_PINS` parser case of item 33, the two shell flows of item 55); and the selftest's count and hash
+    lines, which move. Every other line stays as build 9 has it; nothing is refactored, renamed or reordered. The build's return
+    states the real line counts, the two sha256 values (item 36), the new selftest count, and the exact lines changed. A changed
+    line outside this list is a blocking finding.
 
 ## Box
 
@@ -412,24 +447,29 @@ execution contract). `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator'
   onbox_m4.sh remote_run_m4.sh frozen/provenance.py` and `data/` recursively if it exists; forwarded env `PRICE_USD_PER_HOUR
   BUDGET_LEFT_USD REMOTE_TIMEOUT INSTANCE_TYPE`; fetch from `m4_run/results_m4/out/`. `remote_run_m4.sh` is
   `frozen/remote_run.sh` with only its `cd` line changed to `~/m4_run`; its bootstrap time is counted by the build (item 44).
-- Caps: `REMOTE_TIMEOUT=7200`; `BUDGET_LEFT_USD=5` per launch; two launches at most within USD 10.
+- Caps (revised, addendum 7): `REMOTE_TIMEOUT=7200` exactly for both launches (a smaller value is not authorised, G2);
+  `BUDGET_LEFT_USD=5` per launch; `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, on the fallback); two
+  launches at most within USD 10.
+- Before launch 1 the operator repeats the package-index check on every `PIP_PINS` requirement of build 10 and writes the result
+  into RUN.md (G8).
 - Payload layout on the box: `~/m4_run/run_m4.py`, `~/m4_run/onbox_m4.sh`, `~/m4_run/frozen/provenance.py`, `~/m4_run/data/...`
   if shipped. Results under `~/m4_run/results_m4/out/`.
 - The build's `onbox_command` is a single line the operator runs verbatim on the box through `remote_run_m4.sh`
   (`bash remote_run_m4.sh bash onbox_m4.sh`).
 
-## Local selftest (revised, addendum 6)
+## Local selftest (revised, addendum 7)
 
 `python3 run_m4.py --selftest` is stdlib-only and runs under `timeout 300`: no GPU, no network. It covers every parser
 (engine rate line and reporter file, MD log and production wall-clock, AlphaFold timing rows, docking rank and contact tables,
 byte counts, nvidia-smi labels including the CUDA version header, pip report, pip version string, `etimes`, the colabfold marker
 names), the marginal rule, the planted cases of items 21 to 27, the stage-flow cases of item 31, the real-stage-body cases of
-item 47, the shell-level flows of item 48 (it runs `bash onbox_m4.sh` under the test hook), the finalize flows of item 49, the
-process-group kill of item 32, the child-environment and venv-PATH cases of items 5 and 38, the incomplete-run label of item 35,
-the void path of items 8 and 29, the label-key check of item 6, record writing through `frozen/provenance.py`, and the file-hash
-line of item 36. No local tool run (no AlphaFold, docking or MD).
+item 47, the shell-level flows of items 48 and 55 (it runs `bash onbox_m4.sh` under the test hook), the finalize flows of item
+49, the process-group kill of item 32, the child-environment and venv-PATH cases of items 5 and 38, the `PIP_PINS` parser case
+of item 33, the incomplete-run label of item 35, the void path of items 8 and 29, the label-key check of item 6, record writing
+through `frozen/provenance.py`, and the file-hash line of item 36. No local tool run (no AlphaFold, docking or MD). Build 9's
+count was 658 of 658; build 10's is higher by the cases of items 33 and 55.
 
-## What the runner writes (`results_m4/out/`) (revised, addendum 6)
+## What the runner writes (`results_m4/out/`) (revised, addendum 7)
 
 - `endpoint-anchor_tag-m4.json` and `endpoint-C1_tag-m4.json` to `endpoint-C4_tag-m4.json`, plus one provenance.py record
   for each control (60 s sleep, empty run, unit-and-scale), each with `cell`, `inputs` with hashes, `metric`, `values`,
@@ -445,4 +485,4 @@ line of item 36. No local tool run (no AlphaFold, docking or MD).
   `m4_summary.json` (first key `what_this_run_decides`); download, install, smoke-check and tool logs; the pip report and the
   apt package hashes (item 34), the pip bootstrap entry when it ran (item 50), the colabfold marker record (item 51); the
   `RUN_DONE` marker with the exit code (3 after any guard, ceiling or timeout stop with inputs unmeasured) and the per-input
-  status of item 8 (item 46).
+  status of item 8 (items 46, 55), in which an input decided before an early end stays `decided` or `void_by_rule`.
