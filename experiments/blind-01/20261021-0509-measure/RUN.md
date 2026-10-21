@@ -25,3 +25,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 09:11Z session build1 started (model sonnet, pid 780708, session 000df4ac)
 - 09:23Z build1: the -p session stopped its background workflow 10 min after the operator's last turn (CLI ceiling); the opus build agent was killed before writing; no files; ceiling lifted for later sessions
 - 09:24Z session build2 started (model sonnet, pid 792923, session 3af7ad93)
+- 09:46Z build 2 checks: selftest exit 0
+- 09:46Z review 1 of build 2 requested
+- 09:46Z session review1 started (model sonnet, pid 814607, session dd45626c)
