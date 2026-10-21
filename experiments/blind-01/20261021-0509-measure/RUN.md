@@ -138,3 +138,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:44Z build 16 (wf.js, claude/opus, 5 min, in place): run_m4.py changed (7,523 lines), onbox_m4.sh unchanged; selftest 759/759; PIP_PINS vs item 70: build 9, record 9, identical 9; pins 9: found 9, missing 0, unpinned 0; extras declared 0, not declared 1; no box-compatible wheel and no sdist 0; sdist only (must build on the box) 1; detail in out/pip_pins_check_build16.txt; pip dry-run resolve of build 16's 9 pins in CPython 3.10 (sdists allowed): exit 0; ResolutionImpossible 0; 'No matching distribution' 0; error lines 0; packages in the report 82
 - 16:44Z review 8 of build 16 requested
 - 16:45Z stage review on wf.js run 5: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1397863
+- 16:50Z build 16 checks: selftest exit 0
+- 16:51Z LAUNCH 2: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1409008, log out/launcher_m4_L2.log
+- 16:51Z review 9 of build 16 (wf.js, claude/sonnet): PASS, 0 blocking, 6 advisory; LAUNCH 2 issued under the environment of record.
