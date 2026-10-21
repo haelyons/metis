@@ -197,3 +197,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 20:42Z LAUNCH 6 (A100, box 81448ced…): env_check PASS; tests 48/48 PASS; downloads and three controls recorded (two PASS, one RECORDED); a later stage failed and the box HELD at 20:38:46Z (endpoints and anchor VOID). Live records copied to out/launch6_live/; classifier 7 deciding the failed stage and cause class.
 - 20:44Z classifier 7 (medium confidence): launch 6 failed at the dry-run stage (the engine had run on the GPU); cause = a runner defect of about 10 lines; not fixer scope. Operator route (owner's intent: fix small things, log the changes for later review): fix build 19 in place bounded to that stage with the launch 6 evidence named, review, launch 7; the diff goes to the gate for ratification afterwards.
 - 20:44Z stage build on wf.js run 16: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1817103
+- 20:49Z build 19 checks: selftest exit 0
+- 20:49Z gate 16 (addendum) requested
+- 20:49Z stage gate on wf.js run 12: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1824904
+- 20:49Z build 19 (fix build, opus, 4 min) changed nothing; gate addendum requested on launch 6's failed stage with the live evidence, the classifier's letters and the builder's non-change; also asks for RESUME-re-runs and the hold length.
