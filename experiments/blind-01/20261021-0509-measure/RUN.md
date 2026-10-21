@@ -280,3 +280,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:41Z gate 19 (addendum) requested
 - 22:41Z stage gate on wf.js run 15: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1995527
 - 22:41Z classifier 10 (medium): anchor = published value; identity achievable; genuine miss after the frame fix (value moved about 3x toward expected); recommended R4 (finding of record, measure the inputs flagged). Gate asked to rule on the anchor (R4/R3/R1/R5) and, if R4, to change void propagation so the anchor FAIL no longer voids the inputs; launch 11 pre-authorisation.
+- 22:43Z build 26 checks: selftest exit 0
+- 22:43Z session classify11 started (model sonnet, pid 1999558, session 3ad1e005)
+- 22:43Z gate addendum 19 (wf.js, 10 answers, 33 items): the anchor ruling; its operator lines say not to launch 11 or build yet under some condition and ask that the cap of record (10 or 20) be set in RUN.md (it is: USD 20 per the owner's extension). A letters-only reader decides whether the ruling is R4 with a condition or a halt.

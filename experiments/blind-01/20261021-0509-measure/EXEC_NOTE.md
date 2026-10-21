@@ -1,19 +1,17 @@
-# Execution directive for build (tag m4), regenerated on 2026-10-21 as the current truth after the report on launch 6 (addendum 16; ruled in GATE_COMMIT.md Addendum 17) (revised, addendum 18)
+# Execution directive for build (tag m4), regenerated on 2026-10-21 as the current truth after the report on launches 9 and 10 (addendum 19: HALT) (revised, addendum 19)
 
-This is the measure run m4 of card seed:idea:1: one rented single-GPU box in us-east-1 with the filesystem `metis-env-us-east-1` attached, a
+**Current state: HALT for the owner. No build is authorised and no launch is pre-authorised (item 33).** This is the measure run m4 of card seed:idea:1: one rented single-GPU box in us-east-1 with the filesystem `metis-env-us-east-1` attached, a
 timer check, an anchor redocking of AAVR-PKD2 onto AAV2 against PDB 6IHB, then four inputs (AlphaFold-Multimer hours per run, MD ns/day,
-auxiliary hours per pair, storage GiB) each read against the card's own band. Binding order: this note first, `frozen/ONBOX_CONTRACT.md`
+auxiliary hours per pair, storage GiB) each read against the card's own band. Launches 9 and 10 passed the environment, tests, downloads, controls and dry-run stage and missed the anchor (exit 4; inputs void by the contract); the gate
+does not change the anchor or void-propagation items and halts for the owner's ruling (GATE_COMMIT.md, Addendum 19). Binding order if a build is later authorised: this note first, `frozen/ONBOX_CONTRACT.md`
 second (item 21 says where this note wins), `out/design_record.json` third; where silent the design record binds as written, GUESS values
 included. The build does not read GATE_COMMIT.md. Three standing changes of record (owner, 2026-10-21): (i) the Python environment is an
 artifact built once on the Lambda filesystem and recorded by its lock hash; the on-box script activates it and verifies the hash, and installs
 nothing; pins live in the environment record, not in the runner; (ii) implementer selftests are not required and not credited: a separate
 claim-blind author writes `tests/tests_m4.py` from this note, hidden from the builder, and the runner executes it on the box before the physics as
 a record; (iii) a stage failure on the box holds the box open (HOLD) once for a bounded fixer whose every change is committed to git on the box;
-the fixer may touch environment and glue, never the measurement protocol or the record fields. Launches 1 and 2 ended in install failures; launch 6
-reached the anchor's docking stage, where the runner's rank-table parser dropped every row of a table the tool had written correctly (a runner defect,
-now item 26), and the box was held. Nothing from earlier launches is carried over except that diagnosis. The cap is USD 10 of box time for the whole
-run (the environment build counts). **Read the closing section "Build 20: exactly these changes" first; it binds the edit, and the items below are
-the requirements the files must meet.**
+the fixer may touch environment and glue, never the measurement protocol or the record fields. Items 1 to 32 below are carried unchanged from addendum 18; the closing
+section of the previous note ("Build 20") is satisfied and removed. The cap is USD 10 of box time under the gate's standing rules (the operator reports an owner extension to USD 20; the owner confirms, Addendum 19 G5); the environment build counts.
 
 ## Where to write
 
@@ -24,7 +22,7 @@ at `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/de
 contract) and this note. It does not read `tests/`, `out/`, `results_env/` or `.keys`. `lambda_run_m4.sh` and `remote_run_m4.sh` are the
 operator's files. It uses no network. Its only local checks are `python3 -m py_compile run_m4.py` and `bash -n onbox_m4.sh`.
 
-## Checklist of gate changes the build must carry (32 entries) (revised, addendum 18)
+## Checklist of gate changes the build must carry (33 entries) (revised, addendum 19)
 
 **REQUIRED FOR LAUNCH**
 
@@ -221,6 +219,10 @@ operator's files. It uses no network. Its only local checks are `python3 -m py_c
     `HUP`, `TERM` and `INT`, writes `results_m4/out/HOLD_END` (cause `resume`, `expired` or the signal name; seconds waited) and the log line, then ends as an expiry does (`hold: expired` on `RUN_DONE`, with the cause named). Launch 6's
     hold ended after about 13 minutes of 2,400 s with no record of why; after this item a hold that ends early says why. No other exit path from the wait exists.
 
+33. **REQUIRED FOR LAUNCH. Halt: no build and no launch until the owner rules (new, addendum 19).** No launch 11 and no build is authorised; the anchor items (7, 11, 17, 19, 22, 23) stand as written, so an anchor
+    FAIL still ends the run with exit 4, `run_valid` false and `void_by_anchor_miss` for C1 to C4. Any change to them, to the anchor's tolerance or to the cap of record is the owner's ruling, committed to GATE_COMMIT.md
+    before anything is built or launched. The build, if started in error, edits nothing. (GATE_COMMIT answers G1 to G5.)
+
 **REPORTING ONLY**
 
 28. **REPORTING ONLY. Change log and hold cost.** The fetched `changes.log`, the hold's wall-clock and its cost at `PRICE_USD_PER_HOUR` are reported in `m4_summary.json` and RUN.md; the gate reads them before any
@@ -238,12 +240,13 @@ operator's files. It uses no network. Its only local checks are `python3 -m py_c
 ## Box
 
 - Instance: `gpu_1x_a100_sxm4` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 with the filesystem `metis-env-us-east-1` attached; else the cheapest single GPU with capacity in us-east-1 at no more than USD 2.50/h; the
-  operator records which. Launches 1, 2 and 6 ran on `gpu_1x_a100_sxm4` (A100-SXM4-40GB, driver 570.148.08, CUDA 12.8, python 3.10.12).
+  operator records which. Launches 1, 2 and 6 to 10 ran on `gpu_1x_a100_sxm4` (A100-SXM4-40GB, driver 570.148.08, CUDA 12.8, python 3.10.12).
 - Launcher: the operator's `lambda_run_m4.sh` (from `frozen/lambda_run.sh` at the header's declared points only): remote dir `m4_run/`; payload as item 2; forwarded env `PRICE_USD_PER_HOUR BUDGET_LEFT_USD REMOTE_TIMEOUT
   INSTANCE_TYPE ENV_LOCK_SHA256 HOLD_SECONDS` and optionally `ENV_DIR`; fetch all of `m4_run/results_m4/out/` (rank tables, poses, diagnostics, `HOLD_END`, `tool_logs/`), `held_attempt_1/` if present and `changes.log`. `remote_run_m4.sh` is
   `frozen/remote_run.sh` with only its `cd` line changed to `~/m4_run`.
-- Caps (revised, addendum 16): `REMOTE_TIMEOUT=7200` exactly; spend of record USD 4.18 (3.48 before launch 6, about 0.70 for it), remaining 5.82; `BUDGET_LEFT_USD` = the lesser of 5 and the remaining cap = 5; `HOLD_SECONDS=2400` (revised, addendum 17); no launch starts
-  with less than 7,800 s x price / 3,600 remaining (USD 4.311 at 1.99, 5.417 at 2.50). A launch at its caps is 4.311; after the next launch at its caps 1.51 remains, so no launch follows it.
+- Caps (revised, addendum 19): `REMOTE_TIMEOUT=7200` exactly; spend of record USD 6.68 (through launch 10); under the gate's USD 10 cap 3.32 remains, below the 4.311 (7,800 s x 1.99 / 3,600) a launch at its caps costs, so no launch fits;
+  if the owner confirms the USD 20 the operator reports, 13.32 remains. No launch is pre-authorised (item 33). When a launch is later authorised: `BUDGET_LEFT_USD` = the lesser of 5 and the remaining cap, `HOLD_SECONDS=2400`, and no launch starts
+  with less than 7,800 s x price / 3,600 remaining (USD 4.311 at 1.99, 5.417 at 2.50).
 - Payload layout on the box: `~/m4_run/run_m4.py`, `~/m4_run/onbox_m4.sh`, `~/m4_run/frozen/provenance.py`, `~/m4_run/tests/tests_m4.py`, `~/m4_run/data/...` if shipped. Results under `~/m4_run/results_m4/out/`.
 
 ## Local selftest
@@ -261,22 +264,6 @@ None. `python3 run_m4.py --selftest` is removed; implementer selftests are neith
 - `RUN_VALID.json`; `env.txt` (named non-secret variables only, including the `REMOTE_TIMEOUT` seen and the pre-T0 seconds); `m4_summary.json`; download, capability-check and tool logs (including the tests' output); the download record
   with URLs and sha256; the colabfold marker record; `RUN_DONE` with the exit code and the per-input status of item 7; `HOLD` while held and `HOLD_END` when a hold ends (item 27); `changes.log` and `results_m4/held_attempt_1/` after a hold.
 
-## Build 20: exactly these changes (new, addendum 16; ruled addendum 17; binds first; replaces the closing section "Build 17: exactly these changes", which is satisfied and removed)
+## No build authorised (revised, addendum 19; replaces the closing section "Build 20: exactly these changes", satisfied and removed)
 
-The files edited are the ones now in the run directory. Every other line stays as it is; nothing is refactored, renamed or reordered. A changed line outside V1 to V4 is a blocking finding in review.
-
-**V1. Rank table parse (items 13, 26 a to e).** In `run_m4.py`, `parse_rank_table` and `top_ranked_row` (and the lines of `run_docking` that call them) read the table under item 26 a to d: no row is dropped for its field count; header-with-rows
-mismatch is read positionally or is a named parse error; the empty-table error states the lines after the header; the top row of a score-only table is the first row written and the score column must be monotone. `pose_path_from_row` keeps its named keys
-and never falls back to a glob.
-
-**V2. Evidence on failure (item 26 f, g).** Every parse error and pose failure of `run_docking` carries the field counts and the first five raw lines; the runner writes `rank_table_diagnostic_<name>_tag-m4.txt` before raising; the anchor record's
-`values.docking_parameters` carries `rank_table_columns`.
-
-**V3. The hold wait (item 27).** In `onbox_m4.sh`, the wait loop of `hold_open` is measured with `date +%s`, prints the 60 s heartbeat, traps `HUP`, `TERM` and `INT` while holding, writes `HOLD_END`, and applies the 2,400 s cap with its label
-(item 6). No other exit path leaves the wait.
-
-**V4. The restart (item 6).** In `onbox_m4.sh`, after `RESUME` and the hash and time checks, the runner restarts once from its first stage under the same T0 and caps; a download file with the recorded sha256 may be reused and is recorded
-`reused: true` with its hash. A RESUME never ends the launch in place of the restart.
-
-**The return** states the real line counts of both files, their sha256 values, that `py_compile` and `bash -n` pass, the exact lines changed by V1 to V4 (before and after, as line ranges), and `onbox_command` equal to
-`bash remote_run_m4.sh bash onbox_m4.sh`. It never says "STOPPED", "NOT BUILT" or "NOT ISSUED".
+`run_m4.py` and `onbox_m4.sh` stand as build 26 left them. No edit is authorised until the owner's ruling is committed to GATE_COMMIT.md; the ruling will state the exact changes, if any, in a closing section of this note.
