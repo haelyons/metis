@@ -506,7 +506,13 @@ wait_stage() {
   echo "wait $stage: timed out after $((max/60)) min"; return 1
 }
 
+ask() {   # name instruction-file: one read/write-only sonnet session following the file (classifiers, probes)
+  local name="$1" instr="$2"; [ -f "$instr" ] || { echo "no instruction file $instr"; return 1; }
+  start_session "$name" sonnet "$(realpath "$instr")" --disallowedTools "$RO_TOOLS"
+}
+
 case "$CMD" in
+  ask) ask "$@" ;;
   prepare) prepare "$@" ;; design) design ;; gate) gate "$@" ;; build) build ;; build-checks) build_checks ;; review) review ;;
   launcher) launcher ;; launch) launch "$@" ;; score) score ;; post) post ;; status) status ;; wait) wait_stage "$@" ;;
   *) sed -n 2,22p "$0"; exit 2 ;;
