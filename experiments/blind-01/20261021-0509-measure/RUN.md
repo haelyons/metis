@@ -172,3 +172,4 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 19:22Z build 18 checks: selftest exit 0
 - 19:23Z review 10 of build 18 (wf.js, claude/sonnet): PASS, 0 blocking, 13 advisory. LAUNCH 3 issued under the environment of record with the filesystem attached.
 - 19:23Z LAUNCH 3: gpu_1x_a10 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1665974, log out/launcher_m4_L3.log
+- 19:23Z LAUNCH 3 of record: no A100 capacity in us-east-1 (the filesystem's region); gate's fallback applied: gpu_1x_a10 (A10, USD 1.29/h) in us-east-1. Caveat of record: the card's GPU is an A100; every measured record carries the instance type and GPU name, and the measured rates are A10 rates. The environment of record was built on an A10 as well (same architecture for any compiled extension). Cap: USD 1.71 spent before this launch (launches 0.67, env build 1.04); the launch preflight's arithmetic now includes env builds.

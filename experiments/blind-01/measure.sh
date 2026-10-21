@@ -500,7 +500,7 @@ launch() {
   while [ $# -gt 0 ]; do case "$1" in --type) type="$2"; shift ;; --region) region="$2"; shift ;; --timeout) timeout="$2"; shift ;; --budget) budget="$2"; shift ;; --price) price="$2"; shift ;; *) echo "launch: unknown option $1"; return 2 ;; esac; shift; done
   cd "$MDIR" || return 1
   local n; n=$(ls out/launch*.json 2>/dev/null | wc -l); n=$((n+1))
-  local spent; spent=$($PY -c 'import json,glob; print(round(sum((json.load(open(j)).get("usd_est") or 0) for j in glob.glob("out/launch*.json")), 2))')
+  local spent; spent=$($PY -c 'import json,glob; print(round(sum((json.load(open(j)).get("usd_est") or 0) for j in glob.glob("out/launch*.json")+glob.glob("out/envbuild*.json")), 2))')   # launches and environment builds
   local left; left=$($PY -c "print(round(10 - $spent, 2))"); [ "$($PY -c "print(1 if $left > 0.5 else 0)")" = 1 ] || { echo "launch $n refused: USD $spent of the USD 10 calibration cap already spent (owner rule)"; return 1; }
   budget=$($PY -c "print(min(float('$budget'), $left))"); echo "calibration cap: USD $spent spent, USD $left left; this launch's BUDGET_LEFT_USD=$budget"
   [ -r .keys ] || { echo "no readable .keys"; return 1; }
