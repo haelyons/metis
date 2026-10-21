@@ -145,6 +145,12 @@ AF2_RECYCLES = 20
 MD_VELOCITY_SEED = 0
 MD_PRODUCTION_NS = 0.5
 MD_TIMESTEP_FS = 2.0
+# The trajectory is written every 5,000 steps, which at a two femtosecond step
+# is one frame every 10 picoseconds, fifty frames over the half-nanosecond
+# segment. The interval is declared here and recorded on every row and in the
+# storage record; it is never tuned to move the storage figure into the band.
+MD_REPORT_INTERVAL_STEPS = 5000
+MD_FRAME_INTERVAL_PS = MD_REPORT_INTERVAL_STEPS * MD_TIMESTEP_FS / 1000.0
 MD_ATOMS_MIN = 120000
 MD_ATOMS_MAX = 180000
 PAIR_RESIDUES_MIN = 750
@@ -256,29 +262,106 @@ ENV_RECORD_KEYS = (
     "MPLCONFIGDIR",
 )
 
-# Every measured record carries each of these label keys. A key whose value
-# could not be read is null and carries a sibling "<key>_reason".
-LABEL_KEYS = (
-    "instance_type",
-    "gpu_name",
-    "gpu_driver",
-    "cuda_runtime_version",
-    "jax_cuda_plugin_version",
+# ---------------------------------------------------------------------------
+# LABELS EVERY RECORD CARRIES
+#
+# A record that does not say which machine and which software produced it is a
+# number without a home. Each kind of record this program writes declares here
+# exactly which keys its `values.machine` (and, where it applies, its
+# `values.engine`) must hold. A key is never left out: a value that could not be
+# read is null and `values.null_reasons[<key>]` says why in words.
+# ---------------------------------------------------------------------------
+
+# What machine ran it. Every kind of record carries all of these.
+MACHINE_KEYS = (
+    "instance_type",            # the rented box's own type name
+    "gpu_name",                 # the graphics processor, from a runtime query
+    "gpu_driver",               # its driver version
+    "cuda_runtime_version",     # the "CUDA Version" field of the nvidia-smi banner
+    "cuda_plugin_version",      # the version of the installed JAX CUDA plugin package
+    "start_utc",                # when the stage that produced the value started
+    "end_utc",                  # when it ended; never the record's write time
+    "price_usd_per_hour",       # what the box costs per hour
+)
+
+# What software produced it. The anchor and the four inputs carry all of these.
+ENGINE_KEYS = (
     "alphafold_implementation",
     "alphafold_params_sha256",
     "jax_version",
     "jaxlib_version",
-    "jax_cuda_plugin_wheel_build_tag",
+    "jax_cuda_plugin_version",
+    "jax_wheel_build_tags",
     "docking_code",
     "docking_version",
     "md_engine",
     "md_engine_version",
     "md_precision",
     "md_platform",
-    "start_utc",
-    "end_utc",
-    "price_usd_per_hour",
+    "build_flags",
 )
+
+CONTROL_KINDS = ("control_sleep", "control_empty_run", "control_unit_and_scale")
+MEASURED_KINDS = ("anchor", "C1", "C2", "C3", "C4")
+
+REQUIRED_LABEL_KEYS = {
+    kind: {"machine": MACHINE_KEYS, "engine": ENGINE_KEYS} for kind in MEASURED_KINDS
+}
+REQUIRED_LABEL_KEYS.update(
+    {kind: {"machine": MACHINE_KEYS, "engine": ()} for kind in CONTROL_KINDS}
+)
+
+# The nine labels the directive names, each by a word that must appear in the
+# name of at least one key the record kinds carry between them.
+NINE_LABEL_WORDS = (
+    "instance",   # instance type
+    "gpu",        # graphics processor name
+    "driver",     # its driver
+    "cuda",       # the driver's CUDA version, and the JAX CUDA plugin's version
+    "version",    # engine versions
+    "flags",      # build flags; "tags" also satisfies this label
+    "start",      # start wall-clock, in UTC
+    "end",        # end wall-clock, in UTC
+    "price",      # price per hour
+)
+NINE_LABEL_ALTERNATIVES = {"flags": ("flags", "tags")}
+
+
+def label_keys_cover_nine(required=None) -> list:
+    """Which of the nine labels no key name covers. Empty means all are covered."""
+    required = required or REQUIRED_LABEL_KEYS
+    names = set()
+    for spec in required.values():
+        for group in spec.values():
+            names.update(group)
+    missing = []
+    for word in NINE_LABEL_WORDS:
+        words = NINE_LABEL_ALTERNATIVES.get(word, (word,))
+        if not any(any(w in name for w in words) for name in names):
+            missing.append(word)
+    return missing
+
+
+def label_problems(kind: str, values: dict) -> list:
+    """What a record's labels are missing: absent keys, or nulls with no reason."""
+    spec = REQUIRED_LABEL_KEYS.get(kind)
+    if spec is None:
+        return [f"no label keys are declared for a record of kind {kind}"]
+    problems = []
+    reasons = values.get("null_reasons") or {}
+    for group, keys in spec.items():
+        if not keys:
+            continue
+        block = values.get(group)
+        if not isinstance(block, dict):
+            problems.append(f"{kind}: values.{group} is missing")
+            continue
+        for key in keys:
+            if key not in block:
+                problems.append(f"{kind}: values.{group} does not carry {key}")
+            elif block[key] is None and not str(reasons.get(key) or "").strip():
+                problems.append(f"{kind}: {key} is null with no reason given")
+    return problems
 
 # ---------------------------------------------------------------------------
 # Allowed download sources. Nothing else may be fetched.
@@ -291,8 +374,27 @@ AF_PARAMS_URL = (
 )
 ALLOWED_DOWNLOAD_HOSTS = ("files.rcsb.org", "storage.googleapis.com")
 
-# Packages installed with pip, pinned. The smoke check decides whether the forms
-# chosen here really carry what is needed; nothing is substituted if one fails.
+# Packages installed with pip, every one pinned to an exact version. The smoke
+# check on the box decides whether the forms chosen here really carry what is
+# needed; nothing is substituted if one fails, and a failure is exit 2.
+#
+# WHICH FORM WAS CHOSEN FOR THE DYNAMICS ENGINE, AND WHY IT IS STATED HERE.
+# The engine's plain wheel does not always carry the graphics-processor
+# platform the run needs; the platform comes either from an extra of the pinned
+# release or from a separate package whose name begins "openmm-cuda". The form
+# chosen here is THE PINNED RELEASE'S CUDA EXTRA, written "openmm[cuda12]".
+# The alternative, a sibling pinned requirement such as "openmm-cuda-12==8.2.0",
+# was not used. Which form is right cannot be settled from memory, so two checks
+# decide it and neither is this comment: the operator reads the pinned release's
+# published extras before launch 1, and the smoke check asks the installed
+# engine for its CUDA platform on the box. If the extra does not exist, the
+# engine installs without the platform, the smoke check fails, and the run ends
+# as broken infrastructure before any measurement. Nothing falls back.
+#
+# The prediction stack takes the form whose published metadata carries what the
+# smoke check imports: "colabfold" supplies the command line and "alphafold-
+# colabfold" supplies the alphafold module it imports, with the JAX build pinned
+# to the version that release is built against.
 PIP_PINS = [
     "jax==0.4.35",
     "jaxlib==0.4.35",
@@ -300,15 +402,95 @@ PIP_PINS = [
     "jax-cuda12-pjrt==0.4.35",
     "colabfold==1.5.5",
     "alphafold-colabfold==2.3.6",
-    "openmm==8.2.0",
+    "openmm[cuda12]==8.2.0",
     "lightdock==0.9.4",
 ]
+
+# The smallest pip that can report what it downloaded. An older one gets one
+# recorded bootstrap, and no other upgrade of pip happens anywhere.
+PIP_REPORT_MIN = (22, 2)
+PIP_BOOTSTRAP_VERSION = "24.0"
+
+
+def parse_pin(spec: str) -> dict:
+    """Read one pinned requirement: its name, any extras, and its exact version."""
+    text = str(spec).strip()
+    m = re.match(r"^([A-Za-z0-9._-]+)\s*(?:\[([^\]]*)\])?\s*==\s*([^\s;]+)$", text)
+    if not m:
+        raise ParseError(f"requirement {spec!r} is not pinned as name==version")
+    extras = [e.strip() for e in (m.group(2) or "").split(",") if e.strip()]
+    return {"name": m.group(1), "extras": extras, "version": m.group(3)}
+
+
+def pip_pins_problems(pins: list) -> list:
+    """What is wrong with a list of pinned requirements, in plain words.
+
+    Two things are checked: every requirement names an exact version, and the
+    dynamics engine is asked for in a form that can carry the graphics-processor
+    platform, either through an extra or through a sibling package whose name
+    begins "openmm-cuda".
+    """
+    problems = []
+    parsed = []
+    for spec in pins:
+        try:
+            parsed.append(parse_pin(spec))
+        except ParseError as exc:
+            problems.append(str(exc))
+    names = {p["name"].lower().replace("_", "-") for p in parsed}
+    openmm = [p for p in parsed if p["name"].lower() == "openmm"]
+    sibling = [n for n in names if n.startswith("openmm-cuda")]
+    if openmm and not openmm[0]["extras"] and not sibling:
+        problems.append(
+            "the dynamics engine is pinned without a form that carries the "
+            "graphics-processor platform: no extra and no openmm-cuda sibling"
+        )
+    return problems
+
+
+def parse_pip_version(text: str):
+    """Read `pip --version`: the version as numbers, or None if unreadable."""
+    m = re.search(r"\bpip\s+([0-9]+)\.([0-9]+)(?:\.([0-9]+))?", str(text or ""))
+    if not m:
+        return None
+    return tuple(int(g) for g in m.groups() if g is not None)
+
+
+def pip_needs_bootstrap(version_text: str) -> bool:
+    """True when the environment's own pip is too old to report its downloads."""
+    version = parse_pip_version(version_text)
+    if version is None:
+        raise HarnessFailure(
+            "the python package installer did not report a readable version",
+            f"got {version_text!r}",
+        )
+    return version[:2] < PIP_REPORT_MIN
 
 # Packages installed with the system package manager, declared here and in
 # onbox_m4.sh. The shell installs them; this program records their versions.
 APT_PACKAGES = ["python3-venv", "aria2", "curl"]
 
 DOCKING_CODE = "lightdock"
+
+# The docking parameters, identical for the anchor and for every pair, and never
+# restrained toward the published interface: the anchor has to find the place on
+# its own or it has not reproduced anything.
+DOCKING_SWARMS = 2
+DOCKING_GLOWWORMS = 20
+DOCKING_STEPS = 20
+
+# The order of docking commands: prepare, search, build the structures of the
+# poses found, then let the tool rank them. The conformation-generating step is
+# what turns the search's numbers into pose files; without it there is no pose
+# to compare and the run would end as broken infrastructure at the anchor.
+DOCKING_ORDER = [
+    "lightdock3_setup.py (prepare)",
+    "lightdock3.py (simulate)",
+    "lgd_generate_conformations.py (generate the pose structures)",
+    "lgd_rank.py (rank)",
+]
+DOCKING_CORE_STEPS = ["simulate", "generate_conformations", "rank"]
+
 MD_ENGINE = "OpenMM"
 MD_PRECISION = "mixed"
 MD_PLATFORM = "CUDA"
@@ -323,10 +505,13 @@ AF2_IMPLEMENTATION = "ColabFold (colabfold_batch) running AlphaFold-Multimer"
 class HarnessFailure(Exception):
     """Broken infrastructure or a broken harness. Exit code 2."""
 
-    def __init__(self, reason: str, detail: str = ""):
+    def __init__(self, reason: str, detail: str = "", kind: str = ""):
         super().__init__(reason)
         self.reason = reason
         self.detail = detail
+        # A short name for the marker, so a reader can tell an install failure
+        # from a tool failure without reading prose.
+        self.kind = kind or re.sub(r"[^a-z0-9]+", "_", reason.lower()).strip("_")[:40]
 
 
 class GuardStop(Exception):
@@ -1144,9 +1329,16 @@ class RunState:
         # Measurements as they arrive.
         self.rows = {}                       # arm -> list of rows (also on disk)
         self.inputs_status = {
-            cid: {"state": "unmeasured", "reason": "stage not reached", "decision": None}
+            cid: {"state": "unmeasured",
+                  "status": "unmeasured_by_stop:stage_not_reached",
+                  "reason": "stage not reached", "decision": None,
+                  "voided_by": None}
             for cid in INPUT_IDS
         }
+        # Filled in when something breaks or the anchor misses, so the closing
+        # stage can write the right status word against every input.
+        self.failure_kind = None
+        self.anchor_missed = None
         self.records_written = []
         self.labels_cache = None
         self.install_seconds_used = _env_float(self.env, "M4_APT_SECONDS", 0.0)
@@ -1192,7 +1384,12 @@ class RunState:
         return self.stop_at_s - self.elapsed_s()
 
     def spend_usd(self) -> float:
-        return cost_usd(self.elapsed_s() + self.pre_t0_seconds, self.price_usd_per_hour)
+        """Dollars spent since the run's own start.
+
+        The start already counts the seconds the box spent booting, so those
+        seconds are reported beside this figure and never added to it again.
+        """
+        return cost_usd(self.elapsed_s(), self.price_usd_per_hour)
 
     # -- validity ----------------------------------------------------------
 
@@ -1213,19 +1410,56 @@ class RunState:
 
     # -- per-input bookkeeping --------------------------------------------
 
-    def set_decided(self, cid: str, decision: str, reason=None) -> None:
-        self.inputs_status[cid] = {
-            "state": "void_by_rule" if decision == "VOID" else "decided",
-            "reason": reason,
-            "decision": decision,
-        }
+    # Exactly one of five status words stands against each input in the marker
+    # the launcher reads: decided, void by a rule, left unmeasured by a stop,
+    # voided because the anchor missed, or voided because something broke.
 
-    def set_unmeasured(self, cid: str, stop_name: str) -> None:
+    def set_decided(self, cid: str, decision: str, reason=None) -> None:
+        if decision == "VOID":
+            self.inputs_status[cid] = {
+                "state": "void_by_rule",
+                "status": f"void_by_rule:{reason}",
+                "reason": reason,
+                "decision": "VOID",
+                "voided_by": reason,
+            }
+        else:
+            self.inputs_status[cid] = {
+                "state": "decided", "status": "decided",
+                "reason": reason, "decision": decision, "voided_by": None,
+            }
+
+    def set_unmeasured(self, cid: str, stop_kind: str) -> None:
         self.inputs_status[cid] = {
             "state": "unmeasured",
-            "reason": stop_name,
+            "status": f"unmeasured_by_stop:{stop_kind}",
+            "reason": stop_kind,
             "decision": "VOID",
+            "voided_by": stop_kind,
         }
+
+    def set_void_by_anchor_miss(self, cid: str, reason: str) -> None:
+        self.inputs_status[cid] = {
+            "state": "void_by_anchor_miss", "status": "void_by_anchor_miss",
+            "reason": reason, "decision": "VOID", "voided_by": reason,
+        }
+
+    def set_void_by_failure(self, cid: str, kind: str, reason: str) -> None:
+        self.inputs_status[cid] = {
+            "state": "void_by_failure", "status": f"void_by_failure:{kind}",
+            "reason": reason, "decision": "VOID", "voided_by": reason,
+        }
+
+    def last_stop_kind(self) -> str:
+        """What kind of stop cut the most recent piece of work short."""
+        if not self.stop_events:
+            return "stop_not_recorded"
+        return str(self.stop_events[-1].get("kind") or "stop_not_recorded")
+
+    def unmeasured_inputs(self) -> list:
+        """The inputs a stop left unmeasured, which is what decides exit 3."""
+        return sorted(cid for cid, s in self.inputs_status.items()
+                      if str(s.get("status", "")).startswith("unmeasured_by_stop"))
 
     def unit_estimate(self, kind: str) -> float:
         """How long one more unit of this kind should take.
@@ -1263,17 +1497,19 @@ def collect_labels(state: RunState) -> dict:
     """Read the machine's own description, once, from runtime queries only.
 
     Nothing here is a literal copied from the card. A value that cannot be read
-    is null and carries the reason it is null.
+    is null and carries the reason it is null, in a word or two of plain text.
+    Returns one flat dictionary; `labels_for_record` sorts it into the machine
+    block and the engine block the records carry.
     """
     if state.labels_cache is not None:
         return dict(state.labels_cache)
 
-    labels = {k: None for k in LABEL_KEYS}
+    labels = {k: None for k in MACHINE_KEYS + ENGINE_KEYS}
     reasons = {}
 
     labels["instance_type"] = state.env.get("INSTANCE_TYPE") or None
     if labels["instance_type"] is None:
-        reasons["instance_type_reason"] = "INSTANCE_TYPE not forwarded"
+        reasons["instance_type"] = "INSTANCE_TYPE was not forwarded to the box"
     labels["price_usd_per_hour"] = state.price_usd_per_hour
 
     smi_query = state.runner.capture(
@@ -1288,55 +1524,82 @@ def collect_labels(state: RunState) -> dict:
 
     labels["gpu_name"] = q.get("gpu_name")
     if labels["gpu_name"] is None:
-        reasons["gpu_name_reason"] = "nvidia-smi did not report a GPU name"
+        reasons["gpu_name"] = "nvidia-smi did not report a graphics-processor name"
     labels["gpu_driver"] = q.get("driver_version") or h.get("driver_version")
     if labels["gpu_driver"] is None:
-        reasons["gpu_driver_reason"] = "nvidia-smi did not report a driver version"
+        reasons["gpu_driver"] = "nvidia-smi did not report a driver version"
     labels["cuda_runtime_version"] = h.get("cuda_version_header")
     if labels["cuda_runtime_version"] is None:
-        reasons["cuda_runtime_version_reason"] = (
-            "nvidia-smi banner carried no CUDA Version field"
+        reasons["cuda_runtime_version"] = (
+            "the nvidia-smi banner carried no CUDA Version field"
         )
 
     versions = read_package_versions(state)
     labels["jax_version"] = versions.get("jax")
     if labels["jax_version"] is None:
-        reasons["jax_version_reason"] = "jax version not reported by the interpreter"
+        reasons["jax_version"] = "jax did not report a version"
     labels["jaxlib_version"] = versions.get("jaxlib")
     if labels["jaxlib_version"] is None:
-        reasons["jaxlib_version_reason"] = "jaxlib version not reported"
-    labels["jax_cuda_plugin_version"] = versions.get("jax_cuda12_plugin")
-    if labels["jax_cuda_plugin_version"] is None:
-        reasons["jax_cuda_plugin_version_reason"] = (
-            "jax-cuda12-plugin version not reported"
+        reasons["jaxlib_version"] = "jaxlib did not report a version"
+    plugin = versions.get("jax_cuda12_plugin")
+    labels["jax_cuda_plugin_version"] = plugin
+    labels["cuda_plugin_version"] = plugin
+    if plugin is None:
+        reasons["jax_cuda_plugin_version"] = (
+            "the JAX CUDA plugin package did not report a version"
         )
-    labels["jax_cuda_plugin_wheel_build_tag"] = versions.get("wheel_build_tags")
-    if labels["jax_cuda_plugin_wheel_build_tag"] is None:
-        reasons["jax_cuda_plugin_wheel_build_tag_reason"] = (
-            "no wheel build tag in the pip report"
+        reasons["cuda_plugin_version"] = (
+            "the JAX CUDA plugin package did not report a version"
+        )
+    labels["jax_wheel_build_tags"] = versions.get("wheel_build_tags")
+    if labels["jax_wheel_build_tags"] is None:
+        reasons["jax_wheel_build_tags"] = (
+            "the pip download report named no wheel for the JAX packages"
         )
     labels["alphafold_implementation"] = AF2_IMPLEMENTATION
     labels["alphafold_params_sha256"] = versions.get("params_sha256")
     if labels["alphafold_params_sha256"] is None:
-        reasons["alphafold_params_sha256_reason"] = (
-            "parameter archive not hashed in this run"
+        reasons["alphafold_params_sha256"] = (
+            "the parameter archive was not hashed in this run"
         )
     labels["docking_code"] = DOCKING_CODE
     labels["docking_version"] = versions.get("lightdock")
     if labels["docking_version"] is None:
-        reasons["docking_version_reason"] = "docking code version not reported"
+        reasons["docking_version"] = "the docking code did not report a version"
     labels["md_engine"] = MD_ENGINE
     labels["md_engine_version"] = versions.get("openmm")
     if labels["md_engine_version"] is None:
-        reasons["md_engine_version_reason"] = "OpenMM version not reported"
+        reasons["md_engine_version"] = "the dynamics engine did not report a version"
     labels["md_precision"] = MD_PRECISION
     labels["md_platform"] = MD_PLATFORM
 
+    # One place that holds how the software was built, so a reader can tell two
+    # otherwise identical numbers apart.
+    labels["build_flags"] = {
+        "alphafold_implementation": labels["alphafold_implementation"],
+        "alphafold_params_sha256": labels["alphafold_params_sha256"],
+        "jax_version": labels["jax_version"],
+        "jaxlib_version": labels["jaxlib_version"],
+        "jax_cuda_plugin_version": labels["jax_cuda_plugin_version"],
+        "jax_wheel_build_tags": labels["jax_wheel_build_tags"],
+        "docking_code": labels["docking_code"],
+        "docking_version": labels["docking_version"],
+        "md_engine": labels["md_engine"],
+        "md_engine_version": labels["md_engine_version"],
+        "md_precision": labels["md_precision"],
+        "md_platform": labels["md_platform"],
+        "pinned_requirements": list(PIP_PINS),
+        "alphafold_models": AF2_MODELS,
+        "alphafold_recycles": AF2_RECYCLES,
+        "alphafold_early_stopping": "off",
+        "alphafold_msa_mode": "single_sequence",
+    }
+
     labels["start_utc"] = utc_of(state.t0)
     labels["end_utc"] = None
-    reasons["end_utc_reason"] = "filled per record from the stage that produced it"
+    reasons["end_utc"] = "filled in per record from the stage that produced it"
 
-    labels.update(reasons)
+    labels["null_reasons"] = reasons
     state.labels_cache = dict(labels)
     state.gpu_is_a100 = is_a100(labels["gpu_name"])
     return dict(labels)
@@ -1374,17 +1637,50 @@ def read_package_versions(state: RunState) -> dict:
 
 
 def labels_for_record(state: RunState, start_epoch, end_epoch, extra=None) -> dict:
-    """The machine labels, with the stage's own start and end times."""
+    """The labels for one record, with the stage's own start and end times.
+
+    The times are those of the stage or run that produced the value, never the
+    moment the record happened to be written.
+    """
     labels = collect_labels(state)
+    reasons = dict(labels.get("null_reasons") or {})
     labels["start_utc"] = utc_of(start_epoch) if start_epoch else labels.get("start_utc")
+    if labels["start_utc"] is None:
+        reasons["start_utc"] = "the stage recorded no start time"
+    else:
+        reasons.pop("start_utc", None)
     labels["end_utc"] = utc_of(end_epoch) if end_epoch else None
     if end_epoch:
-        labels.pop("end_utc_reason", None)
+        reasons.pop("end_utc", None)
     else:
-        labels["end_utc_reason"] = "stage did not finish"
+        reasons["end_utc"] = "the stage did not finish"
     if extra:
         labels.update(extra)
+    labels["null_reasons"] = reasons
     return labels
+
+
+def label_blocks(labels: dict, kind: str) -> dict:
+    """Sort one flat label dictionary into what a record of this kind carries.
+
+    Returns the `machine` block, the `engine` block where the kind needs one,
+    and the reasons for whatever is null. Nothing is left out: a key that could
+    not be read is present and null, with its reason beside it.
+    """
+    spec = REQUIRED_LABEL_KEYS.get(kind) or {"machine": MACHINE_KEYS,
+                                             "engine": ENGINE_KEYS}
+    labels = labels or {}
+    reasons = dict(labels.get("null_reasons") or {})
+    out = {"machine": {k: labels.get(k) for k in spec["machine"]}}
+    if spec["engine"]:
+        out["engine"] = {k: labels.get(k) for k in spec["engine"]}
+    carried = set(out["machine"]) | set(out.get("engine", {}))
+    out["null_reasons"] = {k: v for k, v in reasons.items() if k in carried}
+    for key in carried:
+        block = out["machine"] if key in out["machine"] else out["engine"]
+        if block[key] is None and not str(out["null_reasons"].get(key) or "").strip():
+            out["null_reasons"][key] = "not read on this box; no reason was recorded"
+    return out
 
 
 # ===========================================================================
@@ -1394,19 +1690,30 @@ def labels_for_record(state: RunState, start_epoch, end_epoch, extra=None) -> di
 # ===========================================================================
 
 
-def write_record(state: RunState, name: str, *, cell: dict, inputs: list, metric: str,
-                 values: dict, threshold: dict, decision_rule: str, decision: str,
-                 notes: str = "", labels: dict | None = None,
+def write_record(state: RunState, name: str, *, kind: str, cell: dict, inputs: list,
+                 metric: str, values: dict, threshold: dict, decision_rule: str,
+                 decision: str, notes: str = "", labels: dict | None = None,
                  extra_notes: list | None = None):
     """Write one result record and remember it.
 
-    The shared writer owns the record's shape. Validity, labels and the
-    incomplete-run note are added here, at the top level, because every reader
-    of a single file must see them without opening the summary.
+    The shared writer owns the record's shape. The labels, the validity and the
+    incomplete-run note are added here, because every reader of a single file
+    must see them without opening the summary. `kind` says which list of label
+    keys this record must carry.
     """
     prov = state.provenance
     path = state.outdir / name
     tmp = state.outdir / (name + ".prov.tmp")
+    labels = labels if labels is not None else labels_for_record(
+        state, state.t0, state.clock())
+    blocks = label_blocks(labels, kind)
+    values = dict(values)
+    values["machine"] = blocks["machine"]
+    if "engine" in blocks:
+        values["engine"] = blocks["engine"]
+    reasons = dict(values.get("null_reasons") or {})
+    reasons.update(blocks["null_reasons"])
+    values["null_reasons"] = reasons
     prov.write_result(
         tmp,
         cell=cell,
@@ -1426,11 +1733,12 @@ def write_record(state: RunState, name: str, *, cell: dict, inputs: list, metric
         note_list.append(LABEL_INCOMPLETE)
     rec["run_valid"] = bool(state.run_valid)
     rec["run_valid_voided_by"] = state.run_valid_voided_by
-    rec["labels"] = labels if labels is not None else labels_for_record(
-        state, state.t0, state.clock()
-    )
+    rec["kind"] = kind
     rec["notes_list"] = note_list
     rec["tag"] = TAG
+    problems = label_problems(kind, rec["values"])
+    if problems:                      # a label gap is a defect, not a silent pass
+        rec["label_problems"] = problems
     atomic_write_json(path, rec)
     state.records_written.append(name)
     return path
@@ -1690,15 +1998,21 @@ class ToolRunner:
 
 
 def stage_allowance_s(state: RunState, stage: str) -> float:
-    """Seconds this stage may use: its own ceiling, or what is left, whichever is less.
+    """Seconds this stage may use. Never negative.
 
-    What is left always keeps back the fetch margin and the slot the closing
-    stage needs, so results can still be written and collected.
+    One formula, and it is the guarantee the seven ceilings are not:
+
+        allowance = max(0, min(ceiling, whole_run - elapsed - 400 - 100))
+
+    where 400 seconds is the margin that lets results be written and fetched
+    and 100 seconds is the slot the closing stage needs. `whole_run` is the
+    timeout the launcher forwards, or the earlier money cap when the price
+    makes dollars bind first; a cap can only tighten this, never loosen it.
     """
     ceiling = float(STAGE_CEILING_S[stage])
-    reserve = FETCH_MARGIN_S + (0 if stage == "endpoints" else ENDPOINTS_SLOT_S)
-    remaining = state.time_left_s() - reserve
-    return min(ceiling, remaining)
+    whole_run = min(float(state.remote_timeout_s), float(state.stop_at_s))
+    remaining = whole_run - state.elapsed_s() - FETCH_MARGIN_S - ENDPOINTS_SLOT_S
+    return max(0.0, min(ceiling, remaining))
 
 
 def guard_before_stage(state: RunState, stage: str, estimated_s: float) -> float:
@@ -2135,6 +2449,12 @@ def main():
         reporter_path, args.report_interval, step=True, potentialEnergy=True,
         temperature=True, speed=True, elapsedTime=True, totalSteps=args.steps,
     ))
+    # The trajectory itself. One frame every args.report_interval steps, which
+    # at a two femtosecond step is one frame every ten picoseconds: fifty
+    # frames over the half-nanosecond segment. This interval is declared by the
+    # caller and is never changed to move the storage figure.
+    trajectory_path = os.path.join(args.work, "md_trajectory.dcd")
+    sim.reporters.append(app.DCDReporter(trajectory_path, args.report_interval))
     t_prod = time.time()
     sim.step(args.steps)
     production_s = time.time() - t_prod
@@ -2148,6 +2468,9 @@ def main():
         "minimise_s": minimise_s,
         "equilibrate_s": equilibrate_s,
         "reporter_path": reporter_path,
+        "trajectory_path": trajectory_path,
+        "report_interval_steps": args.report_interval,
+        "frame_interval_ps": args.report_interval * args.timestep_fs / 1000.0,
         "platform": platform.getName(),
         "precision": "mixed",
         "openmm_version": __import__("openmm").version.version,
@@ -2158,6 +2481,52 @@ def main():
 if __name__ == "__main__":
     sys.exit(main())
 '''
+
+
+# Files a dynamics working directory holds that are built once to start the
+# segment, not written by the segment. They are reported separately and are not
+# in the storage figure the card is read against.
+MD_SETUP_FILE_NAMES = ("system.xml", "solvated.pdb")
+MD_SETUP_SUFFIXES = (".chk", ".checkpoint")
+
+
+def md_bytes_breakdown(md_dir, extra_log_paths=()) -> dict:
+    """Split what one dynamics segment left behind into written and set-up bytes.
+
+    Written: the trajectory, the engine's own rate file, the tool's logs and the
+    worker's build and run records. Those are what a grid run really writes per
+    segment. Set up once and reported separately: the serialised system, the
+    solvated structure and any checkpoint.
+    """
+    md_dir = Path(md_dir)
+    written = 0
+    setup = 0
+    files = []
+    if md_dir.exists():
+        for root, _dirs, names in os.walk(str(md_dir)):
+            for nm in sorted(names):
+                fp = Path(root) / nm
+                try:
+                    if fp.is_symlink():
+                        continue
+                    size = fp.stat().st_size
+                except OSError:
+                    continue
+                is_setup = (nm in MD_SETUP_FILE_NAMES
+                            or nm.endswith(MD_SETUP_SUFFIXES))
+                if is_setup:
+                    setup += size
+                else:
+                    written += size
+                files.append({"file": str(fp), "bytes": size,
+                              "counted": not is_setup})
+    for extra in extra_log_paths or ():
+        p = Path(extra)
+        if p.exists() and p.is_file():
+            size = p.stat().st_size
+            written += size
+            files.append({"file": str(p), "bytes": size, "counted": True})
+    return {"md_bytes": written, "md_setup_bytes": setup, "files": files}
 
 
 def water_padding_nm(atoms: list, target_atoms: int = 150000) -> float:
@@ -2270,6 +2639,32 @@ def stage_install(state: RunState) -> dict:
                                  "installed_by": "onbox_m4.sh"})
     state.apt_hash_path = apt_path
 
+    # -- the pinned requirements are checked before anything is installed
+    pin_problems = pip_pins_problems(PIP_PINS)
+    if pin_problems:
+        raise HarnessFailure("the pinned requirements are not usable as written",
+                             "; ".join(pin_problems))
+
+    # -- the one recorded bootstrap of the installer itself
+    #
+    # The report of what was downloaded is the only auditable record of every
+    # wheel, and an installer older than 22.2 cannot write one. Such an
+    # installer is replaced exactly once, from a download that is itself
+    # recorded with its address, its hash and its seconds, inside the same
+    # install budget. There is no other upgrade of the installer anywhere.
+    version_res = step([state.python_executable(), "-m", "pip", "--version"],
+                       60, "pip_version")
+    if not version_res.get("ok"):
+        raise HarnessFailure("the python package installer would not report its version",
+                             f"exit {version_res.get('rc')}")
+    version_text = (version_res.get("stdout", "") or "").strip()
+    log["pip_version_line"] = version_text
+    if pip_needs_bootstrap(version_text):
+        log["pip_bootstrap"] = pip_bootstrap(state, step, version_text)
+    else:
+        log["pip_bootstrap"] = {"ran": False, "version_line": version_text,
+                                "why": "the installer can already report downloads"}
+
     # -- python packages, pinned, with a full report of what was downloaded
     report_path = state.outdir / f"pip_report_tag-{TAG}.json"
     res = step(
@@ -2341,6 +2736,9 @@ def stage_install(state: RunState) -> dict:
         )
     log["params_dir"] = str(params_dir)
     log["params_files"] = sorted(p.name for p in params_dir.glob("params_*multimer*.npz"))
+    markers = write_parameter_markers(state, params_dir)
+    log["params_markers"] = markers
+    atomic_write_json(state.outdir / f"params_markers_tag-{TAG}.json", markers)
 
     # -- the smoke check: the tools must start and see the graphics processor
     smoke = smoke_check(state, step, params_dir)
@@ -2360,6 +2758,118 @@ def stage_install(state: RunState) -> dict:
     atomic_write_json(state.outdir / f"install_log_tag-{TAG}.json", log)
     state.stages_done.append("install")
     return log
+
+
+def parse_pip_download_log(text: str):
+    """Read the address a download of one wheel came from, out of a verbose log."""
+    urls = re.findall(r"(https?://\S+?\.whl)", str(text or ""))
+    return urls[-1] if urls else None
+
+
+def pip_bootstrap(state: RunState, step, version_text: str) -> dict:
+    """Fetch one installer wheel, record it in full, and install it from disk.
+
+    The wheel is downloaded with the verbose log kept, hashed here rather than
+    trusted from the log, written into this run's download record, and then
+    installed from the local file with the index switched off, so nothing else
+    can be pulled in behind it.
+    """
+    target = state.workdir / "pip_bootstrap"
+    target.mkdir(parents=True, exist_ok=True)
+    started = state.clock()
+    res = step(
+        [state.python_executable(), "-m", "pip", "download",
+         f"pip=={PIP_BOOTSTRAP_VERSION}", "--no-deps", "--no-input", "-v",
+         "--dest", str(target)],
+        300, "pip_bootstrap_download",
+    )
+    if not res.get("ok"):
+        raise HarnessFailure("the one allowed installer download failed",
+                             f"exit {res.get('rc')}, see {res.get('log')}")
+    wheels = sorted(target.glob("pip-*.whl"))
+    if not wheels:
+        raise HarnessFailure("the installer download left no wheel", str(target))
+    wheel = wheels[0]
+    entry = {
+        "ran": True,
+        "why": f"the environment reported {version_text!r}, which cannot report "
+               "what it downloads",
+        "what": f"pip {PIP_BOOTSTRAP_VERSION}, the one allowed installer bootstrap",
+        "url": parse_pip_download_log(
+            (res.get("stdout") or "") + (res.get("stderr") or "")
+            + (Path(res["log"]).read_text()
+               if res.get("log") and Path(res["log"]).exists() else "")),
+        "path": str(wheel),
+        "sha256": sha256_file(wheel),
+        "bytes": wheel.stat().st_size,
+        "seconds": round(state.clock() - started, 3),
+        "verbose_log": res.get("log"),
+    }
+    install = step(
+        [state.python_executable(), "-m", "pip", "install", "--no-input", "-q",
+         "--no-index", str(wheel)],
+        300, "pip_bootstrap_install",
+    )
+    if not install.get("ok"):
+        raise HarnessFailure("installing the downloaded installer wheel failed",
+                             f"exit {install.get('rc')}, see {install.get('log')}")
+    entry["seconds"] = round(state.clock() - started, 3)
+    entry["installed"] = True
+    return entry
+
+
+MARKER_NAME_PATTERN = re.compile(
+    r"([A-Za-z0-9_\-]*(?:download|complete|finished)[A-Za-z0-9_\-]*\.txt)",
+    re.IGNORECASE,
+)
+
+
+def colabfold_marker_names(source_text: str) -> list:
+    """The completion-marker file names a download module says it checks.
+
+    The names are read out of the installed module's own source, never recalled
+    from memory, because a name that is remembered wrong makes the first timed
+    prediction call fetch its own parameters and stop being a timing.
+    """
+    names = []
+    for name in MARKER_NAME_PATTERN.findall(str(source_text or "")):
+        if name not in names:
+            names.append(name)
+    return names
+
+
+def find_download_module(state: RunState):
+    """Where the installed prediction front end keeps its download module."""
+    bin_dir = state.venv_bin()
+    roots = [bin_dir.parent / "lib"]
+    for root in roots:
+        if not root.exists():
+            continue
+        for path in sorted(root.glob("python3*/site-packages/colabfold/download.py")):
+            return path
+        for path in sorted(root.glob("**/colabfold/download.py")):
+            return path
+    return None
+
+
+def write_parameter_markers(state: RunState, params_dir) -> dict:
+    """Write exactly the completion markers the installed module looks for."""
+    module = find_download_module(state)
+    if module is None:
+        return {"module": None, "markers": [],
+                "note": "no download module was found in the installed packages"}
+    names = colabfold_marker_names(Path(module).read_text())
+    if not names:
+        return {"module": str(module), "markers": [], "note": "no marker named"}
+    written = []
+    for name in names:
+        path = Path(params_dir) / name
+        atomic_write_text(path, "parameters unpacked by run_m4.py before any timed "
+                                "call; written because the installed download "
+                                "module checks for this file\n")
+        written.append(str(path))
+    return {"module": str(module), "markers": names, "written": written,
+            "note": "marker names read from the installed module's own source"}
 
 
 def missing_multimer_params(params_dir) -> list:
@@ -2406,7 +2916,12 @@ except Exception as exc:
 print(json.dumps(out))
 '''
 
-SMOKE_TOOLS = ["colabfold_batch", "lightdock3.py", "lightdock3_setup.py", "lgd_rank.py"]
+SMOKE_TOOLS = ["colabfold_batch", "lightdock3.py", "lightdock3_setup.py",
+               "lgd_generate_conformations.py", "lgd_rank.py"]
+
+# The tools asked to print their own help before any money is spent on them.
+SMOKE_HELP_TOOLS = ("colabfold_batch", "lightdock3.py",
+                    "lgd_generate_conformations.py")
 
 
 def smoke_check(state: RunState, step, params_dir) -> dict:
@@ -2443,7 +2958,7 @@ def smoke_check(state: RunState, step, params_dir) -> dict:
             problems.append(f"{tool} is not on the virtual environment's search path")
     found["resolved_tools"] = resolved
 
-    for tool in ("colabfold_batch", "lightdock3.py"):
+    for tool in SMOKE_HELP_TOOLS:
         path = resolved.get(tool)
         if not path:
             continue
@@ -2523,7 +3038,7 @@ def stage_controls(state: RunState) -> dict:
             f"{(error if error is not None else float('nan')):.4f}"
         )
     write_record(
-        state, f"control-sleep_tag-{TAG}.json",
+        state, f"control-sleep_tag-{TAG}.json", kind="control_sleep",
         cell={"stage": "controls", "control": "planted_sleep", "tag": TAG},
         inputs=record_inputs(state, state.outdir / f"rows_controls_tag-{TAG}.jsonl"),
         metric="relative error of a planted 60 s sleep timed by the run's own harness",
@@ -2564,7 +3079,7 @@ def stage_controls(state: RunState) -> dict:
     empty_ok = (empty_s is not None and empty_s < EMPTY_RUN_MAX_S
                 and empty_bytes < EMPTY_RUN_MAX_BYTES)
     write_record(
-        state, f"control-empty-run_tag-{TAG}.json",
+        state, f"control-empty-run_tag-{TAG}.json", kind="control_empty_run",
         cell={"stage": "controls", "control": "empty_run", "tag": TAG},
         inputs=record_inputs(state, state.outdir / f"rows_controls_tag-{TAG}.jsonl"),
         metric="wall-clock seconds and bytes written by the harness around a command "
@@ -2619,9 +3134,23 @@ def stage_controls(state: RunState) -> dict:
             "unit": CARD["C4"]["unit"],
         },
     }
+    # What this record holds, said plainly: worked examples of each conversion,
+    # and the names of the files where the raw numbers themselves will appear.
+    # The raw numbers cannot be in this record: the order of stages puts the
+    # controls before any prediction, dynamics or storage measurement exists,
+    # so copying them here would mean copying them from nowhere.
+    scale["kind"] = "worked_examples"
+    scale["raw_values_in"] = {
+        "raw_alphafold_seconds_per_run": f"rows_af2_tag-{TAG}.jsonl",
+        "md_engine_rate_lines_with_wallclock_beside_them": f"rows_md_tag-{TAG}.jsonl",
+        "raw_bytes_per_artifact": f"rows_storage_tag-{TAG}.jsonl",
+        "note": ("this control holds worked examples only; the raw values live in "
+                 "the row files named here, which are written later in the run"),
+    }
     atomic_write_json(state.outdir / f"unit_and_scale_tag-{TAG}.json", scale)
     write_record(
         state, f"control-unit-and-scale_tag-{TAG}.json",
+        kind="control_unit_and_scale",
         cell={"stage": "controls", "control": "unit_and_scale", "tag": TAG},
         inputs=record_inputs(state),
         metric="the raw units each input is read in, and the arithmetic that turns "
@@ -2675,16 +3204,18 @@ def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path
     work = Path(work)
     work.mkdir(parents=True, exist_ok=True)
     bin_dir = state.venv_bin()
-    swarms, glowworms, steps = 2, 20, 20
+    swarms, glowworms, steps = DOCKING_SWARMS, DOCKING_GLOWWORMS, DOCKING_STEPS
     started = state.clock()
     budget = limit_s
+    order = []
 
-    def call(cmd, step_name):
+    def call(cmd, step_name, cwd=None):
         nonlocal budget
+        order.append(step_name)
         left = inner_tool_limit_s(state, budget)
         res = state.runner.capture(
             cmd, limit_s=max(1.0, left), stage=stage,
-            name=f"{name}_{step_name}", cwd=work,
+            name=f"{name}_{step_name}", cwd=cwd or work,
         )
         budget -= res.get("seconds", 0.0)
         return res
@@ -2711,6 +3242,29 @@ def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path
     if not sim.get("ok"):
         raise HarnessFailure("the docking run failed",
                              f"exit {sim.get('rc')}, see {sim.get('log')}")
+
+    # The search leaves numbers; this step turns them into pose structures.
+    # Without it there is no pose file to compare, and the run would end as
+    # broken infrastructure at the anchor with nothing to show for the money.
+    swarm_dirs = sorted(p for p in work.glob("swarm_*") if p.is_dir())
+    if not swarm_dirs:
+        raise HarnessFailure(
+            "the docking run left no swarm directory to build poses from",
+            f"nothing matching swarm_* in {work}")
+    for swarm_dir in swarm_dirs:
+        gen = call(
+            [str(bin_dir / "lgd_generate_conformations.py"),
+             str(receptor_pdb), str(ligand_pdb),
+             f"gso_{steps}.out", str(glowworms)],
+            "generate_conformations", cwd=swarm_dir,
+        )
+        if gen.get("timed_out"):
+            raise GuardStop("building the docked pose structures ran past the "
+                            "time allowed for it",
+                            stage=stage, detail=gen.get("log", ""))
+        if not gen.get("ok"):
+            raise HarnessFailure("building the docked pose structures failed",
+                                 f"exit {gen.get('rc')}, see {gen.get('log')}")
 
     rank = call([str(bin_dir / "lgd_rank.py"), str(swarms), str(steps)], "rank")
     if rank.get("timed_out"):
@@ -2754,6 +3308,10 @@ def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path
         "top_row": top,
         "pose_path": str(pose_kept),
         "pose_text": Path(pose_kept).read_text(),
+        "call_order": order,
+        "parameters": {"swarms": swarms, "glowworms": glowworms, "steps": steps,
+                       "cores": cores, "setup_flags": ["--noxt", "--noh"],
+                       "restrained_to_the_published_interface": False},
     }
 
 
@@ -2825,7 +3383,7 @@ def score_pose_against_native(native_role_atoms: list, pose_text: str,
 
 def emit_input_record(state: RunState, cid: str, measured, *, n, rows_arm,
                       start_epoch, end_epoch, extra_values=None, extra_notes=None,
-                      void_reason=None, labels_extra=None):
+                      void_reason=None, labels_extra=None, stop_kind=None):
     """Write the record for one of the four inputs, decided against its own band.
 
     A value that cannot be decided keeps its raw number and says why it is void,
@@ -2854,7 +3412,14 @@ def emit_input_record(state: RunState, cid: str, measured, *, n, rows_arm,
         "n": n,
         "marginal": outcome["marginal"],
         "void_reason": outcome["reason"] if outcome["decision"] == "VOID" else None,
+        "voided_by": None,
+        "null_reasons": {},
     }
+    if outcome["decision"] == "VOID":
+        why = str(void_reason or outcome["reason"] or "no measured value")
+        values["voided_by"] = why
+        if measured is None:
+            values["null_reasons"]["measured"] = why
     if cid == "C1":
         gate = gate_on_c1(measured, outcome["decision"], outcome["marginal"])
         if gate["gate_pass"] is None:
@@ -2867,7 +3432,7 @@ def emit_input_record(state: RunState, cid: str, measured, *, n, rows_arm,
 
     rows_file = state.outdir / f"rows_{rows_arm}_tag-{TAG}.jsonl" if rows_arm else None
     write_record(
-        state, f"endpoint-{cid}_tag-{TAG}.json",
+        state, f"endpoint-{cid}_tag-{TAG}.json", kind=cid,
         cell={"stage": "endpoints", "input": cid, "key": spec["key"], "tag": TAG},
         inputs=record_inputs(state, rows_file, pair_evidence=True),
         metric=f"{spec['key']} measured on the stand-in protocol, in {spec['unit']}",
@@ -2884,11 +3449,16 @@ def emit_input_record(state: RunState, cid: str, measured, *, n, rows_arm,
         labels=labels_for_record(state, start_epoch, end_epoch, labels_extra),
         extra_notes=notes,
     )
-    if void_reason or outcome["decision"] == "VOID":
-        if void_reason and LABEL_UNMEASURED in str(void_reason):
-            state.set_unmeasured(cid, str(void_reason))
-        else:
-            state.set_decided(cid, "VOID", void_reason or outcome["reason"])
+    # Exactly one status word, from the one table the directive gives.
+    if state.anchor_missed:
+        state.set_void_by_anchor_miss(cid, state.anchor_missed)
+    elif state.failure_kind:
+        state.set_void_by_failure(cid, state.failure_kind,
+                                  state.run_valid_voided_by or state.failure_kind)
+    elif void_reason and LABEL_UNMEASURED in str(void_reason):
+        state.set_unmeasured(cid, stop_kind or state.last_stop_kind())
+    elif void_reason or outcome["decision"] == "VOID":
+        state.set_decided(cid, "VOID", void_reason or outcome["reason"])
     else:
         state.set_decided(cid, outcome["decision"], None)
     return outcome
@@ -2956,7 +3526,7 @@ def stage_anchor(state: RunState) -> dict:
         )
 
     write_record(
-        state, f"endpoint-anchor_tag-{TAG}.json",
+        state, f"endpoint-anchor_tag-{TAG}.json", kind="anchor",
         cell={"stage": "anchor", "endpoint": "anchor", "tag": TAG},
         inputs=record_inputs(state, state.outdir / f"rows_anchor_tag-{TAG}.jsonl",
                              extra_paths=[pdb_path]),
@@ -2980,6 +3550,14 @@ def stage_anchor(state: RunState) -> dict:
             "calls_identical": calls_identical,
             "unit": "fraction of published contacts, and angstrom",
             "independent_code": ANCHOR_INDEPENDENT_CODE,
+            "docking_order": DOCKING_ORDER,
+            "docking_order_as_called": results["serial"]["dock"]["call_order"],
+            "docking_order_source": (
+                "the on-box execution contract states no order for the docking "
+                "commands, so the order is prepare, search, build the poses, rank"
+            ),
+            "docking_parameters": results["serial"]["dock"]["parameters"],
+            "docking_parameters_same_for_pairs": True,
         },
         threshold={"min_contact_overlap": ANCHOR_OVERLAP_MIN,
                    "max_interface_backbone_rmsd_a": ANCHOR_IFACE_RMSD_MAX,
@@ -3094,13 +3672,17 @@ def stage_aux(state: RunState) -> dict:
             dock = run_docking(state, f"aux_{pair['pair']}", cap_pdb, rec_pdb, work,
                                limit_s=pair_cap, cores=4, stage="aux")
         except GuardStop as stop:
+            # A pair that reaches its own 250 s cap is kept as a row, is left
+            # out of the mean, and the loop goes on to the next pair. Stopping
+            # the whole stage on one slow pair would throw away the pairs that
+            # would have finished, and the input needs only two of them.
             truncated = True
             add_row(state, "aux", {
                 "pair": pair["pair"], "seconds": state.clock() - unit_started,
-                "truncated": True, "why": stop.reason,
+                "truncated": True, "incomplete": True, "why": stop.reason,
             })
             stopped = stop
-            break
+            continue
         pose_roles = score_pose_against_native(
             split["native_role_atoms"], dock["pose_text"], capsid_atoms)
         analysis = interface_analysis(split["native_role_atoms"],
@@ -3395,6 +3977,7 @@ def stage_md(state: RunState) -> dict:
             [state.python_executable(), str(worker), "--mode", "run",
              "--work", str(work), "--steps", str(steps),
              "--timestep-fs", str(MD_TIMESTEP_FS), "--seed", str(MD_VELOCITY_SEED),
+             "--report-interval", str(MD_REPORT_INTERVAL_STEPS),
              "--out", str(out_json)],
             limit_s=inner_tool_limit_s(state, cap - (state.clock() - unit_started)),
             stage="md", name=f"run_{pair['pair']}", cwd=work,
@@ -3432,16 +4015,24 @@ def stage_md(state: RunState) -> dict:
             "wallclock_ns_per_day": wall_rate,
             "rates_disagree": disagree,
             "reporter_file": str(reporter_kept),
+            "trajectory_file": done.get("trajectory_path"),
+            "trajectory_bytes": apparent_bytes(done.get("trajectory_path") or ""),
+            "frame_interval_ps": done.get("frame_interval_ps",
+                                          MD_FRAME_INTERVAL_PS),
+            "report_interval_steps": done.get("report_interval_steps",
+                                              MD_REPORT_INTERVAL_STEPS),
             "platform": done.get("platform"), "precision": done.get("precision"),
             "engine_version": done.get("openmm_version"),
             "padding_nm": built.get("padding_nm"), "waters": built.get("waters"),
             "seed": MD_VELOCITY_SEED,
+            "tool_log": res.get("log"),
         }
         add_row(state, "md", row)
         rows.append(row)
         rates.append(wall_rate)
         state.note_unit("md_complex", state.clock() - unit_started)
         pair["md_work"] = str(work)
+        pair["md_logs"] = [p for p in [res.get("log")] if p]
 
     finished = state.clock()
     if stopped is not None:
@@ -3483,6 +4074,10 @@ def stage_md(state: RunState) -> dict:
             "production_ns": MD_PRODUCTION_NS,
             "engine_precision": MD_PRECISION,
             "engine_platform": MD_PLATFORM,
+            "engine_version": next((r.get("engine_version") for r in rows
+                                    if r.get("engine_version")), None),
+            "frame_interval_ps": MD_FRAME_INTERVAL_PS,
+            "velocity_seed": MD_VELOCITY_SEED,
             "decision_value": "median over complexes of the wall-clock figure",
         },
         extra_notes=notes, void_reason=void_reason,
@@ -3521,13 +4116,21 @@ def stage_storage(state: RunState) -> dict:
         b = apparent_bytes(docking_dirs[0])
         artifacts.append({"artifact": "whole docking output tree of one pair",
                           "path": docking_dirs[0], "bytes": b, "intermediate": True})
-    md_dirs = [p["md_work"] for p in state.pairs if p.get("md_work")]
+    md_pairs = [p for p in state.pairs if p.get("md_work")]
     md_bytes = 0
-    if md_dirs:
-        md_bytes = apparent_bytes(md_dirs[0])
-        artifacts.append({"artifact": "dynamics trajectory and logs of one "
+    md_setup_bytes = 0
+    md_breakdown = None
+    if md_pairs:
+        first = md_pairs[0]
+        md_breakdown = md_bytes_breakdown(first["md_work"], first.get("md_logs") or [])
+        md_bytes = md_breakdown["md_bytes"]
+        md_setup_bytes = md_breakdown["md_setup_bytes"]
+        artifacts.append({"artifact": "dynamics trajectory and every log of one "
                                       f"{MD_PRODUCTION_NS} ns segment",
-                          "path": md_dirs[0], "bytes": md_bytes, "intermediate": True})
+                          "path": first["md_work"], "bytes": md_bytes,
+                          "intermediate": True,
+                          "frame_interval_ps": MD_FRAME_INTERVAL_PS,
+                          "setup_bytes_not_counted": md_setup_bytes})
 
     for a in artifacts:
         add_row(state, "storage", a)
@@ -3563,7 +4166,11 @@ def stage_storage(state: RunState) -> dict:
             "gib_432_runs": scaled.get("gib_432_runs"),
             "gib_216_runs_intermediates_deleted":
                 scaled.get("gib_216_runs_intermediates_deleted"),
+            "md_bytes": md_bytes,
+            "md_setup_bytes": md_setup_bytes,
+            "md_bytes_breakdown": md_breakdown,
             "md_bytes_per_ns": scaled.get("md_bytes_per_ns"),
+            "frame_interval_ps": MD_FRAME_INTERVAL_PS,
             "grid_runs_used_for_the_decision": GRID_RUNS,
         },
         extra_notes=list(state.overhead_labels)
@@ -3590,12 +4197,21 @@ def stage_endpoints(state: RunState) -> dict:
             continue
         stop_names = "; ".join(e["reason"] for e in state.stop_events) or \
             "the stage that measures it did not run"
+        # emit_input_record puts the one right status word against the input:
+        # voided by the anchor, voided by a failure, or left unmeasured by a
+        # stop. Nothing here overrides it.
+        if state.anchor_missed:
+            why = f"the anchor missed its tolerance: {state.anchor_missed}"
+        elif state.failure_kind:
+            why = ("the run ended on broken infrastructure: "
+                   f"{state.run_valid_voided_by or state.failure_kind}")
+        else:
+            why = f"{LABEL_UNMEASURED} ({stop_names})"
         emit_input_record(
             state, cid, None, n=0, rows_arm=None,
             start_epoch=started, end_epoch=state.clock(),
-            void_reason=f"{LABEL_UNMEASURED} ({stop_names})",
+            void_reason=why,
         )
-        state.set_unmeasured(cid, stop_names)
     write_env_note(state)
     write_summary(state)
     write_run_valid(state)
@@ -3703,6 +4319,12 @@ def summary_object(state: RunState) -> dict:
         "price_usd_per_hour": state.price_usd_per_hour,
         "budget_left_usd": state.budget_left_usd,
         "estimated_spend_usd": round(state.spend_usd(), 4),
+        "estimated_spend_note": (
+            "seconds since the run's own start times the hourly price; the "
+            "bootstrap seconds are reported beside this and are not added "
+            "again, because the start already counts them"
+        ),
+        "pre_t0_seconds_reported_not_added": state.pre_t0_seconds,
         "install_seconds_used": round(state.install_seconds_used, 3),
     }
     obj["files_written"] = sorted(p.name for p in state.outdir.glob("*") if p.is_file())
@@ -3731,16 +4353,18 @@ def write_run_valid(state: RunState) -> Path:
 
 def write_run_done(state: RunState, exit_code: int) -> Path:
     """The marker a reader opens first: what happened to each of the four inputs."""
+    # Exactly one status word per input, from the one table: decided, void by a
+    # rule, left unmeasured by a stop, voided because the anchor missed, or
+    # voided because something broke. A reader needs no other file to tell
+    # which of those happened.
     per_input = {}
     for cid, status in state.inputs_status.items():
-        if status["state"] == "decided":
-            per_input[cid] = {"status": "decided", "decision": status["decision"]}
-        elif status["state"] == "void_by_rule":
-            per_input[cid] = {"status": "void_by_rule", "decision": "VOID",
-                              "reason": status["reason"]}
-        else:
-            per_input[cid] = {"status": "unmeasured_by_a_stop", "decision": "VOID",
-                              "stop": status["reason"]}
+        entry = {"status": status.get("status", "unmeasured_by_stop:unknown"),
+                 "decision": status.get("decision"),
+                 "reason": status.get("reason")}
+        if status.get("voided_by"):
+            entry["voided_by"] = status["voided_by"]
+        per_input[cid] = entry
     path = state.outdir / "RUN_DONE"
     atomic_write_text(path, json.dumps({
         "exit_code": exit_code,
@@ -3748,10 +4372,127 @@ def write_run_done(state: RunState, exit_code: int) -> Path:
         "voided_by": state.run_valid_voided_by,
         "stopped_by": [e["reason"] for e in state.stop_events],
         "inputs": per_input,
+        "notes": ([LABEL_INCOMPLETE] if state.stopped else []),
         "tag": TAG,
         "finished_utc": state.now(),
     }, indent=2) + "\n")
     return path
+
+
+# ===========================================================================
+# CLOSING A RUN THE LAUNCHER'S OWN TIMER ENDED
+#
+# The records already on disk are the run's results. This rebuilds what is
+# known from those files, writes only what is missing, and never touches a
+# record that already holds a decision.
+# ===========================================================================
+
+
+def record_status_from_disk(rec) -> dict:
+    """What one record on disk says about its input: decided, void by rule, or not done."""
+    if not isinstance(rec, dict):
+        return {"state": "unmeasured", "decision": None,
+                "reason": "no record was written for this input"}
+    decision = rec.get("decision")
+    values = rec.get("values") or {}
+    reason = str(values.get("void_reason") or values.get("voided_by") or "")
+    notes = " ".join(str(n) for n in (rec.get("notes_list") or []))
+    if decision in ("PASS", "FAIL"):
+        return {"state": "decided", "decision": decision, "reason": None}
+    if decision == "VOID":
+        if LABEL_UNMEASURED in reason or LABEL_UNMEASURED in notes:
+            return {"state": "unmeasured", "decision": "VOID",
+                    "reason": reason or LABEL_UNMEASURED}
+        if values.get("marginal") or reason:
+            return {"state": "void_by_rule", "decision": "VOID",
+                    "reason": reason or "within 10 percent of a band edge"}
+        return {"state": "unmeasured", "decision": "VOID",
+                "reason": "the record names no rule that voided it"}
+    return {"state": "unmeasured", "decision": decision,
+            "reason": "the record carries no decision"}
+
+
+def finalize_from_disk(state: RunState, outer_rc=None) -> int:
+    """Rebuild the run's standing from the files, then close it. Returns the exit code.
+
+    An input that was decided before the timer fired keeps its decision and its
+    file, byte for byte. An input with no record, or with a record that says it
+    was never measured, is void and says a stop left it that way. Nothing here
+    measures anything.
+    """
+    state.record_stop("outer_timeout", "outer",
+                      f"the launcher's own timeout returned {outer_rc}")
+    state.notes.append("closed from the records on disk after the launcher's own timer")
+
+    # What the validity file and the records already say.
+    validity_path = state.outdir / "RUN_VALID.json"
+    run_valid = True
+    voided_by = None
+    if validity_path.exists():
+        try:
+            doc = json.loads(validity_path.read_text())
+            if doc.get("run_valid") is False:
+                run_valid = False
+                voided_by = doc.get("voided_by") or "the validity file says the run is invalid"
+        except (OSError, ValueError):
+            pass
+
+    anchor_decision_on_disk = None
+    existing = {}
+    for name in ["endpoint-anchor"] + [f"endpoint-{cid}" for cid in INPUT_IDS]:
+        path = state.outdir / f"{name}_tag-{TAG}.json"
+        rec = None
+        if path.exists():
+            try:
+                rec = json.loads(path.read_text())
+            except (OSError, ValueError):
+                rec = None
+        existing[name] = rec
+        if isinstance(rec, dict) and rec.get("run_valid") is False:
+            run_valid = False
+            voided_by = voided_by or rec.get("run_valid_voided_by") or \
+                "a record on disk says the run is invalid"
+        if name == "endpoint-anchor" and isinstance(rec, dict):
+            anchor_decision_on_disk = rec.get("decision")
+            state.anchor = {"decision_from_disk": rec.get("decision"),
+                            "values": rec.get("values")}
+
+    state.run_valid = run_valid
+    state.run_valid_voided_by = voided_by
+    state.records_written = [p.name for p in state.outdir.glob("endpoint-*.json")]
+
+    for cid in INPUT_IDS:
+        status = record_status_from_disk(existing.get(f"endpoint-{cid}"))
+        if status["state"] == "decided":
+            state.set_decided(cid, status["decision"], None)
+        elif status["state"] == "void_by_rule":
+            state.set_decided(cid, "VOID", status["reason"])
+        else:
+            state.set_unmeasured(cid, "outer_timeout")
+
+    # Only the records that are missing are written; nothing already decided is
+    # rewritten, so a finished result is byte-identical afterwards.
+    for cid in INPUT_IDS:
+        path = state.outdir / f"endpoint-{cid}_tag-{TAG}.json"
+        if path.exists():
+            continue
+        emit_input_record(
+            state, cid, None, n=0, rows_arm=None,
+            start_epoch=state.t0, end_epoch=state.clock(),
+            void_reason=f"{LABEL_UNMEASURED} (the launcher's own timer ended the run)",
+            stop_kind="outer_timeout",
+        )
+    write_env_note(state)
+    write_summary(state)
+    write_run_valid(state)
+
+    if str(anchor_decision_on_disk) == "FAIL":
+        return EXIT_ANCHOR
+    if not state.run_valid:
+        return EXIT_INFRA
+    if state.unmeasured_inputs():
+        return EXIT_GUARD
+    return EXIT_OK
 
 
 # ===========================================================================
@@ -3810,11 +4551,13 @@ def run_stages(state: RunState, stages=None, endpoints=None, outer_rc=None) -> i
             except GuardStop as stop:
                 state.record_stop("guard", stop.stage or name, stop.reason)
                 continue
-            except AnchorMiss:
+            except AnchorMiss as miss:
+                state.anchor_missed = miss.reason
                 failure = EXIT_ANCHOR
                 break
             except HarnessFailure as exc:
                 state.void_run(f"{exc.reason}: {exc.detail}" if exc.detail else exc.reason)
+                state.failure_kind = exc.kind
                 failure = EXIT_INFRA
                 break
 
@@ -3826,9 +4569,13 @@ def run_stages(state: RunState, stages=None, endpoints=None, outer_rc=None) -> i
             failure = EXIT_INFRA
             state.void_run(f"the closing stage failed: {exc}")
 
+    # The exit code follows one table. Broken infrastructure is 2 and a missed
+    # anchor is 4, whatever else happened. A stop is 3 only when it actually
+    # left an input unmeasured: a stop that cost nothing measurable, because
+    # every input was already decided, ends at 0 with the stop written down.
     if failure in (EXIT_INFRA, EXIT_ANCHOR):
         return failure
-    if state.stopped:
+    if state.unmeasured_inputs():
         return EXIT_GUARD
     return EXIT_OK
 
@@ -3874,10 +4621,9 @@ def do_run(argv) -> int:
     state.runner = ToolRunner(state)
     if argv.finalize:
         # The launcher's own timeout ended the measuring run. Nothing is
-        # measured here; the records that exist are kept and every input
-        # without one is written as unmeasured, not holding.
-        state.records_written = [p.name for p in outdir.glob("endpoint-*.json")]
-        code = run_stages(state, stages=[], outer_rc=argv.outer_rc or 124)
+        # measured here: what the records on disk already decided stands, and
+        # every input without a record is written as unmeasured, not holding.
+        code = finalize_from_disk(state, outer_rc=argv.outer_rc or 124)
         write_run_done(state, code)
         print(f"[m4] closed after the launcher's timeout: exit {code}")
         return code
@@ -4507,8 +5253,11 @@ class FakeRunner:
 
     def __init__(self, state: RunState, durations=None, failures=None,
                  timeouts=(), pose_text=None, rank_table=None, atoms=150000,
-                 reporter_rate=128.96, smoke_problems=(), default_seconds=1.0):
+                 reporter_rate=128.96, smoke_problems=(), default_seconds=1.0,
+                 skip_generation=False, pip_version="pip 24.0 from /v/pip (python 3.10)"):
         self.state = state
+        self.skip_generation = skip_generation
+        self.pip_version = pip_version
         self.durations = dict(durations or {})
         self.failures = dict(failures or {})
         self.timeouts = set(timeouts)
@@ -4567,6 +5316,16 @@ class FakeRunner:
                     "CUDA Version: 12.8 |\n")
         if base == "apt-cache":
             return "Package: x\nVersion: 1.2.3-1\nSHA256: 00ff\n"
+        if "pip" in cmd and "--version" in cmd:
+            return self.pip_version + "\n"
+        if "pip" in cmd and "download" in cmd:
+            dest = Path(cmd[cmd.index("--dest") + 1])
+            dest.mkdir(parents=True, exist_ok=True)
+            (dest / f"pip-{PIP_BOOTSTRAP_VERSION}-py3-none-any.whl").write_bytes(
+                b"planted installer wheel")
+            return ("Collecting pip\n  Downloading "
+                    f"https://files.pythonhosted.org/pip-{PIP_BOOTSTRAP_VERSION}"
+                    "-py3-none-any.whl (2.1 MB)\n")
         if "--report" in cmd:
             path = Path(cmd[cmd.index("--report") + 1])
             atomic_write_text(path, json.dumps({"install": [
@@ -4600,16 +5359,23 @@ class FakeRunner:
                                "lightdock": "0.9.4", "colabfold": "1.5.5"}) + "\n"
         if base.startswith("lightdock3_setup"):
             (work / "setup.json").write_text("{}")
+            (work / "swarm_1").mkdir(parents=True, exist_ok=True)
             return "setup written\n"
         if base.startswith("lightdock3.py"):
             (work / "swarm_1").mkdir(parents=True, exist_ok=True)
             (work / "swarm_1" / "gso_20.out").write_text("planted swarm output\n")
             return "simulation done\n"
+        if base.startswith("lgd_generate_conformations"):
+            # The real step turns the search's numbers into pose structures.
+            # A planted run that skips it leaves no pose file, which is how the
+            # selftest checks that a missing pose ends the run as a failure.
+            if not self.skip_generation:
+                (work / "lightdock_3.pdb").write_text(
+                    self.pose_text if self.pose_text is not None
+                    else planted_pose_text())
+            return "conformations written\n"
         if base.startswith("lgd_rank"):
             (work / "rank_by_scoring.list").write_text(self.rank_table)
-            (work / "swarm_1").mkdir(parents=True, exist_ok=True)
-            (work / "swarm_1" / "lightdock_3.pdb").write_text(
-                self.pose_text if self.pose_text is not None else planted_pose_text())
             return "ranked\n"
         if base == "colabfold_batch":
             out_dir = Path(cmd[-1])
@@ -4633,11 +5399,21 @@ class FakeRunner:
             header = '#"Step","Temperature (K)"' + (
                 ',"Speed (ns/day)"' if self.reporter_rate is not None else "")
             atomic_write_text(reporter, header + "\n" + f"5000,300.1{rate}\n")
+            interval = int(cmd[cmd.index("--report-interval") + 1]) \
+                if "--report-interval" in cmd else MD_REPORT_INTERVAL_STEPS
+            trajectory = work / "md_trajectory.dcd"
+            trajectory.write_bytes(b"t" * 1000)
+            (work / "system.xml").write_bytes(b"s" * 5000)
+            (work / "solvated.pdb").write_bytes(b"p" * 7000)
             atomic_write_json(out, {"mode": "run", "atoms": self.atoms,
                                     "steps": steps, "timestep_fs": MD_TIMESTEP_FS,
                                     "production_s": 335.0, "minimise_s": 10.0,
                                     "equilibrate_s": 5.0,
                                     "reporter_path": str(reporter),
+                                    "trajectory_path": str(trajectory),
+                                    "report_interval_steps": interval,
+                                    "frame_interval_ps":
+                                        interval * MD_TIMESTEP_FS / 1000.0,
                                     "platform": "CUDA", "precision": "mixed",
                                     "openmm_version": "8.2.0", "seed": 0})
             return ""
@@ -4755,13 +5531,45 @@ def selftest_stage_flow(c: Checks) -> None:
                               stop="a dynamics segment ran past the time allowed"),
                   _fake_stage("storage", decides={"C4": 216.0})]
         code = run_stages(st, stages)
-        c.eq("a tool timeout exits three", code, EXIT_GUARD)
+        # A stop decides the exit code only through what it left unmeasured.
+        # Here the dynamics input was still decided on two complexes and every
+        # other input was decided too, so nothing is unmeasured and the run
+        # ends at zero with the stop written down. That is what the two rules
+        # about exit codes require: a stop is exit 3 when, and only when, it
+        # "left at least one input unmeasured".
+        c.eq("a tool timeout that left nothing unmeasured exits zero", code, EXIT_OK)
+        c.eq("the stop is still written down", bool(st.stop_events), True)
+        c.eq("the stage that stopped is not counted as done",
+             "md" in st.stages_done, False)
         c.eq("a tool timeout does not invalidate the run", st.run_valid, True)
         c.eq("the dynamics input is still decided on two complexes",
              st.inputs_status["C2"]["state"], "decided")
         c.eq("the dynamics input records two complexes",
              json.loads((st.outdir / f"endpoint-C2_tag-{TAG}.json").read_text())
              ["values"]["n"], 2)
+
+        # The same timeout, this time on a run where it did leave work
+        # unmeasured: the storage input never gets its record, so the run ends
+        # at three and that input is marked as left unmeasured by a stop.
+        st = _flow_state(tmp, "c2")
+        stages_c2 = [_fake_stage("install"), _fake_stage("controls"),
+                     _fake_stage("anchor"),
+                     _fake_stage("aux", decides={"C3": 1.0}),
+                     _fake_stage("af2", decides={"C1": 0.5}),
+                     _fake_stage("md", action=c_md,
+                                 stop="a dynamics segment ran past the time allowed"),
+                     _fake_stage("storage",
+                                 stop="no time left for the storage stage")]
+        code = run_stages(st, stages_c2)
+        c.eq("a tool timeout that left an input unmeasured exits three",
+             code, EXIT_GUARD)
+        c.eq("a tool timeout that left an input unmeasured keeps the run valid",
+             st.run_valid, True)
+        c.eq("the input the stop left behind says a stop left it",
+             st.inputs_status["C4"]["status"], "unmeasured_by_stop:ceiling_or_guard")
+        c.eq("the inputs decided before the stop keep their decisions",
+             [st.inputs_status[k]["state"] for k in ("C1", "C2", "C3")],
+             ["decided", "decided", "decided"])
 
         # (d) a ceiling stop in the docking stage
         st = _flow_state(tmp, "d")
@@ -4773,9 +5581,12 @@ def selftest_stage_flow(c: Checks) -> None:
                   _fake_stage("md", decides={"C2": 129.0}),
                   _fake_stage("storage", decides={"C4": 216.0})]
         code = run_stages(st, stages)
-        c.eq("a ceiling stop in docking exits three", code, EXIT_GUARD)
+        c.eq("a ceiling stop in docking with everything decided exits zero",
+             code, EXIT_OK)
         c.eq("the auxiliary input is still decided on the pairs that finished",
              st.inputs_status["C3"]["state"], "decided")
+        c.eq("the docking stage that stopped is not counted as done",
+             "aux" in st.stages_done, False)
         st = _flow_state(tmp, "d2")
         stages[3] = _fake_stage(
             "aux", action=lambda s: emit_input_record(
@@ -4805,6 +5616,13 @@ def selftest_stage_flow(c: Checks) -> None:
             rec = json.loads((st.outdir / f"endpoint-{cid}_tag-{TAG}.json").read_text())
             c.eq(f"{cid}'s own file carries the invalid flag, not just the summary",
                  rec["run_valid"], False)
+        write_run_done(st, code)
+        done = json.loads((st.outdir / "RUN_DONE").read_text())
+        for cid in INPUT_IDS:
+            c.ok(f"the marker says {cid} was voided by a failure",
+                 done["inputs"][cid]["status"].startswith("void_by_failure:"))
+        c.ok("the marker names which failure voided it",
+             "docking" in done["inputs"]["C1"]["status"])
 
         # (f) the anchor misses
         st = _flow_state(tmp, "f")
@@ -4819,6 +5637,16 @@ def selftest_stage_flow(c: Checks) -> None:
         c.eq("a missed anchor voids every input",
              sorted(k for k, v in st.inputs_status.items()
                     if v["decision"] == "VOID"), INPUT_IDS)
+        write_run_done(st, code)
+        done = json.loads((st.outdir / "RUN_DONE").read_text())
+        c.eq("the marker says every input was voided by the anchor",
+             sorted(k for k, v in done["inputs"].items()
+                    if v["status"] == "void_by_anchor_miss"), INPUT_IDS)
+        c.eq("after a missed anchor no input is said to be unmeasured by a stop",
+             [k for k, v in done["inputs"].items()
+              if str(v["status"]).startswith("unmeasured_by_stop")], [])
+        c.ok("each voided input names what voided it",
+             all(v.get("voided_by") for v in done["inputs"].values()))
 
         # (g) the planted sleep fails
         st = _flow_state(tmp, "g")
@@ -4899,8 +5727,10 @@ def selftest_stage_flow(c: Checks) -> None:
         write_run_done(st, code)
         done = json.loads((st.outdir / "RUN_DONE").read_text())
         c.eq("the marker carries the exit code", done["exit_code"], EXIT_OK)
-        c.eq("the marker says why an input is void by rule",
-             done["inputs"]["C1"]["status"], "void_by_rule")
+        c.ok("the marker says why an input is void by rule",
+             done["inputs"]["C1"]["status"].startswith("void_by_rule:"))
+        c.ok("the marker names the rule that voided it",
+             LABEL_ZERO_SPREAD in done["inputs"]["C1"]["status"])
         c.eq("the marker names a decided input",
              done["inputs"]["C3"]["status"], "decided")
         summary_text = (st.outdir / f"{TAG}_summary.json").read_text()
@@ -5035,7 +5865,7 @@ def selftest_records(c: Checks) -> None:
                           start_epoch=0, end_epoch=100)
         rec = json.loads((st.outdir / f"endpoint-C1_tag-{TAG}.json").read_text())
         for key in ("cell", "inputs", "metric", "values", "threshold",
-                    "decision_rule", "decision", "env", "run_valid", "labels"):
+                    "decision_rule", "decision", "env", "run_valid", "kind"):
             c.ok(f"a record carries its {key}", key in rec)
         c.eq("a record's decision rule is stated before the values are known",
              rec["decision_rule"].startswith("inside"), True)
@@ -5052,18 +5882,22 @@ def selftest_records(c: Checks) -> None:
              LABEL_STAND_IN in rec["notes_list"])
         c.ok("every input record names the single graphics processor",
              LABEL_ONE_GPU in rec["notes_list"])
-        for key in LABEL_KEYS:
-            c.ok(f"a record's labels carry {key}", key in rec["labels"])
-        missing_reason = [k for k in LABEL_KEYS
-                          if rec["labels"].get(k) is None
-                          and f"{k}_reason" not in rec["labels"]]
-        c.eq("a label that could not be read says why", missing_reason, [])
+        for key in MACHINE_KEYS:
+            c.ok(f"a record's machine labels carry {key}", key in rec["values"]["machine"])
+        for key in ENGINE_KEYS:
+            c.ok(f"a record's engine labels carry {key}", key in rec["values"]["engine"])
+        c.eq("a record's labels have nothing missing and no unexplained null",
+             label_problems("C1", rec["values"]), [])
         c.eq("the graphics processor is named from a runtime query",
-             rec["labels"]["gpu_name"], "NVIDIA A100-SXM4-40GB")
+             rec["values"]["machine"]["gpu_name"], "NVIDIA A100-SXM4-40GB")
         c.eq("the driver's CUDA version is read from the banner",
-             rec["labels"]["cuda_runtime_version"], "12.8")
+             rec["values"]["machine"]["cuda_runtime_version"], "12.8")
+        c.eq("the CUDA plugin's own version is carried beside it",
+             rec["values"]["machine"]["cuda_plugin_version"], "0.4.35")
         c.eq("the start time is the stage's, not the write time",
-             rec["labels"]["start_utc"], utc_of(0))
+             rec["values"]["machine"]["start_utc"], utc_of(0))
+        c.ok("the build flags name the prediction implementation",
+             "alphafold_implementation" in (rec["values"]["engine"]["build_flags"] or {}))
 
         emit_input_record(st, "C2", 129.0, n=3, rows_arm=None,
                           start_epoch=0, end_epoch=100)
@@ -5158,14 +5992,30 @@ def selftest_real_stage_bodies(c: Checks) -> None:
                                 "HF_TOKEN": "hf_secret"})
         state.runner = FakeRunner(state, durations=durations)
 
+        # The installed prediction front end names its own completion marker;
+        # the marker is written before any timed call, so the first timed call
+        # cannot fetch its own parameters and stop being a timing.
+        pkg = (bin_dir.parent / "lib" / "python3.10" / "site-packages" / "colabfold")
+        pkg.mkdir(parents=True, exist_ok=True)
+        (pkg / "download.py").write_text(
+            'def download_alphafold_params(path):\n'
+            '    if not os.path.isfile(f"{path}/download_complete.txt"):\n'
+            '        fetch()\n')
+
         stage_install(state)
         c.eq("the install stage finishes", "install" in state.stages_done, True)
         params = state.datadir / "params"
         c.eq("the parameter files are in place before any timed call",
              missing_multimer_params(params), [])
         c.ok("the parameter archive was hashed", bool(state.params_sha256))
+        c.ok("the completion marker the module names is written before any timing",
+             (params / "download_complete.txt").exists())
         install_log = json.loads(
             (state.outdir / f"install_log_tag-{TAG}.json").read_text())
+        c.eq("an installer that can report its downloads is not replaced",
+             install_log["pip_bootstrap"]["ran"], False)
+        c.eq("the marker names read from the module are recorded",
+             install_log["params_markers"]["markers"], ["download_complete.txt"])
         resolved = install_log["smoke_check"]["found"]["resolved_tools"]
         for tool in SMOKE_TOOLS:
             c.eq(f"{tool} resolves through the installed directory",
@@ -5192,8 +6042,26 @@ def selftest_real_stage_bodies(c: Checks) -> None:
         sleep_rec = json.loads(
             (state.outdir / f"control-sleep_tag-{TAG}.json").read_text())
         c.eq("the planted sleep reads back correctly", sleep_rec["decision"], "PASS")
-        c.ok("the units and the scale are stated before any band is compared",
-             (state.outdir / f"control-unit-and-scale_tag-{TAG}.json").exists())
+        scale_rec = json.loads(
+            (state.outdir / f"control-unit-and-scale_tag-{TAG}.json").read_text())
+        c.eq("the units and the scale are stated before any band is compared",
+             scale_rec["values"]["kind"], "worked_examples")
+        raw_in = scale_rec["values"]["raw_values_in"]
+        c.eq("it names the file that will hold the raw prediction seconds",
+             raw_in["raw_alphafold_seconds_per_run"], f"rows_af2_tag-{TAG}.jsonl")
+        c.eq("it names the file that will hold the engine rate lines",
+             raw_in["md_engine_rate_lines_with_wallclock_beside_them"],
+             f"rows_md_tag-{TAG}.jsonl")
+        c.eq("it names the file that will hold the raw bytes per artifact",
+             raw_in["raw_bytes_per_artifact"], f"rows_storage_tag-{TAG}.jsonl")
+        for kind, fname in (("control_sleep", f"control-sleep_tag-{TAG}.json"),
+                            ("control_empty_run",
+                             f"control-empty-run_tag-{TAG}.json"),
+                            ("control_unit_and_scale",
+                             f"control-unit-and-scale_tag-{TAG}.json")):
+            rec = json.loads((state.outdir / fname).read_text())
+            c.eq(f"the {kind} record carries every label key it must",
+                 label_problems(kind, rec["values"]), [])
 
         stage_anchor(state)
         c.eq("the anchor stage finishes", "anchor" in state.stages_done, True)
@@ -5206,6 +6074,13 @@ def selftest_real_stage_bodies(c: Checks) -> None:
         c.ok("the anchor's raw rank table is kept",
              any(p.name.startswith("rank_table_anchor")
                  for p in state.outdir.glob("*.list")))
+        c.eq("the anchor record carries the docking parameters it used",
+             anchor["values"]["docking_parameters"]["swarms"], DOCKING_SWARMS)
+        c.eq("the anchor record carries the order the docking commands ran in",
+             [s for s in anchor["values"]["docking_order_as_called"]
+              if s in DOCKING_CORE_STEPS], DOCKING_CORE_STEPS)
+        c.eq("the anchor record carries every label key it must",
+             label_problems("anchor", anchor["values"]), [])
 
         stage_aux(state)
         c.eq("the auxiliary stage finishes", "aux" in state.stages_done, True)
@@ -5231,6 +6106,10 @@ def selftest_real_stage_bodies(c: Checks) -> None:
         c.eq("one raw row per dynamics segment", len(md_rows), 3)
         c.eq("the engine's own speed is read from the reporter file",
              md_rows[0]["engine_ns_per_day"], 128.96)
+        c.eq("each dynamics row says how often a frame was written",
+             md_rows[0]["frame_interval_ps"], MD_FRAME_INTERVAL_PS)
+        c.ok("the trajectory itself is counted",
+             md_rows[0]["trajectory_bytes"] > 0)
         c.ok("the reporter file is kept beside the record",
              Path(md_rows[0]["reporter_file"]).exists())
         c.eq("the built system is inside the required atom range",
@@ -5258,6 +6137,14 @@ def selftest_real_stage_bodies(c: Checks) -> None:
              c4["values"]["gib_216_runs_intermediates_deleted"] is not None)
         c.ok("the storage input reports bytes per nanosecond of dynamics",
              c4["values"]["md_bytes_per_ns"] is not None)
+        c.eq("the storage input says how often a frame was written",
+             c4["values"]["frame_interval_ps"], MD_FRAME_INTERVAL_PS)
+        c.eq("the bytes the segment merely set up are reported apart",
+             c4["values"]["md_setup_bytes"], 12000)
+        c.ok("the segment's own bytes are the trajectory, the rate file and the logs",
+             c4["values"]["md_bytes"] >= 1000)
+        c.eq("the storage input carries every label key it must",
+             label_problems("C4", c4["values"]), [])
 
         stage_endpoints(state)
         summary_text = (state.outdir / f"{TAG}_summary.json").read_text()
@@ -5335,6 +6222,713 @@ def selftest_install_ceiling(c: Checks) -> None:
                  lambda: stage_install(st), HarnessFailure)
         c.ok("the install budget is reported as used up",
              st.install_seconds_used >= STAGE_CEILING_S["install"])
+
+
+def selftest_label_keys(c: Checks) -> None:
+    """Every record kind says what machine and what software produced it."""
+    c.eq("the nine labels are all covered by a key name",
+         label_keys_cover_nine(), [])
+    for kind in MEASURED_KINDS:
+        c.ok(f"{kind} records declare an engine block",
+             bool(REQUIRED_LABEL_KEYS[kind]["engine"]))
+    for kind in CONTROL_KINDS:
+        c.eq(f"{kind} records need only the machine block",
+             REQUIRED_LABEL_KEYS[kind]["engine"], ())
+    c.ok("the machine block covers instance, processor, driver, CUDA, times and price",
+         all(any(word in k for k in MACHINE_KEYS)
+             for word in ("instance", "gpu", "driver", "cuda", "start", "end", "price")))
+
+    with tempfile.TemporaryDirectory() as d:
+        st = _flow_state(Path(d), "labels")
+        emit_input_record(st, "C1", 0.5, n=9, rows_arm=None, start_epoch=0,
+                          end_epoch=100)
+        stage_controls_records = {
+            "C1": f"endpoint-C1_tag-{TAG}.json",
+        }
+        rec = json.loads((st.outdir / stage_controls_records["C1"]).read_text())
+        c.eq("a complete record has no label problem",
+             label_problems("C1", rec["values"]), [])
+
+        # a planted record with one key taken out must fail the check
+        broken = json.loads(json.dumps(rec["values"]))
+        broken["machine"].pop("gpu_name")
+        problems = label_problems("C1", broken)
+        c.ok("a record missing one label key fails the check", bool(problems))
+        c.ok("the failure names the missing key",
+             any("gpu_name" in p for p in problems))
+
+        # a planted null with no reason must fail the check
+        nulled = json.loads(json.dumps(rec["values"]))
+        nulled["machine"]["gpu_driver"] = None
+        nulled["null_reasons"].pop("gpu_driver", None)
+        problems = label_problems("C1", nulled)
+        c.ok("a null label with no reason fails the check", bool(problems))
+        c.ok("the failure says the reason is missing",
+             any("no reason" in p for p in problems))
+
+        # a null with a reason is allowed, because a key is never left out
+        excused = json.loads(json.dumps(rec["values"]))
+        excused["machine"]["gpu_driver"] = None
+        excused["null_reasons"]["gpu_driver"] = "the driver did not report itself"
+        c.eq("a null label with a reason passes", label_problems("C1", excused), [])
+
+        c.ok("an unknown record kind is refused rather than passed",
+             bool(label_problems("not-a-kind", rec["values"])))
+
+
+def selftest_pip_pins(c: Checks) -> None:
+    """The pinned requirements, the installer's version, and the one bootstrap."""
+    pin = parse_pin("openmm[cuda12]==8.2.0")
+    c.eq("a pinned requirement with an extra names its package", pin["name"], "openmm")
+    c.eq("a pinned requirement with an extra names the extra", pin["extras"], ["cuda12"])
+    c.eq("a pinned requirement names its exact version", pin["version"], "8.2.0")
+    c.eq("a pinned requirement without an extra parses",
+         parse_pin("jax==0.4.35")["extras"], [])
+    c.raises("a requirement without an exact version is refused",
+             lambda: parse_pin("openmm"), ParseError)
+    c.raises("a requirement pinned only by a range is refused",
+             lambda: parse_pin("openmm>=8.2"), ParseError)
+
+    c.eq("this run's own pinned requirements are usable as written",
+         pip_pins_problems(PIP_PINS), [])
+    c.eq("the dynamics engine carrying its CUDA extra passes",
+         pip_pins_problems(["openmm[cuda12]==8.2.0"]), [])
+    c.eq("the dynamics engine with a CUDA sibling package passes",
+         pip_pins_problems(["openmm==8.2.0", "openmm-cuda-12==8.2.0"]), [])
+    c.ok("the plain dynamics engine with no CUDA form is refused",
+         bool(pip_pins_problems(["openmm==8.2.0"])))
+    c.ok("an entry without an exact version fails the check",
+         bool(pip_pins_problems(["openmm[cuda12]==8.2.0", "lightdock"])))
+    c.ok("the chosen form is stated in the file beside the pins",
+         "THE PINNED RELEASE'S CUDA EXTRA" in Path(__file__).read_text())
+
+    c.eq("an installer that can report downloads needs no bootstrap",
+         pip_needs_bootstrap("pip 23.0.1 from /usr/lib/python3/dist-packages/pip "
+                             "(python 3.10)"), False)
+    c.eq("an older installer is bootstrapped once",
+         pip_needs_bootstrap("pip 22.0.2 from /usr/lib/python3/dist-packages/pip "
+                             "(python 3.10)"), True)
+    c.eq("the first version that can report is not bootstrapped",
+         pip_needs_bootstrap("pip 22.2 from /x (python 3.10)"), False)
+    c.raises("an unreadable installer version stops the run",
+             lambda: pip_needs_bootstrap("not a version at all"), HarnessFailure)
+    # The whole install stage, run with an installer too old to report its
+    # downloads: the one allowed bootstrap happens and is recorded in full.
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        bin_dir = tmp / "venv" / "bin"
+        bin_dir.mkdir(parents=True)
+        for tool in SMOKE_TOOLS + ["python3"]:
+            p = bin_dir / tool
+            p.write_text("#!/bin/sh\nexit 0\n")
+            os.chmod(str(p), 0o755)
+        st = make_state(tmp / "run", clock=FakeClock(0.0),
+                        env={"REMOTE_TIMEOUT": "7200", "M4_T0_EPOCH": "0",
+                             "INSTANCE_TYPE": "gpu_1x_a100_sxm4",
+                             "M4_VENV_BIN": str(bin_dir)})
+        st.runner = FakeRunner(st, pip_version="pip 22.0.2 from /usr/lib (python 3.10)")
+        stage_install(st)
+        entry = json.loads(
+            (st.outdir / f"install_log_tag-{TAG}.json").read_text())["pip_bootstrap"]
+        c.eq("an installer that cannot report downloads is replaced once",
+             entry["ran"], True)
+        c.ok("the bootstrap records the address it came from",
+             str(entry["url"]).startswith("https://"))
+        c.eq("the bootstrap records a full hash of the wheel",
+             len(str(entry["sha256"])), 64)
+        c.ok("the bootstrap records how long it took", entry["seconds"] >= 0)
+        c.ok("the bootstrap keeps its verbose log",
+             Path(entry["verbose_log"]).exists())
+        names = [call["name"] for call in st.runner.calls]
+        c.eq("the installer is downloaded once and installed once",
+             [names.count("pip_bootstrap_download"),
+              names.count("pip_bootstrap_install")], [1, 1])
+        c.eq("the pinned install still writes its own download report",
+             st.pip_report_path.exists(), True)
+
+    c.eq("the address of a downloaded wheel is read from the verbose log",
+         parse_pip_download_log(
+             "Collecting pip\n  Downloading "
+             "https://files.pythonhosted.org/pip-24.0-py3-none-any.whl (2.1 MB)\n"),
+         "https://files.pythonhosted.org/pip-24.0-py3-none-any.whl")
+    c.eq("a verbose log with no wheel address gives nothing",
+         parse_pip_download_log("Collecting pip\n"), None)
+
+
+def selftest_parameter_markers(c: Checks) -> None:
+    """The completion markers are read from the installed module, never recalled."""
+    one = ('def download_alphafold_params(path):\n'
+           '    if not os.path.isfile(f"{path}/download_complete.txt"):\n'
+           '        fetch()\n')
+    c.eq("a module naming one marker yields that one name",
+         colabfold_marker_names(one), ["download_complete.txt"])
+    two = (one + '    if not os.path.isfile(f"{path}/download_finished.txt"):\n'
+                 '        fetch()\n')
+    c.eq("a module naming two markers yields both",
+         colabfold_marker_names(two),
+         ["download_complete.txt", "download_finished.txt"])
+    c.eq("a module naming no marker yields none",
+         colabfold_marker_names("def download(path):\n    fetch()\n"), [])
+    c.eq("the same name twice is named once",
+         colabfold_marker_names(one + one), ["download_complete.txt"])
+
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        bin_dir = tmp / "venv" / "bin"
+        bin_dir.mkdir(parents=True)
+        pkg = tmp / "venv" / "lib" / "python3.10" / "site-packages" / "colabfold"
+        pkg.mkdir(parents=True)
+        (pkg / "download.py").write_text(two)
+        st = make_state(tmp / "run", env={"M4_VENV_BIN": str(bin_dir)})
+        params = st.datadir / "params"
+        params.mkdir(parents=True, exist_ok=True)
+        found = write_parameter_markers(st, params)
+        c.eq("both markers the module names are written", found["markers"],
+             ["download_complete.txt", "download_finished.txt"])
+        c.ok("the marker files are on disk beside the parameters",
+             all((params / n).exists() for n in found["markers"]))
+
+        empty_pkg = tmp / "venv2" / "lib" / "python3.10" / "site-packages" / "colabfold"
+        empty_pkg.mkdir(parents=True)
+        (empty_pkg / "download.py").write_text("def download(path):\n    fetch()\n")
+        st2 = make_state(tmp / "run2",
+                         env={"M4_VENV_BIN": str(tmp / "venv2" / "bin")})
+        (tmp / "venv2" / "bin").mkdir(parents=True, exist_ok=True)
+        params2 = st2.datadir / "params"
+        params2.mkdir(parents=True, exist_ok=True)
+        found2 = write_parameter_markers(st2, params2)
+        c.eq("a module naming no marker writes none", found2["markers"], [])
+        c.eq("and the record says so", found2["note"], "no marker named")
+
+
+def selftest_storage_details(c: Checks) -> None:
+    """What one dynamics segment writes, and what it merely set up."""
+    with tempfile.TemporaryDirectory() as d:
+        md = Path(d) / "md_pair1"
+        md.mkdir(parents=True)
+        (md / "md_trajectory.dcd").write_bytes(b"t" * 1000)
+        (md / "md_reporter.csv").write_bytes(b"r" * 100)
+        (md / "md_run.log").write_bytes(b"l" * 24)
+        (md / "system.xml").write_bytes(b"s" * 5000)
+        (md / "solvated.pdb").write_bytes(b"p" * 7000)
+        split = md_bytes_breakdown(md)
+        c.eq("the segment's own bytes are the trajectory, the rate file and the log",
+             split["md_bytes"], 1124)
+        c.eq("the system and the solvated structure are set-up bytes",
+             split["md_setup_bytes"], 12000)
+        (md / "state.chk").write_bytes(b"c" * 999)
+        c.eq("a checkpoint is set-up bytes too",
+             md_bytes_breakdown(md)["md_setup_bytes"], 12999)
+        c.eq("a checkpoint does not change the written bytes",
+             md_bytes_breakdown(md)["md_bytes"], 1124)
+        extra = Path(d) / "tool.log"
+        extra.write_bytes(b"x" * 10)
+        c.eq("the tool's own log counts towards the written bytes",
+             md_bytes_breakdown(md, [extra])["md_bytes"], 1134)
+
+    c.ok("the dynamics worker writes a trajectory",
+         "DCDReporter" in MD_WORKER_SOURCE)
+    c.eq("a frame every 5,000 steps at two femtoseconds is one every 10 picoseconds",
+         MD_FRAME_INTERVAL_PS, 10.0)
+    c.eq("fifty frames make up the half-nanosecond segment",
+         int(round(MD_PRODUCTION_NS * 1e6 / MD_TIMESTEP_FS / MD_REPORT_INTERVAL_STEPS)),
+         50)
+
+
+def selftest_allowances(c: Checks) -> None:
+    """One formula decides how long a stage may take, and it is never negative."""
+    with tempfile.TemporaryDirectory() as d:
+        clock = FakeClock(0.0)
+        st = make_state(Path(d), clock=clock,
+                        env={"REMOTE_TIMEOUT": "7200", "M4_T0_EPOCH": "0",
+                             "PRICE_USD_PER_HOUR": "1.99", "BUDGET_LEFT_USD": "5"})
+        c.eq("at the start the install stage may use its whole ceiling",
+             stage_allowance_s(st, "install"), 1800.0)
+        clock.t = 6000.0
+        c.eq("with 1,200 s of the run left the prediction stage may use 700 s",
+             stage_allowance_s(st, "af2"), 700.0)
+        clock.t = 6800.0
+        c.eq("with 400 s left the allowance is zero, never negative",
+             stage_allowance_s(st, "af2"), 0.0)
+        c.raises("a stage with no allowance is not started",
+                 lambda: guard_before_stage(st, "af2", 120), GuardStop)
+        clock.t = 0.0
+        # The seven slots the directive names: installing, the controls and the
+        # anchor together, the per-pair docking, the prediction timings, the
+        # dynamics timings, the closing stage and the margin. The controls and
+        # the anchor each get their own 700 s allowance, so in practice the
+        # pair can use about 770 s and the margin absorbs the difference. The
+        # storage stage's own 100 s is not one of the seven. This sum is an
+        # arithmetic check on the slots, not the guarantee: the guarantee is
+        # the allowance formula checked just above.
+        c.eq("the seven slots sum to the whole cap",
+             (STAGE_CEILING_S["install"] + STAGE_CEILING_S["controls"]
+              + STAGE_CEILING_S["aux"] + STAGE_CEILING_S["af2"]
+              + STAGE_CEILING_S["md"] + STAGE_CEILING_S["endpoints"]
+              + FETCH_MARGIN_S), TOTAL_CEILING_S)
+        c.eq("the controls and the anchor each have the same allowance",
+             STAGE_CEILING_S["anchor"], STAGE_CEILING_S["controls"])
+
+        st.install_seconds_used = 0.0
+        limits = []
+        for _ in range(3):
+            lim = install_call_limit_s(st, 1000, stage_allowance_s(st, "install"))
+            limits.append(lim)
+            spend_install_seconds(st, lim)
+        c.eq("three install calls asking 1,000 s each get 1,000, 800 and 0",
+             limits, [1000.0, 800.0, 0.0])
+        c.eq("the install budget is then exhausted", st.install_total_exhausted, True)
+
+
+def selftest_spend(c: Checks) -> None:
+    """What the run reports it has spent, with the bootstrap counted exactly once."""
+    with tempfile.TemporaryDirectory() as d:
+        clock = FakeClock(0.0)
+        st = make_state(Path(d), clock=clock,
+                        env={"M4_T0_EPOCH": "0", "PRICE_USD_PER_HOUR": "1.99",
+                             "M4_PRE_T0_SECONDS": "300", "REMOTE_TIMEOUT": "7200"})
+        clock.t = 3600.0
+        c.eq("an hour since the run's start at 1.99 an hour is 1.99",
+             round(st.spend_usd(), 2), 1.99)
+        c.eq("the bootstrap seconds are reported, not added again",
+             st.pre_t0_seconds, 300.0)
+        clock.t = 7200.0
+        c.eq("two hours since the run's start is 3.98",
+             round(st.spend_usd(), 2), 3.98)
+
+
+def selftest_docking_order(c: Checks) -> None:
+    """Prepare, search, build the poses, rank: in that order, and the poses exist."""
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        bin_dir = tmp / "bin"
+        bin_dir.mkdir(parents=True)
+        for tool in SMOKE_TOOLS + ["python3"]:
+            (bin_dir / tool).write_text("#!/bin/sh\nexit 0\n")
+
+        def fresh(sub, **kw):
+            st = make_state(tmp / sub, clock=FakeClock(0.0),
+                            env={"REMOTE_TIMEOUT": "7200", "M4_T0_EPOCH": "0",
+                                 "INSTANCE_TYPE": "gpu_1x_a100_sxm4",
+                                 "M4_VENV_BIN": str(bin_dir)})
+            st.runner = FakeRunner(st, **kw)
+            return st
+
+        st = fresh("order")
+        result = run_docking(st, "anchor_x", tmp / "r.pdb", tmp / "l.pdb",
+                             tmp / "w", 250, 1, "anchor")
+        core = [s for s in result["call_order"] if s in DOCKING_CORE_STEPS]
+        c.eq("the docking steps are search, build the poses, then rank",
+             core, DOCKING_CORE_STEPS)
+        c.eq("the search is prepared first", result["call_order"][0], "setup")
+        c.eq("the docking parameters are the declared ones",
+             [result["parameters"]["swarms"], result["parameters"]["glowworms"],
+              result["parameters"]["steps"]],
+             [DOCKING_SWARMS, DOCKING_GLOWWORMS, DOCKING_STEPS])
+        c.eq("the docking is never restrained toward the published interface",
+             result["parameters"]["restrained_to_the_published_interface"], False)
+
+        st = fresh("nogen", skip_generation=True)
+        c.raises("a docking run that builds no pose is broken infrastructure",
+                 lambda: run_docking(st, "anchor_x", tmp / "r.pdb", tmp / "l.pdb",
+                                     tmp / "w2", 250, 1, "anchor"), HarnessFailure)
+
+        # one failing tool is called once: no second tool and no second source
+        st = fresh("once", failures={"anchor_x_simulate": 1})
+        try:
+            run_docking(st, "anchor_x", tmp / "r.pdb", tmp / "l.pdb",
+                        tmp / "w3", 250, 1, "anchor")
+        except HarnessFailure:
+            pass
+        tried = [call for call in st.runner.calls
+                 if call["name"] == "anchor_x_simulate"]
+        c.eq("a failing tool is called once and nothing else is tried",
+             len(tried), 1)
+        c.eq("no later docking step runs after the failure",
+             [call["name"] for call in st.runner.calls
+              if call["name"].endswith(("_rank", "_generate_conformations"))], [])
+
+
+def selftest_docking_pair_loop(c: Checks) -> None:
+    """A pair that reaches its cap is kept, left out of the mean, and not the end."""
+    def planted_aux_state(tmp: Path, name: str, timeouts=()):
+        bin_dir = tmp / "bin"
+        bin_dir.mkdir(parents=True, exist_ok=True)
+        for tool in SMOKE_TOOLS + ["python3"]:
+            p = bin_dir / tool
+            p.write_text("#!/bin/sh\nexit 0\n")
+            os.chmod(str(p), 0o755)
+        st = make_state(tmp / name, clock=FakeClock(0.0),
+                        env={"REMOTE_TIMEOUT": "7200", "M4_T0_EPOCH": "0",
+                             "INSTANCE_TYPE": "gpu_1x_a100_sxm4",
+                             "M4_VENV_BIN": str(bin_dir)})
+        st.runner = FakeRunner(st, timeouts=timeouts)
+        st.datadir.mkdir(parents=True, exist_ok=True)
+        (st.datadir / f"{PDB_ENTRY}.pdb").write_text(planted_pdb_text())
+        st.pairs = build_pairs(planted_pdb_text())
+        write_pair_evidence(st, st.pairs, st.datadir / f"{PDB_ENTRY}.pdb")
+        return st
+
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        st = planted_aux_state(tmp, "one_capped",
+                               timeouts=("aux_pair1_simulate",))
+        out = stage_aux(st)
+        attempted = {call["name"].split("_")[1] for call in st.runner.calls
+                     if call["name"].startswith("aux_pair")}
+        c.eq("all three pairs are attempted when the first one is capped",
+             sorted(attempted), ["pair1", "pair2", "pair3"])
+        c.eq("the capped pair is left out of the mean", out["n"], 2)
+        c.eq("the auxiliary input is still decided on two pairs",
+             st.inputs_status["C3"]["state"], "decided")
+        rows = [json.loads(l) for l in
+                (st.outdir / f"rows_aux_tag-{TAG}.jsonl").read_text().splitlines()]
+        capped = [r for r in rows if r.get("truncated")]
+        c.eq("the capped pair is kept as a row", len(capped), 1)
+        c.ok("the capped pair's row says it did not finish",
+             capped[0].get("incomplete") is True)
+
+        st = planted_aux_state(tmp, "two_capped",
+                               timeouts=("aux_pair1_simulate", "aux_pair2_simulate"))
+        out = stage_aux(st)
+        attempted = {call["name"].split("_")[1] for call in st.runner.calls
+                     if call["name"].startswith("aux_pair")}
+        c.eq("all three pairs are attempted when two are capped",
+             sorted(attempted), ["pair1", "pair2", "pair3"])
+        c.eq("one finished pair is below the minimum", out["n"], 1)
+        c.eq("below two finished pairs the auxiliary input is void",
+             st.inputs_status["C3"]["decision"], "VOID")
+
+
+def selftest_finalize(c: Checks) -> None:
+    """Closing a run after the launcher's timer keeps what was already decided."""
+    def planted_out(tmp: Path, name: str, records: dict, validity=None):
+        st = make_state(tmp / name, clock=FakeClock(100.0),
+                        env={"REMOTE_TIMEOUT": "7200", "M4_T0_EPOCH": "0",
+                             "INSTANCE_TYPE": "gpu_1x_a100_sxm4"})
+        st.runner = FakeRunner(st)
+        for fname, body in records.items():
+            atomic_write_json(st.outdir / fname, body)
+        if validity is not None:
+            atomic_write_json(st.outdir / "RUN_VALID.json", validity)
+        return st
+
+    def c3_record(decision="PASS"):
+        return {"cell": {"stage": "endpoints", "input": "C3", "tag": TAG},
+                "inputs": [], "metric": "aux_h_per_pair", "decision": decision,
+                "values": {"measured": 1.0, "unit": CARD["C3"]["unit"],
+                           "card_value": 1, "band": CARD["C3"]["band"],
+                           "n": 3, "marginal": False, "void_reason": None},
+                "threshold": {}, "decision_rule": "inside the band -> PASS",
+                "notes_list": [], "run_valid": True, "env": {}, "kind": "C3"}
+
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        st = planted_out(tmp, "one_decided",
+                         {f"endpoint-C3_tag-{TAG}.json": c3_record()})
+        before = (st.outdir / f"endpoint-C3_tag-{TAG}.json").read_bytes()
+        code = finalize_from_disk(st, outer_rc=124)
+        c.eq("a timer that left three inputs unmeasured exits three", code, EXIT_GUARD)
+        c.eq("the input decided before the timer keeps its decision",
+             st.inputs_status["C3"]["status"], "decided")
+        c.eq("its record is not rewritten",
+             (st.outdir / f"endpoint-C3_tag-{TAG}.json").read_bytes(), before)
+        for cid in ("C1", "C2", "C4"):
+            c.eq(f"{cid} says the timer left it unmeasured",
+                 st.inputs_status[cid]["status"], "unmeasured_by_stop:outer_timeout")
+            rec = json.loads((st.outdir / f"endpoint-{cid}_tag-{TAG}.json").read_text())
+            c.ok(f"{cid}'s new record carries the incomplete-run label",
+                 LABEL_INCOMPLETE in rec["notes_list"])
+            c.eq(f"{cid}'s new record is void", rec["decision"], "VOID")
+        c.eq("the run is still valid after a timer stop", st.run_valid, True)
+        summary = json.loads((st.outdir / f"{TAG}_summary.json").read_text())
+        c.eq("the closing summary says what the run decides",
+             list(summary.keys())[0], "what_this_run_decides")
+        c.ok("the closing summary says the run is incomplete",
+             LABEL_INCOMPLETE in summary["notes"])
+        write_run_done(st, code)
+        marker = json.loads((st.outdir / "RUN_DONE").read_text())
+        c.ok("the closing marker says the run is incomplete",
+             LABEL_INCOMPLETE in marker["notes"])
+        c.eq("the closing marker carries the exit code", marker["exit_code"],
+             EXIT_GUARD)
+
+        anchor_fail = {"cell": {"stage": "anchor", "tag": TAG}, "inputs": [],
+                       "metric": "anchor", "decision": "FAIL",
+                       "values": {"measured": 0.1}, "threshold": {},
+                       "decision_rule": "overlap or RMSD", "notes_list": [],
+                       "run_valid": False, "env": {}, "kind": "anchor"}
+        st = planted_out(tmp, "anchor_failed",
+                         {f"endpoint-anchor_tag-{TAG}.json": anchor_fail})
+        c.eq("a missed anchor on disk closes as a missed anchor",
+             finalize_from_disk(st, outer_rc=124), EXIT_ANCHOR)
+        c.eq("a missed anchor on disk leaves the run invalid", st.run_valid, False)
+
+        all_four = {f"endpoint-C{i}_tag-{TAG}.json":
+                    dict(c3_record(), cell={"stage": "endpoints", "input": f"C{i}",
+                                            "tag": TAG})
+                    for i in (1, 2, 3, 4)}
+        st = planted_out(tmp, "all_decided", all_four)
+        c.eq("a run with every input decided closes at zero",
+             finalize_from_disk(st, outer_rc=124), EXIT_OK)
+
+        st = planted_out(tmp, "invalid",
+                         {f"endpoint-C3_tag-{TAG}.json": c3_record()},
+                         validity={"run_valid": False, "voided_by": "the sleep check"})
+        c.eq("a run already marked invalid closes as broken infrastructure",
+             finalize_from_disk(st, outer_rc=124), EXIT_INFRA)
+
+        st = planted_out(tmp, "unmeasured_record", {
+            f"endpoint-C3_tag-{TAG}.json": dict(
+                c3_record("VOID"),
+                values={"measured": None, "unit": CARD["C3"]["unit"],
+                        "card_value": 1, "band": CARD["C3"]["band"], "n": 0,
+                        "void_reason": f"{LABEL_UNMEASURED} (ceiling)"})})
+        code = finalize_from_disk(st, outer_rc=124)
+        c.eq("a record that says it was never measured stays unmeasured",
+             st.inputs_status["C3"]["status"], "unmeasured_by_stop:outer_timeout")
+        c.eq("and the run closes as a stop", code, EXIT_GUARD)
+
+
+SHELL_STUB = """#!/bin/sh
+# A planted stand-in for the measuring program. It records that it was called,
+# optionally writes the marker and the validity file the real program writes,
+# and returns whatever exit code the planted case asks for.
+echo "$@" >> "$M4_STUB_CALLS"
+case "$*" in
+  *--finalize*)
+    echo "finalize" >> "$M4_STUB_FINALIZE_CALLS"
+    exit 0 ;;
+esac
+if [ "${M4_STUB_WRITE:-0}" = "1" ]; then
+  mkdir -p "$M4_STUB_OUT"
+  printf '%s' "$M4_STUB_RUN_DONE" > "$M4_STUB_OUT/RUN_DONE"
+  printf '%s' "$M4_STUB_RUN_VALID" > "$M4_STUB_OUT/RUN_VALID.json"
+fi
+exit "${M4_STUB_RC:-0}"
+"""
+
+SUDO_STUB_OK = "#!/bin/sh\nexit 0\n"
+SUDO_STUB_SLOW = "#!/bin/sh\nexec sleep 60\n"
+
+
+def _write_executable(path: Path, text: str) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text)
+    os.chmod(str(path), 0o755)
+    return path
+
+
+def _run_onbox(root: Path, *, rc, write=False, run_done="", run_valid="",
+               remote_timeout="7200", sudo=SUDO_STUB_OK, install_ceiling=None,
+               timeout_s=120):
+    """Run the on-box script itself, under its test hook, with planted answers."""
+    script = Path(__file__).with_name(f"onbox_{TAG}.sh")
+    bin_dir = root / "testbin"
+    _write_executable(bin_dir / "sudo", sudo)
+    stub = _write_executable(root / "runner_stub.sh", SHELL_STUB)
+    out = root / f"results_{TAG}" / "out"
+    env = dict(os.environ)
+    env.update({
+        "M4_SHELL_TEST": "1",
+        "M4_TEST_ROOT": str(root),
+        "M4_TEST_RUNNER": f"/bin/sh {stub}",
+        "M4_TEST_BIN": str(bin_dir),
+        "M4_STUB_CALLS": str(root / "calls.txt"),
+        "M4_STUB_FINALIZE_CALLS": str(root / "finalize_calls.txt"),
+        "M4_STUB_OUT": str(out),
+        "M4_STUB_RC": str(rc),
+        "M4_STUB_WRITE": "1" if write else "0",
+        "M4_STUB_RUN_DONE": run_done,
+        "M4_STUB_RUN_VALID": run_valid,
+        "REMOTE_TIMEOUT": remote_timeout,
+        "PRICE_USD_PER_HOUR": "1.99",
+        "BUDGET_LEFT_USD": "5",
+        "INSTANCE_TYPE": "gpu_1x_a100_sxm4",
+    })
+    if install_ceiling is not None:
+        env["M4_TEST_INSTALL_CEILING_S"] = str(install_ceiling)
+    started = time.time()
+    proc = subprocess.run(["bash", str(script)], env=env, cwd=str(root),
+                          capture_output=True, text=True, timeout=timeout_s)
+    return {"rc": proc.returncode, "seconds": time.time() - started, "out": out,
+            "stdout": proc.stdout, "stderr": proc.stderr,
+            "finalize_calls": (root / "finalize_calls.txt")}
+
+
+def _read_json(path):
+    try:
+        return json.loads(Path(path).read_text())
+    except (OSError, ValueError):
+        return None
+
+
+def selftest_shell_routes(c: Checks) -> None:
+    """The on-box script itself: its test hook, its routes and what it writes.
+
+    This is the one part of the selftest that runs the shell script. Every
+    route out of it is planted here, because the exit code and the validity
+    file it leaves behind are what the operator reads afterwards.
+    """
+    script = Path(__file__).with_name(f"onbox_{TAG}.sh")
+    if not script.exists():
+        c.ok("the on-box script is beside this program", False, str(script))
+        return
+    text = script.read_text()
+
+    # -- the test hook is one block, and nothing outside it reads a test variable
+    begin = "# BEGIN TEST HOOKS"
+    end = "# END TEST HOOKS"
+    c.ok("the on-box script marks where its test hook begins", begin in text)
+    c.ok("the on-box script marks where its test hook ends", end in text)
+    if begin in text and end in text:
+        lo = text.index(begin)
+        hi = text.index(end)
+        c.ok("the test hook block is not empty and is the right way round", lo < hi)
+        first_line = text[lo + len(begin):hi].strip().splitlines()[0]
+        c.ok("the test hook's first line asks whether this is a test",
+             "M4_SHELL_TEST" in first_line, first_line)
+        outside = [m.start() for m in re.finditer(r"M4_TEST_", text)
+                   if not (lo < m.start() < hi)]
+        c.eq("no test variable is read outside the test hook block", outside, [])
+
+    # -- no line that starts the measuring program lets a non-zero status escape
+    joined = re.sub(r"\\\n\s*", " ", text)
+    runner_lines = [ln for ln in joined.splitlines() if "${RUNNER_CMD[@]}" in ln]
+    c.ok("the on-box script starts the measuring program", bool(runner_lines))
+    unguarded = [ln.strip() for ln in runner_lines if "|| RC=$?" not in ln]
+    c.eq("every line that starts the measuring program catches its exit code",
+         unguarded, [])
+    c.ok("the script never turns on abort-on-error", "\nset -e" not in text)
+
+    if shutil.which("bash") is None:
+        c.ok("bash is available to run the on-box script", False,
+             "no bash on this machine")
+        return
+
+    done_zero = json.dumps({"exit_code": 0, "run_valid": True,
+                            "inputs": {k: {"status": "decided"} for k in INPUT_IDS}},
+                           indent=2)
+    valid_true = json.dumps({"run_valid": True, "voided_by": None}, indent=2)
+
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+
+        # (1) the program finished and left its own marker
+        r = _run_onbox(tmp / "ok", rc=0, write=True, run_done=done_zero,
+                       run_valid=valid_true)
+        c.eq("a finished run exits zero", r["rc"], 0)
+        c.eq("the marker the program wrote is left exactly as it was",
+             (r["out"] / "RUN_DONE").read_text(), done_zero)
+        c.eq("the validity file the program wrote is left exactly as it was",
+             (r["out"] / "RUN_VALID.json").read_text(), valid_true)
+
+        # (2) a stop, with the program's own files already written
+        done_three = json.dumps({"exit_code": 3, "run_valid": True,
+                                 "inputs": {k: {"status":
+                                                "unmeasured_by_stop:ceiling"}
+                                            for k in INPUT_IDS}}, indent=2)
+        r = _run_onbox(tmp / "stop_with_files", rc=3, write=True,
+                       run_done=done_three, run_valid=valid_true)
+        c.eq("a stop with the program's own files exits three", r["rc"], 3)
+        c.eq("the stop's marker is untouched",
+             (r["out"] / "RUN_DONE").read_text(), done_three)
+        c.eq("the stop's validity file is untouched",
+             (r["out"] / "RUN_VALID.json").read_text(), valid_true)
+
+        # (3) a stop with nothing written: the shell writes the void itself
+        r = _run_onbox(tmp / "stop_no_files", rc=3)
+        c.eq("a stop with no files exits three", r["rc"], 3)
+        validity = _read_json(r["out"] / "RUN_VALID.json")
+        c.eq("a stop leaves the run valid", (validity or {}).get("run_valid"), True)
+        done = _read_json(r["out"] / "RUN_DONE")
+        c.eq("the marker carries the stop's exit code", (done or {}).get("exit_code"), 3)
+        c.ok("the marker says the run is incomplete",
+             LABEL_INCOMPLETE in json.dumps(done))
+        for cid in INPUT_IDS:
+            rec = _read_json(r["out"] / f"endpoint-{cid}_tag-{TAG}.json")
+            c.eq(f"{cid} has a record with the card's unit",
+                 (rec or {}).get("values", {}).get("unit"), CARD[cid]["unit"])
+            c.eq(f"{cid}'s record carries the card's own value",
+                 (rec or {}).get("values", {}).get("card_value"),
+                 CARD[cid]["card_value"])
+            c.eq(f"{cid}'s record carries the card's band",
+                 (rec or {}).get("values", {}).get("band"), CARD[cid]["band"])
+            c.eq(f"{cid}'s record is void", (rec or {}).get("decision"), "VOID")
+            c.eq(f"{cid}'s record says whether the run is valid",
+                 (rec or {}).get("run_valid"), True)
+            for key in ("cell", "inputs", "metric", "values", "threshold",
+                        "decision_rule", "decision", "env"):
+                c.ok(f"{cid}'s record carries its {key}", key in (rec or {}))
+        anchor = _read_json(r["out"] / f"endpoint-anchor_tag-{TAG}.json")
+        c.eq("the anchor record is void too", (anchor or {}).get("decision"), "VOID")
+        summary = _read_json(r["out"] / f"{TAG}_summary.json")
+        c.eq("the shell's summary says what the run decides",
+             list((summary or {}).keys())[0] if summary else None,
+             "what_this_run_decides")
+        env_txt = (r["out"] / "env.txt").read_text()
+        c.ok("the shell's environment note carries the timeout it saw",
+             "REMOTE_TIMEOUT_SEEN=7200" in env_txt)
+        c.ok("the shell's environment note carries the bootstrap seconds",
+             "PRE_T0_SECONDS=" in env_txt)
+        c.ok("the shell's environment note never prints a download token",
+             "HF_TOKEN=<not read" in env_txt)
+
+        # (4) the anchor missed
+        r = _run_onbox(tmp / "anchor", rc=4)
+        c.eq("a missed anchor exits four", r["rc"], 4)
+        c.eq("a missed anchor leaves the run invalid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), False)
+        done = _read_json(r["out"] / "RUN_DONE")
+        c.eq("the marker says the anchor voided every input",
+             done["inputs"]["C1"]["status"], "void_by_anchor_miss")
+
+        # (5) broken infrastructure
+        r = _run_onbox(tmp / "broken", rc=2)
+        c.eq("broken infrastructure exits two", r["rc"], 2)
+        c.eq("broken infrastructure leaves the run invalid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), False)
+
+        # (6) a program that returns zero without leaving a marker
+        r = _run_onbox(tmp / "silent", rc=0)
+        c.eq("a zero with no marker is treated as broken infrastructure", r["rc"], 2)
+        c.eq("and the run is invalid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), False)
+
+        # (7) the launcher's own timer fired
+        r = _run_onbox(tmp / "timer", rc=124)
+        c.eq("the launcher's own timer closes the run as a stop", r["rc"], 3)
+        calls = r["finalize_calls"]
+        c.eq("the closing call is made exactly once",
+             len(calls.read_text().splitlines()) if calls.exists() else 0, 1)
+        c.eq("a timer stop leaves the run valid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), True)
+
+        # (8) a kill long before the deadline
+        r = _run_onbox(tmp / "killed", rc=137)
+        c.eq("a kill well before the deadline is broken infrastructure", r["rc"], 2)
+        c.eq("and it leaves the run invalid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), False)
+
+        # (9) no time left at all
+        r = _run_onbox(tmp / "no_time", rc=0, remote_timeout="10")
+        c.eq("a run with no time left for any measurement exits three", r["rc"], 3)
+        c.eq("and it leaves the run valid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), True)
+        c.eq("the measuring program is never started",
+             (tmp / "no_time" / "calls.txt").exists(), False)
+
+        # (10) a system package call that hangs past the install budget
+        r = _run_onbox(tmp / "slow_apt", rc=0, sudo=SUDO_STUB_SLOW,
+                       install_ceiling=3, timeout_s=60)
+        c.eq("a package call over the install budget is broken infrastructure",
+             r["rc"], 2)
+        c.ok("and it ends quickly, not at the launcher's own timeout",
+             r["seconds"] < 30, f"{r['seconds']:.1f}s")
+        c.eq("a void record is left behind",
+             (_read_json(r["out"] / "RUN_DONE") or {}).get("exit_code"), 2)
+        c.eq("the hung install leaves the run invalid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), False)
 
 
 def selftest_consistency(c: Checks) -> None:
@@ -5417,7 +7011,11 @@ def selftest() -> int:
                  selftest_outer_timeout, selftest_guards, selftest_pairs,
                  selftest_dynamics_inputs, selftest_records, selftest_stage_flow,
                  selftest_docking_routes, selftest_install_ceiling,
-                 selftest_real_stage_bodies):
+                 selftest_label_keys, selftest_pip_pins,
+                 selftest_parameter_markers, selftest_storage_details,
+                 selftest_allowances, selftest_spend, selftest_docking_order,
+                 selftest_docking_pair_loop, selftest_finalize,
+                 selftest_shell_routes, selftest_real_stage_bodies):
         try:
             part(c)
         except Exception as exc:                       # a crash is a failed check

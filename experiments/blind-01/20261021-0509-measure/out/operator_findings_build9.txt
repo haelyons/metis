@@ -1,0 +1,6 @@
+Operator's mechanical findings on build 9 (no content read):
+1. Environment names read on-box that the launcher does not forward and the on-box script does not set at line start: M4_BASE, M4_SHELL_TEST, M4_TEST_BIN, M4_TEST_INSTALL_CEILING_S, M4_TEST_ROOT, M4_TEST_RUNNER. Verify each has a default or is set before use (the M4_TEST_* names look like selftest hooks: verify they cannot alter a real run). The launcher forwards PRICE_USD_PER_HOUR, BUDGET_LEFT_USD, INSTANCE_TYPE, REMOTE_TIMEOUT, HF_TOKEN, LAMBDA_INSTANCE_ID, GIT_COMMIT only.
+2. One line mentions a key-file name or pattern: key mention: run_m4.py line 6983 string-literal ['.keys'] reads a file: False. Verify it does not read .keys or print a key (standing rule 8).
+3. Package-index check of the runner's pins (out/pip_pins_check_build9.txt): pins 8: found 8, missing 0, unpinned 0; extras declared 0, not declared 1.
+4. Files written by the build: run_m4.py (7,042 lines) and onbox_m4.sh (602 lines) only; build 9 edited build 7's files in place (--keep) as the directive asked. Selftest 658 of 658 PASS under the operator's run (out/selftest_build9.log, 14.8 s).
+5. Gate ruling of record (addendum 6): the gate was asked whether launch 1 may proceed on zero blocking findings regardless of advisory ones; apply its answer in your verdict line's counts, not by softening a blocking finding.
