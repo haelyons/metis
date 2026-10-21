@@ -223,3 +223,139 @@ Arithmetic only, on numbers in the inputs. No experiment was run.
   patching around), or a stage ceiling being hit. A stopped launch writes its summary and `RUN_DONE` before exit.
 - **Totals.** At most two launches; USD 7.96 at the cap for the remote commands, USD 8.62 with the allowance for time outside
   them; the project and owner cap of USD 10 is not exceeded and is not raised by this gate.
+
+---
+
+## Addendum 3 (2026-10-21)
+
+Rules on `out/review_build2.md` (review of build 2, execution layer; 15 findings: 6 BLOCKING, 9 ADVISORY). Inputs added for
+this addendum: that report, this file as it stood, `EXEC_NOTE.md` as it stood, `sessions/GATE_3.md`. The gate ran nothing and did
+not read `run_m4.py`; each ruling rests on the reviewer's line references, taken as reported. Every earlier section above stands
+except where an answer below says it is superseded (the stage ceilings in "Checks the gate made before answering" are
+superseded by answer B8). Answers are numbered B1 to B15, one per finding, in the report's order. Counts: 15 answers.
+
+**Decision on budget and build (addendum).** GO stands. Build 3 spends no GPU money. Launch spend so far: none is evidenced in
+the inputs read. Cap arithmetic is unchanged: 2 launches x 2.00 h x USD 1.99 = USD 7.96; with 600 s outside each, USD 8.62;
+under the USD 10 cap. No change to caps, instance or `BUDGET_LEFT_USD`.
+
+1. **B1 (finding 1, BLOCKING: guard or ceiling stop sets run_valid false).** ACCEPTED; the build changes `fail_stage`
+   (`run_m4.py:2244-2249`). `set_run_invalid` is called only for exit 2 (infrastructure or harness failure) and exit 4 (anchor
+   miss). Exit 3 (guard stop, stage ceiling, outer timeout) leaves `run_valid` as it was, voids only the unfinished inputs,
+   keeps finished inputs' decisions, and labels every record written after it "incomplete run: unmeasured inputs are VOID, not
+   holding". The `fail ... 3` calls in `onbox_m4.sh` (lines 109, 125, 133, 144, 147, 152, 158-160, 170) route to that guard path.
+   Selftest gets planted stage-flow cases (answer B15).
+
+2. **B2 (finding 2, BLOCKING: guard or ceiling stop inside generate exits 0).** ACCEPTED. Each of the three early returns
+   (`stage_af2` 1573-1576, `stage_aux` 1517-1518, `stage_md` 1718-1719) raises `GuardStop` (or records the stop in run state
+   that `run_stages` reads), so the stage is marked not done. A ceiling stop ends that stage only; a later stage whose own guard
+   allows it still starts; `stage_endpoints` always runs. At the end `run_stages` exits 3, not `EXIT_OK`, whenever any input is
+   unmeasured because of a guard, ceiling or timeout stop, so the A2(b) relaunch condition is readable from `RUN_DONE`. Exit 0
+   only when C1 to C4 are all decided or marginal-VOID by measurement.
+
+3. **B3 (finding 3, BLOCKING: a timed-out AlphaFold or MD call voids everything).** ACCEPTED. In `run_tool`
+   (`run_m4.py:1052-1069`) a timeout is distinct from a failure: a timeout (the call exceeded the stage allowance,
+   `min(stage_left, seconds_left)`) is a ceiling stop (B2 path, exit 3), not `ToolError`. A real tool failure (non-zero exit,
+   crash, missing output) stays broken infrastructure: exit 2, run_valid false, no patching around. A timed-out run's row is kept
+   in the raw rows with `incomplete: true` and is not counted in a mean; the stage's finished rows are kept; endpoint records are
+   written from finished rows against the minimums in answer 2 (C3 stays decided if finished; C1 or C2 below its minimum is
+   VOID with the raw rows kept). No input already finished is voided by a later stage's stop.
+
+4. **B4 (finding 4, BLOCKING: REMOTE_TIMEOUT is not forwarded).** ACCEPTED. This sits in the operator's launcher, not in the
+   build's two files: the operator makes `lambda_run_m4.sh` forward `REMOTE_TIMEOUT` with `PRICE_USD_PER_HOUR`,
+   `BUDGET_LEFT_USD` and `INSTANCE_TYPE` (the header then declares four added variables, not three) and re-diffs it against
+   `frozen/lambda_run.sh` before launch 1. The build adds what it controls: `onbox_m4.sh` and `run_m4.py` record the
+   `REMOTE_TIMEOUT` value they see in `env.txt` and `m4_summary.json`; if it is unset the script uses 7200 and the summary
+   carries the label "REMOTE_TIMEOUT not forwarded; default 7200 used". No default above 7200 or `BUDGET_LEFT_USD` above 5.
+
+5. **B5 (finding 5, BLOCKING: anchor overlap compares keys that cannot match unless the receptor chain id is "B").** ACCEPTED. The
+   build keys contacts by chain role, not by the file's chain id: both the reference (6IHB) contact set and the pose's contact
+   set are built after the receptor chain is mapped to the same chain id (and the capsid chain(s) likewise) through one
+   mapping function used for both, so `contact_overlap` compares like with like. Selftest, planted: the same planted pose and
+   reference give overlap 0.5 with the receptor chain id "B" and the same 0.5 with it "C" and with it "A"; a reference whose
+   receptor chain id differs from the pose file's no longer gives 0.0; the native-versus-pose round trip through `write_pdb`
+   and `read_pdb_atoms` is in the case. An overlap of exactly 0.0 on a pose with a non-trivial planted overlap fails the
+   selftest.
+
+6. **B6 (finding 6, BLOCKING: no check that the declared tools start before the expensive stages).** ACCEPTED. The install
+   stage ends with a smoke check inside the install ceiling, after every install and before the controls: import of the
+   AlphaFold-Multimer stack and JAX with a listed device of type GPU; `colabfold_batch --help`; the docking code's entry point
+   `--help`; OpenMM imported with `Platform.getPlatformByName("CUDA")` succeeding. A failure is exit 2 with a void record
+   (rule 4), before any GPU stage is paid for, and counts under A2(a) (a halt before the anchor decision). The build pins every
+   package version in the install line (name, version, in the recorded pip report; B13) and chooses the package form that
+   carries the CUDA platform for OpenMM and a JAX build compatible with the pinned `colabfold`; it does not substitute a
+   tool, and it does not rely on the reviewer's recollection (not verified by the reviewer) that the plain PyPI wheel lacks
+   the CUDA platform: the smoke check is the test. Install order: JAX last or pinned such that `colabfold_batch` still
+   imports; the smoke check decides.
+
+7. **B7 (finding 7, ADVISORY: HF_TOKEN reaches every subprocess).** ACCEPTED. `onbox_m4.sh` unsets `HF_TOKEN` and
+   `HUGGING_FACE_HUB_TOKEN` after the downloads (none of the named sources needs it), and `run_tool` passes every child a
+   copied environment with both removed. `env.txt` still names no secret. Selftest: a planted environment containing both
+   variables yields a child environment without them.
+
+8. **B8 (finding 8, ADVISORY: docking and analysis have no stage ceiling).** ACCEPTED, and the stage ceilings of EXEC_NOTE
+   item 28 are re-set; this supersedes the ceilings in "Checks the gate made before answering" above. New ceilings, in
+   seconds: install and downloads with the smoke check 1,800; controls and anchor 700; per-pair docking and analysis 600 in
+   total (at most 250 per pair); AlphaFold 2,000; MD 1,600 (at most 600 per complex); endpoints 100; margin 400.
+   Sum: 1,800 + 700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200. A pair that reaches its 250 s keeps a row labelled
+   `truncated: true` (a lower bound on its hours), is not counted in the mean, and C3 stays decided on the finished pairs if at
+   least 2 finished, else VOID. A stage's allowance is the lesser of its ceiling and the time left minus the margin and the
+   endpoints slot.
+
+9. **B9 (finding 9, ADVISORY: "incomplete run" label missing).** ACCEPTED. The constant carries the full label "incomplete run:
+   unmeasured inputs are VOID, not holding" next to `LABEL_UNMEASURED = "unmeasured, not holding"`; every record written after a
+   guard, ceiling or timeout stop carries the full label (also in `m4_summary.json`). Selftest: a planted early-stopped run's
+   records all contain the string.
+
+10. **B10 (finding 10, ADVISORY: "interface backbone RMSD" is the whole receptor chain).** ACCEPTED; the build changes
+    `run_m4.py:1409` and `1423`. The RMSD is taken over the backbone atoms (N, CA, C, O) of the receptor residues that make up
+    the reference's interface (any heavy atom of the residue within 4.5 A of the capsid in 6IHB), in the capsid's frame, no
+    superposition of the receptor. The label names what it is. The serial-versus-parallel top-pose RMSD stays over the whole
+    receptor chain and is labelled so. Selftest: a planted pose shifted 5.0 A along x on the interface atoms gives 5.0000; a
+    planted pose that moves only non-interface receptor atoms by 20 A gives interface RMSD 0.0000 (and a whole-chain RMSD above
+    0), so the two measures are told apart.
+
+11. **B11 (finding 11, ADVISORY: `sudo -n apt-get` does not keep DEBIAN_FRONTEND).** ACCEPTED. `onbox_m4.sh` calls
+    `sudo -n env DEBIAN_FRONTEND=noninteractive apt-get ...`. Nothing else changes; `sudo` stays for declared apt packages only.
+
+12. **B12 (finding 12, ADVISORY: outer `timeout` stops only run_m4.py).** ACCEPTED. Every tool call (colabfold, the docking code,
+    the OpenMM worker) runs in its own process group, and the timeout path kills the group; when the outer `timeout` on
+    `run_m4.py` returns 124, `onbox_m4.sh` kills the process groups it recorded (by group id, not by name) before the endpoints
+    stage and routes the outcome as a guard stop, exit 3 (B1, B2), not `fail`/exit 2. The inner tool timeout is set at least
+    100 s shorter than the outer kill, so the inner one fires first; an outer-timeout firing is itself a recorded event.
+    Selftest: a planted tool that sleeps past its allowance is killed with its child and the result is a ceiling stop.
+
+13. **B13 (finding 13, ADVISORY: wheel URLs and hashes are not recorded).** ACCEPTED. Rule 10 and EXEC_NOTE items 7 and 14 hold
+    for pip and apt too: pip installs run with `--report` and the report (URL and archive hash of each wheel) is kept under
+    `results_m4/out/`; apt packages are recorded with version and the SHA256 from `apt-cache show` for each package; the two
+    direct downloads keep URL and sha256 as before. Records cite the report's file hash in `inputs`.
+
+14. **B14 (finding 14, ADVISORY: build return does not match the files).** ACCEPTED, as a check on the evidence. The selftest
+    prints a line `selftest: files sha256 run_m4.py <hash> onbox_m4.sh <hash>` (the script hashes itself and its sibling,
+    stdlib) before its pass line, so a log is tied to the files; the build's return states real line counts and those hashes.
+    After the build the operator re-runs the selftest locally and compares the hashes before launching. No launch on a log whose
+    hashes do not match the files on disk. The last line stays exactly `selftest: PASS` or `selftest: FAIL`.
+
+15. **B15 (finding 15, ADVISORY: selftest does not exercise the stage flow).** ACCEPTED, and it is binding because findings 1 to 3
+    sat in that layer. `run_stages` takes its stage functions and tool runner by injection so the selftest can run the whole
+    flow with fakes (no GPU, no network, no tool). Planted flows, each asserting exit code, `run_valid`, per-input decisions and
+    the labels: (a) all stages finish: exit 0, run_valid true; (b) a time-guard stop in AlphaFold with 2 of 9 runs done:
+    exit 3, run_valid true, C1 VOID with raw rows kept, C2 to C4 decided, full incomplete label; (c) a tool timeout in MD on
+    the third complex: exit 3, run_valid true, C2 decided on n=2, C1, C3, C4 untouched; (d) a ceiling stop in docking: exit 3,
+    C3 decided on finished pairs or VOID below 2; (e) a real tool failure: exit 2, run_valid false, all inputs VOID; (f) anchor
+    miss: exit 4, run_valid false, C1 to C4 VOID; (g) sleep failure: exit 2; (h) install, smoke-check and download failure:
+    exit 2; (i) the outer-timeout route (rc 124): exit 3, run_valid true. These are in addition to the cases of EXEC_NOTE items
+    21 to 27.
+
+**Checks the gate made before answering (addendum).** Arithmetic only. New ceilings: 1,800 + 700 + 600 + 2,000 + 1,600 + 100
++ 400 = 7,200 (checked twice). Old and new totals both 7,200 s = 2.00 h = USD 3.98 at 1.99/h. Per-pair docking cap 3 x 250 = 750,
+above the 600 stage total: the stage total binds, which is intended (the per-pair cap only stops one pair eating the stage).
+The MD ceiling: 3 x 600 = 1,800 above the 1,600 ceiling; two complexes always fit (2 x 600 = 1,200), the third may not, and C2's
+minimum is 2. Inner timeout 100 s below the outer kill: outer kill = stop_at minus elapsed minus 600 per the report, so the inner
+tool timeout becomes stop_at minus elapsed minus 700. No planted value of answers 8 to 14 changes.
+
+**Pre-authorisation (addendum).** Unchanged: A1 and A2 above stand. A failed smoke check (B6) is a halt before the anchor
+decision for a toolchain or install reason and falls under A2(a). The launcher change of B4 is a launcher reason recorded in RUN.md.
+No launch is authorised until build 3 exists, its selftest passes with matching hashes (B14), and the operator has fixed
+`lambda_run_m4.sh` (B4).
+
+Build 3 authorised

@@ -28,3 +28,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 09:46Z build 2 checks: selftest exit 0
 - 09:46Z review 1 of build 2 requested
 - 09:46Z session review1 started (model sonnet, pid 814607, session dd45626c)
+- 09:52Z gate 3 (addendum) requested
+- 09:52Z session gate3 started (model sonnet, pid 823171, session 0dda13c6)
+- 09:56Z session build3 started (model sonnet, pid 827027, session d14fb78e)

@@ -174,6 +174,10 @@ $([ -n "$add" ] && echo "5. The report this addendum rules on: \`$add\`. Also re
 
 A one-paragraph header; \`## Where to write\`; \`## Checklist of gate changes the build must carry\` (numbered; each item traceable to an answer in GATE_COMMIT.md or a standing rule; rules 5 to 10 above appear as items verbatim or tighter); \`## Box\`; \`## Local selftest\`; \`## What the runner writes\`.
 
+## Operator actions
+
+The operator runs the launcher and owns \`lambda_run_$TAG.sh\`, \`remote_run_$TAG.sh\` and the launch environment (instance type and region, REMOTE_TIMEOUT, BUDGET_LEFT_USD, PRICE_USD_PER_HOUR). If any ruling needs a change there (a payload file to ship, a different cap or instance), end GATE_COMMIT.md with a section \`## Operator actions\` whose every line starts with \`OPERATOR:\` and names only infrastructure (file names, environment variable values); never the experiment's content. If nothing is needed, write that section with the single line \`OPERATOR: none\`.
+
 Reply with exactly one line: \`gate written: <answers> answers, <checklist items> items\` (counts only; nothing about the content).
 
 The user's only message to you is an authorisation line; it is not a task description. Your task is this file.
@@ -212,7 +216,7 @@ build_checks() {   # mechanical, after the build session exits
   $PY -m py_compile "run_$TAG.py" && echo "py_compile run: ok" || echo "py_compile run: ERROR"
   timeout 300 $PY "run_$TAG.py" --selftest > "$log" 2>&1; local rc=$?
   echo "selftest: exit $rc, $(wc -l < "$log") lines; $(grep -E '^selftest: ' "$log" | tr '\n' ';')"
-  grep -nE "\.keys|LAMBDA_KEY|HF_KEY" "run_$TAG.py" "onbox_$TAG.sh" | wc -l | sed 's/^/mentions of key files or names in the built files: /'
+  grep -nE "\.keys([^(]|$)|LAMBDA_KEY|HF_KEY" "run_$TAG.py" "onbox_$TAG.sh" | wc -l | sed 's/^/mentions of key files or names in the built files (dict .keys() calls excluded): /'
   $PY - "$MDIR/out/build${n}_return.json" <<'PYEOF'
 import json, sys
 try: d = json.load(open(sys.argv[1]))
