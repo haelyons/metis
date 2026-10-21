@@ -1,0 +1,79 @@
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "(no page fetched — no source cited)",
+      "note": "Research-question field with no sources cited. It asks what the plan will test (computed binding calls reproducing published readouts at the threefold axis), so no external factual claim requires a source. The threefold-axis engagement premise is independently corroborated on the cited s_aavr_struct page."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "This structure reveals that of the five Ig-like polycystic kidney disease (PKD) domains in AAVR, PKD2 binds directly to the spike region of the AAV2 capsid adjacent to the icosahedral three-fold axis.",
+      "note": "Recorded quote appears verbatim in the abstract of s41564-018-0356-7 and supports the cited premise (PKD2 engages the AAV2 capsid adjacent to the threefold axis). The shared-geometry claim and pose-enumeration recovery of labels is the plan's own prediction and needs no source."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "(no page fetched — no source cited)",
+      "note": "No source cited. The numbers (0.80 vs 0.55 balanced accuracy, 432 vs 54 runs, five of six binders within 5 angstrom) are the plan's own passing condition / predicted outcomes for what it will measure, so they need no external source."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "(no page fetched — no source cited)",
+      "note": "No source cited. This is the plan's own failure condition (thresholds on accuracy movement and site recovery plus an interpretation, 'extra runs resample the wrong basin'); it describes future measurements/decisions, not an external factual claim."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "(no page fetched — no source cited)",
+      "note": "No source cited. Counts (36 pairs, 3 AlphaFold-Multimer seeds, 2 5-ns MD relaxations) and the comparisons (published labels, parallel vs serial one-GPU vs independent-copy baselines) are design choices of what the plan will build and measure; no external factual claim requires a source."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple).",
+      "note": "Quote appears verbatim on the cited Fig. 4 page and confirms five models per peptide (X1, CAP-Mac) with up to 20 recycles. The main article page (s41467-024-52149-0) confirms authorship and year: 'Timothy F. Shay' listed first, 'Published: 08 September 2024', and its abstract states 'Our cryo-electron tomography and AlphaFold modeling of capsid-interactor complexes reveal LRP6 and IL3 binding sites.' SPR labels are confirmed in the Fig. 4 caption ('SPR confirms that the engineered capsids AAV9-X1.1 and CAP-Mac gained direct binding interactions with human LRP6'). Minor caveat: the caption says 'AlphaFold models', not naming Multimer verbatim; the card's 'value':10 is a plan-internal ranking with no page counterpart."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple).",
+      "note": "Quote appears verbatim on the cited Fig. 4 page. It shows the closest prior work used only 5 structural models per peptide (X1 and CAP-Mac), consistent with the card's claim that a many-hundred-run pose/seed grid across a full capsid-by-receptor set remains untested by that prior work."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "This structure reveals that of the five Ig-like polycystic kidney disease (PKD) domains in AAVR, PKD2 binds directly to the spike region of the AAV2 capsid adjacent to the icosahedral three-fold axis. ... The obtained cryo-EM density maps and the data of the resolved structures were deposited into the Electron Microscopy Data Bank (EMDB) and Protein Data Bank (PDB) with the following accession numbers: AAV2, EMD-9671 and 6IH9; AAV2–AAVR complex, EMD-9672 and 6IHB.",
+      "note": "Quote appears verbatim in the abstract of s41564-018-0356-7 and the Data availability section confirms 'AAV2–AAVR complex, EMD-9672 and 6IHB', so the card's value 'PKD2 bound to the AAV2 spike region adjacent to the icosahedral three-fold axis (PDB 6IHB)' is supported. The redocking criteria and pilot-call-matching requirements are the plan's own acceptance targets and need no source."
+    },
+    {
+      "ref": "src:s_aavr_struct",
+      "status": "SUPPORTED",
+      "page_quote": "This structure reveals that of the five Ig-like polycystic kidney disease (PKD) domains in AAVR, PKD2 binds directly to the spike region of the AAV2 capsid adjacent to the icosahedral three-fold axis.",
+      "note": "Recorded quote appears verbatim in the abstract of nature.com/articles/s41564-018-0356-7 (AAVR–AAV2 cryo-EM structure paper, Zhang et al., Nature Microbiology 2019). The source's supports claim (PKD2 engagement at the threefold-adjacent spike; PDB 6IHB) is confirmed by the abstract and by Data availability: 'AAV2–AAVR complex, EMD-9672 and 6IHB'."
+    },
+    {
+      "ref": "src:s_shay_af",
+      "status": "SUPPORTED",
+      "page_quote": "Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple). ... d SPR of mouse LRP6-E1E2 and LRP6-E3E4 (the minimal stable extracellular domain fragments due to cooperative folding) confirms that AAV9-X1.1 and CAP-Mac bind only to LRP6-E1E2.",
+      "note": "Recorded quote appears verbatim in the Fig. 4 caption on the cited figures/4 page. The supports claims are confirmed: model count and recycle depth (5 models each, up to 20 recycles) and the E1E2-versus-E3E4 domain check in panel d."
+    },
+    {
+      "ref": "num:af2_h_per_run",
+      "status": "PARTIAL",
+      "page_quote": "This job took 2.5 minutes to complete (296 residues). Prediction time for a structure of N residues is roughly (N/30)*(N/30) seconds for an Nvidia A40 GPU.",
+      "note": "The recorded quote appears verbatim on the UCSF ChimeraX ColabFold/Wynton page, and the page_setting ('ColabFold single-structure prediction on one Nvidia A40') matches the page's context (ColabFold 1.5.5 run with 'usually ... an Nvidia A40 GPU'). However, the page states a scaling formula, not the value 0.5 h; the only concrete timing is 2.5 minutes for a 296-residue heterodimer, and the formula applies to single-structure prediction on an A40, while the value 0.5 GPU-h is a derived proxy for a much larger hetero-multimer with 5 models and up to 20 recycles on a Lambda A100 — differences the card itself flags in differs_in. No page number is stated for 0.5 h, hence PARTIAL."
+    },
+    {
+      "ref": "num:md_ns_per_day_a100",
+      "status": "SUPPORTED",
+      "page_quote": "a protein in explicit water (170,320 atoms) ... For running these benchmarks with GROMACS 2024.1 on a GPU ... [ns/day] System 1 System 2 System 3 System 4 System 5 System 6 A100 267.5 691.7 265.8 129.1 38.8 23.2",
+      "note": "The GROMACS 2024.1 benchmark table on the NHR@FAU page lists System 4 ('a protein in explicit water (170,320 atoms)') at 129.1 ns/day for the A100. The card's value 129 is the rounded page value 129.1 for the stated setting, with PROXY basis and differs_in caveats (capsid–receptor complex of similar size; Lambda A100 SXM 40 GB).",
+      "page_value": 129.1
+    }
+  ]
+}
+```

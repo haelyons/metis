@@ -1,0 +1,127 @@
+{
+ "source": "experiments/blind-01/20261021-0116-loop/out/r1/card/result.json",
+ "result_json_sha256": "d4538bfe7fb86d888780206819a7f75846595034bc18ad47e65848d954359813",
+ "record": {
+  "key": "seed:idea:1",
+  "title": "Motif calls emitted for Capsida NR001–NR005 and Lir Starfish binding-assay readouts",
+  "state": "calibration_required",
+  "plan_usd": 506.83333333333326,
+  "required": [
+   {
+    "id": "af2_h_per_run",
+    "basis": "PROXY",
+    "value": 0.5,
+    "differs_in": [
+     "monomer timing formula, not a 750–1000-residue hetero-multimer with 5 models and up to 20 recycles",
+     "Lambda A100 SXM 40 GB instead of an A40"
+    ],
+    "measured_by": "p1_pilot",
+    "cum_spend_through_measured_by": 107.46,
+    "k_budget": 5.320022449312309,
+    "phase": {
+     "id": "p1_pilot",
+     "what": "Run the 54-run pilot (3 capsids x 3 receptors) on 8x A100 and measure af2_h_per_run, md_ns_per_day_a100, aux_h_per_pair and seed-to-seed SD of calls.",
+     "gate": {
+      "on": "af2_h_per_run",
+      "op": "<=",
+      "value": 1,
+      "else": "take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs"
+     },
+     "stop_rule": "6-hour timer or 54 runs complete"
+    },
+    "line": {
+     "id": "l_pilot",
+     "hours": 6,
+     "usd": 95.52
+    }
+   },
+   {
+    "id": "md_ns_per_day_a100",
+    "basis": "PROXY",
+    "value": 129,
+    "differs_in": [
+     "our system is a docked capsid–receptor complex in explicit solvent, roughly 120k–180k atoms",
+     "Lambda A100 SXM 40 GB"
+    ],
+    "measured_by": "p1_pilot",
+    "cum_spend_through_measured_by": 107.46,
+    "k_budget": 4.483018099758049,
+    "phase": {
+     "id": "p1_pilot",
+     "what": "Run the 54-run pilot (3 capsids x 3 receptors) on 8x A100 and measure af2_h_per_run, md_ns_per_day_a100, aux_h_per_pair and seed-to-seed SD of calls.",
+     "gate": {
+      "on": "af2_h_per_run",
+      "op": "<=",
+      "value": 1,
+      "else": "take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs"
+     },
+     "stop_rule": "6-hour timer or 54 runs complete"
+    },
+    "line": {
+     "id": "l_pilot",
+     "hours": 6,
+     "usd": 95.52
+    }
+   },
+   {
+    "id": "aux_h_per_pair",
+    "basis": "GUESS",
+    "value": 1,
+    "differs_in": [],
+    "measured_by": "p1_pilot",
+    "cum_spend_through_measured_by": 107.46,
+    "k_budget": 7.480033673968463,
+    "phase": {
+     "id": "p1_pilot",
+     "what": "Run the 54-run pilot (3 capsids x 3 receptors) on 8x A100 and measure af2_h_per_run, md_ns_per_day_a100, aux_h_per_pair and seed-to-seed SD of calls.",
+     "gate": {
+      "on": "af2_h_per_run",
+      "op": "<=",
+      "value": 1,
+      "else": "take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs"
+     },
+     "stop_rule": "6-hour timer or 54 runs complete"
+    },
+    "line": {
+     "id": "l_pilot",
+     "hours": 6,
+     "usd": 95.52
+    }
+   },
+   {
+    "id": "n_storage_gib",
+    "basis": "GUESS",
+    "value": 200,
+    "differs_in": [],
+    "measured_by": "p2_main",
+    "cum_spend_through_measured_by": 498.8733333333333,
+    "k_budget": 53.83928571428571,
+    "phase": {
+     "id": "p2_main",
+     "what": "Run the 216-run main grid on 8x A100; emit the plate-layout call table and bead-panel CSV with bind/no-bind, score, interface residues, distance to nearest threefold axis and site class.",
+     "gate": null,
+     "stop_rule": "24-hour timer or all 216 runs complete; hard stop at spend_cap_usd"
+    },
+    "line": {
+     "id": "l_main",
+     "hours": 24,
+     "usd": 382.08
+    }
+   }
+  ],
+  "resolved": [],
+  "anchor": {
+   "what": "Redocking AAVR-PKD2 onto AAV2 must place it beside the threefold spike matching PDB 6IHB contacts; serial and parallel pilots must match calls.",
+   "published_value": "PKD2 bound to the AAV2 spike region adjacent to the icosahedral three-fold axis (PDB 6IHB)",
+   "tolerance": ">=50% contact overlap at the published 4.5 Å cutoff or interface backbone RMSD <=5 Å; serial versus parallel top-pose RMSD <=2 Å with identical bind/no-bind calls",
+   "source_id": "s_aavr_struct",
+   "independent_code": "LightDock and pyDock both run the anchor pair; a consensus pose is required before phase p2_main"
+  },
+  "predictions": {
+   "if_lever": "Balanced accuracy 0.80 at 432 runs versus 0.55 at 54, with five of six known binders within 5 Å of published sites.",
+   "if_not": "Accuracy moves under 0.05 between 54 and 432 runs and at most three of six binders reach published sites; extra runs resample the wrong basin.",
+   "noise_rule": "Three independent seed sets per run level, mean and SD reported; a gap counts only if it exceeds 2x the SD across seed sets and a paired permutation test over the 13 labels gives p < 0.05.",
+   "expected": "if_not"
+  }
+ }
+}

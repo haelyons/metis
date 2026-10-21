@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0116-loop/out/r0/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/mimo-v2.6-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-21T02:49:23.065Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/mimo-v2.6-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 682463,
+   "cost_usd": 0.082407705,
+   "tokens": 154834,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 2,
+   "ms": 228136,
+   "cost_usd": 0.029617943999999997,
+   "tokens": 147780,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 171495,
+   "cost_usd": 0.060224639999999996,
+   "tokens": 281281,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 2,
+   "ms": 383062,
+   "cost_usd": 0.000609542,
+   "tokens": 1157,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 105447,
+   "cost_usd": 0.00162106,
+   "tokens": 7653,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 32895,
+   "cost_usd": 0.00302442,
+   "tokens": 5162,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.177505311,
+ "tokens": 597867,
+ "by_model": {
+  "opencode-go/mimo-v2.6-pro": {
+   "calls": 1,
+   "cost_usd": 0.082407705,
+   "tokens": 154834
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.060224639999999996,
+   "tokens": 281281
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.029617943999999997,
+   "tokens": 147780
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00302442,
+   "tokens": 5162
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.00162106,
+   "tokens": 7653
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.000609542,
+   "tokens": 1157
+  }
+ },
+ "done": true,
+ "updated": "2026-10-21T03:11:04.389Z",
+ "best": {
+  "name": "Gradinaru Lab (Caltech) / APPRAISE-AAV — receptor-directed AAV engineering and the open-source APPRAISE package",
+  "step": "The computational step the card scales: ranking engineered capsid insertion peptides against BBB receptors by AlphaFold-Multimer pairwise competition modeling, scored with atom-counting energy plus binding-angle and pocket-depth geometry, used to classify receptor-dependent vs receptor-independent capsids and to pick candidates before in vivo selection. Today this runs at ten models per competition on single-GPU Colab sessions; the card asks whether 144–2,880 pose models per pair change the transcytosis call.",
+  "sum": 15,
+  "fit": 5,
+  "change": 5,
+  "new": 5
+ }
+}

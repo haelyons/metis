@@ -1,0 +1,28 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "V3",
+   "title": "Motif calls emitted for Capsida NR001–NR005 and Lir Starfish binding-assay readouts",
+   "text": "Enumerate binding modes of capsid libraries against the human BBB-receptor set used by Capsida's NR001–NR005 platform and Lir's Starfish capsid-structure pipeline (ALPL, AAVR, LRP6 and their panel partners) with docking, MD refinement and AlphaFold-Multimer, emitting calls in the format of plate- and bead-based capsid–receptor binding assays. Score whether 3-fold-axis engagement geometry agrees with measured bind/no-bind receptor by receptor, then rank the binding-positive pairs as the only candidates worth a transcytosis claim. Published modeling covers only single-digit complexes, and neither Capsida's nor Lir's structural pipeline has been assessed against exhaustive enumeration. Narrowing: Leaves aside transcytosis and all post-binding fate — the observable is binding agreement plus interface geometry, not fate. It still moves the root question by narrowing the candidate signature catalog (Q3) to pairs that survive a human-receptor binding assay, which is the precondition for any sufficiency test (Q1).",
+   "root_link": "Bears on Q3 of the root question — which capsid–receptor binding signatures are candidates for transcytosis — by pruning the catalog to pairs that survive a real human-receptor binding assay before any transcytosis claim (Q1) is attempted.",
+   "compute_open": "More parallel compute buys model runs across capsid × receptor × pose for the NR001–NR005 receptor set, letting the shared-motif question be tested receptor by receptor against binding readouts rather than at a single receptor; published depth effects stop at single-digit complexes and the proprietary pipelines are unmeasured, so the payoff is unknown.",
+   "sequential": "none: each capsid–receptor pose is an independent docking or AlphaFold-Multimer job with its own seeds, and the plate/bead binding readouts are a separate block.",
+   "source_urls": [],
+   "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+   "kind": "physical"
+  }
+ ]
+}

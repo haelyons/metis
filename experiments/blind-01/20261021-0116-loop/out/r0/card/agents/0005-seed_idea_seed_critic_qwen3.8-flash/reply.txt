@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Predicted geometry only, not transcytosis rates or fate; choices rely on unchecked simulation-to-reality step."
+    },
+    {
+      "criterion": "lever",
+      "value": 5,
+      "ref": "plan:predictions.decision_rule",
+      "reason": "Same pairs, only depth changes; 0.25 rise beats 0.10 noise floor, spans 20×, and key inputs are held fixed."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:scored_against",
+      "reason": "Outcome uses published phenotype labels; anchor reproduces PHP.eB–LY6A pose within RMSD tolerance before spend."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior used ten models and one validated pose; plan asks 2,880-depth whole-panel motif, stated as open."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "Plan states each pair is independent; it only runs copies side by side, not removing a dependency."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "plan:restructuring.method",
+      "reason": "Restructuring method is none, so baseline comparison is not applicable."
+    }
+  ],
+  "decides_by": "p5_analysis",
+  "decides_by_reason": "Only p5_analysis bins all depths and bootstraps 2,880-versus-144 gap; pilot, shallow, deep do not apply rule."
+}

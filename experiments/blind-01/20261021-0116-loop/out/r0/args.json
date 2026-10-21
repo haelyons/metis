@@ -1,0 +1,33 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "Option 1: Exhaustive capsid–receptor complex enumeration (docking and AlphaFold-Multimer)",
+   "title": "Exhaustive capsid–receptor complex enumeration (docking and AlphaFold-Multimer)",
+   "text": "Enumerate binding modes of engineered capsid libraries against the BBB receptor panel (LY6A, LY6C1, ALPL, LRP6, CA4, AAVR) with docking, MD refinement, and AlphaFold-Multimer to test whether transcytosis-competent pairs share a geometric motif such as 3-fold-axis engagement of GPI-anchored receptors (https://www.voyagertherapeutics.com/wp-content/uploads/2024/05/POSTER-Voyager_ASGCT_2024_FINAL_Ishan.pdf). Published modeling covers only single-digit complexes, e.g. AlphaFold-Multimer models of LRP6 with AAV-X1 and CAP-Mac VR-VIII peptides (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), against an experimental catalog of ~150 AAV capsid structures (https://pmc.ncbi.nlm.nih.gov/articles/PMC12682079). Narrowing: This leaves aside everything after binding — endosomal sorting, lysosomal degradation, nuclear import — so the computed interface geometry stands in for the binding step alone, not for fate. Its answer still moves the root question because it either widens or closes the catalog of candidate signatures (Q3) against which the sufficiency claim (Q1) must be tested.",
+   "root_link": "Bears on Q3 of the root question — for which capsid–receptor binding signatures transcytosis occurs — specifically whether a shared interface motif marks transcytosis-competent complexes.",
+   "compute_open": "More parallel compute would buy model runs (capsid × receptor × pose); published measurements of its effect stop at single-digit numbers of AAV–receptor complexes modeled per study — two LRP6 peptide complexes in https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518 — and above that it is unknown whether exhaustive enumeration would surface a shared transcytosis-competent motif or demonstrate that no such motif exists.",
+   "sequential": "none: every capsid–receptor pair is an independent docking or AlphaFold-Multimer job with its own random seeds, so the work already splits into independent pieces.",
+   "source_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518",
+    "https://www.voyagertherapeutics.com/wp-content/uploads/2024/05/POSTER-Voyager_ASGCT_2024_FINAL_Ishan.pdf",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC12682079"
+   ],
+   "narrowing": "This leaves aside everything after binding — endosomal sorting, lysosomal degradation, nuclear import — so the computed interface geometry stands in for the binding step alone, not for fate. Its answer still moves the root question because it either widens or closes the catalog of candidate signatures (Q3) against which the sufficiency claim (Q1) must be tested.",
+   "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+   "kind": "physical"
+  }
+ ]
+}

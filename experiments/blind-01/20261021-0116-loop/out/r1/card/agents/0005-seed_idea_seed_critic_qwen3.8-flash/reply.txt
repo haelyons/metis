@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 3,
+      "ref": "card:limits",
+      "reason": "Binding agreement and geometry only; transcytosis choice needs untested post-binding fate and proprietary assay validation."
+    },
+    {
+      "criterion": "lever",
+      "value": 3,
+      "ref": "plan:compute_axis.levels",
+      "reason": "Levels 54,216,432 span only 8x, below required 10x; other lever conditions can hold."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 5,
+      "ref": "plan:anchor",
+      "reason": "Published experimental labels score outputs; p0 anchor reproduces PDB 6IHB within stated contact or RMSD tolerance."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:left_open",
+      "reason": "Prior used five models per peptide; full grid and hundreds-run agreement gap is explicitly untested."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "No answer waits on another; independent capsid-receptor runs are only side-by-side parallelism."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring method is none, so baseline condition makes this criterion NA."
+    }
+  ],
+  "decides_by": "p3_score",
+  "decides_by_reason": "p3 scores 54/216/432 balanced accuracy and site recovery, enabling the 432-versus-54 decision rule."
+}

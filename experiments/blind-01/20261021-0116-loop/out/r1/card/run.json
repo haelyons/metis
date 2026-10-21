@@ -1,0 +1,154 @@
+{
+ "name": "blind-01-r1",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0116-loop/out/r1/card",
+ "script": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0116-loop/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "e7cfac852e6ff9c02aefab4ad7f92a227657e46be15b5f53270edc9697907e06",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0116-loop/out/r1/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "V3",
+    "title": "Motif calls emitted for Capsida NR001–NR005 and Lir Starfish binding-assay readouts",
+    "text": "Enumerate binding modes of capsid libraries against the human BBB-receptor set used by Capsida's NR001–NR005 platform and Lir's Starfish capsid-structure pipeline (ALPL, AAVR, LRP6 and their panel partners) with docking, MD refinement and AlphaFold-Multimer, emitting calls in the format of plate- and bead-based capsid–receptor binding assays. Score whether 3-fold-axis engagement geometry agrees with measured bind/no-bind receptor by receptor, then rank the binding-positive pairs as the only candidates worth a transcytosis claim. Published modeling covers only single-digit complexes, and neither Capsida's nor Lir's structural pipeline has been assessed against exhaustive enumeration. Narrowing: Leaves aside transcytosis and all post-binding fate — the observable is binding agreement plus interface geometry, not fate. It still moves the root question by narrowing the candidate signature catalog (Q3) to pairs that survive a human-receptor binding assay, which is the precondition for any sufficiency test (Q1).",
+    "root_link": "Bears on Q3 of the root question — which capsid–receptor binding signatures are candidates for transcytosis — by pruning the catalog to pairs that survive a real human-receptor binding assay before any transcytosis claim (Q1) is attempted.",
+    "compute_open": "More parallel compute buys model runs across capsid × receptor × pose for the NR001–NR005 receptor set, letting the shared-motif question be tested receptor by receptor against binding readouts rather than at a single receptor; published depth effects stop at single-digit complexes and the proprietary pipelines are unmeasured, so the payoff is unknown.",
+    "sequential": "none: each capsid–receptor pose is an independent docking or AlphaFold-Multimer job with its own seeds, and the plate/bead binding readouts are a separate block.",
+    "source_urls": [],
+    "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+    "kind": "physical"
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/mimo-v2.6-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "c7344ed0cea74c6cb98b714e7d3bba0247c615fe",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-21T03:15:32.368Z",
+ "finished": "2026-10-21T03:57:59.236Z",
+ "totals": {
+  "cost_usd": 0.25119289,
+  "tokens": 553160,
+  "calls": 10,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 4,
+    "cost_usd": 0.05563802,
+    "tokens": 215613
+   },
+   "opencode-go/mimo-v2.6-pro": {
+    "calls": 3,
+    "cost_usd": 0.17715926,
+    "tokens": 300588
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 1,
+    "cost_usd": 0.00978438,
+    "tokens": 14736
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 1,
+    "cost_usd": 0.00223986,
+    "tokens": 12616
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 1,
+    "cost_usd": 0.00637137,
+    "tokens": 9607
+   }
+  }
+ }
+}

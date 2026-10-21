@@ -1,0 +1,111 @@
+The Voyager PDF is oversized and cannot be fetched. I now have everything needed to decide each item.
+
+```json
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "We apply AlphaFold-based in silico methods to generate capsid-receptor binding models to predict the affinity of AAVs for these identified receptors.",
+      "note": "Open research question posed in the plan's own words; it makes no sourced factual claim, so nothing requires a source. The cited-free framing (capsid-receptor modeling of BBB transcytosis) matches the domain of the fetched APPRAISE-AAV page."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "this method uses AlphaFold-Multimer to place surface-exposed peptides spanning mutagenic insertions (AA587 to AA594) from two distinct AAV variants in competition to interact with a potential receptor ... we next modeled the PHP.eB insertion peptide and LY6A receptor complex within the context of the AAV capsid threefold symmetry spike ... the receptor for PHP.eB, the glycosylphosphatidylinositol (GPI)-anchored protein LY6A",
+      "note": "Recorded quote appears verbatim on the page. The hypothesis itself is the plan's testable claim and needs no source; the cited page supports the modeling context it rests on (GPI-anchored LY6A engaged at the threefold spike via the VR-VIII insertion peptide)."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "A combination of physical and geometric scoring parameters that include interface energy, binding angle, and binding pocket depth calculations are used to generate a peptide competition metric.",
+      "note": "Plan-defined success thresholds (0.50 at 2,880 models vs below 0.25 at 144) predicting its own experiment's output; no source cited and none required. The metric the thresholds apply to is defined on the cited-free APPRAISE page."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "Recombinant Car4 was found to bind to the 3-fold protrusions of AAV9-P31. Due to its size, similar to antibodies bound close to the symmetry axis, a localized cryo-EM reconstruction approach was needed to resolve the complex at 1.8 Å resolution.",
+      "note": "Recorded quote appears verbatim on the page and supports the 3-fold-site reasoning; the numerical prediction (gap within 0.15 at every depth) is the plan's own null scenario and needs no source."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "PARTIAL",
+      "page_quote": "NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $1.99 ... this method uses AlphaFold-Multimer to place surface-exposed peptides spanning mutagenic insertions (AA587 to AA594) ... Matrices ranking AAV peptides by their average competition metric over 10 replicate conditions for LY6A, LY6C1, and mouse CA-IV.",
+      "note": "s_lambda verified: Lambda's 8x A100 SXM 40 GB instance row shows 124 vCPUs, 1800 GiB RAM, 5.8 TiB SSD, $1.99/GPU/hr. s_appraise verified verbatim (PHP.eB-LY6A anchor, ten-replicate baseline). The s_alpl-backed part (phenotype labels from the Voyager VCAP-102/ALPL poster) could not be checked: the PDF fetch failed twice with 'Response too large (exceeds 5MB limit)', so that citation is unverified."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "Matrices ranking AAV peptides by their average competition metric over 10 replicate conditions for LY6A, LY6C1, and mouse CA-IV. ... LY6A A58R mutation, chosen to disrupt the predicted peptide interaction, resulted in reduced potency in the cell culture infectivity assay.",
+      "note": "Recorded quote appears verbatim (Fig. 5C caption); value 10 matches the page's '10 replicate conditions' (page wording is 'replicate conditions', not 'replicate models'). One PHP.eB-LY6A pose was validated experimentally (A58R disruption), consistent with 'validating one PHP.eB-LY6A pose'."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "this method uses AlphaFold-Multimer to place surface-exposed peptides spanning mutagenic insertions (AA587 to AA594) from two distinct AAV variants in competition to interact with a potential receptor",
+      "note": "Recorded quote appears verbatim. The item states what remains open from the prior study - an open question needs no source - and the citation correctly points at the prior method whose scope (few replicates, peptide-level, not a whole capsid panel) leaves it open."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "SUPPORTED",
+      "page_quote": "RMSD (root mean square deviation) between the computational PHP.eB model and a cryo-electron microscopy (cryo-EM)-based model [Protein Data Bank (PDB) ID: 7WQO] is 0.36 Å. RMSD increases in PHP.eB's engineered loop to 1.36 Å.",
+      "note": "Recorded quote appears verbatim on the page; the value 0.36 matches the page exactly, and the page confirms the published complex was experimentally validated (LY6A A58R mutational test), supporting 'validated contacts'."
+    },
+    {
+      "ref": "card:limits",
+      "status": "SUPPORTED",
+      "page_quote": "AlphaFold-Multimer failed to capture direct contact between fLY6A and PHP.eB capsid in either monomer or trimer configurations. ... the often weak and dynamic binding interactions between engineered capsids and receptors [micromolar affinities possible without avidity] ... Some false negatives were also observed, however, as in 9P08 with LY6A or 9P36 with CA-IV.",
+      "note": "Recorded s_appraise quote appears verbatim; the page itself documents that weak/avidity-dependent contacts can evade prediction (failed full-capsid capture, false negatives). 'Twelve capsids, six receptors' is the plan's own scope and needs no source."
+    },
+    {
+      "ref": "src:s_appraise",
+      "status": "SUPPORTED",
+      "page_quote": "this method uses AlphaFold-Multimer to place surface-exposed peptides spanning mutagenic insertions (AA587 to AA594) from two distinct AAV variants in competition to interact with a potential receptor",
+      "note": "Quote appears verbatim on the APPRAISE-AAV page (PMC10115422); it directly supports AlphaFold-Multimer peptide-receptor modeling for this receptor question."
+    },
+    {
+      "ref": "src:s_lambda",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA A100 SXM | VRAM/GPU 40 GB | vCPUs 124 | RAM 1800 GiB | STORAGE 5.8 TiB SSD | PRICE/GPU/HR* $1.99",
+      "note": "Lambda's 8x-instance pricing table contains exactly this row (A100 SXM, 40 GB, 124 vCPUs, 1800 GiB, 5.8 TiB SSD, $1.99 per GPU/hr), supporting both the $1.99/GPU-hour rate and the 124 vCPUs on the 8x instance."
+    },
+    {
+      "ref": "src:s_alpl",
+      "status": "UNREACHABLE",
+      "page_quote": "",
+      "note": "The Voyager Therapeutics poster PDF could not be fetched; two attempts both failed with 'Response too large (exceeds 5MB limit)'. The recorded quote ('ALPL ectopic expression increased transcytosis of VCAP-102 >100-fold in a transwell model.') could not be checked against the page."
+    },
+    {
+      "ref": "src:s_cat",
+      "status": "SUPPORTED",
+      "page_quote": "Recombinant Car4 was found to bind to the 3-fold protrusions of AAV9-P31. Due to its size, similar to antibodies bound close to the symmetry axis, a localized cryo-EM reconstruction approach was needed to resolve the complex at 1.8 Å resolution.",
+      "note": "Quote appears verbatim on the review page (PMC12682079); the page also states Car4 'is anchored to the cell surface via a glycosylphosphatidylinositol linkage', supporting 'a GPI-anchored BBB receptor binds the 3-fold protrusions of an engineered AAV capsid'."
+    },
+    {
+      "ref": "src:s_appraise_rmsd",
+      "status": "SUPPORTED",
+      "page_quote": "RMSD (root mean square deviation) between the computational PHP.eB model and a cryo-electron microscopy (cryo-EM)-based model [Protein Data Bank (PDB) ID: 7WQO] is 0.36 Å. RMSD increases in PHP.eB's engineered loop to 1.36 Å.",
+      "note": "Quote appears verbatim; both values (0.36 Å overall, 1.36 Å in the engineered loop) match the page and support the anchor value and tolerance."
+    },
+    {
+      "ref": "src:s_appraise_rep",
+      "status": "SUPPORTED",
+      "page_quote": "Matrices ranking AAV peptides by their average competition metric over 10 replicate conditions for LY6A, LY6C1, and mouse CA-IV.",
+      "note": "Quote appears verbatim (Fig. 5C caption); the page's '10 replicate conditions' per receptor matrix supports the recorded prior compute level of ten replicate models."
+    },
+    {
+      "ref": "num:af_job_min",
+      "status": "PARTIAL",
+      "page_quote": "Paste a FASTA (monomer or multimer up to 600 aa total) and get pLDDT, PAE, and pTM/ipTM. Runs on an A100-40GB. No MSA, no templates.",
+      "note": "The page confirms the stated setting exactly (no-MSA multimer folding up to 600 aa total on one A100 40GB), but it nowhere states a runtime: the '~1 to 2 min on A100-40GB' portion of the recorded quote is not on the page, so the 12-minute value derived from it is unchecked. The page gives no number to substitute."
+    },
+    {
+      "ref": "num:md_ns_per_gpu_day",
+      "status": "SUPPORTED",
+      "page_quote": "a protein inside a membrane surrounded by explicit water (80,289 atoms) ... A100 | 267.5 | 691.7 | 265.8 | 129.1 | 38.8 | 23.2",
+      "note": "Quote appears verbatim in the benchmark table; the page states GROMACS 2024 on one A100 reaches 265.8 ns/day for benchmark system 3 (membrane protein in water, 80,289 atoms), exactly the page_setting given. The recorded 240 ns/GPU-day is a conservative proxy below the page value, and the differs_in caveats match the page's system.",
+      "page_value": 265.8
+    }
+  ]
+}
+```

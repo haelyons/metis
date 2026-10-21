@@ -1,0 +1,121 @@
+{
+ "ts": "2026-10-21T04:14:55.863Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_15cab49ff001j8D9D9Z0N1mB31",
+  "x-opencode-session": "ses_ea354b712ffecnFVNC2PJ1MH1g",
+  "x-opencode-session-id": "ses_ea354b712ffecnFVNC2PJ1MH1g",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:34395",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "17830"
+ },
+ "body": {
+  "model": "deepseek-v4.1-flash",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.\nYou are powered by the model named deepseek-v4.1-flash. The exact model ID is opencode-go/deepseek-v4.1-flash\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/blind-01/20261021-0116-loop/out/r1/frame\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Wed Oct 21 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"For each item below, fetch its source and check that the recorded quote appears on the page and supports the item. A card item is a field of the plan in the producer's words, with the sources it cites: check each factual claim in it against those sources, and any value it carries against the page; what the plan will build, measure or predict needs no source, but a factual claim with no source is UNSUPPORTED. For a cost input, check that the page states the number for the setting given; whether it applies to this plan is not yours to judge. When the page states a different number for a num or rate item, give it as page_value. Decide only from the pages you fetch and the text below; do not read files. Return one status per item, under its ref: SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE, with the page sentence you relied on.\nItems, one per line:\np1:step: Capsida Biotherapeutics has this step in its pipeline: In vitro capsid–receptor binding detection in their integrated platform: plate-based and bead-based receptor binding assays ('In Vitro Binding Platform Demonstrates Reproducible Capsid/Receptor Binding Data Consistent with Expression Profiles') that emit bind/no-bind readouts for engineered capsids against the NR001–NR005 blood-brain-barrier receptor panel, with in vitro binding predictive power confirmed by transduction in receptor-expressing cell lines. The card emits computed capsid–receptor binding calls in exactly this readout's format, so its result would sit directly upstream of this step as an in silico pre-filter. | source: https://capsida.com/wp-content/uploads/Nick_Goeden_1445_May-14_Theater-C_Identification-of-Multiple-BBB-Receptors.pdf | recorded quote: \\\"The predictive power of in vitro receptor binding is confirmed by AAV transduction in cell lines with receptor expression\\\"\np1:activity: Active: Capsida issued a corporate and pipeline update on May 12, 2026 with ASGCT 2026 presentations and CNS-program work, including ongoing receptor-interaction studies of its clinical capsid and a next-generation capsid using receptor RECK. | source: https://capsida.com/capsida-to-present-preclinical-data-of-new-next-generation-high-performing-ocular-capsids-at-asgct-annual-meeting/ | recorded quote: \\\"Capsida Biotherapeutics, (“Capsida”) a next-generation genetic medicines company, today provided corporate and pipeline updates related to its ocular and central nervous system (CNS) programs.\\\"\np1:c1: The binding step is run as wet-lab detection in plate- and bead-based formats across patented BBB receptors NR001–NR005, whose identities are not public. | source: https://capsida.com/wp-content/uploads/Nick_Goeden_1445_May-14_Theater-C_Identification-of-Multiple-BBB-Receptors.pdf | recorded quote: \\\"Capsida Biotherapeutics has successfully filed patents for all five of these groundbreaking novel receptors and is focused on further expanding the IP portfolio surrounding them\\\"\np1:c2: Scale and people: large engineered capsid libraries screened by automated, high-throughput biological screening by Capsida scientists, at a scale the company calls unrivaled. | source: https://capsida.com/science-innovation/ | recorded quote: \\\"At Capsida, the scale at which we have engineered capsids is unrivaled. Using our automated, high-throughput biological screening, our scientists assess large, diverse engineered capsid libraries for CNS and the eye in models relevant to humans to quickly identify optimal capsids that target tissues and cells in organs of interest.\\\"\np1:c3: Today the receptor step is treated as the key design variable: the company is investigating its CAP-002 capsid's interaction with receptor ADAM15 and advancing a new capsid using receptor RECK. | source: https://capsida.com/capsida-to-present-preclinical-data-of-new-next-generation-high-performing-ocular-capsids-at-asgct-annual-meeting/ | recorded quote: \\\"The ongoing experiments include studying the interaction between the engineered viral capsid contained in CAP-002 and the ADAM15 protein, its primary receptor for crossing the blood brain barrier (BBB). Based on the learning over the past six months, Capsida believes that the receptor is a key factor in designing CNS gene therapy.\\\"\np1:done: No public record shows Capsida running exhaustive computed capsid–receptor pose enumeration scored against its plate/bead binding labels; its public platform material validates binding experimentally (transduction in receptor-expressing cell lines), and the NR001–NR005 receptors and assay labels are proprietary, so internal work of this kind cannot be ruled out. | source: https://capsida.com/wp-content/uploads/Nick_Goeden_1445_May-14_Theater-C_Identification-of-Multiple-BBB-Receptors.pdf | recorded quote: \\\"The predictive power of in vitro receptor binding is confirmed by AAV transduction in cell lines with receptor expression\\\"\np2:step: Lir Therapeutics — Starfish™ / nAAVigator® has this step in its pipeline: Starfish™ capsid-surface structure generation feeding receptor docking on symmetry-axis patches inside the nAAVigator® pipeline — in Lir's words, surface portions 'at the 2, 3 and 5-fold axes are the minimum subunit for useful docking or structural assessment of capsid stability in silico'. Docking receptors onto those Starfish-built variant capsid surfaces produces the binding-screen hits and 'explainability' that drive Lir's lab-in-the-loop variant selection. The card scores exactly this docking/binding-call step and its threefold-axis interface geometry. | source: https://www.lirtx.com/post/starfish-fast-capsid-structure-generation | recorded quote: \\\"Owing to its structural homogeneity, modelling the complete 60-mer AAV capsid is usually unnecessary, but portions of the surface such as at the 2, 3 and 5-fold axes are the minimum subunit for useful docking or structural assessment of capsid stability in silico.\\\"\np2:activity: Active: Lir's blog ran through July 15, 2026, and on August 18, 2026 VectorBuilder announced a strategic collaboration with Lir to develop AI-designed AAV capsids. | source: http://en.vectorbuilder.com/about-us/newsroom.html | recorded quote: \\\"VectorBuilder, a global leader in gene delivery technologies, and Lir Therapeutics, a company pushing the boundaries of vector engineering with AI, today announced a strategic collaboration to develop adeno-associated virus (AAV) capsids designed not only for strong biological performance, but also for the manufacturability and scalability required to bring gene therapies into the clinic.\\\"\np2:c1: Scale and tools: Starfish builds capsid surfaces by folding monomers then physics-based assembly and refinement, fast enough for screening tens of thousands of variants on cost-efficient hardware. | source: https://www.lirtx.com/post/starfish-fast-capsid-structure-generation | recorded quote: \\\"Our method scales far better than multimer cofolding both in terms of runtime and compute requirements, with Starfish™ able to assemble the full capsid at acceptable runtimes for screening tens of thousands of variants.\\\"\np2:c2: The binding-call use today is receptor docking screens on Starfish-built variant surfaces (LY6A first, then other receptors), with computed hits compared against language-model hits. | source: https://www.lirtx.com/post/starfish-fast-capsid-structure-generation | recorded quote: \\\"We first showcased an application of this technology at ESGCT 2025 in Seville, demonstrating that screening of the LY6A receptor was possible by performing docking to variant capsid surfaces constructed using Starfish™. We found a structural approach identified an alternative subset of hits compared to a language model-based approach, with the two methods being additive.\\\"\np2:c3: Current tuning of the docking step is by surface size rather than run count, and the threefold axis is their benchmarked reference surface (AAV9 3-fold axes within RMSD <1 Å). | source: https://www.lirtx.com/post/starfish-fast-capsid-structure-generation | recorded quote: \\\"We've found larger docking surfaces have been required to get relevant docking scores for screening purposes. Starfish is an important aspect of our work to both generate variants and add explainability to hits\\\"\np2:done: Lir has already run receptor docking screens on Starfish-built variant capsid surfaces (LY6A at ESGCT 2025, and the same approach 'for other receptors'), but has not published bind/no-bind accuracy of computed calls against a labelled capsid-by-receptor grid, nor a 54-to-432 run-count scaling test — the assessment the card performs. | source: https://www.lirtx.com/post/starfish-fast-capsid-structure-generation | recorded quote: \\\"We first showcased an application of this technology at ESGCT 2025 in Seville, demonstrating that screening of the LY6A receptor was possible by performing docking to variant capsid surfaces constructed using Starfish™.\\\"\np3:step: CLOVER Center / Gradinaru Laboratory, Caltech — APPRAISE has this step in its pipeline: Computed capsid–receptor binding models and bind/no-bind calls: the APPRAISE pipeline ranks engineered capsid peptides by receptor-binding propensity from AlphaFold-Multimer competitions ('a method that predicts the receptor binding propensity of engineered proteins based on high-precision protein structure prediction tools, such as AlphaFold2-multimer'), extended to integrative trimer–receptor models on the AAV threefold spike, and validated against cell-microarray/SPR/pull-down labels and cryo-ET binding sites. This is the programme the card's closest prior (Shay et al. 2024) belongs to, and its computed-call step is the one the card scales from a handful of models to 54–432 runs. | source: https://github.com/GradinaruLab/APPRAISE | recorded quote: \\\"Automated Pair-wise Peptide-Receptor binding model AnalysIs for Screening Engineered proteins (APPRAISE) is a method that predicts the receptor binding propensity of engineered proteins based on high-precision protein structure prediction tools, such as AlphaFold2-multimer.\\\"\np3:activity: Active: the CLOVER Center's most recent announcement (August 27, 2026) reports a Nature Chemical Biology paper on a CA-IV-targeting BBB shuttle by Gradinaru-lab alumni and staff, following a March 30, 2026 Molecular Therapy paper structurally characterizing AAV9-X1.1 and CAP-B10 capsids. | source: https://clover.caltech.edu/news/chemical-bbb-shuttle-targets-ca-iv-to-deliver-conjugated-payloads-to-the-brain | recorded quote: \\\"Former CLOVER Research Scientists and Gradinaru lab alumns Xiaozhe Ding and Xinhong Chen led a multidisciplinary effort with fellow co-first authors from the Reisman lab at Caltech that generated a small molecule shuttle to efficiently deliver biological cargo across the blood-brain barrier (BBB) of mice and non-human primates.\\\"\np3:c1: Binding-call generation today: APPRAISE scores pairwise peptide–receptor structure models with physics- and geometry-informed analysis in under one CPU-second per model. | source: https://authors.library.caltech.edu/records/nyxge-gz849 | recorded quote: \\\"After generating structural models of engineered proteins competing for binding to a target using an established structure prediction tool such as AlphaFold-Multimer or ESMFold, APPRAISE performs a rapid (under 1 CPU second per model) scoring analysis that takes into account biophysical and geometrical constraints.\\\"\np3:c2: Modeling scale in their own capsid–receptor work is small: five AlphaFold-Multimer models per peptide with up to 20 recycles on one A100 GPU, checked against SPR domain labels (LRP6 E1E2 vs E3E4). | source: https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518/ | recorded quote: \\\"Representative AlphaFold models, from 5 structural models each of X1 and CAP-Mac peptides with up to 20 recycles, predict selective interaction with human LRP6 domain E1 (E1 and E2: teal, E3 and E4: yellow, AAV peptides: purple).\\\"\np3:c3: Their interface-geometry observable is the threefold spike: binding sites are placed by cryo-ET sub-tomogram averaging with symmetry expansion, next to the twofold valley, and integrated with the computed models. | source: https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518/ | recorded quote: \\\"using a combination of biophysical techniques including cryo-ET sub-tomogram averaging with symmetry expansion, we were able to locate the human IL3 binding site on the side of AAV9’s threefold symmetry spike adjacent to the capsid’s twofold symmetry valley and generate an integrative binding model.\\\"\np3:done: The card's experiment exists in miniature in this programme: APPRAISE's proof-of-concept already classifies receptor-dependent vs receptor-independent AAV vectors from computed models, and Shay et al. 2024 scored 5-model AlphaFold-Multimer LRP6-domain predictions against SPR bind/no-bind labels and cryo-ET sites for about six capsids; what is missing is the full 36-pair grid at 54–432 runs with balanced-accuracy and site-recovery scoring. | source: https://authors.library.caltech.edu/records/nyxge-gz849 | recorded quote: \\\"As proof-of-concept cases, we demonstrate that APPRAISE can accurately classify receptor-dependent vs. receptor-independent adeno-associated viral vectors and diverse classes of engineered proteins such as miniproteins targeting the severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2) spike, nanobodies targeting a G-protein-coupled receptor, and peptides that specifically bind to transferrin receptor or programmed death-ligand 1 (PD-L1).\\\"\nReturn only JSON: {\\\"items\\\": [{\\\"ref\\\": \\\"\\\", \\\"status\\\": \\\"SUPPORTED | PARTIAL | UNSUPPORTED | CONTRADICTED | UNREACHABLE\\\", \\\"page_quote\\\": \\\"\\\", \\\"note\\\": \\\"\\\"}]}\""
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

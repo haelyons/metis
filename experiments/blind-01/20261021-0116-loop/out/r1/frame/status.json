@@ -1,0 +1,130 @@
+{
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0116-loop/out/r1/frame",
+ "card": "card",
+ "models": {
+  "research": "opencode-go/mimo-v2.6-pro",
+  "dramaturg": [
+   "opencode-go/deepseek-v4.1-flash",
+   "opencode-go/glm-5.3-flash"
+  ],
+  "critic": [
+   "opencode-go/qwen3.8-flash",
+   "opencode-go/mimo-v2.6-flash",
+   "opencode-go/minimax-m3"
+  ]
+ },
+ "stage": "done",
+ "started": "2026-10-21T03:57:59.367Z",
+ "calls": [
+  {
+   "id": "research#1",
+   "stage": "research",
+   "model": "opencode-go/mimo-v2.6-pro",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 1006795,
+   "cost_usd": 0.119126403,
+   "tokens": 228596,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#2",
+   "stage": "dramaturg",
+   "model": "opencode-go/deepseek-v4.1-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 73999,
+   "cost_usd": 0.018114708,
+   "tokens": 80938,
+   "errors": []
+  },
+  {
+   "id": "dramaturg#3",
+   "stage": "dramaturg",
+   "model": "opencode-go/glm-5.3-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 128619,
+   "cost_usd": 0.01692881,
+   "tokens": 84911,
+   "errors": []
+  },
+  {
+   "id": "critic#4",
+   "stage": "critic",
+   "model": "opencode-go/qwen3.8-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 230623,
+   "cost_usd": 0.00732803,
+   "tokens": 14125,
+   "errors": []
+  },
+  {
+   "id": "critic#5",
+   "stage": "critic",
+   "model": "opencode-go/mimo-v2.6-flash",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 80336,
+   "cost_usd": 0.00134568,
+   "tokens": 6512,
+   "errors": []
+  },
+  {
+   "id": "critic#6",
+   "stage": "critic",
+   "model": "opencode-go/minimax-m3",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 96074,
+   "cost_usd": 0.00883038,
+   "tokens": 9810,
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.171674011,
+ "tokens": 424892,
+ "by_model": {
+  "opencode-go/mimo-v2.6-pro": {
+   "calls": 1,
+   "cost_usd": 0.119126403,
+   "tokens": 228596
+  },
+  "opencode-go/deepseek-v4.1-flash": {
+   "calls": 1,
+   "cost_usd": 0.018114708,
+   "tokens": 80938
+  },
+  "opencode-go/glm-5.3-flash": {
+   "calls": 1,
+   "cost_usd": 0.01692881,
+   "tokens": 84911
+  },
+  "opencode-go/mimo-v2.6-flash": {
+   "calls": 1,
+   "cost_usd": 0.00134568,
+   "tokens": 6512
+  },
+  "opencode-go/minimax-m3": {
+   "calls": 1,
+   "cost_usd": 0.00883038,
+   "tokens": 9810
+  },
+  "opencode-go/qwen3.8-flash": {
+   "calls": 1,
+   "cost_usd": 0.00732803,
+   "tokens": 14125
+  }
+ },
+ "done": true,
+ "updated": "2026-10-21T04:20:52.170Z",
+ "best": {
+  "name": "Lir Therapeutics — Starfish™ / nAAVigator®",
+  "step": "Starfish™ capsid-surface structure generation feeding receptor docking on symmetry-axis patches inside the nAAVigator® pipeline — in Lir's words, surface portions 'at the 2, 3 and 5-fold axes are the minimum subunit for useful docking or structural assessment of capsid stability in silico'. Docking receptors onto those Starfish-built variant capsid surfaces produces the binding-screen hits and 'explainability' that drive Lir's lab-in-the-loop variant selection. The card scores exactly this docking/binding-call step and its threefold-axis interface geometry.",
+  "sum": 12,
+  "fit": 5,
+  "change": 3,
+  "new": 4
+ }
+}
