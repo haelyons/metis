@@ -229,3 +229,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:33Z review 12 of build 22 requested
 - 21:33Z stage review on wf.js run 9: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1892013
 - 21:33Z build 22 (fix, opus, 3 min): 33 diff lines in run_m4.py, 2 FIX lines; review 13 started; plan: ship to the held box and RESUME on PASS.
+- 21:35Z build 22 checks: selftest exit 0
+- 21:36Z review 13 of build 22: FAIL, 1 blocking (item 6, both files), 3 advisory; review-fix build 23 bounded to it.
+- 21:36Z stage build on wf.js run 20: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1895669
