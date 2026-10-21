@@ -251,3 +251,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:55Z stage build on wf.js run 21: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1925491
 - 21:55Z stage build on wf.js run 22: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1925491
 - 21:56Z build 25 (wf run 22) started by a stale deferred job alongside build 24; killed within 2 minutes, its run folder marked .killed, its args removed; build 24 (run 21) continues alone.
+- 21:59Z build 24 checks: selftest exit 0
+- 22:00Z session diag1 started (model sonnet, pid 1934352, session 3f3a9541)
+- 22:00Z LAUNCH 8 (A100): same ladder, dry-run stage failed again (third time, changing messages); live evidence copied to out/launch8_live/; hold ended by RESUME (this on-box script still finishes on RESUME; build 24 changed nothing); a diagnostician session (infrastructure-only output) is reading launches 6 to 8 and the stage's code.

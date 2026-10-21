@@ -1,0 +1,60 @@
+{
+  "cell": {
+    "stage": "environment check",
+    "tag": "m4"
+  },
+  "decision": "PASS",
+  "decision_rule": "the environment is the one of record only when the hash of its package list equals the lock the launcher forwarded; anything else stops the run",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-80-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T21:56:16+00:00"
+  },
+  "inputs": [
+    {
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    }
+  ],
+  "metric": "the sha256 of the package list of the environment of record",
+  "notes": "the package list of the environment hashes to the lock the launcher forwarded",
+  "threshold": {
+    "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d"
+  },
+  "values": {
+    "equal": true,
+    "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+    "kind": "environment_check",
+    "machine": {
+      "cuda_plugin_version": null,
+      "cuda_runtime_version": null,
+      "end_utc": "2026-10-21T21:56:16Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": null,
+      "gpu_name": null,
+      "held_attempts": 0,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T21:56:16Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "null_reasons": {
+      "cuda_plugin_version": "not read by onbox_m4.sh; the measuring program reads it from the box",
+      "cuda_runtime_version": "not read by onbox_m4.sh; the measuring program reads it from the box",
+      "gpu_driver": "not read by onbox_m4.sh; the measuring program reads it from the box",
+      "gpu_name": "not read by onbox_m4.sh; the measuring program reads it from the box"
+    },
+    "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+    "python_version": "CPython 3.10.12",
+    "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+  },
+  "kind": "env_check",
+  "run_valid": true,
+  "run_valid_voided_by": null,
+  "notes_list": [],
+  "tag": "m4"
+}

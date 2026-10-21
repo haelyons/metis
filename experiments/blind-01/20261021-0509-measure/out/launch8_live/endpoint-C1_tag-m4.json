@@ -1,0 +1,127 @@
+{
+  "cell": {
+    "input": "C1",
+    "key": "af2_h_per_run",
+    "stage": "endpoints",
+    "tag": "m4"
+  },
+  "decision": "VOID",
+  "decision_rule": "inside [0.2, 1.25] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; below the minimum sample, on a wrong graphics processor, with zero spread across seeds, or left unmeasured by a stop -> VOID with the raw rows kept",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-80-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T21:59:18+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 1117,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "97dec50a01a5"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    },
+    {
+      "bytes": 5951,
+      "n_items": 3,
+      "path": "/home/ubuntu/m4_run/results_m4/out/pairs_tag-m4.json",
+      "present": true,
+      "sha256": "6de141e83e44"
+    }
+  ],
+  "kind": "C1",
+  "metric": "af2_h_per_run measured on the stand-in protocol, in hours per AlphaFold-Multimer run",
+  "notes": "",
+  "notes_list": [
+    "stand-in pairs built from 6IHB chains, not the card's pairs",
+    "one GPU; one box; 3 pairs; no multi-GPU scaling",
+    "no-MSA: alignment search time excluded; understates the card's setting"
+  ],
+  "run_valid": false,
+  "run_valid_voided_by": "the docking run failed: exit 2, see /home/ubuntu/m4_run/results_m4/out/tool_logs/anchor_anchor_parallel_simulate.log",
+  "tag": "m4",
+  "threshold": {
+    "band": [
+      0.2,
+      1.25
+    ],
+    "card_value": 0.5,
+    "marginal_fraction": 0.1
+  },
+  "values": {
+    "band": [
+      0.2,
+      1.25
+    ],
+    "basis": "PROXY",
+    "card_value": 0.5,
+    "engine": {
+      "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+      "alphafold_params_sha256": null,
+      "build_flags": {
+        "alphafold_early_stopping": "off",
+        "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+        "alphafold_models": 5,
+        "alphafold_msa_mode": "single_sequence",
+        "alphafold_params_sha256": null,
+        "alphafold_recycles": 20,
+        "docking_code": "lightdock",
+        "docking_version": "0.9.4",
+        "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+        "jax_cuda_plugin_version": "0.4.35",
+        "jax_version": "0.4.35",
+        "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+        "jaxlib_version": "0.4.35",
+        "md_engine": "OpenMM",
+        "md_engine_version": "8.1.1",
+        "md_platform": "CUDA",
+        "md_precision": "mixed"
+      },
+      "docking_code": "lightdock",
+      "docking_version": "0.9.4",
+      "jax_cuda_plugin_version": "0.4.35",
+      "jax_version": "0.4.35",
+      "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+      "jaxlib_version": "0.4.35",
+      "md_engine": "OpenMM",
+      "md_engine_version": "8.1.1",
+      "md_platform": "CUDA",
+      "md_precision": "mixed"
+    },
+    "gate": "not evaluated: C1 VOID (the run ended on broken infrastructure: the docking run failed: exit 2, see /home/ubuntu/m4_run/results_m4/out/tool_logs/anchor_anchor_parallel_simulate.log)",
+    "gate_else": "take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs",
+    "gate_pass": null,
+    "gate_value": "af2_h_per_run <= 1",
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-21T21:59:18Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 0,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T21:59:18Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "marginal": false,
+    "measured": null,
+    "n": 0,
+    "null_reasons": {
+      "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+      "measured": "the run ended on broken infrastructure: the docking run failed: exit 2, see /home/ubuntu/m4_run/results_m4/out/tool_logs/anchor_anchor_parallel_simulate.log"
+    },
+    "unit": "hours per AlphaFold-Multimer run",
+    "void_reason": "the run ended on broken infrastructure: the docking run failed: exit 2, see /home/ubuntu/m4_run/results_m4/out/tool_logs/anchor_anchor_parallel_simulate.log",
+    "voided_by": "the run ended on broken infrastructure: the docking run failed: exit 2, see /home/ubuntu/m4_run/results_m4/out/tool_logs/anchor_anchor_parallel_simulate.log"
+  }
+}
