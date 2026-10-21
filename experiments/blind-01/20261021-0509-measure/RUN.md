@@ -146,3 +146,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 17:05Z gate 14 (addendum) requested
 - 17:05Z stage gate on wf.js run 10: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1430962
 - 17:05Z classifier (read-only sonnet, letters only): launch 2's void came from an import check after a completed install; fix class: a different pin or wheel; not launch 1's cause; medium confidence. Gate addendum requested.
+- 17:11Z build 16 checks: selftest exit 0
+- 17:11Z gate addendum 14 (wf.js, claude/sonnet, 5 min): 7 answers, 102 items, build 17 authorised; of record: launch 2 exit 2 at the install stage (import check after a completed install), USD 0.37; cap spent USD 0.67 of 10.

@@ -160,6 +160,19 @@
         "doom_loop": "deny"
       },
       "tools_md": "Read, Write, Glob, Grep, Bash"
+    },
+    "ls-fixer": {
+      "mode": "primary",
+      "description": "Bounded fixer or verifier working on a held-open box through one ssh helper",
+      "prompt": "You work only through the helper command the prompt names, which runs commands on one remote box; you run nothing else and read no local files. You change the smallest thing that explains a failure, inside the scope the prompt states, and commit every change on the box. You return only the record asked for.",
+      "permission": {
+        "*": "deny",
+        "bash": "allow",
+        "read": "allow",
+        "external_directory": "deny",
+        "doom_loop": "deny"
+      },
+      "tools_md": "Bash, Read"
     }
   }
 }

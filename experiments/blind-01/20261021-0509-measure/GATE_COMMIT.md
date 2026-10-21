@@ -1951,3 +1951,181 @@ OPERATOR: after build 16, re-run `python3 run_m4.py --selftest` locally and comp
 OPERATOR: give review 9 the read list of N11(ii) (including `frozen/ONBOX_CONTRACT.md` with G3 applied), the two diffs, the scope statement (R1 to R3 and R5 only, `run_m4.py` only), and EXEC_NOTE item 85 so that findings of the kinds in N5 to N7 are marked advisory; the launch needs zero blocking findings (N11).
 OPERATOR: `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8); record the spend of every launch in RUN.md (USD 0.30 so far); before each launch set `BUDGET_LEFT_USD` to the lesser of 5 and 10 minus the recorded spend; do not start a launch whose remaining cap is below 7,800 s x its `PRICE_USD_PER_HOUR` / 3,600 (USD 4.31 at 1.99, USD 5.42 at 2.50) (N11).
 OPERATOR: launch environment of record: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (N11).
+
+---
+
+## Addendum 14 (2026-10-21)
+
+Rules on `out/gate_report_launch2.md`: the operator's mechanical note on launch 2 (A100 SXM4, us-east-1, 16:51Z to 17:02Z, USD 0.37
+by the operator's record, box terminated; on-box exit 2 at the install stage, `run_valid` false, endpoint and anchor records VOID,
+`stages_done` empty) and the four rulings it asks for: (a) the pin or wheel of record that makes the failing import succeed; (b) whether
+the on-box import check should run after each package's install; (c) the pre-launch test of record; (d) build 17 as an in-place edit and
+launch 3 pre-authorised. Inputs added for this addendum, in the order the task names them: the report; this file as it stood;
+`EXEC_NOTE.md` as it stood; `QUESTION.md`, `CARD.json`, `out/design_record.json`; and, because the report names them as what to read,
+`out/classify_3.json`, `out/launch2/results_m4/out/RUN_VALID.json`, `.../pip_report_tag-m4.json` (read as parsed JSON: the installed
+distributions and the `requires_dist` of `jax`, `jaxlib` and `jax-cuda12-plugin`), `.../tool_logs/install_smoke_imports.log`,
+`install_smoke_help_colabfold_batch.log`, `install_smoke_help_lightdock3_py.log`, `install_smoke_help_lgd_generate_conformations_py.log`,
+`install_pip_install.log`, `install_pip_version.log`, `install_pip_bootstrap_install.log`, `.../run_detached.log`, `.../onbox_m4.log`,
+`.../run_m4.stdout.log`, `out/build16_return.json` (the selftest count and the nine strings as returned) and the tail of `RUN.md` (the
+operator's spend record). The two shape-example files named in the task lie outside this directory and the file tools refused them; the
+shape is taken from this run's own earlier sections. The gate ran nothing and did not open `run_m4.py`, `onbox_m4.sh`,
+`frozen/ONBOX_CONTRACT.md`, `out/pip_pins_openmm_cuda_requires.txt` or the per-version listing of addendum 9; statements about the code
+rest on build 16's return and the logs above. Every earlier section stands except where an answer below says it is superseded (P1
+supersedes the words "nine" and "no `nvidia-*` pin" in items 70 and 71; P5 supersedes the launch numbering of items 62 and 85). Answers
+are numbered P1 to P7. Counts: 7 answers (the four asks, the record of cause, the reporting-only carry-over, and the launch). The line
+`Build 14 authorised` at the end is the launcher's literal string for the next build; it does not renumber the earlier builds (the build
+it authorises is build 17).
+
+**What the inputs show (facts as reported, not rulings).**
+- The pip install call of launch 2 exited 0 in 150.6 s with the nine pins and installed them with their transitive packages. Nothing failed at install. pip was at
+  22.0.2, so the recorded bootstrap to pip 24.0 ran (3 s), as item 50 says.
+- The smoke check failed with two problems, both the same traceback: `import jax` (jax 0.4.35) raises `TypeError: expected str, bytes or
+  os.PathLike object, not NoneType` at `jax/_src/lib/__init__.py:146`, in `pathlib.Path(cuda_nvcc.__file__).parent`. `colabfold_batch
+  --help` died on the same line through `colabfold/batch.py:76 import jax`. So `cuda_nvcc.__file__` is `None`: the `nvidia.cuda_nvcc`
+  package has no `__init__.py` in the installed wheel. That wheel is `nvidia-cuda-nvcc-cu12` 12.9.86, which pip chose because the
+  `with_cuda` extra of `jax-cuda12-plugin` 0.4.35 asks only for `nvidia-cuda-nvcc-cu12 >=12.1.105`, with no upper bound.
+- Everything else the smoke check imports passed on the box: `alphafold`, `colabfold` (the package, not `colabfold.batch`), `openmm`
+  8.1.1 with `Platform.getPlatformByName("CUDA")` succeeding (`openmm_cuda: true`), and `lightdock3.py --help` and
+  `lgd_generate_conformations.py --help` at exit 0. The OpenMM pair of item 70 therefore works on this image.
+- The failing import is plain `import jax`; it needs no GPU. That is why an off-box test can reproduce it. The operator's resolve of item
+  66 could not: a dry-run resolve does not import anything, and it passed on a list that resolves to the broken wheel.
+- The cause is not launch 1's (launch 1 failed at resolution). The classifier's letters (failed check: an import; install completed;
+  fix class: a different pin or wheel of the same package; not launch 1's cause; confidence medium) agree with the logs; the gate relies
+  on the traceback, which is explicit, not on the classifier's medium confidence.
+- Spend: launch 1 USD 0.30, launch 2 USD 0.37 by the operator's record (the runner's own estimate was USD 0.16 for 286 s from its T0;
+  the operator's figure counts box time from provisioning to termination and governs the cap). Cap spent: USD 0.67 of 10.
+
+**Decision on budget and build (addendum).** GO stands. HALT is not decided: the failure is one wheel version outside the nine pins, the
+box tools it did not touch work, and launch 2 cost USD 0.37. A build, a review and the off-box tests spend no GPU money. Arithmetic,
+launches x hours x price, against the USD 10 cap: spent USD 0.67; remaining 10 - 0.67 = 9.33; `BUDGET_LEFT_USD` = min(5, 9.33) = 5; a
+launch at its caps is 7,200 s command + 600 s outside = 7,800 s = 2.1667 h x 1.99 = USD 4.311 (the command alone, 2.00 h x 1.99 = 3.98,
+is under 5). Launch 3 at its caps: 0.67 + 4.311 = 4.98, remaining 5.02, which is above 4.311, so a launch 4 may start: 4.98 + 4.311 =
+9.29, remaining 0.71; a launch 5 would not. At the fallback ceiling of USD 2.50/h: 2.1667 h x 2.50 = 5.417; 0.67 + 5.417 = 6.09,
+remaining 3.91, below 5.417: none after it. The cap is not raised by this gate.
+
+### Answers of record (P1 to P7)
+
+1. **P1 (ask (a): the pin or wheel of record that makes the import succeed).** ACCEPTED: ONE ADDED PIN, as an inference tested before the
+   build. Reading of record: the failing component is `nvidia-cuda-nvcc-cu12`, not `jax`, `jaxlib`, the plugin or `colabfold`; a pip wheel
+   that imports on this image is therefore possible, and no source build, no non-pip route and no HALT is needed. The fix is the tenth
+   pin `nvidia-cuda-nvcc-cu12==12.6.85`, the CUDA 12.6 release that sits with jax 0.4.35's own CUDA 12.6 build; it satisfies the plugin's
+   `>=12.1.105` and so changes nothing else the resolver chooses. It is the gate's inference, labelled so: the gate has not run it, does
+   not know that wheel's contents, and does not know that no other module of the box path is wrong behind this one. The test that decides
+   it is P3 (T3), run before the build; if T3 fails, there is no build and the gate rules again with the failure text (the gate does not
+   guess a second version in advance). The directive item replaces the corresponding line of item 70: `PIP_PINS` holds the nine strings of
+   item 70, unchanged and in their order, followed by a tenth, `nvidia-cuda-nvcc-cu12==12.6.85`, last; the pinned install call passes ten
+   separate arguments in that order (item 71 otherwise as it stands: no other requirement, no `-r`, no constraint file, none of the forbidden
+   options); item 70's sentence "No `nvidia-*` pin" is superseded by "no `nvidia-*` pin except the tenth"; every place `run_m4.py` or its
+   selftest tests the count nine or the list of nine for `PIP_PINS` becomes the count ten and the list of ten (the build finds them by
+   searching the file for the nine strings, the word "nine" and the digit 9 beside "pins" or `len(PIP_PINS)`; it changes no other count).
+   The comment above `PIP_PINS` changes in two places only, exactly as EXEC_NOTE item 86 says (its first line, and one added seventh
+   line); the rules of `pip_pins_comment_problems` still hold on it. `jax`, `jaxlib` and the plugin are not re-pinned: raising jax to a
+   release that tolerates the missing `__init__.py` would change five pins and the colabfold compatibility that item 70 settled.
+
+2. **P2 (ask (b): import each installed package immediately after its install, fail fast, one record per package).** NOT ADOPTED; NOTHING
+   CHANGES. Reasons: (i) item 71 and the test of item 66 rest on one pip call that resolves the set jointly; installing package by package
+   would be a different resolution from the one tested, and would repeat what launch 1 showed pip does with a conflicting pair. (ii) The
+   smoke check already runs right after the install, takes 0.6 s for its import probe, collects every problem in one pass (its record held
+   `found` for `alphafold`, `colabfold` and `openmm` beside the `jax` problem) and runs the tool `--help` calls after it, so a package-wise
+   order would have saved no time and reported nothing more: launch 2's cost was the install (150 s), which no import order avoids. (iii)
+   Fail-fast would hide later problems behind the first; one pass reports all, which is what the next launch needs if a second package
+   is also wrong. The smoke check of item 33 stays as built, including `colabfold_batch --help` (that call imports `colabfold.batch`, the
+   module the probe's `import colabfold` does not reach, and it is what caught the failure).
+
+3. **P3 (ask (c): the pre-launch test of record, and whether the operator's local install-and-import is it).** YES, as test T3, in addition
+   to T1 and T2 of items 66 and 74 and never in place of them. T3 is the operator's check, listed so the build and review rely on it
+   (EXEC_NOTE item 88 has the steps). In one line: a real install of the ten pins into a clean CPython 3.10 venv with pip 24.0, followed by
+   the imports and `--help` calls the box's smoke check makes, each in its own process with its exit code written down, read mechanically
+   from the exit codes. Two readouts are named as expected to differ off-box and are not read as failures: the device list of
+   `jax.devices()` (the smoke check's "no graphics-processor device" problem; off-box the list is the processor, which is expected), and
+   `Platform.getPlatformByName("CUDA")` of OpenMM (no driver off-box, so it may fail; on the box it passed in launch 2). T3 passes when
+   every other step exits 0 and `nvidia.cuda_nvcc.__file__` is a path, not `None` (the direct test of the cause). T3 runs once before
+   build 17 (on the ten strings of `out/pip_pins_list_b17.txt`) and, if the operator's `diff` of build 17's ten strings against that
+   file is empty, that run stands as the run on the launched build. The T1 dry-run of item 66 is run again on the ten strings and must
+   show `nvidia-cuda-nvcc-cu12` at 12.6.85 and no second `nvidia-cuda-nvcc-cu12` entry. The host rule of item 74(a) (10 GiB free, no
+   quota; an Errno 122, disk or network error with no conflict named is not a run of record) applies to T3. The off-box test cannot prove
+   the GPU imports; only the box's smoke check does (item 33).
+
+4. **P4 (ask (d), first half: build 17 as an in-place edit, with a closing section).** BUILD 17 AUTHORISED, on the precondition that
+   T1 and T3 of P3 passed and are in `out/pip_pins_resolve_build17.txt` and `.json` and RUN.md. Build 17 is an in-place edit of build 16's
+   files (`run_m4.py` sha256 begins `0fe4b0cd`, 7,523 lines, selftest 759 of 759; `onbox_m4.sh` begins `8982a9e0`, 642 lines), limited to
+   S1 (the tenth pin and the install call's ten arguments), S2 (the comment change), S3 (the selftest cases for ten pins) and S4 (the count
+   and hash lines, which move) of the closing section "Build 17: exactly these changes" in EXEC_NOTE.md. `onbox_m4.sh` is not edited and
+   its hash stays. Part (b) of the request added no edit (P2). A return of "no change needed" is not a correct outcome. A changed line outside S1 to
+   S4 is a blocking finding in review 10. Build 17 is the last build on this matter without a new addendum: a blocking finding in review
+   10 that is a defect in what S1 to S4 say goes to the gate. The build reads no operator file (item 67) and uses no network; the static
+   check of item 81 runs on the new files and must stay clean. Its return carries the fields of item 84 (with the ten strings, and
+   `onbox_command` equal to `bash remote_run_m4.sh bash onbox_m4.sh`).
+
+5. **P5 (ask (d), second half: launch 3 pre-authorised on a clean review 10).** AUTHORISED, under the environment of record and these
+   conditions, all of which must hold: (i) build 17 exists, its selftest passes with a count above 759 and ends `selftest: PASS`, and the
+   two sha256 values printed locally match the files on disk, `onbox_m4.sh`'s equal to build 16's; (ii) review 10 reports zero blocking
+   findings on a read list that includes `frozen/ONBOX_CONTRACT.md` with item 56 applied and the diffs of build 17 against build 16 and
+   against build 11, with a statement that the diff against build 16 is limited to S1 to S4 and touches only `run_m4.py`; (iii) T1 and
+   T3 of P3 are in place, and the operator's `diff` of build 17's ten strings against `out/pip_pins_list_b17.txt` is empty (else T1 and T3
+   are run again on the lines read from build 17's file and appended); (iv) the launch environment of record: `REMOTE_TIMEOUT=7200`
+   exactly, `BUDGET_LEFT_USD` the lesser of 5 and 10 minus the recorded spend (5 now), `PRICE_USD_PER_HOUR=1.99`,
+   `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1, else the cheapest single GPU with capacity at no more than USD 2.50/h with type and price
+   set to its values and the other three unchanged; (v) the cause is recorded in RUN.md (launch 1's pip conflict; launch 2's `import jax`
+   failure on the unpinned `nvidia-cuda-nvcc-cu12` 12.9.86; the spend of both). The remaining cap must be at least USD 4.31 at 1.99 (5.42
+   at 2.50); it is 9.33 now. The relaunch reasons of A2 hold: launch 2 halted before the anchor decision for a toolchain and install reason
+   with the cause recorded, so A2(a) is met for launch 3. A launch after launch 3 needs the same: A2's reasons, (i) to (v) again with the
+   then-current build and review, and the cap rule; after exit 0 or exit 4 there is none. Launch 2's void records are void: no decision
+   was taken, no input is reported measured, and nothing from launch 2 is carried into launch 3.
+
+6. **P6 (the report's record of cause and the classifier's letters).** ACCEPTED AS THE RECORD, with the gate's own reading in P1 in
+   place of the classifier's medium-confidence class. Nothing changes in the build for this answer. The operator writes into RUN.md the
+   three facts the gate relied on (the install exited 0; the failing line is `jax/_src/lib/__init__.py:146`, `cuda_nvcc.__file__` None;
+   the installed wheel was `nvidia-cuda-nvcc-cu12` 12.9.86) and launch 2's spend (USD 0.37; cap spent USD 0.67). The void records of launch
+   2 were written as the contract requires (item 8, row 1: exit 2, `run_valid` false, anchor and C1 to C4 VOID, `void_by_failure`), and
+   the build 16 void path worked: no change is needed there. The classifier's own file stays under `out/` as evidence and is not an input
+   of any build (item 67).
+
+7. **P7 (what stays, and what review 10 treats as reporting only).** NOTHING ELSE CHANGES. The nine strings of item 70, the lone-sibling
+   refusal, the stage ceilings (1,800 + 700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200), the allowance formula, the labels, the
+   exit-code table, the smoke check (item 33), the stand-in protocol, the bands, the gate scope and every earlier answer stand. Reporting
+   only in review 10, never blocking and not ruled again: the items of N5 to N7 (the operator's frozen bootstrap upgrades, the
+   `with_cuda` against `with-cuda` spelling, which pip now also warns of at install, `does not provide the extra 'with-cuda'`, harmless in
+   launch 2 because pip resolved the extra as `with_cuda`; the gap between a clean-venv test and the box's preinstalled packages); that the
+   tenth pin puts a CUDA 12.6 compiler wheel beside CUDA 12.9 runtime wheels the resolver chose for the other `nvidia-*` libraries; and
+   any further import failure the box shows after `import jax` passes, which ends that launch as exit 2 under A2(a) and is a result for
+   the next addendum, not a defect of build 17.
+
+**Labels (addendum).** Unchanged. No record kind, label key or decision changes. The pip report's file hash is already cited in every
+record, and it will list the tenth distribution; no new label key is required for it.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only; nothing was run. Spend: 0.30 + 0.37 = 0.67; 10 -
+0.67 = 9.33; min(5, 9.33) = 5; 7,800 / 3,600 = 2.1667 h x 1.99 = 4.311; 0.67 + 4.311 = 4.981 (4.98); 10 - 4.981 = 5.019 (above 4.311, one
+more launch may start); 4.981 + 4.311 = 9.292, remaining 0.71 (below 4.311); fallback 2.1667 x 2.50 = 5.417; 0.67 + 5.417 = 6.087, remaining
+3.91, below 5.417. Ceilings: 1,800 + 700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200. Cross-reading: the traceback's frame list (colabfold
+batch line 76, jax `__init__` line 25, `cloud_tpu_init`, `config` line 27, `lib` line 156, `_cuda_path` line 151, `_try_cuda_nvcc_import`
+line 146) ends at `os.fspath(None)`, which is what `Path(None)` raises, so the value is `None`; the pip report lists `nvidia-cuda-nvcc-cu12`
+12.9.86 and no other nvcc entry; the plugin's `requires_dist` has `nvidia-cuda-nvcc-cu12 >=12.1.105` under `with_cuda` and no upper bound,
+and the pip log's warning names the spelling `with-cuda`, not an unresolved extra; the install exit code is 0 and the report lists the nine
+requested distributions plus their transitive ones; build 16's returned strings equal item 70; the new first line and seventh line
+of the comment (EXEC_NOTE item 86) contain none of "not verified facts" and "INFERENCES MADE BY THE REVIEW BOARD", still contain the four
+source names (unchanged lines 2 and 3), the requires sentence (line 4), `with_cuda` and "the gate's inference" (line 5) and "per the
+operator's listing" (line 4), so the five rules of `pip_pins_comment_problems` hold by reading; the new lines begin with `#` and the static
+check of item 81 skips them. The gate did not check the existence of `12.6.85` on the index and did not check the wheel's contents; both
+are what T3 and the T1 re-run decide.
+
+**Pre-authorisation (addendum).** A1 stands. A2 stands as revised by L8, M9 and N11 with P5's conditions in place of N11's: launch 3 (and
+a later one, with the cap) is authorised only under all of (i) to (v) of P5, the remaining cap, and A2's reasons. Not authorised, as
+before: a relaunch to double seeds, to repeat a decided input, to change a band, or after an anchor miss (exit 4) or exit 0; a build
+other than build 17 without a new addendum; a second tenth pin chosen by anyone but the gate. What stops a launch: the cost and time
+guard, an anchor miss (exit 4), the sleep check (exit 2), any broken infrastructure (exit 2 with a void record, no patching around), a
+stage ceiling, or the cap. Totals: USD 0.67 spent; launch 3 at most USD 4.31 (total 4.98); the owner's USD 10 cap is not raised.
+
+Build 14 authorised
+
+## Operator actions
+
+OPERATOR: write into RUN.md the cause of launch 2 (install exit 0; `import jax` fails at `jax/_src/lib/__init__.py:146`; installed `nvidia-cuda-nvcc-cu12` 12.9.86), its spend (USD 0.37) and the cap spent (USD 0.67 of 10) (P5, P6).
+OPERATOR: write `out/pip_pins_list_b17.txt`: the nine requirements of item 70, then `nvidia-cuda-nvcc-cu12==12.6.85`, one per line, in order, nothing else; check `wc -l` is 10 (P1, P3).
+OPERATOR: run T1 (dry-run resolve, item 66) and T3 (item 88: real install, then the imports and `--help` calls, exit codes recorded) on the ten lines of `out/pip_pins_list_b17.txt`, in a clean CPython 3.10 venv with pip 24.0 on a host with at least 10 GiB free (item 74(a)); write command lines, `pip --version`, outputs, `df -h` before and after, every `.tar.gz` entry of the T1 report with name, version, URL and hash, the T2 result for each, and every T3 exit code into `out/pip_pins_resolve_build17.txt` and `out/pip_pins_resolve_build17.json`, and state in RUN.md that T1 and T3 passed; if either fails, start no build and give the gate the file (P3, P4).
+OPERATOR: only after that, start build 17 from build 16's files as they are (`run_m4.py` sha256 begins `0fe4b0cd`, `onbox_m4.sh` begins `8982a9e0`), with the build prompt naming EXEC_NOTE.md's closing section `## Build 17: exactly these changes` as the part to read first (P4).
+OPERATOR: after build 17, `diff` its ten `PIP_PINS` strings against `out/pip_pins_list_b17.txt` and write the result into RUN.md; if empty, no further T1 or T3 run is needed; if not, run both again on the lines read from build 17's file and append the result to `out/pip_pins_resolve_build17.txt` (P3, P5).
+OPERATOR: after build 17, re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); check that `onbox_m4.sh` still begins `8982a9e0`; `diff` build 17's two files against build 16's and against build 11's (P5).
+OPERATOR: give review 10 the read list of P5(ii) (including `frozen/ONBOX_CONTRACT.md` with item 56 applied), the two diffs, the scope statement (S1 to S4 only, `run_m4.py` only) and EXEC_NOTE item 91 so that the reporting-only kinds of P7 are marked advisory; the launch needs zero blocking findings (P5, P7).
+OPERATOR: `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launches 1 and 2 used them (H8); record the spend of every launch in RUN.md (USD 0.67 so far); before each launch set `BUDGET_LEFT_USD` to the lesser of 5 and 10 minus the recorded spend; do not start a launch whose remaining cap is below 7,800 s x its `PRICE_USD_PER_HOUR` / 3,600 (USD 4.31 at 1.99, USD 5.42 at 2.50) (P5).
+OPERATOR: launch environment of record: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (P5).

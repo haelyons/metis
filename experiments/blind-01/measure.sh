@@ -17,6 +17,9 @@
 #                           py_compile, the selftest to a log, hashes
 #   review [--via wf ...]   headless reviewer (read/write tools only): checklist -> out/review_build<N>.{md,json}; --via wf as for gate
 #   launcher                lambda_run_<tag>.sh + remote_run_<tag>.sh from m3's per-launch copies, declared points only
+#   fix --fs <name> [--via wf flags]  bounded fixer on a held box (HOLD marker): env and glue only, git commits on the box, verifier after
+#   envbuild --fs <name>    build the environment of record once on a box onto the named filesystem (measure/env_build.sh):
+#                           pins and apt lists of record as data; hold-open for a fixer on failure; results_env/out/env_report.json
 #   launch [--type T --region R --timeout S --budget B --price P]   preflight, capacity, then the launcher detached
 #   score                   results_<tag>/out records -> out/PREDICTIONS_SCORED.md + LEDGER.jsonl row (no model)
 #   post                    headless operator: Workflow mode post -> TAKEAWAYS_<tag>.md, out/post_return.json
@@ -186,6 +189,10 @@ $([ -n "$add" ] && echo "5. The report this addendum rules on: \`$add\`. Also re
 9. Labels: every measured record carries instance type, GPU name and driver, engine version and build flags, wall-clock.
 10. Nothing interactive; \`sudo\` only for declared apt packages; downloads only from sources the design names, URL and hash recorded; the on-box command the build returns is one line the operator runs verbatim through \`remote_run_$TAG.sh\`.
 
+## Directive form (owner ruling 2026-10-21)
+
+EXEC_NOTE.md is the current truth, not a changelog: in addendum mode REGENERATE it as one bounded directive of at most 40 numbered items, required-for-launch items first (each marked REQUIRED FOR LAUNCH or REPORTING ONLY), with every superseded or satisfied item removed; the history of rulings stays in GATE_COMMIT.md. Three standing changes of record: (i) the Python environment is an artifact, built once from the pins of record by the operator's env_build on a Lambda filesystem and recorded by its lock file hash in out/env_report.json; the on-box script activates that environment and verifies the lock hash instead of installing; pins live in the environment record, not in the runner; (ii) implementer selftests are not required and not credited: tests of the measurement logic are written by a separate claim-blind author from the directive, hidden from the builder, and executed by the runner in the shipped environment before the physics, as records; (iii) on a stage failure on the box the run holds the box open (HOLD marker) for a bounded fixer whose every change is committed to git on the box and fetched as a change log; the fixer may touch environment and glue, never the measurement protocol or the record fields; a change outside that scope is a halt to the gate.
+
 ## GATE_COMMIT.md, in this order$([ -n "$add" ] && echo " (addendum mode: leave every existing section as it is and append one section \`## Addendum $n (<UTC date>)\` ruling on every item of the report, each ruling saying what the build must change or that nothing changes and why; then a line \`Build $((n)) authorised\` or \`HALT\`)")
 
 - Inputs read (and nothing else)
@@ -313,39 +320,129 @@ EOF2
 }
 
 # ---------- launcher ----------
-launcher() {
-  cd "$MDIR" || return 1
-  $PY - "$M3" "$MDIR" "$TAG" <<'PYEOF'
+# lambda_run_<tag>.sh from m3's per-launch copy at the declared points: remote dir, payload, bootstrap name, fetch paths,
+# forwarded env (+REMOTE_TIMEOUT), REMOTE_TIMEOUT default 7200, and (2026-10-21) the filesystem attach (file_system_names)
+# and the environment variables of env_build. `launcher` writes the main copy; `launcher env` writes lambda_run_env.sh
+# (payload env_build.sh pins.txt apt.txt; results_env/; runner env_build.sh).
+gen_launcher() {   # out-file results-dir payload-line runner-desc [fs-name]
+  $PY - "$M3" "$MDIR" "$TAG" "$1" "$2" "$3" "$4" "${5:-}" <<'PYEOF'
 import re, sys, datetime
-m3, m, tag = sys.argv[1:4]
+m3, m, tag, outf, rdir, payload, desc, fs = sys.argv[1:9]
 today = datetime.date.today().isoformat()
 s = open(f"{m3}/lambda_run_m3.sh").read()
 s = s.replace("PER-LAUNCH COPY for m3 (2026-10-20)", f"PER-LAUNCH COPY for {tag} ({today})")
-s = s.replace("# m3 payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ (built box, decks, builder, dataset.csv).",
-              f"# {tag} payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present.")
+s = s.replace("# m3 payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ (built box, decks, builder, dataset.csv).", f"# {tag} payload: {desc}")
 s = s.replace("scp -r $SSHOPT data ubuntu@$IP:m3_run/", "[ -d data ] && scp -r $SSHOPT data ubuntu@$IP:m3_run/")
 assert s.count("REMOTE_TIMEOUT=${REMOTE_TIMEOUT:-5400}   # 90 min hard cap") == 1
 s = s.replace("REMOTE_TIMEOUT=${REMOTE_TIMEOUT:-5400}   # 90 min hard cap", "REMOTE_TIMEOUT=${REMOTE_TIMEOUT:-7200}   # 120 min default (gate ruling; was 5400), hard cap")
 s = s.replace("remote dir welfare_probe -> m3_run; scp payload -> m3 files", f"remote dir welfare_probe -> {tag}_run; scp payload -> {tag} files")
-s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present. REMOTE_TIMEOUT forwarded to the box (declared point 4, additive) so the on-box guard can read it. REMOTE_TIMEOUT default 5400 -> 7200 (gate ruling, declared point: caps). Fetch (declared point: fetch paths): results_<tag>/out/*summary*.json and results_<tag>/out/RUN_VALID.json first, then the whole results_<tag>/out/ directory (the criticals-first ordering of the original).")
+s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present. REMOTE_TIMEOUT, ENV_FS, ENV_TAG, HOLD_SECONDS forwarded to the box (declared point 4, additive). REMOTE_TIMEOUT default 5400 -> 7200 (gate ruling, declared point: caps). Fetch (declared point: fetch paths): results_<tag>/out/*summary*.json and results_<tag>/out/RUN_VALID.json first, then the whole results_<tag>/out/ directory (the criticals-first ordering of the original)." + (f" Filesystem {fs} attached at launch (file_system_names; declared point: launch payload)." if fs else ""))
+# payload (declared point 2)
+old_payload = 'scp $SSHOPT run_m3.py remote_run_m3.sh "$RUNNER" ubuntu@$IP:m3_run/'
+assert old_payload in s; s = s.replace(old_payload, payload)
+# forwarded env (declared point 4, additive)
 assert s.count('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"') == 1
-s = s.replace('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"', 'INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\" REMOTE_TIMEOUT=\\"$REMOTE_TIMEOUT\\"')
-s = s.replace("forwarded\n# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE;", "forwarded\n# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE REMOTE_TIMEOUT;")
-for a, b in (("m3_run", f"{tag}_run"), ("results_m3", f"results_{tag}"), ("run_m3.py", f"run_{tag}.py"), ("remote_run_m3.sh", f"remote_run_{tag}.sh"), ("results_m3/", f"results_{tag}/")):
+s = s.replace('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"', 'INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\" REMOTE_TIMEOUT=\\"$REMOTE_TIMEOUT\\" ENV_FS=\\"${ENV_FS:-}\\" ENV_TAG=\\"${ENV_TAG:-}\\" HOLD_SECONDS=\\"${HOLD_SECONDS:-0}\\"')
+# filesystem attach (declared point: launch payload)
+if fs:
+    old_launch = '\\"name\\":\\"drill_$RDIR\\"}'
+    assert old_launch in s, "launch payload line"
+    s = s.replace(old_launch, '\\"name\\":\\"drill_$RDIR\\",\\"file_system_names\\":[\\"' + fs + '\\"]}')
+for a, b in (("m3_run", f"{tag}_run"), ("results_m3", rdir), ("run_m3.py", f"run_{tag}.py"), ("remote_run_m3.sh", f"remote_run_{tag}.sh")):
     s = s.replace(a, b)
-left = re.findall(r"\bm3\b", s)
-assert not left, f"unreplaced m3 tokens: {len(left)}"
-open(f"{m}/lambda_run_{tag}.sh", "w").write(s)
-r = open(f"{m3}/remote_run_m3.sh").read()
-r = r.replace("cd ~/m3_run  # ADAPTED for m3:", f"cd ~/{tag}_run  # ADAPTED for {tag}:")
-assert not re.findall(r"\bm3\b", r)
-open(f"{m}/remote_run_{tag}.sh", "w").write(r)
-print(f"lambda_run_{tag}.sh and remote_run_{tag}.sh written from m3's per-launch copies")
+assert not re.findall(r"\bm3\b", s), "unreplaced m3 tokens"
+open(f"{m}/{outf}", "w").write(s)
+print(f"{outf} written from m3's per-launch copy" + (f" (filesystem {fs})" if fs else ""))
+PYEOF
+}
+launcher() {
+  cd "$MDIR" || return 1
+  local fs="${ENV_FS_NAME:-}"
+  gen_launcher "lambda_run_$TAG.sh" "results_$TAG" 'scp $SSHOPT run_'"$TAG"'.py remote_run_'"$TAG"'.sh "$RUNNER" ubuntu@$IP:'"$TAG"'_run/' "runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present" "$fs" || return 1
+  $PY - "$M3" "$MDIR" "$TAG" <<'PYEOF'
+import re, sys
+m3, m, tag = sys.argv[1:4]
+r = open(f"{m3}/remote_run_m3.sh").read().replace("cd ~/m3_run  # ADAPTED for m3:", f"cd ~/{tag}_run  # ADAPTED for {tag}:")
+assert not re.findall(r"\bm3\b", r); open(f"{m}/remote_run_{tag}.sh", "w").write(r); print(f"remote_run_{tag}.sh written")
 PYEOF
   bash -n "lambda_run_$TAG.sh" && bash -n "remote_run_$TAG.sh" && echo "bash -n: ok" || { echo "bash -n: SYNTAX ERROR"; return 1; }
   echo "lambda_run_$TAG.sh: $(wc -l < lambda_run_$TAG.sh) lines, $(diff frozen/lambda_run.sh lambda_run_$TAG.sh | grep -c '^[<>]') lines differ from frozen (m3's copy: $(diff frozen/lambda_run.sh $M3/lambda_run_m3.sh | grep -c '^[<>]'))"
   echo "remote_run_$TAG.sh: $(diff frozen/remote_run.sh remote_run_$TAG.sh | grep -c '^[<>]') lines differ from frozen"
-  logrun "launcher copies written from m3's (declared points only)"
+  logrun "launcher copies written from m3's (declared points only)${fs:+; filesystem $fs attached}"
+}
+launcher_env() {   # the env-build launcher: payload env_build.sh pins.txt apt.txt; runner env_build.sh; results_env/
+  cd "$MDIR" || return 1
+  local fs="${ENV_FS_NAME:?ENV_FS_NAME (filesystem name) required}"
+  gen_launcher "lambda_run_env.sh" "results_env" 'scp $SSHOPT env/env_build.sh env/pins.txt env/apt.txt remote_run_'"$TAG"'.sh ubuntu@$IP:'"$TAG"'_run/' "env_build.sh, pins.txt, apt.txt (the environment of record is built on the filesystem)" "$fs" || return 1
+  bash -n lambda_run_env.sh && echo "lambda_run_env.sh: bash -n ok, $(diff frozen/lambda_run.sh lambda_run_env.sh | grep -c '^[<>]') lines differ from frozen"
+}
+# ---------- envbuild: the environment of record, built once on a box onto the filesystem (hold-open on failure) ----------
+# measure.sh envbuild <dir> --fs <filesystem name> [--type T --region R --timeout S --hold S --price P]
+envbuild() {
+  local fs="" type=gpu_1x_a100_sxm4 region=us-east-1 timeout=5400 hold=2400 price=1.99
+  while [ $# -gt 0 ]; do case "$1" in --fs) fs="$2"; shift ;; --type) type="$2"; shift ;; --region) region="$2"; shift ;; --timeout) timeout="$2"; shift ;; --hold) hold="$2"; shift ;; --price) price="$2"; shift ;; *) echo "envbuild: unknown option $1"; return 2 ;; esac; shift; done
+  [ -n "$fs" ] || { echo "envbuild needs --fs <filesystem name>"; return 2; }
+  cd "$MDIR" || return 1
+  mkdir -p env; cp "$REPO/dut/pipeline/measure/env_build.sh" env/env_build.sh; cp out/pip_pins_of_record.txt env/pins.txt; cp out/apt_packages_of_record.txt env/apt.txt 2>/dev/null || : > env/apt.txt
+  echo "env payload: pins $(wc -l < env/pins.txt), apt $(wc -l < env/apt.txt), env_build.sh $(wc -l < env/env_build.sh) lines (sha256 $(sha256sum env/env_build.sh | cut -c1-12)…)"
+  ENV_FS_NAME="$fs" launcher_env || return 1
+  [ -r .keys ] || { echo "no readable .keys"; return 1; }
+  pgrep -f "lambda_run_env.sh" >/dev/null && { echo "an env launcher is already running"; return 1; }
+  local n; n=$(ls out/envbuild*.json 2>/dev/null | wc -l); n=$((n+1))
+  local spent; spent=$($PY -c 'import json,glob; print(round(sum((json.load(open(j)).get("usd_est") or 0) for j in glob.glob("out/launch*.json")+glob.glob("out/envbuild*.json")), 2))'); echo "cap: USD $spent spent so far (extended budget; recorded)"
+  echo "== capacity"; rm -f out/.capacity.json.fallback
+  if ! lambda_capacity "$type" "$region" 2.50; then
+    # the filesystem is regional: no fallback across regions here
+    echo "no capacity for $type in $region (the filesystem's region); retry later or pick another type in $region with --type"; return 1
+  fi
+  local log="out/launcher_env_E$n.log"
+  $PY -c 'import json,sys; json.dump({"n":int(sys.argv[1]),"kind":"envbuild","type":sys.argv[2],"region":sys.argv[3],"timeout_s":int(sys.argv[4]),"hold_s":int(sys.argv[5]),"price_usd_h":float(sys.argv[6]),"fs":sys.argv[7],"started":sys.argv[8],"log":sys.argv[9]}, open(sys.argv[10],"w"), indent=1)' \
+    "$n" "$type" "$region" "$timeout" "$hold" "$price" "$fs" "$(now)" "$log" "out/envbuild$n.json"
+  ( REMOTE_TIMEOUT=$timeout HOLD_SECONDS=$hold ENV_FS="/lambda/nfs/$fs" ENV_TAG="$TAG" PRICE_USD_PER_HOUR=$price INSTANCE_TYPE=$type setsid nohup bash lambda_run_env.sh "$type" "$region" env_build.sh results_env > "$log" 2>&1 < /dev/null & )
+  sleep 5; local pid; pid=$(pgrep -f "lambda_run_env.sh" | head -1)
+  logrun "ENVBUILD $n: $type @ $region, filesystem $fs, REMOTE_TIMEOUT=$timeout, HOLD_SECONDS=$hold, pid ${pid:-?}, log $log"
+  echo "envbuild $n started: pid ${pid:-?}, log $log"
+}
+env_status() {   # masked view of an env build: launcher lines, hold marker, env_report summary when fetched
+  cd "$MDIR" || return 1
+  for j in out/envbuild*.json; do [ -s "$j" ] || continue; local log; log=$($PY -c 'import json,sys; print(json.load(open(sys.argv[1]))["log"])' "$j")
+    echo "  $j: $($PY -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["type"], "@", d["region"], "fs", d["fs"], "started", d["started"], "ended", d.get("ended") or "-")' "$j"); launcher $(pgrep -f "lambda_run_env.sh" >/dev/null && echo running || echo exited)"
+    [ -f "$log" ] && launch_tail "$log" | tail -6 | sed 's/^/      /'
+    local ip; ip=$(awk '{print $2}' .last_lambda_instance 2>/dev/null); [ -n "$ip" ] && pgrep -f "lambda_run_env.sh" >/dev/null && echo "      box: $(timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "ls $TAG_run/HOLD $TAG_run/RESUME 2>/dev/null | tr '\n' ' '; echo; tail -2 $TAG_run/out/run_detached.log 2>/dev/null | grep -oE '^\[env\] [0-9:]+ [a-z]+:?' " 2>/dev/null | tr '\n' ' ')"
+  done
+  [ -f results_env/out/env_report.json ] && $PY -c "
+import json; r=json.load(open('results_env/out/env_report.json')); print('  env_report: status', r.get('status'), '| imports ok', r.get('all_imports_ok'), '| dists', len(r.get('dists') or []), '| modules failing', sum(1 for d in (r.get('dists') or []) for m in d.get('modules', []) if not m.get('ok')), '| lock', (r.get('lock_sha256') or '')[:12], '| commits', r.get('git_commits'), '| elapsed', r.get('elapsed_s'), 's')"
+  return 0
+}
+
+# ---------- fix: a bounded fixer on the held-open box (measure/fixer_stage.js on wf.js, both families) ----------
+# measure.sh fix <dir> --fs <filesystem name> [--family ... --mode ... --on-refusal ...]
+fix() {
+  local fs=""; pop_via "$@"; set -- "${REST[@]}"; local rest2=()
+  while [ $# -gt 0 ]; do case "$1" in --fs) fs="$2"; shift ;; --family|--mode|--on-refusal) rest2+=("$1" "$2"); shift ;; *) echo "fix: unknown option $1"; return 2 ;; esac; shift; done
+  [ -n "$fs" ] || { echo "fix needs --fs <filesystem name>"; return 2; }
+  cd "$MDIR" || return 1
+  local ip; ip=$(awk '{print $2}' .last_lambda_instance 2>/dev/null); [ -n "$ip" ] || { echo "no box recorded in .last_lambda_instance"; return 1; }
+  timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD" 2>/dev/null || { echo "the box is not holding (no ${TAG}_run/HOLD); nothing to fix"; return 1; }
+  mkdir -p env; cat > env/box.sh <<EOF2
+#!/usr/bin/env bash
+# box.sh: run one command on the held box over ssh (the fixer's only tool). usage: box.sh <command...>
+exec ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=20 -o ServerAliveInterval=30 -i \$HOME/.ssh/lambda_ed25519 ubuntu@$ip "\$*"
+EOF2
+  chmod +x env/box.sh
+  local n; n=$(ls out/fix*_args.json 2>/dev/null | wc -l); n=$((n+1))
+  $PY - "$MDIR" "$TAG" "$fs" "$n" <<'PYEOF'
+import json, sys
+m, tag, fs, n = sys.argv[1:5]
+args = {"box_helper": f"{m}/env/box.sh", "hold_dir": f"/home/ubuntu/{tag}_run", "env_dir": f"/lambda/nfs/{fs}/{tag}", "tag": tag,
+        "failure_summary": f"env_build.sh failed on the box and wrote /home/ubuntu/{tag}_run/HOLD. Logs: /home/ubuntu/{tag}_run/results_env/out/install_pip.log, apt.log, import_check.json (per-module import results with error kinds), env_report.json. The build retries when /home/ubuntu/{tag}_run/RESUME exists.",
+        "scope": "environment and glue only: pins.txt (a version, an extra, a different distribution of the same package, a build dependency), apt.txt (system libraries and build tools), environment variables of the install, files under the environment directory. Never the measurement protocol, never record fields, never files outside the environment directory and the hold directory.",
+        "max_attempts": 3, "time_budget_min": 30}
+json.dump(args, open(f"{m}/out/fix{n}_args.json", "w"), indent=1); print(f"out/fix{n}_args.json written")
+PYEOF
+  logrun "FIX $n requested on the held box (fixer_stage.js, flags [${rest2[*]}])"
+  ( cd "$REPO" && setsid nohup node dut/pipeline/launch.js "$NAME_EXP" stage --measure "$MDIR" --stage fix "${rest2[@]}" > "$SESS/wf-fix$n.out" 2>&1 < /dev/null & )
+  sleep 4; echo "fixer started (run $n); watch with: measure.sh status"
 }
 
 # ---------- launch ----------
@@ -563,6 +660,7 @@ import json,sys; d=json.load(open(sys.argv[1])); print('keys', sorted(d.keys())[
   for f in GATE_COMMIT.md EXEC_NOTE.md; do [ -s "$f" ] && echo "  $f: $(wc -l < "$f") lines, $(grep -c '^#' "$f") headings, $(grep -c '^## Addendum' "$f") addenda"; done
   [ -f "run_$TAG.py" ] && echo "  built: run_$TAG.py $(wc -l < run_$TAG.py) lines, onbox_$TAG.sh $(wc -l < onbox_$TAG.sh 2>/dev/null) lines; selftest logs: $(ls out/selftest_build*.log 2>/dev/null | wc -l) ($(for l in out/selftest_build*.log; do [ -f "$l" ] && grep -E '^selftest: (PASS|FAIL)' "$l" | tail -1; done | tr '\n' ' '))"
   for r in out/review_build*.json; do [ -s "$r" ] && echo "  $r: $(cat "$r" | tr -d '\n ' | cut -c1-80)"; done
+  env_status
   for j in out/launch*.json; do [ -s "$j" ] || continue; local log; log=$($PY -c 'import json,sys; print(json.load(open(sys.argv[1]))["log"])' "$j")
     echo "  $j: $($PY -c 'import json,sys; d=json.load(open(sys.argv[1])); print(d["type"], "@", d["region"], "started", d["started"], "ended", d.get("ended") or "-", "usd_est", d.get("usd_est", "-"), "rc", d.get("rc", "-"))' "$j"); launcher $(pgrep -f "lambda_run_$TAG.sh" >/dev/null && echo running || echo exited)"
     [ -f "$log" ] && launch_tail "$log" | tail -8 | sed 's/^/      /'; done
@@ -577,6 +675,8 @@ wait_stage() {
   while [ $t -lt $max ]; do
     case "$stage" in
       launch) if ! pgrep -f "lambda_run_$TAG.sh" >/dev/null; then launch_finish; echo "launch exited after $((t/60)) min"; return 0; fi ;;
+      envbuild) if ! pgrep -f "lambda_run_env.sh" >/dev/null; then echo "env build exited after $((t/60)) min"; env_status; return 0; fi ;;
+      hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env.sh" >/dev/null; then echo "env build exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
       wf) if ! wf_running; then echo "wf.js stage exited after $((t/60)) min"; ls "$MDIR"/out/build*_args.json >/dev/null 2>&1 && [ -f "$MDIR/run_$TAG.py" ] && [ "$(ls "$MDIR"/out/wf-build-* -d 2>/dev/null | wc -l)" -ge 1 ] && build_checks; return 0; fi ;;
       *) local last; last=$(ls "$SESS"/$stage*.json 2>/dev/null | sort | tail -1); [ -n "$last" ] || { echo "no $stage session"; return 1; }
          if ! session_running "$(basename "$last" .json)"; then echo "$stage session exited after $((t/60)) min"; [ "$stage" = build ] && build_checks; return 0; fi ;;
@@ -594,6 +694,6 @@ ask() {   # name instruction-file: one read/write-only sonnet session following 
 case "$CMD" in
   ask) ask "$@" ;;
   prepare) prepare "$@" ;; design) design "$@" ;; gate) gate "$@" ;; build) build "$@" ;; build-checks) build_checks ;; review) review "$@" ;;
-  launcher) launcher ;; launch) launch "$@" ;; score) score ;; post) post "$@" ;; status) status ;; wait) wait_stage "$@" ;;
+  launcher) launcher ;; launch) launch "$@" ;; envbuild) envbuild "$@" ;; fix) fix "$@" ;; score) score ;; post) post "$@" ;; status) status ;; wait) wait_stage "$@" ;;
   *) sed -n 2,22p "$0"; exit 2 ;;
 esac

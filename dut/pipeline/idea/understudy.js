@@ -43,7 +43,7 @@ const CLAUDE_TOOLS = {
   'qt-bare': '', 'qt-web': 'WebFetch,WebSearch', 'qt-extract': 'Read',
   'qt-research': 'Read,Write,Edit,Glob,Grep,WebFetch,WebSearch', 'qt-producer': 'Read,Write,Edit,Glob,Grep,WebFetch,WebSearch',
   'triage-reader': 'Read,Grep,Glob,Bash', 'triage-runner': 'Bash,Read', 'triage-author': 'Read,Glob,Grep,Write',
-  'ls-general': 'Read,Glob,Grep,Bash', 'ls-builder': 'Read,Write,Edit,Glob,Grep,Bash', 'ls-writer': 'Read,Write,Glob,Grep,Bash',
+  'ls-general': 'Read,Glob,Grep,Bash', 'ls-builder': 'Read,Write,Edit,Glob,Grep,Bash', 'ls-writer': 'Read,Write,Glob,Grep,Bash', 'ls-fixer': 'Bash,Read',
 }
 
 const DEFAULTS = {

@@ -1,7 +1,7 @@
-# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5), build 7 (addendum 6), build 9 (addendum 7), launch 1 (addendum 8) builds 11 and 13 (addendum 9) and the candidate-list report (addendum 10) and the build 14 resolve report (addendum 11) and the review of build 14 (addendum 12) and the review of build 15 (addendum 13) (revised, addendum 12) (revised, addendum 13)
+# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5), build 7 (addendum 6), build 9 (addendum 7), launch 1 (addendum 8) builds 11 and 13 (addendum 9) and the candidate-list report (addendum 10) and the build 14 resolve report (addendum 11) and the review of build 14 (addendum 12) and the review of build 15 (addendum 13) and the report on launch 2 (addendum 14) (revised, addendum 12) (revised, addendum 13) (revised, addendum 14)
 
 Binding order: GATE_COMMIT.md answers first (the original answers 1 to 14, then addendum 3 answers B1 to B15, then addendum 5
-answers E1 to E28, then addendum 6 answers F1 to F22, then addendum 7 answers G1 to G8, then addendum 8 answers H1 to H10, then addendum 9 answers J1 to J9, then addendum 10 answers K1 to K7, then addendum 11 answers L1 to L9, then addendum 12 answers M1 to M9, then addendum 13 answers N1 to N11), this note second, `out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and
+answers E1 to E28, then addendum 6 answers F1 to F22, then addendum 7 answers G1 to G8, then addendum 8 answers H1 to H10, then addendum 9 answers J1 to J9, then addendum 10 answers K1 to K7, then addendum 11 answers L1 to L9, then addendum 12 answers M1 to M9, then addendum 13 answers N1 to N11, then addendum 14 answers P1 to P7), this note second, `out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and
 nothing here loosens it except at the points item 56 names (where it states a docking command order, that order is followed, item
 52). Where silent, the design record binds as written, GUESS values included. The build does not read GATE_COMMIT.md itself; the
 checklist below carries every gate change the build must implement. This is the measure run m4 of card seed:idea:1: one rented
@@ -17,6 +17,7 @@ change build 11's; items 79 to 85 are new in addendum 13; items 75 to 78 are new
 items 55 to 57 came with addendum 7; items 48 to 54 came with addendum 6; items 38 to 47 came with addendum 5; items 31 to 37
 came with addendum 3; the rest stand. Items 6, 8, 28 and 29 are restated in addendum 6 as single testable requirements; review
 judges the build against those texts. (revised, addendum 9)
+Launch 2 has run (addendum 14): it ended in 10 minutes with on-box exit 2 at the install stage, USD 0.37, all records void; the pip install exited 0, and the smoke check failed because `import jax` raises a `TypeError` on the unpinned `nvidia-cuda-nvcc-cu12` 12.9.86 (`cuda_nvcc.__file__` is None); the cap spent is USD 0.67 of 10. Build 17 is the next build: an in-place edit of build 16's files (`run_m4.py` begins `0fe4b0cd`, `onbox_m4.sh` begins `8982a9e0`) limited to what the closing section "Build 17: exactly these changes" lists (items 86 to 91): one added pin, its comment line, its selftest cases and the moved count and hash lines. **Read that closing section first; it binds before the Build 16 section and before the checklist.** Items 86 to 91 are new in addendum 14; items 62, 64, 70, 71, 79 and 85 are revised by it. The next launch is launch 3. (revised, addendum 14)
 
 ## Where to write
 
@@ -28,7 +29,7 @@ execution contract). Build 14 reads no other file as an input (item 67): the ope
 because the pins are written in item 58. It edits the existing `run_m4.py` and `onbox_m4.sh` of build 11 in place and uses no
 network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and are not written by the build. (revised, addendum 9)
 
-## Checklist of gate changes the build must carry (85 entries) (revised, addendum 13)
+## Checklist of gate changes the build must carry (91 entries) (revised, addendum 14)
 
 1. **Order on the box.** install and downloads (with the smoke check, item 33); R1 controls (60 s sleep, empty run,
    unit-and-scale print); anchor (serial, then parallel); per-pair docking and analysis (aux timing); AlphaFold timings
@@ -493,7 +494,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     the launch environment is as the Box says; (v) the cause is recorded in RUN.md (launch 1's pip failure; the full-disk first resolve of build
     14). The count of launches is not fixed: a later launch needs A2's reasons (a halt before the anchor decision for a toolchain, install or
     launcher reason, or a time-guard stop with inputs unmeasured), conditions (i) to (v) again, and the cap rule of item 73; after exit 0 or
-    exit 4 there is none. Total spend if the next launch runs to its caps: 0.30 + 4.31 = USD 4.61, under the USD 10 cap. (J7, L8) (revised, addendum 12: condition (iii) needs the non-empty evidence file of item 78, and condition (ii) a clean review 8, M9) (revised, addendum 13: the launched build is build 16; condition (ii) is a clean review 9, zero blocking findings; condition (iii) is met as item 83 says, by the evidence under the name `build15` and, if the `diff` of item 83 is empty, without a new run; N4, N11)
+    exit 4 there is none. Total spend if the next launch runs to its caps: 0.30 + 4.31 = USD 4.61, under the USD 10 cap. (J7, L8) (revised, addendum 12: condition (iii) needs the non-empty evidence file of item 78, and condition (ii) a clean review 8, M9) (revised, addendum 13: the launched build is build 16; condition (ii) is a clean review 9, zero blocking findings; condition (iii) is met as item 83 says, by the evidence under the name `build15` and, if the `diff` of item 83 is empty, without a new run; N4, N11) (revised, addendum 14: this is launch 3 and later; the launched build is build 17; condition (i): its selftest count is above 759; condition (ii): a clean review 10, zero blocking findings, with diffs against build 16 and build 11 limited to items 86 and 87; condition (iii): T1 and T3 of item 88 on the ten strings, in `out/pip_pins_resolve_build17.txt` and `.json`, and RUN.md; condition (v): the cause of launch 2 is recorded as well as launch 1's; P5)
 63. **Why build 14 exists (new, addendum 9, J5).** Build 11 and build 13 left `PIP_PINS` unchanged because the operator file
     `out/pip_pins_openmm_cuda_requires.txt`, which the directive told them to read, held the `lightdock` listing and no `openmm-cuda`
     metadata; the file branch of the old item 58 is withdrawn. The build does not look for that file and does not branch on any
@@ -503,7 +504,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     the nine entries of item 58 in that order; the `openmm` pin's version (8.1.1) equals the version quoted in the comment as the
     one `openmm-cuda` requires; a bracketed extra on `openmm` is rejected; an entry without `==` is rejected; an `openmm-cuda*`
     entry without a plain `openmm` entry is rejected; the bracketed extra on `jax-cuda12-plugin` is accepted and is the only extra in
-    the list; the planted good pair is accepted. The selftest's count and the two hash lines move (build 11: 740 of 740). The case also checks the comment of item 76. (J1, J2) (revised, addendum 12) (revised, addendum 13: the comment assertions are the function and planted cases of item 82; the old assertions on "INFERENCES MADE BY THE REVIEW BOARD" and on a `SIBLING REQUIRES ENGINE VERSION:` marker are replaced by them)
+    the list; the planted good pair is accepted. The selftest's count and the two hash lines move (build 11: 740 of 740). The case also checks the comment of item 76. (J1, J2) (revised, addendum 12) (revised, addendum 13: the comment assertions are the function and planted cases of item 82; the old assertions on "INFERENCES MADE BY THE REVIEW BOARD" and on a `SIBLING REQUIRES ENGINE VERSION:` marker are replaced by them) (revised, addendum 14: the list the case compares against is the ten strings of item 86; the cases are item 87)
 65. **Build 14 scope (new, addendum 9, J6; supersedes item 61) (revised, addendum 10) (revised, addendum 11).** Build 14 is an in-place edit of build 11's `run_m4.py` and
     `onbox_m4.sh` (build 13's files are identical), limited to: the nine `PIP_PINS` entries and their comment (item 58); the
     selftest's `PIP_PINS` parser case (item 64); the selftest's count and hash lines, which move. Every other line stays as build 11
@@ -555,7 +556,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     normalises it). No `prody`, `freesasa`, `numpy`, `scipy`, `cython` or `nvidia-*` pin: they are transitive and the pip report records them.
     The selftest case of item 64 asserts equality with this list. The build's return prints the nine strings of its `PIP_PINS`, one per
     line, read from the file after its edit. The build does not read `out/pip_pins_list_b14.txt`, which the operator keeps equal to this list
-    (item 68). (L4)
+    (item 68). (L4) (revised, addendum 14: item 86 adds a tenth string after these nine, so `PIP_PINS` holds ten; the sentence "No `nvidia-*` pin" is superseded by "no `nvidia-*` pin except the tenth of item 86"; the nine strings above are unchanged)
 71. **The install call has the form the test tests (new, addendum 11, L4).** The pinned install is one `pip install` call over the nine
     `PIP_PINS` strings passed as nine separate arguments in this order, with no other requirement, no `-r` file and no constraint file, and
     with `--report` (item 34). It carries no option that changes what is resolved or how a source distribution is built: no `--no-deps`,
@@ -563,7 +564,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     `--find-links`, `--no-index` (except the local bootstrap wheel of item 50, which is a separate call), `--pre`. Options that change
     neither (report path, timeout, retries, progress, log file, cache directory under `~/m4_run/` of item 45) are allowed. If build 14's call
     has a forbidden option, build 15 removes it, and its return names the line before and after; if it has none, nothing changes. Selftest:
-    a planted install command line with each forbidden option fails the check; the one in the file passes. (L4) (revised, addendum 13: the reviewer and the operator confirm the call at `run_m4.py:2766-2767` carries no forbidden option; nothing changes in build 16, V4 of the closing section re-checks it)
+    a planted install command line with each forbidden option fails the check; the one in the file passes. (L4) (revised, addendum 13: the reviewer and the operator confirm the call at `run_m4.py:2766-2767` carries no forbidden option; nothing changes in build 16, V4 of the closing section re-checks it) (revised, addendum 14: the call passes ten separate arguments, the ten strings of item 86 in that order; no other part of this item changes; V4 of the Build 17 section re-checks it)
 72. **Build 15 scope (new, addendum 11, L7; supersedes item 65 for the next build).** Build 15 is an in-place edit of build 14's
     `run_m4.py` and `onbox_m4.sh`, limited to: (a) the nine `PIP_PINS` strings, changed only if they differ from item 70; (b) the pinned
     `pip install` call, changed only if it differs from item 71; (c) the selftest's count and hash lines, which move only if (a) or (b)
@@ -580,7 +581,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     2.50): at 1.99 the arithmetic is 0.30 + 4.31 = 4.61, then 4.61 + 4.31 = 8.92, remaining 1.08, below 4.31. A relaunch needs the
     conditions of item 62. The build changes nothing for this item: `onbox_m4.sh` reads `BUDGET_LEFT_USD`, `PRICE_USD_PER_HOUR` and
     `REMOTE_TIMEOUT` from its environment, has no default above 5 and 7200, and stops cleanly, writing a void record, before projected spend
-    reaches `BUDGET_LEFT_USD` or elapsed time reaches `REMOTE_TIMEOUT` (item 9). (L8)
+    reaches `BUDGET_LEFT_USD` or elapsed time reaches `REMOTE_TIMEOUT` (item 9). (L8) (revised, addendum 14: spent USD 0.67 after launch 2, remaining USD 9.33; launch 3 at 1.99/h adds at most 4.31 (total 4.98, remaining 5.02, so a launch 4 may start: 4.98 + 4.31 = 9.29); at 2.50/h launch 3 adds 5.42 (total 6.09, remaining 3.91, none after); P5)
 74. **Test host and source-distribution criterion for item 66 (new, addendum 11, L5, L6; operator's check, listed so the build and review
     rely on it).** (a) T0, T1 and T2 run on a host whose venv, `TMPDIR` and pip cache are on a filesystem with at least 10 GiB free and no
     quota the run can hit; `df -h` of that path is written to the output before and after. A run that ends on a disk, quota, network or host
@@ -637,7 +638,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     as it is; nothing is refactored, renamed or reordered. It uses no network and reads no operator file (item 67). A return of "no change
     needed" is not a correct outcome: the files as they stand fail V1 to V3. A changed line outside R1 to R3 and R5 is a blocking finding.
     Build 16 is the last build on this matter: a blocking finding in review 9 that is a defect in what R1 to R5 say goes to the gate in an
-    addendum, and no build is started on it by anyone else. (N9)
+    addendum, and no build is started on it by anyone else. (N9) (revised, addendum 14: build 16 was built and ran as launch 2; the next build is build 17, item 90)
 80. **The `PIP_PINS` comment, exact text (new, addendum 13, N1; REQUIRED FOR LAUNCH 2 as a condition of record).** The contiguous `#`
     comment block directly above the `PIP_PINS` assignment is replaced, whole, by the six lines of R1 in the closing section, character
     for character. The block contains none of the strings "INFERENCES MADE BY THE REVIEW BOARD" and "not verified facts", names the four
@@ -678,7 +679,74 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     and shell forms it lists. Launch 2 is authorised under item 62 as revised: build 16 exists and its selftest passes with matching hashes;
     review 9 reports zero blocking findings and states that the diff against build 15 is limited to R1, R2, R3 and R5 and touches only
     `run_m4.py`; item 83 is met; the launch environment is that of the Box; the cause is recorded in RUN.md; the remaining cap is at least
-    7,800 s x the price / 3,600 (USD 9.70 now; spent USD 0.30). (N5, N6, N7, N11)
+    7,800 s x the price / 3,600 (USD 9.70 now; spent USD 0.30). (N5, N6, N7, N11) (revised, addendum 14: review 9 passed with 6 advisory findings and launch 2 ran on build 16; launch 3 is authorised under item 91 with a clean review 10 of build 17; the cap remaining is USD 9.33, spent USD 0.67; P5, P7)
+
+86. **The tenth pin and its comment (new, addendum 14, P1; REQUIRED FOR LAUNCH 3).** Launch 2's smoke check failed at `import jax` (jax 0.4.35,
+    `jax/_src/lib/__init__.py:146`, `pathlib.Path(cuda_nvcc.__file__)` with `__file__` None) because the `with_cuda` extra of
+    `jax-cuda12-plugin` 0.4.35 asks only `nvidia-cuda-nvcc-cu12 >=12.1.105` and pip took 12.9.86. The fix is one more pin, the gate's
+    inference, tested by item 88 and not by the resolve: `PIP_PINS` holds ten strings, the nine of item 70 unchanged and in their order,
+    then, last, exactly `nvidia-cuda-nvcc-cu12==12.6.85` (no extra, no space, no marker). The pinned install call passes the ten as ten
+    separate arguments in that order and is otherwise as item 71 says. `jax`, `jaxlib`, the plugin and `colabfold` are not re-pinned. The
+    comment block above `PIP_PINS` changes in exactly two places: its first line becomes
+    `# PIP_PINS: the ten pins of record (EXEC_NOTE items 70 and 86); nothing here is read from an operator file.` and one line is added
+    directly after its sixth line, so the block stays contiguous, with exactly this text:
+    `# The tenth pin, nvidia-cuda-nvcc-cu12==12.6.85, is a ruling of the gate (addendum 14): launch 2's smoke check failed at "import jax" with the unpinned 12.9.86, where cuda_nvcc.__file__ is None; whether 12.6.85 cures it is decided by the operator's import test T3 of EXEC_NOTE item 88, not by the resolve.`
+    Lines 2 to 6 stay character for character; the five rules of `pip_pins_comment_problems` (item 82) still pass and the function is not
+    edited. Everywhere `run_m4.py` or its selftest tests the count nine or the nine-entry list for `PIP_PINS`, it tests ten and the ten-entry
+    list (the build finds them by searching for the nine strings, `len(PIP_PINS)`, "nine" and the digit 9 beside "pins"; it changes no
+    other count). The lone-sibling refusal and the pair rule stay as they are. (P1)
+87. **Selftest cases for ten pins (new, addendum 14, P1; REQUIRED FOR LAUNCH 3).** In `selftest_pip_pins`: (a) the live `PIP_PINS` equals the
+    ten strings of item 86 in order; (b) planted lists are refused by the equality check: the nine strings without the tenth; the ten with
+    the tenth `nvidia-cuda-nvcc-cu12>=12.6.85`; the ten with the tenth `nvidia-cuda-nvcc-cu12==12.9.86`; the ten with the tenth first; (c)
+    the entry without `==` is still refused by `pip_pins_problems`, and the single-extra rule still holds on the ten (the bracket on the JAX
+    plugin is the only extra); (d) the live comment still gives `[]` from `pip_pins_comment_problems`; the version that follows
+    `nvidia-cuda-nvcc-cu12==` in the comment's seventh line equals the version of the tenth pin, and the live comment with that version
+    changed to `12.9.86` fails that equality (a selftest assertion; no change to the function); (e) the install call passes `PIP_PINS` whole
+    (ten arguments) and carries none of the options item 71 forbids (the case of item 71 stays). The static check of item 81 stays clean on
+    both real files. The count and the two hash lines move and are computed by the script (item 36). (P1)
+88. **T3, the off-box import test, and the T1 re-run (new, addendum 14, P3; operator's check, listed so the build and review rely on it).**
+    On a host that meets item 74(a), in a clean CPython 3.10 Linux x86_64 virtual environment with `pip==24.0` (`pip --version` recorded, as
+    T0 of item 66), on the ten lines of `out/pip_pins_list_b17.txt` (the nine of item 70, then `nvidia-cuda-nvcc-cu12==12.6.85`; `wc -l` 10).
+    T1 (item 66 with ten requirements): the dry-run passes on the conditions of item 66 as amended by item 74(b), with the command line
+    showing exactly ten requirements and the report's `install` list holding exactly one `nvidia-cuda-nvcc-cu12` entry, at 12.6.85; T2 on
+    every `.tar.gz` entry as item 74(c). T3: a real `python -m pip install --report <file> <ten arguments>` that exits 0, then these steps,
+    each its own process, each exit code written down: 3.0 `python -c "import nvidia.cuda_nvcc as m; print(m.__file__)"` exits 0 and prints
+    a path, not `None` (the direct test of the cause); 3.1 `python -c "import jax, jaxlib; print(jax.__version__, jaxlib.__version__)"` exits
+    0 and prints 0.4.35 twice; 3.2 `python -c "import jax; print([d.platform for d in jax.devices()])"` exits 0; 3.3 `python -c "import
+    colabfold.batch"` exits 0; 3.4 the venv's `colabfold_batch --help` exits 0; 3.5 `python -c "import alphafold, colabfold"` exits 0; 3.6a
+    `python -c "import openmm; print(openmm.version.version)"` exits 0; 3.6b `python -c "from openmm import Platform;
+    Platform.getPlatformByName('CUDA')"` exit code recorded; 3.7 the venv's `lightdock3.py --help` and `lgd_generate_conformations.py --help`
+    exit 0. Expected off-box and not read as failures: the device list of 3.2 (the processor only, so the box smoke check's "no
+    graphics-processor device" problem cannot be tested here) and the exit code of 3.6b (no driver off-box; it passed on the box in launch
+    2). T3 passes when 3.0 to 3.5, 3.6a and 3.7 all hold. If any fails, no build is made and the gate rules again with the file; the
+    gate does not name a second version in advance. Results go to `out/pip_pins_resolve_build17.txt` and `.json` and RUN.md. T3 does not prove
+    the GPU imports; only the smoke check on the box does (item 33). The build reads none of these files (item 67). (P3)
+89. **The smoke check and the install order stay (new, addendum 14, P2).** No per-package install and no per-package import: the install is the
+    one pip call of item 71, which resolves the set jointly as items 66 and 88 test it, and the smoke check of item 33 runs right after it,
+    reports every problem in one pass and ends with the `--help` calls (`colabfold_batch --help` imports `colabfold.batch`, which the import
+    probe does not reach, and caught launch 2's failure). No build change for this item. (P2)
+90. **Build 17 scope and return (new, addendum 14, P4; supersedes item 79's scope for the next build).** Build 17 is an in-place edit of build 16's
+    `run_m4.py` (sha256 begins `0fe4b0cd`, 7,523 lines, selftest 759 of 759) limited to S1 to S4 of the closing section "Build 17: exactly these
+    changes" (items 86 and 87 and the moved count and hash lines). `onbox_m4.sh` (begins `8982a9e0`, 642 lines) is not edited. Every other
+    line stays as it is; nothing is refactored, renamed or reordered. It uses no network and reads no operator file (item 67). It starts only
+    after T1 and T3 of item 88 passed (P4). A return of "no change needed" is not a correct outcome. A changed line outside S1 to S4 is a
+    blocking finding in review 10. The return is one block that states: the real line counts of both files; their two sha256 values (item 36),
+    `onbox_m4.sh`'s equal to the value before the build; the selftest line `selftest: N of M checks passed` with N above 759 and the last line
+    `selftest: PASS`; the exact lines changed by S1 to S3 (before and after, as line ranges); the ten `PIP_PINS` strings read from the file after
+    the edit, one per line; the `pip install` line as written; and `onbox_command` equal to `bash remote_run_m4.sh bash onbox_m4.sh`. A return
+    that says "STOPPED", "NOT BUILT" or "NOT ISSUED", or has no `onbox_command`, is a failed build. Build 17 is the last build on this matter
+    without a new addendum. (P4)
+91. **Review 10, reporting only, and launch 3 (new, addendum 14, P5 to P7).** Review 10 is a review of build 17 against the closing section, with
+    `frozen/ONBOX_CONTRACT.md` on its read list (item 56 applied) and the diffs of build 17 against build 16 and against build 11. These are
+    REPORTING ONLY, advisory and never blocking: the items of item 85 (the operator's frozen bootstrap upgrades; the `with_cuda` against
+    `with-cuda` spelling, which pip also warns of at install; the gap between a clean-venv test and the box's preinstalled packages; any
+    widening of the static check beyond R2's names); that the tenth pin puts a CUDA 12.6 compiler wheel beside CUDA 12.9 runtime wheels the
+    resolver chose for the other `nvidia-*` libraries; any further import failure on the box after `import jax` passes. Launch 3 is
+    authorised under item 62 as revised: build 17 exists and its selftest passes (count above 759) with matching hashes; review 10 reports
+    zero blocking findings and states the diff against build 16 is limited to S1 to S4 and touches only `run_m4.py`; T1 and T3 of item 88 are
+    in place and the operator's `diff` of build 17's ten strings against `out/pip_pins_list_b17.txt` is empty (else both are run again and
+    appended); the launch environment is that of the Box; the cause of launches 1 and 2 is in RUN.md; the remaining cap is at least 7,800 s x
+    the price / 3,600 (USD 9.33 now; spent USD 0.67). Launch 2's void records decide nothing and carry nothing into launch 3. (P5, P6, P7)
 
 ## Box
 
@@ -699,6 +767,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
   `out/pip_pins_resolve_build14.txt`; this supersedes the existence check, which tested each pin alone. (revised, addendum 10) (revised, addendum 13: the first run is of record under the name `build15`, and the second is not repeated if the `diff` of item 83 is empty)
 - Caps now (addendum 12): spent USD 0.30; the next launch at its caps adds at most USD 4.31 (USD 5.42 at 2.50/h), total 4.61 (5.72); `BUDGET_LEFT_USD` = the lesser of 5 and 10 minus the recorded spend; `REMOTE_TIMEOUT=7200` exactly; the second run of item 66 and a clean review 8 come before the launch (item 78). (revised, addendum 12)
 - Caps now (addendum 13): unchanged: spent USD 0.30; the next launch at its caps adds at most USD 4.31 (USD 5.42 at 2.50/h); `BUDGET_LEFT_USD` 5; `REMOTE_TIMEOUT=7200` exactly; a clean review 9 of build 16 and the evidence of item 83 come before the launch (item 85). (revised, addendum 13)
+- Caps now (addendum 14): spent USD 0.67 (launch 1 USD 0.30, launch 2 USD 0.37); remaining USD 9.33; launch 3 at its caps adds at most USD 4.31 (USD 5.42 at 2.50/h), total 4.98 (6.09); `BUDGET_LEFT_USD` 5; `REMOTE_TIMEOUT=7200` exactly; a launch 4 may start after launch 3 at 1.99/h only under the cap rule of item 73; T1 and T3 of item 88 and a clean review 10 of build 17 come before launch 3 (item 91). (revised, addendum 14)
 - Payload layout on the box: `~/m4_run/run_m4.py`, `~/m4_run/onbox_m4.sh`, `~/m4_run/frozen/provenance.py`, `~/m4_run/data/...`
   if shipped. Results under `~/m4_run/results_m4/out/`.
 - The build's `onbox_command` is a single line the operator runs verbatim on the box through `remote_run_m4.sh`
@@ -717,7 +786,7 @@ engine-version sourcing case of item 60, the anchor VOID record case of item 54,
 path of items 8 and 29, the label-key check of item 6, the no-evidence-file-read check of item 67, record writing through
 `frozen/provenance.py`, and the file-hash line of item 36. No local tool run (no AlphaFold, docking or MD) and no pip
 resolution (that is the operator's check, item 66). Build 11's count was 740 of 740; build 14's is the same or higher by the cases
-of items 64 and 67; build 15's likewise, and build 15's is higher by the cases of items 76 and 77 (build 14: 749 of 749) and it returns the counts and hashes of the files it made (item 75). (revised, addendum 12) Build 15 changed no file, so its count stayed 749 of 749; build 16's count is higher by the cases of R2 and R3 (items 81 and 82) and it returns the count and hashes of the files it made (item 84). (revised, addendum 13)
+of items 64 and 67; build 15's likewise, and build 15's is higher by the cases of items 76 and 77 (build 14: 749 of 749) and it returns the counts and hashes of the files it made (item 75). (revised, addendum 12) Build 15 changed no file, so its count stayed 749 of 749; build 16's count is higher by the cases of R2 and R3 (items 81 and 82) and it returns the count and hashes of the files it made (item 84). (revised, addendum 13) Build 17's count is above 759 (build 16: 759 of 759) by the cases of item 87, and it returns the count and hashes of the files it made (item 90). (revised, addendum 14)
 
 ## What the runner writes (`results_m4/out/`) (revised, addendum 8)
 
@@ -738,7 +807,7 @@ of items 64 and 67; build 15's likewise, and build 15's is higher by the cases o
   `RUN_DONE` marker with the exit code (3 after any guard, ceiling or timeout stop with inputs unmeasured) and the per-input
   status of item 8 (items 46, 55), in which an input decided before an early end stays `decided` or `void_by_rule`.
 
-## Build 16: exactly these changes (new, addendum 13; binds first)
+## Build 16: exactly these changes (new, addendum 13; binds first) (superseded for the next build by the closing section "Build 17: exactly these changes", addendum 14; kept as the record of build 16)
 
 Read this section before the checklist. It lists the only edits of build 16. The 85 items above are the record of why; do not diff them
 against the files. The files you edit are the ones now in the run directory: `run_m4.py` (about 7,416 lines) and `onbox_m4.sh` (642 lines).
@@ -820,3 +889,51 @@ do not edit them by hand. The count is above 749; the `onbox_m4.sh` hash equals 
 - V6. `python3 run_m4.py --selftest` ends with the line `selftest: PASS`, prints `selftest: N of N checks passed` with N above 749, and runs in under 300 s.
 
 Nothing else is changed. A line changed outside R1, R2, R3 and R5 is a blocking finding in review 9. The deferred items of item 85 are not part of this build.
+
+## Build 17: exactly these changes (new, addendum 14; binds first)
+
+Read this section before the checklist and before the Build 16 section. It lists the only edits of build 17. The 91 items above are the record of
+why; do not diff them against the files. The files you edit are the ones now in the run directory: `run_m4.py` (7,523 lines) and `onbox_m4.sh`
+(642 lines). `onbox_m4.sh` is never edited.
+
+**Step 0.** Compute the sha256 of both files with the stdlib. If `run_m4.py` begins `0fe4b0cd` and `onbox_m4.sh` begins `8982a9e0`, they are build 16's
+files and S1, S2 and S3 are mandatory. If `run_m4.py` begins otherwise, apply V1 to V3 below to find which of S1 to S3 is already met, make only the
+missing ones, and say which in the return.
+
+**S1. The tenth pin (item 86).** Find the assignment `PIP_PINS = ` in `run_m4.py` (the nine strings are at about lines 383 to 391 after build 16's
+comment). Append, as the last element, in the same quoting and container style, the string `nvidia-cuda-nvcc-cu12==12.6.85`. The nine strings and
+their order are not touched. The pinned install call (`[... "install", ..., "--report", str(report_path)] + PIP_PINS`) already passes the list whole;
+it is not edited. Change every test of the count nine or the nine-entry list for `PIP_PINS` (in `pip_pins_problems`, if it holds a count, and in
+`selftest_pip_pins`) to ten and the ten-entry list, and nothing else that is nine.
+
+**S2. The comment (item 86).** In the contiguous `#` block directly above `PIP_PINS`: replace line 1 with exactly
+`# PIP_PINS: the ten pins of record (EXEC_NOTE items 70 and 86); nothing here is read from an operator file.` and add after line 6, as a seventh line of
+the same block, exactly:
+
+```
+# The tenth pin, nvidia-cuda-nvcc-cu12==12.6.85, is a ruling of the gate (addendum 14): launch 2's smoke check failed at "import jax" with the unpinned 12.9.86, where cuda_nvcc.__file__ is None; whether 12.6.85 cures it is decided by the operator's import test T3 of EXEC_NOTE item 88, not by the resolve.
+```
+
+Lines 2 to 6 stay as they are.
+
+**S3. The selftest cases (item 87).** In `selftest_pip_pins`: the cases (a) to (e) of item 87, and no other change. `pip_pins_comment_problems` and
+`pip_pins_problems`' lone-sibling refusal are not edited. Every planted text is built so that the literal prefixes of the static check (item 81) do not
+appear in code.
+
+**S4. Count and hash lines.** The selftest count and the line `selftest: files sha256 run_m4.py <hash> onbox_m4.sh <hash>` are computed by the script;
+do not edit them by hand. The count is above 759; the `onbox_m4.sh` hash equals the one before the build.
+
+**The return (item 90)** carries the fields of item 90, among them `onbox_command` equal to `bash remote_run_m4.sh bash onbox_m4.sh`. It never says
+"STOPPED", "NOT BUILT" or "NOT ISSUED".
+
+**Checks the build runs on the files, before and after (stdlib, text only, no network).**
+
+- V1. `PIP_PINS` holds ten strings: the nine of item 70 in order, then `nvidia-cuda-nvcc-cu12==12.6.85`. Before: fails. After: passes.
+- V2. The comment block above `PIP_PINS` begins with the new line 1, has the seventh line of S2, names the four sources, contains the requires sentence and
+  none of "INFERENCES MADE BY THE REVIEW BOARD" and "not verified facts". Before: fails. After: passes.
+- V3. `selftest_pip_pins` holds the cases of item 87. Before: fails. After: passes.
+- V4. The pinned `pip install` call passes `PIP_PINS` whole and carries none of the options item 71 forbids. Before and after: passes; nothing is edited for it.
+- V5. `onbox_m4.sh` is byte-identical to its state before the build (sha256 begins `8982a9e0`).
+- V6. `python3 run_m4.py --selftest` ends with the line `selftest: PASS`, prints `selftest: N of N checks passed` with N above 759, and runs in under 300 s.
+
+Nothing else is changed. A line changed outside S1 to S4 is a blocking finding in review 10. The reporting-only items of item 91 are not part of this build.
