@@ -1,0 +1,77 @@
+{
+  "capability_check": {
+    "found": {
+      "alphafold": "present",
+      "colabfold": "present",
+      "jax": "0.4.35",
+      "jax_devices": [
+        "gpu"
+      ],
+      "openmm": "8.1.1.dev-54c1306",
+      "openmm_cuda": true,
+      "resolved_tools": {
+        "colabfold_batch": "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/colabfold_batch",
+        "lgd_generate_conformations.py": "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/lgd_generate_conformations.py",
+        "lgd_rank.py": "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/lgd_rank.py",
+        "lightdock3.py": "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/lightdock3.py",
+        "lightdock3_setup.py": "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/lightdock3_setup.py"
+      }
+    },
+    "ok": true,
+    "problems": []
+  },
+  "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+  "finished_utc": "2026-10-21T19:59:21Z",
+  "installs_run": "none: this program installs nothing",
+  "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+  "setup_seconds_used": 28.476,
+  "started_utc": "2026-10-21T19:58:55Z",
+  "steps": [
+    {
+      "cmd": [
+        "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/python3",
+        "-c",
+        "\nimport json, sys\nout = {\"problems\": [], \"found\": {}}\ntry:\n    import jax\n    out[\"found\"][\"jax\"] = jax.__version__\n    devices = [d.platform for d in jax.devices()]\n    out[\"found\"][\"jax_devices\"] = devices\n    if not any(p in (\"gpu\", \"cuda\") for p in devices):\n        out[\"problems\"].append(\"jax lists no graphics-processor device\")\nexcept Exception as exc:\n    out[\"problems\"].append(\"jax unusable: %s\" % exc)\ntry:\n    import alphafold\n    out[\"found\"][\"alphafold\"] = getattr(alphafold, \"__version__\", \"present\")\nexcept Exception as exc:\n    out[\"problems\"].append(\"the AlphaFold-Multimer stack is unusable: %s\" % exc)\ntry:\n    import colabfold\n    out[\"found\"][\"colabfold\"] = getattr(colabfold, \"__version__\", \"present\")\nexcept Exception as exc:\n    out[\"problems\"].append(\"colabfold unusable: %s\" % exc)\ntry:\n    import openmm\n    from openmm import Platform\n    out[\"found\"][\"openmm\"] = openmm.version.version\n    Platform.getPlatformByName(\"CUDA\")\n    out[\"found\"][\"openmm_cuda\"] = True\nexcept Exception as exc:\n    out[\"problems\"].append(\"OpenMM has no CUDA platform: %s\" % exc)\nprint(json.dumps(out))\n"
+      ],
+      "log": "/home/ubuntu/m4_run/results_m4/out/tool_logs/setup_smoke_imports.log",
+      "name": "smoke_imports",
+      "rc": 0,
+      "seconds": 8.291,
+      "timed_out": false
+    },
+    {
+      "cmd": [
+        "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/colabfold_batch",
+        "--help"
+      ],
+      "log": "/home/ubuntu/m4_run/results_m4/out/tool_logs/setup_smoke_help_colabfold_batch.log",
+      "name": "smoke_help_colabfold_batch",
+      "rc": 0,
+      "seconds": 9.71,
+      "timed_out": false
+    },
+    {
+      "cmd": [
+        "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/lightdock3.py",
+        "--help"
+      ],
+      "log": "/home/ubuntu/m4_run/results_m4/out/tool_logs/setup_smoke_help_lightdock3_py.log",
+      "name": "smoke_help_lightdock3_py",
+      "rc": 0,
+      "seconds": 0.327,
+      "timed_out": false
+    },
+    {
+      "cmd": [
+        "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/lgd_generate_conformations.py",
+        "--help"
+      ],
+      "log": "/home/ubuntu/m4_run/results_m4/out/tool_logs/setup_smoke_help_lgd_generate_conformations_py.log",
+      "name": "smoke_help_lgd_generate_conformations_py",
+      "rc": 0,
+      "seconds": 7.147,
+      "timed_out": false
+    }
+  ],
+  "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+}
