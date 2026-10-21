@@ -1,0 +1,144 @@
+{
+ "name": "blind-01-r0",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2351-loop/out/r0/card",
+ "script": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2351-loop/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "9a56002414f95a8e688c9dc42e43af2a7aff8d71d01169143170adb81bd69d3e",
+ "args": {
+  "seed": 1,
+  "pool_k": 3,
+  "picks_per_branch": 2,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 1000,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2351-loop/out/r0/card/work",
+  "fixed_roots": [],
+  "seed_ideas": [
+   {
+    "id": "endosome-md",
+    "title": "pH-resolved capsid and glycan dynamics from molecular simulation",
+    "text": "Simulate capsid conformational change, glycan retention and membrane-facing behavior across endosomal pH (7.4 to 4.0), extending the cryo-EM pH series in which AAV9 stays galactose-bound at pH 5.5, to test whether post-binding fate is computable from physics — the one computational result that could upgrade 'not determinable from binding' to 'determinable from binding + physics'. Narrowing: Leaves aside whole-cell trafficking and in vivo parenchymal delivery, and simulated pH-dependent capsid conformations stand in for the endosomal sorting assay; its answer still moves the root question because BR1-versus-BR1N shows fate is decided after binding, so any computable post-binding descriptor is the first candidate for a determinacy-restoring signature.",
+    "root_link": "Bears on the determinacy half of the root question — whether post-uptake fate (transcytosis versus endosomal retention) is derivable from anything a physics-level map of binding can compute.",
+    "compute_open": "More parallel compute buys simulation sampling (ensemble members and aggregate trajectory time): the largest amount any cited source reports is 3 μs total (500 ns × 2 serotypes × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053), and above that it is unknown whether converged sampling would expose sorting determinants that correlate with transcytosis-versus-retention labels, which exist for only a handful of capsids (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+    "sequential": "Each 2 fs integration step waits on the previous coordinates, so one 500 ns run is ~250 million sequential steps and a single run keeps one GPU essentially fully busy, while the answer needs several independent replicas per pH per capsid (the published pH screen ran 2 capsids × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053); steps must run in order along one trajectory, but replicas, pH conditions and capsids can run at the same time, which pays off when the relevant conformational transitions mix within each replica's length, and the nearest source that tried concurrent pH-conditioned capsid simulations is that same study (https://doi.org/10.3390/pharmaceutics18091053), with concurrent-replica GPU throughput shown at ~5 μs/day per GPU (https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/).",
+    "source_urls": [
+     "https://doi.org/10.3390/pharmaceutics18091053",
+     "https://pmc.ncbi.nlm.nih.gov/articles/PMC8428384",
+     "https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519"
+    ],
+    "narrowing": "Leaves aside whole-cell trafficking and in vivo parenchymal delivery, and simulated pH-dependent capsid conformations stand in for the endosomal sorting assay; its answer still moves the root question because BR1-versus-BR1N shows fate is decided after binding, so any computable post-binding descriptor is the first candidate for a determinacy-restoring signature.",
+    "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+    "kind": "physical"
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/mimo-v2.6-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "opencode_version": "1.18.34",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "c5b90e5054cd3774bbec25e4c430c207cf2662a7",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   }
+  }
+ },
+ "started": "2026-10-21T00:15:34.229Z",
+ "finished": "2026-10-21T01:04:54.311Z",
+ "totals": {
+  "cost_usd": 0.160281458,
+  "tokens": 342299,
+  "calls": 3,
+  "by_model": {
+   "opencode-go/glm-5.3-flash": {
+    "calls": 2,
+    "cost_usd": 0.02205348,
+    "tokens": 83408
+   },
+   "opencode-go/mimo-v2.6-pro": {
+    "calls": 1,
+    "cost_usd": 0.138227978,
+    "tokens": 258891
+   }
+  }
+ }
+}

@@ -1,0 +1,178 @@
+{
+  "option_title": "pH-resolved capsid and glycan dynamics from molecular simulation",
+  "question": "Can all-atom simulation at endosomal pH detect the one-residue difference that flips AAV brain entry and show galactose binding?",
+  "hypothesis": "pH-resolved trajectories of four capsid trimers separate fate-linked signatures because the three-fold unit holds both the glycan pocket and the fate-flipping site.",
+  "compute_axis": {
+    "quantity": "Independent 150-ns replica trajectories whose aggregate simulation the answer needs",
+    "unit": "trajectories",
+    "levels": [28, 36]
+  },
+  "held_fixed": [
+    "The four VP3 trimer systems (AAV9, AAV2, BR1, BR1N) plus AAV9 with terminal Gal-NAc (pose from PDB 7MTZ/7MUA)",
+    "Discrete PROPKA3 protonation states per pH condition (7.4, 5.5, 4.0), reviewing His229, His423, His629, Glu564",
+    "Replica length 150 ns, all-atom explicit solvent, same force field",
+    "Pre-registered descriptor set: spike loop 585-595 RMSF, VRI 263-269 order, pH-quartet contact occupancy, N-terminal 201-213 exposure, Gal-NAc contacts"
+  ],
+  "predictions": {
+    "if_lever": "At 28 trajectories the pH 5.5 separation ratio exceeds 3.0; packed GPUs reach it in 56 vs 70 copy-hours, 560 sequential hours.",
+    "if_not": "At 28 trajectories the ratio stays below 1.5 or sign-flips across replica halves; packing then buys only more noisy replicas, no earlier conclusion.",
+    "decision_rule": "if_lever if the class-separation ratio at pH 5.5 exceeds 3.0; if_not if it stays below 1.5 or sign-flips across replica halves.",
+    "noise_rule": "Independent velocity seeds; class gaps must exceed 2 pooled replica SDs and keep sign in both halves of each trajectory.",
+    "expected": "unsure",
+    "expected_why": "BR1 and BR1N differ by one residue, so any capsid-intrinsic signature is small and 150-ns replicas may be too short to resolve it."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "The plan varies the replica count (28, optional 36) and times packed, copies and sequential execution of the same 4200 ns on the 8-GPU instance.",
+  "scored_against": "The class-separation ratio at pH 5.5 against thresholds 3.0 (lever) and 1.5 (not), with the anchors: Trp503 glycan contact in >= 80% of last-100-ns frames at pH 5.5 and 7.4, VRI RMSF dropping with glycan, averaged structures <= 1.0 A apart over the VP3 core, and a 20-ns GROMACS repeat within 10% on Gal-NAc contact occupancy.",
+  "arms": [
+    {"id": "aav9", "what": "AAV9 VP3 trimer at pH 7.4, 5.5 and 4.0 (2 replicas each)"},
+    {"id": "aav2", "what": "AAV2 VP3 trimer at pH 7.4, 5.5 and 4.0 (2 replicas each)"},
+    {"id": "br1", "what": "BR1 VP3 trimer at pH 7.4, 5.5 and 4.0 (2 replicas each)"},
+    {"id": "br1n", "what": "BR1N VP3 trimer at pH 7.4, 5.5 and 4.0 (2 replicas each)"},
+    {"id": "aav9_gal", "what": "AAV9 VP3 trimer with terminal Gal-NAc (pose from PDB 7MTZ/7MUA) at pH 7.4 and 5.5 (2 replicas each)"},
+    {"id": "packing_modes", "what": "Same 4200-ns campaign timed three ways: sequential (one replica at a time, 1 GPU), copies (one replica per A100, no MPS), packed (two replicas per GPU via CUDA MPS)"}
+  ],
+  "baseline": {
+    "what": "Minzoni 2026: pH-resolved AAV capsid MD on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels",
+    "value": "3 us aggregate (500 ns x 2 serotypes x 3 pHs)",
+    "source_id": "minzoni_2026"
+  },
+  "anchor": {
+    "what": "Published cryo-EM capsid structures differ by 0.5 A C-alpha RMSD between pH 4.0 and 7.4",
+    "published_value": 0.5,
+    "tolerance": "Averaged simulated structures must differ by <= 1.0 A over the VP3 core",
+    "independent_code": "One 20-ns GROMACS repeat (same force field, same protonation states) must agree within 10% on Gal-NAc contact occupancy"
+  },
+  "checks": [
+    "Anchor (published value): AAV9 stays galactose-bound at pH 5.5 and glycan binding orders VRI (Penzes 2021, PMC8428384); the Gal-NAc arm must keep a Trp503 contact in >= 80% of frames of the last 100 ns at pH 5.5 and 7.4, and VRI RMSF with glycan must drop vs apo.",
+    "Anchor (structure): cryo-EM C-alpha RMSD pH 4.0 vs 7.4 is 0.5 A; averaged structures must differ by <= 1.0 A over the VP3 core.",
+    "Cross-code: one 20-ns GROMACS repeat (same force field, same protonation states) must agree within 10% on Gal-NAc contact occupancy.",
+    "Equilibration: C-alpha RMSD plateau < 2 A over final 2 ns of a 5-ns NPT equilibration.",
+    "Noise: independent velocity seeds; class gaps must exceed 2 pooled replica SDs and keep sign in both halves of each trajectory."
+  ],
+  "phases": [
+    {
+      "id": "pilot",
+      "what": "Pilot: 4 h on one A100, timing the ~175k-atom trimer single-process and with 2 replicas per GPU via CUDA MPS, to measure throughput and packing gain.",
+      "stop_rule": "The pilot phase gate stops or shrinks the campaign if throughput is below plan.",
+      "gate": {"on": "ns_day_a100", "op": ">=", "value": 180, "else": "stop or shrink the campaign"}
+    },
+    {
+      "id": "build_eq",
+      "what": "Build the 14 systems with PROPKA3 protonation states (Gal-NAc pose from PDB 7MTZ/7MUA) and run a 5-ns NPT equilibration per system.",
+      "stop_rule": "C-alpha RMSD plateau < 2 A over the final 2 ns of each 5-ns NPT equilibration."
+    },
+    {
+      "id": "main",
+      "what": "Main campaign: 28 trajectories (14 conditions x 2 replicas x 150 ns) on one 8-GPU A100 instance, two replicas per GPU via CUDA MPS.",
+      "stop_rule": "The 58 h time box ends the phase; the derived estimate of the work is 56.0 wall-clock hours."
+    },
+    {
+      "id": "analyze",
+      "what": "Compute the pre-registered descriptors; apply the noise rule (class gaps > 2 pooled replica SDs, sign kept in both halves); run one 20-ns GROMACS cross-code repeat within 10% on Gal-NAc contact occupancy."
+    },
+    {
+      "id": "topup",
+      "what": "Optional top-up: 8 more replicas so the four capsids reach 4 replicas at pH 5.5 (16 h on the 8-GPU instance).",
+      "stop_rule": "16 h time box."
+    }
+  ],
+  "numbers": [
+    {"id": "atoms_trimer", "name": "VP3 trimer system size (~175k atoms)", "unit": "atoms", "value": 175000, "basis": "DESIGN"},
+    {"id": "ns_day_a100", "name": "Throughput of the ~175k-atom trimer per A100", "unit": "ns/day per A100", "value": 180, "basis": "PROXY", "source_id": "openmm_bench94", "quote": "ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day", "page_setting": "Official OpenMM A100 benchmarks for ApoA1 (92,224 atoms) and Cellulose (408,609 atoms)", "differs_in": ["The source systems are ApoA1 and Cellulose, not a ~175k-atom AAV VP3 trimer", "180 ns/day is the plan's conservative choice below the source's power-law interpolation, not a value the source states for this system"], "measured_by": "pilot"},
+    {"id": "packing_gain", "name": "MPS packing gain, 2 replicas per GPU", "unit": "x (speed-up vs single process per GPU)", "value": 1.25, "basis": "PROXY", "source_id": "openmm_mps3082", "quote": "ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x", "page_setting": "ApoA1 on one A100 with 2 CUDA MPS processes", "differs_in": ["The source system is ApoA1, not the ~175k-atom AAV VP3 trimer", "The plan uses 1.25, conservative against the source's 1.26x"], "measured_by": "pilot"},
+    {"id": "n_conditions", "name": "Simulation conditions (4 capsids x 3 pHs + AAV9+Gal at 2 pHs)", "unit": "conditions", "value": 14, "basis": "DESIGN"},
+    {"id": "replicas_per_condition", "name": "Replicas per condition in the main campaign", "unit": "replicas", "value": 2, "basis": "DESIGN"},
+    {"id": "replica_ns", "name": "Length of each replica", "unit": "ns", "value": 150, "basis": "DESIGN"},
+    {"id": "n_traj", "name": "Trajectories in the main campaign (14 x 2 = 28)", "unit": "trajectories", "basis": "DERIVED", "expr": "n_conditions*replicas_per_condition"},
+    {"id": "agg_ns", "name": "Aggregate simulation of the main campaign (4.2 us)", "unit": "ns", "basis": "DERIVED", "expr": "n_traj*replica_ns"},
+    {"id": "need_main_h", "name": "Estimated wall-clock hours for the main campaign on one 8-GPU instance (24*4200/(180*1.25*8))", "unit": "wall-clock hours", "basis": "DERIVED", "expr": "24*agg_ns/(ns_day_a100*packing_gain*8)"},
+    {"id": "main_time_box_h", "name": "Time box for the main campaign", "unit": "wall-clock hours", "value": 58, "basis": "DESIGN"},
+    {"id": "main_usd", "name": "Main campaign cost (58 h at 8 x $1.99)", "unit": "USD", "basis": "DERIVED", "expr": "main_time_box_h*8*1.99"},
+    {"id": "pilot_h", "name": "Pilot duration (4 h x 1 GPU)", "unit": "wall-clock hours", "value": 4, "basis": "DESIGN"},
+    {"id": "pilot_usd", "name": "Pilot cost", "unit": "USD", "basis": "DERIVED", "expr": "pilot_h*1*1.99"},
+    {"id": "storage_gib", "name": "Storage bought", "unit": "GiB", "value": 30, "basis": "DESIGN"},
+    {"id": "storage_days", "name": "Storage duration", "unit": "days", "value": 14, "basis": "DESIGN"},
+    {"id": "storage_usd", "name": "Storage cost (30 GiB x 14 d)", "unit": "USD", "basis": "DERIVED", "expr": "storage_gib*storage_days/30*fs_usd_gib_month"},
+    {"id": "contingency_usd", "name": "Contingency allotment", "unit": "USD", "value": 40, "basis": "DESIGN"},
+    {"id": "topup_extra_replicas", "name": "Extra replicas in the optional top-up", "unit": "replicas", "value": 8, "basis": "DESIGN"},
+    {"id": "topup_h", "name": "Optional top-up duration (16 h)", "unit": "wall-clock hours", "value": 16, "basis": "DESIGN"},
+    {"id": "topup_usd", "name": "Optional top-up cost", "unit": "USD", "basis": "DERIVED", "expr": "topup_h*8*1.99"},
+    {"id": "copies_h", "name": "Copies baseline for the parallel claim (8 GPUs, 1 rep/GPU; 24*4200/(180*8))", "unit": "wall-clock hours", "basis": "DERIVED", "expr": "24*agg_ns/(ns_day_a100*8)"},
+    {"id": "seq_h", "name": "Single-chain baseline for the parallel claim (1 GPU; 24*4200/180)", "unit": "wall-clock hours", "basis": "DERIVED", "expr": "24*agg_ns/ns_day_a100"},
+    {"id": "baseline_agg_ns", "name": "Aggregate simulation of the published baseline (Minzoni 2026)", "unit": "ns", "value": 3000, "basis": "CITED", "source_id": "minzoni_2026", "quote": "500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels", "page_setting": "AAV8/AAV9 5-fold assemblies, no glycans, no fate labels"},
+    {"id": "sep_ratio_lever", "name": "Class-separation ratio that decides for the lever", "unit": "class-separation ratio", "value": 3.0, "basis": "DESIGN"},
+    {"id": "sep_ratio_not", "name": "Class-separation ratio below which the lever fails", "unit": "class-separation ratio", "value": 1.5, "basis": "DESIGN"},
+    {"id": "trp503_contact_min_pct", "name": "Required Trp503 glycan contact (last 100 ns, pH 5.5 and 7.4)", "unit": "% of frames", "value": 80, "basis": "DESIGN"},
+    {"id": "crosscode_agree_max_pct", "name": "Allowed GROMACS-vs-OpenMM disagreement on Gal-NAc contact occupancy", "unit": "%", "value": 10, "basis": "DESIGN"},
+    {"id": "eq_rmsd_plateau_max_a", "name": "Allowed C-alpha RMSD plateau over the final 2 ns of 5-ns NPT equilibration", "unit": "A", "value": 2, "basis": "DESIGN"},
+    {"id": "cryoem_rmsd_a", "name": "Cryo-EM C-alpha RMSD between pH 4.0 and pH 7.4 structures", "unit": "A", "value": 0.5, "basis": "GUESS", "rests_on": "The plan states this figure as a published structural anchor but names no source for it; presumably its cryo-EM pH-series structures."},
+    {"id": "anchor_rmsd_tol_a", "name": "Allowed difference between averaged simulated structures over the VP3 core", "unit": "A", "value": 1.0, "basis": "DESIGN"},
+    {"id": "noise_sd_mult", "name": "Class gaps must exceed this many pooled replica SDs and keep sign in both trajectory halves", "unit": "pooled replica SDs", "value": 2, "basis": "DESIGN"}
+  ],
+  "cost": {
+    "rates": [
+      {"id": "rate_pilot", "gpu": "A100 SXM 40GB", "n_gpus": 1, "per_gpu_usd_h": 1.99, "gpu_memory_gb": 40},
+      {"id": "rate_main", "gpu": "A100 SXM 40GB", "n_gpus": 8, "per_gpu_usd_h": 1.99, "gpu_memory_gb": 40}
+    ],
+    "lines": [
+      {"id": "l_pilot", "phase": "pilot", "what": "Pilot: 4 h on one A100 to measure throughput and MPS packing gain", "kind": "work", "rate": "rate_pilot", "hours": "pilot_h"},
+      {"id": "l_main", "phase": "main", "what": "Main campaign time box: 28 trajectories on one 8-GPU instance, two replicas per GPU via CUDA MPS", "kind": "work", "rate": "rate_main", "hours": "main_time_box_h", "need": "need_main_h"},
+      {"id": "l_storage", "phase": "main", "what": "Storage, 30 GiB for 14 days", "kind": "storage", "usd": "storage_usd"},
+      {"id": "l_contingency", "phase": "main", "what": "Contingency allotment", "kind": "allotment", "usd": 40},
+      {"id": "l_topup", "phase": "topup", "what": "Optional top-up: 8 more replicas so the four capsids reach 4 replicas at pH 5.5", "kind": "work", "rate": "rate_main", "hours": "topup_h", "optional": true, "condition": "Only after the main campaign, if 4 replicas per capsid at pH 5.5 are wanted"}
+    ],
+    "scenarios": [
+      {"id": "sc_mps_source_ratio", "what": "Use the source's measured MPS ratio (1.26x) instead of the plan's conservative 1.25 packing gain", "set": {"packing_gain": 1.26}}
+    ],
+    "yields": ["n_traj", "agg_ns", "need_main_h", "replica_ns"],
+    "spend_cap_usd": 1000,
+    "total_stated": 974.12
+  },
+  "full_scale": [
+    {"id": "fs_full_replicas", "what": "Full scale: 4 replicas on all 14 conditions (56 trajectories)", "usd": "not priced in the plan", "ratio_to": "n_traj"},
+    {"id": "fs_pentamer", "what": "VP3 pentamer arm for the 5-fold pore descriptor of Minzoni 2026", "usd": "not priced in the plan"}
+  ],
+  "outside_budget": [
+    {"what": "System building and PROPKA3 protonation-state assignment, not itemized in the plan's cost lines", "qty": 14, "unit": "systems"},
+    {"what": "GROMACS 20-ns cross-code repeat, GPU time not in the plan's cost lines", "qty": 20, "unit": "ns"},
+    {"what": "Descriptor computation and analysis over the trajectories, not itemized in the plan's cost lines", "qty": 28, "unit": "trajectories"}
+  ],
+  "restructuring": {
+    "sequential_part": "Each 150 ns trajectory integrates forward step by step; all 28 replicas must finish.",
+    "method": "Independent replicas run concurrently, two per GPU via CUDA MPS interleaving steps, sixteen lanes on the 8-GPU instance.",
+    "condition": "Throughput must hold near 180 ns/day per A100 with ~1.25x MPS packing on the ~175k-atom trimer; the cheap check is the 4-hour single-GPU pilot that measures both.",
+    "condition_phase": "pilot",
+    "baseline_sequential": "One 150-ns replica at a time on one A100; 560 wall-clock hours for the full 4200 ns.",
+    "baseline_copies": "One replica per A100 on the 8-GPU instance, no MPS; 70 wall-clock hours for the full 4200 ns."
+  },
+  "scope_gap": [
+    "The 5-fold pore descriptor of Minzoni 2026 is out of budget (it needs a VP3 pentamer arm).",
+    "Full 4-replica sampling of all 14 conditions (56 trajectories) is unaffordable; only the optional pH 5.5 top-up is priced.",
+    "150-ns replicas may be too short to resolve a one-residue (Q587N) capsid-intrinsic signature.",
+    "Separation is judged on simulation descriptors only, not on a measured BBB-fate outcome."
+  ],
+  "novelty": {
+    "closest_prior": "Minzoni 2026 ran pH-resolved AAV capsid MD: 500 ns x 2 serotypes x 3 pHs = 3 us aggregate, no glycans, no fate labels [minzoni_2026].",
+    "closest_source_id": "minzoni_2026",
+    "prior_max_level": 6,
+    "left_open": "Prior work ran no glycans and no fate-labeled capsids, leaving whether simulation resolves BR1 vs BR1N and galactose binding across pH untested.",
+    "decides": "no",
+    "searched": true
+  },
+  "limits": [
+    "Results are 150-ns descriptor proxies for one capsid pair and a glycan pocket; they cannot establish BBB transport or the 5-fold pore mechanism."
+  ],
+  "test_summary": "Simulate VP3 trimers of AAV9, AAV2, BR1 and BR1N at pH 7.4, 5.5 and 4.0, plus AAV9 with galactose, 150 ns x 2 replicas each. Pre-registered loop, contact and exposure descriptors test whether the one-residue BR1/BR1N difference leaves a detectable signature.",
+  "sources": [
+    {"id": "penzes_2021", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC8428384/", "quote": "located in a pocket in the proximity of the 3-fold axis, on the surface wall of the 3-fold spikes", "supports": "The AAV9 galactose pocket (Asn470, Asp271, Asn272, Tyr446, Trp503) sits in the 3-fold trimer, and the anchor that AAV9 stays galactose-bound at pH 5.5 with VRI ordering."},
+    {"id": "kawabata_2023", "url": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10036519/", "quote": "whose single Q587N difference flips BBB fate (Kawabata 2023)", "supports": "The BR1/BR1N insertion site (NRGTEWD between R588 and Q589, variable region VIII) motivates comparing BR1 with BR1N."},
+    {"id": "minzoni_2026", "url": "https://doi.org/10.3390/pharmaceutics18091053", "quote": "500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels", "supports": "The published baseline (3 us aggregate) and the closest prior work; the open copy is https://digitalcommons.mtu.edu/michigantech-p2/2986/."},
+    {"id": "openmm_bench94", "url": "https://github.com/openmm/openmm-org/issues/94", "quote": "ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day", "supports": "The A100 throughput benchmarks behind the 180 ns/day proxy for the ~175k-atom trimer."},
+    {"id": "openmm_mps3082", "url": "https://github.com/openmm/openmm/issues/3082", "quote": "ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x", "supports": "The MPS packing-gain proxy; the plan conservatively uses 1.25."},
+    {"id": "lambda_pricing", "url": "https://lambda.ai/pricing", "quote": "A100 SXM 40GB at $1.99/GPU-h", "supports": "The GPU rates for the pilot, main and optional top-up lines (prices as supplied in the run, read 2026-10-21)."}
+  ],
+  "files_read": [
+    "/home/hal/dev/interp/metis/experiments/blind-01/20261020-2351-loop/out/r0/card/work/seed-1/seed/idea/fa3e0c93/producer.md"
+  ]
+}

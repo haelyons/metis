@@ -1,0 +1,206 @@
+{
+ "table": "| Pick | Result | Picked | Expected | Lever | Open → | Stakes → | Verifiable | Internals | Reshape → | Baseline | Decides at |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| [seed·idea·1](#card-seed-idea-1) pH-resolved capsid and glycan dynamics from molecular simulation | halted: G-plan | seed | unsure | — | — → — | — → — | — | — | — → — | — | not judged · plan $0 · 0 GUESS |",
+ "cards": [
+  "<a id=\"card-seed-idea-1\"></a>**endosome-md · pH-resolved capsid and glycan dynamics from molecular simulation.** seed pick · compute tested: yes · plan expects: unsure · halted: G-plan\n\n**Question.** Can all-atom simulation at endosomal pH detect the one-residue difference that flips AAV brain entry and show galactose binding?\n\n**What is known.** Minzoni 2026 ran pH-resolved AAV capsid MD: 500 ns x 2 serotypes x 3 pHs = 3 us aggregate, no glycans, no fate labels [minzoni_2026]. Prior work ran no glycans and no fate-labeled capsids, leaving whether simulation resolves BR1 vs BR1N and galactose binding across pH untested.\n\n**Hypothesis.** pH-resolved trajectories of four capsid trimers separate fate-linked signatures because the three-fold unit holds both the glycan pocket and the fate-flipping site.\n\n**Restructuring.** Each 150 ns trajectory integrates forward step by step; all 28 replicas must finish. Independent replicas run concurrently, two per GPU via CUDA MPS interleaving steps, sixteen lanes on the 8-GPU instance.\n\n**If compute is the lever.** At 28 trajectories the pH 5.5 separation ratio exceeds 3.0; packed GPUs reach it in 56 vs 70 copy-hours, 560 sequential hours.\n\n**If not.** At 28 trajectories the ratio stays below 1.5 or sign-flips across replica halves; packing then buys only more noisy replicas, no earlier conclusion.\n\n**Test.** Simulate VP3 trimers of AAV9, AAV2, BR1 and BR1N at pH 7.4, 5.5 and 4.0, plus AAV9 with galactose, 150 ns x 2 replicas each. Pre-registered loop, contact and exposure descriptors test whether the one-residue BR1/BR1N difference leaves a detectable signature.\n\n*Compute axis.* Independent 150-ns replica trajectories whose aggregate simulation the answer needs: 28–36 trajectories, 2 levels. Closest prior: 6 [minzoni_2026].\n\n**Check first.** Published cryo-EM capsid structures differ by 0.5 A C-alpha RMSD between pH 4.0 and 7.4 Tolerance: Averaged simulated structures must differ by <= 1.0 A over the VP3 core.\n\n**Would not show.** Results are 150-ns descriptor proxies for one capsid pair and a glycan pocket; they cannot establish BBB transport or the 5-fold pore mechanism.\n\n*Cost.* The cost record did not evaluate (5 errors); see the cost block.\n\n**Halted at G-plan.** compute_axis levels [28,36]: need at least 2 levels spanning 2x\n\n**Cost block.**\n```\nCOST: computed by the pipeline from the plan's inputs\nTags: [q] set by the question [c] cited [p] cited for a different setting [m] measured by the producer [d] plan's choice [g] guess [=] computed\nBudget     [q] $1,000 Lambda on-demand credit · storage covered · tax not covered · prices read 2026-10-21\nErrors     parse at full_scale.fs_full_replicas.usd: unexpected \"priced\" in \"not priced in the plan\"\n           parse at full_scale.fs_pentamer.usd: unexpected \"priced\" in \"not priced in the plan\"\n           quote at numbers.ns_day_a100.quote: 180 does not appear in the quote \"ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day\"; a value transformed from the page belongs in a DERIVED number\n           quote at numbers.packing_gain.quote: 1.25 does not appear in the quote \"ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x\"; a value transformed from the page belongs in a DERIVED number\n           quote at numbers.baseline_agg_ns.quote: 3000 does not appear in the quote \"500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels\"; a value transformed from the page belongs in a DERIVED number\n```\n\n**Derivations.**\n```\nDerivations: the cost record did not evaluate.\n```\n\n**Producer says (not judged).** expected unsure (BR1 and BR1N differ by one residue, so any capsid-intrinsic signature is small and 150-ns replicas may be too short to resolve it.); compute_tested yes (The plan varies the replica count (28, optional 36) and times packed, copies and sequential execution of the same 4200 ns on the 8-GPU instance.); decides no; searched yes.\n\n**Annotations.**\n- quote at numbers.ns_day_a100.quote: 180 does not appear in the quote \"ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day\"; a value transformed from the page belongs in a DERIVED number\n- quote at numbers.packing_gain.quote: 1.25 does not appear in the quote \"ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x\"; a value transformed from the page belongs in a DERIVED number\n- quote at numbers.baseline_agg_ns.quote: 3000 does not appear in the quote \"500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels\"; a value transformed from the page belongs in a DERIVED number\n- rate 1x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess\n- rate 8x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess\n- prior_max_level 6 is not in the quote of minzoni_2026\n\n**Root question (null).** Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?\n\n**Producer file.** [producer.md](/home/hal/dev/interp/metis/experiments/blind-01/20261020-2351-loop/out/r0/card/work/seed-1/seed/idea/fa3e0c93/producer.md)"
+ ],
+ "inventory": "| Option | Title | Distance | Cluster | Total | Status | Reason |\n|---|---|---|---|---|---|---|",
+ "frontier": "None.",
+ "log": [
+  "pool: 0 candidate cluster(s); picked 0",
+  "seed:idea:seed: PRODUCER returned no valid PLAN; extracting from producer.md",
+  "seed:idea:seed: quote at numbers.ns_day_a100.quote: 180 does not appear in the quote \"ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day\"; a value transformed from the page belongs in a DERIVED number",
+  "seed:idea:seed: quote at numbers.packing_gain.quote: 1.25 does not appear in the quote \"ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x\"; a value transformed from the page belongs in a DERIVED number",
+  "seed:idea:seed: quote at numbers.baseline_agg_ns.quote: 3000 does not appear in the quote \"500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels\"; a value transformed from the page belongs in a DERIVED number",
+  "seed:idea:seed: rate 1x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess",
+  "seed:idea:seed: rate 8x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess",
+  "seed:idea:seed: prior_max_level 6 is not in the quote of minzoni_2026",
+  "seed:idea:seed: halted at G-plan: compute_axis levels [28,36]: need at least 2 levels spanning 2x"
+ ],
+ "result_md": "# Result\n\nPicks 1 · PASS 0 · on-goal cards U4 0 · U3 0 · halts: G-plan 1\n\n## Table\n\n| Pick | Result | Picked | Expected | Lever | Open → | Stakes → | Verifiable | Internals | Reshape → | Baseline | Decides at |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n| [seed·idea·1](#card-seed-idea-1) pH-resolved capsid and glycan dynamics from molecular simulation | halted: G-plan | seed | unsure | — | — → — | — → — | — | — | — → — | — | not judged · plan $0 · 0 GUESS |\n\n## Frontier (listed, not produced)\n\nNone.\n\n## Cards\n\n<a id=\"card-seed-idea-1\"></a>**endosome-md · pH-resolved capsid and glycan dynamics from molecular simulation.** seed pick · compute tested: yes · plan expects: unsure · halted: G-plan\n\n**Question.** Can all-atom simulation at endosomal pH detect the one-residue difference that flips AAV brain entry and show galactose binding?\n\n**What is known.** Minzoni 2026 ran pH-resolved AAV capsid MD: 500 ns x 2 serotypes x 3 pHs = 3 us aggregate, no glycans, no fate labels [minzoni_2026]. Prior work ran no glycans and no fate-labeled capsids, leaving whether simulation resolves BR1 vs BR1N and galactose binding across pH untested.\n\n**Hypothesis.** pH-resolved trajectories of four capsid trimers separate fate-linked signatures because the three-fold unit holds both the glycan pocket and the fate-flipping site.\n\n**Restructuring.** Each 150 ns trajectory integrates forward step by step; all 28 replicas must finish. Independent replicas run concurrently, two per GPU via CUDA MPS interleaving steps, sixteen lanes on the 8-GPU instance.\n\n**If compute is the lever.** At 28 trajectories the pH 5.5 separation ratio exceeds 3.0; packed GPUs reach it in 56 vs 70 copy-hours, 560 sequential hours.\n\n**If not.** At 28 trajectories the ratio stays below 1.5 or sign-flips across replica halves; packing then buys only more noisy replicas, no earlier conclusion.\n\n**Test.** Simulate VP3 trimers of AAV9, AAV2, BR1 and BR1N at pH 7.4, 5.5 and 4.0, plus AAV9 with galactose, 150 ns x 2 replicas each. Pre-registered loop, contact and exposure descriptors test whether the one-residue BR1/BR1N difference leaves a detectable signature.\n\n*Compute axis.* Independent 150-ns replica trajectories whose aggregate simulation the answer needs: 28–36 trajectories, 2 levels. Closest prior: 6 [minzoni_2026].\n\n**Check first.** Published cryo-EM capsid structures differ by 0.5 A C-alpha RMSD between pH 4.0 and 7.4 Tolerance: Averaged simulated structures must differ by <= 1.0 A over the VP3 core.\n\n**Would not show.** Results are 150-ns descriptor proxies for one capsid pair and a glycan pocket; they cannot establish BBB transport or the 5-fold pore mechanism.\n\n*Cost.* The cost record did not evaluate (5 errors); see the cost block.\n\n**Halted at G-plan.** compute_axis levels [28,36]: need at least 2 levels spanning 2x\n\n**Cost block.**\n```\nCOST: computed by the pipeline from the plan's inputs\nTags: [q] set by the question [c] cited [p] cited for a different setting [m] measured by the producer [d] plan's choice [g] guess [=] computed\nBudget     [q] $1,000 Lambda on-demand credit · storage covered · tax not covered · prices read 2026-10-21\nErrors     parse at full_scale.fs_full_replicas.usd: unexpected \"priced\" in \"not priced in the plan\"\n           parse at full_scale.fs_pentamer.usd: unexpected \"priced\" in \"not priced in the plan\"\n           quote at numbers.ns_day_a100.quote: 180 does not appear in the quote \"ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day\"; a value transformed from the page belongs in a DERIVED number\n           quote at numbers.packing_gain.quote: 1.25 does not appear in the quote \"ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x\"; a value transformed from the page belongs in a DERIVED number\n           quote at numbers.baseline_agg_ns.quote: 3000 does not appear in the quote \"500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels\"; a value transformed from the page belongs in a DERIVED number\n```\n\n**Derivations.**\n```\nDerivations: the cost record did not evaluate.\n```\n\n**Producer says (not judged).** expected unsure (BR1 and BR1N differ by one residue, so any capsid-intrinsic signature is small and 150-ns replicas may be too short to resolve it.); compute_tested yes (The plan varies the replica count (28, optional 36) and times packed, copies and sequential execution of the same 4200 ns on the 8-GPU instance.); decides no; searched yes.\n\n**Annotations.**\n- quote at numbers.ns_day_a100.quote: 180 does not appear in the quote \"ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day\"; a value transformed from the page belongs in a DERIVED number\n- quote at numbers.packing_gain.quote: 1.25 does not appear in the quote \"ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x\"; a value transformed from the page belongs in a DERIVED number\n- quote at numbers.baseline_agg_ns.quote: 3000 does not appear in the quote \"500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels\"; a value transformed from the page belongs in a DERIVED number\n- rate 1x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess\n- rate 8x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess\n- prior_max_level 6 is not in the quote of minzoni_2026\n\n**Root question (null).** Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?\n\n**Producer file.** [producer.md](/home/hal/dev/interp/metis/experiments/blind-01/20261020-2351-loop/out/r0/card/work/seed-1/seed/idea/fa3e0c93/producer.md)\n\n## Inventory\n\n| Option | Title | Distance | Cluster | Total | Status | Reason |\n|---|---|---|---|---|---|---|\n\n## Log\n\n```\npool: 0 candidate cluster(s); picked 0\nseed:idea:seed: PRODUCER returned no valid PLAN; extracting from producer.md\nseed:idea:seed: quote at numbers.ns_day_a100.quote: 180 does not appear in the quote \"ApoA1 92,224 atoms = 445.35 ns/day; Cellulose 408,609 atoms = 126.69 ns/day\"; a value transformed from the page belongs in a DERIVED number\nseed:idea:seed: quote at numbers.packing_gain.quote: 1.25 does not appear in the quote \"ApoA1 on A100, 203.198 ns/day single vs 256.53 ns/day with 2 MPS processes = 1.26x\"; a value transformed from the page belongs in a DERIVED number\nseed:idea:seed: quote at numbers.baseline_agg_ns.quote: 3000 does not appear in the quote \"500 ns x 2 serotypes x 3 pHs = 3 us aggregate on AAV8/AAV9 5-fold assemblies, no glycans, no fate labels\"; a value transformed from the page belongs in a DERIVED number\nseed:idea:seed: rate 1x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess\nseed:idea:seed: rate 8x A100 SXM 40GB 40GB at $1.99/GPU-h is not on the price sheet; kept as a guess\nseed:idea:seed: prior_max_level 6 is not in the quote of minzoni_2026\nseed:idea:seed: halted at G-plan: compute_axis levels [28,36]: need at least 2 levels spanning 2x\n```",
+ "price_sheet": {
+  "read_at": "2026-10-21",
+  "instances": [
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 6.69,
+    "page_text": "8x — Plan: NVIDIA B200 SXM6 | VRAM/GPU: 180 GB | vCPUs: 208 | RAM: 2900 GiB | STORAGE: 22 TiB SSD | PRICE/GPU/HR*: $6.69"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 3.99,
+    "page_text": "8x — Plan: NVIDIA H100 SXM | VRAM/GPU: 80 GB | vCPUs: 208 | RAM: 1800 GiB | STORAGE: 22 TiB SSD | PRICE/GPU/HR*: $3.99"
+   },
+   {
+    "gpu": "NVIDIA A100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 2.79,
+    "page_text": "8x — Plan: NVIDIA A100 SXM | VRAM/GPU: 80 GB | vCPUs: 240 | RAM: 1800 GiB | STORAGE: 19.5 TiB SSD | PRICE/GPU/HR*: $2.79"
+   },
+   {
+    "gpu": "NVIDIA A100 SXM",
+    "gpu_memory_gb": 40,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "8x — Plan: NVIDIA A100 SXM | VRAM/GPU: 40 GB | vCPUs: 124 | RAM: 1800 GiB | STORAGE: 5.8 TiB SSD | PRICE/GPU/HR*: $1.99"
+   },
+   {
+    "gpu": "NVIDIA Tesla V100",
+    "gpu_memory_gb": 16,
+    "n_gpus": 8,
+    "per_gpu_usd_h": 0.79,
+    "page_text": "8x — Plan: NVIDIA Tesla V100 | VRAM/GPU: 16 GB | vCPUs: 88 | RAM: 448 GiB | STORAGE: 5.8 TiB SSD | PRICE/GPU/HR*: $0.79"
+   },
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 6.79,
+    "page_text": "4x — Plan: NVIDIA B200 SXM6 | VRAM/GPU: 180 GB | vCPUs: 104 | RAM: 1440 GiB | STORAGE: 11 TiB SSD | PRICE/GPU/HR*: $6.79"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 4.09,
+    "page_text": "4x — Plan: NVIDIA H100 SXM | VRAM/GPU: 80 GB | vCPUs: 104 | RAM: 900 GiB | STORAGE: 11 TiB SSD | PRICE/GPU/HR*: $4.09"
+   },
+   {
+    "gpu": "NVIDIA A100 PCIe",
+    "gpu_memory_gb": 40,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "4x — Plan: NVIDIA A100 PCIe | VRAM/GPU: 40 GB | vCPUs: 120 | RAM: 900 GiB | STORAGE: 1 TiB SSD | PRICE/GPU/HR*: $1.99"
+   },
+   {
+    "gpu": "NVIDIA A6000",
+    "gpu_memory_gb": 48,
+    "n_gpus": 4,
+    "per_gpu_usd_h": 1.09,
+    "page_text": "4x — Plan: NVIDIA A6000 | VRAM/GPU: 48 GB | vCPUs: 56 | RAM: 400 GiB | STORAGE: 1 TiB SSD | PRICE/GPU/HR*: $1.09"
+   },
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 6.89,
+    "page_text": "2x — Plan: NVIDIA B200 SXM6 | VRAM/GPU: 180 GB | vCPUs: 52 | RAM: 720 GiB | STORAGE: 5.5 TiB SSD | PRICE/GPU/HR*: $6.89"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 4.19,
+    "page_text": "2x — Plan: NVIDIA H100 SXM | VRAM/GPU: 80 GB | vCPUs: 52 | RAM: 450 GiB | STORAGE: 5.5 TiB SSD | PRICE/GPU/HR*: $4.19"
+   },
+   {
+    "gpu": "NVIDIA A100 PCIe",
+    "gpu_memory_gb": 40,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "2x — Plan: NVIDIA A100 PCIe | VRAM/GPU: 40 GB | vCPUs: 60 | RAM: 450 GiB | STORAGE: 1 TiB SSD | PRICE/GPU/HR*: $1.99"
+   },
+   {
+    "gpu": "NVIDIA A6000",
+    "gpu_memory_gb": 48,
+    "n_gpus": 2,
+    "per_gpu_usd_h": 1.09,
+    "page_text": "2x — Plan: NVIDIA A6000 | VRAM/GPU: 48 GB | vCPUs: 28 | RAM: 200 GiB | STORAGE: 1 TiB SSD | PRICE/GPU/HR*: $1.09"
+   },
+   {
+    "gpu": "NVIDIA B200 SXM6",
+    "gpu_memory_gb": 180,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 6.99,
+    "page_text": "1x — Plan: NVIDIA B200 SXM6 | VRAM/GPU: 180 GB | vCPUs: 26 | RAM: 360 GiB | STORAGE: 2.75 TiB SSD | PRICE/GPU/HR*: $6.99"
+   },
+   {
+    "gpu": "NVIDIA GH200",
+    "gpu_memory_gb": 96,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 2.29,
+    "page_text": "1x — Plan: NVIDIA GH200 | VRAM/GPU: 96 GB | vCPUs: 64 | RAM: 432 GiB | STORAGE: 4 TiB SSD | PRICE/GPU/HR*: $2.29"
+   },
+   {
+    "gpu": "NVIDIA H100 SXM",
+    "gpu_memory_gb": 80,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 4.29,
+    "page_text": "1x — Plan: NVIDIA H100 SXM | VRAM/GPU: 80 GB | vCPUs: 26 | RAM: 225 GiB | STORAGE: 2.75 TiB SSD | PRICE/GPU/HR*: $4.29"
+   },
+   {
+    "gpu": "NVIDIA H100 PCIe",
+    "gpu_memory_gb": 80,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 3.29,
+    "page_text": "1x — Plan: NVIDIA H100 PCIe | VRAM/GPU: 80 GB | vCPUs: 26 | RAM: 225 GiB | STORAGE: 1 TiB SSD | PRICE/GPU/HR*: $3.29"
+   },
+   {
+    "gpu": "NVIDIA A100 SXM",
+    "gpu_memory_gb": 40,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "1x — Plan: NVIDIA A100 SXM | VRAM/GPU: 40 GB | vCPUs: 30 | RAM: 220 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $1.99"
+   },
+   {
+    "gpu": "NVIDIA A100 PCIe",
+    "gpu_memory_gb": 40,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.99,
+    "page_text": "1x — Plan: NVIDIA A100 PCIe | VRAM/GPU: 40 GB | vCPUs: 30 | RAM: 225 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $1.99"
+   },
+   {
+    "gpu": "NVIDIA A10",
+    "gpu_memory_gb": 24,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.29,
+    "page_text": "1x — Plan: NVIDIA A10 | VRAM/GPU: 24 GB | vCPUs: 30 | RAM: 226 GiB | STORAGE: 1.3 TiB SSD | PRICE/GPU/HR*: $1.29"
+   },
+   {
+    "gpu": "NVIDIA A6000",
+    "gpu_memory_gb": 48,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 1.09,
+    "page_text": "1x — Plan: NVIDIA A6000 | VRAM/GPU: 48 GB | vCPUs: 14 | RAM: 100 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $1.09"
+   },
+   {
+    "gpu": "NVIDIA Quadro RTX 6000",
+    "gpu_memory_gb": 24,
+    "n_gpus": 1,
+    "per_gpu_usd_h": 0.69,
+    "page_text": "1x — Plan: NVIDIA Quadro RTX 6000 | VRAM/GPU: 24 GB | vCPUs: 14 | RAM: 46 GiB | STORAGE: 512 GiB SSD | PRICE/GPU/HR*: $0.69"
+   }
+  ],
+  "filesystem": {
+   "usd_gib_month": 0.2,
+   "page_text": "Filesystems are billed per GiB used per month in one-hour increments. For example, at a rate of $0.20 per GiB per month: If you use 1,000 GiB continuously for a full month (720 hours), you'll be billed $200.00. If you use 1,000 GiB continuously for a full day (24 hours), you'll be billed $6.67. Important: The rate above is used for example purposes and might not reflect current pricing. The actual price will be displayed when you create your filesystem.",
+   "example": true
+  }
+ },
+ "calibration": [
+  {
+   "key": "seed:idea:1",
+   "title": "pH-resolved capsid and glycan dynamics from molecular simulation",
+   "state": "not_judged",
+   "plan_usd": null,
+   "required": [],
+   "resolved": [],
+   "anchor": {
+    "what": "Published cryo-EM capsid structures differ by 0.5 A C-alpha RMSD between pH 4.0 and 7.4",
+    "published_value": 0.5,
+    "tolerance": "Averaged simulated structures must differ by <= 1.0 A over the VP3 core",
+    "independent_code": "One 20-ns GROMACS repeat (same force field, same protonation states) must agree within 10% on Gal-NAc contact occupancy"
+   },
+   "predictions": {
+    "if_lever": "At 28 trajectories the pH 5.5 separation ratio exceeds 3.0; packed GPUs reach it in 56 vs 70 copy-hours, 560 sequential hours.",
+    "if_not": "At 28 trajectories the ratio stays below 1.5 or sign-flips across replica halves; packing then buys only more noisy replicas, no earlier conclusion.",
+    "noise_rule": "Independent velocity seeds; class gaps must exceed 2 pooled replica SDs and keep sign in both halves of each trajectory.",
+    "expected": "unsure"
+   }
+  }
+ ]
+}

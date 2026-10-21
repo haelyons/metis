@@ -1,0 +1,239 @@
+{
+ "framer": {
+  "verdict": "NOT COMPUTE-BOUND",
+  "compute_signals": [
+   {
+    "subproblem": "Structure/energetic mapping of capsid–receptor interfaces at scale (AlphaFold-multimer/MD free energies across capsid variant × BMEC receptor matrices, including GPI-anchored vs transmembrane receptor geometry and AAVR PKD-domain engagement strength)",
+    "what_compute_buys": "A quantitative, continuous binding-signature descriptor space to correlate with transcytosis labels, and a test of whether receptor class/engagement geometry (e.g., LY6A/LY6C1/CA-IV/ALPL vs LRP6) predicts sorting rather than mere attachment."
+   },
+   {
+    "subproblem": "Endosomal-fate biophysics of capsids post-uptake (pH-dependent conformational change, membrane interaction, exposure of sorting/degradation determinants, e.g., AAV9 remaining galactose-bound at late-endosome pH)",
+    "what_compute_buys": "A test of whether the post-binding transcytose-vs-retain decision is derivable from capsid physics/structure — the one computational result that could upgrade 'not determinable from binding maps' to 'determinable from binding plus computed trafficking features'."
+   },
+   {
+    "subproblem": "Variant-effect machine learning over capsid-library NGS data paired with transcytosis phenotypes (deep-mutational-scanning style training within a single receptor class)",
+    "what_compute_buys": "Generalization beyond experimentally observed variants and an empirical at-scale test of whether binding-signature features suffice to predict transcytosis-vs-retention labels, versus requiring explicit trafficking covariates."
+   }
+  ]
+ },
+ "role": "widener",
+ "options": [
+  {
+   "id": "structure-matrix",
+   "title": "Capsid–receptor interface matrix from AlphaFold-Multimer and docking",
+   "summary": "Predict structures and continuous energetic descriptors for every capsid variant × BMEC receptor pair (GPI-anchored LY6A/LY6C1/CA-IV/ALPL versus transmembrane LRP6 and AAVR PKD domains), to test whether receptor-class geometry separates transcytosis-favoring from retention-favoring binding signatures.",
+   "root_link": "Bears on the signature-scope half of the root question — which capsid–receptor binding signatures make transcytosis-versus-retention classifiable from binding data.",
+   "compute_open": "More parallel compute buys model runs (complex predictions × seeds/recycles per pair): the largest per-pair amount any cited source reports is 5 AlphaFold-Multimer models with up to 20 recycles for one peptide–LRP6 pair (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and it is unknown above that whether saturating a full variant × receptor matrix with more seeds and pairs would make receptor-class geometry predict endosomal sorting fate, whose determinants are unmapped (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "One prediction waits on iterative MSA search and then on up to 20 network recycles, each conditioned on the previous model — roughly 20–30 sequential steps per complex — and the answer needs one run per variant × receptor × seed, each keeping a single GPU busy for minutes to hours; the recycles must run in order within a prediction, but different pairs and seeds can run at once once MSAs are cached, which pays off when pairs × seeds exceeds available GPUs, and the nearest source that tried multi-model-per-pair prediction is the LRP6 study (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518).",
+   "source_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519",
+    "https://www.ebi.ac.uk/about/news/technology-and-innovation/alphafold-200-million/"
+   ],
+   "narrowing": "Leaves aside intracellular sorting and the species/model conditioning of fate labels, and the computed interface geometry stands in for the transwell transcytosis readout; its answer still moves the root question because if receptor-class geometry cannot even separate the known transcytosis-favoring (LY6A/LY6C1/CA-IV/ALPL/LRP6) from retention-favoring (AAV2-scaffold) signatures, no binding map can determine fate."
+  },
+  {
+   "id": "endosome-md",
+   "title": "pH-resolved capsid and glycan dynamics from molecular simulation",
+   "summary": "Simulate capsid conformational change, glycan retention and membrane-facing behavior across endosomal pH (7.4 to 4.0), extending the cryo-EM pH series in which AAV9 stays galactose-bound at pH 5.5, to test whether post-binding fate is computable from physics — the one computational result that could upgrade 'not determinable from binding' to 'determinable from binding + physics'.",
+   "root_link": "Bears on the determinacy half of the root question — whether post-uptake fate (transcytosis versus endosomal retention) is derivable from anything a physics-level map of binding can compute.",
+   "compute_open": "More parallel compute buys simulation sampling (ensemble members and aggregate trajectory time): the largest amount any cited source reports is 3 μs total (500 ns × 2 serotypes × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053), and above that it is unknown whether converged sampling would expose sorting determinants that correlate with transcytosis-versus-retention labels, which exist for only a handful of capsids (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "Each 2 fs integration step waits on the previous coordinates, so one 500 ns run is ~250 million sequential steps and a single run keeps one GPU essentially fully busy, while the answer needs several independent replicas per pH per capsid (the published pH screen ran 2 capsids × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053); steps must run in order along one trajectory, but replicas, pH conditions and capsids can run at the same time, which pays off when the relevant conformational transitions mix within each replica's length, and the nearest source that tried concurrent pH-conditioned capsid simulations is that same study (https://doi.org/10.3390/pharmaceutics18091053), with concurrent-replica GPU throughput shown at ~5 μs/day per GPU (https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/).",
+   "source_urls": [
+    "https://doi.org/10.3390/pharmaceutics18091053",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8428384",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519"
+   ],
+   "narrowing": "Leaves aside whole-cell trafficking and in vivo parenchymal delivery, and simulated pH-dependent capsid conformations stand in for the endosomal sorting assay; its answer still moves the root question because BR1-versus-BR1N shows fate is decided after binding, so any computable post-binding descriptor is the first candidate for a determinacy-restoring signature."
+  },
+  {
+   "id": "library-ml",
+   "title": "Variant-effect ML over capsid-library NGS with transcytosis labels",
+   "summary": "Train sequence-to-fitness models on deep mutational scanning and library NGS counts paired with transcytosis-versus-retention labels, then prescreen candidate sequences in silico, to test whether binding-signature features suffice to predict fate at library scale.",
+   "root_link": "Bears on the signature-scope half of the root question — whether binding-signature features carry enough information to classify fate across a variant population rather than one pair at a time.",
+   "compute_open": "settled: parallel in-silico prescreening is already known to change which variants get tested — Voyager double-screened ~25 million candidates to select a 100k library with production-fitness r = 0.94 and transduction-classification accuracy 0.94 (https://www.voyagertherapeutics.com/wp-content/uploads/2025/05/Cox_ASGCT2025_VoyagerTherapeutics.pdf) and later screened 1.7 billion candidates to select 15,000 (https://www.voyagertherapeutics.com/wp-content/uploads/2026/05/POSTER_Voyager_LeveragingArtificialIntelligencetoDesignAAVMutantCapsidsOptimizedforAntibodyEvasion_May_2026_FINAL.pdf), in a capsid region where over 90% of random mutants are nonviable.",
+   "sequential": "Training is a sequential chain of gradient steps (hundreds to thousands of epochs, each waiting on the previous weights) and one training run keeps one GPU busy for hours, while the answer needs several independent seeds and cross-validation folds plus the scoring pass over millions of sequences; gradient steps must run in order within a run, but seeds, folds and scoring batches run at the same time, which pays off when labeled variants are numerous enough that independently trained models ensemble, and the nearest source that tried parallel model ensembles is Bryant et al., where all models benefited from ensembling (https://www.nature.com/articles/s41587-020-00793-4).",
+   "source_urls": [
+    "https://www.voyagertherapeutics.com/wp-content/uploads/2025/05/Cox_ASGCT2025_VoyagerTherapeutics.pdf",
+    "https://www.voyagertherapeutics.com/wp-content/uploads/2026/05/POSTER_Voyager_LeveragingArtificialIntelligencetoDesignAAVMutantCapsidsOptimizedforAntibodyEvasion_May_2026_FINAL.pdf",
+    "https://www.nature.com/articles/s41587-020-00793-4"
+   ],
+   "narrowing": "Leaves aside the mechanism — receptor identity and endosomal sorting — and treats library enrichment as a stand-in for per-variant fate classification; its answer still moves the root question because if models trained on binding-signature features cannot predict fate labels even at 1.7-billion-sequence screening scale, that indicates the signature genuinely lacks the information rather than that the screen was too small."
+  },
+  {
+   "id": "cryoet-refinement",
+   "title": "Cryo-ET/cryo-EM averaging of capsid–receptor complexes",
+   "summary": "Solve capsid–receptor complexes (engineered inserts bound to LRP6, CA-IV, ALPL, LY6A) at epitope-level resolution by sub-tomogram averaging and single-particle refinement, converting each binding event into a structural signature of epitope, stoichiometry and geometry.",
+   "root_link": "Bears on the operationalization of 'molecular mapping' in the root question — whether a structural map of capsid–receptor interactions is rich enough to define the binding signatures whose fate-predictiveness is being asked about.",
+   "compute_open": "More parallel compute buys particles averaged and hence map resolution: the largest particle count any cited source reports is 159,660 symmetry-expanded particles from 46 tomograms (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and it is unknown above that whether still higher-resolution interface maps would expose epitope/stoichiometry features that separate transcytosed from retained capsids sharing a receptor (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "One reconstruction waits step after step on motion correction, CTF estimation, particle picking, and then iterative 3D classification and refinement rounds — roughly 5–15 sequential refinement iterations per dataset — and the answer needs one run per complex, each keeping a GPU busy for hours to days (large-complex refinement historically took weeks on CPU clusters, https://www.cell.com/biophysj/fulltext/S0006-3495(15)02062-7); the refinement rounds must run in order because each consumes the previous orientations, but independent tomograms and complexes can be processed at the same time, which pays off when particle stacks are large and homogeneous, and the nearest source that tried it is RELION-2's GPU-parallel refinement (https://elifesciences.org/articles/18722) as applied to AAV capsids at 1.56–1.86 Å (https://www.nature.com/articles/s41467-018-06076-6).",
+   "source_urls": [
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518",
+    "https://www.nature.com/articles/s41467-018-06076-6",
+    "https://elifesciences.org/articles/18722"
+   ],
+   "narrowing": "Leaves aside intracellular fate and species conditioning, and the solved interface stands in for the functional transcytosis readout; its answer still moves the root question because the root asks which binding signatures determine fate, and no signature can be stated at all without epitope- and stoichiometry-level structures of the validated receptor classes."
+  }
+ ],
+ "screen": [
+  {
+   "id": "structure-matrix",
+   "title": "Capsid–receptor interface matrix from AlphaFold-Multimer and docking",
+   "changes": "",
+   "root_link": "Bears on the signature-scope half of the root question — which capsid–receptor binding signatures make transcytosis-versus-retention classifiable from binding data.",
+   "compute_open": "More parallel compute buys model runs (complex predictions × seeds/recycles per pair): the largest per-pair amount any cited source reports is 5 AlphaFold-Multimer models with up to 20 recycles for one peptide–LRP6 pair (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and it is unknown above that whether saturating a full variant × receptor matrix with more seeds and pairs would make receptor-class geometry predict endosomal sorting fate, whose determinants are unmapped (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "One prediction waits on iterative MSA search and then on up to 20 network recycles, each conditioned on the previous model — roughly 20–30 sequential steps per complex — and the answer needs one run per variant × receptor × seed, each keeping a single GPU busy for minutes to hours; the recycles must run in order within a prediction, but different pairs and seeds can run at once once MSAs are cached, which pays off when pairs × seeds exceeds available GPUs, and the nearest source that tried multi-model-per-pair prediction is the LRP6 study (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518).",
+   "narrowing": "Leaves aside intracellular sorting and the species/model conditioning of fate labels, and the computed interface geometry stands in for the transwell transcytosis readout; its answer still moves the root question because if receptor-class geometry cannot even separate the known transcytosis-favoring (LY6A/LY6C1/CA-IV/ALPL/LRP6) from retention-favoring (AAV2-scaffold) signatures, no binding map can determine fate.",
+   "stakes": 4,
+   "open": 4,
+   "reshape": 1,
+   "total": 8,
+   "distance": "SAME"
+  },
+  {
+   "id": "endosome-md",
+   "title": "pH-resolved capsid and glycan dynamics from molecular simulation",
+   "changes": "",
+   "root_link": "Bears on the determinacy half of the root question — whether post-uptake fate (transcytosis versus endosomal retention) is derivable from anything a physics-level map of binding can compute.",
+   "compute_open": "More parallel compute buys simulation sampling (ensemble members and aggregate trajectory time): the largest amount any cited source reports is 3 μs total (500 ns × 2 serotypes × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053), and above that it is unknown whether converged sampling would expose sorting determinants that correlate with transcytosis-versus-retention labels, which exist for only a handful of capsids (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "Each 2 fs integration step waits on the previous coordinates, so one 500 ns run is ~250 million sequential steps and a single run keeps one GPU essentially fully busy, while the answer needs several independent replicas per pH per capsid (the published pH screen ran 2 capsids × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053); steps must run in order along one trajectory, but replicas, pH conditions and capsids can run at the same time, which pays off when the relevant conformational transitions mix within each replica's length, and the nearest source that tried concurrent pH-conditioned capsid simulations is that same study (https://doi.org/10.3390/pharmaceutics18091053), with concurrent-replica GPU throughput shown at ~5 μs/day per GPU (https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/).",
+   "narrowing": "Leaves aside whole-cell trafficking and in vivo parenchymal delivery, and simulated pH-dependent capsid conformations stand in for the endosomal sorting assay; its answer still moves the root question because BR1-versus-BR1N shows fate is decided after binding, so any computable post-binding descriptor is the first candidate for a determinacy-restoring signature.",
+   "stakes": 5,
+   "open": 5,
+   "reshape": 1,
+   "total": 10,
+   "distance": "SAME"
+  },
+  {
+   "id": "library-ml",
+   "title": "Variant-effect ML over capsid-library NGS with transcytosis labels",
+   "changes": "",
+   "root_link": "Bears on the signature-scope half of the root question — whether binding-signature features carry enough information to classify fate across a variant population rather than one pair at a time.",
+   "compute_open": "settled: parallel in-silico prescreening is already known to change which variants get tested — Voyager double-screened ~25 million candidates to select a 100k library with production-fitness r = 0.94 and transduction-classification accuracy 0.94 (https://www.voyagertherapeutics.com/wp-content/uploads/2025/05/Cox_ASGCT2025_VoyagerTherapeutics.pdf) and later screened 1.7 billion candidates to select 15,000 (https://www.voyagertherapeutics.com/wp-content/uploads/2026/05/POSTER_Voyager_LeveragingArtificialIntelligencetoDesignAAVMutantCapsidsOptimizedforAntibodyEvasion_May_2026_FINAL.pdf), in a capsid region where over 90% of random mutants are nonviable.",
+   "sequential": "Training is a sequential chain of gradient steps (hundreds to thousands of epochs, each waiting on the previous weights) and one training run keeps one GPU busy for hours, while the answer needs several independent seeds and cross-validation folds plus the scoring pass over millions of sequences; gradient steps must run in order within a run, but seeds, folds and scoring batches run at the same time, which pays off when labeled variants are numerous enough that independently trained models ensemble, and the nearest source that tried parallel model ensembles is Bryant et al., where all models benefited from ensembling (https://www.nature.com/articles/s41587-020-00793-4).",
+   "narrowing": "Leaves aside the mechanism — receptor identity and endosomal sorting — and treats library enrichment as a stand-in for per-variant fate classification; its answer still moves the root question because if models trained on binding-signature features cannot predict fate labels even at 1.7-billion-sequence screening scale, that indicates the signature genuinely lacks the information rather than that the screen was too small.",
+   "stakes": 3,
+   "open": 1,
+   "reshape": 1,
+   "total": 4,
+   "distance": "SAME"
+  },
+  {
+   "id": "cryoet-refinement",
+   "title": "Cryo-ET/cryo-EM averaging of capsid–receptor complexes",
+   "changes": "",
+   "root_link": "Bears on the operationalization of 'molecular mapping' in the root question — whether a structural map of capsid–receptor interactions is rich enough to define the binding signatures whose fate-predictiveness is being asked about.",
+   "compute_open": "More parallel compute buys particles averaged and hence map resolution: the largest particle count any cited source reports is 159,660 symmetry-expanded particles from 46 tomograms (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and it is unknown above that whether still higher-resolution interface maps would expose epitope/stoichiometry features that separate transcytosed from retained capsids sharing a receptor (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "One reconstruction waits step after step on motion correction, CTF estimation, particle picking, and then iterative 3D classification and refinement rounds — roughly 5–15 sequential refinement iterations per dataset — and the answer needs one run per complex, each keeping a GPU busy for hours to days (large-complex refinement historically took weeks on CPU clusters, https://www.cell.com/biophysj/fulltext/S0006-3495(15)02062-7); the refinement rounds must run in order because each consumes the previous orientations, but independent tomograms and complexes can be processed at the same time, which pays off when particle stacks are large and homogeneous, and the nearest source that tried it is RELION-2's GPU-parallel refinement (https://elifesciences.org/articles/18722) as applied to AAV capsids at 1.56–1.86 Å (https://www.nature.com/articles/s41467-018-06076-6).",
+   "narrowing": "Leaves aside intracellular fate and species conditioning, and the solved interface stands in for the functional transcytosis readout; its answer still moves the root question because the root asks which binding signatures determine fate, and no signature can be stated at all without epitope- and stoichiometry-level structures of the validated receptor classes.",
+   "stakes": 5,
+   "open": 4,
+   "reshape": 1,
+   "total": 9,
+   "distance": "SAME"
+  }
+ ],
+ "ranked": [
+  {
+   "id": "structure-matrix",
+   "title": "Capsid–receptor interface matrix from AlphaFold-Multimer and docking",
+   "changes": "",
+   "root_link": "Bears on the signature-scope half of the root question — which capsid–receptor binding signatures make transcytosis-versus-retention classifiable from binding data.",
+   "compute_open": "More parallel compute buys model runs (complex predictions × seeds/recycles per pair): the largest per-pair amount any cited source reports is 5 AlphaFold-Multimer models with up to 20 recycles for one peptide–LRP6 pair (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and it is unknown above that whether saturating a full variant × receptor matrix with more seeds and pairs would make receptor-class geometry predict endosomal sorting fate, whose determinants are unmapped (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "One prediction waits on iterative MSA search and then on up to 20 network recycles, each conditioned on the previous model — roughly 20–30 sequential steps per complex — and the answer needs one run per variant × receptor × seed, each keeping a single GPU busy for minutes to hours; the recycles must run in order within a prediction, but different pairs and seeds can run at once once MSAs are cached, which pays off when pairs × seeds exceeds available GPUs, and the nearest source that tried multi-model-per-pair prediction is the LRP6 study (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518).",
+   "narrowing": "Leaves aside intracellular sorting and the species/model conditioning of fate labels, and the computed interface geometry stands in for the transwell transcytosis readout; its answer still moves the root question because if receptor-class geometry cannot even separate the known transcytosis-favoring (LY6A/LY6C1/CA-IV/ALPL/LRP6) from retention-favoring (AAV2-scaffold) signatures, no binding map can determine fate.",
+   "stakes": 4,
+   "open": 4,
+   "reshape": 1,
+   "total": 8,
+   "distance": "SAME",
+   "compute_open_status": "open",
+   "sequential_status": "named",
+   "scores": {
+    "stakes": 4,
+    "open": 4,
+    "reshape": 1
+   },
+   "eligible": true,
+   "reasons": []
+  },
+  {
+   "id": "endosome-md",
+   "title": "pH-resolved capsid and glycan dynamics from molecular simulation",
+   "changes": "",
+   "root_link": "Bears on the determinacy half of the root question — whether post-uptake fate (transcytosis versus endosomal retention) is derivable from anything a physics-level map of binding can compute.",
+   "compute_open": "More parallel compute buys simulation sampling (ensemble members and aggregate trajectory time): the largest amount any cited source reports is 3 μs total (500 ns × 2 serotypes × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053), and above that it is unknown whether converged sampling would expose sorting determinants that correlate with transcytosis-versus-retention labels, which exist for only a handful of capsids (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "Each 2 fs integration step waits on the previous coordinates, so one 500 ns run is ~250 million sequential steps and a single run keeps one GPU essentially fully busy, while the answer needs several independent replicas per pH per capsid (the published pH screen ran 2 capsids × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053); steps must run in order along one trajectory, but replicas, pH conditions and capsids can run at the same time, which pays off when the relevant conformational transitions mix within each replica's length, and the nearest source that tried concurrent pH-conditioned capsid simulations is that same study (https://doi.org/10.3390/pharmaceutics18091053), with concurrent-replica GPU throughput shown at ~5 μs/day per GPU (https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/).",
+   "narrowing": "Leaves aside whole-cell trafficking and in vivo parenchymal delivery, and simulated pH-dependent capsid conformations stand in for the endosomal sorting assay; its answer still moves the root question because BR1-versus-BR1N shows fate is decided after binding, so any computable post-binding descriptor is the first candidate for a determinacy-restoring signature.",
+   "stakes": 5,
+   "open": 5,
+   "reshape": 1,
+   "total": 10,
+   "distance": "SAME",
+   "compute_open_status": "open",
+   "sequential_status": "named",
+   "scores": {
+    "stakes": 5,
+    "open": 5,
+    "reshape": 1
+   },
+   "eligible": true,
+   "reasons": []
+  },
+  {
+   "id": "library-ml",
+   "title": "Variant-effect ML over capsid-library NGS with transcytosis labels",
+   "changes": "",
+   "root_link": "Bears on the signature-scope half of the root question — whether binding-signature features carry enough information to classify fate across a variant population rather than one pair at a time.",
+   "compute_open": "settled: parallel in-silico prescreening is already known to change which variants get tested — Voyager double-screened ~25 million candidates to select a 100k library with production-fitness r = 0.94 and transduction-classification accuracy 0.94 (https://www.voyagertherapeutics.com/wp-content/uploads/2025/05/Cox_ASGCT2025_VoyagerTherapeutics.pdf) and later screened 1.7 billion candidates to select 15,000 (https://www.voyagertherapeutics.com/wp-content/uploads/2026/05/POSTER_Voyager_LeveragingArtificialIntelligencetoDesignAAVMutantCapsidsOptimizedforAntibodyEvasion_May_2026_FINAL.pdf), in a capsid region where over 90% of random mutants are nonviable.",
+   "sequential": "Training is a sequential chain of gradient steps (hundreds to thousands of epochs, each waiting on the previous weights) and one training run keeps one GPU busy for hours, while the answer needs several independent seeds and cross-validation folds plus the scoring pass over millions of sequences; gradient steps must run in order within a run, but seeds, folds and scoring batches run at the same time, which pays off when labeled variants are numerous enough that independently trained models ensemble, and the nearest source that tried parallel model ensembles is Bryant et al., where all models benefited from ensembling (https://www.nature.com/articles/s41587-020-00793-4).",
+   "narrowing": "Leaves aside the mechanism — receptor identity and endosomal sorting — and treats library enrichment as a stand-in for per-variant fate classification; its answer still moves the root question because if models trained on binding-signature features cannot predict fate labels even at 1.7-billion-sequence screening scale, that indicates the signature genuinely lacks the information rather than that the screen was too small.",
+   "stakes": 3,
+   "open": 1,
+   "reshape": 1,
+   "total": 4,
+   "distance": "SAME",
+   "compute_open_status": "settled",
+   "sequential_status": "named",
+   "scores": {
+    "stakes": 3,
+    "open": 1,
+    "reshape": 1
+   },
+   "eligible": false,
+   "reasons": [
+    "compute effect settled: no open compute quantity"
+   ]
+  },
+  {
+   "id": "cryoet-refinement",
+   "title": "Cryo-ET/cryo-EM averaging of capsid–receptor complexes",
+   "changes": "",
+   "root_link": "Bears on the operationalization of 'molecular mapping' in the root question — whether a structural map of capsid–receptor interactions is rich enough to define the binding signatures whose fate-predictiveness is being asked about.",
+   "compute_open": "More parallel compute buys particles averaged and hence map resolution: the largest particle count any cited source reports is 159,660 symmetry-expanded particles from 46 tomograms (https://pmc.ncbi.nlm.nih.gov/articles/PMC11381518), and it is unknown above that whether still higher-resolution interface maps would expose epitope/stoichiometry features that separate transcytosed from retained capsids sharing a receptor (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "One reconstruction waits step after step on motion correction, CTF estimation, particle picking, and then iterative 3D classification and refinement rounds — roughly 5–15 sequential refinement iterations per dataset — and the answer needs one run per complex, each keeping a GPU busy for hours to days (large-complex refinement historically took weeks on CPU clusters, https://www.cell.com/biophysj/fulltext/S0006-3495(15)02062-7); the refinement rounds must run in order because each consumes the previous orientations, but independent tomograms and complexes can be processed at the same time, which pays off when particle stacks are large and homogeneous, and the nearest source that tried it is RELION-2's GPU-parallel refinement (https://elifesciences.org/articles/18722) as applied to AAV capsids at 1.56–1.86 Å (https://www.nature.com/articles/s41467-018-06076-6).",
+   "narrowing": "Leaves aside intracellular fate and species conditioning, and the solved interface stands in for the functional transcytosis readout; its answer still moves the root question because the root asks which binding signatures determine fate, and no signature can be stated at all without epitope- and stoichiometry-level structures of the validated receptor classes.",
+   "stakes": 5,
+   "open": 4,
+   "reshape": 1,
+   "total": 9,
+   "distance": "SAME",
+   "compute_open_status": "open",
+   "sequential_status": "named",
+   "scores": {
+    "stakes": 5,
+    "open": 4,
+    "reshape": 1
+   },
+   "eligible": true,
+   "reasons": []
+  }
+ ],
+ "gate_log": [
+  "library-ml: not ranked (compute effect settled: no open compute quantity)",
+  "seed:physical: no reshape option",
+  "pool: 0 candidate cluster(s); picked 0"
+ ],
+ "chosen": "endosome-md",
+ "why": "top pick"
+}

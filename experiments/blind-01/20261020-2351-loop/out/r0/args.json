@@ -1,0 +1,33 @@
+{
+ "seed": 1,
+ "pool_k": 3,
+ "picks_per_branch": 2,
+ "require_compute_lever": {
+  "physical": true,
+  "interp": true
+ },
+ "deepen_on_signal": false,
+ "budget_usd": 1000,
+ "budget_covers_storage": true,
+ "budget_covers_tax": false,
+ "base": "auto",
+ "fixed_roots": [],
+ "seed_ideas": [
+  {
+   "id": "endosome-md",
+   "title": "pH-resolved capsid and glycan dynamics from molecular simulation",
+   "text": "Simulate capsid conformational change, glycan retention and membrane-facing behavior across endosomal pH (7.4 to 4.0), extending the cryo-EM pH series in which AAV9 stays galactose-bound at pH 5.5, to test whether post-binding fate is computable from physics — the one computational result that could upgrade 'not determinable from binding' to 'determinable from binding + physics'. Narrowing: Leaves aside whole-cell trafficking and in vivo parenchymal delivery, and simulated pH-dependent capsid conformations stand in for the endosomal sorting assay; its answer still moves the root question because BR1-versus-BR1N shows fate is decided after binding, so any computable post-binding descriptor is the first candidate for a determinacy-restoring signature.",
+   "root_link": "Bears on the determinacy half of the root question — whether post-uptake fate (transcytosis versus endosomal retention) is derivable from anything a physics-level map of binding can compute.",
+   "compute_open": "More parallel compute buys simulation sampling (ensemble members and aggregate trajectory time): the largest amount any cited source reports is 3 μs total (500 ns × 2 serotypes × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053), and above that it is unknown whether converged sampling would expose sorting determinants that correlate with transcytosis-versus-retention labels, which exist for only a handful of capsids (https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519).",
+   "sequential": "Each 2 fs integration step waits on the previous coordinates, so one 500 ns run is ~250 million sequential steps and a single run keeps one GPU essentially fully busy, while the answer needs several independent replicas per pH per capsid (the published pH screen ran 2 capsids × 3 pHs, https://doi.org/10.3390/pharmaceutics18091053); steps must run in order along one trajectory, but replicas, pH conditions and capsids can run at the same time, which pays off when the relevant conformational transitions mix within each replica's length, and the nearest source that tried concurrent pH-conditioned capsid simulations is that same study (https://doi.org/10.3390/pharmaceutics18091053), with concurrent-replica GPU throughput shown at ~5 μs/day per GPU (https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/).",
+   "source_urls": [
+    "https://doi.org/10.3390/pharmaceutics18091053",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC8428384",
+    "https://pmc.ncbi.nlm.nih.gov/articles/PMC10036519"
+   ],
+   "narrowing": "Leaves aside whole-cell trafficking and in vivo parenchymal delivery, and simulated pH-dependent capsid conformations stand in for the endosomal sorting assay; its answer still moves the root question because BR1-versus-BR1N shows fate is decided after binding, so any computable post-binding descriptor is the first candidate for a determinacy-restoring signature.",
+   "root_question": "Can molecular mapping of AAV capsid-receptor interactions on brain microvascular endothelial cells determine which AAV variants transcytose across the blood-brain barrier versus remain intracellular, and for which capsid-receptor binding signatures?",
+   "kind": "physical"
+  }
+ ]
+}
