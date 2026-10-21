@@ -374,40 +374,12 @@ AF_PARAMS_URL = (
 )
 ALLOWED_DOWNLOAD_HOSTS = ("files.rcsb.org", "storage.googleapis.com")
 
-# Packages installed with pip, every one pinned to an exact version. The smoke
-# check on the box decides whether the forms chosen here really carry what is
-# needed; nothing is substituted if one fails, and a failure is exit 2.
-#
-# WHICH FORM WAS CHOSEN FOR THE DYNAMICS ENGINE, AND WHY IT IS STATED HERE.
-# The engine's plain wheel does not always carry the graphics-processor
-# platform the run needs. The form chosen here is THE SIBLING PACKAGE: two
-# pinned entries, the plain engine release "openmm==8.1.1" and the separate
-# package "openmm-cuda==8.1.1.12" that carries the CUDA platform.
-# SIBLING REQUIRES ENGINE VERSION: 8.1.1
-# The sibling's own version number reads as that engine release, so the two are
-# pinned as one pair. The earlier pairing with engine release 8.2.0 was
-# withdrawn: the installer refuses that sibling beside 8.2.0.
-# A bracketed extra, written "openmm[cuda12]==8.1.1", is not used and is refused
-# by the check below, because the engine release declares no extras.
-# This pairing, and the one bracketed extra in the list below (the graphics
-# plugin's "with_cuda", the project's own way of bringing the CUDA runtime
-# libraries from the package index), are INFERENCES MADE BY THE REVIEW BOARD,
-# not verified facts. They are drawn from these records, which this program
-# never opens: the board's report "gate_report_build13.md", the installer
-# output "pip_pins_resolve_build11.txt", and launch 1's own install log
-# "install_pip_install.log" under launch1/results_m4/out/tool_logs/.
-# Three checks, none of them this comment, decide whether the form works. The
-# operator resolves these exact requirements together with the installer in a
-# clean Python 3.10 environment, once before this program is edited and once
-# before the next launch (the test of record, directive item 66). The smoke
-# check then asks the installed engine for its CUDA platform on the box. If the
-# platform is missing, the smoke check fails and the run ends as broken
-# infrastructure before any measurement. Nothing falls back.
-#
-# The prediction stack takes the form whose published metadata carries what the
-# smoke check imports: "colabfold" supplies the command line and "alphafold-
-# colabfold" supplies the alphafold module it imports, with the JAX build pinned
-# to the version that release is built against.
+# PIP_PINS: the nine pins of record (EXEC_NOTE item 70); nothing here is read from an operator file.
+# Sources, named only: out/gate_report_build13.md, out/pip_pins_resolve_build11.txt,
+# out/launch1/results_m4/out/tool_logs/install_pip_install.log, out/pip_release_files_lightdock.txt.
+# Index metadata (out/pip_release_files_lightdock.txt): openmm-cuda==8.1.1.12 requires openmm==8.1.1, and that release has a CPython 3.10 manylinux x86_64 wheel (per the operator's listing). The OpenMM pair is read from that metadata.
+# The with_cuda extra on jax-cuda12-plugin is the gate's inference, tested by the operator's resolve of item 66.
+# That the whole set resolves in one pip call is decided by that resolve; that the CUDA platform loads, only by the smoke check on the box.
 PIP_PINS = [
     "jax==0.4.35",
     "jaxlib==0.4.35",
@@ -470,6 +442,49 @@ def pip_pins_problems(pins: list) -> list:
             "the openmm-cuda sibling is pinned without the plain dynamics "
             "engine beside it, and the two install only as a pair"
         )
+    return problems
+
+
+# The four records the comment above the pinned requirements must name. They
+# are named there as sources only; this program never opens any of them.
+PIN_COMMENT_SOURCES = (
+    "out/gate_report_build13.md",
+    "out/pip_pins_resolve_build11.txt",
+    "out/launch1/results_m4/out/tool_logs/install_pip_install.log",
+    "out/pip_release_files_lightdock.txt",
+)
+
+
+def pip_pins_comment_problems(comment: str, pins) -> list:
+    """What is wrong with the comment written above the pinned requirements.
+
+    `comment` is that comment block with the leading "#" of each line removed,
+    `pins` the list of pinned requirements. The returned list is empty when the
+    comment says what it must: the four source records by name, the published
+    metadata sentence with the engine release the sibling package needs, no
+    stale wording that calls the pair unverified, the bracketed extra named as
+    the gate's inference, and the wheel claim attributed to the operator.
+    """
+    problems = []
+    for name in PIN_COMMENT_SOURCES:
+        if name not in comment:
+            problems.append(f"missing source {name}")
+    m = re.search(r"openmm-cuda==8\.1\.1\.12\s+requires\s+openmm==(\d+(?:\.\d+)*)",
+                  comment)
+    if m is None:
+        problems.append("missing requires sentence")
+    else:
+        pinned = [p for p in pins if p.startswith("openmm==")]
+        version = pinned[0].split("==", 1)[1] if pinned else None
+        if m.group(1) != version:
+            problems.append("requires version differs from the openmm pin")
+    lowered = comment.lower()
+    if "not verified facts" in lowered or "INFERENCES MADE BY THE REVIEW BOARD" in comment:
+        problems.append("stale wording")
+    if "with_cuda" not in comment or "the gate's inference" not in comment:
+        problems.append("with_cuda inference missing")
+    if "per the operator's listing" not in comment:
+        problems.append("wheel attribution missing")
     return problems
 
 
@@ -6569,21 +6584,28 @@ def selftest_pip_pins(c: Checks) -> None:
     c.ok("this run pins the CUDA sibling package of the dynamics engine",
          any(p.startswith("openmm-cuda") for p in PIP_PINS))
     source_text = Path(__file__).read_text()
-    c.ok("the chosen form is stated in the file beside the pins",
-         "THE SIBLING PACKAGE" in source_text)
-    c.ok("the comment beside the pins says the pairing was inferred, not verified",
-         "INFERENCES MADE BY THE REVIEW BOARD" in source_text)
-    for named in ("gate_report_build13.md", "pip_pins_resolve_build11.txt",
-                  "install_pip_install.log"):
-        c.ok(f"the comment beside the pins names the record {named}",
-             named in source_text)
-    quoted = re.search(r"SIBLING REQUIRES ENGINE VERSION:\s*([0-9][0-9.]*)",
-                       source_text)
-    c.ok("the comment states which engine release the sibling package needs",
-         quoted is not None)
-    c.eq("the engine is pinned to the release the comment says the sibling needs",
-         parse_pin([p for p in PIP_PINS if p.startswith("openmm==")][0])["version"],
-         quoted.group(1) if quoted else None)
+    # The comment written directly above the pinned requirements: the run of
+    # lines beginning "#" just before the assignment, with that mark removed.
+    block = []
+    for line in source_text.split("PIP_PINS = ")[0].splitlines()[::-1]:
+        if not line.startswith("#"):
+            break
+        block.append(line.lstrip("#").strip())
+    live_comment = "\n".join(block[::-1])
+    c.eq("the comment beside the pinned requirements says what it must",
+         pip_pins_comment_problems(live_comment, PIP_PINS), [])
+    for named in PIN_COMMENT_SOURCES:
+        c.ok(f"a comment that drops the source {named} is refused",
+             any(p.startswith("missing source")
+                 for p in pip_pins_comment_problems(
+                     live_comment.replace(named, ""), PIP_PINS)))
+    c.ok("a comment still calling the pairing unverified is refused",
+         "stale wording" in pip_pins_comment_problems(
+             live_comment + " The pair is not verified facts.", PIP_PINS))
+    c.ok("a comment naming an engine release other than the pinned one is refused",
+         "requires version differs from the openmm pin"
+         in pip_pins_comment_problems(
+             live_comment.replace("openmm==8.1.1", "openmm==8.2.0"), PIP_PINS))
     extras_in_list = {parse_pin(p)["name"]: parse_pin(p)["extras"]
                       for p in PIP_PINS if parse_pin(p)["extras"]}
     c.eq("the graphics plugin is the only requirement asked for with an extra",
@@ -7375,11 +7397,96 @@ def selftest_consistency(c: Checks) -> None:
              all(n not in text for n in dump_names))
 
 
+def evidence_read_problems(text: str, kind: str) -> list:
+    """Places where a text opens one of the operator's evidence files.
+
+    The operator's evidence files live under two path prefixes. This program
+    and its shell script may name them in a comment, as sources, but may never
+    read them: the pinned requirements are written in the directive, not taken
+    from a file on disk. `kind` is "py" for python text and "sh" for shell
+    text. The returned list holds one "<line number>: <line>" string for each
+    place where such a path is the argument of a call that opens, reads, lists
+    or copies a file; an empty list means the text is clean.
+    """
+    prefixes = ("out/" + "pip_", "out/" + "gate")
+    call_py = re.compile(
+        r"(?<![\w.])(?:open|Path|read_text|read_bytes|glob|rglob|listdir|scandir"
+        r"|walk|copy|copy2|copyfile|copytree|move)\s*\(|os\.path\.\w+\s*\("
+    )
+    call_sh = re.compile(r"\b(?:cat|cp)\s|<")
+
+    def strip_comment(line: str) -> str:
+        if line.strip().startswith("#"):
+            return ""
+        out = line
+        for i, ch in enumerate(line):
+            if ch != "#" or i == 0 or line[i - 1] not in " \t":
+                continue
+            before = line[:i]
+            if before.count('"') % 2 == 0 and before.count("'") % 2 == 0:
+                out = before
+                break
+        return out
+
+    problems = []
+    previous = ""
+    for number, raw in enumerate(text.splitlines(), start=1):
+        code = strip_comment(raw)
+        logical = code
+        if previous.count("(") > previous.count(")"):
+            logical = previous + " " + code
+        for match in (call_py if kind == "py" else call_sh).finditer(logical):
+            tail = logical[match.start():]
+            if any(prefix in tail for prefix in prefixes):
+                problems.append(f"{number}: {raw.strip()}")
+                break
+        previous = code
+    return problems
+
+
+def selftest_no_evidence_reads(c: Checks) -> None:
+    """Neither file this build writes may read the operator's evidence files."""
+    p = "out/" + "pip_"
+    g = "out/" + "gate"
+    one = 'open("' + p + 'pins_list_b14.txt")'
+    two = 'Path("' + g + '_report_x.md").read_text()'
+    three = "cat " + p + "release_files_lightdock.txt"
+    c.eq("opening an evidence file by name is caught in python text",
+         len(evidence_read_problems(one, "py")), 1)
+    c.eq("reading a report file by name is caught in python text",
+         len(evidence_read_problems(two, "py")), 1)
+    c.eq("printing an evidence file is caught in shell text",
+         len(evidence_read_problems(three, "sh")), 1)
+    c.eq("the same python line inside a comment is not a read",
+         evidence_read_problems("# " + one, "py"), [])
+    c.eq("the same python line for the report inside a comment is not a read",
+         evidence_read_problems("# " + two, "py"), [])
+    c.eq("the same shell line inside a comment is not a read",
+         evidence_read_problems("# " + three, "sh"), [])
+    c.eq("an evidence name in a trailing python comment is not a read",
+         evidence_read_problems('x = 1  # open("' + p + 'y")', "py"), [])
+    tuple_text = ("NAMES = (\n"
+                  '    "' + g + '_report_build13.md",\n'
+                  '    "' + p + 'resolve_build11.txt",\n'
+                  ")\n")
+    c.eq("a list of evidence names with no call on those lines is not a read",
+         evidence_read_problems(tuple_text, "py"), [])
+
+    me = Path(__file__).resolve()
+    c.eq("this program never opens one of the operator's evidence files",
+         evidence_read_problems(me.read_text(), "py"), [])
+    onbox = me.with_name(f"onbox_{TAG}.sh")
+    if onbox.exists():
+        c.eq("the on-box script never opens one of the operator's evidence files",
+             evidence_read_problems(onbox.read_text(), "sh"), [])
+
+
 def selftest() -> int:
     """Run every planted case and report the tally, the file hashes and the verdict."""
     c = Checks()
     started = time.time()
-    for part in (selftest_consistency, selftest_parsers, selftest_bytes_and_storage,
+    for part in (selftest_consistency, selftest_no_evidence_reads,
+                 selftest_parsers, selftest_bytes_and_storage,
                  selftest_bands, selftest_harness_rules, selftest_cost_and_time,
                  selftest_anchor, selftest_environment, selftest_process_groups,
                  selftest_outer_timeout, selftest_guards, selftest_pairs,
