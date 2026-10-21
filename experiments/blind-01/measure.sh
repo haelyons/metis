@@ -568,7 +568,7 @@ ask() {   # name instruction-file: one read/write-only sonnet session following 
 
 case "$CMD" in
   ask) ask "$@" ;;
-  prepare) prepare "$@" ;; design) design "$@" ;; gate) gate "$@" ;; build) build "$@" ;; build-checks) build_checks ;; review) review ;;
+  prepare) prepare "$@" ;; design) design "$@" ;; gate) gate "$@" ;; build) build "$@" ;; build-checks) build_checks ;; review) review "$@" ;;
   launcher) launcher ;; launch) launch "$@" ;; score) score ;; post) post "$@" ;; status) status ;; wait) wait_stage "$@" ;;
   *) sed -n 2,22p "$0"; exit 2 ;;
 esac
