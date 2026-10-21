@@ -261,8 +261,9 @@ build_checks() {   # mechanical, after the build session or wf run exits
   echo "other files touched in the run dir: $others"
   bash -n "onbox_$TAG.sh" && echo "bash -n onbox: ok" || echo "bash -n onbox: SYNTAX ERROR"
   $PY -m py_compile "run_$TAG.py" && echo "py_compile run: ok" || echo "py_compile run: ERROR"; rm -rf __pycache__
-  timeout 300 $PY "run_$TAG.py" --selftest > "$log" 2>&1; local rc=$?
-  echo "selftest: exit $rc, $(wc -l < "$log") lines; $(grep -E '^selftest: ' "$log" | tr '\n' ';')"
+  local rc=0
+  if grep -q -- '--selftest' "run_$TAG.py"; then timeout 300 $PY "run_$TAG.py" --selftest > "$log" 2>&1; rc=$?; echo "selftest: exit $rc, $(wc -l < "$log") lines; $(grep -E '^selftest: ' "$log" | tr '\n' ';')"
+  else echo "selftest: none (implementer selftests dropped by ruling); author's tests: $([ -f "tests/tests_$TAG.py" ] && { $PY -m py_compile "tests/tests_$TAG.py" && echo "tests/tests_$TAG.py compiles ($(wc -l < tests/tests_$TAG.py) lines)" || echo "tests/tests_$TAG.py DOES NOT COMPILE"; rm -rf tests/__pycache__; } || echo "no tests file")"; fi
   grep -nE "\.keys([^(]|$)|LAMBDA_KEY|HF_KEY" "run_$TAG.py" "onbox_$TAG.sh" | wc -l | sed 's/^/mentions of key files or names in the built files (dict .keys() calls excluded): /'
   $PY - "$MDIR" "$TAG" <<'PYEOF'
 import re, sys
@@ -363,7 +364,7 @@ PYEOF
 launcher() {
   cd "$MDIR" || return 1
   local fs="${ENV_FS_NAME:-}"
-  gen_launcher "lambda_run_$TAG.sh" "results_$TAG" 'scp $SSHOPT run_'"$TAG"'.py remote_run_'"$TAG"'.sh "$RUNNER" ubuntu@$IP:'"$TAG"'_run/' "runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present" "$fs" || return 1
+  gen_launcher "lambda_run_$TAG.sh" "results_$TAG" 'scp $SSHOPT run_'"$TAG"'.py remote_run_'"$TAG"'.sh "$RUNNER" ubuntu@$IP:'"$TAG"'_run/; [ -f tests/tests_'"$TAG"'.py ] && scp $SSHOPT tests/tests_'"$TAG"'.py ubuntu@$IP:'"$TAG"'_run/' "runner, on-box batch, adapted remote bootstrap, record writer (frozen/), the author's tests file, data/ if present" "$fs" || return 1
   $PY - "$M3" "$MDIR" "$TAG" <<'PYEOF'
 import re, sys
 m3, m, tag = sys.argv[1:4]
@@ -507,10 +508,14 @@ launch() {
   local rv; rv=$(ls out/review_build*.json 2>/dev/null | sort -V | tail -1); [ -n "$rv" ] && grep -q '"PASS"' "$rv" || { echo "latest review is not PASS ($rv)"; return 1; }
   local bh; bh=$(ls out/BUILT_HASHES_build*.txt | sort -V | tail -1); ( cd "$MDIR" && sha256sum -c --quiet "$bh" ) || { echo "built files changed since $bh"; return 1; }
   # gate ruling (addenda 5 to 7): re-run the selftest before launch and compare its printed sha256 values with the files on disk
-  local st; st=$(timeout 300 $PY "run_$TAG.py" --selftest 2>&1 | tee "out/selftest_prelaunch_L$n.log" | grep -E '^selftest: (PASS|FAIL|files sha256)')
-  echo "$st" | grep -q '^selftest: PASS' || { echo "pre-launch selftest did not PASS"; return 1; }
-  local want; want=$(echo "$st" | grep -oE '[0-9a-f]{64}' | sort); local have; have=$(sha256sum "run_$TAG.py" "onbox_$TAG.sh" | awk '{print $1}' | sort)
-  [ "$want" = "$have" ] && echo "pre-launch selftest PASS; its printed hashes match the files on disk" || { echo "pre-launch selftest hashes differ from the files on disk"; return 1; }
+  if grep -q -- '--selftest' "run_$TAG.py"; then
+    local st; st=$(timeout 300 $PY "run_$TAG.py" --selftest 2>&1 | tee "out/selftest_prelaunch_L$n.log" | grep -E '^selftest: (PASS|FAIL|files sha256)')
+    echo "$st" | grep -q '^selftest: PASS' || { echo "pre-launch selftest did not PASS"; return 1; }
+    local want; want=$(echo "$st" | grep -oE '[0-9a-f]{64}' | sort); local have; have=$(sha256sum "run_$TAG.py" "onbox_$TAG.sh" | awk '{print $1}' | sort)
+    [ "$want" = "$have" ] && echo "pre-launch selftest PASS; its printed hashes match the files on disk" || { echo "pre-launch selftest hashes differ from the files on disk"; return 1; }
+  else
+    [ -f "tests/tests_$TAG.py" ] && $PY -m py_compile "tests/tests_$TAG.py" && rm -rf tests/__pycache__ && echo "pre-launch: author's tests compile; they run on the box in the shipped environment (no implementer selftest by ruling)" || { echo "pre-launch: tests/tests_$TAG.py missing or does not compile"; return 1; }
+  fi
   pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null && { echo "a launcher is already running"; return 1; }
   [ "$timeout" -le 7200 ] || { echo "timeout above 7,200 s (owner rule)"; return 1; }
   echo "== capacity"; rm -f out/.capacity.json.fallback

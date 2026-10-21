@@ -164,3 +164,8 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 19:00Z build 17 checks: selftest exit 0
 - 19:01Z build 17 (wf.js, opus, 54 s) changed nothing: its report stops on the build contract's 'two new files, edit nothing existing' sentence against the directive's in-place edit (7 mentions). Operator fix of record: in-place builds prepend one sentence to the directive text passed to the builder saying the two paths are overwritten in place; EXEC_NOTE.md itself unchanged. Build 18 follows. Test author (opus, 7 min): tests/tests_m4.py, 47 tests, needs GPU, compiles, black-box.
 - 19:02Z stage build on wf.js run 15: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1622680
+- 19:18Z build 18 checks: selftest exit 2
+- 19:19Z launcher copies written from m3's (declared points only); filesystem metis-env-us-east-1 attached
+- 19:19Z build 18 (wf.js, opus, 16 min, USD 11): the environment, tests and hold wiring landed (run_m4.py 4,765 lines, onbox_m4.sh 942); no pip install, no selftest. Launcher payload ships tests/tests_m4.py. Review 10 started.
+- 19:19Z review 9 of build 18 requested
+- 19:19Z stage review on wf.js run 6: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1656061

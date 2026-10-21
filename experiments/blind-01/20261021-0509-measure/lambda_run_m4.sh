@@ -113,10 +113,10 @@ for i in $(seq 1 24); do ssh $SSHOPT ubuntu@$IP true 2>/dev/null && { echo "[ssh
 # that never accepts SSH otherwise bleeds billing for the full marker deadline (2026-06-28 orphan, ~3h).
 [ "$SSHUP" = 0 ] && { echo "[ssh] sshd NEVER came up -> unhealthy box; aborting + tearing down"; exit 1; }
 
-# m4 payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present
+# m4 payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), the author's tests file, data/ if present
 echo "[scp] code -> box"
 ssh $SSHOPT ubuntu@$IP "mkdir -p m4_run/out m4_run/frozen m4_run/results_m4/out"
-scp $SSHOPT run_m4.py remote_run_m4.sh "$RUNNER" ubuntu@$IP:m4_run/
+scp $SSHOPT run_m4.py remote_run_m4.sh "$RUNNER" ubuntu@$IP:m4_run/; [ -f tests/tests_m4.py ] && scp $SSHOPT tests/tests_m4.py ubuntu@$IP:m4_run/
 scp $SSHOPT frozen/provenance.py ubuntu@$IP:m4_run/frozen/
 [ -d data ] && scp -r $SSHOPT data ubuntu@$IP:m4_run/
 # CRLF guard: a Windows-checkout (autocrlf) CRLF script shipped raw kills the on-box run at
