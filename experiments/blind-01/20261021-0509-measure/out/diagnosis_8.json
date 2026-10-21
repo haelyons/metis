@@ -1,0 +1,13 @@
+{
+  "stage": "second invocation of the multi-command chain, in the same directory family as the first, at its second command",
+  "expected": "each invocation starts from a clean directory: its first command writes a configuration file into the invocation's own working directory, which the second command then opens by relative path",
+  "observed": "the first invocation succeeded end to end. In the second, the first command exited 0 after 2.85 s but printed an error that its generated input files already existed beside the shared input files from the first invocation; it wrote no configuration file. The second command then exited 2 after 0.056 s on stderr 'the file does not exist' for that relative path and wrote no files.",
+  "engine_command_exit_code": 2,
+  "engine_command_seconds": 0.056,
+  "files_written_by_command": 0,
+  "mismatch_class": "config",
+  "fix_target": "runner",
+  "fix": "Copy the two input files into each invocation's own working directory before its first command, so generated files never collide; also treat an error line in stdout as failure.",
+  "why_previous_fixes_missed": "They targeted reading output after a successful run; the first invocation never collided, so the shared-input-directory collision on the second invocation stayed hidden until now.",
+  "confidence": "high"
+}

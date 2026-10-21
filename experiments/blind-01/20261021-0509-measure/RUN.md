@@ -254,3 +254,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:59Z build 24 checks: selftest exit 0
 - 22:00Z session diag1 started (model sonnet, pid 1934352, session 3f3a9541)
 - 22:00Z LAUNCH 8 (A100): same ladder, dry-run stage failed again (third time, changing messages); live evidence copied to out/launch8_live/; hold ended by RESUME (this on-box script still finishes on RESUME; build 24 changed nothing); a diagnostician session (infrastructure-only output) is reading launches 6 to 8 and the stage's code.
+- 22:02Z diagnostician (high confidence): the dry-run stage runs its command chain twice in one shared directory; the second invocation's first command refuses to overwrite generated files, exits 0 with an error line and writes no configuration file; its second command then exits 2 ('file does not exist'). Fix: one working directory per invocation (copy the inputs in), and treat an error line in stdout as failure. Fix build 25 bounded to that.
+- 22:02Z stage build on wf.js run 23: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1937880
