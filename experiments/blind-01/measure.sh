@@ -12,7 +12,7 @@
 #                           --family, --mode, --on-refusal pass through) under out/wf-<stage>-<stamp>/
 #   gate [--addendum <f>] [--via wf ...]   headless gate writer (read/write tools only): GATE_COMMIT.md + EXEC_NOTE.md; --via wf runs
 #                           the same instruction file as one agent() call on wf.js (measure/prompt_stage.js, role ls-writer)
-#   build [--keep] [--fix <evidence dir>]  headless operator: Workflow mode build -> run_<tag>.py onbox_<tag>.sh; then bash -n,
+#   build [--keep] [--fix <evidence dir>] [--review <review file>]  headless operator: Workflow mode build -> run_<tag>.py onbox_<tag>.sh; then bash -n,
 #                           (--fix: in-place fix bounded to the stage that failed on the box, evidence dir named to the builder)
 #                           (--keep leaves the previous build's files in place for a directive that asks for edits)
 #                           py_compile, the selftest to a log, hashes
@@ -229,17 +229,20 @@ EOF2
 build() {
   [ -s "$MDIR/GATE_COMMIT.md" ] && [ -s "$MDIR/EXEC_NOTE.md" ] || { echo "no GATE_COMMIT.md / EXEC_NOTE.md yet"; return 1; }
   pop_via "$@"
-  local keep=0 fixdir="" rest2=(); set -- "${REST[@]}"; while [ $# -gt 0 ]; do case "$1" in --keep) keep=1 ;; --fix) fixdir="$(realpath "$2")"; keep=1; shift ;; *) rest2+=("$1") ;; esac; shift; done; REST=("${rest2[@]}")
+  local keep=0 fixdir="" revfile="" rest2=(); set -- "${REST[@]}"; while [ $# -gt 0 ]; do case "$1" in --keep) keep=1 ;; --fix) fixdir="$(realpath "$2")"; keep=1; shift ;; --review) revfile="$(realpath "$2")"; keep=1; shift ;; *) rest2+=("$1") ;; esac; shift; done; REST=("${rest2[@]}")
   local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); n=$((n+1)); local name="build$n"
   if [ -f "$MDIR/run_$TAG.py" ] || [ -f "$MDIR/onbox_$TAG.sh" ]; then   # the previous build's files: archived, or kept in place for an incremental build (--keep)
     mkdir -p "$MDIR/out/build$((n-1))"
     if [ $keep = 1 ]; then cp -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files copied to out/build$((n-1))/ and KEPT in place (--keep)"
     else mv -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files archived under out/build$((n-1))/"; fi
   fi
-  $PY - "$MDIR" "$TAG" "$n" "$keep" "$fixdir" <<'PYEOF'
+  $PY - "$MDIR" "$TAG" "$n" "$keep" "$fixdir" "$revfile" <<'PYEOF'
 import json, sys
-m, tag, n, keep, fixdir = sys.argv[1:6]
+m, tag, n, keep, fixdir, revfile = sys.argv[1:7]
 note = open(f"{m}/EXEC_NOTE.md").read()
+if revfile:   # a review-fix build: bounded to the BLOCKING findings of one review; advisory findings untouched
+    note = (f"OPERATOR NOTE OF RECORD (review-fix build): the reviewer's file {revfile} reports BLOCKING finding(s) against directive items the files do not yet satisfy. Read it first. "
+            f"Fix EXACTLY those BLOCKING findings in run_{tag}.py and/or onbox_{tag}.sh with the smallest change that satisfies the cited directive items; leave every ADVISORY finding and everything else as it is. State each change in your selftest_output field as 'FIX: <file>: <directive item>: <what>'.\n\n") + note
 if fixdir:   # a fix build: bounded to the stage that failed on the box, evidence named; the diff is reviewed and sent to the gate
     note = (f"OPERATOR NOTE OF RECORD (fix build): on the last launch the on-box run failed at one stage after the tests passed. Evidence, read it first: {fixdir}/RUN_VALID.json (voided_by names the failed stage), the summary json in {fixdir}/, the records {fixdir}/*_tag-{tag}.json, the logs under {fixdir}/tool_logs/, and {fixdir}/run_detached.log. "
             f"Fix ONLY the defect that made that stage fail, in run_{tag}.py and/or onbox_{tag}.sh, with the smallest change that follows the directive; change nothing else; do not touch the measurement protocol, the record fields or the guard. State the change in your selftest_output field as 'FIX: <file>: <what>' lines. The diff is reviewed and goes to the gate.\n\n") + note
