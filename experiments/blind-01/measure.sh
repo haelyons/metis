@@ -384,7 +384,8 @@ envbuild() {
   while [ $# -gt 0 ]; do case "$1" in --fs) fs="$2"; shift ;; --type) type="$2"; shift ;; --region) region="$2"; shift ;; --timeout) timeout="$2"; shift ;; --hold) hold="$2"; shift ;; --price) price="$2"; shift ;; *) echo "envbuild: unknown option $1"; return 2 ;; esac; shift; done
   [ -n "$fs" ] || { echo "envbuild needs --fs <filesystem name>"; return 2; }
   cd "$MDIR" || return 1
-  mkdir -p env; cp "$REPO/dut/pipeline/measure/env_build.sh" env/env_build.sh; cp out/pip_pins_of_record.txt env/pins.txt; cp out/apt_packages_of_record.txt env/apt.txt 2>/dev/null || : > env/apt.txt
+  mkdir -p env; cp "$REPO/dut/pipeline/measure/env_build.sh" env/env_build.sh; cp out/pip_pins_of_record.txt env/pins.txt
+  grep -vE '^[0-9.]+$' out/apt_packages_of_record.txt > env/apt.txt 2>/dev/null || : > env/apt.txt   # package names only, never bare numbers
   echo "env payload: pins $(wc -l < env/pins.txt), apt $(wc -l < env/apt.txt), env_build.sh $(wc -l < env/env_build.sh) lines (sha256 $(sha256sum env/env_build.sh | cut -c1-12)…)"
   ENV_FS_NAME="$fs" launcher_env || return 1
   [ -r .keys ] || { echo "no readable .keys"; return 1; }
