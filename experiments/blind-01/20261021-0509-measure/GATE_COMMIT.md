@@ -1784,3 +1784,170 @@ OPERATOR: before the launch re-run `python3 run_m4.py --selftest` locally and co
 OPERATOR: record the spend of every launch in RUN.md (USD 0.30 so far); before each launch set `BUDGET_LEFT_USD` to the lesser of 5 and 10 minus the recorded spend; do not start a launch whose remaining cap is below 7,800 s x its `PRICE_USD_PER_HOUR` / 3,600 (USD 4.31 at 1.99, USD 5.42 at 2.50) (M9).
 OPERATOR: launch environment of record: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (M9).
 OPERATOR: optional, not required by the gate: state the box-venv gap of finding 6 in RUN.md (M6).
+
+---
+
+## Addendum 13 (2026-10-21)
+
+Rules on `out/gate_report_build15.md`: the operator's mechanical note (review 8 of build 15: FAIL, 4 blocking, 3 advisory; build 15
+changed no file, so its files are byte-identical to build 14's; `PIP_PINS` equals item 70 line for line; the operator's resolve of
+record passes, 82 packages) and the reviewer's file quoted in it. Rulings asked: (a) for each of items 75 to 78 and for the finding that
+cites no item, one minimal mechanical instruction, marked REQUIRED FOR LAUNCH 2 or REPORTING ONLY; (b) build 16 as an in-place edit
+limited to the REQUIRED items; (c) a closing EXEC_NOTE section listing only the required edits; (d) launch 2 pre-authorised on a review 9
+with zero REQUIRED blocking findings. Inputs added for this addendum, in the order the task names them: the report; also this file as it
+stood, `EXEC_NOTE.md` as it stood, `QUESTION.md`, `CARD.json`, `out/design_record.json`, and the task text of this session, which is not
+a source of rulings. The gate ran nothing; it did not open `run_m4.py`, `onbox_m4.sh`, `frozen/ONBOX_CONTRACT.md`, the build 15 return or
+the operator's resolve files, so every statement about the code, the return and the resolve is the reviewer's or the operator's, taken as
+reported (line numbers, the sha256 prefixes `82b8465e` and `8982a9e0`, the 0-byte file, the 82 packages). Every earlier section stands
+except where an answer below says it is superseded: N9 supersedes item 75's scope and the "no 16th build" sentences of items 69 and 75
+(M8 itself left a blocking finding of review 8 to the gate); N4 supersedes the file name in items 62(iii) and 78(a). Answers are numbered
+N1 to N11. Counts: 11 answers (7 findings, the four asks). The line `Build 13 authorised` at the end is the launcher's literal string for
+the next build; it does not renumber the earlier builds (the build it authorises is build 16).
+
+**What the inputs show (facts as reported, not rulings).**
+- Build 15 returned, in its command field, that no change was needed. The operator's note says its files are byte-identical to build 14's
+  and that `PIP_PINS` equals item 70. That reading of item 75(e) is right. Items 75(a) to (c) require edits to a comment and to the
+  selftest, which were not made, so the files returned are the files review 7 failed.
+- Blocking findings 1 to 3 are those of review 7, still open: the `PIP_PINS` comment, the static check of item 67, the selftest's comment
+  assertions. Finding 4 is about the build's return and the evidence file name, not about code.
+- No finding reports a wrong pin, a resolution conflict, a cost problem or a defect in what the box does.
+
+**Decision on budget and build (addendum).** GO stands. HALT is not decided: the findings are two missing pieces of comment and selftest
+text, one missing selftest assertion set and one return and evidence-name gap; none touches the box's behaviour or the money. Builds,
+reviews and pip tests spend no GPU money. Arithmetic, launches x hours x price, against the USD 10 cap: spent so far, launch 1, USD 0.30
+(nothing since); the next launch at its caps, 7,200 s command + 600 s outside = 7,800 s = 2.1667 h x 1.99 = USD 4.31 (the command alone,
+2.00 h x 1.99 = 3.98, is under `BUDGET_LEFT_USD=5`); total 0.30 + 4.31 = USD 4.61, USD 5.39 of the cap left; a launch after it would
+need 4.31 and 5.39 is above that, so one more may start (4.61 + 4.31 = 8.92, remaining 1.08); a launch after that would not. At the
+fallback ceiling of USD 2.50/h: 2.1667 h x 2.50 = 5.42; 0.30 + 5.42 = 5.72, remaining 4.28, below 5.42: none after it.
+
+### Answers of record (N1 to N11)
+
+1. **N1 (finding 1, BLOCKING: the comment on `PIP_PINS` at `run_m4.py:381-405` still calls the pair and the extra "INFERENCES MADE BY THE
+   REVIEW BOARD, not verified facts", names three sources, not four, and states neither the metadata fact nor that only the extra is the
+   gate's inference).** ACCEPTED. REQUIRED FOR LAUNCH 2 (as a condition of record under M3 and M9(ii); it does not change what the box
+   does, and the gate does not waive it, because the review is the only check on the files and M3 ruled the text). The instruction, one
+   edit: replace the contiguous `#` comment block directly above the `PIP_PINS` assignment, whole, with the six lines given verbatim in
+   EXEC_NOTE.md's closing section "Build 16: exactly these changes", R1. No other line moves.
+
+2. **N2 (finding 2, BLOCKING: the static check of items 67 and 77 is missing from the selftest).** ACCEPTED. REQUIRED FOR LAUNCH 2 (the same
+   reason as N1: M2 ruled it). The instruction: add to `run_m4.py`, as a new function `evidence_read_problems(text, kind)` and a new
+   selftest function `selftest_no_evidence_reads`, called from the selftest's main sequence next to the existing static checks (the `.keys`
+   check, review's `run_m4.py:7328-7336`), the check whose exact algorithm and planted cases are in EXEC_NOTE item 81 and R2. It changes
+   nothing either file does. `onbox_m4.sh` is not edited.
+
+3. **N3 (finding 3, BLOCKING: `selftest_pip_pins` at `run_m4.py:6571-6586` still requires "INFERENCES MADE BY THE REVIEW BOARD", checks three
+   names, checks a `SIBLING REQUIRES ENGINE VERSION:` marker, and has no planted cases).** ACCEPTED. REQUIRED FOR LAUNCH 2, and it must be
+   made together with N1, because the old assertions fail the new comment. The instruction: replace the comment assertions at those lines
+   with calls to a new module-level function `pip_pins_comment_problems(comment, pins)` and the planted cases of EXEC_NOTE item 82 and R3.
+   The lone-sibling refusal (`run_m4.py:468-472`) and its cases are kept untouched (M4, item 75(d)); no other line of `pip_pins_problems`
+   changes.
+
+4. **N4 (finding 4, BLOCKING: the return says "STOPPED - NOT BUILT" and "NOT ISSUED" for `onbox_command`; the evidence file named by items 62(iii)
+   and 78(a), `out/pip_pins_resolve_build14.txt`, is 0 bytes, and `out/pip_pins_list_b14.txt` is absent; the operator's passing resolve is in
+   `out/pip_pins_resolve_build15.txt` and `.json`).** ACCEPTED in two parts. (a) The return: REQUIRED FOR LAUNCH 2 (a return with no command
+   cannot be compared with what `onbox_m4.sh` runs; checklist 8). Build 16's return carries the fields of EXEC_NOTE item 84, among them
+   `onbox_command` equal to `bash remote_run_m4.sh bash onbox_m4.sh`; a return that says stopped, not built or not issued is a failed
+   build. (b) The evidence name: the gate rules that the files under the name `build15` are accepted as the first run of item 66 of record,
+   and that the name in items 62(iii) and 78(a) is superseded by `out/pip_pins_resolve_build15.txt` and `out/pip_pins_resolve_build15.json`,
+   on three conditions the operator checks and states in RUN.md: the `.txt` is non-empty and holds what item 78(a) lists (the command lines,
+   the `pip --version` of T0, the T1 output, `df -h` before and after, every `.tar.gz` entry of the T1 report with name, version, URL and
+   hash, and the T2 result of each); it says T1 and T2 passed; and `out/pip_pins_list_b14.txt` exists with nine lines (item 68; the reviewer
+   found it absent, the operator's note does not say it was written). The operator also copies the `.txt` content into
+   `out/pip_pins_resolve_build14.txt` so that both names hold it. Because build 16 leaves the nine strings byte-identical to item 70 (N1
+   to N3 touch a comment and the selftest only), the second run of item 66 (item 62(iii)) is not repeated if the operator's `diff` of build
+   16's nine strings against `out/pip_pins_list_b14.txt` is empty, and the existing run stands as both runs; if the `diff` shows any
+   difference, T0, T1 and T2 are run again on the lines read from build 16's file and appended to the `build15` file. The build reads
+   none of these files (item 67).
+
+5. **N5 (finding 5, ADVISORY: `frozen/remote_run.sh`, shipped as `remote_run_m4.sh`, runs unrecorded `pip install --upgrade pip` and
+   `--upgrade pillow ... transformers accelerate` into `~/.local`).** ACCEPTED AS-IS, NOTHING CHANGES, REPORTING ONLY, as H7 ruled: it is the
+   operator's frozen bootstrap, the build does not write it, and the install time it uses is inside the 7,200 s command and the
+   bootstrap seconds item 44 counts. Not blocking in review 9.
+
+6. **N6 (finding 6, ADVISORY: `jax-cuda12-plugin[with_cuda]` is flagged by the operator's index check as an undeclared extra; `with_cuda`
+   against `with-cuda`).** ACCEPTED AS-IS, NOTHING CHANGES, REPORTING ONLY, as M5 and L2 ruled: one name to pip; the dry-run resolve passes;
+   the pin is not respelled. Not blocking in review 9.
+
+7. **N7 (finding 7, ADVISORY: the box venv sits over the image's torch 2.7 and `nvidia-*` packages, so a clean-venv resolve does not model the
+   box).** ACCEPTED AS A STATED RISK, NOTHING CHANGES, REPORTING ONLY, as M6 ruled. A conflict on the box ends the launch as exit 2 with a void
+   record (item 8, A2(a)). Not blocking in review 9.
+
+8. **N8 (ask (a): one minimal instruction for each of items 75 to 78 and for the finding that cites no item, marked REQUIRED or REPORTING
+   ONLY).** The map, so that nobody reads the directive to find it: item 75 (build 15 scope) is superseded by item 79 (N9); item 76 (the
+   comment) is N1 and N3, REQUIRED, instructions R1 and R3; item 77 (the static check) is N2, REQUIRED, instruction R2; item 78 (evidence
+   and conditions) is N4 and N11, no build edit, REQUIRED as operator conditions, with the return of N4(a) as R4 for the build. The finding
+   that cites no item is read as finding 4's evidence-name half, ruled in N4(b). REPORTING ONLY, nothing to build and nothing blocking:
+   findings 5, 6 and 7 (N5 to N7), and any widening of the static check of R2 beyond the call names and the three shell forms it lists.
+   Honest label on the three code edits: none of R1 to R3 changes what the box does, what a record holds or what is spent; they are REQUIRED
+   because M2, M3 and M9(ii) made them conditions of record and a review is the only check on the files, not because the money or the
+   record would be wrong without them. The gate does not re-open that ruling.
+
+9. **N9 (ask (b): build 16 as an in-place edit limited to the REQUIRED items).** BUILD 16 AUTHORISED. No precondition is open: the first run
+   of item 66 is of record under N4(b). Build 16 is an in-place edit of the files as they now are (build 14's; build 15 changed none),
+   limited to R1, R2, R3 and R5 of "Build 16: exactly these changes" (the comment, the static check, the comment assertions, and the
+   selftest's count and hash lines, which move), and it returns what R4 lists. `onbox_m4.sh` is not edited and its sha256 stays as it is. The
+   nine `PIP_PINS` strings and the pinned `pip install` call stay as they are (equal to items 70 and 71, as the operator's finding, the
+   reviewer and build 15 agree). The "no 16th build" sentences of L7 and M8 are superseded by this answer only for build 16, and build 16 is
+   the last build on this matter: a blocking finding of review 9 that is a defect in what R1 to R5 told the build to do goes to the gate in
+   an addendum; no build is started on it by anyone else. A changed line outside R1 to R3 and R5 is a blocking finding. A build that
+   returns "no change needed" is not a correct outcome here, because the files fail checks V1 to V3 of the closing section as they stand
+   (the build computes the sha256 of `run_m4.py` first: a value beginning `82b8465e` means the file is unedited and the edits are mandatory).
+
+10. **N10 (ask (c): end EXEC_NOTE.md with a section that lists only the required edits).** ACCEPTED. EXEC_NOTE.md ends with `## Build 16: exactly
+    these changes`: the five instructions R1 to R5 as exact text, behaviour and values, the checks V1 to V6 the build runs on the
+    files before and after, and the statement that this section binds first and the 85-item checklist is the record of why. The build
+    reads that section before the checklist and does not diff the directive against the files. The header paragraph points to it.
+
+11. **N11 (ask (d): launch 2 pre-authorised on a review 9 with zero REQUIRED blocking findings, environment of record unchanged).**
+    AUTHORISED, with one tightening: the condition is zero blocking findings in review 9, not zero "REQUIRED" ones, because the reviewer is
+    told in EXEC_NOTE item 85 that findings of the kinds in N5 to N7 and any widening of the static check are advisory, so the two
+    readings agree on everything that matters and the reviewer does not have to classify. The conditions of item 62 as revised: (i) build 16
+    exists, its selftest passes, and the two sha256 values printed locally match the files on disk (the `onbox_m4.sh` value equals build
+    15's); (ii) review 9 reports zero blocking findings on a read list that includes `frozen/ONBOX_CONTRACT.md` with G3 applied and the
+    diffs of build 16 against build 15 (equal to build 14) and against build 11, with a statement that the diff against build 15 is limited to
+    R1 to R3 and R5 and touches only `run_m4.py`; (iii) the item 66 evidence of N4(b) is in place and, if the `diff` there was not empty, the
+    new run is appended; (iv) the launch environment of record: `REMOTE_TIMEOUT=7200` exactly, `BUDGET_LEFT_USD` the lesser of 5 and 10 minus
+    the recorded spend (5 now), `PRICE_USD_PER_HOUR=1.99`, `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1, else the cheapest single GPU with
+    capacity at no more than USD 2.50/h with type and price set to its values and the other three unchanged; (v) the cause is recorded in
+    RUN.md (launch 1's pip failure; the full-disk resolve; the empty evidence file; build 15 changed nothing and is not accepted as a build).
+    The remaining cap must be at least USD 4.31 at 1.99 (5.42 at 2.50): it is 9.70 now. Spent: USD 0.30. Everything else is unchanged:
+    bands, gate scope, stage ceilings (1,800 + 700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200), the allowance formula, labels, the
+    exit-code table, the selftest contract, the stand-in protocol and every answer of the earlier sections.
+
+**Labels (addendum).** Unchanged. Nothing in this addendum changes a record, a label key or a decision; N1 to N3 change a source comment
+and selftest text only. The labels of the first section and of E10 and E11 stand.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Spend: 7,800 / 3,600 = 2.1667 h x 1.99 = 4.311;
+0.30 + 4.311 = 4.61; 0.30 + 2 x 4.311 = 8.92; 10 - 8.92 = 1.08, below 4.31; fallback 2.1667 x 2.50 = 5.417, 0.30 + 5.417 = 5.72, 10 - 5.72 =
+4.28, below 5.42; `BUDGET_LEFT_USD` = min(5, 10 - 0.30 = 9.70) = 5; 3.98 under it; ceilings 1,800 + 700 + 600 + 2,000 + 1,600 + 100 + 400 =
+7,200. Cross-reading: the report has 7 findings (4 blocking, 3 advisory) and 4 asks; answers N1 to N7 take the findings in the report's
+order, N8 to N11 the four asks; the report's findings 1 and 3 cite items 76 and 64, finding 2 items 67 and 77, finding 4 items 62, 78 and
+36, so the map of N8 covers items 75 to 78 and the one uncited half; the nine pins of item 70 are those the reviewer says are at
+`run_m4.py:411-421`; the file name the reviewer says is empty is the one items 62(iii) and 78(a) name, and the files the operator says hold
+the result carry another name, which N4(b) resolves; the three comment lines the reviewer quotes (394-395) are in the block R1 replaces; the
+regular expression of R3 was traced by hand on the R1 text: it captures `8.1.1` (the trailing comma is not part of it) and the version of
+the `openmm` pin is `8.1.1`; the R1 comment contains none of the strings the stale-wording check looks for; the static check of R2 skips
+the R1 comment lines (they begin with `#`) and sees no call name on the lines of the `PIN_COMMENT_SOURCES` tuple. The gate ran no code and
+did not check these by execution; the reviewer's selftest log (749 of 749) is for the unedited files.
+
+**Pre-authorisation (addendum).** A1 stands unchanged. A2 stands as revised by L8 and M9, with N11's conditions in place of M9's: the next
+launch (launch 2), and a later one, are authorised only under all of (i) to (v) of N11, the remaining cap, and either of A2's two reasons
+(a relaunch only after a launch that halted before the anchor decision for a toolchain, install or launcher reason with the cause recorded in
+RUN.md, or after a launch that stopped on its time guard with inputs unmeasured, which reruns the anchor first and then only the unfinished
+inputs). Not authorised, as before: a relaunch to double seeds, to repeat a decided input, to change a band, or after an anchor miss (exit 4)
+or exit 0; a build other than build 16 without a new addendum. What stops a launch: the cost and time guard, an anchor miss (exit 4), the
+sleep check (exit 2), any broken infrastructure (exit 2 with a void record, no patching around), a stage ceiling, or the cap. Totals: USD
+0.30 spent; the next launch at most USD 4.31 (total 4.61); the owner's USD 10 cap is not raised by this gate.
+
+Build 13 authorised
+
+## Operator actions
+
+OPERATOR: write into RUN.md that build 15 changed no file (hashes equal to build 14's) and is not accepted as a build (N9); start build 16 from the files as they are, with the build prompt naming EXEC_NOTE.md's closing section `## Build 16: exactly these changes` as the part to read first (N9, N10).
+OPERATOR: check and state in RUN.md that `out/pip_pins_resolve_build15.txt` is non-empty and holds the command lines, the `pip --version` of T0, the T1 output, `df -h` before and after, every `.tar.gz` entry of the T1 report with name, version, URL and hash, and the T2 result of each, and says T1 and T2 passed; check that `out/pip_pins_list_b14.txt` exists with nine lines (N4).
+OPERATOR: copy the content of `out/pip_pins_resolve_build15.txt` into `out/pip_pins_resolve_build14.txt` (non-empty) so both names hold the run of record; keep `out/pip_pins_resolve_build15.json` (N4).
+OPERATOR: after build 16, `diff` its nine `PIP_PINS` strings against `out/pip_pins_list_b14.txt` and write the result into RUN.md; if the `diff` is empty no further run of item 66 is needed; if not, run T0, T1 and T2 (item 74) again on the lines read from build 16's file and append the result to `out/pip_pins_resolve_build15.txt` and RUN.md (N4).
+OPERATOR: after build 16, re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); check that `onbox_m4.sh` still has the sha256 that begins `8982a9e0`; `diff` build 16's two files against build 15's and against build 11's (N11).
+OPERATOR: give review 9 the read list of N11(ii) (including `frozen/ONBOX_CONTRACT.md` with G3 applied), the two diffs, the scope statement (R1 to R3 and R5 only, `run_m4.py` only), and EXEC_NOTE item 85 so that findings of the kinds in N5 to N7 are marked advisory; the launch needs zero blocking findings (N11).
+OPERATOR: `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8); record the spend of every launch in RUN.md (USD 0.30 so far); before each launch set `BUDGET_LEFT_USD` to the lesser of 5 and 10 minus the recorded spend; do not start a launch whose remaining cap is below 7,800 s x its `PRICE_USD_PER_HOUR` / 3,600 (USD 4.31 at 1.99, USD 5.42 at 2.50) (N11).
+OPERATOR: launch environment of record: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (N11).

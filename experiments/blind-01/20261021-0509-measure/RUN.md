@@ -131,3 +131,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:22Z build 15 checks: selftest exit 0
 - 16:22Z gate 13 (addendum) requested
 - 16:22Z stage gate on wf.js run 9: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1361374
+- 16:37Z build 15 checks: selftest exit 0
+- 16:37Z gate addendum 13 (wf.js, claude/sonnet, 14 min): 11 answers, 96 items; EXEC_NOTE.md ends with '## Build 16: exactly these changes' (4 REQUIRED FOR LAUNCH 2, 1 REPORTING ONLY). Of record (OPERATOR line): build 15 changed no file (hashes equal to build 14) and is not counted as a build; build 16 starts from the files as they are.
+- 16:37Z stage build on wf.js run 13: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1385118
