@@ -110,3 +110,8 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:01Z build 14 (wf.js, claude/opus, 5 min, in place): run_m4.py changed, selftest 749/749; index check: pins 9: found 9, missing 0, unpinned 0; extras declared 0, not declared 1; no box-compatible wheel and no sdist 0; sdist only (must build on the box) 1; pip dry-run resolve of build 14's 9 pins in CPython 3.10 (sdists allowed): exit 1; ResolutionImpossible 0; 'No matching distribution' 0; error lines 1; packages in the report 0
 - 16:01Z gate 11 (addendum) requested
 - 16:01Z stage gate on wf.js run 7: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1320767
+- 16:01Z build 14 checks: selftest exit 0
+- 16:04Z resolve re-run with TMPDIR on disk (earlier runs used the quota-limited tmpfs): pip dry-run resolve of build 14's 9 pins in CPython 3.10 (sdists allowed): exit 0; ResolutionImpossible 0; 'No matching distribution' 0; error lines 0; packages in the report 82
+- 16:04Z gate run 7 stopped by the operator: the resolve failure was the operator's tmpfs quota; build 14's pins resolve on disk
+- 16:04Z review 6 of build 14 requested
+- 16:04Z stage review on wf.js run 3: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1325849

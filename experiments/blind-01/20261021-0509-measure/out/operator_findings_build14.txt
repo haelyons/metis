@@ -1,6 +1,6 @@
 Operator's mechanical findings on build 14 (no content read):
 1. Index check (out/pip_pins_check_build14.txt): pins 9: found 9, missing 0, unpinned 0; extras declared 0, not declared 1; no box-compatible wheel and no sdist 0; sdist only (must build on the box) 1.
-2. Pre-launch test of record (gate addendum 9; out/pip_pins_resolve_build14.txt and .json): pip dry-run resolve of build 14's 9 pins in CPython 3.10 (sdists allowed): exit 1; ResolutionImpossible 0; 'No matching distribution' 0; error lines 1; packages in the report 0
+2. Pre-launch test of record (gate addendum 9; out/pip_pins_resolve_build14.txt and .json): pip dry-run resolve of build 14's 9 pins in CPython 3.10 (sdists allowed): exit 0; ResolutionImpossible 0; 'No matching distribution' 0; error lines 0; packages in the report 82 (a first run failed on the operator's quota-limited temporary filesystem, not on the pins).
 3. Environment names read on-box that nothing forwards or sets at line start: as in build 11 (M4_BASE, M4_SHELL_TEST, M4_TEST_BIN, M4_TEST_INSTALL_CEILING_S, M4_TEST_ROOT, M4_TEST_RUNNER); verify defaults; the M4_TEST_* hooks must not alter a real run.
 4. One line mentions a key-file name or pattern: key mention: run_m4.py line 7333 string-literal ['.keys'] reads a file: False. Verify it does not read .keys or print a key.
 5. Files written: run_m4.py (7,416 lines; changed from build 11) and onbox_m4.sh (642 lines; unchanged since build 11) only, in place. Selftest 749 of 749 PASS under the operator's run (out/selftest_build14.log, 15.1 s).

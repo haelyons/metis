@@ -3,7 +3,10 @@
 # sdists allowed (their metadata is built locally), report written beside the runner. Prints counts only.
 #   usage: bash pip_resolve_310.sh <measure dir> <build number>
 set -u
-M=$(realpath "$1"); N=$2; S=${TMPDIR:-/tmp}/pip_resolve_310_$$; mkdir -p "$S"
+# scratch on disk, never on the quota-limited tmpfs (a metadata build there failed on quota, 2026-10-21)
+export TMPDIR=${TMPDIR_DISK:-$HOME/.cache/blind01/tmp} UV_CACHE_DIR=${UV_CACHE_DIR:-$HOME/.cache/blind01/uv} PIP_CACHE_DIR=${PIP_CACHE_DIR:-$HOME/.cache/blind01/pip}
+mkdir -p "$TMPDIR" "$UV_CACHE_DIR" "$PIP_CACHE_DIR"
+M=$(realpath "$1"); N=$2; S=$TMPDIR/pip_resolve_310_$$; mkdir -p "$S"
 python3 - "$M/run_m4.py" > "$S/pins.txt" <<'PY'
 import ast, sys
 for node in ast.walk(ast.parse(open(sys.argv[1]).read())):
