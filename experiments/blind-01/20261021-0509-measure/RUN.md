@@ -124,3 +124,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:12Z pins of record (EXEC_NOTE item 70) extracted mechanically to out/pip_pins_of_record.txt; pip dry-run resolve of the item-70 pins of record (9 lines) in CPython 3.10 on disk: exit 0; ResolutionImpossible 0; error lines 0; packages in the report 82
 - 16:12Z launch cap arithmetic of record: REMOTE_TIMEOUT 7,200 s + 600 s fetch margin = 7,800 s = 2.17 h; at USD 1.99/h = USD 4.31 per launch, under the USD 5 BUDGET_LEFT_USD; spent so far USD 0.30 of the USD 10 cap; before each launch BUDGET_LEFT_USD = min(5, 10 - spent).
 - 16:12Z stage build on wf.js run 12: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1342432
+- 16:19Z build 15 checks: selftest exit 0
+- 16:20Z build 15 (wf.js, claude/opus, 84 s): files identical to build 14 (hashes 82b8465e…/8982a9e0…); pip dry-run resolve of build 15's 9 pins in CPython 3.10 (sdists allowed): exit 0; ResolutionImpossible 0; 'No matching distribution' 0; error lines 0; packages in the report 82
+- 16:20Z review 7 of build 15 requested
+- 16:20Z stage review on wf.js run 4: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1356927
