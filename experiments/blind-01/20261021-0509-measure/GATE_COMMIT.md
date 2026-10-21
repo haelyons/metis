@@ -1465,3 +1465,156 @@ OPERATOR: record in RUN.md that launch 1 ended with exit 2 at the pip install st
 OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of the review of build 14, state G3's ruling and the build 14 scope of EXEC_NOTE item 65 to it, and give it the diff against build 11 (J7, K6).
 OPERATOR: before launch 2 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8).
 OPERATOR: launch environment of record for launch 2, unchanged: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (J7, K7).
+
+---
+
+## Addendum 11 (2026-10-21)
+
+Rules on `out/gate_report_build14.md`: the operator's mechanical note that the pre-build resolve of build 14's nine `PIP_PINS` in
+CPython 3.10 (sdists allowed) ended with exit 1, `ResolutionImpossible` 0, "No matching distribution" 0, error lines 1, packages in
+the report 0, and that the addendum 9 overlay set had resolved before the build (83 packages) while the build's own pins differ from it.
+Rulings asked: the exact `PIP_PINS` of record, verbatim, as one directive item; build 15 authorised or HALT. Inputs added for this
+addendum, in the order the report names them: `out/pip_pins_resolve_build14.txt`, `out/pip_pins_check_build14.txt`; also this file as it
+stood, `EXEC_NOTE.md` as it stood, `QUESTION.md`, `CARD.json`, `out/design_record.json`, and the task text of this session, which is not
+a source of rulings. The two shape-example files named in the task are outside this session's readable directory; this addendum follows
+the shape of the sections above. The gate ran nothing and did not read `run_m4.py`, `onbox_m4.sh` or `frozen/ONBOX_CONTRACT.md`, so what
+the build's `PIP_PINS` holds is taken from the operator's note, not seen. Every earlier section stands except where an answer below says
+it is superseded: L4 restates item 58 and J1 verbatim; L5 amends the pass criterion of J4 and K4; L7 supersedes the "last build" sentence of
+K5 and J6 for exactly this case; L8 supersedes every statement that fixes a count of launches (A2's "at most one more", J7's "launch 2 is
+the last", J9's and K5's "no third launch"). Answers are numbered L1 to L9. Counts: 9 answers. The line `Build 11 authorised` at the
+end is the launcher's literal string for the next build; it does not renumber the earlier builds (the build it authorises is build 15).
+
+**What the inputs show (facts, not rulings).**
+- `out/pip_pins_resolve_build14.txt` (19 lines of pip output): pip was building metadata for `prody` from source and failed at the step
+  "installing build dependencies for prody": it had collected `setuptools-84.2.1` and `numpy-2.2.6` (cp310 wheel, from its cache) and
+  stopped with `ERROR: Could not install packages due to an OSError: [Errno 122] Disk quota exceeded`; the last line is `ERROR: Failed to
+  build 'prody' when installing build dependencies for prody`. No line contains `ResolutionImpossible`, `conflicting dependencies` or
+  "No matching distribution". Errno 122 is a filesystem quota error of the host that ran the test; it names no requirement of the list.
+- The same output shows that pip chose a source distribution of `prody`, a requirement of `lightdock==0.9.4` (K3: numpy, scipy, cython,
+  prody, freesasa), and had to build it. J4's T1 allowed only `lightdock` itself to be a `.tar.gz` and T2 builds only `lightdock` with
+  `--no-deps`, so neither test covered this build.
+- `out/pip_pins_check_build14.txt` (10 lines, each pin alone): every pinned release exists; eight have a box wheel; `lightdock==0.9.4` has
+  none (sdist only); one line, `EXTRA-NOT-DECLARED jax-cuda12-plugin[with_cuda]==0.4.35: extra with_cuda not in ['with-cuda']`, and under it
+  the same pin has a box wheel (2 of 8 wheels).
+- The operator's note: the overlay set of addendum 9 resolved (83 packages) before build 14; build 14's own nine pins differ from it. The
+  overlay is the gate's candidate pins laid over the then-current pins; it is not the nine-line file of K2, and the gate has not seen it.
+
+**Decision on budget and build (addendum).** GO stands, on the conditions of L6, L7 and L8. HALT is not decided: the report gives no
+resolution failure of the list of record, only a full disk on the host that tested it. Builds, reviews and the operator's pip tests spend no
+GPU money. Arithmetic, launches x hours x price, against the USD 10 cap: spent so far, launch 1, USD 0.30; the next launch at its caps, 7,200
+s command + 600 s outside = 7,800 s = 2.1667 h x 1.99 = USD 4.31 (the command alone, 2.00 h x 1.99 = 3.98, is under `BUDGET_LEFT_USD=5`);
+total 0.30 + 4.31 = USD 4.61, USD 5.39 of the cap left. Under L8 a further launch is allowed while the remaining cap is at least USD 4.31:
+after a second launch at its caps the total is 0.30 + 2 x 4.31 = USD 8.92 and USD 1.08 remain, below 4.31, so no further launch would start.
+At the fallback ceiling of USD 2.50/h one launch is 2.1667 h x 2.50 = USD 5.42, total 5.72, remaining 4.28 (below 5.42): none after it.
+
+### Answers of record (L1 to L9)
+
+1. **L1 (the failed resolve: what it is).** A FAILURE OF THE TEST HOST, NOT A RESULT ABOUT THE PINS. The output ends on `[Errno 122] Disk
+   quota exceeded` while pip installed build dependencies for `prody` in a scratch environment; it names no conflict and no missing
+   distribution, so it is neither a T1 pass nor a T1 failure under K5 (K5's HALT is for "any conflict"; none is named). It is ruled
+   not a run of record, like the candidate-list failure of K2. Nothing changes in the build for this answer. The operator repeats the test
+   on a host with room (L6); the failed output is kept in `out/pip_pins_resolve_build14.txt` under a heading "run 1: Errno 122, not of
+   record" and is recorded in RUN.md. The box is a different host; nothing in the inputs shows a disk limit there, and the install stage
+   already treats any pip failure as exit 2 with a void record (item 8, A2(a)).
+
+2. **L2 (the check file).** ACCEPTED AS-IS, NOTHING CHANGES. The `EXTRA-NOT-DECLARED` line is a spelling mismatch of the check script:
+   the release declares the extra as `with-cuda`, pip normalises `with_cuda` and `with-cuda` to one name (K3), and the same pin shows a box
+   wheel on the next line. It is not a finding against J2 or K1 and the pin is not respelled. The check tests each pin alone and is not a
+   test of record (J4). `lightdock==0.9.4` with no box wheel is the known sdist case (J3). The operator may normalise extras in the check
+   script (Operator actions); that is not a gate requirement.
+
+3. **L3 (the overlay set resolved; the build's pins differ from it).** ACCEPTED AS REPORTED, AS EVIDENCE FOR THE GATE ONLY. A resolution
+   of 83 packages is consistent with the pins of J1 resolving, but the overlay is not the K2 file and is not a T1 of record, so nothing
+   rests on it. "Differ" is not a finding against build 14 by itself: the overlay was built over the current pins and may differ from the
+   nine-line list in lines the list does not contain. What decides is the `diff` of build 14's `PIP_PINS` strings against the list of L4,
+   which the operator runs now (Operator actions) and records in RUN.md. A difference is what build 15 corrects (L7); no difference means
+   build 15 changes no pin line.
+
+4. **L4 (ask 1: the exact `PIP_PINS` of record, verbatim; restates J1, K1 and item 58, no pin changes).** The nine strings, in this
+   order, are the pins of record, and the build writes them as the one directive item 70 of EXEC_NOTE.md, character for character:
+   `jax==0.4.35`, `jaxlib==0.4.35`, `jax-cuda12-plugin[with_cuda]==0.4.35`, `jax-cuda12-pjrt==0.4.35`, `colabfold==1.5.5`,
+   `alphafold-colabfold==2.3.6`, `openmm==8.1.1`, `openmm-cuda==8.1.1.12`, `lightdock==0.9.4`. No other name, version, extra, option or
+   marker; no `prody`, `freesasa`, `numpy`, `scipy`, `cython` or `nvidia-*` pin (transitive; the pip report records them, J2). The install
+   call takes exactly these nine as nine arguments in one `pip install`, with no option that changes what is resolved or how an sdist is
+   built (EXEC_NOTE item 71), so the test of item 66 and the box run the same resolution. Evidence level, stated plainly: unchanged from
+   K1, no new evidence about the pins; the whole set resolving in one call under pip 24.0 is still decided only by the operator's T1 on the
+   explicit list (L6), and the CUDA platform and the JAX GPU device only by the smoke check on the box.
+
+5. **L5 (what the failed output reveals: `prody` is built from source; amends J4 and K4).** ACCEPTED, as a change to the operator's test,
+   not to the build and not to the pins. `prody` is not pinned (it is a requirement of `lightdock`) and the gate adds no pin. T1's clause
+   "only `lightdock` may be a `.tar.gz`" becomes: `lightdock` and the source-only distributions that the T1 report itself lists as
+   dependencies of `lightdock` may be `.tar.gz`; the output lists each such entry with name, version, URL and hash. T2 becomes: every
+   `.tar.gz` entry of the T1 report is built into a wheel with `pip wheel --no-deps --wheel-dir <an empty directory>` with
+   `build-essential` and `python3-dev` present; each must exit 0 and leave a wheel. A T1 report that lists a `.tar.gz` for any of the other
+   eight pinned distributions, or for `jax`, `jaxlib`, the CUDA libraries or `openmm`, fails T1 as before. The risk is stated: these source
+   builds run on the box inside the pip call and the 1,800 s install total (item 28); a failure or an overrun is exit 2 with a void
+   record under A2(a). The smoke check (item 33), which imports the docking code's entry point, decides whether the built result works.
+
+6. **L6 (the test of record, run again on a sound host).** J4 and K4 STAND (T0, T1, T2, pip 24.0, a clean CPython 3.10 Linux x86_64
+   environment, the file `out/pip_pins_list_b14.txt`, nine arguments, the K4 criteria) with L5's amendment and one added condition: the
+   virtual environment, `TMPDIR` and the pip cache sit on a filesystem with at least 10 GiB free and no quota that the run can hit; `df -h`
+   of that path is written to the output before and after (the 10 GiB figure is the gate's estimate for the CUDA wheels plus the source
+   builds, not a measured need). A run that ends on a disk, quota, network or host error with no conflict named is not a run of record; the
+   operator repeats it on another host without asking the gate. The first run on the list, T1 and T2 as amended, must pass and be in RUN.md
+   and `out/pip_pins_resolve_build14.txt` before build 15 starts; the second, on the lines read from the launched build's `PIP_PINS`, before
+   the next launch (J7). If T1 on a sound host fails with a conflict, the gate's answer is HALT with the owner deciding (K5 stands). If
+   only T2 fails (a source build), the gate rules on that alone (J3).
+
+7. **L7 (ask 2: build 15 authorised, or HALT; narrows J6 and K5 for this case).** BUILD 15 AUTHORISED, narrowly, on one precondition: L6's
+   first run (T1 and T2) passed on a sound host and is in RUN.md. Scope, as EXEC_NOTE item 72: an in-place edit of build 14's `run_m4.py`
+   and `onbox_m4.sh`, limited to (a) the nine `PIP_PINS` strings, which must equal L4's list character for character, changed only if they
+   do not; (b) the `pip install` call of the nine, which must have the form of item 71, changed only if it does not; (c) the selftest's
+   count and hash lines, which move only if (a) or (b) changed a line. If (a) and (b) already hold, the build changes nothing, returns build
+   14's line counts and two sha256 values and says so; that is a correct outcome and no finding is raised. The reason the gate authorises a
+   further build despite K5's "a fourth build is not authorised in any case": K5 and J9 set that limit on the premise that T1 would produce a
+   result on the list; it produced none (L1), the build costs no GPU money, and the only open question the report asks (what the pins of
+   record are) is answered in L4. Build 15 is the last build on this matter; there is no 16th, and a changed line outside this list is a
+   blocking finding in review.
+
+8. **L8 (money, instance, caps, launches; supersedes every fixed launch count).** The owner's rule of 2026-10-21 replaces the count: the
+   hard cap is USD 10 of box time for the whole run, the operator records the spend of every launch, and launches go on until the cap is
+   reached. For each launch `BUDGET_LEFT_USD` is the lesser of 5 and what remains of the cap; `REMOTE_TIMEOUT=7200` exactly;
+   `gpu_1x_a100_sxm4` (USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity, which is allowed at no more
+   than USD 2.50/h as before (the operator records which). The gate adds one operating rule so that a launch is not started on a cap that
+   cannot fund it: the operator does not start a launch whose remaining cap is below 7,800 s at that launch's price (USD 4.31 at 1.99, USD
+   5.42 at 2.50), the arithmetic above. A relaunch still needs A2's conditions (below); after exit 0 (all inputs decided) or exit 4 (anchor
+   miss) there is none. The build changes nothing: `onbox_m4.sh` already reads `BUDGET_LEFT_USD`, `PRICE_USD_PER_HOUR` and `REMOTE_TIMEOUT`
+   from its environment, has no default above 5 and 7200, and stops before the projected spend reaches `BUDGET_LEFT_USD`. Spent: USD 0.30.
+
+9. **L9 (everything else in the report's scope).** NOTHING CHANGES. Bands, gate scope, stage ceilings (1,800 + 700 + 600 + 2,000 + 1,600 +
+   100 + 400 = 7,200), allowance formula, labels, exit-code table, selftest contract, the J7 conditions (i) to (v) (with "launch 2" read as
+   "the next launch" and "build 14" as "the launched build"), the labels of the stand-in protocol and every answer of the earlier sections
+   stand. The only items that move in EXEC_NOTE.md are those marked `(revised, addendum 11)`.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Spend: 7,800 / 3,600 = 2.1667 h x 1.99 = 4.311;
+0.30 + 4.311 = 4.61; 0.30 + 2 x 4.311 = 8.92; 10 - 8.92 = 1.08, below 4.31; fallback 2.1667 x 2.50 = 5.417, 0.30 + 5.417 = 5.72, 10 -
+5.72 = 4.28, below 5.42. `BUDGET_LEFT_USD` = min(5, 10 - 0.30 = 9.70) = 5 for the next launch; 3.98 under it. Ceilings sum to 7,200.
+Cross-reading: the resolve output has no line with `ResolutionImpossible`, "conflicting dependencies" or "No matching distribution" and one
+`OSError: [Errno 122]`, matching the report's counts (0, 0, error lines 1; the line `ERROR: Failed to build 'prody'` is the unindented
+one); the check file has 10 lines, 9 pins plus the extra's second line, one `EXTRA-NOT-DECLARED`; the list of L4 has 9 entries, one `openmm==`
+line (8.1.1), one `openmm-cuda==` line, one `jax-cuda12-plugin` line with `[with_cuda]`, no `8.2.0`. Counting: the report asks 2 rulings and
+names 2 evidence files; answers L1 to L9 cover the two asks (L4, L7), each file (L1, L2), the overlay statement (L3), the test (L5, L6), the
+money (L8) and the unchanged rest (L9). The gate did not re-run any resolution, index query or build, and did not verify that the list
+resolves.
+
+**Pre-authorisation (addendum).** A1 stands unchanged. A2 stands with the count removed (L8): the next launch, and a later one, are
+authorised only under all of (i) to (v) of J7 (read as EXEC_NOTE item 62 restates them), the remaining cap of L8, and either of A2's two
+reasons (a relaunch only after a launch that halted before the anchor decision for a toolchain, install or launcher reason with the cause
+recorded in RUN.md, or after a launch that stopped on its time guard with inputs unmeasured, which reruns the anchor first and then only the
+unfinished inputs). Not authorised, as before: a relaunch to double seeds, to repeat a decided input, to change a band, or after an anchor
+miss; a build other than build 15 without a new addendum. What stops a launch: the cost and time guard, an anchor miss (exit 4), the sleep
+check (exit 2), any broken infrastructure (exit 2 with a void record, no patching around), a stage ceiling, or the cap. Totals: USD 0.30
+spent; the next launch at most USD 4.31 (total 4.61); the owner's USD 10 cap is not raised by this gate.
+
+Build 11 authorised
+
+## Operator actions
+
+OPERATOR: run `diff` of build 14's nine `PIP_PINS` strings against `out/pip_pins_list_b14.txt` now, and write the result into RUN.md (L3, L7); also write into RUN.md the failed resolve (exit 1, `OSError: [Errno 122] Disk quota exceeded` while building `prody`'s build dependencies, no conflict named) and that it is not a run of record (L1).
+OPERATOR: repeat T0, T1 and T2 of item 66 on `out/pip_pins_list_b14.txt` on a host where the venv, `TMPDIR` and `PIP_CACHE_DIR` are on a filesystem with at least 10 GiB free; write `df -h` of that path before and after; apply item 74 (the `.tar.gz` clause of T1 and the extended T2); append the output to `out/pip_pins_resolve_build14.txt` (keep the failed run under the heading "run 1: Errno 122, not of record") and write `out/pip_pins_resolve_build14.json` and RUN.md; start build 15 only if T1 and T2 pass; if T1 fails with a conflict start no build and return to the gate (HALT, K5); if only T2 fails return to the gate; a disk, quota or network error with no conflict is repeated on another host without asking (L5, L6).
+OPERATOR: after build 15, `diff` its `PIP_PINS` strings against `out/pip_pins_list_b14.txt` and its two files against build 14's and against build 11's; run T1 and T2 again (item 74) on the lines read from the launched build's file and append both results to `out/pip_pins_resolve_build14.txt` and RUN.md (J7, L6).
+OPERATOR: optional, not required by the gate: in the pin-check script, compare extras after normalising `_` to `-`, so that `with_cuda` and `with-cuda` are not reported as `EXTRA-NOT-DECLARED` (L2).
+OPERATOR: record the spend of every launch in RUN.md (USD 0.30 so far, launch 1); before each launch set `BUDGET_LEFT_USD` to the lesser of 5 and 10 minus the recorded spend; do not start a launch if the remaining cap is below 7,800 s x the launch's `PRICE_USD_PER_HOUR` / 3,600 (USD 4.31 at 1.99, USD 5.42 at 2.50) (L8).
+OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of the review of the launched build, state G3's ruling and the scopes of EXEC_NOTE items 65 and 72 to it, and give it the diff against build 11 and against build 14 (J7, L7).
+OPERATOR: before the next launch re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8).
+OPERATOR: launch environment of record for each launch: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (L8).

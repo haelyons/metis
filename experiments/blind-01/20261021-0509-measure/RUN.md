@@ -115,3 +115,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:04Z gate run 7 stopped by the operator: the resolve failure was the operator's tmpfs quota; build 14's pins resolve on disk
 - 16:04Z review 6 of build 14 requested
 - 16:04Z stage review on wf.js run 3: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1325849
+- 16:06Z build 14 checks: selftest exit 0
+- 16:07Z build 14 checks: selftest exit 0
+- 16:07Z gate 12 (addendum) requested
+- 16:07Z stage gate on wf.js run 8: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1332584
