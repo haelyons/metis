@@ -128,3 +128,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:20Z build 15 (wf.js, claude/opus, 84 s): files identical to build 14 (hashes 82b8465e…/8982a9e0…); pip dry-run resolve of build 15's 9 pins in CPython 3.10 (sdists allowed): exit 0; ResolutionImpossible 0; 'No matching distribution' 0; error lines 0; packages in the report 82
 - 16:20Z review 7 of build 15 requested
 - 16:20Z stage review on wf.js run 4: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1356927
+- 16:22Z build 15 checks: selftest exit 0
+- 16:22Z gate 13 (addendum) requested
+- 16:22Z stage gate on wf.js run 9: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1361374
