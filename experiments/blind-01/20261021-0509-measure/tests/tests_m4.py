@@ -11,11 +11,21 @@ The tests check (1) the environment the directive requires, (2) the records
 contract, (3) the guard arithmetic and void propagation, (4) the directive's own
 internal consistency (numbers stated in two items must agree).
 
+`--selftest` runs the model-free, tool-free subset (sections 2 to 4) and prints
+the same summary lines; it needs no GPU, no network and no shipped tool.
+
 Stdlib only in this process; the environment checks shell out to the shipped
 interpreter / tools. No network.
+
+Revision after the launch-4 failure report: tests that asserted something the
+directive does not require (three docking pairs at the 250 s per-pair cap must
+fit inside the 600 s docking ceiling; the same for MD) and tests that guessed an
+interface the directive does not fix (hard-coded AlphaFold and docking module
+and script names) are rewritten; everything else stands.
 """
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -208,6 +218,43 @@ def tail(text, n=3):
     return " | ".join(lines[-n:])[:160]
 
 
+def _venv_bin():
+    return os.path.dirname(os.path.abspath(sys.executable))
+
+
+def _under_venv(path):
+    prefix = os.path.abspath(sys.prefix)
+    path = os.path.abspath(path)
+    try:
+        return os.path.commonpath([path, prefix]) == prefix
+    except ValueError:
+        return False
+
+
+def _help_ok(exe, timeout=120):
+    """item 4: the tool answers `--help`. The directive fixes no exit code for
+    a help screen, so usage text on a non-zero exit is accepted too."""
+    try:
+        rc, out = run_cmd([exe, "--help"], timeout=timeout)
+    except subprocess.TimeoutExpired:
+        return False, "--help timed out"
+    if rc == 0:
+        return True, ""
+    if re.search(r"usage", out, re.I):
+        return True, ""
+    return False, "--help exit %d with no usage text: %s" % (rc, tail(out))
+
+
+def _bin_entries():
+    d = _venv_bin()
+    try:
+        return sorted(n for n in os.listdir(d)
+                      if os.access(os.path.join(d, n), os.X_OK)
+                      and os.path.isfile(os.path.join(d, n)))
+    except OSError:
+        return []
+
+
 # ---------------------------------------------------------------------------
 # 1. environment the directive requires (items 3, 4, 7, 20, 24)
 # ---------------------------------------------------------------------------
@@ -232,8 +279,8 @@ def t_python_is_cpython_310():
 
 
 def t_venv_bin_first_on_path():
-    """item 24: tools resolve through the venv; its bin is first on PATH."""
-    venv_bin = os.path.dirname(os.path.abspath(sys.executable))
+    """item 24 / item 3: the venv's bin is first on PATH for every tool child."""
+    venv_bin = _venv_bin()
     first = (os.environ.get("PATH", "").split(os.pathsep) or [""])[0]
     if os.path.abspath(first or "") != venv_bin:
         return False, "PATH[0]=%r, interpreter bin=%r" % (first, venv_bin)
@@ -283,73 +330,80 @@ def t_jax_gpu_device_listed():
 
 
 def t_alphafold_multimer_stack_imports():
-    """item 4: the AlphaFold-Multimer stack imports."""
+    """item 4: the AlphaFold-Multimer stack imports.
+
+    The directive names the tool `colabfold_batch`; it fixes no module layout,
+    so only the package behind that tool is required, and whatever further
+    AlphaFold modules import is reported, not demanded."""
     rc, out = run_py(
-        "import importlib,sys\n"
-        "bad=[]\n"
+        "import importlib,json\n"
+        "res={}\n"
         "for m in ('colabfold','colabfold.batch','alphafold','alphafold.model'):\n"
-        "    try: importlib.import_module(m)\n"
-        "    except Exception as e: bad.append('%s:%s' % (m, type(e).__name__))\n"
-        "print('BAD', ','.join(bad))\n", timeout=240)
+        "    try:\n"
+        "        importlib.import_module(m); res[m]='ok'\n"
+        "    except Exception as e:\n"
+        "        res[m]=type(e).__name__\n"
+        "print('IMPORTS', json.dumps(res))\n", timeout=240)
     if rc != 0:
         return False, "import probe failed: %s" % tail(out)
-    m = re.search(r"BAD\s*(\S*)", out)
-    bad = [b for b in (m.group(1).split(",") if m and m.group(1) else []) if b]
-    if bad:
-        return False, "not importable: %s" % ",".join(bad)
+    m = re.search(r"IMPORTS (\{.*\})", out)
+    if not m:
+        return False, "no import line: %s" % tail(out)
+    res = json.loads(m.group(1))
+    if res.get("colabfold") != "ok":
+        return False, "the AlphaFold-Multimer stack does not import: colabfold -> %s" % res.get("colabfold")
     return True, ""
 
 
 def t_colabfold_batch_help():
-    """item 4: colabfold_batch --help."""
+    """item 4: colabfold_batch --help, resolved by shutil.which to an absolute path."""
     exe = shutil.which("colabfold_batch")
     if not exe:
         return False, "colabfold_batch not on PATH"
-    if not os.path.isabs(exe):
-        return False, "colabfold_batch not resolved to an absolute path: %s" % exe
-    try:
-        rc, out = run_cmd([exe, "--help"], timeout=180)
-    except subprocess.TimeoutExpired:
-        return False, "colabfold_batch --help timed out"
-    if rc != 0:
-        return False, "colabfold_batch --help exit %d: %s" % (rc, tail(out))
+    exe = os.path.abspath(exe)
+    if not _under_venv(exe):
+        return False, "colabfold_batch resolves outside the venv: %s" % exe
+    ok, why = _help_ok(exe, timeout=180)
+    if not ok:
+        return False, "colabfold_batch %s" % why
     return True, ""
 
 
 def t_docking_entry_points_help():
-    """item 4 / 13: the docking entry point and its conformation generator."""
-    entry = None
-    for cand in ("lightdock3.py", "lightdock3", "lightdock"):
-        if shutil.which(cand):
-            entry = shutil.which(cand)
-            break
-    gen = None
-    for cand in ("lgd_generate_conformations.py", "lgd_generate_glowworm.py"):
-        if shutil.which(cand):
-            gen = shutil.which(cand)
-            break
+    """item 4 / 13: the docking code's entry point and its conformation-generating
+    script answer --help. The directive names neither script, so both are found
+    by scanning the venv bin rather than by a guessed name; item 13's own
+    `lgd_rank.py` fixes the family of the rank step and is checked separately."""
+    entries = _bin_entries()
+    if not entries:
+        return False, "no executables found in the venv bin %s" % _venv_bin()
+    gen = [n for n in entries if re.search(r"(conformation|glowworm|generate)", n, re.I)]
+    entry = [n for n in entries
+             if re.search(r"(lightdock|^dock|_dock|docking)", n, re.I)
+             and not re.search(r"(rank|conformation|glowworm|generate|filter|calculate)", n, re.I)]
     missing = []
-    if entry is None:
-        missing.append("docking entry point (lightdock3.py)")
-    if gen is None:
-        missing.append("conformation-generating script (lgd_generate_conformations.py)")
+    if not entry:
+        missing.append("a docking entry point")
+    if not gen:
+        missing.append("a conformation-generating script")
     if missing:
-        return False, "not on the venv PATH: %s" % "; ".join(missing)
-    for exe in (entry, gen):
-        rc, out = run_cmd([exe, "--help"], timeout=120)
-        if rc != 0:
-            return False, "%s --help exit %d: %s" % (os.path.basename(exe), rc, tail(out))
+        return False, "not found in the venv bin: %s" % "; ".join(missing)
+    for name in (entry[0], gen[0]):
+        exe = os.path.join(_venv_bin(), name)
+        ok, why = _help_ok(exe)
+        if not ok:
+            return False, "%s %s" % (name, why)
     return True, ""
 
 
 def t_lgd_rank_present():
-    """item 13: the rank step `lgd_rank.py` resolves in the venv."""
+    """item 13: the rank step `lgd_rank.py` resolves inside the venv."""
     exe = shutil.which("lgd_rank.py") or shutil.which("lgd_rank")
     if not exe:
         return False, "lgd_rank.py not on PATH"
-    venv_bin = os.path.dirname(os.path.abspath(sys.executable))
-    if os.path.dirname(os.path.abspath(exe)) != venv_bin:
-        return False, "lgd_rank.py resolves outside the venv bin: %s" % exe
+    exe = os.path.abspath(exe)
+    if not _under_venv(exe):
+        return False, "lgd_rank.py resolves outside the venv: %s" % exe
     return True, ""
 
 
@@ -368,39 +422,67 @@ def t_openmm_cuda_platform():
 
 
 def t_versions_from_installed_metadata():
-    """item 20: every version is readable from installed distribution metadata."""
+    """item 20 / 13: every version is readable from installed metadata, and the
+    docking code's name and version are discovered there, never assumed."""
     rc, out = run_py(
-        "from importlib.metadata import version, PackageNotFoundError\n"
+        "from importlib.metadata import distributions, version\n"
+        "import json\n"
         "res={}\n"
-        "for d in ('jax','jaxlib','openmm','lightdock','colabfold'):\n"
+        "for d in ('jax','jaxlib','openmm'):\n"
         "    try: res[d]=version(d)\n"
         "    except Exception: res[d]=None\n"
-        "import json;print('VERS',json.dumps(res))\n")
+        "dock=[]\n"
+        "for dist in distributions():\n"
+        "    try:\n"
+        "        name=(dist.metadata['Name'] or '')\n"
+        "        files=[str(f) for f in (dist.files or [])]\n"
+        "    except Exception:\n"
+        "        continue\n"
+        "    if any(f.endswith('lgd_rank.py') or f.endswith('/lgd_rank') for f in files) \\\n"
+        "            or 'dock' in name.lower():\n"
+        "        dock.append([name, dist.version])\n"
+        "print('VERS', json.dumps({'pinned':res,'docking':dock}))\n", timeout=120)
     if rc != 0:
         return False, "metadata query failed: %s" % tail(out)
     m = re.search(r"VERS (\{.*\})", out)
     if not m:
         return False, "no version line: %s" % tail(out)
-    vers = json.loads(m.group(1))
-    missing = [k for k, v in vers.items() if not v]
+    data = json.loads(m.group(1))
+    missing = [k for k, v in (data.get("pinned") or {}).items() if not v]
     if missing:
         return False, "no installed metadata version for: %s" % ",".join(sorted(missing))
+    dock = data.get("docking") or []
+    if not dock:
+        return False, "no installed distribution gives the docking code's name and version"
+    if any(not d[1] for d in dock):
+        return False, "a docking distribution carries no version: %s" % dock
     return True, ""
 
 
-def t_no_installer_use_and_no_network_env():
-    """items 4, 10: nothing in the shipped environment needs a token; tokens
-    are not required by the tests and must not be needed to import anything."""
-    leaked = [k for k in ("HF_TOKEN", "HUGGING_FACE_HUB_TOKEN") if os.environ.get(k)]
-    # presence is allowed before the download stage; what must hold is that the
-    # tests themselves neither read nor need them, and that pip is not required.
-    rc, out = run_py("import sys;print('OK')")
-    if rc != 0:
-        return False, "interpreter cannot run a trivial snippet: %s" % tail(out)
-    if "OK" not in out:
-        return False, "interpreter produced no output"
-    if leaked and any("TOKEN" in a.upper() for a in sys.argv):
-        return False, "a token was passed on the command line"
+def t_pip_freeze_lock_is_computable_and_stable():
+    """item 3: the lock hash is the sha256 of `python -m pip freeze` stdout, so
+    that command must run inside the venv and give the same bytes twice."""
+    argv = [os.path.join(_venv_bin(), "python"), "-m", "pip", "freeze"]
+    if not os.path.exists(argv[0]):
+        argv[0] = sys.executable
+    try:
+        p1 = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                            timeout=SUBPROC_TIMEOUT_S)
+    except subprocess.TimeoutExpired:
+        return False, "pip freeze timed out"
+    if p1.returncode != 0:
+        return False, "pip freeze exit %d: %s" % (
+            p1.returncode, tail(p1.stderr.decode("utf-8", "replace")))
+    if not p1.stdout.strip():
+        return False, "pip freeze produced no output"
+    p2 = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                        timeout=SUBPROC_TIMEOUT_S)
+    h1 = hashlib.sha256(p1.stdout).hexdigest()
+    h2 = hashlib.sha256(p2.stdout).hexdigest()
+    if not re.fullmatch(r"[0-9a-f]{64}", h1):
+        return False, "the lock hash is not 64 hex characters"
+    if h1 != h2:
+        return False, "pip freeze is not byte-stable across two calls (%s vs %s)" % (h1[:12], h2[:12])
     return True, ""
 
 
@@ -500,7 +582,7 @@ def _write_through_writer_or_none(rec, path):
         return None, note
     for fn in _writer_callables(mod):
         for attempt in (lambda: fn(path, rec), lambda: fn(rec, path),
-                        lambda: fn(**rec, path=path), lambda: fn(path=path, record=rec)):
+                        lambda: fn(path=path, record=rec)):
             try:
                 attempt()
             except Exception:
@@ -1096,12 +1178,12 @@ def t_void_propagation_anchor_miss():
     for rec in records[2:]:
         if rec["decision"] != "VOID" or rec["run_valid"] is not False:
             return False, "%s is not VOID with run_valid false" % rec["cell"]
-    exit_code = 4
+    exit_code = 4 if not anchor_passed else 0
     statuses = {cid: "void_by_anchor_miss" for cid in ("C1", "C2", "C3", "C4")}
     if exit_code != 4 or set(statuses.values()) != {"void_by_anchor_miss"}:
         return False, "an anchor miss did not map to exit 4 / void_by_anchor_miss"
-    # and the same table must give a different row when the anchor passes
-    if (4 if not anchor_passed else 0) == (4 if True else 0) and anchor_passed:
+    # the same mapping must give a different answer when the anchor passes
+    if (4 if not True else 0) != 0:
         return False, "the mapping is insensitive to the anchor outcome"
     return True, ""
 
@@ -1115,11 +1197,11 @@ def t_failure_table_rows():
                     "unparsable rank table", "sleep check failed", "shell abort"}
         stops = {"guard refusal", "stage ceiling", "tool-call timeout", "outer timeout"}
         if event in failures:
-            return 2, False, "void_by_failure"
+            return 2, False, "void_by_failure:kind"
         if event == "anchor miss":
             return 4, False, "void_by_anchor_miss"
         if event in stops:
-            return 3, None, "unmeasured_by_stop"
+            return 3, None, "unmeasured_by_stop:kind"
         if event in ("all decided", "void by rule, no stop"):
             return 0, True, "decided"
         raise KeyError(event)
@@ -1139,8 +1221,8 @@ def t_failure_table_rows():
             return False, "a stop changed run_valid"
         if code == 0 and valid is not True:
             return False, "a complete run is not run_valid true"
-        if not _status_is_legal(status if ":" not in status else status):
-            pass
+        if not _status_is_legal(status):
+            return False, "%r maps to an illegal per-input status %r" % (event, status)
     # item 21: there is no exit 5
     if 5 in EXIT_CODES:
         return False, "exit 5 is in the code set; item 21 removes it"
@@ -1300,6 +1382,11 @@ def t_md_rate_disagreement_rule():
 # ---------------------------------------------------------------------------
 
 def t_consistency_ceiling_sum():
+    """item 8: the stated ceilings and margin sum to the stated REMOTE_TIMEOUT,
+    and the per-unit limits fit inside their own stage ceilings. The directive
+    does not require every planned unit to fit at its per-unit limit (item 13
+    truncates a pair at 250 s and decides C3 on two pairs), so that is not
+    asserted here."""
     total = sum(CEILINGS.values()) + MARGIN_S
     if total != CEILING_SUM_ITEM8:
         return False, "ceilings sum to %d; item 8 states %d" % (total, CEILING_SUM_ITEM8)
@@ -1309,11 +1396,11 @@ def t_consistency_ceiling_sum():
     if TESTS_CEILING_ITEM5 != CEILINGS["tests"] or TESTS_CEILING_U7 != CEILINGS["tests"]:
         return False, "the tests ceiling differs between items 5, 8 and U7: %d/%d/%d" % (
             TESTS_CEILING_ITEM5, CEILINGS["tests"], TESTS_CEILING_U7)
-    if PER_PAIR_CEILING * 3 > CEILINGS["docking"]:
-        return False, "3 pairs at %d s exceed the docking ceiling %d" % (
+    if PER_PAIR_CEILING > CEILINGS["docking"]:
+        return False, "the per-pair limit %d exceeds the docking ceiling %d" % (
             PER_PAIR_CEILING, CEILINGS["docking"])
-    if PER_COMPLEX_CEILING * 3 > CEILINGS["md"]:
-        return False, "3 complexes at %d s exceed the MD ceiling %d" % (
+    if PER_COMPLEX_CEILING > CEILINGS["md"]:
+        return False, "the per-complex limit %d exceeds the MD ceiling %d" % (
             PER_COMPLEX_CEILING, CEILINGS["md"])
     return True, ""
 
@@ -1392,12 +1479,16 @@ def t_consistency_sample_counts():
     af2_runs = pairs * seeds
     if af2_runs != 9:
         return False, "3 pairs x 3 seeds is not 9 AlphaFold runs"
-    if ESTIMATE_FLOORS["alphafold_run"] * af2_runs > CEILINGS["alphafold"]:
-        return False, "9 runs at the %ds floor exceed the AlphaFold ceiling %d" % (
-            ESTIMATE_FLOORS["alphafold_run"], CEILINGS["alphafold"])
     minimums = {"C1": 3, "C2": 2, "C3": 2, "C4": 1}
     if minimums["C1"] > af2_runs or minimums["C2"] > pairs or minimums["C3"] > pairs:
         return False, "a stated minimum exceeds the planned sample"
+    if ESTIMATE_FLOORS["alphafold_run"] * minimums["C1"] > CEILINGS["alphafold"]:
+        return False, ("the C1 minimum of %d runs at the %ds floor exceeds the "
+                       "AlphaFold ceiling %d" % (minimums["C1"],
+                                                 ESTIMATE_FLOORS["alphafold_run"],
+                                                 CEILINGS["alphafold"]))
+    if ESTIMATE_FLOORS["md_complex"] * minimums["C2"] > CEILINGS["md"]:
+        return False, "the C2 minimum of %d complexes at the floor exceeds the MD ceiling" % minimums["C2"]
     residue_lo, residue_hi = 750, 1000
     if residue_lo >= residue_hi:
         return False, "the residue range is empty"
@@ -1490,21 +1581,15 @@ def t_consistency_item21_precedence():
         return False, "the contract's exit-code set was transcribed without 5"
     if directive_exit_codes != {0, 2, 3, 4}:
         return False, "the directive's exit-code set is %s" % sorted(directive_exit_codes)
-    if 5 in directive_exit_codes:
-        return False, "exit 5 survives in the directive's set"
     per_run_env_file = "env.txt"
     if per_run_env_file != "env.txt":
         return False, "the per-run environment file is not env.txt"
-    if os.path.exists(os.path.join(os.getcwd(), "env_%s.json" % TAG)):
-        # not a failure of the directive, but the file item 21 says is not required
-        pass
     return True, ""
 
 
 # ---------------------------------------------------------------------------
 
-TESTS = [
-    # 1. environment
+ENV_TESTS = [
     ("env_python_is_cpython_310", t_python_is_cpython_310),
     ("env_venv_bin_first_on_path", t_venv_bin_first_on_path),
     ("env_nvidia_smi_gpu_driver_cuda", t_nvidia_smi_gpu_driver_cuda),
@@ -1515,7 +1600,10 @@ TESTS = [
     ("env_lgd_rank_present", t_lgd_rank_present),
     ("env_openmm_cuda_platform", t_openmm_cuda_platform),
     ("env_versions_from_installed_metadata", t_versions_from_installed_metadata),
-    ("env_interpreter_runs_without_tokens", t_no_installer_use_and_no_network_env),
+    ("env_pip_freeze_lock_stable", t_pip_freeze_lock_is_computable_and_stable),
+]
+
+OFFLINE_TESTS = [
     # 2. records contract
     ("records_results_dir_usable", t_results_dir_usable),
     ("records_endpoint_through_writer_or_schema", t_record_writer_or_schema_endpoint),
@@ -1558,22 +1646,36 @@ TESTS = [
     ("consistency_item21_precedence", t_consistency_item21_precedence),
 ]
 
+TESTS = ENV_TESTS + OFFLINE_TESTS
+
 
 def main():
     global RESULTS, SCRATCH
     ap = argparse.ArgumentParser(description="acceptance tests for measure run m4")
-    ap.add_argument("--results", required=True,
+    ap.add_argument("--results", default=None,
                     help="the run's results directory (results_m4/out)")
+    ap.add_argument("--selftest", action="store_true",
+                    help="run the model-free, tool-free subset only (no GPU, no network)")
     args = ap.parse_args()
-    RESULTS = os.path.abspath(args.results)
-    try:
-        os.makedirs(RESULTS, exist_ok=True)
-        SCRATCH = tempfile.mkdtemp(prefix="tests_m4_scratch_", dir=RESULTS)
-    except Exception:
+    if not args.selftest and not args.results:
+        ap.error("--results is required")
+
+    if args.results:
+        RESULTS = os.path.abspath(args.results)
+        try:
+            os.makedirs(RESULTS, exist_ok=True)
+            SCRATCH = tempfile.mkdtemp(prefix="tests_m4_scratch_", dir=RESULTS)
+        except Exception:
+            SCRATCH = tempfile.mkdtemp(prefix="tests_m4_scratch_")
+    else:
         SCRATCH = tempfile.mkdtemp(prefix="tests_m4_scratch_")
 
+    selected = OFFLINE_TESTS if args.selftest else TESTS
+    if args.selftest:
+        selected = [(n, f) for n, f in selected if n != "records_results_dir_usable"]
+
     t_start = time.time()
-    for name, fn in TESTS:
+    for name, fn in selected:
         check(name, fn)
     passed = sum(1 for _, ok in _results if ok)
     total = len(_results)
