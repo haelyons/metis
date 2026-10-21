@@ -74,3 +74,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 14:52Z build 9 checks: selftest exit 0
 - 14:53Z addendum 7 (gate on wf.js, 8 answers, 57 items, build 10 authorised, launch 1 pre-authorised on a clean review 5): operator wrote the offline index listing the gate asked for; build 10 starts with --keep. Operator disclosure: a masking pass printed the engine's package name twice today; masking replaced by a fixed vocabulary filter.
 - 14:54Z stage build on wf.js run 7: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1203259
+- 15:02Z build 10 checks: selftest exit 0
+- 15:02Z review 5 of build 10 requested
+- 15:02Z stage review on wf.js run 2: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1217562

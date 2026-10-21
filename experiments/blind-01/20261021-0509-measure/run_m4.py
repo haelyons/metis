@@ -380,16 +380,21 @@ ALLOWED_DOWNLOAD_HOSTS = ("files.rcsb.org", "storage.googleapis.com")
 #
 # WHICH FORM WAS CHOSEN FOR THE DYNAMICS ENGINE, AND WHY IT IS STATED HERE.
 # The engine's plain wheel does not always carry the graphics-processor
-# platform the run needs; the platform comes either from an extra of the pinned
-# release or from a separate package whose name begins "openmm-cuda". The form
-# chosen here is THE PINNED RELEASE'S CUDA EXTRA, written "openmm[cuda12]".
-# The alternative, a sibling pinned requirement such as "openmm-cuda-12==8.2.0",
-# was not used. Which form is right cannot be settled from memory, so two checks
-# decide it and neither is this comment: the operator reads the pinned release's
-# published extras before launch 1, and the smoke check asks the installed
-# engine for its CUDA platform on the box. If the extra does not exist, the
-# engine installs without the platform, the smoke check fails, and the run ends
-# as broken infrastructure before any measurement. Nothing falls back.
+# platform the run needs. The form chosen here is THE SIBLING PACKAGE: two
+# pinned entries, the plain engine release "openmm==8.2.0" and the separate
+# package "openmm-cuda==8.1.1.12" that carries the CUDA platform.
+# A bracketed extra, written "openmm[cuda12]==8.2.0", is not used and is
+# refused by the check below: the operator's package-index listing
+# "out/pip_pins_openmm_listing.txt" reports that the pinned release declares no
+# extras at all ("extra cuda12 not in []"). That same listing is the only
+# source of the sibling's name and version; neither comes from memory or from
+# the network. It lists "openmm-cuda" with versions 8.1.1.11.2, 8.1.1.11.8 and
+# 8.1.1.12, and 8.1.1.12 is the build for CUDA 12, which the box runs.
+# Two checks, neither of them this comment, decide whether the form works: the
+# operator repeats the index check before launch 1, and the smoke check asks
+# the installed engine for its CUDA platform on the box. If the platform is
+# missing, the smoke check fails and the run ends as broken infrastructure
+# before any measurement. Nothing falls back.
 #
 # The prediction stack takes the form whose published metadata carries what the
 # smoke check imports: "colabfold" supplies the command line and "alphafold-
@@ -402,7 +407,8 @@ PIP_PINS = [
     "jax-cuda12-pjrt==0.4.35",
     "colabfold==1.5.5",
     "alphafold-colabfold==2.3.6",
-    "openmm[cuda12]==8.2.0",
+    "openmm==8.2.0",
+    "openmm-cuda==8.1.1.12",
     "lightdock==0.9.4",
 ]
 
@@ -425,10 +431,10 @@ def parse_pin(spec: str) -> dict:
 def pip_pins_problems(pins: list) -> list:
     """What is wrong with a list of pinned requirements, in plain words.
 
-    Two things are checked: every requirement names an exact version, and the
-    dynamics engine is asked for in a form that can carry the graphics-processor
-    platform, either through an extra or through a sibling package whose name
-    begins "openmm-cuda".
+    Three things are checked: every requirement names an exact version, the
+    dynamics engine is asked for with a sibling package whose name begins
+    "openmm-cuda" to carry the graphics-processor platform, and the engine
+    itself carries no bracketed extra, because its pinned release declares none.
     """
     problems = []
     parsed = []
@@ -440,10 +446,16 @@ def pip_pins_problems(pins: list) -> list:
     names = {p["name"].lower().replace("_", "-") for p in parsed}
     openmm = [p for p in parsed if p["name"].lower() == "openmm"]
     sibling = [n for n in names if n.startswith("openmm-cuda")]
-    if openmm and not openmm[0]["extras"] and not sibling:
+    if openmm and openmm[0]["extras"]:
+        problems.append(
+            "the dynamics engine is pinned with a bracketed extra "
+            "(%s), which its pinned release does not declare"
+            % ",".join(openmm[0]["extras"])
+        )
+    if openmm and not sibling:
         problems.append(
             "the dynamics engine is pinned without a form that carries the "
-            "graphics-processor platform: no extra and no openmm-cuda sibling"
+            "graphics-processor platform: no openmm-cuda sibling"
         )
     return problems
 
@@ -6291,16 +6303,28 @@ def selftest_pip_pins(c: Checks) -> None:
 
     c.eq("this run's own pinned requirements are usable as written",
          pip_pins_problems(PIP_PINS), [])
-    c.eq("the dynamics engine carrying its CUDA extra passes",
-         pip_pins_problems(["openmm[cuda12]==8.2.0"]), [])
     c.eq("the dynamics engine with a CUDA sibling package passes",
+         pip_pins_problems(["openmm==8.2.0", "openmm-cuda==8.1.1.12"]), [])
+    c.eq("a differently named CUDA sibling package also passes",
          pip_pins_problems(["openmm==8.2.0", "openmm-cuda-12==8.2.0"]), [])
+    c.ok("the dynamics engine carrying a bracketed extra is refused",
+         bool(pip_pins_problems(["openmm[cuda12]==8.2.0"])))
+    c.ok("a bracketed extra is refused even beside a CUDA sibling",
+         bool(pip_pins_problems(["openmm[cuda12]==8.2.0",
+                                 "openmm-cuda==8.1.1.12"])))
     c.ok("the plain dynamics engine with no CUDA form is refused",
          bool(pip_pins_problems(["openmm==8.2.0"])))
     c.ok("an entry without an exact version fails the check",
-         bool(pip_pins_problems(["openmm[cuda12]==8.2.0", "lightdock"])))
+         bool(pip_pins_problems(["openmm==8.2.0", "openmm-cuda==8.1.1.12",
+                                 "lightdock"])))
+    c.ok("this run pins the plain dynamics engine, with no extra",
+         "openmm==8.2.0" in PIP_PINS)
+    c.ok("this run pins the CUDA sibling package of the dynamics engine",
+         any(p.startswith("openmm-cuda") for p in PIP_PINS))
     c.ok("the chosen form is stated in the file beside the pins",
-         "THE PINNED RELEASE'S CUDA EXTRA" in Path(__file__).read_text())
+         "THE SIBLING PACKAGE" in Path(__file__).read_text())
+    c.ok("the comment beside the pins names the operator's index listing",
+         "pip_pins_openmm_listing.txt" in Path(__file__).read_text())
 
     c.eq("an installer that can report downloads needs no bootstrap",
          pip_needs_bootstrap("pip 23.0.1 from /usr/lib/python3/dist-packages/pip "
@@ -6700,6 +6724,10 @@ case "$*" in
     echo "finalize" >> "$M4_STUB_FINALIZE_CALLS"
     exit 0 ;;
 esac
+if [ -n "${M4_STUB_RECORD:-}" ]; then
+  mkdir -p "$M4_STUB_OUT"
+  printf '%s' "$M4_STUB_RECORD" > "$M4_STUB_RECORD_PATH"
+fi
 if [ "${M4_STUB_WRITE:-0}" = "1" ]; then
   mkdir -p "$M4_STUB_OUT"
   printf '%s' "$M4_STUB_RUN_DONE" > "$M4_STUB_OUT/RUN_DONE"
@@ -6721,7 +6749,7 @@ def _write_executable(path: Path, text: str) -> Path:
 
 def _run_onbox(root: Path, *, rc, write=False, run_done="", run_valid="",
                remote_timeout="7200", sudo=SUDO_STUB_OK, install_ceiling=None,
-               timeout_s=120):
+               timeout_s=120, record=None, record_name=None):
     """Run the on-box script itself, under its test hook, with planted answers."""
     script = Path(__file__).with_name(f"onbox_{TAG}.sh")
     bin_dir = root / "testbin"
@@ -6748,6 +6776,9 @@ def _run_onbox(root: Path, *, rc, write=False, run_done="", run_valid="",
     })
     if install_ceiling is not None:
         env["M4_TEST_INSTALL_CEILING_S"] = str(install_ceiling)
+    if record is not None:
+        env["M4_STUB_RECORD"] = record
+        env["M4_STUB_RECORD_PATH"] = str(out / (record_name or ""))
     started = time.time()
     proc = subprocess.run(["bash", str(script)], env=env, cwd=str(root),
                           capture_output=True, text=True, timeout=timeout_s)
@@ -6929,6 +6960,60 @@ def selftest_shell_routes(c: Checks) -> None:
              (_read_json(r["out"] / "RUN_DONE") or {}).get("exit_code"), 2)
         c.eq("the hung install leaves the run invalid",
              (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), False)
+
+        # (11) and (12) an input already decided keeps its decision when the
+        # shell writes the void. Only the inputs with no record of their own
+        # take the shell's status.
+        decided_c3 = json.dumps(
+            {"cell": {"stage": "endpoints", "input": "C3", "tag": TAG},
+             "inputs": [], "metric": "aux_h_per_pair",
+             "values": {"measured": 1.0, "unit": CARD["C3"]["unit"],
+                        "card_value": CARD["C3"]["card_value"],
+                        "band": CARD["C3"]["band"], "n": 3},
+             "threshold": {"band": CARD["C3"]["band"]},
+             "decision_rule": "inside the band is PASS", "decision": "PASS",
+             "run_valid": True, "env": {"timestamp_utc": "2026-10-21T00:00:00Z"}},
+            indent=2)
+        record_name = f"endpoint-C3_tag-{TAG}.json"
+
+        r = _run_onbox(tmp / "decided_fail", rc=2, record=decided_c3,
+                       record_name=record_name)
+        c.eq("broken infrastructure after one decided input still exits two",
+             r["rc"], 2)
+        c.eq("and the run is invalid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), False)
+        c.eq("the decided input's record is left exactly as it was",
+             (r["out"] / record_name).read_text(), decided_c3)
+        done = _read_json(r["out"] / "RUN_DONE")
+        c.eq("the decided input stays decided in the marker",
+             done["inputs"]["C3"]["status"], "decided")
+        c.eq("the decided input keeps its decision in the marker",
+             done["inputs"]["C3"]["decision"], "PASS")
+        c.eq("an input with no record of its own is void by failure",
+             done["inputs"]["C1"]["status"], "void_by_failure:runner_exit_2")
+        validity = _read_json(r["out"] / "RUN_VALID.json")
+        c.eq("the validity file keeps the decided input decided",
+             validity["inputs_status"]["C3"]["status"], "decided")
+        c.eq("the validity file voids the inputs with no record",
+             [validity["inputs_status"][k]["status"] for k in ("C2", "C4")],
+             ["void_by_failure:runner_exit_2"] * 2)
+        summary = _read_json(r["out"] / f"{TAG}_summary.json")
+        c.eq("the summary the shell writes keeps the decided input decided",
+             summary["inputs_status"]["C3"]["status"], "decided")
+
+        r = _run_onbox(tmp / "decided_stop", rc=3, record=decided_c3,
+                       record_name=record_name)
+        c.eq("a stop after one decided input exits three", r["rc"], 3)
+        c.eq("and the run stays valid",
+             (_read_json(r["out"] / "RUN_VALID.json") or {}).get("run_valid"), True)
+        c.eq("the decided input's record survives the stop untouched",
+             (r["out"] / record_name).read_text(), decided_c3)
+        done = _read_json(r["out"] / "RUN_DONE")
+        c.eq("the decided input stays decided after a stop",
+             done["inputs"]["C3"]["status"], "decided")
+        c.eq("the inputs with no record are unmeasured after a stop",
+             [done["inputs"][k]["status"] for k in ("C1", "C2", "C4")],
+             ["unmeasured_by_stop:outer_timeout"] * 3)
 
 
 def selftest_consistency(c: Checks) -> None:

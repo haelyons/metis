@@ -251,7 +251,38 @@ put(os.path.join(out, "endpoint-anchor_tag-m4.json"),
     "an anchor the run never compared is VOID, never holding",
     reason)
 
+# An input the measuring program already decided keeps that decision. Its
+# record is read, never rewritten, and it is not shown as void below. Only an
+# input with no such record takes this script's status. Code 4 (the anchor
+# missed) voids all four, whatever their records say.
+UNMEASURED = "unmeasured, not holding"
+
+def standing(cid):
+    """Read one input's record on disk: decided, void by a rule, or not done."""
+    path = os.path.join(out, "endpoint-%s_tag-m4.json" % cid)
+    try:
+        rec = json.load(open(path))
+    except Exception:
+        return None
+    if not isinstance(rec, dict):
+        return None
+    decision = rec.get("decision")
+    values = rec.get("values") or {}
+    why = str(values.get("void_reason") or values.get("voided_by") or "")
+    notes = " ".join(str(n) for n in (rec.get("notes_list") or []))
+    if decision in ("PASS", "FAIL"):
+        return {"status": "decided", "decision": decision, "voided_by": None}
+    if decision == "VOID" and UNMEASURED not in why and UNMEASURED not in notes:
+        if values.get("marginal") or why:
+            return {"status": "void_by_rule:%s" % (why or "marginal"),
+                    "decision": "VOID", "voided_by": why or "marginal"}
+    return None
+
+KEPT = {} if code == 4 else {c: s for c in CARD for s in [standing(c)] if s}
+
 for cid, (key, unit, value, band) in CARD.items():
+    if cid in KEPT:
+        continue
     put(os.path.join(out, "endpoint-%s_tag-m4.json" % cid),
         {"stage": "endpoints", "input": cid, "key": key, "tag": "m4"},
         "%s was not measured: the run ended before this stage" % key,
@@ -262,8 +293,12 @@ for cid, (key, unit, value, band) in CARD.items():
         "an input the run never reached is VOID, never holding",
         reason)
 
-inputs = {c: {"status": status, "decision": "VOID", "voided_by": reason}
-          for c in ("C1", "C2", "C3", "C4")}
+inputs = {}
+for c in ("C1", "C2", "C3", "C4"):
+    if c in KEPT:
+        inputs[c] = dict(KEPT[c])
+    else:
+        inputs[c] = {"status": status, "decision": "VOID", "voided_by": reason}
 
 summary = {}
 summary["what_this_run_decides"] = WHAT
