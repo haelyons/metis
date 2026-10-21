@@ -1,0 +1,51 @@
+{
+ "option_title": "6 R2 W13 (PASS)",
+ "phases": [
+ {"id":"P0","what":"pilot: harness gate, throughput, eval speed","stop_rule":"if < 3,500 steps/A100-h: drop arm E, shrink B', C at 100% only","gate":{"on":"sph","op":">=","value":3500,"else":"drop arm E, shrink B', C at 100% only"}},
+ {"id":"W1","what":"wave 1"},
+ {"id":"W2","what":"wave 2"},
+ {"id":"EV","what":"evaluation tail, copy-out"}
+],
+ "numbers": [
+ {"id":"lr_steps","name":"steps in LeRobot SmolVLA timing","unit":"steps","basis":"PROXY","value":20000,"source_id":"s_lerobot","quote":"20k steps will roughly take ~4 hrs on a single A100 GPU","page_setting":"SmolVLA fine-tune, LeRobot default dataset, 1x A100","differs_in":["dataset"],"measured_by":"P0"},
+ {"id":"lr_hours","name":"hours for those steps","unit":"h","basis":"PROXY","value":4,"source_id":"s_lerobot","page_setting":"same","differs_in":["dataset"],"measured_by":"P0"},
+ {"id":"sph","name":"training steps per A100-hour","unit":"steps/GPU-h","basis":"DERIVED","expr":"lr_steps / lr_hours"},
+ {"id":"s_A","name":"steps, arm A (2 runs x 100k)","unit":"steps","basis":"DESIGN","value":200000},
+ {"id":"s_C","name":"step-equivalents, arm C (2 x 50k x cost 2)","unit":"steps","basis":"DERIVED","expr":"2 * 50000 * c_full"},
+ {"id":"c_full","name":"cost of a full fine-tune step vs expert-only","unit":"x","basis":"GUESS","value":2,"rests_on":"producer's assumption; full fine-tune trains ~4.5x the parameters","measured_by":"P0"},
+ {"id":"s_B50","name":"steps, arm B 50k cells (4 x 50k)","unit":"steps","basis":"DESIGN","value":200000},
+ {"id":"s_Bp","name":"steps, arm B' (4 x 50k)","unit":"steps","basis":"DESIGN","value":200000},
+ {"id":"s_W2","name":"steps in wave 2 (E 100k, D 70k, B15k x4, B5k x4)","unit":"steps","basis":"DESIGN","value":250000},
+ {"id":"gpus_w1","name":"GPUs training in wave 1","unit":"GPUs","basis":"DESIGN","value":8},
+ {"id":"gpus_w2","name":"GPUs training in wave 2 (3 score wave-1 checkpoints)","unit":"GPUs","basis":"DESIGN","value":5},
+ {"id":"gpuh_w1","name":"A100-hours, wave 1","unit":"GPU-h","basis":"DERIVED","expr":"(s_A + s_C + s_B50 + s_Bp) / sph"},
+ {"id":"gpuh_w2","name":"A100-hours, wave 2","unit":"GPU-h","basis":"DERIVED","expr":"s_W2 / sph"},
+ {"id":"fs_cosmos_gpus","name":"Cosmos H100s","unit":"GPUs","basis":"CITED","value":10000,"source_id":"s_cosmos","quote":"10,000 NVIDIA H100 GPUs in a time span of three months"},
+ {"id":"fs_cosmos_months","name":"Cosmos months","unit":"months","basis":"CITED","value":3,"source_id":"s_cosmos"},
+ {"id":"h100_rate","name":"Lambda 8x H100 per-GPU price","unit":"usd/GPU-h","basis":"CITED","value":3.99,"source_id":"price_sheet"},
+ {"id":"wm_s_per_video","name":"Cosmos-Predict2-2B s per generated video, 1x H100 PCIe","unit":"s","basis":"CITED","value":79.87,"source_id":"s_cosmos_perf"},
+ {"id":"h100pcie_rate","name":"Lambda 1x H100 PCIe price","unit":"usd/h","basis":"CITED","value":3.29,"source_id":"price_sheet"}
+],
+ "cost": {
+  "rates": [
+   {"id":"r_a100x8","gpu":"A100 SXM","gpu_memory_gb":40,"n_gpus":8,"per_gpu_usd_h":1.99}
+  ],
+  "lines": [
+   {"id":"pilot","phase":"P0","what":"pilot","kind":"work","rate":"r_a100x8","hours":"2"},
+   {"id":"wave1","phase":"W1","what":"arms A, C, B 50k, B'","kind":"work","rate":"r_a100x8","hours":"gpuh_w1 / gpus_w1"},
+   {"id":"wave2","phase":"W2","what":"arms E, D, B 15k and 5k","kind":"work","rate":"r_a100x8","hours":"gpuh_w2 / gpus_w2"},
+   {"id":"evtail","phase":"EV","what":"evaluation tail and copy-out","kind":"work","rate":"r_a100x8","hours":"3"}
+  ],
+  "scenarios": [
+   {"id":"s4000","what":"4,000 steps/A100-h","set":{"sph":4000}},
+   {"id":"s3500","what":"3,500","set":{"sph":3500}},
+   {"id":"s3000","what":"3,000","set":{"sph":3000}}
+  ],
+  "total_stated": 557
+ },
+ "full_scale": [
+ {"id":"fs_cosmos","what":"Cosmos world-model pretraining at Lambda 8x H100 per-GPU price","usd":"fs_cosmos_gpus * fs_cosmos_months * 30 * 24 * h100_rate"},
+ {"id":"fs_wm_arm","what":"score 27 checkpoints x 2,000 episodes in a world model, 1x H100 PCIe","usd":"27 * 2000 * wm_s_per_video / 3600 * h100pcie_rate"}
+],
+ "outside_budget": []
+}
