@@ -1,0 +1,173 @@
+{
+  "summary": "Seed question to takeaways; agents speak only through typed contracts; nothing proceeds past a gate unconsumed",
+  "agentCount": 6,
+  "logs": [
+    "Design: 8 arms, 7 endpoints, $8",
+    "Diff: 5 departure question(s)",
+    "▸ running dynamic workflow claim-triage",
+    "[claim-triage] H4: 7 instrument(s) lack a validation artifact; queued.",
+    "[claim-triage] Triaging 1 claim(s); confounds=10; execute_runs=false; ground=true.",
+    "▸ claim-triage done"
+  ],
+  "result": {
+    "seed": "# QUESTION: do the card's unmeasured load-bearing inputs hold on its own protocol?\n\nCompiled by launch.js measure from `experiments/blind-01/20261021-0116-loop/out/r1/card/result.json` (sha256 d4538bfe7fb86d888780206819a7f75846595034bc18ad47e65848d954359813); no one read the card to write this. Card seed:idea:1: \"Motif calls emitted for Capsida NR001–NR005 and Lir Starfish binding-assay readouts\"; plan USD 506.83333333333326; calibration state calibration_required.\n\n## The question\n\nFor each load-bearing input the card's cost rests on, measure it on the card's own protocol on one rented box, within the owner's calibration cap, and read the result against the card's own gate. The card's planned run is not executed.\n\n## Committed data\n\n- `experiments/blind-01/20261021-0116-loop/out/r1/card/result.json`: sha256 d4538bfe7fb86d888780206819a7f75846595034bc18ad47e65848d954359813; its calibration record is copied to `CARD.json`.\n- Input 1: af2_h_per_run, basis PROXY, value 0.5, measured in phase p1_pilot (line l_pilot: 6 h, USD 95.52); spend through that phase USD 107.5; the budget is reached at 5.32x; differs from its source in: monomer timing formula, not a 750–1000-residue hetero-multimer with 5 models and up to 20 recycles, Lambda A100 SXM 40 GB instead of an A40.\n- Input 2: md_ns_per_day_a100, basis PROXY, value 129, measured in phase p1_pilot (line l_pilot: 6 h, USD 95.52); spend through that phase USD 107.5; the budget is reached at 4.483x; differs from its source in: our system is a docked capsid–receptor complex in explicit solvent, roughly 120k–180k atoms, Lambda A100 SXM 40 GB.\n- Input 3: aux_h_per_pair, basis GUESS, value 1, measured in phase p1_pilot (line l_pilot: 6 h, USD 95.52); spend through that phase USD 107.5; the budget is reached at 7.48x.\n- Input 4: n_storage_gib, basis GUESS, value 200, measured in phase p2_main (line l_main: 24 h, USD 382.1); spend through that phase USD 498.9; the budget is reached at 53.84x.\n\n## Anchor\n\nRedocking AAVR-PKD2 onto AAV2 must place it beside the threefold spike matching PDB 6IHB contacts; serial and parallel pilots must match calls. Published value PKD2 bound to the AAV2 spike region adjacent to the icosahedral three-fold axis (PDB 6IHB), tolerance >=50% contact overlap at the published 4.5 Å cutoff or interface backbone RMSD <=5 Å; serial versus parallel top-pose RMSD <=2 Å with identical bind/no-bind calls [s_aavr_struct]. The run reproduces it first; a miss stops the run before the inputs are measured.\n\n## What would refute each claim\n\n- C1: measured af2_h_per_run outside [0.2, 1.25] (PROXY: band 2.5x either side). the card's gate af2_h_per_run <= 1 is then applied to the measured value, else \"take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs\".\n- C2: measured md_ns_per_day_a100 outside [51.6, 322.5] (PROXY: band 2.5x either side). the card's gate af2_h_per_run <= 1 is then applied to the measured value, else \"take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs\".\n- C3: measured aux_h_per_pair outside [0.3333, 3] (GUESS: band 3x either side). the card's gate af2_h_per_run <= 1 is then applied to the measured value, else \"take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs\".\n- C4: measured n_storage_gib outside [66.67, 600] (GUESS: band 3x either side). the card names no gate on it.\n\n## Scope\n\nOne rented box; the measuring phase's protocol as the card states it: Run the 54-run pilot (3 capsids x 3 receptors) on 8x A100 and measure af2_h_per_run, md_ns_per_day_a100, aux_h_per_pair and seed-to-seed SD of calls.; Run the 216-run main grid on 8x A100; emit the plate-layout call table and bead-panel CSV with bind/no-bind, score, interface residues, distance to nearest threefold axis and site class.. Cost cap: the lesser of the phase's own line and the owner's calibration cap (USD 10 without re-approval; above USD 20 needs approval before launch). No production phase runs.\n\n## Declared construct risks\n\n- af2_h_per_run is a PROXY: its source setting differs in monomer timing formula, not a 750–1000-residue hetero-multimer with 5 models and up to 20 recycles, Lambda A100 SXM 40 GB instead of an A40.\n- md_ns_per_day_a100 is a PROXY: its source setting differs in our system is a docked capsid–receptor complex in explicit solvent, roughly 120k–180k atoms, Lambda A100 SXM 40 GB.\n- aux_h_per_pair is a GUESS: no page states it; the card's value is the producer's estimate.\n- n_storage_gib is a GUESS: no page states it; the card's value is the producer's estimate.\n- The producer's own local pilots, if any, ran on a shared CPU host and are not GPU measurements.\n- One sample on one box unless the phase repeats; run-to-run spread is not measured.\n\n## How the card maps onto this record\n\nCard key seed:idea:1. Predictions: if_lever \"Balanced accuracy 0.80 at 432 runs versus 0.55 at 54, with five of six known binders within 5 Å of published sites.\"; if_not \"Accuracy moves under 0.05 between 54 and 432 runs and at most three of six binders reach published sites; extra runs resample the wrong basin.\"; noise rule \"Three independent seed sets per run level, mean and SD reported; a gap counts only if it exceeds 2x the SD across seed sets and a paired permutation test over the 13 labels gives p < 0.05.\"; the producer expects if_not. This run resolves the inputs only; the card's own decision rule is not evaluated here.\n",
+    "design": {
+      "hypothesis": "Each of four inputs behind the card's cost holds on the card's own protocol, measured on one rented GPU box. Input 1: AlphaFold-Multimer hours per run (af2_h_per_run) lies in [0.2, 1.25], and the card's gate (at most 1) passes. Input 2: molecular-dynamics speed on an A100 (md_ns_per_day_a100) lies in [51.6, 322.5] ns per day. Input 3: auxiliary hours per pair (aux_h_per_pair) lies in [0.3333, 3]. Input 4: storage (n_storage_gib) lies in [66.67, 600] GiB. These are the card's own bands. The run first requires the anchor redocking to pass.",
+      "models": [
+        "No language model. Structure tools only: AlphaFold-Multimer for complex prediction, a docking tool, and a molecular-dynamics engine. Specific tools and versions are not fixed by the question; the on-box script records exact names and versions (GUESS: installable inside the time cap)."
+      ],
+      "data": "[\"Committed card: experiments/blind-01/20261021-0116-loop/out/r1/card/result.json, sha256 d4538bfe7fb86d888780206819a7f75846595034bc18ad47e65848d954359813. Its calibration record is copied to CARD.json. Bands and gate come only from the question text.\", \"Anchor: redock AAVR-PKD2 onto AAV2 and compare with PDB 6IHB. Pass if contact overlap at the 4.5 Angstrom cutoff is at least 50 percent, or interface backbone RMSD is at most 5 Angstrom. Serial and parallel pilots must give top-pose RMSD of at most 2 Angstrom and identical bind/no-bind calls.\", \"Measurement sample, a subset of the card's 54-run pilot of 3 capsids x 3 receptors: 3 capsid-receptor pairs, one per capsid (GUESS: 3 pairs; spread across pairs may exceed what 3 captures). Three seeds per pair for timing (GUESS: 3 seeds). Total 9 timing runs. Structure files and their sources are not named in the question; the script records them.\", \"Molecular dynamics: one docked capsid-receptor complex per sampled pair, in explicit solvent, roughly 120k to 180k atoms as the card states. Run a short production segment (GUESS: 0.5 ns after equilibration) and read ns per day from the engine log.\"]",
+      "arms": [
+        "Anchor, serial: redock AAVR-PKD2 onto AAV2 one job at a time. Gate for everything below; a miss stops the run (control: published 6IHB contacts).",
+        "Anchor, parallel: same redocking run in parallel on the same box. Control for the serial-versus-parallel agreement check.",
+        "Input 1 arm: time AlphaFold-Multimer on a hetero-multimer of 750 to 1000 residues, 5 models, up to 20 recycles, on the 3 sampled pairs x 3 seeds. Report hours per run, per GPU.",
+        "Input 2 arm: time explicit-solvent molecular dynamics on the 3 sampled docked complexes. Report ns per day on the A100.",
+        "Input 3 arm: time everything per pair that is neither AlphaFold-Multimer nor molecular dynamics (docking, interface analysis, call-table row). Report hours per pair. The question does not define this term; this is our reading (GUESS).",
+        "Input 4 arm: measure bytes written per run on the sampled runs, scale to the card's 216-run main grid, and report GiB. Whether the card means 216 or 432 runs is unclear; also report the 432-run figure (GUESS on scaling: linear in runs).",
+        "Negative control: an empty-input dry run of the timing harness, to confirm it does not report nonzero time or storage from setup alone. Expected near zero; if not, subtract and flag.",
+        "Planted-truth control: time a fixed sleep of known length (60 s) through the same harness. Reported time must be within 5 percent of 60 s."
+      ],
+      "endpoints": [
+        {
+          "metric": "Anchor: contact overlap with 6IHB at 4.5 Angstrom, or interface backbone RMSD",
+          "threshold": "Pass if overlap is at least 50 percent or RMSD is at most 5 Angstrom, AND serial-versus-parallel top-pose RMSD is at most 2 Angstrom with identical bind/no-bind calls",
+          "refuting_outcome": "Overlap under 50 percent AND RMSD over 5 Angstrom, or serial and parallel differ by more than 2 Angstrom or in any call. The run halts and no input is reported as measured."
+        },
+        {
+          "metric": "Input 1: mean af2_h_per_run over 9 timing runs",
+          "threshold": "Inside [0.2, 1.25] hours holds. The card's gate also requires the measured value to be at most 1.",
+          "refuting_outcome": "Mean below 0.2 or above 1.25 refutes the input. A mean above 1 triggers the card's fallback text: use docking plus molecular dynamics with one seed per pair, or move the grid to 12 pairs."
+        },
+        {
+          "metric": "Input 2: median md_ns_per_day_a100 over 3 complexes",
+          "threshold": "Inside [51.6, 322.5] ns per day holds",
+          "refuting_outcome": "Median below 51.6 or above 322.5 refutes the input. Below 51.6 would make the molecular-dynamics line under-budgeted."
+        },
+        {
+          "metric": "Input 3: mean aux_h_per_pair over 3 pairs",
+          "threshold": "Inside [0.3333, 3] hours holds",
+          "refuting_outcome": "Mean below 0.3333 or above 3 refutes the input."
+        },
+        {
+          "metric": "Input 4: n_storage_gib extrapolated to the 216-run grid",
+          "threshold": "Inside [66.67, 600] GiB holds. The card names no gate on it.",
+          "refuting_outcome": "Estimate below 66.67 or above 600 refutes the input."
+        },
+        {
+          "metric": "Harness validity: planted 60 s sleep error, and seed-to-seed spread of timings",
+          "threshold": "Sleep error at most 5 percent; spread across seeds for each pair must be nonzero",
+          "refuting_outcome": "Sleep error over 5 percent invalidates all timings. Zero spread across seeds halts as wrong variance source, since reruns should differ at least in the last digits."
+        },
+        {
+          "metric": "Cost and time",
+          "threshold": "Total spend at most USD 10 (hard cap); each launch at most 7,200 s",
+          "refuting_outcome": "Spend reaching USD 10 or a launch hitting the 7,200 s limit before all arms finish. Unfinished inputs are reported as unmeasured, not as holding."
+        }
+      ],
+      "sampling": "Decoding does not apply; no language model is used. Seeds: AlphaFold-Multimer seeds 0, 1, 2 per pair (GUESS). Molecular dynamics: one velocity seed (0) per complex, because speed, not trajectory, is the output; the card's seed-to-seed spread of calls is not measured. Anchor: serial and parallel each run once with seed 0. Cells: 3 pairs x 3 seeds = 9 AlphaFold timings; 3 molecular-dynamics timings; 3 auxiliary timings; 3 storage measurements. Band-edge cases (value within 10 percent of a band edge) are reported as marginal, not decided. Variance rule for the seed count: reruns of the same cell are the variance source. If 3 seeds give a relative SD over 50 percent, the second launch (if budget allows) doubles the seeds.",
+      "budget_usd": 8,
+      "does_not_test": [
+        "The card's planned 54-run or 216-run grids are not executed. Balanced accuracy, binder-site recovery, the permutation test, and the card's decision rule between its lever and its non-lever predictions are not evaluated.",
+        "Hardware GUESS: one A100 SXM4 40 GB at USD 1.99 per hour in us-east-1, else the cheapest single GPU with capacity. If a different GPU is used, speeds are not A100 numbers and the molecular-dynamics input is reported unmeasured. Wrong by a factor up to several in speed. The card's 8x A100 setting is not reproduced; per-GPU timings are measured and not tested for multi-GPU scaling.",
+        "Cost GUESS: USD 8 budget is two launches of up to 2 hours each at USD 1.99 per hour, about USD 7.96, under the USD 10 cap. Installs or downloads could eat most of a launch. Wrong by up to USD 2 either way.",
+        "GUESS: AlphaFold-Multimer sequence databases are too large to download in the time cap, so precomputed or single-sequence alignments may be used. That would make measured hours lower than the card's real setting, possibly by 2x or more. The alignment source is recorded; a lower bias is not corrected.",
+        "GUESS: 3 sampled pairs and 3 seeds stand in for the 9 pairs. Pair-to-pair spread across the other 6 pairs is not measured and could move means by tens of percent.",
+        "GUESS: 0.5 ns molecular-dynamics segment. Speed can drift with system size and equilibration; wrong by about 10 to 20 percent.",
+        "GUESS: the reading of auxiliary hours per pair as docking, interface analysis, and table writing. If the card meant something else, input 3 does not test the card's meaning.",
+        "GUESS: storage scales linearly with run count, and whether the card's storage figure includes 432 runs or intermediate files is not known. Wrong by 2x if intermediate files are deleted or kept differently in production.",
+        "Band widths are the card's own (2.5x for proxies, 3x for guesses), taken from the question. Whether they are sensible is not tested.",
+        "One sample on one box per cell; box-to-box spread, noisy neighbours, and clock throttling are not measured."
+      ]
+    },
+    "diff": {
+      "departures": [
+        {
+          "what": "The question says the card's gate is applied to the measured value for all three inputs that carry a gate (at most 1 hour per AlphaFold-Multimer run). The design applies the gate only to the AlphaFold timing and leaves the other two without it.",
+          "question": "The card's gate (AlphaFold hours per run at most 1, else fall back) is listed under three inputs. Should it be applied to the molecular-dynamics speed and the auxiliary hours too, or only to the AlphaFold timing?"
+        },
+        {
+          "what": "The question says to run the card's 54-run pilot protocol. The design runs only 9 timing runs (3 pairs, one per capsid, 3 seeds) and 3 molecular-dynamics runs. It never runs the 54-run pilot or the 216-run grid.",
+          "question": "Is it acceptable to measure on 3 of the 9 capsid-receptor pairs, with 3 seeds each, instead of the full 54-run pilot? Or must every pair be timed?"
+        },
+        {
+          "what": "The card's setting is 8x A100 GPUs. The design uses one A100 40 GB at USD 1.99 per hour, or the cheapest single GPU if none is free. It also allows precomputed or single-sequence alignments, which would lower AlphaFold time.",
+          "question": "May the AlphaFold timing use shortcut alignments and a single GPU, even though this likely understates the card's real hours per run? Or should it use the full search setup?"
+        },
+        {
+          "what": "The question gives no definition of auxiliary hours per pair. The design reads it as docking, interface analysis and writing the call-table row. It also defines storage as bytes written per run scaled linearly to 216 runs, and also reports 432 runs.",
+          "question": "What does auxiliary hours per pair include? And is storage meant to cover 216 runs, 432 runs, or both, with intermediate files kept or deleted?"
+        },
+        {
+          "what": "The question fixes no tools, structure files, run lengths or seed counts. The design invents a 0.5 ns molecular-dynamics segment, seeds 0, 1 and 2, one velocity seed for molecular dynamics, and a USD 8 budget split into two launches of at most 2 hours. It also adds a 60-second sleep check and a rule to double seeds if spread is high.",
+          "question": "Are these invented choices acceptable: a 0.5 ns molecular-dynamics segment, 3 seeds, an USD 8 budget below the USD 10 cap, and the extra sleep and empty-run checks? Or do you want others?"
+        }
+      ]
+    },
+    "triage": {
+      "claims": [
+        {
+          "id": "design-core",
+          "grounding": {
+            "artifacts_read": [
+              "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/CARD.json",
+              "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/RUN.md",
+              "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/triage_args.json",
+              "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0116-loop/out/r1/card/result.json"
+            ],
+            "grounding": "unauditable",
+            "note": "Bands re-derive exactly from the card (af2 0.5 PROXY x/2.5 -> [0.2,1.25], gate <=1; md 129 -> [51.6,322.5]; aux 1 GUESS x/3 -> [0.3333,3]; storage 200 GUESS -> [66.67,600]), and the cited card sha256 matches; but no measurement artifact exists anywhere (out/ holds only design_args, triage_args, hashes, seals; RUN.md states \"Nothing here has run yet\"), so the anchor, 9 AF2 timings, 3 MD/aux/storage values and the 60 s sleep control were never saved.",
+            "observed": "Re-derived card bands [0.2,1.25]/[51.6,322.5]/[0.3333,3]/[66.67,600] and gate <=1 match the claim exactly; re-derived measured values: none exist (0 of 9 AF2, 0 of 3 MD, 0 of 3 aux, 0 of 3 storage runs recorded)."
+          },
+          "findings": [
+            {
+              "confound": "decidability by construction: endpoints can fire both ways, but several inputs are defined by the design's own guessed reading or a substitute protocol",
+              "status": "EXPLAINS",
+              "crux": "The design is not forced, because every endpoint has a named refuting outcome that can occur. But Input 3 (auxiliary hours per pair) is undefined in the question and read by guess, and Input 1 may use precomputed or single-sequence alignments instead of the card's real setup. A pass would therefore decide the design's proxy question, not the card's own protocol, and the claim's scope exceeds what was tested."
+            },
+            {
+              "confound": "Coordinates and scale: units and band width (ns/day read from the engine log, extrapolation from bytes per run to the 216-run grid, and an undefined auxiliary-hours term) could make every input land inside or outside its band regardless of the hypothesis. There are no layers or strengths in this design.",
+              "status": "NEEDS_RUN",
+              "crux": "The evidence contains no measured value. It holds only a pre-run design with wide bands (Input 1 spans about 6x). Refutation was named in advance, so the design is not degenerate, but nothing committed shows the unit and scale choices are sane. Those choices include precomputed alignments, a guessed 0.5 ns MD segment, linear storage scaling and the undefined auxiliary term."
+            }
+          ],
+          "rejected_findings": [],
+          "run_queue": [
+            "On-box harness controls first: 60 s planted-sleep run, empty-input dry run, and a unit and scale print of raw AF2 hours, ns/day engine log lines and bytes per run, before any band comparison"
+          ],
+          "author_queue": [],
+          "runner_results": null
+        }
+      ],
+      "shared_queue": [],
+      "instrument_queue": [
+        "AUTHOR: validation control for instrument endpoint-1-readout vv1: held-out ground truth for \"Anchor: contact overlap with 6IHB at 4.5 Angstrom, or interface backbone RMSD\"",
+        "AUTHOR: validation control for instrument endpoint-2-readout vv1: held-out ground truth for \"Input 1: mean af2_h_per_run over 9 timing runs\"",
+        "AUTHOR: validation control for instrument endpoint-3-readout vv1: held-out ground truth for \"Input 2: median md_ns_per_day_a100 over 3 complexes\"",
+        "AUTHOR: validation control for instrument endpoint-4-readout vv1: held-out ground truth for \"Input 3: mean aux_h_per_pair over 3 pairs\"",
+        "AUTHOR: validation control for instrument endpoint-5-readout vv1: held-out ground truth for \"Input 4: n_storage_gib extrapolated to the 216-run grid\"",
+        "AUTHOR: validation control for instrument endpoint-6-readout vv1: held-out ground truth for \"Harness validity: planted 60 s sleep error, and seed-to-seed spread of timings\"",
+        "AUTHOR: validation control for instrument endpoint-7-readout vv1: held-out ground truth for \"Cost and time\""
+      ],
+      "authored": null
+    },
+    "gate": "BUDGET_AND_DESIGN_APPROVAL: human commits a gate file answering, of record, every diff question, every non-reproducing grounding note, and every queued item (instrument validations included; \"accepted as-is\" is an answer) before mode=build."
+  },
+  "workflowProgress": [
+    {"type": "workflow_phase", "index": 1, "title": "Design"},
+    {"type": "workflow_phase", "index": 2, "title": "Diff"},
+    {"type": "workflow_phase", "index": 3, "title": "Triage"},
+    {"type": "workflow_phase", "index": 4, "title": "GateCheck"},
+    {"type": "workflow_phase", "index": 5, "title": "Build"},
+    {"type": "workflow_phase", "index": 6, "title": "Elicit"},
+    {"type": "workflow_phase", "index": 7, "title": "Write"},
+    {"type": "workflow_agent", "index": 1, "label": "design", "phaseIndex": 1, "phaseTitle": "Design", "agentId": "ae060331bbbb7317f", "model": "claude-sonnet-5-5", "state": "done", "startedAt": 1792573297012, "queuedAt": 1792573296946, "attempt": 1, "lastToolName": "StructuredOutput", "lastToolSummary": "Each of four inputs behind the card's cost holds on the car…", "promptFramed": true, "lastProgressAt": 1792573331302, "tokens": 21690, "toolCalls": 1, "durationMs": 34289},
+    {"type": "workflow_agent", "index": 2, "label": "diff", "phaseIndex": 2, "phaseTitle": "Diff", "agentId": "a7d224e24925ae734", "model": "claude-sonnet-5-5", "state": "done", "startedAt": 1792573331329, "queuedAt": 1792573331305, "attempt": 1, "lastToolName": "StructuredOutput", "promptFramed": true, "lastProgressAt": 1792573340770, "tokens": 24147, "toolCalls": 1, "durationMs": 9441},
+    {"type": "workflow_phase", "index": 8, "title": "▸ claim-triage", "kind": "child"},
+    {"type": "workflow_agent", "index": 3, "label": "read:design-core", "phaseIndex": 8, "phaseTitle": "▸ claim-triage", "agentId": "af402c91058a5e303", "agentType": "triage-reader", "model": "claude-opus-5-5", "fallbackModel": "claude-opus-5", "state": "done", "startedAt": 1792573340831, "queuedAt": 1792573340810, "attempt": 1, "lastToolName": "StructuredOutput", "lastToolSummary": "unauditable", "promptFramed": true, "lastProgressAt": 1792573376280, "tokens": 17961, "toolCalls": 8, "durationMs": 35449},
+    {"type": "workflow_agent", "index": 4, "label": "skeptic:design-core:decidability by cons", "phaseIndex": 8, "phaseTitle": "▸ claim-triage", "agentId": "af9c4ff8a13a85000", "model": "claude-sonnet-5-5", "state": "done", "startedAt": 1792573376332, "queuedAt": 1792573376290, "attempt": 1, "lastToolName": "StructuredOutput", "lastToolSummary": "decidability by construction: endpoints can fire both ways,…", "promptFramed": true, "lastProgressAt": 1792573396630, "tokens": 25171, "toolCalls": 1, "durationMs": 20297},
+    {"type": "workflow_agent", "index": 5, "label": "skeptic:design-core:coordinates and scal", "phaseIndex": 8, "phaseTitle": "▸ claim-triage", "agentId": "a9a423b8553a4ce9f", "model": "claude-sonnet-5-5", "state": "done", "startedAt": 1792573376332, "queuedAt": 1792573376290, "attempt": 1, "lastToolName": "StructuredOutput", "lastToolSummary": "Coordinates and scale: units and band width (ns/day read fr…", "promptFramed": true, "lastProgressAt": 1792573389907, "tokens": 23329, "toolCalls": 1, "durationMs": 11253},
+    {"type": "workflow_agent", "index": 6, "label": "adjudicate:design-core", "phaseIndex": 8, "phaseTitle": "▸ claim-triage", "agentId": "a2f27dbdd0b1fcf4a", "model": "claude-sonnet-5-5", "state": "done", "startedAt": 1792573396680, "queuedAt": 1792573396633, "attempt": 1, "lastToolName": "StructuredOutput", "promptFramed": true, "lastProgressAt": 1792573399258, "tokens": 19042, "toolCalls": 1, "durationMs": 2578}
+  ],
+  "totalTokens": 131340,
+  "totalToolCalls": 13
+}

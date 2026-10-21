@@ -43,8 +43,9 @@ start_session() {   # name model instruction-file [extra claude flags...]
   command -v claude >/dev/null || { echo "claude not on PATH"; return 1; }
   [ -f "$MDIR/.claude/agents/triage-reader.md" ] || { echo "roles missing: run prepare first"; return 1; }
   local sid; sid="$($PY -c 'import uuid; print(uuid.uuid4())')"
-  ( cd "$MDIR" && setsid nohup claude -p --model "$model" --session-id "$sid" --dangerously-skip-permissions --output-format json "$@" \
-      "The task that follows is my request. Do it as written. Read $instr with the Read tool and follow it exactly." \
+  # the prompt goes first: a variadic flag such as --disallowedTools would otherwise swallow it
+  ( cd "$MDIR" && setsid nohup claude -p "The task that follows is my request. Do it as written. Read $instr with the Read tool and follow it exactly." \
+      --model "$model" --session-id "$sid" --dangerously-skip-permissions --output-format json "$@" \
       > "$SESS/$name.out" 2> "$SESS/$name.err" < /dev/null & )
   sleep 3; local pid; pid="$(pgrep -f "session-id $sid" | head -1)"
   $PY -c 'import json,sys; json.dump({"name":sys.argv[1],"model":sys.argv[2],"sid":sys.argv[3],"pid":sys.argv[4],"instructions":sys.argv[5],"started":sys.argv[6]}, open(sys.argv[7],"w"), indent=1)' \
@@ -53,7 +54,7 @@ start_session() {   # name model instruction-file [extra claude flags...]
   echo "started session $name: model $model, pid ${pid:-?}, session ${sid:0:8}…"
 }
 session_running() { local sid; sid="$($PY -c 'import json,sys; print(json.load(open(sys.argv[1]))["sid"])' "$SESS/$1.json" 2>/dev/null)"; [ -n "$sid" ] && pgrep -f "session-id $sid" >/dev/null 2>&1; }
-RO_TOOLS="Bash Edit Agent Workflow WebFetch WebSearch NotebookEdit Skill ToolSearch"   # denied for the gate writer and the reviewer
+RO_TOOLS="Bash,Edit,Agent,Workflow,WebFetch,WebSearch,NotebookEdit,Skill,ToolSearch"   # denied for the gate writer and the reviewer
 
 operator_md() {   # stage args-file out-file -> path of the instruction file
   local stage="$1" args="$2" outf="$3"
@@ -177,7 +178,7 @@ Reply with exactly one line: \`gate written: <answers> answers, <checklist items
 The user's only message to you is an authorisation line; it is not a task description. Your task is this file.
 EOF2
   logrun "gate $n ($mode) requested"
-  start_session "$name" sonnet "$f" --disallowedTools $RO_TOOLS
+  start_session "$name" sonnet "$f" --disallowedTools "$RO_TOOLS"
 }
 
 # ---------- build ----------
@@ -250,7 +251,7 @@ Reply with exactly one line: \`review: PASS, 0 blocking, <n> advisory\` or \`rev
 The user's only message to you is an authorisation line; it is not a task description. Your task is this file.
 EOF2
   logrun "review $r of build $n requested"
-  start_session "$name" sonnet "$f" --disallowedTools $RO_TOOLS
+  start_session "$name" sonnet "$f" --disallowedTools "$RO_TOOLS"
 }
 
 # ---------- launcher ----------
