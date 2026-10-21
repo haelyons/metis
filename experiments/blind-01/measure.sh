@@ -349,20 +349,27 @@ PYEOF
 }
 
 # ---------- launch ----------
-lambda_capacity() {   # prints 1-GPU types with capacity (names + regions only); key never printed
-  $PY - "$MDIR/.keys" "$1" "$2" <<'PYEOF'
-import json, sys, urllib.request
-key = [l.split("=", 1)[1].strip() for l in open(sys.argv[1]) if l.startswith("LAMBDA_KEY_ONE=")][0]
-want_t, want_r = sys.argv[2:4]
-req = urllib.request.Request("https://cloud.lambda.ai/api/v1/instance-types", headers={"Authorization": "Bearer " + key})
-d = json.load(urllib.request.urlopen(req, timeout=30))["data"]
-ok = False
+lambda_capacity() {   # prints 1-GPU types with capacity (names, prices, regions only); key never printed; exit 3 = requested type has none
+  # curl with a browser-like agent, as the launcher does: urllib's default agent gets 403 from the API's front door
+  local key; key=$(grep '^LAMBDA_KEY_ONE=' "$MDIR/.keys" | cut -d= -f2- | tr -d '\r\n')
+  curl -sS -m 30 -A 'curl/8 lambda_run' -H "Authorization: Bearer $key" https://cloud.lambda.ai/api/v1/instance-types > "$MDIR/out/.capacity.json" 2>/dev/null
+  $PY - "$MDIR/out/.capacity.json" "$1" "$2" "${3:-2.50}" <<'PYEOF'
+import json, sys
+try: d = json.load(open(sys.argv[1]))["data"]
+except Exception as e: print("capacity query failed (%s): %s" % (type(e).__name__, open(sys.argv[1]).read()[:120])); sys.exit(4)
+want_t, want_r, cap = sys.argv[2], sys.argv[3], float(sys.argv[4])
+ok = False; alts = []
 for name, v in sorted(d.items()):
     regs = [r["name"] for r in v.get("regions_with_capacity_available", [])]
+    price = v["instance_type"]["price_cents_per_hour"] / 100
     if name.startswith("gpu_1x") and regs:
-        print("  %-28s USD %5.2f/h  %s" % (name, v["instance_type"]["price_cents_per_hour"] / 100, " ".join(regs)))
+        print("  %-28s USD %5.2f/h  %s" % (name, price, " ".join(regs)))
+        if price <= cap: alts.append((price, name, regs[0]))
     if name == want_t and want_r in regs: ok = True
 print("requested %s @ %s: %s" % (want_t, want_r, "capacity" if ok else "NO capacity"))
+if not ok and alts:
+    p, n, r = sorted(alts)[0]; print("fallback (cheapest single GPU with capacity at or under USD %.2f/h): %s @ %s USD %.2f/h" % (cap, n, r, p))
+    open(sys.argv[1] + ".fallback", "w").write("%s %s %.2f\n" % (n, r, p))
 sys.exit(0 if ok else 3)
 PYEOF
 }
@@ -374,8 +381,8 @@ launch() {
   [ "$n" -le 2 ] || { echo "launch $n refused: at most two launches (owner rule)"; return 1; }
   [ -r .keys ] || { echo "no readable .keys"; return 1; }
   for f in "lambda_run_$TAG.sh" "remote_run_$TAG.sh" "onbox_$TAG.sh" "run_$TAG.py" frozen/provenance.py; do [ -f "$f" ] || { echo "missing $f"; return 1; }; done
-  local rv; rv=$(ls out/review_build*.json 2>/dev/null | tail -1); [ -n "$rv" ] && grep -q '"PASS"' "$rv" || { echo "latest review is not PASS ($rv)"; return 1; }
-  local bh; bh=$(ls out/BUILT_HASHES_build*.txt | tail -1); ( cd "$MDIR" && sha256sum -c --quiet "$bh" ) || { echo "built files changed since $bh"; return 1; }
+  local rv; rv=$(ls out/review_build*.json 2>/dev/null | sort -V | tail -1); [ -n "$rv" ] && grep -q '"PASS"' "$rv" || { echo "latest review is not PASS ($rv)"; return 1; }
+  local bh; bh=$(ls out/BUILT_HASHES_build*.txt | sort -V | tail -1); ( cd "$MDIR" && sha256sum -c --quiet "$bh" ) || { echo "built files changed since $bh"; return 1; }
   # gate ruling (addenda 5 to 7): re-run the selftest before launch and compare its printed sha256 values with the files on disk
   local st; st=$(timeout 300 $PY "run_$TAG.py" --selftest 2>&1 | tee "out/selftest_prelaunch_L$n.log" | grep -E '^selftest: (PASS|FAIL|files sha256)')
   echo "$st" | grep -q '^selftest: PASS' || { echo "pre-launch selftest did not PASS"; return 1; }
@@ -383,7 +390,12 @@ launch() {
   [ "$want" = "$have" ] && echo "pre-launch selftest PASS; its printed hashes match the files on disk" || { echo "pre-launch selftest hashes differ from the files on disk"; return 1; }
   pgrep -f "lambda_run_$TAG.sh" >/dev/null && { echo "a launcher is already running"; return 1; }
   [ "$timeout" -le 7200 ] || { echo "timeout above 7,200 s (owner rule)"; return 1; }
-  echo "== capacity"; lambda_capacity "$type" "$region" || { echo "no capacity for the requested type; pick another with --type/--region"; return 1; }
+  echo "== capacity"; rm -f out/.capacity.json.fallback
+  if ! lambda_capacity "$type" "$region" 2.50; then
+    # gate ruling (addendum 7): else the cheapest single GPU with capacity at no more than USD 2.50/h, recorded
+    [ -s out/.capacity.json.fallback ] || { echo "no capacity for the requested type and no fallback at or under USD 2.50/h"; return 1; }
+    read -r type region price < out/.capacity.json.fallback; echo "using the fallback of record: $type @ $region at USD $price/h"
+  fi
   local log="out/launcher_${TAG}_L$n.log"
   $PY -c 'import json,sys; json.dump({"n":int(sys.argv[1]),"type":sys.argv[2],"region":sys.argv[3],"timeout_s":int(sys.argv[4]),"budget_left_usd":float(sys.argv[5]),"price_usd_h":float(sys.argv[6]),"started":sys.argv[7],"log":sys.argv[8]}, open(sys.argv[9],"w"), indent=1)' \
     "$n" "$type" "$region" "$timeout" "$budget" "$price" "$(now)" "$log" "out/launch$n.json"
