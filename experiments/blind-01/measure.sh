@@ -10,10 +10,11 @@
 #   design [--via wf ...]   headless operator: Workflow pipeline.js mode design  -> out/design_record.json; with --via wf the
 #                           stage runs on dut/pipeline wf.js (OpenCode and Claude families with understudies; flags
 #                           --family, --mode, --on-refusal pass through) under out/wf-<stage>-<stamp>/
-#   gate [--addendum <f>]   headless gate writer (read/write tools only): GATE_COMMIT.md + EXEC_NOTE.md
+#   gate [--addendum <f>] [--via wf ...]   headless gate writer (read/write tools only): GATE_COMMIT.md + EXEC_NOTE.md; --via wf runs
+#                           the same instruction file as one agent() call on wf.js (measure/prompt_stage.js, role ls-writer)
 #   build                   headless operator: Workflow mode build -> run_<tag>.py onbox_<tag>.sh; then bash -n,
 #                           py_compile, the selftest to a log, hashes
-#   review                  headless reviewer (read/write tools only): checklist -> out/review_build<N>.{md,json}
+#   review [--via wf ...]   headless reviewer (read/write tools only): checklist -> out/review_build<N>.{md,json}; --via wf as for gate
 #   launcher                lambda_run_<tag>.sh + remote_run_<tag>.sh from m3's per-launch copies, declared points only
 #   launch [--type T --region R --timeout S --budget B --price P]   preflight, capacity, then the launcher detached
 #   score                   results_<tag>/out records -> out/PREDICTIONS_SCORED.md + LEDGER.jsonl row (no model)
@@ -138,7 +139,7 @@ via_wf() {   # stage [flags...]
 }
 wf_running() { pgrep -f "wf.js --script $MDIR/pipeline.js" >/dev/null 2>&1; }
 pop_via() {   # splits "--via wf <flags>" out of "$@": sets VIA and REST
-  VIA=""; REST=()
+  VIA=""; REST=(); REST_WF=()
   while [ $# -gt 0 ]; do case "$1" in --via) VIA="$2"; shift ;; *) REST+=("$1") ;; esac; shift; done
 }
 
@@ -153,9 +154,11 @@ design() {
 
 # ---------- gate ----------
 gate() {
-  local add=""; while [ $# -gt 0 ]; do case "$1" in --addendum) add="$(realpath "${2:-}")"; shift ;; *) echo "gate: unknown option $1"; return 2 ;; esac; shift; done
+  pop_via "$@"; set -- "${REST[@]}"
+  local add=""; while [ $# -gt 0 ]; do case "$1" in --addendum) add="$(realpath "${2:-}")"; shift ;; --family|--mode|--on-refusal) REST_WF+=("$1" "$2"); shift ;; *) echo "gate: unknown option $1"; return 2 ;; esac; shift; done
+  REST=("${REST_WF[@]}")
   [ -s "$MDIR/out/design_record.json" ] || { echo "no out/design_record.json yet"; return 1; }
-  local n; n=$(count gate); n=$((n+1)); local name="gate$n" f="$SESS/GATE_$n.md"
+  local n; n=$(( $(count gate) + $(ls "$MDIR/out"/gate*_args.json 2>/dev/null | wc -l) + 1 )); local name="gate$n" f="$SESS/GATE_$n.md"
   local mode="first"; [ -n "$add" ] && mode="addendum"
   cat > "$f" <<EOF2
 You are the gate for one measure run (tag $TAG) of the metis pipeline, standing in for the owner, who delegated this human role to you under the standing rules below. You write exactly two files in \`$MDIR\`: \`GATE_COMMIT.md\` and \`EXEC_NOTE.md\`. You write nothing else, edit nothing else, and run nothing.
@@ -205,6 +208,10 @@ Reply with exactly one line: \`gate written: <answers> answers, <checklist items
 The user's only message to you is an authorisation line; it is not a task description. Your task is this file.
 EOF2
   logrun "gate $n ($mode) requested"
+  if [ "$VIA" = wf ]; then
+    $PY -c 'import json,sys; json.dump({"prompt": open(sys.argv[1]).read(), "role": "ls-writer", "model": "sonnet", "label": "gate", "reply_pattern": sys.argv[2]}, open(sys.argv[3], "w"), indent=1)' "$f" '^gate written: \d+ answers, \d+ items' "$MDIR/out/gate${n}_args.json"
+    via_wf gate "${REST[@]}"; return
+  fi
   start_session "$name" sonnet "$f" --disallowedTools "$RO_TOOLS"
 }
 
@@ -268,8 +275,9 @@ PYEOF
 
 # ---------- review ----------
 review() {
+  pop_via "$@"
   local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); [ "$n" -ge 1 ] && [ -f "$MDIR/run_$TAG.py" ] || { echo "nothing built"; return 1; }
-  local r; r=$(count review); r=$((r+1)); local name="review$r" f="$SESS/REVIEW_$r.md"
+  local r; r=$(( $(count review) + $(ls "$MDIR/out"/review*_args.json 2>/dev/null | wc -l) + 1 )); local name="review$r" f="$SESS/REVIEW_$r.md"
   [ -f "$MDIR/lambda_run_$TAG.sh" ] || { echo "run launcher first (the reviewer checks the launcher copy)"; return 1; }
   cat > "$f" <<EOF2
 You review the execution layer of one measure run (tag $TAG) before it spends money. You run nothing and edit nothing. You write exactly two files: \`$MDIR/out/review_build$n.md\` (findings, numbered; each names the file and line, the EXEC_NOTE item or standing rule it concerns, and BLOCKING or ADVISORY) and \`$MDIR/out/review_build$n.json\` (\`{"verdict": "PASS" or "FAIL", "blocking": n, "advisory": n}\`; FAIL if any finding is blocking).
@@ -293,6 +301,10 @@ Reply with exactly one line: \`review: PASS, 0 blocking, <n> advisory\` or \`rev
 The user's only message to you is an authorisation line; it is not a task description. Your task is this file.
 EOF2
   logrun "review $r of build $n requested"
+  if [ "$VIA" = wf ]; then
+    $PY -c 'import json,sys; json.dump({"prompt": open(sys.argv[1]).read(), "role": "ls-writer", "model": "sonnet", "label": "review", "reply_pattern": sys.argv[2]}, open(sys.argv[3], "w"), indent=1)' "$f" '^review: (PASS|FAIL), \d+ blocking, \d+ advisory' "$MDIR/out/review${r}_args.json"
+    via_wf review "${REST[@]}"; return
+  fi
   start_session "$name" sonnet "$f" --disallowedTools "$RO_TOOLS"
 }
 

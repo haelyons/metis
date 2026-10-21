@@ -47,3 +47,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 13:04Z build 6 checks: selftest exit 0
 - 13:05Z review 2 of build 6 requested
 - 13:05Z session review2 started (model sonnet, pid 1046891, session 52bb8df2)
+- 13:14Z gate 5 (addendum) requested
+- 13:14Z stage gate on wf.js run 1: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid ?
