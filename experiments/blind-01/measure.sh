@@ -175,7 +175,7 @@ $([ -n "$add" ] && echo "5. The report this addendum rules on: \`$add\`. Also re
 
 ## Standing rules (owner, 2026-10-20 and 21; binding)
 
-1. Budget: hard cap USD 10 for the whole run; at most two launches; \`BUDGET_LEFT_USD=5\` per launch; \`gpu_1x_a100_sxm4\` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity (the operator records which). If the design's budget exceeds the cap, shorten the protocol to fit as a ruling of record (fewer steps, fewer repeats, one cell), never drop an input silently; if it cannot fit, decide HALT and say what it would cost.
+1. Budget: hard cap USD 10 of box time for the whole run (the owner's calibration rule; the operator records the spend of every launch and launches until the cap is reached, no fixed count); \`BUDGET_LEFT_USD\` per launch = the lesser of 5 and what remains of the cap; \`gpu_1x_a100_sxm4\` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity (the operator records which). If the design's budget exceeds the cap, shorten the protocol to fit as a ruling of record (fewer steps, fewer repeats, one cell), never drop an input silently; if it cannot fit, decide HALT and say what it would cost.
 2. Time: set \`REMOTE_TIMEOUT\` (at most 7,200 s per launch). \`onbox_$TAG.sh\` reads \`PRICE_USD_PER_HOUR\`, \`BUDGET_LEFT_USD\` and \`REMOTE_TIMEOUT\` from its environment and stops cleanly, writing a void record, before exceeding them.
 3. Scope: measure the inputs on the card's own protocol; no production phase; anchor first, and a missed anchor voids the inputs (run_valid=false propagates to every later record).
 4. Box: Ubuntu 22.04, CUDA 12.8, driver 570, python 3.10, torch 2.7 preinstalled; anything else is installed by \`onbox_$TAG.sh\` inside the time cap. Broken infrastructure: exit non-zero with a void record; never patch around.
@@ -378,7 +378,9 @@ launch() {
   while [ $# -gt 0 ]; do case "$1" in --type) type="$2"; shift ;; --region) region="$2"; shift ;; --timeout) timeout="$2"; shift ;; --budget) budget="$2"; shift ;; --price) price="$2"; shift ;; *) echo "launch: unknown option $1"; return 2 ;; esac; shift; done
   cd "$MDIR" || return 1
   local n; n=$(ls out/launch*.json 2>/dev/null | wc -l); n=$((n+1))
-  [ "$n" -le 2 ] || { echo "launch $n refused: at most two launches (owner rule)"; return 1; }
+  local spent; spent=$($PY -c 'import json,glob; print(round(sum((json.load(open(j)).get("usd_est") or 0) for j in glob.glob("out/launch*.json")), 2))')
+  local left; left=$($PY -c "print(round(10 - $spent, 2))"); [ "$($PY -c "print(1 if $left > 0.5 else 0)")" = 1 ] || { echo "launch $n refused: USD $spent of the USD 10 calibration cap already spent (owner rule)"; return 1; }
+  budget=$($PY -c "print(min(float('$budget'), $left))"); echo "calibration cap: USD $spent spent, USD $left left; this launch's BUDGET_LEFT_USD=$budget"
   [ -r .keys ] || { echo "no readable .keys"; return 1; }
   for f in "lambda_run_$TAG.sh" "remote_run_$TAG.sh" "onbox_$TAG.sh" "run_$TAG.py" frozen/provenance.py; do [ -f "$f" ] || { echo "missing $f"; return 1; }; done
   local rv; rv=$(ls out/review_build*.json 2>/dev/null | sort -V | tail -1); [ -n "$rv" ] && grep -q '"PASS"' "$rv" || { echo "latest review is not PASS ($rv)"; return 1; }

@@ -105,3 +105,4 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:55Z overlay test (current pins with the addendum 9 substitutions applied, 10 pins): exit 0
 - 15:55Z gate run 6 (wf) stopped by the operator: it was started on a false premise (the operator's union test of old and new pins); the overlay set resolves (83 packages), so build 14 proceeds on the addendum 9 directive.
 - 15:55Z stage build on wf.js run 11: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1306636
+- 15:58Z owner correction of record: the launch limit is the USD 10 calibration cap, not a count of two (the two-launch rule was the operator's, carried over from m3); launches continue while the cap allows; USD 0.30 spent so far.
