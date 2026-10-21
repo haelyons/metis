@@ -430,7 +430,7 @@ fix() {
   [ -n "$fs" ] || { echo "fix needs --fs <filesystem name>"; return 2; }
   cd "$MDIR" || return 1
   local ip; ip=$(awk '{print $2}' .last_lambda_instance 2>/dev/null); [ -n "$ip" ] || { echo "no box recorded in .last_lambda_instance"; return 1; }
-  timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD" 2>/dev/null || { echo "the box is not holding (no ${TAG}_run/HOLD); nothing to fix"; return 1; }
+  timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD || test -f ${TAG}_run/results_${TAG}/out/HOLD" 2>/dev/null || { echo "the box is not holding (no HOLD marker); nothing to fix"; return 1; }
   mkdir -p env; cat > env/box.sh <<EOF2
 #!/usr/bin/env bash
 # box.sh: run one command on the held box over ssh (the fixer's only tool). usage: box.sh <command...>
@@ -442,7 +442,7 @@ EOF2
 import json, sys
 m, tag, fs, n = sys.argv[1:5]
 args = {"box_helper": f"{m}/env/box.sh", "hold_dir": f"/home/ubuntu/{tag}_run", "env_dir": f"/lambda/nfs/{fs}/{tag}", "tag": tag,
-        "failure_summary": f"env_build.sh failed on the box and wrote /home/ubuntu/{tag}_run/HOLD. Logs: /home/ubuntu/{tag}_run/results_env/out/install_pip.log, apt.log, import_check.json (per-module import results with error kinds), env_report.json. The build retries when /home/ubuntu/{tag}_run/RESUME exists.",
+        "failure_summary": f"a stage failed on the box and wrote a HOLD marker (/home/ubuntu/{tag}_run/HOLD for the environment build; /home/ubuntu/{tag}_run/results_{tag}/out/HOLD for the main run, whose RESUME marker sits beside it). Logs: /home/ubuntu/{tag}_run/results_env/out/install_pip.log, apt.log, import_check.json (per-module import results with error kinds), env_report.json. The build retries when /home/ubuntu/{tag}_run/RESUME exists.",
         "scope": "environment and glue only: pins.txt (a version, an extra, a different distribution of the same package, a build dependency), apt.txt (system libraries and build tools), environment variables of the install, files under the environment directory. Never the measurement protocol, never record fields, never files outside the environment directory and the hold directory.",
         "max_attempts": 3, "time_budget_min": 30}
 json.dump(args, open(f"{m}/out/fix{n}_args.json", "w"), indent=1); print(f"out/fix{n}_args.json written")
@@ -709,7 +709,7 @@ wait_stage() {
     case "$stage" in
       launch) if ! pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null; then launch_finish; echo "launch exited after $((t/60)) min"; return 0; fi ;;
       envbuild) if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then launch_finish; echo "env build exited after $((t/60)) min"; env_status; return 0; fi ;;
-      hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then echo "env build exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
+      hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then echo "env build exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD || test -f ${TAG}_run/results_${TAG}/out/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
       wf) if ! wf_running; then echo "wf.js stage exited after $((t/60)) min"; ls "$MDIR"/out/build*_args.json >/dev/null 2>&1 && [ -f "$MDIR/run_$TAG.py" ] && [ "$(ls "$MDIR"/out/wf-build-* -d 2>/dev/null | wc -l)" -ge 1 ] && build_checks; return 0; fi ;;
       *) local last; last=$(ls "$SESS"/$stage*.json 2>/dev/null | sort | tail -1); [ -n "$last" ] || { echo "no $stage session"; return 1; }
          if ! session_running "$(basename "$last" .json)"; then echo "$stage session exited after $((t/60)) min"; [ "$stage" = build ] && build_checks; return 0; fi ;;
