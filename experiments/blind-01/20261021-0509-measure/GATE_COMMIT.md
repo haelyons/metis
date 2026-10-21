@@ -1150,3 +1150,182 @@ OPERATOR: record in RUN.md that launch 1 ended with exit 2 at the pip install st
 OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of review 6 and state G3's ruling and the build 11 scope of EXEC_NOTE item 61 to it (H9).
 OPERATOR: before launch 2 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8).
 OPERATOR: launch environment of record for launch 2, unchanged: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (H9).
+
+---
+
+## Addendum 9 (2026-10-21)
+
+Rules on `out/gate_report_build13.md`: the operator's mechanical note after build 11 and build 13 (three rulings asked: (a) the pins
+or install route of record for build 14, (b) the pre-launch test of record, (c) build 14 authorised or HALT). Inputs added for this
+addendum, in the order the report names them: `out/pip_pins_check_build11.txt`, `out/pip_pins_openmm_cuda_requires.txt`,
+`out/pip_pins_openmm_listing.txt`, `out/launch1/results_m4/out/tool_logs/install_pip_install.log`, `out/pip_pins_resolve_build11.txt`;
+also this file as it stood, `EXEC_NOTE.md` as it stood, and the task text of this session, which is not a source of rulings. The gate
+ran nothing and did not read `run_m4.py`, `onbox_m4.sh`, `out/build13_return.json` or `frozen/ONBOX_CONTRACT.md`; each ruling rests on
+the report and the five evidence files, taken as reported. The two shape-example files named in the task are outside this session's
+readable directory; this addendum follows the shape of the sections above. Every earlier section stands except where an answer below
+says it is superseded: J1 supersedes the OpenMM pair of H1 and item 58; J2 changes one of the seven pins H1 kept; J5 withdraws the
+file branch of H1(ii); J6 supersedes item 61; J7 supersedes item 62 and H9. Answers are numbered J1 to J9. Counts: 9 answers. The line
+`Build 9 authorised` at the end is the launcher's literal string for the next build; it does not renumber the earlier builds (the
+build it authorises is build 14).
+
+**What the inputs show (facts, not rulings).**
+- `out/pip_pins_resolve_build11.txt` (pip's own output, a real CPython 3.10): `ResolutionImpossible`, "Cannot install -r pins_b11.txt
+  (line 8) and openmm==8.2.0". Line 8 of the nine-line list is `openmm-cuda==8.1.1.12`. It is the same conflict as launch 1's
+  (`install_pip_install.log`: "Cannot install openmm-cuda==8.1.1.12 and openmm==8.2.0"), so build 11 and build 13 left the pair
+  unchanged and it is still the failing pair. pip names no other conflict, but a resolver that stops at its first conflict does not
+  prove there is no second one.
+- `out/pip_pins_check_build11.txt`: all nine pinned releases exist; eight have a box wheel; `lightdock==0.9.4` has none (sdist only).
+  `openmm==8.2.0` has one box wheel of 16 files. The check tests each pin alone; it did not test `openmm==8.1.1`, which is not pinned.
+- `out/pip_pins_openmm_listing.txt`: `openmm-cuda` has three versions on the index (8.1.1.11.2, 8.1.1.11.8, 8.1.1.12); the plain
+  `OpenMM` query failed (TypeError), so the versions of `openmm` and the files of 8.1.1 are not evidenced; `openmm==8.2.0` declares no
+  extras and requires `numpy` only; distributions `OpenMM-CUDA-12` and `OpenMM-CUDA-13` exist but their versions were not listed
+  (query failed).
+- `out/pip_pins_openmm_cuda_requires.txt`: **this file does not hold what its name says.** Its content is the per-version listing of
+  `lightdock` (21 versions, requires_dist of 0.9.4: numpy, scipy, cython, prody, freesasa; the pinned release's only files are a cp38
+  macOS wheel and the sdist). It holds no `requires_dist` of `openmm-cuda==8.1.1.12`. Under H1(ii) a file that exists and names no
+  exact `openmm` version makes the build change nothing and return a statement; that is what build 11 and build 13 did, correctly
+  by the text they were given. The fault is in the evidence, not in the build.
+
+**Decision on budget and build (addendum).** GO stands, on the conditions of J4 and J7. Builds, reviews and the operator's pip tests
+spend no GPU money. Arithmetic, launches x hours x price, against the USD 10 cap: launch 1 actual USD 0.30 (as in H-section); launch 2
+at its caps 7,200 s command + 600 s outside = 7,800 s = 2.1667 h x 1.99 = USD 4.31; total 0.30 + 4.31 = USD 4.61, under the cap with
+USD 5.39 left; the command alone is 7,200 s = 2.00 h x 1.99 = 3.98, under `BUDGET_LEFT_USD=5`. At the fallback ceiling of USD 2.50/h:
+2.1667 h x 2.50 = 5.42, plus 0.30 = 5.72, under 10. No launch 3 exists (owner rule). Nothing in this addendum adds a download to the
+box beyond pip wheels from the package index (J2), which fall inside the 1,800 s install total.
+
+### Answers of record (J1 to J9)
+
+1. **J1 (ask (a): the pins of record for build 14; supersedes H1 and EXEC_NOTE item 58).** The nine pins of record, in this order,
+   each `name==version` (the one extra in J2 is the only bracket):
+   `jax==0.4.35`, `jaxlib==0.4.35`, `jax-cuda12-plugin[with_cuda]==0.4.35`, `jax-cuda12-pjrt==0.4.35`, `colabfold==1.5.5`,
+   `alphafold-colabfold==2.3.6`, `openmm==8.1.1`, `openmm-cuda==8.1.1.12`, `lightdock==0.9.4`.
+   Evidence level, stated plainly: the OpenMM pair is the gate's inference, unchanged from H1(i) and still not verified. What is
+   evidenced: pip, twice, refuses `openmm-cuda==8.1.1.12` beside `openmm==8.2.0`; the index has no other `openmm-cuda` release
+   with a four-part version above 8.1.1.12; the sibling's version reads as OpenMM 8.1.1. What is not evidenced: that
+   `openmm-cuda==8.1.1.12` requires `openmm==8.1.1` exactly, that `openmm==8.1.1` exists on the index with a CPython 3.10 manylinux
+   x86_64 wheel, and that the CUDA platform the sibling carries loads on CUDA 12.8 with driver 570. The first two are decided by the
+   test of J4, run before build 14 exists, so the build is not spent on an untested guess; the third only by the box's smoke check
+   (item 33), as H9 said. Routes not taken, so the build does not weigh them: no source build of `openmm` (it needs a compiler stack
+   and the CUDA toolkit; not authorised); no conda or other non-pip route (a host the design does not name, rule 10); no
+   `OpenMM-CUDA-12`, `OpenMM-CUDA-13` or `openmm-unofficial-*` distribution (their versions are not evidenced and `openmm-unofficial-*`
+   is a third-party rebuild); no change of `openmm-cuda` to another version (an older build of the sibling is not evidenced to fit
+   either). The build writes the nine lines into `PIP_PINS` exactly, adds no operator-file reads and no network, and its comment on
+   `PIP_PINS` says: the pair is the gate's inference; the source is `out/gate_report_build13.md` and the pip outputs
+   `out/pip_pins_resolve_build11.txt` and `launch1/.../install_pip_install.log`; the test of record is item 66. Selftest: the
+   `PIP_PINS` parser case asserts the nine entries equal this list in this order, that the `openmm` pin's version equals the
+   version quoted in the comment as the one `openmm-cuda` requires (8.1.1), rejects a bracketed extra on OpenMM, rejects an entry
+   without `==`, rejects an `openmm-cuda*` entry without a plain `openmm` entry, and accepts the planted good pair. Every C2
+   record carries the OpenMM and `openmm-cuda` versions as installed (H3, item 60); moving the release changes no band and no protocol
+   (H1(iv) stands).
+
+2. **J2 (the JAX GPU libraries: one of the seven kept pins changes).** ACCEPTED as a change, because the last launch would otherwise
+   be able to fail at the smoke check for a reason visible now. `jax-cuda12-plugin==0.4.35` alone installs the plugin without the
+   CUDA runtime libraries it loads (cuDNN, cuBLAS, cuSPARSE, cuFFT, cuSOLVER, the NVRTC and ptxas pieces); the JAX release's own
+   GPU install is the plugin with its `with_cuda` extra. The pin becomes `jax-cuda12-plugin[with_cuda]==0.4.35`, as J1 lists. This
+   is the gate's inference from the JAX project's install form, not a fact read in the inputs; it is tested by J4 (the extra must be
+   provided, and a `nvidia-cudnn-cu12` wheel must appear in the resolution). The libraries come through pip from the package index,
+   a named source (item 14), inside the 1,800 s install total, and are recorded in the pip report (B13); their versions are not
+   pinned by the gate (they are transitive; the report records them). Item 33's permission for brackets on non-OpenMM entries
+   covers it. The smoke check (JAX with a listed GPU device) remains the in-box test. The venv stays the build's own and does not
+   use the bootstrap's `~/.local` packages as the source of these libraries. If the J4 test reports that the extra is not provided
+   or that the set conflicts because of it, no build is made and the gate rules again (J9).
+
+3. **J3 (the sdist-only pin `lightdock==0.9.4`).** H2 and item 59 STAND unchanged: five declared apt packages, the sdist built by pip
+   with default build isolation inside the venv, a failed build is exit 2. What is new is when it is tested: the local wheel build of
+   H4 is not among the inputs, so its result is unknown, and it joins the test of J4 (step T2) before build 14. The operator's host
+   for T2 has `build-essential` and `python3-dev` present (as the box will). Nothing changes in the build for this answer.
+
+4. **J4 (ask (b): the pre-launch test of record).** The test of record is pip's dry-run resolution in a real CPython 3.10 with
+   sdists allowed, as run, tightened into three steps the operator can run mechanically, all in one clean CPython 3.10 Linux x86_64
+   virtual environment with no GPU and no packages beyond pip. T0: install `pip==24.0` in it and record `pip --version` (24.0 is the
+   pip the box uses after the item 50 bootstrap, so the test and the box agree). T1: one call `python -m pip install --dry-run
+   --ignore-installed --report out/pip_pins_resolve_build14.json` with the nine requirements of J1 as nine arguments in that order,
+   output kept in `out/pip_pins_resolve_build14.txt`. T1 passes only if all hold: exit 0; the report's `install` list has an entry for
+   each of the nine distributions at its stated version; the entries for `jaxlib`, `jax-cuda12-plugin`, `jax-cuda12-pjrt`, `openmm`
+   and `openmm-cuda` each have a `download_info.url` ending `.whl`; an `nvidia-cudnn-cu12` entry is present; no output line
+   contains `ResolutionImpossible`, `conflicting dependencies` or `does not provide the extra`; `lightdock` is the only entry whose
+   URL may end `.tar.gz`. T2: `python -m pip wheel --no-deps --wheel-dir <an empty directory> lightdock==0.9.4`; passes if it exits 0
+   and leaves a `lightdock-0.9.4-*.whl`. T1 and T2 run twice: first on the J1 list **before build 14 starts**, then on the nine
+   lines read from build 14's `PIP_PINS` after it (those lines must be text-identical to J1's, checked by `diff`). Both results go
+   into RUN.md and `out/pip_pins_resolve_build14.txt`. A pass of the existence check alone (`pip_pins_check_*`) is not a test of
+   record. The test does not prove the CUDA platform loads; only the box does (J1).
+
+5. **J5 (the mislabelled evidence file; the build 11, 12 and 13 outcomes).** ACCEPTED as the cause of the no-change returns. Build 11
+   and build 13 did what H1(ii) told them: they found a file under the required name with no exact `openmm` version in it, changed
+   nothing and said so. Build 13's identity with build 11 (reported by the operator) is therefore the expected outcome, not a defect
+   of the build, and no finding is raised against it. Build 12, the operator's wheels-only mis-trigger, was stopped; it produced no
+   file of record and nothing of it is relied on. The gate withdraws H1(ii): build 14 reads no operator evidence file, takes the
+   pins from J1 as written here, and `out/pip_pins_openmm_cuda_requires.txt` is not among its inputs (item 67). To keep the evidence
+   honest the operator renames the lightdock listing to what it is and writes the missing listing (Operator actions); that file
+   informs the gate if J4 fails, and is not a build input.
+
+6. **J6 (what build 14 may change; supersedes item 61 and H10).** Build 14 is an in-place edit of build 11's `run_m4.py` and
+   `onbox_m4.sh` (build 13's files are identical to them), limited to: the nine `PIP_PINS` entries and their comment (J1, J2);
+   the selftest's `PIP_PINS` parser case (J1); the selftest's count and hash lines, which move. Every other line stays as build 11
+   has it. A changed line outside that list is a blocking finding in review. It uses no network and reads no operator evidence
+   file. The build's return states the real line counts, the two sha256 values (item 36), the new selftest count (build 11:
+   740 of 740) and the exact lines changed. The operator stops re-running builds on this matter, as the report says: one build
+   14, started only after J4's first run passes (J7).
+
+7. **J7 (ask (c): build 14 authorised, or HALT; launch 2 conditions revised; supersedes item 62 and H9).** BUILD 14 AUTHORISED, on
+   one precondition and no other: the first run of the J4 test (T1 and T2 on the J1 list) passed and is in RUN.md. Without it, no
+   build is started and the gate rules again (J9). Launch 2, the last launch allowed, stays pre-authorised on A2(a) (launch 1 halted
+   before the anchor decision for an install reason; recorded in the report and to be in RUN.md) under five conditions, all of
+   which must hold: (i) build 14 exists as an in-place edit limited to J6 and its own selftest passes; the operator's local re-run
+   prints the same two sha256 values as the files on disk (B14); (ii) the operator's `diff` of build 14 against build 11 shows only
+   lines of J6's list, and a review of that diff reports zero BLOCKING findings (F22's definition), had
+   `frozen/ONBOX_CONTRACT.md` on its read list and states it checked with G3 applied (lines unchanged from build 11 are not
+   reviewed again; if the earlier review of build 11 was never run, this review also covers the whole files as H9(ii) said); (iii)
+   the second run of the J4 test, on build 14's own `PIP_PINS`, passed and is in RUN.md; (iv) the launch environment of record is
+   unchanged: `REMOTE_TIMEOUT=7200`, `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99`, `INSTANCE_TYPE=gpu_1x_a100_sxm4`, us-east-1,
+   else the cheapest single GPU with capacity at no more than USD 2.50/h with the type and price set to its values and the other
+   three unchanged; (v) the cause (launch 1: exit 2 at the pip install step; builds 11 and 13 unchanged on the evidence defect of
+   J5) is recorded in RUN.md. Launch 2 runs every stage from the install on. The open risk, stated plainly: the OpenMM pair and the
+   JAX extra are inferences until J4 resolves them on the index, and the CUDA platform and the JAX GPU device are proved only by the
+   smoke check on the box; a failure there is exit 2 with a void record and no third launch.
+
+8. **J8 (budget: does anything in the report change money, instance or caps).** NO. Spent to date: USD 0.30 (launch 1). Builds 11,
+   12, 13 and 14 and the operator's tests cost no GPU money. Launch 2 at its caps adds at most USD 4.31 (USD 5.42 at the USD 2.50/h
+   ceiling), total USD 4.61 (5.72), under the USD 10 cap. `BUDGET_LEFT_USD=5`, `REMOTE_TIMEOUT=7200` exactly and the 1,800 s install
+   total are unchanged; the extra libraries of J2 add download seconds inside that total (an overrun is exit 2, E2). The stage
+   ceilings, the allowance formula, the labels and every band are unchanged.
+
+9. **J9 (what stops the loop: if the J4 test fails, or launch 2 ends without a measurement).** No build is started on a failed J4
+   run, and no further build is authorised by this addendum beyond build 14. If T1 fails with a conflict that still names the OpenMM
+   pair, or finds no `.whl` for `openmm==8.1.1`, the operator writes the corrected evidence file (Operator actions) and returns to
+   the gate with it; the gate then rules in an addendum 10 either on the exact `openmm` version that file names (when it names one
+   with a box wheel) or HALT. If T1 fails on the `with_cuda` extra or on any other pair, the gate likewise rules again with pip's
+   output. If the evidence shows no pip route that gives a CUDA-capable OpenMM for CPython 3.10 and CUDA 12.8 from the sources the
+   design names, the gate's answer is HALT and the owner decides whether to name a further source (a conda channel or a
+   `OpenMM-CUDA-12`-family release whose versions the operator would list), which is the owner's choice under rule 10 and not
+   the gate's. If launch 2 itself ends without a measurement, nothing is authorised after it (two launches at most, standing rule 1);
+   the run is closed as unmeasured and any further launch, cap or pin is the owner's.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Spend: 7,800 s / 3,600 = 2.1667 h x 1.99 =
+4.311; plus 0.30 = 4.61; fallback 2.1667 x 2.50 = 5.417, plus 0.30 = 5.72; both under 10. Ceilings still sum to 7,200: 1,800 + 700 + 600
++ 2,000 + 1,600 + 100 + 400 = 7,200. Cross-reading: the nine-line list in `pip_pins_check_build11.txt` has `openmm-cuda==8.1.1.12`
+on line 8, the line pip names; the launch-1 command line and the build 11 resolve conflict name the same two requirements; the
+listing of `openmm-cuda` versions (8.1.1.11.2, 8.1.1.11.8, 8.1.1.12) has 8.1.1.12 as the newest; the file named `..._openmm_cuda_requires.txt`
+begins `## lightdock`, 21 versions, 43 files per the operator's own commit note, and holds no openmm line. Counting: the report asks 3
+rulings and names 5 evidence files; answers J1 to J9 cover the three asks (J1, J4, J7), each file's finding (J1 to J5), the build
+scope and the money. The gate did not re-run any index query, resolution or build and did not verify that `openmm==8.1.1` exists on
+the index.
+
+**Pre-authorisation (addendum).** A1 stands unchanged. A2 stands for the one remaining launch as restated by J7: launch 2 under
+conditions (i) to (v) and no other; it is the last. Not authorised, as before: a relaunch to double seeds, to repeat a decided input,
+to change a band, or after an anchor miss; a third launch of any kind; a build other than build 14 without a new addendum. What stops
+launch 2: the cost and time guard, an anchor miss (exit 4), the sleep check (exit 2), any broken infrastructure (exit 2 with a void
+record, no patching around), a stage ceiling. Totals: at most USD 4.61 spent in all if launch 2 runs to its caps (0.30 + 4.31); the
+owner's USD 10 cap is not raised by this gate.
+
+Build 9 authorised
+
+## Operator actions
+
+OPERATOR: rename `out/pip_pins_openmm_cuda_requires.txt` (it holds the `lightdock` listing) to `out/pip_release_files_lightdock.txt`; then, with the same listing script, write `out/pip_pins_openmm_cuda_requires.txt` with the `requires_dist` of `openmm-cuda==8.1.1.12` and the file names of the `openmm` release 8.1.1 (which are CPython 3.10 manylinux x86_64 wheels); if the index cannot be read, write that fact; build 14 does not read this file, the gate does if J4 fails (J5, J9).
+OPERATOR: before build 14, run the J4 test (T0, T1, T2) on the nine requirements of J1 and write the full output into `out/pip_pins_resolve_build14.txt`, `out/pip_pins_resolve_build14.json` and RUN.md; start build 14 only if T1 and T2 pass; if either fails, start no build and return to the gate with those files (J4, J7, J9).
+OPERATOR: after build 14, `diff` its `PIP_PINS` lines against the J1 list and its two files against build 11's, and run T1 and T2 again on the lines read from build 14's file; append both results to `out/pip_pins_resolve_build14.txt` and RUN.md (J4, J7).
+OPERATOR: record in RUN.md that launch 1 ended with exit 2 at the pip install step (`ResolutionImpossible`, `openmm-cuda==8.1.1.12` against `openmm==8.2.0`), USD 0.30, box terminated, outputs archived under `out/launch1/`, that builds 11 and 13 left the pins unchanged because the evidence file named `pip_pins_openmm_cuda_requires.txt` held the `lightdock` listing, and that build 12 was a stopped mis-trigger (J5, J7).
+OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of the review of build 14, state G3's ruling and the build 14 scope of EXEC_NOTE item 65 to it, and give it the diff against build 11 (J7).
+OPERATOR: before launch 2 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8).
+OPERATOR: launch environment of record for launch 2, unchanged: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (J7).

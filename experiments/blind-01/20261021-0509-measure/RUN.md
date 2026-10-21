@@ -96,3 +96,12 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:46Z build 13 checks: selftest exit 0
 - 15:47Z gate 9 (addendum) requested
 - 15:47Z stage gate on wf.js run 5: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1291955
+- 15:52Z build 13 checks: selftest exit 0
+- 15:53Z build 13 checks: selftest exit 0
+- 15:54Z Record of record (addendum 9 OPERATOR line): launch 1 exited 2 at the install stage (USD 0.30, box terminated, out/launch1/); builds 11 and 13 left the pins unchanged; build 12 was the operator's mis-trigger (wheels-only test) and was stopped; gate addendum 9 (wf.js, claude/sonnet, 5 min): 9 answers, 67 items. Operator disclosure: a raw path listing exposed a package name in a gate-chosen file name; paths now go through the mask.
+- 15:54Z pre-build test on the addendum 9 candidate pins (12 lines): exit 1
+- 15:54Z gate 10 (addendum) requested
+- 15:54Z stage gate on wf.js run 6: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1304690
+- 15:55Z overlay test (current pins with the addendum 9 substitutions applied, 10 pins): exit 0
+- 15:55Z gate run 6 (wf) stopped by the operator: it was started on a false premise (the operator's union test of old and new pins); the overlay set resolves (83 packages), so build 14 proceeds on the addendum 9 directive.
+- 15:55Z stage build on wf.js run 11: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1306636
