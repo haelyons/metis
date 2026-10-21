@@ -486,11 +486,11 @@ for name, v in sorted(d.items()):
     price = v["instance_type"]["price_cents_per_hour"] / 100
     if name.startswith("gpu_1x") and regs:
         print("  %-28s USD %5.2f/h  %s" % (name, price, " ".join(regs)))
-        if price <= cap: alts.append((price, name, regs[0]))
+        if price <= cap and want_r in regs: alts.append((price, name, want_r))   # the filesystem is regional: fall back only inside the requested region
     if name == want_t and want_r in regs: ok = True
 print("requested %s @ %s: %s" % (want_t, want_r, "capacity" if ok else "NO capacity"))
 if not ok and alts:
-    p, n, r = sorted(alts)[0]; print("fallback (cheapest single GPU with capacity at or under USD %.2f/h): %s @ %s USD %.2f/h" % (cap, n, r, p))
+    p, n, r = sorted(alts)[0]; print("fallback (cheapest single GPU with capacity in the same region at or under USD %.2f/h): %s @ %s USD %.2f/h" % (cap, n, r, p))
     open(sys.argv[1] + ".fallback", "w").write("%s %s %.2f\n" % (n, r, p))
 sys.exit(0 if ok else 3)
 PYEOF

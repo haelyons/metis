@@ -169,3 +169,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 19:19Z build 18 (wf.js, opus, 16 min, USD 11): the environment, tests and hold wiring landed (run_m4.py 4,765 lines, onbox_m4.sh 942); no pip install, no selftest. Launcher payload ships tests/tests_m4.py. Review 10 started.
 - 19:19Z review 9 of build 18 requested
 - 19:19Z stage review on wf.js run 6: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1656061
+- 19:22Z build 18 checks: selftest exit 0
+- 19:23Z review 10 of build 18 (wf.js, claude/sonnet): PASS, 0 blocking, 13 advisory. LAUNCH 3 issued under the environment of record with the filesystem attached.
+- 19:23Z LAUNCH 3: gpu_1x_a10 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1665974, log out/launcher_m4_L3.log
