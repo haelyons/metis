@@ -381,20 +381,28 @@ ALLOWED_DOWNLOAD_HOSTS = ("files.rcsb.org", "storage.googleapis.com")
 # WHICH FORM WAS CHOSEN FOR THE DYNAMICS ENGINE, AND WHY IT IS STATED HERE.
 # The engine's plain wheel does not always carry the graphics-processor
 # platform the run needs. The form chosen here is THE SIBLING PACKAGE: two
-# pinned entries, the plain engine release "openmm==8.2.0" and the separate
+# pinned entries, the plain engine release "openmm==8.1.1" and the separate
 # package "openmm-cuda==8.1.1.12" that carries the CUDA platform.
-# A bracketed extra, written "openmm[cuda12]==8.2.0", is not used and is
-# refused by the check below: the operator's package-index listing
-# "out/pip_pins_openmm_listing.txt" reports that the pinned release declares no
-# extras at all ("extra cuda12 not in []"). That same listing is the only
-# source of the sibling's name and version; neither comes from memory or from
-# the network. It lists "openmm-cuda" with versions 8.1.1.11.2, 8.1.1.11.8 and
-# 8.1.1.12, and 8.1.1.12 is the build for CUDA 12, which the box runs.
-# Two checks, neither of them this comment, decide whether the form works: the
-# operator repeats the index check before launch 1, and the smoke check asks
-# the installed engine for its CUDA platform on the box. If the platform is
-# missing, the smoke check fails and the run ends as broken infrastructure
-# before any measurement. Nothing falls back.
+# SIBLING REQUIRES ENGINE VERSION: 8.1.1
+# The sibling's own version number reads as that engine release, so the two are
+# pinned as one pair. The earlier pairing with engine release 8.2.0 was
+# withdrawn: the installer refuses that sibling beside 8.2.0.
+# A bracketed extra, written "openmm[cuda12]==8.1.1", is not used and is refused
+# by the check below, because the engine release declares no extras.
+# This pairing, and the one bracketed extra in the list below (the graphics
+# plugin's "with_cuda", the project's own way of bringing the CUDA runtime
+# libraries from the package index), are INFERENCES MADE BY THE REVIEW BOARD,
+# not verified facts. They are drawn from these records, which this program
+# never opens: the board's report "gate_report_build13.md", the installer
+# output "pip_pins_resolve_build11.txt", and launch 1's own install log
+# "install_pip_install.log" under launch1/results_m4/out/tool_logs/.
+# Three checks, none of them this comment, decide whether the form works. The
+# operator resolves these exact requirements together with the installer in a
+# clean Python 3.10 environment, once before this program is edited and once
+# before the next launch (the test of record, directive item 66). The smoke
+# check then asks the installed engine for its CUDA platform on the box. If the
+# platform is missing, the smoke check fails and the run ends as broken
+# infrastructure before any measurement. Nothing falls back.
 #
 # The prediction stack takes the form whose published metadata carries what the
 # smoke check imports: "colabfold" supplies the command line and "alphafold-
@@ -403,11 +411,11 @@ ALLOWED_DOWNLOAD_HOSTS = ("files.rcsb.org", "storage.googleapis.com")
 PIP_PINS = [
     "jax==0.4.35",
     "jaxlib==0.4.35",
-    "jax-cuda12-plugin==0.4.35",
+    "jax-cuda12-plugin[with_cuda]==0.4.35",
     "jax-cuda12-pjrt==0.4.35",
     "colabfold==1.5.5",
     "alphafold-colabfold==2.3.6",
-    "openmm==8.2.0",
+    "openmm==8.1.1",
     "openmm-cuda==8.1.1.12",
     "lightdock==0.9.4",
 ]
@@ -432,9 +440,9 @@ def pip_pins_problems(pins: list) -> list:
     """What is wrong with a list of pinned requirements, in plain words.
 
     Three things are checked: every requirement names an exact version, the
-    dynamics engine is asked for with a sibling package whose name begins
-    "openmm-cuda" to carry the graphics-processor platform, and the engine
-    itself carries no bracketed extra, because its pinned release declares none.
+    dynamics engine and a sibling package whose name begins "openmm-cuda" are
+    pinned together as a pair (neither alone), and the engine itself carries no
+    bracketed extra, because its pinned release declares none.
     """
     problems = []
     parsed = []
@@ -456,6 +464,11 @@ def pip_pins_problems(pins: list) -> list:
         problems.append(
             "the dynamics engine is pinned without a form that carries the "
             "graphics-processor platform: no openmm-cuda sibling"
+        )
+    if sibling and not openmm:
+        problems.append(
+            "the openmm-cuda sibling is pinned without the plain dynamics "
+            "engine beside it, and the two install only as a pair"
         )
     return problems
 
@@ -6538,14 +6551,45 @@ def selftest_pip_pins(c: Checks) -> None:
     c.ok("an entry without an exact version fails the check",
          bool(pip_pins_problems(["openmm==8.2.0", "openmm-cuda==8.1.1.12",
                                  "lightdock"])))
+    c.ok("the CUDA sibling package pinned on its own is refused",
+         bool(pip_pins_problems(["openmm-cuda==8.1.1.12"])))
+    c.eq("this run installs exactly the nine requirements it was given, in order",
+         list(PIP_PINS),
+         ["jax==0.4.35",
+          "jaxlib==0.4.35",
+          "jax-cuda12-plugin[with_cuda]==0.4.35",
+          "jax-cuda12-pjrt==0.4.35",
+          "colabfold==1.5.5",
+          "alphafold-colabfold==2.3.6",
+          "openmm==8.1.1",
+          "openmm-cuda==8.1.1.12",
+          "lightdock==0.9.4"])
     c.ok("this run pins the plain dynamics engine, with no extra",
-         "openmm==8.2.0" in PIP_PINS)
+         "openmm==8.1.1" in PIP_PINS)
     c.ok("this run pins the CUDA sibling package of the dynamics engine",
          any(p.startswith("openmm-cuda") for p in PIP_PINS))
+    source_text = Path(__file__).read_text()
     c.ok("the chosen form is stated in the file beside the pins",
-         "THE SIBLING PACKAGE" in Path(__file__).read_text())
-    c.ok("the comment beside the pins names the operator's index listing",
-         "pip_pins_openmm_listing.txt" in Path(__file__).read_text())
+         "THE SIBLING PACKAGE" in source_text)
+    c.ok("the comment beside the pins says the pairing was inferred, not verified",
+         "INFERENCES MADE BY THE REVIEW BOARD" in source_text)
+    for named in ("gate_report_build13.md", "pip_pins_resolve_build11.txt",
+                  "install_pip_install.log"):
+        c.ok(f"the comment beside the pins names the record {named}",
+             named in source_text)
+    quoted = re.search(r"SIBLING REQUIRES ENGINE VERSION:\s*([0-9][0-9.]*)",
+                       source_text)
+    c.ok("the comment states which engine release the sibling package needs",
+         quoted is not None)
+    c.eq("the engine is pinned to the release the comment says the sibling needs",
+         parse_pin([p for p in PIP_PINS if p.startswith("openmm==")][0])["version"],
+         quoted.group(1) if quoted else None)
+    extras_in_list = {parse_pin(p)["name"]: parse_pin(p)["extras"]
+                      for p in PIP_PINS if parse_pin(p)["extras"]}
+    c.eq("the graphics plugin is the only requirement asked for with an extra",
+         extras_in_list, {"jax-cuda12-plugin": ["with_cuda"]})
+    c.eq("the requirements with that one extra are usable as written",
+         pip_pins_problems(PIP_PINS), [])
 
     c.eq("an installer that can report downloads needs no bootstrap",
          pip_needs_bootstrap("pip 23.0.1 from /usr/lib/python3/dist-packages/pip "

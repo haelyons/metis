@@ -106,3 +106,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:55Z gate run 6 (wf) stopped by the operator: it was started on a false premise (the operator's union test of old and new pins); the overlay set resolves (83 packages), so build 14 proceeds on the addendum 9 directive.
 - 15:55Z stage build on wf.js run 11: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1306636
 - 15:58Z owner correction of record: the launch limit is the USD 10 calibration cap, not a count of two (the two-launch rule was the operator's, carried over from m3); launches continue while the cap allows; USD 0.30 spent so far.
+- 16:00Z build 14 checks: selftest exit 0
+- 16:01Z build 14 (wf.js, claude/opus, 5 min, in place): run_m4.py changed, selftest 749/749; index check: pins 9: found 9, missing 0, unpinned 0; extras declared 0, not declared 1; no box-compatible wheel and no sdist 0; sdist only (must build on the box) 1; pip dry-run resolve of build 14's 9 pins in CPython 3.10 (sdists allowed): exit 1; ResolutionImpossible 0; 'No matching distribution' 0; error lines 1; packages in the report 0
+- 16:01Z gate 11 (addendum) requested
+- 16:01Z stage gate on wf.js run 7: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1320767

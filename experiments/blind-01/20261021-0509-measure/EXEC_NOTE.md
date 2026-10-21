@@ -1,8 +1,7 @@
-# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5), build 7 (addendum 6), build 9 (addendum 7), launch 1 (addendum 8) and builds 11 and 13 (addendum 9) (revised, addendum 9)
+# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5), build 7 (addendum 6), build 9 (addendum 7), launch 1 (addendum 8) builds 11 and 13 (addendum 9) and the candidate-list report (addendum 10) (revised, addendum 10)
 
 Binding order: GATE_COMMIT.md answers first (the original answers 1 to 14, then addendum 3 answers B1 to B15, then addendum 5
-answers E1 to E28, then addendum 6 answers F1 to F22, then addendum 7 answers G1 to G8, then addendum 8 answers H1 to H10, then
-addendum 9 answers J1 to J9), this note second, `out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and
+answers E1 to E28, then addendum 6 answers F1 to F22, then addendum 7 answers G1 to G8, then addendum 8 answers H1 to H10, then addendum 9 answers J1 to J9, then addendum 10 answers K1 to K7), this note second, `out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and
 nothing here loosens it except at the points item 56 names (where it states a docking command order, that order is followed, item
 52). Where silent, the design record binds as written, GUESS values included. The build does not read GATE_COMMIT.md itself; the
 checklist below carries every gate change the build must implement. This is the measure run m4 of card seed:idea:1: one rented
@@ -12,11 +11,10 @@ whole run, at most two launches. Launch 1 has run: it ended in 9 minutes with ex
 `openmm==8.2.0` and `openmm-cuda==8.1.1.12` cannot be resolved together), USD 0.30, nothing measured, void records written as the
 contract requires. Builds 11 and 13 left the pins unchanged because the evidence file they were told to read held the wrong
 content (J5), and the operator's pre-launch resolve failed with the same conflict. Build 14 is the next and last build on this
-matter: an in-place edit limited to what item 65 lists, started only after the operator's test of item 66 passes on the pins of
-item 58. Launch 2 is the last launch allowed. Items marked `(revised, addendum 3)` changed build 2's behaviour, items marked
+matter: an in-place edit limited to what item 65 lists, started only after the operator's test of item 66 passes on the pins of item 58 as listed in the operator's explicit file of item 68. Launch 2 is the last launch allowed. Items marked `(revised, addendum 3)` changed build 2's behaviour, items marked
 `(revised, addendum 5)` changed build 6's, items marked `(revised, addendum 6)` changed build 7's, items marked `(revised,
 addendum 7)` changed build 9's, items marked `(revised, addendum 8)` changed build 10's, items marked `(revised, addendum 9)`
-change build 11's; items 63 to 67 are new in addendum 9; items 58 to 62 came with addendum 8 (58, 61, 62 revised again);
+change build 11's; items 68 and 69 are new in addendum 10 (items 65 to 67 revised again); items 63 to 67 came with addendum 9; items 58 to 62 came with addendum 8 (58, 61, 62 revised again);
 items 55 to 57 came with addendum 7; items 48 to 54 came with addendum 6; items 38 to 47 came with addendum 5; items 31 to 37
 came with addendum 3; the rest stand. Items 6, 8, 28 and 29 are restated in addendum 6 as single testable requirements; review
 judges the build against those texts. (revised, addendum 9)
@@ -31,7 +29,7 @@ execution contract). Build 14 reads no other file as an input (item 67): the ope
 because the pins are written in item 58. It edits the existing `run_m4.py` and `onbox_m4.sh` of build 11 in place and uses no
 network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and are not written by the build. (revised, addendum 9)
 
-## Checklist of gate changes the build must carry (67 entries)
+## Checklist of gate changes the build must carry (69 entries)
 
 1. **Order on the box.** install and downloads (with the smoke check, item 33); R1 controls (60 s sleep, empty run,
    unit-and-scale print); anchor (serial, then parallel); per-pair docking and analysis (aux timing); AlphaFold timings
@@ -464,7 +462,7 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     `OpenMM-CUDA-12`, `OpenMM-CUDA-13` or `openmm-unofficial-*` distribution; no operator file is read to choose a pin (item 67).
     The comment on `PIP_PINS` says: the OpenMM pair and the extra are the gate's inference (addendum 9, J1 and J2); the sources are
     `out/gate_report_build13.md` and the pip outputs `out/pip_pins_resolve_build11.txt` and
-    `out/launch1/results_m4/out/tool_logs/install_pip_install.log`; the test of record is item 66. The OpenMM release is not fixed
+    `out/launch1/results_m4/out/tool_logs/install_pip_install.log` and `out/pip_release_files_lightdock.txt` (the index metadata: `openmm-cuda==8.1.1.12` requires `openmm==8.1.1`, and that release has a CPython 3.10 manylinux x86_64 wheel); the pair and the extra remain tested by item 66 on the list of item 68 (revised, addendum 10). The OpenMM release is not fixed
     by the design: the installed versions of `openmm` and `openmm-cuda` are recorded (item 6, item 60). Selftest (item 64): the
     parser case. (J1, J2) (revised, addendum 9)
 59. **Declared apt packages and the sdist build (new, addendum 8, H2).** `lightdock==0.9.4` has no wheel for CPython 3.10 Linux
@@ -507,33 +505,39 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
     one `openmm-cuda` requires; a bracketed extra on `openmm` is rejected; an entry without `==` is rejected; an `openmm-cuda*`
     entry without a plain `openmm` entry is rejected; the bracketed extra on `jax-cuda12-plugin` is accepted and is the only extra in
     the list; the planted good pair is accepted. The selftest's count and the two hash lines move (build 11: 740 of 740). (J1, J2)
-65. **Build 14 scope (new, addendum 9, J6; supersedes item 61).** Build 14 is an in-place edit of build 11's `run_m4.py` and
+65. **Build 14 scope (new, addendum 9, J6; supersedes item 61) (revised, addendum 10).** Build 14 is an in-place edit of build 11's `run_m4.py` and
     `onbox_m4.sh` (build 13's files are identical), limited to: the nine `PIP_PINS` entries and their comment (item 58); the
     selftest's `PIP_PINS` parser case (item 64); the selftest's count and hash lines, which move. Every other line stays as build 11
     has it; nothing is refactored, renamed or reordered. It uses no network and reads no operator evidence file. The build's return
     states the real line counts, the two sha256 values (item 36), the new selftest count and the exact lines changed. A changed
-    line outside this list is a blocking finding in review. Build 14 is started only after the first run of the item 66 test
-    passed. (J6, J7)
-66. **The test of record, and when it runs (new, addendum 9, J4; operator's check, listed so the build and review rely on it).**
+    line outside this list is a blocking finding in review. The static check of item 67 is part of the selftest cases of this scope. Build 14 is started only after the first run of the item 66 test passed on the list of item 68. (J6, J7, K6)
+66. **The test of record, and when it runs (new, addendum 9, J4; operator's check, listed so the build and review rely on it) (revised, addendum 10).**
     Pip's dry-run resolution in a real CPython 3.10 with sdists allowed, in three steps, in one clean CPython 3.10 Linux x86_64
     virtual environment with no GPU and no packages beyond pip. T0: install `pip==24.0` and record `pip --version` (the pip the box
-    uses after item 50). T1: `python -m pip install --dry-run --ignore-installed --report out/pip_pins_resolve_build14.json` over
-    the nine requirements of item 58 as nine arguments in order; passes only if the exit is 0, the report's `install` list has each
+    uses after item 50). T1: `python -m pip install --dry-run --ignore-installed --report out/pip_pins_resolve_build14.json` over the nine requirements of the file of item 68 as nine arguments in order (not `-r` with comments); passes only if the exit is 0, the report's `install` list has each
     of the nine distributions at its stated version, `jaxlib`, `jax-cuda12-plugin`, `jax-cuda12-pjrt`, `openmm` and `openmm-cuda`
     each resolve to a `.whl` URL, an `nvidia-cudnn-cu12` entry is present, no output line contains `ResolutionImpossible`,
-    `conflicting dependencies` or `does not provide the extra`, and only `lightdock` may be a `.tar.gz`. T2: `python -m pip wheel
+    `conflicting dependencies` or `does not provide the extra`, and only `lightdock` may be a `.tar.gz`; the `install` list has exactly one `openmm` entry, at 8.1.1, and no 8.2.0 entry appears in the report or the command line, which shows exactly nine requirements. T2: `python -m pip wheel
     --no-deps --wheel-dir <empty directory> lightdock==0.9.4` with `build-essential` and `python3-dev` present; passes if it exits 0
-    and leaves a `lightdock-0.9.4-*.whl`. T1 and T2 run first on the item 58 list before build 14 starts, and again on the lines
+    and leaves a `lightdock-0.9.4-*.whl`. T1 and T2 run first on the item 68 list before build 14 starts, and again on the lines
     read from build 14's `PIP_PINS` (text-identical to item 58's, checked by `diff`) before launch 2; results go to RUN.md and
     `out/pip_pins_resolve_build14.txt`. Failure of either run means no build (first run) or no launch (second run) and the gate
     rules again; the build never edits pins by hand (F6). The test does not prove the CUDA platform or the JAX GPU device load:
-    only the smoke check on the box does (item 33). (J4, J7, J9)
-67. **Evidence files are not build inputs (new, addendum 9, J5).** The files `out/pip_pins_check_build9.txt`,
+    only the smoke check on the box does (item 33). (J4, J7, J9, K2, K4)
+67. **Evidence files are not build inputs (new, addendum 9, J5) (revised, addendum 10).** The files `out/pip_pins_check_build9.txt`,
     `out/pip_pins_check_build10_platform.txt`, `out/pip_pins_check_build11.txt`, `out/pip_pins_openmm_listing.txt`,
-    `out/pip_pins_openmm_cuda_requires.txt`, `out/pip_pins_resolve_build11.txt`, `out/gate_report_launch1.md` and
-    `out/gate_report_build13.md` inform the gate and the operator; build 14 does not read them (the comment of item 58 names
-    them as sources only). Selftest: a static check that neither `run_m4.py` nor `onbox_m4.sh` opens a path under `out/pip_pins_`
-    or `out/gate_report_`. (J5)
+    `out/pip_pins_openmm_cuda_requires.txt`, `out/pip_pins_resolve_build11.txt`, `out/pip_pins_resolve_candidates_addendum9.txt`, `out/pip_release_files_lightdock.txt`, `out/pip_pins_list_b14.txt`, `out/gate_report_launch1.md`, `out/gate_report_build13.md` and `out/gate_report_candidates9.md` inform the gate and the operator; build 14 does not read them (the comment of item 58 names
+    them as sources only). Selftest: a static check that neither `run_m4.py` nor `onbox_m4.sh` opens a path under `out/pip_` or `out/gate` (prefixes widened from `out/pip_pins_` and `out/gate_report_`). (J5, K6)
+
+68. **The pin list is one operator file, written by hand from item 58 (new, addendum 10, K1, K2, K4).** The addendum 9 candidate
+    list was extracted from prose and held `openmm==8.1.1` and `openmm==8.2.0` together, so its failure is not a run of item 66.
+    The operator writes `out/pip_pins_list_b14.txt`: the nine requirements of item 58, one per line, in order, nothing else; checks
+    `wc -l` is 9, one `openmm==8.1.1` line, one `openmm-cuda==` line, one `jax-cuda12-plugin[with_cuda]==0.4.35` line, no
+    `openmm==8.2.0`. Item 66 runs on that file and after build 14 the operator `diff`s it against build 14's `PIP_PINS`. The build
+    does not read the file (item 67); the nine pins of item 58 are unchanged by this item. (K1, K2, K4)
+69. **Stop rule if the test fails (new, addendum 10, K5; adds to the loop limit of item 62).** If item 66's T1 fails on the list of
+    item 68 with any conflict, no build is made and the gate's next ruling is HALT with the owner deciding; if only T2 fails the
+    gate rules on the lightdock sdist alone. Build 14 is the last build; there is no fourth. Nothing here changes the build. (K5, K6)
 
 ## Box
 
@@ -550,9 +554,9 @@ network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's files and 
 - Caps (revised, addendum 7 and addendum 8): `REMOTE_TIMEOUT=7200` exactly for both launches (a smaller value is not authorised,
   G2); `BUDGET_LEFT_USD=5` per launch; `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, on the fallback); two
   launches at most within USD 10, of which one is spent (USD 0.30) and one remains (item 62).
-- Before build 14 and again before launch 2 the operator runs the test of item 66 (the nine pins of item 58 resolved jointly with
+- Before build 14 and again before launch 2 the operator runs the test of item 66 (the nine pins of the file of item 68 resolved jointly with
   pip 24.0, and the `lightdock` sdist built into a wheel) and writes the results into RUN.md and
-  `out/pip_pins_resolve_build14.txt`; this supersedes the existence check, which tested each pin alone. (revised, addendum 9)
+  `out/pip_pins_resolve_build14.txt`; this supersedes the existence check, which tested each pin alone. (revised, addendum 10)
 - Payload layout on the box: `~/m4_run/run_m4.py`, `~/m4_run/onbox_m4.sh`, `~/m4_run/frozen/provenance.py`, `~/m4_run/data/...`
   if shipped. Results under `~/m4_run/results_m4/out/`.
 - The build's `onbox_command` is a single line the operator runs verbatim on the box through `remote_run_m4.sh`
