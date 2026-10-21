@@ -1,4 +1,4 @@
-# Execution directive for build (tag m4), regenerated on 2026-10-21 as the current truth after the report on launch 6 (addendum 16; ruled in GATE_COMMIT.md Addendum 17) (revised, addendum 17)
+# Execution directive for build (tag m4), regenerated on 2026-10-21 as the current truth after the report on launch 6 (addendum 16; ruled in GATE_COMMIT.md Addendum 17) (revised, addendum 18)
 
 This is the measure run m4 of card seed:idea:1: one rented single-GPU box in us-east-1 with the filesystem `metis-env-us-east-1` attached, a
 timer check, an anchor redocking of AAVR-PKD2 onto AAV2 against PDB 6IHB, then four inputs (AlphaFold-Multimer hours per run, MD ns/day,
@@ -24,7 +24,7 @@ at `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/de
 contract) and this note. It does not read `tests/`, `out/`, `results_env/` or `.keys`. `lambda_run_m4.sh` and `remote_run_m4.sh` are the
 operator's files. It uses no network. Its only local checks are `python3 -m py_compile run_m4.py` and `bash -n onbox_m4.sh`.
 
-## Checklist of gate changes the build must carry (31 entries) (revised, addendum 16)
+## Checklist of gate changes the build must carry (32 entries) (revised, addendum 18)
 
 **REQUIRED FOR LAUNCH**
 
@@ -56,20 +56,13 @@ operator's files. It uses no network. Its only local checks are `python3 -m py_c
    `tests_tag-m4.json` (values: `exit_code`, `seconds`, `tests_file_sha256`, `stdout_tail` as the last 20 lines, `tests_passed` and `tests_total` from a
    line `tests: N of M passed` in the output, else null with a `null_reasons` entry). The runner neither imports nor interprets the tests. The tests are
    written by the claim-blind author from this note, `ONBOX_CONTRACT.md`, the design record and QUESTION.md; implementer selftests are neither required nor credited.
-6. **REQUIRED FOR LAUNCH. Hold-open, the fixer's scope and the restart (revised, addendum 17).** Eligible: any exit-2 stage failure of the table of item 7 except the 60 s
-   sleep check. After the failed attempt's void records and `RUN_DONE` are written, the shell writes `results_m4/out/HOLD` (stage, kind, exit code, UTC
-   time, `hold_seconds`) and waits as item 27 says, at most `HOLD_SECONDS` (forwarded; value of record 2400 (revised, addendum 17); any value above 2,400 is treated as 2,400 with the label
-   "HOLD_SECONDS capped at 2400"; unset means 0, no hold, label "HOLD_SECONDS not forwarded; no hold") for `results_m4/out/RESUME`;
-   hold time counts in elapsed time and never in a stage ceiling. At start the shell records the sha256 of `run_m4.py` and
-   `tests/tests_m4.py`. The fixer may change environment and glue, each change committed to git on the box and fetched as `results_m4/out/changes.log`;
-   it may not change the measurement protocol or the record fields, so `run_m4.py` and `tests/tests_m4.py` stay byte-identical: before a restart the shell
-   compares the hashes, and a change (or a verifier finding of out of scope) is a halt to the gate: no restart, exit 2, label `fixer_out_of_scope`. On RESUME
-   with at least 1,500 s of REMOTE_TIMEOUT left the shell moves `results_m4/out` to `results_m4/held_attempt_1/` and restarts the runner once, with the files as they are on the box at RESUME time, from its first
-   stage (item 1's order, every stage, never from a mid-run state, and a RESUME never ends the run in place of the restart) under the same T0 and caps; a download whose
-   file exists with the recorded sha256 may be reused, recorded as `reused: true` with the hash; the restarted attempt's stage allowances follow item 8 from the elapsed
-   time then, so later stages may be guard-stopped (exit 3), stated in `m4_summary.json`; its records are the run's records and `m4_summary.json` carries
-   `held_attempts: 1` and the change log's sha256. One hold per launch: a second eligible failure is exit 2, final. Expiry or less than 1,500 s left ends the launch with
-   the first attempt's records and `RUN_DONE` extended with `hold: expired` or `hold: no time to resume`.
+6. **REQUIRED FOR LAUNCH. Hold-open and restart: one mechanical check on one file (revised, addendum 18).** The whole requirement is in `onbox_m4.sh`; `run_m4.py` carries no requirement under this item. File: `onbox_m4.sh`. Look for five behaviours in the code that handles an exit-2 stage failure of
+   item 7's table. Pass condition: all five are present when the file is read; a review that finds all five reports item 6 satisfied, and a finding on item 6 outside H1 to H5 is advisory. (H1) After a failure other than the 60 s sleep check, once the failed attempt's void records and `RUN_DONE` exist, the
+   shell writes `results_m4/out/HOLD` (stage, kind, exit code, UTC time, `hold_seconds`), `hold_seconds` being `HOLD_SECONDS` (forwarded; value of record 2400) capped at 2,400; with `HOLD_SECONDS` unset or 0 no `HOLD` is written and there is no hold. Hold time counts in elapsed time and never in a
+   stage ceiling. (H2) It waits for `results_m4/out/RESUME` as item 27 says. (H3) On `RESUME` it computes the sha256 of `run_m4.py` and `tests/tests_m4.py` and compares each with the value it took at its own start; any difference is exit 2, label `fixer_out_of_scope`, no restart. (H4) With the hashes equal and at least
+   1,500 s of REMOTE_TIMEOUT left it moves `results_m4/out` to `results_m4/held_attempt_1/` and runs the runner once from its first stage (item 1's order, every stage, never a mid-run state) under the same T0 and caps, and a `RESUME` never ends the launch in place of that restart; with less than 1,500 s
+   left, or on expiry, the launch ends with the first attempt's records. (H5) One hold per launch: an eligible failure in the restarted attempt is exit 2, final, with no second hold. The fixer's scope (environment and glue only; each change committed to git on the box and fetched as `results_m4/out/changes.log`) is
+   the operator's procedure; the hash comparison of H3 is its only mechanical test. The labels and summary fields of the hold are item 32.
 7. **REQUIRED FOR LAUNCH. Broken infrastructure (rule 4).** Ubuntu 22.04, CUDA 12.8, driver 570, python 3.10 and torch 2.7 are preinstalled;
    everything else is in the environment of record. Every outcome maps to exactly one row, and the table is the only source of exit code, `run_valid` and
    the `RUN_DONE` per-input status:
@@ -238,6 +231,9 @@ operator's files. It uses no network. Its only local checks are `python3 -m py_c
     preinstalled packages and the venv is not tested. Advisory only.
 31. **REPORTING ONLY. Spend record.** `m4_summary.json` carries `estimated_spend_usd`, the pre-T0 seconds and the instance type and price; the operator's figure (provisioning to termination, hold included) governs the
     cap.
+
+32. **REPORTING ONLY. Hold labels and summary fields (new, addendum 18).** Not blocking in review: the labels "HOLD_SECONDS capped at 2400", "HOLD_SECONDS not forwarded; no hold" and "environment changed by the fixer on the box; lock <hash>"; `held_attempts` and the sha256 of
+    `changes.log` in `m4_summary.json`; `hold: expired` or `hold: no time to resume` on `RUN_DONE`; a reused download recorded `reused: true` with its hash. A launch lacking them is valid and the post-run reader notes it.
 
 ## Box
 
