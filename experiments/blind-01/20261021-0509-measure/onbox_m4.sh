@@ -343,7 +343,12 @@ PY
 
 FINISHED=0
 INSTALL_USED=0
-APT_PACKAGES="python3-venv aria2 curl"
+# The system packages this run declares, and the only ones it installs. The
+# first three build the virtual environment and fetch the declared files. The
+# last two are the C compiler and the python headers: the docking code is
+# published for this python only as a source archive, so the package installer
+# compiles it on the box, and without these two that compile fails.
+APT_PACKAGES="python3-venv aria2 curl build-essential python3-dev"
 VENV="$RUN_DIR/venv_m4"
 
 on_exit() {

@@ -86,3 +86,10 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:25Z build 10 checks: selftest exit 0
 - 15:26Z LAUNCH 1 of record: A100 SXM4 us-east-1, box ed3c8ab9…, 15:05:53Z to 15:14:50Z, 0.15 h, USD 0.30 est, on-box exit 2 at the install stage (pinned python packages did not install; RUN_VALID run_valid false, four endpoint records VOID), box terminated (terminate accepted, try 1). Outputs under out/launch1/. Launch 2 is the last launch allowed (owner rule: two at most). Gate addendum 8 (wf.js, claude/sonnet): 10 answers, 62 items, build 11 authorised.
 - 15:28Z stage build on wf.js run 8: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1256723
+- 15:41Z build 11 checks: selftest exit 0
+- 15:42Z build 11 checks: selftest exit 0
+- 15:42Z build 11 (wf.js, claude/opus, 13 min, in place): selftest 740/740; index check: pins 9: found 9, missing 0, unpinned 0; extras declared 0, not declared 0; no box-compatible wheel and no sdist 0; sdist only (must build on the box) 1; dry-run resolve of build 11's 9 pins (cp310, manylinux x86_64, wheels only): exit 1; ResolutionImpossible 0; 'No matching distribution' 1; packages in the report 0
+- 15:42Z stage build on wf.js run 9: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1280778
+- 15:43Z build 12 (wf run 9) stopped by the operator after 3 min: it was triggered by a wheels-only dry-run resolve that rejects any sdist by construction; the gate's test is a plain pip dry-run in a Python 3.10 environment, now run with uv's CPython 3.10.
+- 15:43Z pip dry-run resolve of build 11's 9 pins in a real CPython 3.10 (uv venv, sdists allowed, metadata built locally): exit 1; ResolutionImpossible 1; 'No matching distribution' 0; 'error' lines 2; packages in the report 0
+- 15:43Z stage build on wf.js run 10: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1283032

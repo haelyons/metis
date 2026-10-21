@@ -480,7 +480,10 @@ def pip_needs_bootstrap(version_text: str) -> bool:
 
 # Packages installed with the system package manager, declared here and in
 # onbox_m4.sh. The shell installs them; this program records their versions.
-APT_PACKAGES = ["python3-venv", "aria2", "curl"]
+# The last two are the C compiler and the python headers, needed because the
+# docking code ships no ready-built package for this python and is compiled from
+# its source archive by the package installer on the box.
+APT_PACKAGES = ["python3-venv", "aria2", "curl", "build-essential", "python3-dev"]
 
 DOCKING_CODE = "lightdock"
 
@@ -1355,6 +1358,10 @@ class RunState:
         self.labels_cache = None
         self.install_seconds_used = _env_float(self.env, "M4_APT_SECONDS", 0.0)
         self.install_total_exhausted = False
+        # True only once the pinned install of this run has finished and proved
+        # itself. Until then no version is read from an installed package,
+        # because the box image carries packages this run did not install.
+        self.install_completed = False
         self.pip_report_path = None
         self.pip_report_sha256 = None
         self.apt_hash_path = None
@@ -1504,6 +1511,21 @@ def _env_float(env: dict, key: str, default):
 # Every measured record says which machine produced it and with what software.
 # ===========================================================================
 
+# The packages whose versions the records carry: the name the installer knows
+# them by, and the key used here. Every version comes from this run's own
+# install; see read_package_versions.
+PACKAGE_VERSION_NAMES = (
+    ("jax", "jax"),
+    ("jaxlib", "jaxlib"),
+    ("jax-cuda12-plugin", "jax_cuda12_plugin"),
+    ("openmm", "openmm"),
+    ("lightdock", "lightdock"),
+    ("colabfold", "colabfold"),
+)
+
+# Why a version label is null on a run whose install never finished.
+LABEL_NOT_INSTALLED = "not installed: the install stage failed"
+
 
 def collect_labels(state: RunState) -> dict:
     """Read the machine's own description, once, from runtime queries only.
@@ -1547,25 +1569,33 @@ def collect_labels(state: RunState) -> dict:
         )
 
     versions = read_package_versions(state)
+    # A version label is null whenever this run's own install did not supply it,
+    # and the reason says which of the two cases it is: the install never
+    # finished, or it finished and that package still named no version.
+    installed_here = bool(versions.get("versions_from_this_run"))
+
+    def version_reason(if_installed: str) -> str:
+        return if_installed if installed_here else LABEL_NOT_INSTALLED
+
     labels["jax_version"] = versions.get("jax")
     if labels["jax_version"] is None:
-        reasons["jax_version"] = "jax did not report a version"
+        reasons["jax_version"] = version_reason("jax did not report a version")
     labels["jaxlib_version"] = versions.get("jaxlib")
     if labels["jaxlib_version"] is None:
-        reasons["jaxlib_version"] = "jaxlib did not report a version"
+        reasons["jaxlib_version"] = version_reason("jaxlib did not report a version")
     plugin = versions.get("jax_cuda12_plugin")
     labels["jax_cuda_plugin_version"] = plugin
     labels["cuda_plugin_version"] = plugin
     if plugin is None:
-        reasons["jax_cuda_plugin_version"] = (
+        reasons["jax_cuda_plugin_version"] = version_reason(
             "the JAX CUDA plugin package did not report a version"
         )
-        reasons["cuda_plugin_version"] = (
+        reasons["cuda_plugin_version"] = version_reason(
             "the JAX CUDA plugin package did not report a version"
         )
     labels["jax_wheel_build_tags"] = versions.get("wheel_build_tags")
     if labels["jax_wheel_build_tags"] is None:
-        reasons["jax_wheel_build_tags"] = (
+        reasons["jax_wheel_build_tags"] = version_reason(
             "the pip download report named no wheel for the JAX packages"
         )
     labels["alphafold_implementation"] = AF2_IMPLEMENTATION
@@ -1577,11 +1607,13 @@ def collect_labels(state: RunState) -> dict:
     labels["docking_code"] = DOCKING_CODE
     labels["docking_version"] = versions.get("lightdock")
     if labels["docking_version"] is None:
-        reasons["docking_version"] = "the docking code did not report a version"
+        reasons["docking_version"] = version_reason(
+            "the docking code did not report a version")
     labels["md_engine"] = MD_ENGINE
     labels["md_engine_version"] = versions.get("openmm")
     if labels["md_engine_version"] is None:
-        reasons["md_engine_version"] = "the dynamics engine did not report a version"
+        reasons["md_engine_version"] = version_reason(
+            "the dynamics engine did not report a version")
     labels["md_precision"] = MD_PRECISION
     labels["md_platform"] = MD_PLATFORM
 
@@ -1618,7 +1650,47 @@ def collect_labels(state: RunState) -> dict:
 
 
 def read_package_versions(state: RunState) -> dict:
-    """Ask the installed packages their own versions, through the virtual environment."""
+    """The versions this run installed, from this run's own install and nothing else.
+
+    Two sources are allowed, both of this run: the report the package installer
+    wrote while installing, and the metadata of the packages the virtual
+    environment holds once that install has finished and started once. Nothing
+    is read before then, and no constant stands in as a default, because the box
+    image arrives with packages of its own: launch 1 wrote the image's prediction
+    library version into records of a run that installed nothing. A version
+    neither source gives is absent here, and the caller writes it as null with
+    the reason beside it.
+    """
+    out = {}
+    from_report = {}
+    report_path = getattr(state, "pip_report_path", None)
+    if report_path and Path(report_path).exists():
+        try:
+            entries = parse_pip_report(Path(report_path).read_text())
+        except (OSError, ParseError):
+            entries = []
+        for entry in entries:
+            name = str(entry.get("name") or "").strip().lower().replace("_", "-")
+            if name and entry.get("version"):
+                from_report[name] = entry["version"]
+    for name, key in PACKAGE_VERSION_NAMES:
+        if from_report.get(name):
+            out[key] = from_report[name]
+    installed = bool(getattr(state, "install_completed", False))
+    if installed and any(key not in out for _n, key in PACKAGE_VERSION_NAMES):
+        out.update(installed_package_versions(state, skip=set(out)))
+    out["versions_from_this_run"] = bool(installed or from_report)
+    out["version_sources"] = {
+        "pip_report": sorted(from_report),
+        "installed_metadata": installed,
+    }
+    out["params_sha256"] = getattr(state, "params_sha256", None)
+    out["wheel_build_tags"] = getattr(state, "wheel_build_tags", None)
+    return out
+
+
+def installed_package_versions(state: RunState, skip=()) -> dict:
+    """Ask the packages the virtual environment holds for their own versions."""
     code = (
         "import json\n"
         "out={}\n"
@@ -1643,9 +1715,7 @@ def read_package_versions(state: RunState) -> dict:
                     out = json.loads(line)
                 except ValueError:
                     out = {}
-    out["params_sha256"] = getattr(state, "params_sha256", None)
-    out["wheel_build_tags"] = getattr(state, "wheel_build_tags", None)
-    return out
+    return {k: v for k, v in out.items() if v and k not in set(skip)}
 
 
 def labels_for_record(state: RunState, start_epoch, end_epoch, extra=None) -> dict:
@@ -2757,6 +2827,9 @@ def stage_install(state: RunState) -> dict:
     log["smoke_check"] = smoke
     if not smoke["ok"]:
         raise HarnessFailure("the smoke check failed", json.dumps(smoke["problems"]))
+    # Past this line the pinned packages are installed and have started once, so
+    # their own metadata may be read for the version labels, and not before.
+    state.install_completed = True
 
     # -- the stand-in pairs, built and checked before any time is spent on them
     pairs = build_pairs(pdb_path.read_text())
@@ -4199,10 +4272,75 @@ def stage_storage(state: RunState) -> dict:
 # has none, then the environment note, the summary and the validity file.
 # ===========================================================================
 
+# Why the anchor's record holds no measured value on a run that ended first.
+LABEL_ANCHOR_NOT_REACHED = "anchor stage not reached"
+
+
+def emit_anchor_void_record(state: RunState, *, start_epoch, end_epoch,
+                            why: str = LABEL_ANCHOR_NOT_REACHED) -> Path:
+    """Write the anchor's record as void when the run ended before it decided.
+
+    A run that ends in the install stage never reaches the redocking check, and
+    launch 1 then left no anchor file at all: a reader could not tell a check
+    that was never run from one that was skipped. Every run that ends on broken
+    infrastructure or on a stop now leaves this file, with no measured value and
+    the reason it has none written beside it.
+    """
+    pdb_path = state.datadir / f"{PDB_ENTRY}.pdb"
+    reason = str(why or LABEL_ANCHOR_NOT_REACHED)
+    return write_record(
+        state, f"endpoint-anchor_tag-{TAG}.json", kind="anchor",
+        cell={"stage": "anchor", "endpoint": "anchor", "tag": TAG},
+        inputs=record_inputs(state, state.outdir / f"rows_anchor_tag-{TAG}.jsonl",
+                             extra_paths=[pdb_path]),
+        metric=("contact overlap with the published complex at 4.5 angstrom, or "
+                "interface backbone displacement, with serial and parallel agreement"),
+        values={
+            "measured": None,
+            "published": (f"AAVR-PKD2 bound to the AAV2 spike region adjacent to the "
+                          f"icosahedral three-fold axis (PDB {PDB_ENTRY})"),
+            "tolerance": {
+                "min_contact_overlap": ANCHOR_OVERLAP_MIN,
+                "max_interface_backbone_rmsd_a": ANCHOR_IFACE_RMSD_MAX,
+                "max_serial_parallel_rmsd_a": ANCHOR_SERIAL_PARALLEL_RMSD_MAX,
+                "calls_must_be_identical": True,
+            },
+            "unit": "fraction of published contacts, and angstrom",
+            "independent_code": ANCHOR_INDEPENDENT_CODE,
+            "docking_order": DOCKING_ORDER,
+            "void_reason": reason,
+            "voided_by": reason,
+            "null_reasons": {"measured": reason},
+        },
+        threshold={"min_contact_overlap": ANCHOR_OVERLAP_MIN,
+                   "max_interface_backbone_rmsd_a": ANCHOR_IFACE_RMSD_MAX,
+                   "max_serial_parallel_rmsd_a": ANCHOR_SERIAL_PARALLEL_RMSD_MAX},
+        decision_rule=("PASS when the pose reproduces the published placement "
+                       "(contact overlap at least 0.50 or interface backbone RMSD at "
+                       "most 5.0 angstrom) AND serial and parallel agree (top-pose "
+                       "RMSD at most 2.0 angstrom with identical bind or no-bind "
+                       "calls); otherwise FAIL, every input is void and the run stops; "
+                       "VOID when the run ended before the check could be made"),
+        decision="VOID",
+        labels=labels_for_record(state, start_epoch, end_epoch),
+        extra_notes=[LABEL_SERIAL_PARALLEL_WHOLE_CHAIN],
+    )
+
 
 def stage_endpoints(state: RunState) -> dict:
     """Close the run: every input gets a record, then the summary is written."""
     started = state.clock()
+    anchor_name = f"endpoint-anchor_tag-{TAG}.json"
+    if not (state.outdir / anchor_name).exists():
+        # The anchor was not compared, so its record says so rather than being
+        # absent. The anchor's own decision, when it has one, is never touched.
+        emit_anchor_void_record(
+            state, start_epoch=started, end_epoch=state.clock(),
+            why=(f"{LABEL_ANCHOR_NOT_REACHED}: "
+                 + (state.run_valid_voided_by or state.failure_kind
+                    or "; ".join(e["reason"] for e in state.stop_events)
+                    or "the run ended before the anchor stage")),
+        )
     for cid in INPUT_IDS:
         name = f"endpoint-{cid}_tag-{TAG}.json"
         if name in state.records_written or (state.outdir / name).exists():
@@ -4484,6 +4622,12 @@ def finalize_from_disk(state: RunState, outer_rc=None) -> int:
 
     # Only the records that are missing are written; nothing already decided is
     # rewritten, so a finished result is byte-identical afterwards.
+    if not (state.outdir / f"endpoint-anchor_tag-{TAG}.json").exists():
+        emit_anchor_void_record(
+            state, start_epoch=state.t0, end_epoch=state.clock(),
+            why=(f"{LABEL_ANCHOR_NOT_REACHED}: the launcher's own timer ended the "
+                 "run before the anchor was compared"),
+        )
     for cid in INPUT_IDS:
         path = state.outdir / f"endpoint-{cid}_tag-{TAG}.json"
         if path.exists():
@@ -5680,6 +5824,27 @@ def selftest_stage_flow(c: Checks) -> None:
                                    _fake_stage("controls")])
             c.eq(f"a {label} failure exits two", code, EXIT_INFRA)
             c.eq(f"a {label} failure invalidates the run", st.run_valid, False)
+            # The redocking check never ran, and its record says exactly that
+            # instead of being absent, which is what launch 1 left behind.
+            anchor_rec = json.loads(
+                (st.outdir / f"endpoint-anchor_tag-{TAG}.json").read_text())
+            for key in ("cell", "inputs", "metric", "values", "threshold",
+                        "decision_rule", "decision", "run_valid"):
+                c.ok(f"the anchor record after a {label} failure carries its {key}",
+                     key in anchor_rec)
+            c.eq(f"the anchor record after a {label} failure is void",
+                 anchor_rec["decision"], "VOID")
+            c.eq(f"the anchor record after a {label} failure has no measured value",
+                 anchor_rec["values"]["measured"], None)
+            c.ok(f"the anchor record after a {label} failure says it was not reached",
+                 LABEL_ANCHOR_NOT_REACHED
+                 in str(anchor_rec["values"]["null_reasons"].get("measured")))
+            c.ok(f"the anchor record after a {label} failure names the published "
+                 "placement", bool(anchor_rec["values"]["published"]))
+            c.ok(f"the anchor record after a {label} failure carries its tolerance",
+                 bool(anchor_rec["values"]["tolerance"]))
+            c.eq(f"the anchor record after a {label} failure is invalid with the run",
+                 anchor_rec["run_valid"], False)
 
         # (i) the launcher's own timeout
         st = _flow_state(tmp, "i")
@@ -5687,6 +5852,12 @@ def selftest_stage_flow(c: Checks) -> None:
         c.eq("the launcher's own timeout exits three", code, EXIT_GUARD)
         c.eq("the launcher's own timeout does not invalidate the run",
              st.run_valid, True)
+        anchor_rec = json.loads(
+            (st.outdir / f"endpoint-anchor_tag-{TAG}.json").read_text())
+        c.eq("a run stopped before the anchor still leaves an anchor record",
+             anchor_rec["decision"], "VOID")
+        c.eq("that anchor record keeps the run's own validity",
+             anchor_rec["run_valid"], True)
 
         # (j) the docking call in the anchor runs past its time
         st = _flow_state(tmp, "j")
@@ -5873,6 +6044,9 @@ def selftest_records(c: Checks) -> None:
     """Records go through the shared writer and carry every field a reader needs."""
     with tempfile.TemporaryDirectory() as d:
         st = _flow_state(Path(d), "rec")
+        # A run that reached its measurements has finished its install, so the
+        # installed packages may be asked for their versions.
+        st.install_completed = True
         emit_input_record(st, "C1", 0.5, n=9, rows_arm=None,
                           start_epoch=0, end_epoch=100)
         rec = json.loads((st.outdir / f"endpoint-C1_tag-{TAG}.json").read_text())
@@ -5979,6 +6153,53 @@ def selftest_records(c: Checks) -> None:
              "remote_timeout_seen_s=" in note)
         c.ok("the environment note carries the bootstrap seconds",
              "pre_t0_seconds=" in note)
+
+    # Where the version labels come from: this run's own install, or nothing.
+    with tempfile.TemporaryDirectory() as d:
+        tmp = Path(d)
+        st = _flow_state(tmp, "versions_from_report")
+        report = st.outdir / f"pip_report_tag-{TAG}.json"
+        atomic_write_text(report, json.dumps({"install": [
+            {"download_info": {
+                "url": "https://files.pythonhosted.org/jax-0.4.35-cp310.whl",
+                "archive_info": {"hash": "sha256=aa11"}},
+             "metadata": {"name": "jax", "version": "0.4.35"}}]}))
+        st.pip_report_path = report
+        st.pip_report_sha256 = sha256_file(report)
+        emit_input_record(st, "C1", 0.5, n=9, rows_arm=None,
+                          start_epoch=0, end_epoch=100)
+        rec = json.loads((st.outdir / f"endpoint-C1_tag-{TAG}.json").read_text())
+        c.eq("a version named in this run's own download report is the one recorded",
+             rec["values"]["engine"]["jax_version"], "0.4.35")
+        c.eq("a package that report does not name carries no version",
+             rec["values"]["engine"]["md_engine_version"], None)
+        c.ok("that missing version still says why it is missing",
+             bool(str(rec["values"]["null_reasons"].get("md_engine_version") or "")))
+
+        # The install failed, so nothing was installed by this run: every
+        # version is null with that reason, and no version is read from a
+        # package the box image happened to carry.
+        st2 = _flow_state(tmp, "versions_without_install")
+        emit_input_record(
+            st2, "C1", None, n=0, rows_arm=None, start_epoch=0, end_epoch=100,
+            void_reason="the run ended on broken infrastructure: the install failed")
+        rec2 = json.loads((st2.outdir / f"endpoint-C1_tag-{TAG}.json").read_text())
+        for key in ("jax_version", "jaxlib_version", "jax_cuda_plugin_version"):
+            c.eq(f"a failed install leaves {key} empty",
+                 rec2["values"]["engine"][key], None)
+            c.eq(f"a failed install says why {key} is empty",
+                 rec2["values"]["null_reasons"][key], LABEL_NOT_INSTALLED)
+        c.eq("a failed install leaves the CUDA plugin version empty",
+             rec2["values"]["machine"]["cuda_plugin_version"], None)
+        c.eq("a failed install says why the CUDA plugin version is empty",
+             rec2["values"]["null_reasons"]["cuda_plugin_version"],
+             LABEL_NOT_INSTALLED)
+        c.eq("the reason a failed install gives is the one written down",
+             LABEL_NOT_INSTALLED, "not installed: the install stage failed")
+        c.ok("no installed package is asked for a version before the install finishes",
+             not any(call["name"] == "package_versions" for call in st2.runner.calls))
+        c.ok("no version label falls back to a constant",
+             rec2["values"]["engine"]["build_flags"]["jax_version"] is None)
 
 
 def selftest_real_stage_bodies(c: Checks) -> None:
@@ -7077,6 +7298,30 @@ def selftest_consistency(c: Checks) -> None:
              "unset HF_TOKEN" in text)
         c.ok("the on-box script declares its system packages",
              "python3-venv" in text)
+
+        # The system packages are declared in one place in the shell's own text,
+        # and this program records exactly those. Five, no more and no fewer:
+        # the last two compile the docking code, which ships no ready-built
+        # package for this python.
+        def declared_apt(shell_text):
+            m = re.search(r'APT_PACKAGES="([^"]*)"', shell_text)
+            return m.group(1).split() if m else []
+
+        five = ["python3-venv", "aria2", "curl", "build-essential", "python3-dev"]
+        c.eq("the on-box script declares exactly the five system packages",
+             declared_apt(text), five)
+        c.eq("this program records the same five system packages",
+             APT_PACKAGES, five)
+        c.ok("a sixth system package in the shell's list fails the check",
+             declared_apt('APT_PACKAGES="python3-venv aria2 curl build-essential '
+                          'python3-dev gcc"') != five)
+        c.ok("a missing system package in the shell's list fails the check",
+             declared_apt('APT_PACKAGES="python3-venv aria2 curl '
+                          'build-essential"') != five)
+        c.eq("the shell installs the declared list in one call and nothing else",
+             [ln.strip() for ln in text.splitlines()
+              if ln.strip().startswith("apt-get install")],
+             ["apt-get install -y -qq $APT_PACKAGES >>\"$LOG\" 2>&1 || rc=$?"])
         c.ok("the on-box script never upgrades pip", "--upgrade pip" not in text)
         c.ok("the on-box script reads the forwarded timeout",
              "REMOTE_TIMEOUT" in text)
