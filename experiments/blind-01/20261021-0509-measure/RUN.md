@@ -32,3 +32,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 09:52Z session gate3 started (model sonnet, pid 823171, session 0dda13c6)
 - 09:56Z session build3 started (model sonnet, pid 827027, session d14fb78e)
 - 09:57Z launcher copies written from m3's (declared points only)
+- 10:01Z build3: the build agent STOPPED and reported (no files written; return 3,953 B); its report goes to the gate as addendum 2
+- 10:01Z gate 4 (addendum) requested
+- 10:01Z session gate4 started (model sonnet, pid 831571, session 6963d2d7)
