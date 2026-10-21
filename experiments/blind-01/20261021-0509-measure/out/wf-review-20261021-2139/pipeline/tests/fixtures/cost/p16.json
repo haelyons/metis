@@ -1,0 +1,36 @@
+{
+ "option_title": "16 R4 O4 (REJECT, non-cost)",
+ "phases": [
+ {"id":"P0","what":"build, unit checks, 100-item pilot, throughput measurement","stop_rule":"if judge rate lower than needed, cut extra samples"},
+ {"id":"P1","what":"extraction"},
+ {"id":"P2","what":"judge baseline"},
+ {"id":"P3","what":"scoring on CPU"},
+ {"id":"P4","what":"stretch, only if C2 or C3 passes"}
+],
+ "numbers": [
+ {"id":"judge_tok","name":"judge output tokens (7.4k generations x ~3k)","unit":"tokens","basis":"DERIVED","expr":"n_gen * tok_gen"},
+ {"id":"n_gen","name":"judge generations","unit":"1","basis":"DESIGN","value":7400},
+ {"id":"tok_gen","name":"output tokens per generation","unit":"tokens","basis":"GUESS","value":3000,"rests_on":"producer's estimate","measured_by":"P0"},
+ {"id":"tps_gpu","name":"judge output tokens/s per GPU","unit":"tok/s","basis":"GUESS","value":190,"rests_on":"the rate the 4-hour box requires; no source","measured_by":"P0"},
+ {"id":"contingency_frac","name":"contingency","unit":"1","basis":"DESIGN","value":0.25}
+],
+ "cost": {
+  "rates": [
+   {"id":"r_pcie","gpu":"H100 PCIe","n_gpus":1,"per_gpu_usd_h":3.29},
+   {"id":"r_h100x8","gpu":"H100 SXM","n_gpus":8,"per_gpu_usd_h":3.99},
+   {"id":"r_b200x8","gpu":"B200","n_gpus":8,"per_gpu_usd_h":6.69}
+  ],
+  "lines": [
+   {"id":"p0","phase":"P0","kind":"work","rate":"r_pcie","hours":"16"},
+   {"id":"p1","phase":"P1","kind":"work","rate":"r_h100x8","hours":"3"},
+   {"id":"p2","phase":"P2","kind":"work","rate":"r_h100x8","hours":"4","need":"judge_tok / (tps_gpu * 8) / 3600"},
+   {"id":"p4","phase":"P4","kind":"work","rate":"r_b200x8","hours":"4","optional":true},
+   {"id":"cont","phase":"P4","kind":"allotment","usd":"contingency_frac * (p0 + p1 + p2 + p4)","optional":true}
+  ],
+  "total_stated": 276.08
+ },
+ "full_scale": [],
+ "outside_budget": [
+ {"what":"triage, spot checks, named-case review (557 x 2 min + 2 h + 2 h)","qty":"557 * 2 / 60 + 4","unit":"person-hours"}
+]
+}
