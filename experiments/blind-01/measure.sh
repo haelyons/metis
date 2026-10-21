@@ -337,13 +337,13 @@ s = s.replace("scp -r $SSHOPT data ubuntu@$IP:m3_run/", "[ -d data ] && scp -r $
 assert s.count("REMOTE_TIMEOUT=${REMOTE_TIMEOUT:-5400}   # 90 min hard cap") == 1
 s = s.replace("REMOTE_TIMEOUT=${REMOTE_TIMEOUT:-5400}   # 90 min hard cap", "REMOTE_TIMEOUT=${REMOTE_TIMEOUT:-7200}   # 120 min default (gate ruling; was 5400), hard cap")
 s = s.replace("remote dir welfare_probe -> m3_run; scp payload -> m3 files", f"remote dir welfare_probe -> {tag}_run; scp payload -> {tag} files")
-s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present. REMOTE_TIMEOUT, ENV_FS, ENV_TAG, HOLD_SECONDS forwarded to the box (declared point 4, additive). REMOTE_TIMEOUT default 5400 -> 7200 (gate ruling, declared point: caps). Fetch (declared point: fetch paths): results_<tag>/out/*summary*.json and results_<tag>/out/RUN_VALID.json first, then the whole results_<tag>/out/ directory (the criticals-first ordering of the original)." + (f" Filesystem {fs} attached at launch (file_system_names; declared point: launch payload)." if fs else ""))
+s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present. REMOTE_TIMEOUT, ENV_FS, ENV_TAG, HOLD_SECONDS, ENV_DIR, ENV_LOCK_SHA256 forwarded to the box (declared point 4, additive). REMOTE_TIMEOUT default 5400 -> 7200 (gate ruling, declared point: caps). Fetch (declared point: fetch paths): results_<tag>/out/*summary*.json and results_<tag>/out/RUN_VALID.json first, then the whole results_<tag>/out/ directory (the criticals-first ordering of the original)." + (f" Filesystem {fs} attached at launch (file_system_names; declared point: launch payload)." if fs else ""))
 # payload (declared point 2)
 old_payload = 'scp $SSHOPT run_m3.py remote_run_m3.sh "$RUNNER" ubuntu@$IP:m3_run/'
 assert old_payload in s; s = s.replace(old_payload, payload)
 # forwarded env (declared point 4, additive)
 assert s.count('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"') == 1
-s = s.replace('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"', 'INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\" REMOTE_TIMEOUT=\\"$REMOTE_TIMEOUT\\" ENV_FS=\\"${ENV_FS:-}\\" ENV_TAG=\\"${ENV_TAG:-}\\" HOLD_SECONDS=\\"${HOLD_SECONDS:-0}\\"')
+s = s.replace('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"', 'INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\" REMOTE_TIMEOUT=\\"$REMOTE_TIMEOUT\\" ENV_FS=\\"${ENV_FS:-}\\" ENV_TAG=\\"${ENV_TAG:-}\\" HOLD_SECONDS=\\"${HOLD_SECONDS:-0}\\" ENV_DIR=\\"${ENV_DIR:-}\\" ENV_LOCK_SHA256=\\"${ENV_LOCK_SHA256:-}\\"')
 # filesystem attach (declared point: launch payload)
 if fs:
     old_launch = '\\"name\\":\\"drill_$RDIR\\"}'
@@ -518,7 +518,11 @@ launch() {
   local log="out/launcher_${TAG}_L$n.log"
   $PY -c 'import json,sys; json.dump({"n":int(sys.argv[1]),"type":sys.argv[2],"region":sys.argv[3],"timeout_s":int(sys.argv[4]),"budget_left_usd":float(sys.argv[5]),"price_usd_h":float(sys.argv[6]),"started":sys.argv[7],"log":sys.argv[8]}, open(sys.argv[9],"w"), indent=1)' \
     "$n" "$type" "$region" "$timeout" "$budget" "$price" "$(now)" "$log" "out/launch$n.json"
-  ( REMOTE_TIMEOUT=$timeout PRICE_USD_PER_HOUR=$price BUDGET_LEFT_USD=$budget INSTANCE_TYPE=$type setsid nohup bash "lambda_run_$TAG.sh" "$type" "$region" "onbox_$TAG.sh" "results_$TAG" > "$log" 2>&1 < /dev/null & )
+  # environment of record (gate addendum 15): forwarded to the box; the on-box script activates it and verifies the lock hash
+  local envdir lock; envdir=$($PY -c 'import json; print(json.load(open("results_env/out/env_report.json"))["env_dir"])' 2>/dev/null); lock=$($PY -c 'import json; print(json.load(open("results_env/out/env_report.json"))["lock_sha256"])' 2>/dev/null)
+  [ -n "$envdir" ] && [ -n "$lock" ] || { echo "no environment of record (results_env/out/env_report.json); run envbuild first"; return 1; }
+  echo "environment of record: $envdir, lock ${lock:0:16}…, HOLD_SECONDS=${HOLD_SECONDS_LAUNCH:-1200}"
+  ( REMOTE_TIMEOUT=$timeout PRICE_USD_PER_HOUR=$price BUDGET_LEFT_USD=$budget INSTANCE_TYPE=$type ENV_FS="/lambda/nfs/${ENV_FS_NAME:-metis-env-us-east-1}" ENV_TAG="$TAG" ENV_DIR="$envdir" ENV_LOCK_SHA256="$lock" HOLD_SECONDS=${HOLD_SECONDS_LAUNCH:-1200} setsid nohup bash "lambda_run_$TAG.sh" "$type" "$region" "onbox_$TAG.sh" "results_$TAG" > "$log" 2>&1 < /dev/null & )
   sleep 5; local pid; pid=$(pgrep -f "lambda_run_${TAG}[.]sh" | head -1)
   logrun "LAUNCH $n: $type @ $region, REMOTE_TIMEOUT=$timeout, BUDGET_LEFT_USD=$budget, pid ${pid:-?}, log $log"
   echo "launch $n started: pid ${pid:-?}, log $log"

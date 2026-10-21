@@ -2129,3 +2129,172 @@ OPERATOR: after build 17, re-run `python3 run_m4.py --selftest` locally and comp
 OPERATOR: give review 10 the read list of P5(ii) (including `frozen/ONBOX_CONTRACT.md` with item 56 applied), the two diffs, the scope statement (S1 to S4 only, `run_m4.py` only) and EXEC_NOTE item 91 so that the reporting-only kinds of P7 are marked advisory; the launch needs zero blocking findings (P5, P7).
 OPERATOR: `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launches 1 and 2 used them (H8); record the spend of every launch in RUN.md (USD 0.67 so far); before each launch set `BUDGET_LEFT_USD` to the lesser of 5 and 10 minus the recorded spend; do not start a launch whose remaining cap is below 7,800 s x its `PRICE_USD_PER_HOUR` / 3,600 (USD 4.31 at 1.99, USD 5.42 at 2.50) (P5).
 OPERATOR: launch environment of record: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (P5).
+
+---
+
+## Addendum 15 (2026-10-21)
+
+Rules on `out/gate_report_env.md` (the operator's mechanical note: the environment of record exists; implementer selftests are dropped
+for a claim-blind test author; stage failures hold the box for a bounded fixer; the directive is regenerated). Inputs added for this
+addendum: that report, this file as it stood, `EXEC_NOTE.md` as it stood. The two shape-example files of another run could not be read in
+this session (the file tools are confined to this run directory), so the shape follows the earlier addenda of this file. The gate ran
+nothing beyond one directory listing (file names and one file size). It did not read `env_report.json`, `fix1_return.json`, `run_m4.py`,
+`onbox_m4.sh` or `env_build.sh`: every statement about them is the report's, taken as reported. Every earlier section stands except where
+an answer below says it is superseded. Answers are numbered Q1 to Q14, one per item of the report (its three paragraphs of fact, its four
+rulings asked (a) to (d)) and per consequence the gate drew from them. Counts: 14 answers. The line `Build 15 authorised` at the end is the
+launcher's literal string for the next build; the build it authorises is the one the report calls build 17 and EXEC_NOTE's closing section
+names.
+
+**Decision on budget and build (addendum).** GO stands. HALT is not decided: the environment exists and imports, the box tools worked in
+launch 2 except the one import the environment now pins, and a build, a test author and a review spend no box money. Arithmetic, launches x
+hours x price, against the USD 10 cap of standing rule 1: recorded spend known to the gate is launch 1 USD 0.30 and launch 2 USD 0.37 =
+USD 0.67; the box time of the environment build, the fixer and the verifier is also box time of this run and is not among the inputs the gate
+read, so the operator states it as `S_env` in RUN.md. Remaining = 10 - 0.67 - S_env. A launch at its caps is 7,200 s command + 600 s outside
+= 7,800 s = 2.1667 h x 1.99 = USD 4.311 (the command alone, 2.00 h x 1.99 = 3.98, is under `BUDGET_LEFT_USD` 5; hold time is inside the
+7,200 s). At the fallback ceiling of USD 2.50/h: 2.1667 h x 2.50 = USD 5.417. Launch 3 is started only if remaining >= 4.311 (5.417 at 2.50),
+which holds for any `S_env` up to 5.02 (4.98 at 2.50 gives 3.91 < 5.417: the fallback needs `S_env` up to 3.91). `BUDGET_LEFT_USD` =
+min(5, 10 - 0.67 - S_env).
+
+### Answers of record (Q1 to Q14)
+
+1. **Q1 (ask (a): regenerate EXEC_NOTE.md as the current truth).** ACCEPTED. `EXEC_NOTE.md` is regenerated: 29 numbered items, REQUIRED
+   FOR LAUNCH first (items 1 to 25), then REPORTING ONLY (items 26 to 29), and the closing section "Build 17: exactly these changes". Removed
+   as superseded or satisfied: every install, pip, apt, pin and pip-report item; the pin evidence, T1 to T3 and build-scope items of
+   addenda 11 to 14 (the tenth-pin build of addendum 14 is withdrawn: pins live in the environment record); every selftest item and the
+   selftest hash line. The numeric cases the old selftest planted are kept in the directive as worked values (item 25), because the test
+   author reads only the directive. The history of rulings stays in this file.
+
+2. **Q2 (the environment of record: path, lock hash, verification).** ACCEPTED, as a standing change of record (i). The environment is an
+   artifact: `/lambda/nfs/metis-env-us-east-1/m4/` on the Lambda filesystem `metis-env-us-east-1` (us-east-1), holding `venv/` (CPython 3.10),
+   `pins.txt` (10 lines), `apt.txt` and a git history; its record is `results_env/out/env_report.json` (status ok, all imports ok, 10
+   distributions, lock sha256 `f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d`). The on-box script activates
+   `${ENV_DIR:-/lambda/nfs/metis-env-us-east-1/m4}/venv`, computes the lock hash, and compares it with `ENV_LOCK_SHA256`, which the launcher
+   forwards from `env_report.json` and which has no default (unset is exit 2). The lock text is the stdout of `"${VENV}/bin/python" -m pip
+   freeze` with no flags, bytes as emitted, hashed with sha256. A mismatch is exit 2 with a void record. The check is one provenance record
+   `env_check_tag-m4.json` (expected hash, observed hash, venv path, python version, equal or not). The gate cannot confirm that
+   `env_build.sh` hashed the same text; the operator confirms it for free before launch (`sha256sum results_env/out/env.lock` equals the
+   lock hash; OPERATOR line). Pins are no longer in the runner: `PIP_PINS`, the pip install call, the pip bootstrap and their checks are removed
+   (Q9).
+
+3. **Q3 (the fixer's override pin, and the verifier's six advisory findings, one on a CUDA compiler wheel against the runtime libraries).**
+   ACCEPTED AS THE RECORD. The tenth pin is the environment's (it is in `pins.txt` and in the lock); the gate does not name or change it, and
+   the runner does not know it. The verifier's verdict (within scope) and its six advisory findings are advisory and not ruled one by one. The
+   compiler-wheel finding is decided where the report says: by the capability check on the box (item 4 of the directive: `import jax` with a
+   GPU device listed, `colabfold_batch --help`, the docking entry points' `--help`, OpenMM's CUDA platform). A failure there is a stage failure
+   (Q7), not a gate halt. Nothing in the build changes for it.
+
+4. **Q4 (the on-box script no longer installs).** ACCEPTED. `onbox_m4.sh` and `run_m4.py` run no `pip`, no `apt-get`, no `sudo`, build no
+   venv and install nothing. The five declared apt packages of earlier addenda are replaced by the environment's `apt.txt`, installed at
+   environment build and not on this box. Downloads stay for data only (6IHB from RCSB; the AlphaFold parameter archive from the project's
+   own storage address), URL and sha256 recorded, extracted and marker-written as before; the download tool is whatever the existing code
+   uses, and a missing tool is an environment failure for the hold (Q7). Rule 10's "sudo only for declared apt packages" now has no case.
+
+5. **Q5 (the tests stage: file, when, record).** ACCEPTED, as standing change of record (ii). The file is `tests/tests_m4.py`, written by the
+   claim-blind author (Q10), shipped by the operator, run by the runner as `${VENV}/bin/python tests/tests_m4.py --results results_m4/out`
+   in the shipped environment, after the lock check and the capability check and before the downloads and the physics. It is run through the
+   runner's tool runner (own process group, ceiling 300 s, output to `tool_logs/`). Exit 0 is a pass; non-zero, timeout or a missing file is a
+   stage failure (exit 2, `void_by_failure:tests`, run_valid false, HOLD under Q7); there is no skip. The record is `tests_tag-m4.json`
+   (provenance.py; values: `exit_code`, `seconds`, `tests_file_sha256`, `stdout_tail` last 20 lines, and `tests_passed` and `tests_total`
+   when the output has a line `tests: N of M passed`, else null with a reason). The runner does not import, edit or interpret the tests.
+   The builder never sees `tests/` and writes nothing for it.
+
+6. **Q6 (implementer selftests dropped).** ACCEPTED. Selftests are not required and not credited: the build removes `--selftest` and
+   everything only it uses (Q9), and no launch condition mentions a selftest count or hash line. The only local checks of the build are
+   `python3 -m py_compile run_m4.py` and `bash -n onbox_m4.sh`. Correctness of the measurement logic is the author's tests, run on the box
+   (Q5). Consequence of record: a logic bug the tests miss is found on the box, which is what the hold and the cap are for.
+
+7. **Q7 (hold-open on a stage failure; the fixer's scope).** ACCEPTED, as standing change of record (iii), bounded as follows.
+   (a) Eligible: any exit-2 stage failure of the table of directive item 7 except the 60 s sleep check (the timer is the instrument). An
+   anchor miss (exit 4) is a result, not a failure; guard and ceiling stops (exit 3) are not failures. (b) The shell writes
+   `results_m4/out/HOLD` (stage, kind, exit code, UTC time), after the void records and `RUN_DONE` of the failed attempt are written, and
+   waits at most `HOLD_SECONDS` (launch value 1,200; unset means 0 and no hold, with the label "HOLD_SECONDS not forwarded; no hold") for
+   `results_m4/out/RESUME`, polling every 10 s. Hold time counts in elapsed time and in the 7,200 s, never in a stage's ceiling. (c) The
+   fixer may change the environment and the glue (`onbox_m4.sh`, launcher-side files), every change committed to git on the box and
+   fetched as a change log (`results_m4/out/changes.log`). It may not change the measurement protocol or the record fields: `run_m4.py` and
+   `tests/tests_m4.py` stay byte-identical (their sha256 are written at start and checked before a restart); a changed hash, or a verifier
+   finding of out of scope, is a halt to the gate: no restart, exit 2, label `fixer_out_of_scope`. (d) On RESUME with at least 1,500 s of
+   the 7,200 s left, the shell moves the held attempt's `results_m4/out` to `results_m4/held_attempt_1/` (fetched) and restarts the runner once
+   from its first stage under the same T0 and the same caps, with the lock recomputed (if the failed stage was the lock check, a second mismatch is
+   final; if the fixer changed the environment otherwise, the records carry the label "environment changed by the fixer on the box; lock
+   <new hash>" and the run proceeds). The restarted attempt's records are the run's records; `m4_summary.json` carries `held_attempts: 1` and
+   the change log's sha256. (e) One hold per launch: a second eligible failure is exit 2, final, no hold. HOLD_SECONDS expiring, or less than
+   1,500 s left, ends the launch with the first attempt's void records and `RUN_DONE` extended with `hold: expired` or `hold: no time to
+   resume`. (f) A fixer environment change that persists on the filesystem changes the lock: the operator writes the new hash to RUN.md and
+   the next launch uses it only after a gate ruling.
+
+8. **Q8 (stage ceilings, now that the install ceiling is gone).** RE-SET. Ceilings in seconds: setup (activation, lock check, capability
+   check, downloads, parameter extraction) 1,500, a running total, over it is exit 2; tests 300; controls and anchor 700; per-pair docking
+   and analysis 600 (at most 250 per pair); AlphaFold 2,000; MD 1,600 (at most 600 per complex); endpoints 100; margin 400. Sum: 1,500 + 300 +
+   700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200 (checked twice). The allowance formula of the earlier addenda stands:
+   `allowance(stage) = max(0, min(ceiling, REMOTE_TIMEOUT - elapsed_since_T0 - 400 - 100))`. This supersedes the stage ceilings of answer B8
+   and directive item 28 as they stood (install 1,800).
+
+9. **Q9 (ask (b): the minimal edits to `run_m4.py` and `onbox_m4.sh`).** ACCEPTED, listed in EXEC_NOTE's closing section "Build 17: exactly
+   these changes" as U1 to U9: activate the environment; lock verification; remove installs; remove the selftest; the capability check
+   kept with its installs removed; the tests stage; the hold in the shell; the ceilings of Q8; the new record kinds and labels. Every other
+   line stays as it is; nothing is refactored, renamed or reordered. A changed line outside U1 to U9 is a blocking finding in review.
+
+10. **Q10 (ask (c): authorise the build and the test author, in parallel).** AUTHORISED, both. The build reads the design record,
+    `frozen/` (including `ONBOX_CONTRACT.md` with the precedence of directive item 21) and EXEC_NOTE.md, and nothing in `tests/` or `out/`. The
+    test author reads only EXEC_NOTE.md, `frozen/ONBOX_CONTRACT.md`, the design record and QUESTION.md, writes only `tests/tests_m4.py`
+    (stdlib plus what the environment holds; no GPU, no network; interface of Q5; it exercises the measurement logic through the runner's own
+    functions and planted inputs from the directive's worked values), and may not read `run_m4.py`. Neither reads the other's output.
+
+11. **Q11 (ask (d): launch 3 pre-authorised on a clean review).** AUTHORISED under A1 and A2, with all of these holding: (i) the build
+    exists, `python3 -m py_compile run_m4.py` and `bash -n onbox_m4.sh` pass, `tests/tests_m4.py` exists, and the operator has run it once
+    locally against the built files as far as it can run off-box (a local failure is a build or test defect for the gate, no launch); (ii)
+    a review of the build against the closing section, with `frozen/ONBOX_CONTRACT.md` on its read list, reports zero REQUIRED blocking findings
+    and states the diff against the previous files is limited to U1 to U9; (iii) the launch environment of record, unchanged except the
+    filesystem attach and the three added variables (Q13): `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 at `PRICE_USD_PER_HOUR=1.99`, else the
+    cheapest single GPU with capacity in us-east-1 at no more than 2.50 with type and price set to its values (a non-A100 makes C1 and C2
+    VOID "not an A100"); `REMOTE_TIMEOUT=7200` exactly; `BUDGET_LEFT_USD` = min(5, remaining cap); (iv) the remaining cap is at least 4.311 at 1.99
+    (5.417 at 2.50); (v) RUN.md records the cause of launches 1 and 2, the environment build's cause and spend, and `S_env`. Launch 2's void
+    records carry nothing into launch 3. A launch after launch 3 needs A2's reasons, (i) to (v) again, and the cap; after exit 0 or exit 4 there
+    is none. A hold (Q7) is not a new launch.
+
+12. **Q12 (the report's "extended cap").** NOT EXTENDED BY THIS GATE. The cap is standing rule 1's USD 10 of box time for the whole run, and
+    the environment build, the fixer and the verifier are box time of the run. If the owner has set a different figure, the operator writes the
+    owner's figure and date in RUN.md and the launch uses that figure; the gate neither assumes nor grants one. `BUDGET_LEFT_USD` is never
+    above 5 and `REMOTE_TIMEOUT` never above 7,200 in any case.
+
+13. **Q13 (what the launcher must do; infrastructure only).** The payload gains `tests/tests_m4.py`; the launcher attaches the filesystem
+    `metis-env-us-east-1` and forwards `ENV_LOCK_SHA256`, `HOLD_SECONDS` and (optionally) `ENV_DIR` besides the four earlier variables; it
+    fetches `results_m4/out/`, `results_m4/held_attempt_1/` if present, and `changes.log`; it leaves the box up while `HOLD` exists and
+    stops it after `RESUME`'s run ends or at hold expiry. Standing rule 5's payload list is amended by the owner's rulings (i) and (iii)
+    in exactly these two ways (the tests file; the filesystem), and by nothing else. The operator lines at the end carry it.
+
+14. **Q14 (everything else).** NOTHING ELSE CHANGES. Answers 1 to 14 of the original gate (D1 to D5, G1, R1, I1 to I7: gate scope, the
+    stand-in 3 pairs x 3 seeds, no-MSA AlphaFold, the definitions of auxiliary hours and storage, the rejected re-launch for spread, the
+    controls, the anchor and its tolerance, the marginal rule, the cost readout), and the answers of addenda 3 to 14 about the protocol,
+    records, labels, exit codes, guard arithmetic and shell void paths, stand as carried in the regenerated directive; the bands, the card's
+    gate (on af2_h_per_run only), the USD 10 cap and A2's relaunch reasons are unchanged.
+
+**Labels (addendum).** One addition: every record's `machine` (or `inputs`) carries the environment's lock sha256 observed on the box, the
+expected one, the venv path, and the flag `environment_changed_by_fixer` (false unless Q7(d) applies), plus `held_attempts`. Two new record
+kinds, `env_check` and `tests`, carry the machine-level keys only. No decision, band or other label changes.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only; nothing was run. Spend: 0.30 + 0.37 = 0.67;
+7,800 / 3,600 = 2.1667 h x 1.99 = 4.311; x 2.50 = 5.417; 10 - 0.67 = 9.33, so `S_env` up to 5.02 leaves 4.311 (up to 3.91 at 2.50). Ceilings:
+1,500 + 300 + 700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200 (twice). Hold: at most 1,200 s of the 7,200 s, restart needs 1,500 s left, setup 1,500 + tests
+300 are the new stages that precede the earlier 5,400 s (700 + 600 + 2,000 + 1,600 + 100 + 400 = 5,400; 1,800 + 5,400 = 7,200). The report's
+lock hash is 64 hex characters as quoted. The report's "10 distributions" against a pip freeze that normally lists more is noted: the
+hash is of the freeze text, and the operator's free local check of `env.lock` settles the form. The gate did not read the environment
+record, the fixer's return or the scripts.
+
+**Pre-authorisation (addendum).** A1 stands (instance, caps). A2 stands with Q11's conditions in place of P5's: launch 3 and later launches
+need A2's reasons, Q11 (i) to (v) and the cap. Not authorised: a relaunch to double seeds, to repeat a decided input, to change a band, or after
+exit 0 or exit 4; a second hold in one launch; a fixer change to `run_m4.py`, `tests/tests_m4.py`, the protocol or the record fields; a build
+other than the one of Q9 without a new addendum. What stops a launch: the cost and time guard, an anchor miss (exit 4), the sleep check (exit 2),
+broken infrastructure not cured within the one hold (exit 2 with a void record), a stage ceiling, hold expiry, or the cap. Totals: USD 0.67
+plus `S_env` spent; launch 3 at most USD 4.311; the owner's USD 10 cap is not raised.
+
+Build 15 authorised
+
+## Operator actions
+
+OPERATOR: before launch, check `sha256sum results_env/out/env.lock` equals `f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d`; if it does not, tell the gate which command `env_build.sh` used for the lock hash before any launch (Q2).
+OPERATOR: write into RUN.md the box cost of the environment build, the fixer and the verifier (`S_env`), the cause of launches 1 and 2 and the cap spent (USD 0.67 plus `S_env`); do not start a launch whose remaining cap is below 7,800 s x its `PRICE_USD_PER_HOUR` / 3,600 (USD 4.311 at 1.99, USD 5.417 at 2.50) (Q11, Q12).
+OPERATOR: in `lambda_run_m4.sh` add `tests/tests_m4.py` to the payload; attach the filesystem `metis-env-us-east-1` (us-east-1) to the instance; forward `ENV_LOCK_SHA256=f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d`, `HOLD_SECONDS=1200` and (optional) `ENV_DIR=/lambda/nfs/metis-env-us-east-1/m4` together with `PRICE_USD_PER_HOUR`, `BUDGET_LEFT_USD`, `REMOTE_TIMEOUT`, `INSTANCE_TYPE`; declare these points in the file's header and re-diff it against `frozen/lambda_run.sh` (Q13).
+OPERATOR: fetch `results_m4/out/`, `results_m4/held_attempt_1/` (if present) and `results_m4/out/changes.log`; keep the box up while `results_m4/out/HOLD` exists, for at most `HOLD_SECONDS`, and write `results_m4/out/RESUME` only when the fixer's change log is in scope (no change to `run_m4.py`, `tests/tests_m4.py`, the protocol or the record fields); otherwise do not write it (Q7, Q13).
+OPERATOR: keep `remote_run_m4.sh` as `frozen/remote_run.sh` with only the `cd` line changed to `~/m4_run`; copy `tests/tests_m4.py` from the test author's output into the run directory unread by the builder; record the spend of every launch in RUN.md (Q10, Q13).
+OPERATOR: launch environment of record: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` = the lesser of 5 and the remaining cap, `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, on the fallback), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity in us-east-1 at no more than USD 2.50/h); record which on every record (Q11).
