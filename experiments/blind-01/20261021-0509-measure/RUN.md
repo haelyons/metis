@@ -271,3 +271,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:25Z review 16 of build 26 requested
 - 22:25Z stage review on wf.js run 13: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1972262
 - 22:25Z build 26 (fix at the anchor stage, opus, 3 min): 56 diff lines in run_m4.py, 3 FIX lines; review 17 started.
+- 22:27Z build 26 checks: selftest exit 0
+- 22:27Z review 17 of build 26: PASS, 0 blocking, 6 advisory. LAUNCH 10 issued (build 26: anchor-stage fix).
+- 22:27Z LAUNCH 10: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=3.66, pid 1975813, log out/launcher_m4_L10.log
