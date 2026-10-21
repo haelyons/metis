@@ -354,6 +354,7 @@ HELD_ATTEMPTS=0
 ENV_CHANGED_BY_FIXER=false
 LOCK_OBSERVED=""
 HOLD_LABELS=""
+HOLD_SIGNAL=""
 # The environment of record, on the filesystem the launcher attached. It is not
 # built here and nothing is installed into it.
 VENV="$ENV_DIR/venv"
@@ -840,11 +841,17 @@ hold_is_eligible() {
 
 # Returns 0 when the run may be restarted once, non-zero when it may not.
 hold_open() {
-  local waited left runner_now tests_now
+  local waited left runner_now tests_now hold_start next_beat cause ended_utc
   if [ "$HELD_ATTEMPTS" -ge 1 ]; then
     say "a second failure that would qualify for a hold: the launch ends here"
     extend_run_done "one hold per launch; the second failure ends the launch"
     return 1
+  fi
+  # However long the launcher asked for, the box is never held past 2,400 s.
+  if [ "${HOLD_SECONDS_SEEN:-0}" -gt 2400 ]; then
+    HOLD_SECONDS_SEEN=2400
+    say "HOLD_SECONDS capped at 2400"
+    note_hold_label "HOLD_SECONDS capped at 2400"
   fi
   if [ "${HOLD_SECONDS_SEEN:-0}" -le 0 ]; then
     say "$HOLD_NOTE"
@@ -865,16 +872,43 @@ hold_open() {
     > "$OUT/HOLD"
   say "holding the box open for up to ${HOLD_SECONDS_SEEN}s; waiting for $OUT/RESUME"
 
-  waited=0
-  while [ "$waited" -lt "$HOLD_SECONDS_SEEN" ]; do
-    [ -f "$OUT/RESUME" ] && break
+  # The wait is measured against the clock, never counted in sleeps, so a
+  # sleep that is cut short or stretched cannot change how long the box is
+  # held. It ends on a resume, on the clock reaching the hold length, or on a
+  # signal; there is no other way out of this loop. Every end is written down.
+  HOLD_SIGNAL=""
+  trap 'HOLD_SIGNAL=HUP' HUP
+  trap 'HOLD_SIGNAL=TERM' TERM
+  trap 'HOLD_SIGNAL=INT' INT
+  hold_start="$(date -u +%s)"
+  next_beat=60
+  cause=""
+  while : ; do
+    waited=$(( $(date -u +%s) - hold_start ))
+    if [ -f "$OUT/RESUME" ]; then cause="resume"; break; fi
+    if [ -n "$HOLD_SIGNAL" ]; then cause="$HOLD_SIGNAL"; break; fi
+    if [ "$waited" -ge "$HOLD_SECONDS_SEEN" ]; then cause="expired"; break; fi
     sleep 10
-    waited=$(( waited + 10 ))
+    waited=$(( $(date -u +%s) - hold_start ))
+    if [ "$waited" -ge "$next_beat" ]; then
+      say "held ${waited}s of ${HOLD_SECONDS_SEEN}s, still waiting for a resume"
+      while [ "$waited" -ge "$next_beat" ]; do next_beat=$(( next_beat + 60 )); done
+    fi
   done
-  if [ ! -f "$OUT/RESUME" ]; then
-    say "the hold expired after ${waited}s with no resume"
-    note_hold_label "hold: expired"
-    extend_run_done "expired"
+  trap - HUP TERM INT
+  waited=$(( $(date -u +%s) - hold_start ))
+  ended_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  printf '%s\n' \
+    "cause: $cause" \
+    "seconds_waited: $waited" \
+    "hold_seconds: $HOLD_SECONDS_SEEN" \
+    "ended_utc: $ended_utc" \
+    > "$OUT/HOLD_END"
+  say "the hold ended after ${waited}s: $cause"
+
+  if [ "$cause" != "resume" ]; then
+    note_hold_label "hold: expired ($cause after ${waited}s)"
+    extend_run_done "expired ($cause after ${waited}s)"
     return 1
   fi
   say "a resume arrived after ${waited}s"

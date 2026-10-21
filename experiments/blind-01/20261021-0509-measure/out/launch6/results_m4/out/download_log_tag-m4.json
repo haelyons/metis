@@ -1,0 +1,77 @@
+{
+  "downloads": [
+    {
+      "bytes": 455220,
+      "path": "/home/ubuntu/m4_run/data/6IHB.pdb",
+      "sha256": "d3f489cc062d0a4a92490774a51f85782439d5ffd9bfae9445f4f10bf7e0f2c4",
+      "url": "https://files.rcsb.org/download/6IHB.pdb",
+      "what": "PDB entry 6IHB"
+    },
+    {
+      "bytes": 5587968000,
+      "path": "/home/ubuntu/m4_run/data/alphafold_params.tar",
+      "sha256": "36d4b0220f3c735f3296d301152b738c9776d16981d054845a68a1370b26cfe3",
+      "url": "https://storage.googleapis.com/alphafold/alphafold_params_2022-12-06.tar",
+      "what": "AlphaFold parameter archive"
+    }
+  ],
+  "finished_utc": "2026-10-21T20:57:43Z",
+  "pairs": [
+    {
+      "pair": "pair1",
+      "residues": 780
+    },
+    {
+      "pair": "pair2",
+      "residues": 870
+    },
+    {
+      "pair": "pair3",
+      "residues": 960
+    }
+  ],
+  "params_dir": "/home/ubuntu/m4_run/data/params",
+  "params_files": [
+    "params_model_1_multimer_v3.npz",
+    "params_model_2_multimer_v3.npz",
+    "params_model_3_multimer_v3.npz",
+    "params_model_4_multimer_v3.npz",
+    "params_model_5_multimer_v3.npz"
+  ],
+  "params_markers": {
+    "markers": [
+      "download_complexes_multimer_v3_finished.txt",
+      "download_complexes_multimer_v2_finished.txt",
+      "download_complexes_multimer_v1_finished.txt",
+      "download_finished.txt",
+      "download_deepfold-v1_finished.txt"
+    ],
+    "module": "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/colabfold/download.py",
+    "note": "marker names read from the installed module's own source",
+    "written": [
+      "/home/ubuntu/m4_run/data/params/download_complexes_multimer_v3_finished.txt",
+      "/home/ubuntu/m4_run/data/params/download_complexes_multimer_v2_finished.txt",
+      "/home/ubuntu/m4_run/data/params/download_complexes_multimer_v1_finished.txt",
+      "/home/ubuntu/m4_run/data/params/download_finished.txt",
+      "/home/ubuntu/m4_run/data/params/download_deepfold-v1_finished.txt"
+    ]
+  },
+  "setup_seconds_used": 25.249,
+  "started_utc": "2026-10-21T20:57:31Z",
+  "steps": [
+    {
+      "cmd": [
+        "tar",
+        "-xf",
+        "/home/ubuntu/m4_run/data/alphafold_params.tar",
+        "-C",
+        "/home/ubuntu/m4_run/data/params"
+      ],
+      "log": "/home/ubuntu/m4_run/results_m4/out/tool_logs/downloads_extract_params.log",
+      "name": "extract_params",
+      "rc": 0,
+      "seconds": 7.383,
+      "timed_out": false
+    }
+  ]
+}

@@ -206,3 +206,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 20:56Z gate 17 (addendum) requested
 - 20:56Z stage gate on wf.js run 13: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1833502
 - 20:56Z gate run 12 on launch 6: EXEC_NOTE.md regenerated (31 items, '## Build 20: exactly these changes', RESUME 8 and HOLD_SECONDS 5 mentions) but no addendum appended and an off-format reply; build 20 started on the directive; the gate asked again for the ruling of record (addendum 16).
+- 20:57Z launch 6: inspect-only hold ended early by the operator (RESUME) after the live records were copied; nothing further to inspect on the box.
+- 21:01Z LAUNCH 6 of record: A100 us-east-1, 20:31Z to 2026-10-21T21:00:47Z, USD 1.0 est, exit 2 after setup, tests (48/48), downloads and controls; failed at the dry-run stage; box terminated. Outputs under out/launch6/ (live copies under out/launch6/live). m4 Lambda spend: USD 4.48.

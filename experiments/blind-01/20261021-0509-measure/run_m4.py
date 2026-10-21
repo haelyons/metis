@@ -668,60 +668,214 @@ def rates_disagree(engine_rate, wallclock_rate, fraction: float = 0.05) -> bool:
     return abs(engine_rate - wallclock_rate) / abs(wallclock_rate) > fraction
 
 
-def parse_rank_table(text: str) -> list:
-    """Read a docking tool's own ranked list of poses.
+SCORE_COLUMN_NAMES = ("scoring", "score", "energy")
 
-    The table must name its ranking: either a rank column or a score column. A
-    table without one is refused, because the first line of a file is not a
-    ranking and must never stand in for one.
+
+class RankTable(list):
+    """A docking tool's ranked list, with how its columns were read kept beside it.
+
+    It behaves as a plain list of rows, so `len()` counts the rows the tool
+    wrote. The extra attributes say how the fields were named (`by_name` when
+    the header names them, `positional` when the rows carry a different number
+    of fields and the last column is the score), what the header tokens were,
+    and how many fields each data row held.
     """
-    rows = []
+
+    def __init__(self, rows, header=(), mapping="", field_count=0,
+                 raw_lines=(), rank_key=None, score_key=None):
+        super().__init__(rows)
+        self.header = list(header)
+        self.mapping = mapping
+        self.field_count = field_count
+        self.raw_lines = list(raw_lines)
+        self.rank_key = rank_key
+        self.score_key = score_key
+
+    def columns(self) -> dict:
+        """What to write into the record, so a reader sees how it was read."""
+        return {"header": list(self.header), "row_field_count": self.field_count,
+                "mapping": self.mapping}
+
+
+def header_tokens(line: str) -> list:
+    """The header's own words: one leading hash and the blanks around it go."""
+    text = line.strip()
+    if text.startswith("#"):
+        text = text[1:].strip()
+    return text.split()
+
+
+def first_raw_lines(text: str, count: int = 5) -> str:
+    """The start of a file, printed exactly as it stands, for an error to carry."""
+    lines = text.splitlines()[:count]
+    return "first %d raw lines: %s" % (count, "; ".join(repr(l) for l in lines))
+
+
+def is_data_line(line: str) -> bool:
+    """A data row is any line of at least two fields ending in a number."""
+    parts = line.split()
+    if len(parts) < 2:
+        return False
+    try:
+        float(parts[-1])
+    except ValueError:
+        return False
+    return True
+
+
+def rank_table_shape(text: str) -> dict:
+    """What a rank table looks like, without judging it. Used for evidence.
+
+    This never raises. It is what the diagnostic file and every error message
+    report: the header, how many data rows there were, and how many fields each
+    of them held.
+    """
+    raw_lines = text.splitlines()
     header = None
-    for raw in text.splitlines():
+    header_index = -1
+    counts = []
+    for index, raw in enumerate(raw_lines):
         line = raw.strip()
         if not line:
             continue
-        parts = line.split()
         if header is None:
-            lowered = [p.lower() for p in parts]
-            has_rank = any(p == "rank" for p in lowered)
-            has_score = any(p in ("scoring", "score", "energy") for p in lowered)
-            if not (has_rank or has_score):
-                raise ParseError(
-                    "docking rank table has neither a rank nor a score column"
-                )
-            header = parts
+            header = header_tokens(line)
+            header_index = index
             continue
-        if len(parts) != len(header):
+        if line.startswith("#"):
             continue
-        rows.append(dict(zip(header, parts)))
+        if is_data_line(line):
+            counts.append(len(line.split()))
+    return {"header": header or [], "header_index": header_index,
+            "data_lines": len(counts), "field_counts": counts,
+            "lines_after_header": max(0, len(raw_lines) - header_index - 1)
+            if header is not None else 0,
+            "raw_lines": raw_lines}
+
+
+def parse_rank_table(text: str) -> RankTable:
+    """Read a docking tool's own ranked list of poses, exactly as written.
+
+    The first line that holds anything is the header. No data row is ever
+    dropped for holding a different number of fields than the header: either
+    every row matches the header, and the header names the fields, or every row
+    shares one other count, and the fields are numbered from the left with the
+    last one as the score. Rows of differing counts, or a table with no data
+    row at all, are errors that say what was seen; a table is never silently
+    read as empty, which is how one earlier run lost a table the tool had
+    written correctly.
+    """
+    raw_lines = text.splitlines()
+    header = None
+    header_index = -1
+    rows_fields = []
+    for index, raw in enumerate(raw_lines):
+        line = raw.strip()
+        if not line:
+            continue
+        if header is None:
+            header = header_tokens(line)
+            header_index = index
+            continue
+        if line.startswith("#"):
+            continue
+        if not is_data_line(line):
+            continue
+        rows_fields.append(line.split())
+
     if header is None:
-        raise ParseError("docking rank table has no header line")
-    if not rows:
-        raise ParseError("docking rank table has a header but no rows")
-    return rows
+        raise ParseError("docking rank table has no header line; "
+                         + first_raw_lines(text))
+    if not rows_fields:
+        after = len(raw_lines) - header_index - 1
+        raise ParseError(
+            "docking rank table has a header but no data row: %d lines follow "
+            "the header; %s" % (after, first_raw_lines(text))
+        )
+
+    counts = sorted(set(len(fields) for fields in rows_fields))
+    if len(counts) > 1:
+        raise ParseError(
+            "docking rank table rows hold different numbers of fields (%s); %s"
+            % (", ".join(str(c) for c in counts), first_raw_lines(text))
+        )
+    width = counts[0]
+    lowered_header = [token.lower() for token in header]
+
+    if width == len(header):
+        mapping = "by_name"
+        rows = [dict(zip(header, fields)) for fields in rows_fields]
+        rank_key = next((t for t in header if t.lower() == "rank"), None)
+        score_key = next(
+            (t for t in header if t.lower() in SCORE_COLUMN_NAMES), None
+        )
+        if rank_key is None and score_key is None:
+            raise ParseError(
+                "docking rank table names neither a rank nor a score column; %s"
+                % first_raw_lines(text)
+            )
+    else:
+        mapping = "positional"
+        if not lowered_header or lowered_header[-1] not in SCORE_COLUMN_NAMES:
+            raise ParseError(
+                "docking rank table has %d header tokens over rows of %d fields, "
+                "and its last header token is not a score column; %s"
+                % (len(header), width, first_raw_lines(text))
+            )
+        names = ["col%d" % i for i in range(width)]
+        rows = [dict(zip(names, fields)) for fields in rows_fields]
+        rank_key = None
+        score_key = names[-1]
+
+    return RankTable(rows, header=header, mapping=mapping, field_count=width,
+                     raw_lines=raw_lines, rank_key=rank_key, score_key=score_key)
+
+
+def is_monotone(values: list) -> bool:
+    """True when a column only rises, or only falls, down the file."""
+    rising = all(b >= a for a, b in zip(values, values[1:]))
+    falling = all(b <= a for a, b in zip(values, values[1:]))
+    return rising or falling
 
 
 def top_ranked_row(rows: list) -> dict:
-    """The tool's own first-ranked pose: lowest rank, else best score."""
+    """The tool's own first-ranked pose.
+
+    With a rank column, it is the lowest rank. Without one, it is the first row
+    the tool wrote, and the score column must only rise or only fall down the
+    file; a score that rises and then falls means the file is not a ranking,
+    and is refused rather than guessed at.
+    """
     if not rows:
         raise ParseError("no rows in the docking rank table")
+    raw_text = "\n".join(getattr(rows, "raw_lines", []))
     keys = list(rows[0].keys())
-    rank_key = next((k for k in keys if k.lower() == "rank"), None)
+    rank_key = getattr(rows, "rank_key", None)
+    if rank_key is None:
+        rank_key = next((k for k in keys if k.lower() == "rank"), None)
     if rank_key is not None:
         try:
             return min(rows, key=lambda r: float(r[rank_key]))
         except (TypeError, ValueError):
-            raise ParseError("rank column is not numeric")
-    score_key = next(
-        (k for k in keys if k.lower() in ("scoring", "score", "energy")), None
-    )
+            raise ParseError("rank column is not numeric; " + first_raw_lines(raw_text))
+    score_key = getattr(rows, "score_key", None)
     if score_key is None:
-        raise ParseError("docking rank table has neither a rank nor a score column")
+        score_key = next(
+            (k for k in keys if k.lower() in SCORE_COLUMN_NAMES), None
+        )
+    if score_key is None:
+        raise ParseError("docking rank table has neither a rank nor a score "
+                         "column; " + first_raw_lines(raw_text))
     try:
-        return max(rows, key=lambda r: float(r[score_key]))
-    except (TypeError, ValueError):
-        raise ParseError("score column is not numeric")
+        scores = [float(r[score_key]) for r in rows]
+    except (TypeError, ValueError, KeyError):
+        raise ParseError("score column is not numeric; " + first_raw_lines(raw_text))
+    if not is_monotone(scores):
+        raise ParseError(
+            "the score column rises and then falls, so the file is not in rank "
+            "order; " + first_raw_lines(raw_text)
+        )
+    return rows[0]
 
 
 def parse_af2_timing_rows(rows: list) -> dict:
@@ -2726,6 +2880,37 @@ def stage_tests(state: RunState) -> dict:
     return dict(values)
 
 
+def recorded_download_sha256(state: RunState, path) -> str:
+    """The hash the held first attempt recorded for this file, or an empty string."""
+    record = Path(state.outdir).parent / "held_attempt_1" / f"downloads_tag-{TAG}.json"
+    if not record.exists():
+        return ""
+    try:
+        doc = json.loads(record.read_text())
+    except (OSError, ValueError):
+        return ""
+    for entry in doc.get("downloads", []):
+        if entry.get("path") == str(path):
+            return entry.get("sha256") or ""
+    return ""
+
+
+def may_reuse_download(state: RunState, path) -> bool:
+    """True when the file on disk is the one a held attempt already fetched.
+
+    After the box is held open and the run restarts, a file that is already
+    here and still hashes to what the first attempt recorded is used again
+    rather than fetched again. Anything else is fetched.
+    """
+    path = Path(path)
+    if not path.exists():
+        return False
+    recorded = recorded_download_sha256(state, path)
+    if not recorded:
+        return True
+    return sha256_file(path) == recorded
+
+
 def stage_downloads(state: RunState) -> dict:
     """Fetch the declared files, unpack the parameters, and build the pairs.
 
@@ -2740,7 +2925,8 @@ def stage_downloads(state: RunState) -> dict:
 
     # -- the published structure
     pdb_path = state.datadir / f"{PDB_ENTRY}.pdb"
-    if not pdb_path.exists():
+    pdb_reused = may_reuse_download(state, pdb_path)
+    if not pdb_reused:
         res = step(["curl", "-fsSL", "--retry", "3", "-o", str(pdb_path), PDB_URL],
                    300, "download_pdb")
         if not res.get("ok") or not pdb_path.exists():
@@ -2751,13 +2937,15 @@ def stage_downloads(state: RunState) -> dict:
             )
     log["downloads"].append({"what": f"PDB entry {PDB_ENTRY}", "url": PDB_URL,
                              "path": str(pdb_path), "sha256": sha256_file(pdb_path),
+                             "reused": pdb_reused,
                              "bytes": pdb_path.stat().st_size})
 
     # -- the prediction parameters, fetched and unpacked before anything is timed
     params_dir = state.datadir / "params"
     params_dir.mkdir(parents=True, exist_ok=True)
     archive = state.datadir / "alphafold_params.tar"
-    if not archive.exists():
+    archive_reused = may_reuse_download(state, archive)
+    if not archive_reused:
         res = step(["curl", "-fsSL", "--retry", "3", "-o", str(archive), AF_PARAMS_URL],
                    900, "download_params")
         if not res.get("ok") or not archive.exists():
@@ -2770,6 +2958,7 @@ def stage_downloads(state: RunState) -> dict:
     log["downloads"].append({"what": "AlphaFold parameter archive",
                              "url": AF_PARAMS_URL, "path": str(archive),
                              "sha256": state.params_sha256,
+                             "reused": archive_reused,
                              "bytes": archive.stat().st_size})
     res = step(["tar", "-xf", str(archive), "-C", str(params_dir)], 600, "extract_params")
     if not res.get("ok"):
@@ -3195,6 +3384,53 @@ def pose_path_from_row(work: Path, row: dict):
     return Path(work) / f"swarm_{swarm}" / f"lightdock_{conformation}.pdb"
 
 
+def write_rank_table_diagnostic(state: RunState, name: str, text: str, work) -> Path:
+    """Keep what the table and the working directory looked like, before raising.
+
+    A reader who never saw this run must be able to tell, from this one file,
+    what the tool actually wrote and what it left on disk. Only names are
+    listed, never contents.
+    """
+    shape = rank_table_shape(text)
+    work = Path(work)
+    try:
+        entries = sorted(p.name for p in work.iterdir())
+    except OSError as exc:
+        entries = ["<could not be listed: %s>" % exc]
+    swarm_dirs = sorted(p for p in work.glob("swarm_*") if p.is_dir())
+    if swarm_dirs:
+        try:
+            swarm_entries = sorted(p.name for p in swarm_dirs[0].iterdir())
+        except OSError as exc:
+            swarm_entries = ["<could not be listed: %s>" % exc]
+        swarm_name = swarm_dirs[0].name
+    else:
+        swarm_entries = []
+        swarm_name = "<no swarm_* directory>"
+    lines = [
+        "rank table diagnostic for %s" % name,
+        "written because the table could not be read, or named no pose file",
+        "",
+        "first 8 raw lines of the table, exactly as written:",
+    ]
+    lines += ["  %s" % repr(l) for l in shape["raw_lines"][:8]] or ["  <no lines>"]
+    lines += [
+        "",
+        "data lines: %d" % shape["data_lines"],
+        "field counts of the data lines: %s"
+        % ", ".join(str(c) for c in shape["field_counts"]),
+        "header tokens: %s" % ", ".join(shape["header"]),
+        "",
+        "names in the docking working directory (depth 1):",
+    ]
+    lines += ["  %s" % e for e in entries] or ["  <empty>"]
+    lines += ["", "names in %s (depth 1):" % swarm_name]
+    lines += ["  %s" % e for e in swarm_entries] or ["  <none>"]
+    path = state.outdir / f"rank_table_diagnostic_{name}_tag-{TAG}.txt"
+    atomic_write_text(path, "\n".join(lines) + "\n")
+    return path
+
+
 def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path,
                 work: Path, limit_s: float, cores: int, stage: str) -> dict:
     """Dock one receptor onto one capsid and return the tool's own best pose.
@@ -3287,17 +3523,28 @@ def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path
                              f"nothing matching rank_*.list in {work}")
     kept = state.outdir / f"rank_table_{name}_tag-{TAG}.list"
     shutil.copyfile(str(table_path), str(kept))
+    table_text = table_path.read_text()
+    shape = rank_table_shape(table_text)
+    counts_text = ", ".join(str(c) for c in shape["field_counts"]) or "none"
     try:
-        rows = parse_rank_table(table_path.read_text())
+        rows = parse_rank_table(table_text)
         top = top_ranked_row(rows)
     except ParseError as exc:
-        raise HarnessFailure("the docking rank table could not be read",
-                             f"{exc}; raw table kept at {kept}")
+        diagnostic = write_rank_table_diagnostic(state, name, table_text, work)
+        raise HarnessFailure(
+            "the docking rank table could not be read",
+            f"{exc}; field counts of the data lines: {counts_text}; "
+            f"{first_raw_lines(table_text)}; raw table kept at {kept}; "
+            f"diagnostic at {diagnostic}",
+        )
     pose = pose_path_from_row(work, top)
     if pose is None or not Path(pose).exists():
+        diagnostic = write_rank_table_diagnostic(state, name, table_text, work)
         raise HarnessFailure(
             "the docking rank table names no pose file that exists",
-            f"top row {top}; raw table kept at {kept}",
+            f"top row {top}; field counts of the data lines: {counts_text}; "
+            f"{first_raw_lines(table_text)}; raw table kept at {kept}; "
+            f"diagnostic at {diagnostic}",
         )
     pose_kept = state.outdir / f"pose_{name}_tag-{TAG}.pdb"
     shutil.copyfile(str(pose), str(pose_kept))
@@ -3314,7 +3561,8 @@ def run_docking(state: RunState, name: str, receptor_pdb: Path, ligand_pdb: Path
         "call_order": order,
         "parameters": {"swarms": swarms, "glowworms": glowworms, "steps": steps,
                        "cores": cores, "setup_flags": ["--noxt", "--noh"],
-                       "restrained_to_the_published_interface": False},
+                       "restrained_to_the_published_interface": False,
+                       "rank_table_columns": rows.columns()},
     }
 
 

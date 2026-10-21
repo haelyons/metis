@@ -1,4 +1,4 @@
-# Execution directive for build (tag m4), regenerated on 2026-10-21 as the current truth after the report on launch 6 (addendum 16) (revised, addendum 16)
+# Execution directive for build (tag m4), regenerated on 2026-10-21 as the current truth after the report on launch 6 (addendum 16; ruled in GATE_COMMIT.md Addendum 17) (revised, addendum 17)
 
 This is the measure run m4 of card seed:idea:1: one rented single-GPU box in us-east-1 with the filesystem `metis-env-us-east-1` attached, a
 timer check, an anchor redocking of AAVR-PKD2 onto AAV2 against PDB 6IHB, then four inputs (AlphaFold-Multimer hours per run, MD ns/day,
@@ -56,15 +56,15 @@ operator's files. It uses no network. Its only local checks are `python3 -m py_c
    `tests_tag-m4.json` (values: `exit_code`, `seconds`, `tests_file_sha256`, `stdout_tail` as the last 20 lines, `tests_passed` and `tests_total` from a
    line `tests: N of M passed` in the output, else null with a `null_reasons` entry). The runner neither imports nor interprets the tests. The tests are
    written by the claim-blind author from this note, `ONBOX_CONTRACT.md`, the design record and QUESTION.md; implementer selftests are neither required nor credited.
-6. **REQUIRED FOR LAUNCH. Hold-open, the fixer's scope and the restart (revised, addendum 16).** Eligible: any exit-2 stage failure of the table of item 7 except the 60 s
+6. **REQUIRED FOR LAUNCH. Hold-open, the fixer's scope and the restart (revised, addendum 17).** Eligible: any exit-2 stage failure of the table of item 7 except the 60 s
    sleep check. After the failed attempt's void records and `RUN_DONE` are written, the shell writes `results_m4/out/HOLD` (stage, kind, exit code, UTC
-   time, `hold_seconds`) and waits as item 27 says, at most `HOLD_SECONDS` (forwarded; value of record 1200; any value above 2,400 is treated as 2,400 with the label
+   time, `hold_seconds`) and waits as item 27 says, at most `HOLD_SECONDS` (forwarded; value of record 2400 (revised, addendum 17); any value above 2,400 is treated as 2,400 with the label
    "HOLD_SECONDS capped at 2400"; unset means 0, no hold, label "HOLD_SECONDS not forwarded; no hold") for `results_m4/out/RESUME`;
    hold time counts in elapsed time and never in a stage ceiling. At start the shell records the sha256 of `run_m4.py` and
    `tests/tests_m4.py`. The fixer may change environment and glue, each change committed to git on the box and fetched as `results_m4/out/changes.log`;
    it may not change the measurement protocol or the record fields, so `run_m4.py` and `tests/tests_m4.py` stay byte-identical: before a restart the shell
    compares the hashes, and a change (or a verifier finding of out of scope) is a halt to the gate: no restart, exit 2, label `fixer_out_of_scope`. On RESUME
-   with at least 1,500 s of REMOTE_TIMEOUT left the shell moves `results_m4/out` to `results_m4/held_attempt_1/` and restarts the runner once from its first
+   with at least 1,500 s of REMOTE_TIMEOUT left the shell moves `results_m4/out` to `results_m4/held_attempt_1/` and restarts the runner once, with the files as they are on the box at RESUME time, from its first
    stage (item 1's order, every stage, never from a mid-run state, and a RESUME never ends the run in place of the restart) under the same T0 and caps; a download whose
    file exists with the recorded sha256 may be reused, recorded as `reused: true` with the hash; the restarted attempt's stage allowances follow item 8 from the elapsed
    time then, so later stages may be guard-stopped (exit 3), stated in `m4_summary.json`; its records are the run's records and `m4_summary.json` carries
@@ -246,7 +246,7 @@ operator's files. It uses no network. Its only local checks are `python3 -m py_c
 - Launcher: the operator's `lambda_run_m4.sh` (from `frozen/lambda_run.sh` at the header's declared points only): remote dir `m4_run/`; payload as item 2; forwarded env `PRICE_USD_PER_HOUR BUDGET_LEFT_USD REMOTE_TIMEOUT
   INSTANCE_TYPE ENV_LOCK_SHA256 HOLD_SECONDS` and optionally `ENV_DIR`; fetch all of `m4_run/results_m4/out/` (rank tables, poses, diagnostics, `HOLD_END`, `tool_logs/`), `held_attempt_1/` if present and `changes.log`. `remote_run_m4.sh` is
   `frozen/remote_run.sh` with only its `cd` line changed to `~/m4_run`.
-- Caps (revised, addendum 16): `REMOTE_TIMEOUT=7200` exactly; spend of record USD 4.18 (3.48 before launch 6, about 0.70 for it), remaining 5.82; `BUDGET_LEFT_USD` = the lesser of 5 and the remaining cap = 5; `HOLD_SECONDS=1200`; no launch starts
+- Caps (revised, addendum 16): `REMOTE_TIMEOUT=7200` exactly; spend of record USD 4.18 (3.48 before launch 6, about 0.70 for it), remaining 5.82; `BUDGET_LEFT_USD` = the lesser of 5 and the remaining cap = 5; `HOLD_SECONDS=2400` (revised, addendum 17); no launch starts
   with less than 7,800 s x price / 3,600 remaining (USD 4.311 at 1.99, 5.417 at 2.50). A launch at its caps is 4.311; after the next launch at its caps 1.51 remains, so no launch follows it.
 - Payload layout on the box: `~/m4_run/run_m4.py`, `~/m4_run/onbox_m4.sh`, `~/m4_run/frozen/provenance.py`, `~/m4_run/tests/tests_m4.py`, `~/m4_run/data/...` if shipped. Results under `~/m4_run/results_m4/out/`.
 
@@ -265,7 +265,7 @@ None. `python3 run_m4.py --selftest` is removed; implementer selftests are neith
 - `RUN_VALID.json`; `env.txt` (named non-secret variables only, including the `REMOTE_TIMEOUT` seen and the pre-T0 seconds); `m4_summary.json`; download, capability-check and tool logs (including the tests' output); the download record
   with URLs and sha256; the colabfold marker record; `RUN_DONE` with the exit code and the per-input status of item 7; `HOLD` while held and `HOLD_END` when a hold ends (item 27); `changes.log` and `results_m4/held_attempt_1/` after a hold.
 
-## Build 20: exactly these changes (new, addendum 16; binds first; replaces the closing section "Build 17: exactly these changes", which is satisfied and removed)
+## Build 20: exactly these changes (new, addendum 16; ruled addendum 17; binds first; replaces the closing section "Build 17: exactly these changes", which is satisfied and removed)
 
 The files edited are the ones now in the run directory. Every other line stays as it is; nothing is refactored, renamed or reordered. A changed line outside V1 to V4 is a blocking finding in review.
 

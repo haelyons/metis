@@ -1,0 +1,69 @@
+{
+  "cell": {
+    "control": "planted_sleep",
+    "stage": "controls",
+    "tag": "m4"
+  },
+  "decision": "PASS",
+  "decision_rule": "relative error at most 0.05 -> PASS and the timings may be trusted; otherwise FAIL, every timing in this run is invalid, and the run stops",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-146-79",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T20:58:43+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 232,
+      "n_items": 1,
+      "path": "/home/ubuntu/m4_run/results_m4/out/rows_controls_tag-m4.jsonl",
+      "present": true,
+      "sha256": "e350e2713050"
+    },
+    {
+      "bytes": 1071,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "e6a65327b0d6"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    }
+  ],
+  "kind": "control_sleep",
+  "metric": "relative error of a planted 60 s sleep timed by the run's own harness",
+  "notes": "",
+  "notes_list": [],
+  "run_valid": true,
+  "run_valid_voided_by": null,
+  "tag": "m4",
+  "threshold": {
+    "max_relative_error": 0.05
+  },
+  "values": {
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-21T20:58:43Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 1,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T20:57:43Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "measured_s": 60.004204988479614,
+    "null_reasons": {},
+    "planted_s": 60.0,
+    "relative_error": 7.00831413269043e-05,
+    "unit": "seconds"
+  }
+}
