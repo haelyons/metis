@@ -1,0 +1,101 @@
+{
+  "cell": {
+    "control": "unit_and_scale",
+    "stage": "controls",
+    "tag": "m4"
+  },
+  "decision": "RECORDED",
+  "decision_rule": "this control decides nothing; it exists so a reader can re-derive every later number from raw output",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-112-227",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T21:23:41+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 1117,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "97dec50a01a5"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    }
+  ],
+  "kind": "control_unit_and_scale",
+  "metric": "the raw units each input is read in, and the arithmetic that turns raw output into the card's unit",
+  "notes": "",
+  "notes_list": [],
+  "run_valid": true,
+  "run_valid_voided_by": null,
+  "tag": "m4",
+  "threshold": {
+    "required": "stated before any band is compared"
+  },
+  "values": {
+    "af2_hours_from_seconds": {
+      "rule": "wall-clock seconds of one prediction call divided by 3,600",
+      "unit": "hours per AlphaFold-Multimer run",
+      "worked_example": {
+        "hours": 0.5,
+        "seconds": 1800
+      }
+    },
+    "aux_hours_from_seconds": {
+      "rule": "wall-clock seconds of docking, interface analysis and writing the call-table row for one pair, divided by 3,600",
+      "unit": "hours per capsid-receptor pair",
+      "worked_example": {
+        "hours": 1.0,
+        "seconds": 3600
+      }
+    },
+    "kind": "worked_examples",
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-21T21:23:41Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 0,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T21:23:41Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "md_ns_per_day_from_steps": {
+      "engine_rate_line_example": "Speed (ns/day) column of the reporter file, read beside the wall-clock figure",
+      "rule": "steps times the timestep gives simulated femtoseconds; divided by the production wall-clock and scaled to 86,400 seconds",
+      "unit": "nanoseconds simulated per day",
+      "worked_example": {
+        "ns_per_day": 128.96,
+        "steps": 250000,
+        "timestep_fs": 2.0,
+        "wallclock_s": 335
+      }
+    },
+    "null_reasons": {},
+    "raw_values_in": {
+      "md_engine_rate_lines_with_wallclock_beside_them": "rows_md_tag-m4.jsonl",
+      "note": "this control holds worked examples only; the raw values live in the row files named here, which are written later in the run",
+      "raw_alphafold_seconds_per_run": "rows_af2_tag-m4.jsonl",
+      "raw_bytes_per_artifact": "rows_storage_tag-m4.jsonl"
+    },
+    "storage_gib_from_bytes": {
+      "rule": "apparent bytes written by one run times 216 divided by 2 to the power 30",
+      "unit": "gibibytes",
+      "worked_example": {
+        "bytes_per_run": 1073741824,
+        "gib_216_runs": 216.0,
+        "gib_432_runs": 432.0
+      }
+    }
+  }
+}
