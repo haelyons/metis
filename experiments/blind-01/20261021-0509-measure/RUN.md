@@ -225,3 +225,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:27Z session classify8 started (model sonnet, pid 1881486, session dce50fde)
 - 21:29Z LAUNCH 7 (A100): env_check PASS, tests 48/48, downloads and controls, then the dry-run stage failed with a different message from launch 6 (a missing output file, with run numbers); box HELD at 21:24Z (RESUME re-runs in this build). Classifier 8 (high confidence): not the same failure; engine produced output; runner code defect. Fix build 22 bounded to that stage with the live evidence and the triage note.
 - 21:29Z stage build on wf.js run 19: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1885498
+- 21:33Z build 22 checks: selftest exit 0
+- 21:33Z review 12 of build 22 requested
+- 21:33Z stage review on wf.js run 9: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1892013
+- 21:33Z build 22 (fix, opus, 3 min): 33 diff lines in run_m4.py, 2 FIX lines; review 13 started; plan: ship to the held box and RESUME on PASS.

@@ -1,0 +1,5 @@
+Operator's mechanical findings on build 22 (no content read):
+1. Build 22 (opus, 3 min, fix build bounded to launch 7's failed dry-run stage, evidence under out/launch7_live/ with a triage note): run_m4.py changed by 33 diff lines vs build 21 (5,040 lines, sha bd6b7ea7…); onbox_m4.sh unchanged (8d7b9d29…); two FIX lines reported. No stray files; no key-file mentions. Author's tests (48) compile and passed 48/48 on the box in launches 6 and 7.
+2. Launch 7 evidence: env_check PASS; tests PASS; downloads and three controls recorded; the dry-run stage failed with a different message from launch 6 (a missing output file, with run numbers); the engine produced output. Classifier (high confidence): runner code defect at that stage.
+3. Verify the fix follows the directive for the dry-run stage (how the engine's output is located and read) and touches nothing else; the records contract, guard and anchor logic unchanged.
+4. Plan after a PASS: the fixed run_m4.py is shipped to the held A100 (box of launch 7, holding until about 22:04Z) and RESUME re-runs from the failed stage with the files as they are, per the directive's hold rule; the change is this reviewed diff.

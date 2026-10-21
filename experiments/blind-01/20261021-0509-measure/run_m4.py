@@ -711,9 +711,36 @@ def first_raw_lines(text: str, count: int = 5) -> str:
     return "first %d raw lines: %s" % (count, "; ".join(repr(l) for l in lines))
 
 
+def split_fields(line: str) -> list:
+    """Split one line of a rank table into the tool's own columns.
+
+    Blanks separate columns, except inside a bracketed group. The docking code
+    writes a pose's position as one column holding several numbers in round
+    brackets, "(2.088, -26.883, ...)", with blanks inside it. That column is
+    one field, not one field for every number in it. Counting its numbers as
+    separate fields made a real table of 12 columns look 18 fields wide, so it
+    no longer matched its own 12-word header; the row was then read by position
+    instead of by name, the column naming the pose file was lost, and the run
+    ended with a table the tool had written correctly.
+    """
+    fields = []
+    current = []
+    depth = 0
+    for token in line.split():
+        current.append(token)
+        depth += token.count("(") - token.count(")")
+        if depth <= 0:
+            fields.append(" ".join(current))
+            current = []
+            depth = 0
+    if current:
+        fields.append(" ".join(current))
+    return fields
+
+
 def is_data_line(line: str) -> bool:
     """A data row is any line of at least two fields ending in a number."""
-    parts = line.split()
+    parts = split_fields(line)
     if len(parts) < 2:
         return False
     try:
@@ -745,7 +772,7 @@ def rank_table_shape(text: str) -> dict:
         if line.startswith("#"):
             continue
         if is_data_line(line):
-            counts.append(len(line.split()))
+            counts.append(len(split_fields(line)))
     return {"header": header or [], "header_index": header_index,
             "data_lines": len(counts), "field_counts": counts,
             "lines_after_header": max(0, len(raw_lines) - header_index - 1)
@@ -781,7 +808,7 @@ def parse_rank_table(text: str) -> RankTable:
             continue
         if not is_data_line(line):
             continue
-        rows_fields.append(line.split())
+        rows_fields.append(split_fields(line))
 
     if header is None:
         raise ParseError("docking rank table has no header line; "
