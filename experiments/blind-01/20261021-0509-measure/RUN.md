@@ -93,3 +93,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:43Z build 12 (wf run 9) stopped by the operator after 3 min: it was triggered by a wheels-only dry-run resolve that rejects any sdist by construction; the gate's test is a plain pip dry-run in a Python 3.10 environment, now run with uv's CPython 3.10.
 - 15:43Z pip dry-run resolve of build 11's 9 pins in a real CPython 3.10 (uv venv, sdists allowed, metadata built locally): exit 1; ResolutionImpossible 1; 'No matching distribution' 0; 'error' lines 2; packages in the report 0
 - 15:43Z stage build on wf.js run 10: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1283032
+- 15:46Z build 13 checks: selftest exit 0
+- 15:47Z gate 9 (addendum) requested
+- 15:47Z stage gate on wf.js run 5: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1291955

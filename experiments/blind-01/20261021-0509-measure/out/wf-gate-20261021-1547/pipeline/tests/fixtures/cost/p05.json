@@ -1,0 +1,66 @@
+{
+ "option_title": "5 R2 W3 (REJECT)",
+ "phases": [
+ {"id":"P0","what":"write solver, C1 on 1 GPU","stop_rule":"G1: no 8-GPU node until C1 passes"},
+ {"id":"P1","what":"distributed debug"},
+ {"id":"P2","what":"bake-off: measure s/step on A100, H100, B200","stop_rule":"G2: if > 0.6 s/step, swap in cuDecomp/jaxDecomp before P5"},
+ {"id":"P3","what":"C2 JHTDB step test"},
+ {"id":"P4","what":"ladder 128-512"},
+ {"id":"P5","what":"1024^3 reproduction","stop_rule":"G3: not before C2 passes"},
+ {"id":"P6","what":"fit exponents"},
+ {"id":"FS","what":"filesystem"},
+ {"id":"S1","what":"stretch 2048^3","stop_rule":"G4: only if reserve >= 2x projected cost from measured P5 $/T_L"}
+],
+ "numbers": [
+ {"id":"fft_ms_ref","name":"cuFFTMp single-precision 2048^3 FFT, 8x A100 (Selene)","unit":"ms","basis":"PROXY","value":78,"source_id":"s_nv_blog","quote":"78ms with 8 GPUs (1 node)","page_setting":"cuFFTMp, 2048^3 fp32 FFT, 8x A100, Selene","differs_in":["component: one FFT, not a solver step","size: 2048^3","gpu: A100","software: cuFFTMp, not PyTorch"],"measured_by":"P2"},
+ {"id":"pts_ratio","name":"points ratio 1024^3 / 2048^3","unit":"1","basis":"DESIGN","value":0.125},
+ {"id":"bytes_ratio","name":"bytes per point, real fp64 vs complex fp32","unit":"1","basis":"GUESS","value":1,"rests_on":"blog does not say complex or real; producer assumes complex","measured_by":"P2"},
+ {"id":"bw_h100","name":"H100 SXM HBM bandwidth","unit":"TB/s","basis":"CITED","value":3.35,"source_id":"s_nv_h100"},
+ {"id":"bw_a100","name":"A100 80GB SXM HBM bandwidth","unit":"TB/s","basis":"CITED","value":2.039,"source_id":"s_nv_a100"},
+ {"id":"fft_per_eval","name":"3D FFTs per nonlinear evaluation (Fluid3D)","unit":"1","basis":"CITED","value":9,"source_id":"s_nv_blog"},
+ {"id":"evals_per_step","name":"phase-shifted evaluations per step","unit":"1","basis":"DESIGN","value":2},
+ {"id":"pointwise","name":"pointwise overhead","unit":"1","basis":"GUESS","value":1.25,"rests_on":"producer's allowance"},
+ {"id":"s_step_model","name":"modelled s/step at 1024^3, 8x H100","unit":"s","basis":"DERIVED","expr":"fft_ms_ref / 1000 * pts_ratio * bytes_ratio * bw_a100 / bw_h100 * fft_per_eval * evals_per_step * pointwise"},
+ {"id":"s_step","name":"central s/step at 1024^3, 8x H100","unit":"s","basis":"GUESS","value":0.2,"rests_on":"the model above (0.13-0.14 s) rounded up","measured_by":"P2"},
+ {"id":"t_l","name":"large-eddy turnover time T_L","unit":"time units","basis":"CITED","value":1.99,"source_id":"s_jhtdb_readme"},
+ {"id":"dt","name":"JHTDB time step","unit":"time units","basis":"CITED","value":0.0002,"source_id":"s_jhtdb_readme"},
+ {"id":"p5_time","name":"P5 window, same as baseline","unit":"time units","basis":"CITED","value":10.056,"source_id":"s_jhtdb_readme"},
+ {"id":"p4_512_steps","name":"512^3 rung steps","unit":"steps","basis":"DESIGN","value":30000},
+ {"id":"p4_small_usd","name":"128^3 and 256^3 rungs on 1x H100","unit":"usd","basis":"GUESS","value":9,"rests_on":"producer gives dollars only"},
+ {"id":"fs_gib","name":"filesystem","unit":"GiB","basis":"DESIGN","value":500},
+ {"id":"fs_months","name":"filesystem months (2 weeks)","unit":"months","basis":"DESIGN","value":0.4667},
+ {"id":"rl_1024","name":"R_lambda of JHTDB isotropic1024","unit":"1","basis":"CITED","value":418,"source_id":"s_jhtdb_readme"},
+ {"id":"rl_record","name":"record isotropic DNS R_lambda","unit":"1","basis":"CITED","value":2550,"source_id":"s_jhtdb_home"},
+ {"id":"cost_exp","name":"exponent of cost per T_L in R_lambda","unit":"1","basis":"GUESS","value":6,"rests_on":"ops ~ Re^3 (Wikipedia DNS) and Re ~ R_lambda^2 (not cited)","measured_by":"P6"},
+ {"id":"usd_per_tl","name":"1024^3 $ per T_L on 8x H100","unit":"usd","basis":"DERIVED","expr":"t_l / dt * s_step / 3600 * r_h100x8"}
+],
+ "cost": {
+  "rates": [
+   {"id":"r_a6000","gpu":"A6000","n_gpus":1,"per_gpu_usd_h":1.09},
+   {"id":"r_v100x8","gpu":"V100","n_gpus":8,"per_gpu_usd_h":0.79},
+   {"id":"r_h100x8","gpu":"H100 SXM","gpu_memory_gb":80,"n_gpus":8,"per_gpu_usd_h":3.99},
+   {"id":"r_a100x8","gpu":"A100 SXM","gpu_memory_gb":80,"n_gpus":8,"per_gpu_usd_h":2.79},
+   {"id":"r_b200x8","gpu":"B200","n_gpus":8,"per_gpu_usd_h":6.69}
+  ],
+  "lines": [
+   {"id":"p0","phase":"P0","what":"develop + C1","kind":"work","rate":"r_a6000","hours":"40"},
+   {"id":"p1","phase":"P1","kind":"work","rate":"r_v100x8","hours":"6"},
+   {"id":"p2a","phase":"P2","kind":"work","rate":"r_a100x8","hours":"0.5"},
+   {"id":"p2h","phase":"P2","kind":"work","rate":"r_h100x8","hours":"0.5"},
+   {"id":"p2b","phase":"P2","kind":"work","rate":"r_b200x8","hours":"0.5"},
+   {"id":"p3","phase":"P3","kind":"work","rate":"r_h100x8","hours":"1"},
+   {"id":"p4s","phase":"P4","kind":"allotment","usd":"p4_small_usd"},
+   {"id":"p4","phase":"P4","what":"512^3 rung","kind":"work","rate":"r_h100x8","hours":"p4_512_steps * s_step / 8 / 3600"},
+   {"id":"p5","phase":"P5","kind":"work","rate":"r_h100x8","hours":"p5_time / dt * s_step / 3600"},
+   {"id":"fs","phase":"FS","kind":"storage","usd":"fs_gib * fs_months * fs_usd_gib_month"}
+  ],
+  "scenarios": [
+   {"id":"pess","what":"0.6 s/step (3x central)","set":{"s_step":0.6}}
+  ],
+  "total_stated": 320
+ },
+ "full_scale": [
+ {"id":"record","what":"one T_L at the record R_lambda at single-node rates","usd":"usd_per_tl * pow(rl_record / rl_1024, cost_exp)","ratio_to":"usd_per_tl"}
+],
+ "outside_budget": []
+}
