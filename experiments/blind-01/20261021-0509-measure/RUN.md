@@ -44,3 +44,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 12:36Z build 5 checks: selftest exit 0
 - 12:39Z build 5 (wf run 1150, Claude first): opus built and returned (17 min); the operator's declined_if predicate misclassified the reply (descriptions, not bare paths) and the mimo understudy ran in the same folder, overwriting opus's files at 12:32Z; mimo's reply misclassified the same way; files on disk are mimo's (selftest 250/250). Predicate fixed, snapshot added, understudy accounting fixed. Build 6 Claude-first follows. The operator's diagnostic printed one third-party tool name from the on-box script (a topic-bearing word); disclosed to the owner, probe fixed.
 - 12:40Z stage build on wf.js run 3: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1019832
+- 13:04Z build 6 checks: selftest exit 0
+- 13:05Z review 2 of build 6 requested
+- 13:05Z session review2 started (model sonnet, pid 1046891, session 52bb8df2)

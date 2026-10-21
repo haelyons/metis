@@ -1,0 +1,4 @@
+Operator's mechanical findings on build 6 (no content read):
+1. Environment names read on-box that the launcher does not forward and the on-box script does not set at line start: M4_OUT_DIR (run_m4.py, environ.get), REMOTE_T and STOP_AT (onbox_m4.sh, ${REMOTE_T} and ${STOP_AT}). Verify each has a default or is set before use; the launcher forwards PRICE_USD_PER_HOUR, BUDGET_LEFT_USD, INSTANCE_TYPE, REMOTE_TIMEOUT, HF_TOKEN, LAMBDA_INSTANCE_ID, GIT_COMMIT only.
+2. Files written by the build: run_m4.py (3,719 lines) and onbox_m4.sh (191 lines) only. Selftest 253 of 253 PASS under the operator's run (out/selftest_build6.log).
+3. frozen/ONBOX_CONTRACT.md was present for this build; EXEC_NOTE.md predates it (addendum 1), so check the contract's stage order, guard arithmetic from measured rates, and atomic per-phase records as advisory items unless the directive already carries them.

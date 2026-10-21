@@ -237,7 +237,7 @@ build_checks() {   # mechanical, after the build session or wf run exits
   local others; others=$(git -C "$REPO" status --porcelain -- "$MDIR" | grep -vE "run_$TAG.py|onbox_$TAG.sh|/out/|/sessions/|RUN.md|GATE_COMMIT.md|EXEC_NOTE.md|TAG$|\.claude/|frozen/|gates/|pipeline.js|triage_workflow.js|\.last_lambda" | wc -l)
   echo "other files touched in the run dir: $others"
   bash -n "onbox_$TAG.sh" && echo "bash -n onbox: ok" || echo "bash -n onbox: SYNTAX ERROR"
-  $PY -m py_compile "run_$TAG.py" && echo "py_compile run: ok" || echo "py_compile run: ERROR"
+  $PY -m py_compile "run_$TAG.py" && echo "py_compile run: ok" || echo "py_compile run: ERROR"; rm -rf __pycache__
   timeout 300 $PY "run_$TAG.py" --selftest > "$log" 2>&1; local rc=$?
   echo "selftest: exit $rc, $(wc -l < "$log") lines; $(grep -E '^selftest: ' "$log" | tr '\n' ';')"
   grep -nE "\.keys([^(]|$)|LAMBDA_KEY|HF_KEY" "run_$TAG.py" "onbox_$TAG.sh" | wc -l | sed 's/^/mentions of key files or names in the built files (dict .keys() calls excluded): /'
@@ -274,7 +274,7 @@ review() {
   cat > "$f" <<EOF2
 You review the execution layer of one measure run (tag $TAG) before it spends money. You run nothing and edit nothing. You write exactly two files: \`$MDIR/out/review_build$n.md\` (findings, numbered; each names the file and line, the EXEC_NOTE item or standing rule it concerns, and BLOCKING or ADVISORY) and \`$MDIR/out/review_build$n.json\` (\`{"verdict": "PASS" or "FAIL", "blocking": n, "advisory": n}\`; FAIL if any finding is blocking).
 
-Read with the Read tool: \`$MDIR/EXEC_NOTE.md\`; \`$MDIR/GATE_COMMIT.md\` (the Pre-authorisation section and the latest addendum); \`$MDIR/run_$TAG.py\`; \`$MDIR/onbox_$TAG.sh\`; \`$MDIR/lambda_run_$TAG.sh\`; \`$MDIR/remote_run_$TAG.sh\`; \`$MDIR/frozen/lambda_run.sh\`; \`$MDIR/frozen/remote_run.sh\`; \`$MDIR/frozen/provenance.py\`; \`$MDIR/out/selftest_build$n.log\`; \`$MDIR/out/build${n}_return.json\`.
+Read with the Read tool: \`$MDIR/out/operator_findings_build$n.txt\` if it exists (the operator's mechanical findings: environment names read on-box that nothing forwards or sets, files touched; verify each); \`$MDIR/EXEC_NOTE.md\`; \`$MDIR/GATE_COMMIT.md\` (the Pre-authorisation section and the latest addendum); \`$MDIR/run_$TAG.py\`; \`$MDIR/onbox_$TAG.sh\`; \`$MDIR/lambda_run_$TAG.sh\`; \`$MDIR/remote_run_$TAG.sh\`; \`$MDIR/frozen/lambda_run.sh\`; \`$MDIR/frozen/remote_run.sh\`; \`$MDIR/frozen/provenance.py\`; \`$MDIR/out/selftest_build$n.log\`; \`$MDIR/out/build${n}_return.json\`.
 
 Checklist:
 1. Every EXEC_NOTE checklist item is carried by the code, item by item (name the item number for each miss).
