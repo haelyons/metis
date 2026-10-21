@@ -245,3 +245,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 21:46Z launch 8 refused by the preflight: the latest review (14, of build 23) is FAIL under the pre-addendum-18 wording of item 6. Review 15 of the same files under the restated directive requested; launch 8 follows a PASS.
 - 21:46Z review 14 of build 23 requested
 - 21:47Z stage review on wf.js run 11: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1912704
+- 21:49Z build 23 checks: selftest exit 0
+- 21:50Z review 15 (same files, item 6 as restated): PASS, 0 blocking, 6 advisory. LAUNCH 8 issued.
+- 21:50Z LAUNCH 8: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=4.51, pid 1917582, log out/launcher_m4_L8.log
