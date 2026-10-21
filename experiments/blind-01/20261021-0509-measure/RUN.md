@@ -31,3 +31,4 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 09:52Z gate 3 (addendum) requested
 - 09:52Z session gate3 started (model sonnet, pid 823171, session 0dda13c6)
 - 09:56Z session build3 started (model sonnet, pid 827027, session d14fb78e)
+- 09:57Z launcher copies written from m3's (declared points only)

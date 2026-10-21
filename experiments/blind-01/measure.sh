@@ -217,6 +217,19 @@ build_checks() {   # mechanical, after the build session exits
   timeout 300 $PY "run_$TAG.py" --selftest > "$log" 2>&1; local rc=$?
   echo "selftest: exit $rc, $(wc -l < "$log") lines; $(grep -E '^selftest: ' "$log" | tr '\n' ';')"
   grep -nE "\.keys([^(]|$)|LAMBDA_KEY|HF_KEY" "run_$TAG.py" "onbox_$TAG.sh" | wc -l | sed 's/^/mentions of key files or names in the built files (dict .keys() calls excluded): /'
+  $PY - "$MDIR" "$TAG" <<'PYEOF'
+import re, sys
+m, tag = sys.argv[1:3]
+onbox = open(f"{m}/onbox_{tag}.sh").read(); run = open(f"{m}/run_{tag}.py").read()
+used = set(re.findall(r"\$\{?([A-Z][A-Z0-9_]{2,})", onbox)) | set(re.findall(r"environ(?:\.get)?\s*[\[(]\s*['\"]([A-Z][A-Z0-9_]{2,})", run)) | set(re.findall(r"getenv\s*\(\s*['\"]([A-Z][A-Z0-9_]{2,})", run))
+std = {"HOME", "PATH", "PWD", "USER", "SHELL", "TMPDIR", "PYTHONPATH", "LD_LIBRARY_PATH", "CUDA_VISIBLE_DEVICES", "OMP_NUM_THREADS", "HF_HOME", "HF_TOKEN", "HUGGING_FACE_HUB_TOKEN", "PYTORCH_CUDA_ALLOC_CONF", "LAMBDA_INSTANCE_ID", "GIT_COMMIT", "CUDA_HOME", "NVIDIA_VISIBLE_DEVICES", "LANG", "LC_ALL", "TERM", "HOSTNAME", "RUN_DONE", "SECONDS", "RANDOM", "LINENO", "BASH_SOURCE", "EUID", "UID", "PPID", "OLDPWD", "IFS", "OPTARG", "OPTIND", "PIPESTATUS", "FUNCNAME", "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE", "TOKENIZERS_PARALLELISM", "MKL_NUM_THREADS", "OPENBLAS_NUM_THREADS", "NUMEXPR_NUM_THREADS", "CUDA_LAUNCH_BLOCKING", "HF_HUB_ENABLE_HF_TRANSFER", "TORCH_HOME", "XDG_CACHE_HOME"}
+try: launcher = open(f"{m}/lambda_run_{tag}.sh").read()
+except FileNotFoundError: launcher = ""
+fwd = set(re.findall(r"([A-Z][A-Z0-9_]{2,})=\\\"", launcher))
+local_defined = set(re.findall(r"^\s*(?:export\s+)?([A-Z][A-Z0-9_]{2,})=", onbox, re.M)) | set(re.findall(r"^\s*(?:local\s+)?([A-Z][A-Z0-9_]{2,})=", onbox, re.M))
+missing = sorted(v for v in used - std - fwd - local_defined if not v.startswith(("BASH", "SHLVL")))
+print("env read on-box: %d names; forwarded by the launcher: %s; read on-box but neither forwarded nor set there: %s" % (len(used), ",".join(sorted(fwd - {"HF_TOKEN", "LAMBDA_INSTANCE_ID", "GIT_COMMIT"})) or "-", ",".join(missing) or "none"))
+PYEOF
   $PY - "$MDIR/out/build${n}_return.json" <<'PYEOF'
 import json, sys
 try: d = json.load(open(sys.argv[1]))
@@ -272,7 +285,10 @@ s = s.replace("# m3 payload: runner, on-box batch, adapted remote bootstrap, rec
               f"# {tag} payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present.")
 s = s.replace("scp -r $SSHOPT data ubuntu@$IP:m3_run/", "[ -d data ] && scp -r $SSHOPT data ubuntu@$IP:m3_run/")
 s = s.replace("remote dir welfare_probe -> m3_run; scp payload -> m3 files", f"remote dir welfare_probe -> {tag}_run; scp payload -> {tag} files")
-s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present.")
+s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present. REMOTE_TIMEOUT forwarded to the box (declared point 4, additive) so the on-box guard can read it.")
+assert s.count('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"') == 1
+s = s.replace('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"', 'INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\" REMOTE_TIMEOUT=\\"$REMOTE_TIMEOUT\\"')
+s = s.replace("forwarded\n# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE;", "forwarded\n# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE REMOTE_TIMEOUT;")
 for a, b in (("m3_run", f"{tag}_run"), ("results_m3", f"results_{tag}"), ("run_m3.py", f"run_{tag}.py"), ("remote_run_m3.sh", f"remote_run_{tag}.sh"), ("results_m3/", f"results_{tag}/")):
     s = s.replace(a, b)
 left = re.findall(r"\bm3\b", s)

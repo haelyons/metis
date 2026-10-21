@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # PER-LAUNCH COPY for m4 (2026-10-21), made from frozen/lambda_run.sh while no box runs. Adapted ONLY at
 # the points the frozen header declares: remote dir welfare_probe -> m4_run; scp payload -> m4 files; forwarded
-# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE; remote bootstrap renamed remote_run_m4.sh; fetch paths follow
-# results_m4/. data/ shipped recursively if present. Billing-safety mechanisms byte-identical.
+# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE REMOTE_TIMEOUT; remote bootstrap renamed remote_run_m4.sh; fetch paths follow
+# results_m4/. data/ shipped recursively if present. REMOTE_TIMEOUT forwarded to the box (declared point 4, additive) so the on-box guard can read it. Billing-safety mechanisms byte-identical.
 # Local Lambda lifecycle for ONE box: launch -> poll -> scp code -> run on-box batch ->
 # fetch results -> TERMINATE. Teardown on NORMAL completion/error is guaranteed via `trap ... EXIT`;
 # a LOCAL interrupt (Ctrl-C/SIGHUP) AFTER the on-box self-destruct backstop is armed deliberately does
@@ -165,7 +165,7 @@ for s in 1 2 3; do
   # exactly one runner ($RUNNER), so there is no per-cell wrapper to carry it. Forwarding an EMPTY
   # value is safe -- the runner's ${VAR:-default} treats null as unset (and an unset VARIANT is a
   # loud FATAL there, never a guessed cell).
-  ssh $SSHOPT ubuntu@$IP "cd m4_run && rm -f RUN_DONE && setsid bash -c 'timeout $REMOTE_TIMEOUT env HF_TOKEN=\"$HF\" LAMBDA_INSTANCE_ID=\"$ID\" GIT_COMMIT=\"$GITSHA\" PRICE_USD_PER_HOUR=\"${PRICE_USD_PER_HOUR:-}\" BUDGET_LEFT_USD=\"${BUDGET_LEFT_USD:-}\" INSTANCE_TYPE=\"${INSTANCE_TYPE:-$TYPE}\" VARIANT=\"${VARIANT:-}\" MODEL=\"${MODEL:-}\" MODEL2=\"${MODEL2:-}\" BATCH_SIZE=\"${BATCH_SIZE:-}\" MAX_NEW_TOKENS=\"${MAX_NEW_TOKENS:-}\" BEHAV_SCOPE=\"${BEHAV_SCOPE:-}\" SRCDEC_FAMILY2=\"${SRCDEC_FAMILY2:-}\" SRCDEC_IT_BINARY=\"${SRCDEC_IT_BINARY:-}\" bash remote_run_m4.sh bash $RUNNER > out/run_detached.log 2>&1; echo \$? > RUN_DONE' < /dev/null > /dev/null 2>&1 &" 2>/dev/null
+  ssh $SSHOPT ubuntu@$IP "cd m4_run && rm -f RUN_DONE && setsid bash -c 'timeout $REMOTE_TIMEOUT env HF_TOKEN=\"$HF\" LAMBDA_INSTANCE_ID=\"$ID\" GIT_COMMIT=\"$GITSHA\" PRICE_USD_PER_HOUR=\"${PRICE_USD_PER_HOUR:-}\" BUDGET_LEFT_USD=\"${BUDGET_LEFT_USD:-}\" INSTANCE_TYPE=\"${INSTANCE_TYPE:-$TYPE}\" REMOTE_TIMEOUT=\"$REMOTE_TIMEOUT\" VARIANT=\"${VARIANT:-}\" MODEL=\"${MODEL:-}\" MODEL2=\"${MODEL2:-}\" BATCH_SIZE=\"${BATCH_SIZE:-}\" MAX_NEW_TOKENS=\"${MAX_NEW_TOKENS:-}\" BEHAV_SCOPE=\"${BEHAV_SCOPE:-}\" SRCDEC_FAMILY2=\"${SRCDEC_FAMILY2:-}\" SRCDEC_IT_BINARY=\"${SRCDEC_IT_BINARY:-}\" bash remote_run_m4.sh bash $RUNNER > out/run_detached.log 2>&1; echo \$? > RUN_DONE' < /dev/null > /dev/null 2>&1 &" 2>/dev/null
   sleep 8
   if ssh $SSHOPT ubuntu@$IP "test -f m4_run/out/run_detached.log" 2>/dev/null; then
     echo "[run] confirmed started (try $s)"; STARTED=1; break
