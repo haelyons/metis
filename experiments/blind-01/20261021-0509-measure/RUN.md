@@ -83,3 +83,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:05Z LAUNCH 1: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5, pid 1224740, log out/launcher_m4_L1.log
 - 15:16Z gate 8 (addendum) requested
 - 15:16Z stage gate on wf.js run 4: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1240010
+- 15:25Z build 10 checks: selftest exit 0
+- 15:26Z LAUNCH 1 of record: A100 SXM4 us-east-1, box ed3c8ab9…, 15:05:53Z to 15:14:50Z, 0.15 h, USD 0.30 est, on-box exit 2 at the install stage (pinned python packages did not install; RUN_VALID run_valid false, four endpoint records VOID), box terminated (terminate accepted, try 1). Outputs under out/launch1/. Launch 2 is the last launch allowed (owner rule: two at most). Gate addendum 8 (wf.js, claude/sonnet): 10 answers, 62 items, build 11 authorised.

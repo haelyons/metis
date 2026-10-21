@@ -1,18 +1,21 @@
-# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5), build 7 (addendum 6) and build 9 (addendum 7)
+# Execution directive for build (tag m4), revised on 2026-10-21 after the reviews of build 2 (addendum 3), build 6 (addendum 5), build 7 (addendum 6), build 9 (addendum 7) and launch 1 (addendum 8) (revised, addendum 8)
 
 Binding order: GATE_COMMIT.md answers first (the original answers 1 to 14, then addendum 3 answers B1 to B15, then addendum 5
-answers E1 to E28, then addendum 6 answers F1 to F22, then addendum 7 answers G1 to G8), this note second,
-`out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and nothing here loosens it except at the points
-item 56 names (where it states a docking command order, that order is followed, item 52). Where silent, the design record binds as
-written, GUESS values included. The build does not read GATE_COMMIT.md itself; the checklist below carries every gate change the
-build must implement. This is the measure run m4 of card seed:idea:1: one rented single-GPU box, a timer check, an anchor
+answers E1 to E28, then addendum 6 answers F1 to F22, then addendum 7 answers G1 to G8, then addendum 8 answers H1 to H10), this
+note second, `out/design_record.json` third; `frozen/ONBOX_CONTRACT.md` binds under rule 5 and nothing here loosens it except at the
+points item 56 names (where it states a docking command order, that order is followed, item 52). Where silent, the design record
+binds as written, GUESS values included. The build does not read GATE_COMMIT.md itself; the checklist below carries every gate
+change the build must implement. This is the measure run m4 of card seed:idea:1: one rented single-GPU box, a timer check, an anchor
 redocking of AAVR-PKD2 onto AAV2 against PDB 6IHB, then four inputs (AlphaFold-Multimer hours per run, MD ns/day, auxiliary hours
-per pair, storage GiB) each read against the card's own band. The cap is USD 10 for the whole run, at most two launches. Nothing
-here has run yet. Items marked `(revised, addendum 3)` changed build 2's behaviour, items marked `(revised, addendum 5)` changed
-build 6's, items marked `(revised, addendum 6)` changed build 7's, items marked `(revised, addendum 7)` change build 9's; items 55
-to 57 are new in addendum 7; items 48 to 54 came with addendum 6; items 38 to 47 came with addendum 5; items 31 to 37 came with
-addendum 3; the rest stand. Build 10 is an in-place edit of build 9 limited to what item 57 lists. Items 6, 8, 28 and 29 are
-restated in addendum 6 as single testable requirements; review judges the build against those texts.
+per pair, storage GiB) each read against the card's own band. The cap is USD 10 for the whole run, at most two launches. Launch 1
+has run: it ended in 9 minutes with exit 2 at the pip install step (the pins `openmm==8.2.0` and `openmm-cuda==8.1.1.12` cannot be
+resolved together), USD 0.30, nothing measured, void records written as the contract requires. Launch 2 is the last launch
+allowed. Items marked `(revised, addendum 3)` changed build 2's behaviour, items marked `(revised, addendum 5)` changed build 6's,
+items marked `(revised, addendum 6)` changed build 7's, items marked `(revised, addendum 7)` changed build 9's, items marked
+`(revised, addendum 8)` change build 10's; items 58 to 62 are new in addendum 8; items 55 to 57 came with addendum 7; items 48 to 54
+came with addendum 6; items 38 to 47 came with addendum 5; items 31 to 37 came with addendum 3; the rest stand. Build 11 is an
+in-place edit of build 10 limited to what item 61 lists. Items 6, 8, 28 and 29 are restated in addendum 6 as single testable
+requirements; review judges the build against those texts. (revised, addendum 8)
 
 ## Where to write
 
@@ -20,20 +23,21 @@ The run directory is `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0
 `onbox_m4.sh` there, by absolute path. Write nothing anywhere else. Read the design record at
 `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/design_record.json` and the conventions in `frozen/`
 (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does; `ONBOX_CONTRACT.md` is the binding
-execution contract). Build 10 also reads, as inputs, `out/pip_pins_openmm_listing.txt` and `out/pip_pins_check_build9.txt` (item
-33, item 57), and edits the existing `run_m4.py` and `onbox_m4.sh` of build 9 in place. `lambda_run_m4.sh` and `remote_run_m4.sh`
-are the operator's files and are not written by the build.
+execution contract). Build 11 also reads, as inputs, `out/pip_pins_openmm_listing.txt`, `out/pip_pins_check_build10_platform.txt`,
+`out/gate_report_launch1.md` and, if it exists, `out/pip_pins_openmm_cuda_requires.txt` (items 33, 58), and edits the existing
+`run_m4.py` and `onbox_m4.sh` of build 10 in place. It uses no network. `lambda_run_m4.sh` and `remote_run_m4.sh` are the operator's
+files and are not written by the build. (revised, addendum 8)
 
-## Checklist of gate changes the build must carry (57 entries)
+## Checklist of gate changes the build must carry (62 entries)
 
 1. **Order on the box.** install and downloads (with the smoke check, item 33); R1 controls (60 s sleep, empty run,
    unit-and-scale print); anchor (serial, then parallel); per-pair docking and analysis (aux timing); AlphaFold timings
    (seed-major); MD timings; storage; endpoints. A guard before every stage. (GATE_COMMIT answers 7, 14.)
 2. **Files (rule 5).** The build writes exactly `run_m4.py` and `onbox_m4.sh` in
    `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure` (absolute path), and reads the design record and
-   `frozen/` (and, for build 10 only, the two operator files named under "Where to write"). Payload shipped to the box:
+   `frozen/` (and, for build 11 only, the operator files named under "Where to write"). Payload shipped to the box:
    `run_m4.py onbox_m4.sh remote_run_m4.sh frozen/provenance.py`, and `data/` recursively if it exists, all under `~/m4_run/`.
-   Results under `~/m4_run/results_m4/out/`, which the launcher fetches. Nothing else is on the box.
+   Results under `~/m4_run/results_m4/out/`, which the launcher fetches. Nothing else is on the box. (revised, addendum 8)
 3. **Records (rule 6) (revised, addendum 5).** For each input C1 to C4 one provenance.py record
    `results_m4/out/endpoint-C<i>_tag-m4.json`; its `values` carries `measured` (a number in the card's unit: C1 h per run, C2
    ns/day, C3 h per pair, C4 GiB), `unit`, `card_value` (0.5, 129, 1, 200) and `band` ([0.2, 1.25], [51.6, 322.5], [0.3333, 3],
@@ -48,38 +52,39 @@ are the operator's files and are not written by the build.
 4. **Selftest (rule 7) (revised, addendum 3).** `python3 run_m4.py --selftest`: stdlib only, no GPU, no network, under 300 s;
    prints `selftest: N of M checks passed`, a line `selftest: files sha256 run_m4.py <hash> onbox_m4.sh <hash>` (item 36), then
    exactly `selftest: PASS` or `selftest: FAIL` as its last line; non-zero exit on FAIL. Planted cases for every parser and for
-   the gate-failure (void) path (items 21 to 29, 31, 47, 48, 49 and 55 list them).
+   the gate-failure (void) path (items 21 to 29, 31, 47, 48, 49, 55, 58, 59 and 60 list them).
 5. **Secrets (rule 8) (revised, addendum 3).** Nothing reads `.keys`; nothing prints its environment (no `env`, `printenv` or
    `set` dump; `env.txt` lists only named non-secret variables); `HF_TOKEN` is used by downloads only: `onbox_m4.sh` unsets
    `HF_TOKEN` and `HUGGING_FACE_HUB_TOKEN` after the downloads, and `run_tool` gives every child a copied environment with both
    removed. Selftest: a planted environment with both variables gives a child environment without them. (B7)
-6. **Labels (rule 9) (revised, addendum 6; restated as one requirement).** The runner keeps one constant, `REQUIRED_LABEL_KEYS`,
-   mapping each record kind it writes through provenance.py (anchor, C1, C2, C3, C4, sleep control, empty-run control,
-   unit-and-scale) to the keys that its `values.machine` (and, for C records and the anchor, `values.engine`) must hold. A key is
-   never omitted: a value that cannot be had is null and `values.null_reasons[<key>]` is a non-empty string. Taken together the
-   lists for every kind cover these nine labels, each by at least one key whose name contains the stated word: instance type
-   (`instance`), GPU name (`gpu`), driver (`driver`), CUDA runtime version (`cuda`: the driver's "CUDA Version" from the nvidia-smi
-   header, parsed, plus the JAX CUDA plugin package version), engine versions (`version`), build flags (`flags` or `tags`:
-   AlphaFold implementation and its parameter archive sha256, JAX, jaxlib and CUDA-plugin versions and wheel build tags, docking
-   code and version, MD engine, version, precision and platform), start and end wall-clock (`start`, `end`: UTC, of the stage or
-   run that produced the value, not the record's write time), price per hour (`price`). The control kinds need only the
-   machine-level keys (instance, GPU, driver, CUDA, start, end, price); the anchor and C kinds need all. Every C record also
-   carries "stand-in pairs built from 6IHB chains, not the card's pairs", "one GPU; one box; 3 pairs; no multi-GPU scaling" and
-   `n`. C1 adds "no-MSA: alignment search time excluded; understates the card's setting"; C2 the atom count of each complex, the
-   engine precision, platform and version, `timestep_fs`, `production_ns` and the per-complex wall-clock and engine rates; C3
-   "producer's reading of aux hours"; C4 "linear in runs; intermediates kept; MD length 0.5 ns". The anchor adds
-   `independent_code: "not run: single docking code"`. Every record written after a guard, ceiling or timeout stop carries
-   "incomplete run: unmeasured inputs are VOID, not holding" (item 35). Planted selftest case: the selftest flow writes every
-   record kind, and for each asserts that every key in `REQUIRED_LABEL_KEYS[kind]` is present, that every null has a reason, and
-   that the nine-label coverage holds; a planted record with one key removed fails the check, and a planted null without a reason
-   fails it. (E10, E11, F20)
-7. **Nothing interactive; downloads; command (rule 10) (revised, addendum 6).** No prompts anywhere; `sudo` only for declared apt
-   packages (the build declares them in `onbox_m4.sh`, `python3-venv` among them), called as
-   `sudo -n env DEBIAN_FRONTEND=noninteractive apt-get ...`; `apt-get update` called the same way is allowed as the first step of
-   those installs and no other sudo call is (B11, E20); downloads only from the sources in item 14, URL and sha256 recorded for
-   each (pip and apt too, item 34); no unrecorded download, so `pip install --upgrade pip` is not used; the one pip bootstrap
-   allowed is the recorded one of item 50 (F14); the on-box command the build returns (`onbox_command`) is one line the operator
-   runs verbatim through `remote_run_m4.sh`.
+6. **Labels (rule 9) (revised, addendum 6; restated as one requirement; sourcing of versions revised, addendum 8).** The runner
+   keeps one constant, `REQUIRED_LABEL_KEYS`, mapping each record kind it writes through provenance.py (anchor, C1, C2, C3, C4,
+   sleep control, empty-run control, unit-and-scale) to the keys that its `values.machine` (and, for C records and the anchor,
+   `values.engine`) must hold. A key is never omitted: a value that cannot be had is null and `values.null_reasons[<key>]` is a
+   non-empty string. Taken together the lists for every kind cover these nine labels, each by at least one key whose name contains
+   the stated word: instance type (`instance`), GPU name (`gpu`), driver (`driver`), CUDA runtime version (`cuda`: the driver's
+   "CUDA Version" from the nvidia-smi header, parsed, plus the JAX CUDA plugin package version), engine versions (`version`), build
+   flags (`flags` or `tags`: AlphaFold implementation and its parameter archive sha256, JAX, jaxlib and CUDA-plugin versions and
+   wheel build tags, docking code and version, MD engine, version, precision and platform), start and end wall-clock (`start`,
+   `end`: UTC, of the stage or run that produced the value, not the record's write time), price per hour (`price`). Every engine
+   and plugin version in these labels comes from the pip report of this run or from the installed distribution's metadata read
+   after the install, never from a constant default; item 60. The control kinds need only the machine-level keys (instance, GPU,
+   driver, CUDA, start, end, price); the anchor and C kinds need all. Every C record also carries "stand-in pairs built from 6IHB
+   chains, not the card's pairs", "one GPU; one box; 3 pairs; no multi-GPU scaling" and `n`. C1 adds "no-MSA: alignment search
+   time excluded; understates the card's setting"; C2 the atom count of each complex, the engine precision, platform and version,
+   `timestep_fs`, `production_ns` and the per-complex wall-clock and engine rates; C3 "producer's reading of aux hours"; C4
+   "linear in runs; intermediates kept; MD length 0.5 ns". The anchor adds `independent_code: "not run: single docking code"`.
+   Every record written after a guard, ceiling or timeout stop carries "incomplete run: unmeasured inputs are VOID, not holding"
+   (item 35). Planted selftest case: the selftest flow writes every record kind, and for each asserts that every key in
+   `REQUIRED_LABEL_KEYS[kind]` is present, that every null has a reason, and that the nine-label coverage holds; a planted record
+   with one key removed fails the check, and a planted null without a reason fails it. (E10, E11, F20, H3)
+7. **Nothing interactive; downloads; command (rule 10) (revised, addendum 6 and addendum 8).** No prompts anywhere; `sudo` only for
+   declared apt packages (the build declares them in `onbox_m4.sh`: `python3-venv`, `aria2`, `curl`, `build-essential` and
+   `python3-dev`, exactly these five, item 59), called as `sudo -n env DEBIAN_FRONTEND=noninteractive apt-get ...`; `apt-get
+   update` called the same way is allowed as the first step of those installs and no other sudo call is (B11, E20); downloads only
+   from the sources in item 14, URL and sha256 recorded for each (pip and apt too, item 34); no unrecorded download, so `pip install
+   --upgrade pip` is not used; the one pip bootstrap allowed is the recorded one of item 50 (F14); the on-box command the build
+   returns (`onbox_command`) is one line the operator runs verbatim through `remote_run_m4.sh`.
 8. **Broken infrastructure (rule 4) (revised, addendum 6; restated as one requirement).** Ubuntu 22.04, CUDA 12.8, driver 570,
    python 3.10, torch 2.7 are preinstalled; anything else is installed by `onbox_m4.sh` inside the time cap. Every outcome maps to
    exactly one row of this table, and the table is the only source of exit code, `run_valid` and `RUN_DONE` status:
@@ -101,9 +106,10 @@ are the operator's files and are not written by the build.
 9. **Caps (rules 1, 2) (revised, addendum 5).** `onbox_m4.sh` reads `PRICE_USD_PER_HOUR`, `BUDGET_LEFT_USD` and `REMOTE_TIMEOUT`
    from its environment, with no default that exceeds `BUDGET_LEFT_USD=5` or `REMOTE_TIMEOUT=7200`, and stops cleanly, writing a
    void record for unfinished work, before projected spend reaches `BUDGET_LEFT_USD` or elapsed time reaches `REMOTE_TIMEOUT`.
-   Hard cap USD 10 for the run, at most two launches. It records the `REMOTE_TIMEOUT` it sees in `env.txt` and
-   `m4_summary.json`; if unset it uses 7200 and labels "REMOTE_TIMEOUT not forwarded; default 7200 used" (item 37). Elapsed
-   time counts from the start of the bootstrap (item 44). Both launches run with `REMOTE_TIMEOUT=7200` exactly (G2). (B4, E19)
+   Hard cap USD 10 for the run, at most two launches (launch 1 spent USD 0.30; launch 2 is the last, item 62). It records the
+   `REMOTE_TIMEOUT` it sees in `env.txt` and `m4_summary.json`; if unset it uses 7200 and labels "REMOTE_TIMEOUT not forwarded;
+   default 7200 used" (item 37). Elapsed time counts from the start of the bootstrap (item 44). Both launches run with
+   `REMOTE_TIMEOUT=7200` exactly (G2). (B4, E19)
 10. **Scope (rule 3).** Measure the inputs on the card's own protocol; no production phase, no 54-run pilot, no 216-run grid;
     anchor first; a missed anchor voids the inputs (run_valid false propagates to every later record).
 11. **Gate scope (answer 1) (revised, addendum 5).** The card's gate (`af2_h_per_run <= 1`) is applied to C1 only: C1 values carry
@@ -124,8 +130,9 @@ are the operator's files and are not written by the build.
     figure when the log gives per-model times. The parameter files are in place before any timed call (items 39 and 51), so no
     download or extraction time can enter the call.
 14. **Allowed download sources (answer 3).** The PDB entry 6IHB from RCSB; the AlphaFold parameter archive from the
-    AlphaFold project's own storage address; Python wheels through pip and declared packages through apt. Each URL and sha256
-    recorded. Any other host is not allowed; a failed download stops the run (item 8).
+    AlphaFold project's own storage address; Python wheels and source distributions through pip (the `lightdock` sdist and the
+    build requirements pip fetches for it, item 59) and declared packages through apt. Each URL and sha256 recorded. Any other host
+    is not allowed; a failed download stops the run (item 8). (revised, addendum 8)
 15. **Auxiliary hours (answer 4).** aux_h_per_pair = per pair wall-clock hours of docking, interface analysis (contacts at
     4.5 A, interface residues, distance to the nearest threefold axis, site class) and writing the call-table row; installs,
     downloads and setup excluded; mean over the finished pairs (3 if all finish). One pip-installable docking code, name and
@@ -147,7 +154,7 @@ are the operator's files and are not written by the build.
     (0). ns/day from the engine's rate line (the reporter file, item 41) and, separately, from production steps x timestep over
     the wall-clock of the production segment; the decision value is the median over complexes of the wall-clock figure; if the two
     disagree by more than 5 percent every ns/day is labelled "engine rate and wall-clock disagree" and both are reported. Atom
-    count outside the range: C2 VOID, the range is not widened.
+    count outside the range: C2 VOID, the range is not widened. The OpenMM release is the one of item 58, recorded as installed.
 18. **Marginal rule (GATE_COMMIT instrument queue).** A value within 10 percent of a band edge (`edge x 0.9` to `edge x 1.1`) is
     decision VOID with `marginal: true`; the raw value is kept in `measured`.
 19. **Non-A100 GPU (design, does_not_test).** If the GPU is not an A100 (instance fallback), C1 and C2 are VOID with the raw
@@ -214,13 +221,14 @@ are the operator's files and are not written by the build.
     `onbox_m4.sh` is bounded by `min(its own limit, 1,800 - install seconds used)`; the third term, `REMOTE_TIMEOUT - elapsed -
     500`, is not required of the shell (revised, addendum 7: it cannot bind at `REMOTE_TIMEOUT=7200`, which both launches use);
     `apt-get update` may retry (at most 10 tries, 15 s apart), each try under its own `timeout`, the whole loop at most 300 s (F7).
-    Docking: a pair that reaches 250 s is kept as a row with `truncated: true`, is not counted in the mean, and the loop
-    continues with the next pair until the stage allowance is gone (F4); C3 is decided if at least 2 pairs finished, else VOID. A
-    later stage that hits its ceiling stops and its unfinished inputs are `unmeasured_by_stop`. Planted: `allowance` with
-    REMOTE_TIMEOUT 7,200 gives install 1,800 at elapsed 0, AlphaFold 700 at elapsed 6,000 (7,200 - 6,000 - 500) and 0 at elapsed
-    6,800 (clamped, not negative, stage not started); install calls with limits 1,000, 1,000 and 1,000 get 1,000, 800 and 0 (the
-    third is not started and the stage is exit 2); docking with pair 1 capped and pairs 2 and 3 finished attempts all 3 pairs, n=2,
-    C3 decided, and with pairs 1 and 2 capped attempts all 3, n=1, C3 VOID. (E2, F4, F7, F8, F20, G2)
+    The build of the `lightdock` sdist (item 59) runs inside the pip call and so inside the install total. Docking: a pair that
+    reaches 250 s is kept as a row with `truncated: true`, is not counted in the mean, and the loop continues with the next pair
+    until the stage allowance is gone (F4); C3 is decided if at least 2 pairs finished, else VOID. A later stage that hits its
+    ceiling stops and its unfinished inputs are `unmeasured_by_stop`. Planted: `allowance` with REMOTE_TIMEOUT 7,200 gives install
+    1,800 at elapsed 0, AlphaFold 700 at elapsed 6,000 (7,200 - 6,000 - 500) and 0 at elapsed 6,800 (clamped, not negative, stage
+    not started); install calls with limits 1,000, 1,000 and 1,000 get 1,000, 800 and 0 (the third is not started and the stage is
+    exit 2); docking with pair 1 capped and pairs 2 and 3 finished attempts all 3 pairs, n=2, C3 decided, and with pairs 1 and 2
+    capped attempts all 3, n=1, C3 VOID. (E2, F4, F7, F8, F20, G2)
 29. **Gate-failure and guard-stop paths (answers 8, 13, 14; revised, addendum 6; restated as one requirement).** A stop is exactly
     one of: guard refusal to start a stage or unit, a stage ceiling, a tool call exceeding its allowance, the outer timeout. A
     failure (exit 2) and an anchor miss (exit 4) are not stops. When a stop happens, all six hold, and each has a planted flow in
@@ -238,16 +246,17 @@ are the operator's files and are not written by the build.
     gate result and the fallback text (item 11); carries no decision of its own; carries the label "seed spread high; mean is
     uncertain" for any pair with relative SD over 50 percent; and carries the full "incomplete run" label after an early stop. No
     relaunch is made for spread. Selftest reads the written file as text and checks the first key. (E9)
-31. **Stage-flow selftest (new, addendum 3, B15; revised, addendum 6).** `run_stages` takes its stage functions and tool runner by
-    injection; the selftest runs the whole flow with fakes and asserts exit code, run_valid, per-input decisions, labels and the
-    `RUN_DONE` status strings of item 8 for: (a) all stages finish: exit 0, run_valid true; (b) a time-guard stop in AlphaFold
-    after 2 of 9 runs: exit 3, run_valid true, C1 VOID with raw rows kept, C2 to C4 decided; (c) a tool timeout in MD on the
-    third complex: exit 3, run_valid true, C2 decided on n=2, others untouched; (d) a ceiling stop in docking: exit 3, C3 decided
-    on the finished pairs or VOID below 2; (e) a real tool failure: exit 2, run_valid false, all undecided inputs
+31. **Stage-flow selftest (new, addendum 3, B15; revised, addendum 6 and addendum 8).** `run_stages` takes its stage functions and
+    tool runner by injection; the selftest runs the whole flow with fakes and asserts exit code, run_valid, per-input decisions,
+    labels and the `RUN_DONE` status strings of item 8 for: (a) all stages finish: exit 0, run_valid true; (b) a time-guard stop
+    in AlphaFold after 2 of 9 runs: exit 3, run_valid true, C1 VOID with raw rows kept, C2 to C4 decided; (c) a tool timeout in MD
+    on the third complex: exit 3, run_valid true, C2 decided on n=2, others untouched; (d) a ceiling stop in docking: exit 3, C3
+    decided on the finished pairs or VOID below 2; (e) a real tool failure: exit 2, run_valid false, all undecided inputs
     `void_by_failure`; (f) anchor miss: exit 4, run_valid false, C1 to C4 `void_by_anchor_miss`; (g) sleep failure: exit 2; (h)
-    install, smoke-check and download failure: exit 2; (i) the outer-timeout route (rc 124): exit 3, run_valid true. Addendum 5
-    adds: (j) docking timeout in the anchor: exit 3, anchor undecided; (k) docking with no parsable pose: exit 2, run_valid
-    false; (l) not-an-A100 or zero spread with no stop: exit 0 with the VOIDs.
+    install, smoke-check and download failure: exit 2, with an anchor VOID record "anchor stage not reached" present (item 54);
+    (i) the outer-timeout route (rc 124): exit 3, run_valid true. Addendum 5 adds: (j) docking timeout in the anchor: exit 3,
+    anchor undecided; (k) docking with no parsable pose: exit 2, run_valid false; (l) not-an-A100 or zero spread with no stop:
+    exit 0 with the VOIDs.
 32. **Process groups and outer timeout (new, addendum 3, B12; revised, addendum 6).** Every tool call (colabfold, the docking
     code, the OpenMM worker) runs in its own process group and a timeout kills the group; when the outer `timeout` on
     `run_m4.py` returns 124, or 137 with elapsed time since T0 at least the outer deadline minus 5 s, `onbox_m4.sh` kills the
@@ -260,27 +269,25 @@ are the operator's files and are not written by the build.
     700) so the inner fires first; an outer firing is itself a recorded event. Selftest: a planted tool that sleeps past its
     allowance is killed with its child and the result is a ceiling stop; planted rc 137 at the deadline gives exit 3, at 100 s
     exit 2; a stale pgid entry with a different start time is not signalled; the shell-level rc 124 flow of item 48. (E23, F1)
-33. **Smoke check in the install stage (new, addendum 3, B6; revised, addendum 6 and addendum 7).** After every install and inside
-    the 1,800 s install ceiling: import of the AlphaFold-Multimer stack and JAX with a GPU device listed; `colabfold_batch
-    --help`; the docking code's entry point `--help` and its conformation-generating script's `--help` (item 52); OpenMM imported
-    with `Platform.getPlatformByName("CUDA")` succeeding; and each tool resolved by `shutil.which` against the venv PATH with its
-    absolute path recorded (item 38). A failure is exit 2 with a void record before any GPU stage. Every package is pinned in the
-    install line as `name==version` (extras in brackets allowed, except for OpenMM). The OpenMM requirement is written as two
-    pinned entries: the plain OpenMM distribution at the pinned version and a sibling pinned requirement whose distribution name
-    starts `openmm-cuda`; a bracketed extra on the OpenMM entry is not accepted, because the pinned release declares none (the
-    operator's index check of build 9 found `extra cuda12 not in []`). The sibling's name and version are taken from the
-    operator's listing `out/pip_pins_openmm_listing.txt`, read as an input, and never from memory or the network; if that
-    listing shows no `openmm-cuda*` distribution the build changes nothing and returns that statement (the gate then rules
-    again). Which form was chosen is stated in a comment on `PIP_PINS`, with the listing's file name. colabfold takes the form
-    whose metadata carries what the smoke check imports, with a JAX build compatible with the pinned `colabfold`, without
-    substituting a tool. The smoke check decides in the box; the operator's metadata check decides before launch 1. No trial
-    docking is run in the install stage. Planted: a `PIP_PINS` parser case in which the OpenMM requirement has an `openmm-cuda*`
-    sibling passes, an OpenMM entry carrying a bracketed extra fails, and an entry without `==` fails the selftest. (E12, E13,
-    F6, G1)
+33. **Smoke check in the install stage (new, addendum 3, B6; revised, addendum 6, addendum 7 and addendum 8).** After every install
+    and inside the 1,800 s install ceiling: import of the AlphaFold-Multimer stack and JAX with a GPU device listed;
+    `colabfold_batch --help`; the docking code's entry point `--help` and its conformation-generating script's `--help` (item 52);
+    OpenMM imported with `Platform.getPlatformByName("CUDA")` succeeding; and each tool resolved by `shutil.which` against the venv
+    PATH with its absolute path recorded (item 38). A failure is exit 2 with a void record before any GPU stage. Every package is
+    pinned in the install line as `name==version` (extras in brackets allowed, except for OpenMM). The OpenMM requirement is two
+    pinned entries, the plain `openmm` distribution and a sibling whose distribution name starts `openmm-cuda`, as a pair that
+    resolves together; a bracketed extra on the OpenMM entry is not accepted, because the pinned release declares none. Which
+    pair, and from what evidence, is item 58 (the pair `openmm==8.2.0` with `openmm-cuda==8.1.1.12` of build 10 failed to
+    resolve in launch 1 and is withdrawn). Which form was chosen is stated in a comment on `PIP_PINS`, with the evidence file's
+    name. colabfold takes the form whose metadata carries what the smoke check imports, with a JAX build compatible with the
+    pinned `colabfold`, without substituting a tool. The smoke check decides in the box; the operator's joint resolution (item 62)
+    decides before launch 2. No trial docking is run in the install stage. Planted: a `PIP_PINS` parser case in which the OpenMM
+    requirement has an `openmm-cuda*` sibling passes, an OpenMM entry carrying a bracketed extra fails, an entry without `==`
+    fails the selftest, and the pair rule of item 58 holds. (E12, E13, F6, G1, H1)
 34. **Downloads recorded in full (new, addendum 3, B13; revised, addendum 5).** pip installs run with `--report`; the report (URL
-    and archive hash of each wheel) is kept under `results_m4/out/` and its sha256 is cited in every record's `inputs` (E24); each
-    apt package is recorded with version and the SHA256 from `apt-cache show`; the direct downloads keep URL and sha256; the pip
-    bootstrap of item 50, when it runs, is recorded the same way.
+    and archive hash of each wheel or sdist) is kept under `results_m4/out/` and its sha256 is cited in every record's `inputs`
+    (E24); each apt package is recorded with version and the SHA256 from `apt-cache show`; the direct downloads keep URL and
+    sha256; the pip bootstrap of item 50, when it runs, is recorded the same way.
 35. **Incomplete-run label (new, addendum 3, B9).** The constant "incomplete run: unmeasured inputs are VOID, not holding" exists
     beside `LABEL_UNMEASURED = "unmeasured, not holding"`; every record and the summary written after a guard, ceiling or
     timeout stop carries the full label. Selftest: a planted early-stopped run's records all contain it.
@@ -291,6 +298,7 @@ are the operator's files and are not written by the build.
 37. **Launcher and REMOTE_TIMEOUT (new, addendum 3, B4; operator's change, listed so the build relies on it).** `lambda_run_m4.sh`
     forwards `REMOTE_TIMEOUT` with `PRICE_USD_PER_HOUR`, `BUDGET_LEFT_USD` and `INSTANCE_TYPE`; the build does not write it. The
     build's two files read the variable, never default above 7200, record the value seen (item 9), and label an unset value.
+    Launch 1 confirmed it: the summary shows `remote_timeout_seen_s` 7200.0 and `remote_timeout_forwarded` true. (revised, addendum 8)
 38. **Tools resolve through the venv (new, addendum 5, E1, E12, E14).** `onbox_m4.sh` exports `PATH="${VENV}/bin:${PATH}"` before
     the first stage; `run_m4.py` builds `child_env` with the venv bin directory (taken from `sys.executable`'s directory) first
     and calls `colabfold_batch`, `lightdock3.py`, `lightdock3_setup.py` and `lgd_*` by absolute venv path where it can; an
@@ -334,8 +342,8 @@ are the operator's files and are not written by the build.
     pre-T0 seconds go to `env.txt` and the summary. `STOP_AT` and elapsed time use this T0. Selftest: a planted `etimes` value
     moves T0; garbage takes the default and the label.
 45. **Caches under the run directory (new, addendum 5, E20).** `PIP_CACHE_DIR`, `XDG_CACHE_HOME`, `MPLCONFIGDIR`, `TMPDIR` and
-    any JAX or colabfold cache variable the build sets point under `~/m4_run/`. The frozen bootstrap's `~/.local` installs are
-    the operator's and are not the build's to change.
+    any JAX or colabfold cache variable the build sets point under `~/m4_run/`. The frozen bootstrap's `~/.local` installs (and
+    the warnings they print) are the operator's and are not the build's to change (H7).
 46. **Exit-code vocabulary in `RUN_DONE` (new, addendum 5, E22; revised, addendum 6).** `RUN_DONE` carries the exit code and, per
     input C1 to C4, exactly one status of the item 8 table: `decided`, `void_by_rule:<reason>`, `unmeasured_by_stop:<stop kind>`,
     `void_by_anchor_miss` or `void_by_failure:<kind>`, so A2(a), A2(b) and A2(c) are readable from it alone. After exit 4 no input
@@ -408,13 +416,18 @@ are the operator's files and are not written by the build.
 53. **Spend report (new, addendum 6, F10).** `estimated_spend_usd` = seconds since T0 x `PRICE_USD_PER_HOUR` / 3,600; the pre-T0
     seconds are reported beside it and not added (T0 already includes the bootstrap, item 44). Selftest: 3,600 s since T0 with 300
     s pre-T0 gives 1.99 (not 2.16), and 7,200 s gives 3.98.
-54. **The shell's void records carry the rule-6 keys (new, addendum 6, F11; revised, addendum 7).** The shell's minimal void (item
-    8, row 1, and the code-3 route of item 48) writes `env.txt` (named non-secret variables, including the `REMOTE_TIMEOUT`
-    seen), `m4_summary.json` (first key `what_this_run_decides`), an anchor record and C1 to C4 records each with the
-    provenance.py keys, `values.measured` null, `values.unit`, `values.card_value`, `values.band`, `decision` VOID and
-    `run_valid` per item 48(b), plus `RUN_VALID.json` and `RUN_DONE`; a record that already decided on disk is not written
+54. **The shell's and the runner's void records carry the rule-6 keys (new, addendum 6, F11; revised, addendum 7 and addendum
+    8).** The shell's minimal void (item 8, row 1, and the code-3 route of item 48) writes `env.txt` (named non-secret variables,
+    including the `REMOTE_TIMEOUT` seen), `m4_summary.json` (first key `what_this_run_decides`), an anchor record and C1 to C4
+    records each with the provenance.py keys, `values.measured` null, `values.unit`, `values.card_value`, `values.band`, `decision`
+    VOID and `run_valid` per item 48(b), plus `RUN_VALID.json` and `RUN_DONE`; a record that already decided on disk is not written
     again and is not shown as void (item 55). It writes through `frozen/provenance.py` when that imports under the system
-    `python3` (stdlib), else by hand with the same keys. Selftest: the item 48 flows read these files and check the keys.
+    `python3` (stdlib), else by hand with the same keys. The runner does the same on every exit-2 and exit-3 path it ends
+    on: launch 1's runner wrote C1 to C4 and no anchor record, so the runner also writes
+    `endpoint-anchor_tag-m4.json` as a VOID record with `run_valid` as the run has it, `measured` null with
+    `null_reasons.measured` "anchor stage not reached" when the anchor was not run, `published`, `tolerance` and the keys of item 3
+    (H5). Selftest: the item 48 flows read these files and check the keys; the install-failure flow of item 31 (h) asserts the
+    anchor record exists with them.
 55. **The shell's void path keeps decided inputs decided (new, addendum 7, G4).** When `write_minimal_void` runs (the runner
     died or never started, so no `RUN_DONE`), it first reads each C<i> record already on disk. A record with decision PASS or
     FAIL, or VOID with `marginal` or a rule reason, is `decided` or `void_by_rule:<reason>` in `RUN_VALID.json`
@@ -430,51 +443,99 @@ are the operator's files and are not written by the build.
     the per-run environment file is `env.txt` and no `env_<tag>.json` is required. Every other contract item (stage order,
     guards, record fields, selftest contract, failure checks) stays binding. Review checks against the contract with this item
     applied and does not cite these four points. No build change.
-57. **Build 10 scope (new, addendum 7, G6).** Build 10 is an in-place edit of build 9's `run_m4.py` and `onbox_m4.sh`, limited to:
-    the OpenMM change to `PIP_PINS` and its comment (item 33); the `write_minimal_void` change (item 55); the selftest cases those
-    two changes need (the `PIP_PINS` parser case of item 33, the two shell flows of item 55); and the selftest's count and hash
-    lines, which move. Every other line stays as build 9 has it; nothing is refactored, renamed or reordered. The build's return
-    states the real line counts, the two sha256 values (item 36), the new selftest count, and the exact lines changed. A changed
-    line outside this list is a blocking finding.
+57. **Build 10 scope (new, addendum 7, G6; superseded by item 61, addendum 8).** Build 10 was an in-place edit of build 9 limited to
+    the OpenMM change to `PIP_PINS` (item 33), the `write_minimal_void` change (item 55) and their selftest cases. It is built
+    (selftest 677 of 677) and ran as launch 1. Its `PIP_PINS` pair was wrong (item 58); everything else in it is accepted as it ran,
+    including the void path (H5). Build 11 is bounded by item 61, not by this item. (revised, addendum 8)
+58. **The OpenMM pair (new, addendum 8, H1).** `PIP_PINS` carries the nine entries of build 10 with the OpenMM pair replaced; the
+    other seven stay exactly: `jax==0.4.35`, `jaxlib==0.4.35`, `jax-cuda12-plugin==0.4.35`, `jax-cuda12-pjrt==0.4.35`,
+    `colabfold==1.5.5`, `alphafold-colabfold==2.3.6`, `lightdock==0.9.4`. The pair is `openmm==8.1.1` with `openmm-cuda==8.1.1.12`
+    (the gate's inference: pip said `openmm-cuda==8.1.1.12` does not accept 8.2.0, and the sibling's version reads as OpenMM 8.1.1
+    build 12), unless the operator file `out/pip_pins_openmm_cuda_requires.txt` exists: then the plain `openmm` pin is the exact
+    version that file says `openmm-cuda==8.1.1.12` requires, provided the file shows that release has a CPython 3.10 manylinux
+    x86_64 wheel; if the file names no exact version or no box wheel, the build changes nothing in `PIP_PINS`, returns a statement
+    saying so, and the gate rules again (no launch). The build uses no network, guesses no other name or version, and keeps every
+    entry `name==version`. The comment on `PIP_PINS` says which branch was taken, that the pair is a choice, the evidence file's name
+    (and, on the inference branch, that it is the gate's inference awaiting the operator's joint resolve), and names
+    `out/gate_report_launch1.md`. The OpenMM release is not fixed by the design: the installed version is recorded (item 6). Selftest:
+    the `PIP_PINS` parser case asserts that the `openmm` pin's version equals the version quoted in the comment as the one
+    `openmm-cuda` requires, rejects a bracketed extra on OpenMM, rejects an entry without `==`, rejects an `openmm-cuda*` entry
+    without a plain `openmm` entry, and accepts the planted good pair. (H1)
+59. **Declared apt packages and the sdist build (new, addendum 8, H2).** `lightdock==0.9.4` has no wheel for CPython 3.10 Linux
+    x86_64 and is built by pip from its sdist inside the venv. `onbox_m4.sh` therefore declares exactly five apt packages,
+    `python3-venv aria2 curl build-essential python3-dev`, installed in the one declared apt call with the bounds of item 28, each
+    recorded with version and the SHA256 from `apt-cache show` (item 34). pip builds the sdist with its default build isolation
+    (the build requirements come through pip from the index); the pip report records the sdist's URL and hash. No
+    `--no-build-isolation`, no other compiler package, no second source; a failed build is exit 2 (item 8). The smoke check of item
+    33 decides that the built package works. Selftest: the apt list parsed from the shell's text equals those five names exactly;
+    a sixth name, or a missing one, fails. (H2)
+60. **Engine versions come from the install, never from a default (new, addendum 8, H3).** Launch 1's void records named
+    `jax_version`, `jaxlib_version` and `jax_cuda_plugin_version` "0.6.0" and `cuda_plugin_version` "0.6.0" although the pins are
+    0.4.35 and nothing installed. Build 11 reads each of these (and the OpenMM, docking and wheel-build-tag values) only from the
+    pip report of this run or from the installed distribution's metadata after the install; a value that cannot be had is null with
+    a non-empty `null_reasons` entry ("not installed: the install stage failed" on a void path). No constant stands in as a
+    default. Selftest: a planted pip report naming `jax 0.4.35` gives `jax_version` "0.4.35" in a C record; a planted failed-install
+    state gives null with a reason for each of the four keys. (H3)
+61. **Build 11 scope (new, addendum 8, H10).** Build 11 is an in-place edit of build 10's `run_m4.py` and `onbox_m4.sh`, limited to:
+    the `PIP_PINS` pair and its comment (item 58); the declared apt list (item 59); the engine and plugin version labels (item
+    60); the anchor VOID record on the runner's exit-2 and exit-3 paths (item 54); the selftest cases those changes need (items 54,
+    58, 59, 60); and the selftest's count and hash lines, which move. Every other line stays as build 10 has it; nothing is
+    refactored, renamed or reordered. The build's return states the real line counts, the two sha256 values (item 36), the new
+    selftest count (build 10: 677 of 677) and the exact lines changed. A changed line outside this list is a blocking finding in
+    review 6. (H10)
+62. **Launch 2 is the last, and what stands before it (new, addendum 8, H4, H9).** Launch 1 ended with exit 2 at the pip install
+    step, USD 0.30, nothing decided. Launch 2 is authorised on A2(a) only if: build 11 exists and its selftest passes with the two
+    sha256 values matching the files on disk (item 36); review 6 reports zero blocking findings, had `frozen/ONBOX_CONTRACT.md` on
+    its read list with item 56 applied, and states that build 11's diff against build 10 is limited to item 61; the operator's joint
+    resolution of the whole `PIP_PINS` list in one clean CPython 3.10 Linux x86_64 environment (`pip install --dry-run --report`)
+    and the local build of the `lightdock==0.9.4` sdist into a wheel both passed and are in RUN.md and
+    `out/pip_pins_resolve_build11.txt` (an index check that only tests that each release exists is not enough); the launch
+    environment is unchanged (Box). No third launch exists; a second failure ends the run as unmeasured and what follows is the
+    owner's decision. Total spend if launch 2 runs to its caps: 0.30 + 4.31 = USD 4.61, under the USD 10 cap. (H4, H9)
 
 ## Box
 
 - Instance: `gpu_1x_a100_sxm4` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity; else the cheapest single GPU
-  with capacity at no more than USD 2.50/h; the operator records which.
+  with capacity at no more than USD 2.50/h; the operator records which. Launch 1 ran on `gpu_1x_a100_sxm4` (A100-SXM4-40GB,
+  driver 570.148.08, CUDA 12.8, python 3.10.12). (revised, addendum 8)
 - Launcher (revised, addendum 6): the operator's per-launch copy `lambda_run_m4.sh` (made from `frozen/lambda_run.sh` at the
   header's declared points only; the header declares the four added variables, any added fetch line, such as the one for
   `results_m4/out/RUN_VALID.json`, and the changed `REMOTE_TIMEOUT` default of 7200): remote dir `m4_run/`; payload `run_m4.py
   onbox_m4.sh remote_run_m4.sh frozen/provenance.py` and `data/` recursively if it exists; forwarded env `PRICE_USD_PER_HOUR
   BUDGET_LEFT_USD REMOTE_TIMEOUT INSTANCE_TYPE`; fetch from `m4_run/results_m4/out/`. `remote_run_m4.sh` is
   `frozen/remote_run.sh` with only its `cd` line changed to `~/m4_run`; its bootstrap time is counted by the build (item 44).
-- Caps (revised, addendum 7): `REMOTE_TIMEOUT=7200` exactly for both launches (a smaller value is not authorised, G2);
-  `BUDGET_LEFT_USD=5` per launch; `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, on the fallback); two
-  launches at most within USD 10.
-- Before launch 1 the operator repeats the package-index check on every `PIP_PINS` requirement of build 10 and writes the result
-  into RUN.md (G8).
+  Both files stay as launch 1 used them (H8).
+- Caps (revised, addendum 7 and addendum 8): `REMOTE_TIMEOUT=7200` exactly for both launches (a smaller value is not authorised,
+  G2); `BUDGET_LEFT_USD=5` per launch; `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, on the fallback); two
+  launches at most within USD 10, of which one is spent (USD 0.30) and one remains (item 62).
+- Before launch 2 the operator resolves the whole `PIP_PINS` list of build 11 jointly and builds the `lightdock` sdist, and
+  writes both results into RUN.md (item 62; supersedes G8's existence check, which tested each pin alone). (revised, addendum 8)
 - Payload layout on the box: `~/m4_run/run_m4.py`, `~/m4_run/onbox_m4.sh`, `~/m4_run/frozen/provenance.py`, `~/m4_run/data/...`
   if shipped. Results under `~/m4_run/results_m4/out/`.
 - The build's `onbox_command` is a single line the operator runs verbatim on the box through `remote_run_m4.sh`
   (`bash remote_run_m4.sh bash onbox_m4.sh`).
 
-## Local selftest (revised, addendum 7)
+## Local selftest (revised, addendum 8)
 
 `python3 run_m4.py --selftest` is stdlib-only and runs under `timeout 300`: no GPU, no network. It covers every parser
 (engine rate line and reporter file, MD log and production wall-clock, AlphaFold timing rows, docking rank and contact tables,
 byte counts, nvidia-smi labels including the CUDA version header, pip report, pip version string, `etimes`, the colabfold marker
 names), the marginal rule, the planted cases of items 21 to 27, the stage-flow cases of item 31, the real-stage-body cases of
 item 47, the shell-level flows of items 48 and 55 (it runs `bash onbox_m4.sh` under the test hook), the finalize flows of item
-49, the process-group kill of item 32, the child-environment and venv-PATH cases of items 5 and 38, the `PIP_PINS` parser case
-of item 33, the incomplete-run label of item 35, the void path of items 8 and 29, the label-key check of item 6, record writing
-through `frozen/provenance.py`, and the file-hash line of item 36. No local tool run (no AlphaFold, docking or MD). Build 9's
-count was 658 of 658; build 10's is higher by the cases of items 33 and 55.
+49, the process-group kill of item 32, the child-environment and venv-PATH cases of items 5 and 38, the `PIP_PINS` pair case of
+items 33 and 58, the declared-apt-list case of item 59, the engine-version sourcing case of item 60, the anchor VOID record case of
+item 54, the incomplete-run label of item 35, the void path of items 8 and 29, the label-key check of item 6, record writing
+through `frozen/provenance.py`, and the file-hash line of item 36. No local tool run (no AlphaFold, docking or MD) and no pip
+resolution (that is the operator's check, item 62). Build 10's count was 677 of 677; build 11's is higher by the cases of items
+54, 58, 59 and 60.
 
-## What the runner writes (`results_m4/out/`) (revised, addendum 7)
+## What the runner writes (`results_m4/out/`) (revised, addendum 8)
 
 - `endpoint-anchor_tag-m4.json` and `endpoint-C1_tag-m4.json` to `endpoint-C4_tag-m4.json`, plus one provenance.py record
   for each control (60 s sleep, empty run, unit-and-scale), each with `cell`, `inputs` with hashes, `metric`, `values`,
-  `threshold`, `decision_rule` written before values, `decision`, `run_valid`; the labels of item 6; the anchor's
-  `docking_parameters` and `docking_order` (item 52).
+  `threshold`, `decision_rule` written before values, `decision`, `run_valid`; the labels of item 6 with versions taken from the
+  install (item 60); the anchor's `docking_parameters` and `docking_order` (item 52). On an exit-2 or exit-3 end the anchor record
+  is written even when the anchor was not reached (item 54).
 - Raw rows, one JSON line each (`rows_<arm>_tag-m4.jsonl`): every AlphaFold run (pair, seed, wall-clock, per-model times when
   available, `incomplete` when timed out, `download_in_timed_call`), every docking and analysis timing (`truncated` when it hit
   its per-pair cap), every MD segment (complex, atom count, steps, wall-clock, engine rate or null, `frame_interval_ps`), every

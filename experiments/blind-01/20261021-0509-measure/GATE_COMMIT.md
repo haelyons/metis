@@ -575,7 +575,7 @@ layer.
     parsed (E6), the empty-run control times the harness (E7), and the three docking failure routes (E8). The selftest's count
     line and file-hash line stay as in B14.
 
-**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Cap: 7,200 s = 2.00 h x 1.99 = 3.98;
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Cap: 7,200 s = 2 h; 2 h x 1.99 = 3.98;
 two launches 7.96; with 600 s each outside 8.62; under 10. Ceilings unchanged and still sum to 7,200: 1,800 + 700 + 600 + 2,000 +
 1,600 + 100 + 400 = 7,200. Hitting the install total now ends in exit 2, not 3 (E2); the earlier B8 text about ceiling stops
 applies to the later stages only. MD per complex: 0.5 ns at 129 ns/day is 335 s, inside the 600 s per-complex cap with system
@@ -970,3 +970,183 @@ OPERATOR: after build 10, re-run the package-index check on every requirement in
 OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of review 5 and state G3's ruling to it (G8).
 OPERATOR: before launch 1 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); the earlier lines of addenda 5 and 6 (the `RUN_VALID.json` fetch line declared, `remote_run_m4.sh` with only its `cd` line changed, `lambda_run_m4.sh` default `REMOTE_TIMEOUT` 7200 declared in its header) stand.
 OPERATOR: launch environment of record for both launches: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (G8).
+
+---
+
+## Addendum 8 (2026-10-21)
+
+Rules on `out/gate_report_launch1.md`: the operator's mechanical note on launch 1 (three rulings asked: (a), (b), (c)) and the
+launch-1 outputs it names. Inputs added for this addendum, read in the order the report gives:
+`out/launch1/results_m4/out/RUN_VALID.json`, `out/launch1/results_m4/out/m4_summary.json`,
+`out/launch1/results_m4/out/tool_logs/install_pip_install.log`, `out/launch1/results_m4/out/run_detached.log`,
+`out/pip_pins_check_build10_platform.txt`; also `out/pip_pins_openmm_listing.txt` and `out/pip_pins_check_build9.txt` (earlier
+operator evidence, read for the OpenMM pair), this file as it stood, `EXEC_NOTE.md` as it stood, and the task text of this session,
+which is not a source of rulings. The gate ran nothing and did not read `run_m4.py`, `onbox_m4.sh` or `frozen/ONBOX_CONTRACT.md`;
+each ruling rests on the logs and records above, taken as reported. The two shape-example files named in the task are outside this
+session's readable directory; this addendum follows the shape of the sections above. Every earlier section stands except where an
+answer below says it is superseded: H1 supersedes the OpenMM pair of G1, and H9 restates A2 for the one launch that remains.
+Answers are numbered H1 to H10. Counts: 10 answers. The line `Build 8 authorised` at the end is the launcher's literal string for
+the next build; it does not renumber the earlier builds (the build it authorises is build 11).
+
+**What launch 1 showed (facts from the inputs, not rulings).** The box was `gpu_1x_a100_sxm4` (A100-SXM4-40GB, driver 570.148.08,
+CUDA 12.8, python 3.10.12), 15:05Z to 15:14Z, USD 0.30. The shell set up the venv and the runner started with 6,486 s of its own and
+returned 2 after 16 s. The single `pip install` of all nine pins ended in `ResolutionImpossible`: "Cannot install
+openmm-cuda==8.1.1.12 and openmm==8.2.0 because these package versions have conflicting dependencies". Nothing else was reached:
+no controls, no anchor, no download of the parameter archive, no smoke check. `RUN_VALID.json` is `run_valid` false with all four
+inputs `void_by_failure`; `m4_summary.json` has `what_this_run_decides` as its first key and `anchor: null`; install seconds used
+47.47 of 1,800. The operator's index check passed all nine pins (exists, box wheel yes) except one: `lightdock==0.9.4` has no
+box-compatible wheel but has an sdist.
+
+**Decision on budget and build (addendum).** GO stands: one more build (build 11, an in-place edit of build 10 limited to the items
+below) and, if review 6 is clean, launch 2, the last. No GPU money is spent by builds or reviews. Arithmetic, launches x hours x
+price, against the USD 10 cap: launch 1 actual USD 0.30 (9 min = 0.15 h x 1.99 = 0.2985, reported 0.30; the runner's own
+`estimated_spend_usd` 0.0723 covers only its 130.7 s since T0). Launch 2 at its caps: 7,200 s command + 600 s outside = 7,800 s =
+2.1667 h x 1.99 = USD 4.31. Total 0.30 + 4.31 = USD 4.61, under the cap with USD 5.39 left. The command alone is 3.98, under
+`BUDGET_LEFT_USD=5`. At the fallback ceiling of USD 2.50/h: 2.1667 h x 2.50 = 5.42, plus 0.30 = 5.72, still under 10. No launch 3
+exists (owner rule), so the left-over money does not buy another.
+
+### Answers of record (H1 to H10)
+
+1. **H1 (ask (a): what build 11 must change so the install succeeds; exact pins of record).** The failure is a pin conflict, not a
+   network, wheel or time failure, and it is in the OpenMM pair that G1 told the build to write: `openmm==8.2.0` beside
+   `openmm-cuda==8.1.1.12`. The gate cannot read package metadata, so the pair of record is stated with its evidence level. (i) The
+   pair of record is `openmm==8.1.1` and `openmm-cuda==8.1.1.12`. This is an inference, not a verified fact: pip's message shows
+   `openmm-cuda==8.1.1.12` does not accept 8.2.0, and the sibling's own version number reads as release 8.1.1 build 12; the operator's
+   listing (`out/pip_pins_openmm_listing.txt`) carries no `requires_dist` for the sibling and its query of the plain `OpenMM`
+   distribution failed, so neither is evidenced. (ii) Build 11 first looks for the operator file
+   `out/pip_pins_openmm_cuda_requires.txt` (Operator actions): the `requires_dist` of `openmm-cuda==8.1.1.12`, and for the `openmm`
+   version it names, whether that release exists with a CPython 3.10 manylinux x86_64 wheel. If the file exists and names an exact
+   `openmm` version with a box wheel, the pair is `openmm==<that version>` with `openmm-cuda==8.1.1.12`, and the file overrides (i).
+   If the file exists but names no exact `openmm` version, or names a release without a box wheel, the build changes nothing in
+   `PIP_PINS`, returns a statement saying so, and the gate rules again in an addendum 9; no launch happens. If the file does not
+   exist, the build uses (i), says in the `PIP_PINS` comment that the pair is the gate's inference awaiting the operator's joint
+   resolve (H4), and names `out/gate_report_launch1.md` as the source. (iii) The build does not guess any other name or version, uses
+   no network, keeps every entry `name==version`, and keeps the sibling's name starting `openmm-cuda` (G1). The other seven pins stay
+   exactly as built: `jax==0.4.35`, `jaxlib==0.4.35`, `jax-cuda12-plugin==0.4.35`, `jax-cuda12-pjrt==0.4.35`, `colabfold==1.5.5`,
+   `alphafold-colabfold==2.3.6`, `lightdock==0.9.4`; pip reported no conflict among them (the resolver named only the OpenMM pair),
+   though that is not proof until H4 is done. (iv) Ruling of record: the OpenMM release is not fixed by the design (the design says
+   the script records exact versions), so moving from 8.2.0 to the pair's release changes no band and no protocol; every C2 record
+   carries the version actually installed (H3). Selftest: the `PIP_PINS` parser case of item 33 also asserts that the `openmm` pin's
+   version equals the version quoted in the comment as the one `openmm-cuda` requires, and still rejects a bracketed extra, an entry
+   without `==`, and an `openmm-cuda*` entry without a plain `openmm` entry.
+
+2. **H2 (the one sdist-only pin: `lightdock==0.9.4` has no wheel for CPython 3.10 Linux x86_64 and is built on the box).** ACCEPTED,
+   with a declared change, because a compile failure at the install step would spend the last launch exactly as launch 1 did. The
+   declared apt packages become `python3-venv aria2 curl build-essential python3-dev` (the first three as built; `build-essential`
+   and `python3-dev` added), installed in the same declared apt call, each recorded with version and the SHA256 from `apt-cache
+   show` (B13), inside the 1,800 s install total (launch 1's apt step took 32 s for three packages; the two additions are bounded
+   by the same total and the 300 s update loop). The sdist is built by pip inside the venv from the pinned requirement, with pip's
+   own build isolation (build requirements come through pip from the index, a named source); the pip report records the sdist's URL
+   and hash (B13). No second source, no `--no-build-isolation` workaround, no other compiler package: a failed build is exit 2 and
+   falls under A2(a), as the table of item 8 says. The smoke check of item 33 (the docking code's `--help` and its
+   conformation-generating script's `--help`, resolved in the venv) is the in-box test that the built package works. Selftest: the
+   declared-apt list parse (in the shell's text) contains exactly those five names and no sixth; `sudo` stays for declared apt only
+   (E20).
+
+3. **H3 (the records of the failed launch name JAX versions that were not installed).** ACCEPTED as a defect to fix, binding. In
+   every launch-1 record `values.engine` and `build_flags` give `jax_version`, `jaxlib_version` and `jax_cuda_plugin_version` as
+   "0.6.0" while the pins are 0.4.35 and nothing installed; `md_engine_version` and `docking_version` were null with reasons, as the
+   rules require, but the JAX values are a default, not a measurement. Rule 9 asks for the engine versions the run used. Build 11
+   takes each engine version only from the pip report of this run or from the installed distribution's metadata read after the
+   install (never a constant default); a version that cannot be had is null with a non-empty `null_reasons` entry saying why ("not
+   installed: the install stage failed" on a void path). The same holds for `cuda_plugin_version` in `machine`. Selftest: a planted
+   pip report naming `jax 0.4.35` gives `jax_version` "0.4.35" in the record; a planted failed-install state gives null with the
+   reason for each of the three keys and for `cuda_plugin_version`. Nothing else about the label constants changes (item 6).
+
+4. **H4 (why the operator's index check passed a set that cannot install; what the check must be before launch 2).** ACCEPTED. The
+   checks of build 9 and build 10 tested that each pinned release exists and has a box wheel; none resolved the set together, which
+   is the only test of a pin conflict. The operator therefore runs, before launch 2 and after build 11, a joint resolution of the
+   exact pinned set of `PIP_PINS` as written in the build 11 file, in a clean CPython 3.10 Linux x86_64 environment with no GPU and
+   none of the box's preinstalled packages (same index, a pip version in the family of the box's venv, `pip install --dry-run
+   --report` over the whole list in one call), and writes the full result into RUN.md and `out/pip_pins_resolve_build11.txt`. Pass
+   means one resolution with every pin at its stated version and no conflict message. The operator also builds the
+   `lightdock==0.9.4` sdist to a wheel once in a clean environment on a host with the declared apt packages of H2 (`pip wheel
+   --no-deps lightdock==0.9.4`) and records pass or fail. A failure of either is a build 11 re-run (or, for the sdist, a gate
+   ruling), never a hand edit (F6), and no launch happens until both pass. This is a launch condition (H9), not a build matter. The
+   build's own selftest cannot do it (stdlib, no network).
+
+5. **H5 (the void path behaved as the contract requires; one record is missing).** ACCEPTED AS-IS for what it did; one small addition.
+   Evidence: exit code 2, `run_valid` false, `RUN_VALID.json`, `m4_summary.json` (first key `what_this_run_decides`), four C records
+   with `decision` VOID, `unit`, `card_value`, `band`, `measured` null and a reason, and `voided_by` naming the log; the status per
+   input is `void_by_failure:<kind>` as item 8 row 1 says (the kind string is cut off at 40 characters,
+   `installing_the_pinned_python_packages_fa`: harmless, readable, not a defect worth a build change). The addition: rule 6 asks for an
+   anchor record `endpoint-anchor_tag-m4.json`; launch 1's `files_written` lists none and the summary has `anchor: null`. For a run
+   that ends before the anchor stage that is accepted as `not reached`, but a script that scores launch 2 should not have to guess,
+   so build 11 writes, on every exit-2 and exit-3 path of the runner, `endpoint-anchor_tag-m4.json` as a VOID record with `run_valid`
+   as the run has it, `measured` null with the reason "anchor stage not reached" when the anchor was not run, and the keys of item
+   3. This sharpens item 54, which already requires it of the shell; it loosens nothing. Selftest: the install-failure flow asserts
+   the anchor record exists with those keys.
+
+6. **H6 (time and money inside the launch: install total, ceilings, guard).** ACCEPTED AS-IS; nothing changes. Launch 1 used 47.47 s of
+   the 1,800 s install total, `remote_timeout_seen_s` 7,200.0 with `remote_timeout_forwarded` true, `stop_at_s` 7,200, binding cap
+   "time", `budget_left_usd` 5.0, price 1.99, pre-T0 77 s counted and not added (item 53). The stage ceilings and the allowance
+   formula of item 28 are unchanged. The sdist build of H2 and the larger apt step add seconds to the install stage; they are
+   bounded by the same 1,800 s total (an overrun is exit 2, E2) and the margin is unchanged; later stages keep their ceilings
+   because each allowance is the lesser of ceiling and time left (F8).
+
+7. **H7 (the frozen bootstrap's output in `run_detached.log`: PATH warnings, a `filelock` resolver complaint, a NumPy/SciPy warning,
+   transformers and Gemma set-up).** ACCEPTED AS-IS; nothing changes. These lines come from the operator's unchanged
+   `remote_run_m4.sh` (`frozen/remote_run.sh` with only its `cd` line changed) installing into `~/.local`; they are warnings about
+   the system site, they ended with `[setup] torch 2.7.0 cuda 12.8 device NVIDIA A100-SXM4-40GB` and `[run] bash onbox_m4.sh`, and
+   the failure came later, in the private venv. The venv is the build's own and holds the pins; the bootstrap's packages are not
+   the build's to change (E20). The bootstrap spent 77 s before T0 and the build counted it (E19), as the log shows
+   (`bootstrap already used 77s; the run must stop 7200s after that start`).
+
+8. **H8 (ask (b): does anything in the launcher's forwarded environment or the bootstrap change).** NO. `REMOTE_TIMEOUT`,
+   `BUDGET_LEFT_USD`, `PRICE_USD_PER_HOUR` and `INSTANCE_TYPE` were forwarded and seen by the runner (the summary shows 7200, 5.0,
+   1.99 and the instance type in every `machine` block); the fetch of `results_m4/out/` worked (the records are in `out/launch1/`);
+   the bootstrap ran to its `[run]` line. `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them. The only OPERATOR
+   lines are the files and checks named in H1 and H4, the unchanged launch environment, and the RUN.md record (Operator actions
+   below). The payload is unchanged: `run_m4.py onbox_m4.sh remote_run_m4.sh frozen/provenance.py` and `data/` if it exists.
+
+9. **H9 (ask (c): launch 2, the last launch allowed; pre-authorise on a clean review 6, or HALT).** PRE-AUTHORISED, on A2(a) (launch 1
+   halted before the anchor decision for an install reason; the cause is recorded in the report and must be in RUN.md; the build is
+   re-run, not hand-edited). Launch 2 may proceed if all four hold: (i) build 11 exists, as an in-place edit limited to item 61, and
+   its own selftest passes; the operator's local re-run prints the same two sha256 values as the files on disk (B14); (ii) review 6
+   reports zero BLOCKING findings (F22's definition), had `frozen/ONBOX_CONTRACT.md` on its read list and states it checked with G3
+   applied, and states that the diff of build 11 against build 10 is limited to item 61's list; (iii) the operator's joint
+   resolution and sdist build of H4 passed and are in RUN.md; (iv) the launch environment of record is unchanged:
+   `REMOTE_TIMEOUT=7200`, `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99`, `INSTANCE_TYPE=gpu_1x_a100_sxm4`, us-east-1, else the
+   cheapest single GPU with capacity at no more than USD 2.50/h with the type and price set to its values and the other three
+   unchanged. Launch 2 runs every stage from the install on: nothing was decided in launch 1. If review 6 reports a blocking
+   finding, or H4 fails, the gate rules again in an addendum 9 and no launch happens. What the owner must decide if launch 2 also
+   ends without a measurement: nothing is authorised after it (two launches at most, owner rule, standing rule 1); the run is then
+   closed as unmeasured, and any further launch, cap or choice of pins is the owner's, not the gate's. The open risk, stated plainly:
+   the OpenMM pair of H1 is a gate inference until H4 resolves it, and `openmm-cuda==8.1.1.12` has not been shown to carry a CUDA
+   platform that loads on CUDA 12.8 and driver 570; the smoke check of item 33 is the only test, and a failure there is exit 2 with
+   a void record and no third launch.
+
+10. **H10 (ask (c), second half: what build 11 may change).** Build 11 is an in-place edit of build 10's `run_m4.py` and
+    `onbox_m4.sh`, limited to: the `PIP_PINS` pair and its comment (H1, item 58); the declared apt list (H2, item 59); the engine
+    and plugin version labels (H3, item 60); the anchor VOID record on exit-2 and exit-3 paths (H5); the selftest cases those changes
+    need; and the selftest's count and hash lines, which move. This is EXEC_NOTE item 61. Every other line stays as build 10 has
+    it. A changed line outside that list is a blocking finding in review 6. The build's return states the real line counts, the two
+    sha256 values, the new selftest count (build 10: 677 of 677) and the exact lines changed.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Spend: launch 1, 15:05Z to 15:14Z = 9 min =
+0.15 h x 1.99 = 0.2985, rounded 0.30 as the operator reports. Launch 2: 7,800 s / 3,600 = 2.1667 h x 1.99 = 4.311; with 0.30: 4.61
+(fallback ceiling case 2.1667 x 2.50 = 5.417, plus 0.30 = 5.72). Both under 10. Ceilings still sum to 7,200: 1,800 + 700 + 600 +
+2,000 + 1,600 + 100 + 400 = 7,200. Times from `run_detached.log`: 15:12:24 shell start, 15:12:56 apt done (32 s), 15:13:00 venv built,
+15:13:16 runner returned 2 (16 s). `m4_summary.json` `elapsed_s` 130.728 plus `pre_t0_seconds` 77.0 is 207.7 s on the box before exit,
+consistent with USD 0.115 of box time at 1.99/h and the rest of the 0.30 being provisioning, fetch and teardown. The pip command in
+the log lists nine requirements, the conflict message names the OpenMM pair only, and the operator's platform check lists nine pins
+(found 9, missing 0, sdist only 1). Counting: the report asks 3 rulings and names 5 files; answers H1 to H10 cover the three asks,
+each file's finding and the one addition (H5's anchor record). The gate did not re-run any index query, resolution or build.
+
+**Pre-authorisation (addendum).** A1 stands unchanged. A2 is restated for the one remaining launch: launch 2 is authorised on A2(a)
+under the four conditions of H9 and no other; it is the last. Not authorised, as before: a relaunch to double seeds, to repeat a
+decided input, to change a band, or after an anchor miss; and now also a third launch of any kind. What stops launch 2: the cost and
+time guard, an anchor miss (exit 4), the sleep check (exit 2), any broken infrastructure (exit 2 with a void record, no patching
+around), a stage ceiling. Totals: at most USD 4.61 spent in all if launch 2 runs to its caps (0.30 + 4.31); the owner's USD 10 cap
+is not raised by this gate.
+
+Build 8 authorised
+
+## Operator actions
+
+OPERATOR: before build 11 runs, write `out/pip_pins_openmm_cuda_requires.txt`: the `requires_dist` lines of `openmm-cuda==8.1.1.12` from the package index, and for the `openmm` version those lines name, whether that release exists and which of its files are CPython 3.10 manylinux x86_64 wheels; if the index cannot be read, write that fact instead (the build then uses the gate's inference of H1(i)).
+OPERATOR: after build 11 and before launch 2, resolve the whole `PIP_PINS` list of the build 11 `run_m4.py` in one call in a clean CPython 3.10 Linux x86_64 environment (`pip install --dry-run --report`), and build `lightdock==0.9.4` from its sdist into a wheel there with `build-essential` and `python3-dev` present; write both results into RUN.md and `out/pip_pins_resolve_build11.txt`; any conflict or failure is a build 11 re-run, not a hand edit (H4).
+OPERATOR: record in RUN.md that launch 1 ended with exit 2 at the pip install step (`ResolutionImpossible`, `openmm-cuda==8.1.1.12` against `openmm==8.2.0`), USD 0.30, box terminated, outputs archived under `out/launch1/`; this is the A2(a) record launch 2 depends on (H9).
+OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of review 6 and state G3's ruling and the build 11 scope of EXEC_NOTE item 61 to it (H9).
+OPERATOR: before launch 2 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8).
+OPERATOR: launch environment of record for launch 2, unchanged: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (H9).
