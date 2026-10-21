@@ -1,0 +1,54 @@
+{
+ "option_title": "18 R5 W5 (REJECT)",
+ "phases": [
+ {"id":"G01","what":"download, build arrays, gates G0-G1 on A10"},
+ {"id":"G23","what":"gates G2-G3, H100 and A100 throughput pilot","stop_rule":"config A only if >= 13 samples/s per H100; 8x A100 80GB instead if H100 < 1.43x A100","gate":{"on":"samples_per_s","op":">=","value":13,"else":"use config B"}},
+ {"id":"MAIN","what":"main grid on 8x H100"},
+ {"id":"FS","what":"filesystem"}
+],
+ "numbers": [
+ {"id":"fs_gib","name":"filesystem","unit":"GiB","basis":"DESIGN","value":650},
+ {"id":"fs_days","name":"filesystem days","unit":"days","basis":"DESIGN","value":7},
+ {"id":"train_box","name":"training hours per GPU (T)","unit":"h","basis":"DESIGN","value":21},
+ {"id":"flop_sample","name":"training FLOP per sample, config A (4 x 3.4e12)","unit":"FLOP","basis":"DERIVED","expr":"4 * fwd_flop"},
+ {"id":"fwd_flop","name":"forward FLOP per sample at 1.5 deg (MLP counts from GraphCast dims)","unit":"FLOP","basis":"DERIVED","expr":"16 * (81900 * 2.1e6 + 10242 * 1.6e6) + 0.4e12"},
+ {"id":"h100_dense","name":"H100 dense BF16 (half of 1,979 with sparsity)","unit":"FLOP/s","basis":"DERIVED","expr":"1979e12 * 0.5"},
+ {"id":"util","name":"achieved utilization on H100","unit":"1","basis":"GUESS","value":0.05,"rests_on":"GraphCast's own run implies ~6% (derived from cited TPU v4 peak and schedule); range 5-15%","measured_by":"G23"},
+ {"id":"samples_per_s","name":"training samples per second per H100, config A","unit":"samples/s","basis":"DERIVED","expr":"h100_dense * util / flop_sample"},
+ {"id":"samples_per_run","name":"samples seen per GPU run in the time box","unit":"samples","basis":"DERIVED","expr":"train_box * 3600 * h100_dense * util / flop_sample"},
+ {"id":"gc_chips","name":"GraphCast TPU v4 devices","unit":"chips","basis":"CITED","value":32,"source_id":"s_graphcast","quote":"roughly four weeks on 32 Cloud TPU v4 devices"},
+ {"id":"gc_weeks","name":"GraphCast training weeks","unit":"weeks","basis":"CITED","value":4,"source_id":"s_graphcast"},
+ {"id":"device_is_chip","name":"a 'device' is one chip","unit":"1","basis":"GUESS","value":1,"rests_on":"the paper's 32 GB per device matches a v4 chip's 32 GiB HBM"},
+ {"id":"tpu_host_usd","name":"four-chip TPU v4 host, on demand","unit":"usd/h","basis":"CITED","value":12.88,"source_id":"s_gcp_tpu_pricing"},
+ {"id":"chips_per_host","name":"chips per host","unit":"chips","basis":"CITED","value":4,"source_id":"s_gcp_tpu_pricing"}
+],
+ "cost": {
+  "rates": [
+   {"id":"r_a10","gpu":"A10","n_gpus":1,"per_gpu_usd_h":1.29},
+   {"id":"r_h100x1","gpu":"H100 SXM","n_gpus":1,"per_gpu_usd_h":4.29},
+   {"id":"r_a100x1","gpu":"A100 SXM","gpu_memory_gb":40,"n_gpus":1,"per_gpu_usd_h":1.99},
+   {"id":"r_h100x8","gpu":"H100 SXM","n_gpus":8,"per_gpu_usd_h":3.99},
+   {"id":"r_a100x8_80","gpu":"A100 SXM","gpu_memory_gb":80,"n_gpus":8,"per_gpu_usd_h":2.79}
+  ],
+  "lines": [
+   {"id":"g01","phase":"G01","kind":"work","rate":"r_a10","hours":"8"},
+   {"id":"fs","phase":"FS","kind":"storage","usd":"fs_gib * fs_days / 30 * fs_usd_gib_month"},
+   {"id":"g23h","phase":"G23","what":"pilot","kind":"work","rate":"r_h100x1","hours":"6"},
+   {"id":"g23a","phase":"G23","kind":"work","rate":"r_a100x1","hours":"1"},
+   {"id":"main","phase":"MAIN","what":"21 h training + ~1 h setup + ~2 h evaluation","kind":"work","rate":"r_h100x8","hours":"train_box + 1 + 2"},
+   {"id":"main_a100","phase":"MAIN","what":"fallback if H100 < 1.43x A100","kind":"work","rate":"r_a100x8_80","hours":"34","instead_of":["main"]}
+  ],
+  "total_stated": 834.46,
+  "yields": ["samples_per_run"],
+  "scenarios": [
+   {"id":"u15","what":"15% utilization","set":{"util":0.15}}
+  ]
+ },
+ "full_scale": [
+ {"id":"graphcast","what":"GraphCast's own training run at Google list price","usd":"gc_chips * device_is_chip * gc_weeks * 7 * 24 * tpu_host_usd / chips_per_host"}
+],
+ "outside_budget": [
+ {"what":"write prepare/train/rollout code","qty":"2","unit":"to 4 person-days"},
+ {"what":"scoring, tables, write-up","qty":"1","unit":"CPU day"}
+]
+}

@@ -81,3 +81,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:03Z build 10 ran on build 9's args (addendum 6 directive): launch.js picked the latest args file by string order (build9 > build10); fixed to numeric order; build 10's return had overwritten build9_return.json, restored from its wf run. Build 11 will run on the addendum 7 directive after review 5 finishes.
 - 15:04Z review 5 of build 10 (wf.js, claude/sonnet): PASS, 0 blocking, 3 advisory, against the addendum 7 directive. Deviation of record: build 10 was produced from the addendum 6 directive (operator's args-order bug); the reviewer judged its files against addendum 7 with no blocking finding and the post-build pin check is clean, so launch 1 proceeds on the gate's pre-authorisation rather than after a build 11.
 - 15:05Z LAUNCH 1: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5, pid 1224740, log out/launcher_m4_L1.log
+- 15:16Z gate 8 (addendum) requested
+- 15:16Z stage gate on wf.js run 4: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1240010
