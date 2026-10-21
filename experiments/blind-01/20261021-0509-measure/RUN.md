@@ -159,3 +159,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 18:51Z build 16 checks: selftest exit 0
 - 18:52Z launcher copies written from m3's (declared points only); filesystem metis-env-us-east-1 attached
 - 18:52Z gate addendum 15 (wf.js, claude/sonnet, 5 min): EXEC_NOTE.md REGENERATED: 29 items (26 REQUIRED FOR LAUNCH, 5 REPORTING ONLY), 273 lines, '## Build 17: exactly these changes' present; build 17 and the test author authorised; launch 3 pre-authorised. Launcher copy regenerated with the filesystem attach (metis-env-us-east-1) and ENV_DIR/ENV_LOCK_SHA256/HOLD_SECONDS forwarded (declared points). Cap arithmetic of record unchanged: 7,800 s at USD 1.99 = USD 4.31 per launch under BUDGET_LEFT_USD 5; m4 spend USD 1.71 (launches 0.67, env build 1.04).
+- 18:52Z stage build on wf.js run 14: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1607496
+- 18:52Z TESTS 1: claim-blind author on wf.js (flags [--family claude --on-refusal understudy])
+- 19:00Z build 17 checks: selftest exit 0
