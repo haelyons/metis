@@ -1,0 +1,6 @@
+# blind-01 · stage · 20261021-1837
+
+Pipeline: copy of dut/pipeline/ at commit 51cc973, in ./pipeline (read-only).
+Command: node /home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-fix-20261021-1837/pipeline/idea/wf.js --script /home/hal/dev/interp/metis/dut/pipeline/measure/fixer_stage.js --args /home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-fix-20261021-1837/args.json --name blind-01-m4-fix --out /home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-fix-20261021-1837/out --profile latent_skeptic --family claude --on-refusal understudy
+Stage: fix of experiments/blind-01/20261021-0509-measure · args: ./args.json
+Outputs: ./out · console: ./console.log

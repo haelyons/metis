@@ -1,0 +1,12 @@
+{
+ "box_helper": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/env/box.sh",
+ "hold_dir": "/home/ubuntu/m4_run",
+ "env_dir": "/lambda/nfs/metis-env-us-east-1/m4",
+ "tag": "m4",
+ "failure_summary": "env_build.sh failed on the box and wrote /home/ubuntu/m4_run/HOLD. Logs: /home/ubuntu/m4_run/results_env/out/install_pip.log, apt.log, import_check.json (per-module import results with error kinds), env_report.json. The build retries when /home/ubuntu/m4_run/RESUME exists.",
+ "scope": "environment and glue only: pins.txt (a version, an extra, a different distribution of the same package, a build dependency), apt.txt (system libraries and build tools), environment variables of the install, files under the environment directory. Never the measurement protocol, never record fields, never files outside the environment directory and the hold directory.",
+ "max_attempts": 3,
+ "time_budget_min": 30,
+ "cwd": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure",
+ "base": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-fix-20261021-1837/work"
+}
