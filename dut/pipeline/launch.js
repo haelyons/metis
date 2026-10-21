@@ -10,6 +10,9 @@
 //        node dut/pipeline/launch.js <experiment> tree --seed <args.json>  (the full tree; args.json overrides run F's args,
 //                                                                          e.g. {"fixed_roots": ["..."], "picks_per_branch": 1})
 //        node dut/pipeline/launch.js <experiment> measure --card <card run dir | its out dir | result.json> [--pick <key>]
+//        node dut/pipeline/launch.js <experiment> stage --measure <measure dir> --stage design|build|post [--family opencode|claude]
+//                                                                  [--mode fallback|shadow|swap|primary-only] [--on-refusal halt|understudy]
+//                                                                  (one latent_skeptic stage on wf.js with understudies; run under <measure dir>/out/)
 //                                                                 (compiles a card's calibration record into a latent_skeptic
 //                                                                  measure folder: QUESTION.md, SEALED_PREDICTIONS.md,
 //                                                                  out/triage_args.json, CARD.json; runs nothing)
@@ -26,14 +29,19 @@ const dry = rest.includes('--dry-run')
 const si = rest.indexOf('--seed'), seedFile = si >= 0 ? path.resolve(rest[si + 1]) : null
 const extra = rest.filter((a, i) => a !== '--dry-run' && !(si >= 0 && (i === si || i === si + 1)))
 const EXP = path.join(REPO, 'experiments', name || '')
-if (!name || !['loop', 'card', 'frame', 'tree', 'measure'].includes(kind) || !fs.existsSync(EXP)) {
-  console.error('usage: node dut/pipeline/launch.js <experiment> <loop|card|frame|tree|measure> [args] [--dry-run]; the experiment folder must exist')
+if (!name || !['loop', 'card', 'frame', 'tree', 'measure', 'stage'].includes(kind) || !fs.existsSync(EXP)) {
+  console.error('usage: node dut/pipeline/launch.js <experiment> <loop|card|frame|tree|measure|stage> [args] [--dry-run]; the experiment folder must exist')
   process.exit(2)
 }
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-').slice(0, 13)
 // two launches in the same minute get -2, -3 ...
-let RUN = path.join(EXP, `${stamp}-${kind}`)
-for (let i = 2; fs.existsSync(RUN); i++) RUN = path.join(EXP, `${stamp}-${kind}-${i}`)
+const mi = rest.indexOf('--measure'), MDIR = mi >= 0 ? path.resolve(rest[mi + 1]) : null
+const sti = rest.indexOf('--stage'), STAGE = sti >= 0 ? rest[sti + 1] : null
+if (kind === 'stage' && (!MDIR || !fs.existsSync(path.join(MDIR, 'pipeline.js')) || !['design', 'build', 'post'].includes(STAGE))) {
+  console.error('stage needs --measure <measure dir with pipeline.js> and --stage design|build|post'); process.exit(2)
+}
+let RUN = kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}`) : path.join(EXP, `${stamp}-${kind}`)
+for (let i = 2; fs.existsSync(RUN); i++) RUN = kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}-${i}`) : path.join(EXP, `${stamp}-${kind}-${i}`)
 const COPY = path.join(RUN, 'pipeline')
 fs.mkdirSync(path.join(RUN, 'out'), { recursive: true })
 
@@ -109,6 +117,24 @@ let cmd
 const SEED = seedFile || path.join(EXP, 'seed.json')
 if (kind === 'loop') cmd = node('loop.js', ['--seed', SEED, '--name', name, '--dir', path.join(RUN, 'out')])
 if (kind === 'frame') cmd = node('frame.js', [...extra, '--out', path.join(RUN, 'out')])
+if (kind === 'stage') {
+  // the stage's args file as measure.sh wrote it (design_args.json, build<N>_args.json, post<N>_args.json: the latest)
+  const latest = re => fs.readdirSync(path.join(MDIR, 'out')).filter(f => re.test(f)).sort().pop()
+  const argsFile = STAGE === 'design' ? 'design_args.json' : latest(STAGE === 'build' ? /^build\d+_args\.json$/ : /^post\d+_args\.json$/)
+  if (!argsFile || !fs.existsSync(path.join(MDIR, 'out', argsFile))) { console.error(`stage: no ${STAGE} args file under ${MDIR}/out (measure.sh writes it)`); process.exit(2) }
+  const a = JSON.parse(fs.readFileSync(path.join(MDIR, 'out', argsFile), 'utf8'))
+  const args = { ...a, cwd: MDIR, base: path.join(RUN, 'work') }   // file-writing roles work in the measure folder, as the Workflow runtime did
+  fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify(args, null, 1))
+  const tag = fs.existsSync(path.join(MDIR, 'TAG')) ? fs.readFileSync(path.join(MDIR, 'TAG'), 'utf8').trim() : 'm'
+  const flags = extra.filter((x, i, xs) => !['--measure', '--stage'].includes(x) && !['--measure', '--stage'].includes(xs[i - 1]))
+  cmd = node('wf.js', ['--script', path.join(MDIR, 'pipeline.js'), '--args', path.join(RUN, 'args.json'), '--name', `${name}-${tag}-${STAGE}`, '--out', path.join(RUN, 'out'), '--profile', 'latent_skeptic', ...flags])
+  // the stage's return value lands where measure.sh expects it, after the run
+  const target = STAGE === 'design' ? 'design_record.json' : argsFile.replace('_args.json', '_return.json')
+  process.on('exit', () => {
+    const r = path.join(RUN, 'out', 'result.json')
+    if (fs.existsSync(r)) { fs.copyFileSync(r, path.join(MDIR, 'out', target)); console.log(`stage ${STAGE}: return value copied to out/${target}`) }
+  })
+}
 if (kind === 'card' || kind === 'tree') {
   const cfg = JSON.parse(fs.readFileSync(path.join(COPY, 'idea', 'config.json'), 'utf8'))
   const F = JSON.parse(fs.readFileSync(cfg.roots_args, 'utf8'))
@@ -122,7 +148,7 @@ const commit = git(['rev-parse', '--short', 'HEAD']), dirty = git(['status', '--
 fs.writeFileSync(path.join(RUN, 'RUN.md'), [`# ${name} · ${kind} · ${stamp}`, '',
   `Pipeline: copy of dut/pipeline/ at commit ${commit}${dirty}, in ./pipeline (read-only).`,
   `Command: ${cmd[0]} ${cmd[1].map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`,
-  `Seed: ${path.relative(EXP, SEED)}`, `Outputs: ./out · console: ./console.log`, ''].join('\n'))
+  kind === 'stage' ? `Stage: ${STAGE} of ${path.relative(REPO, MDIR)} · args: ./args.json` : `Seed: ${path.relative(EXP, SEED)}`, `Outputs: ./out · console: ./console.log`, ''].join('\n'))
 console.log(`run folder: ${RUN}\n${fs.readFileSync(path.join(RUN, 'RUN.md'), 'utf8')}`)
 if (dry) process.exit(0)
 

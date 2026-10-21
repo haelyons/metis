@@ -27,7 +27,18 @@ its result would feed. A loop proposes close variants and keeps a better one.
                        ranking (bears on the root question, open compute quantity,
                        narrowing stated when not compute-bound) and ranks the rest
                        by the main pick rule; nothing passing is a valid end
-      wf.js            runs a dist script with OpenCode models
+      wf.js            runs a dist script (or latent_skeptic's pipeline.js and
+                       triage_workflow.js) with two model families: OpenCode Go
+                       models (oc.js) and Claude models headless (claude_cli.js),
+                       each the other's understudy (understudy.js): a call whose
+                       primary fails on a named kind (timeout, exit, runner,
+                       nojson, schema) is retried on the other family; a refusal
+                       halts unless the run says --on-refusal understudy. Modes
+                       fallback | shadow (both run, compared in shadow.jsonl) |
+                       swap | primary-only; --family picks the primary; routes
+                       and profiles in config.json "understudy"; UNDERSTUDY.md
+                       per run (understudy_report.js); tools/e2e_wf.js is the
+                       stubbed harness. Nested workflow() runs one level deep.
       frame.js         which programmes would use the result, and how well
       status.js        progress and spend of any run
     launch.js          starts a run (below)
@@ -47,7 +58,13 @@ REQUIREMENTS
 - OpenCode with an OpenCode Go subscription (opencode-go/* models). Calls run
   under the isolated config in dut/pipeline/idea/ocx: no MCP servers, every
   permission denied unless the agent needs it.
-- Optional: Claude Code, for the Workflow runtime (dut/pipeline/dist/*.js).
+- Optional: Claude Code, for the Workflow runtime (dut/pipeline/dist/*.js) and
+  for the Claude family in wf.js (claude -p, logged in; calls run --restricted
+  --strict-mcp-config so no hook, plugin or MCP server reaches them; models
+  sonnet, opus, haiku only).
+- dut/pipeline/measure/ONBOX_CONTRACT.md seeds the build agent of a measure
+  run (copied into <measure dir>/frozen/ by experiments/blind-01/measure.sh
+  prepare; launch.js <exp> stage runs one latent_skeptic stage on wf.js).
 - After cloning: git submodule update --init (dut/latent_skeptic).
 
 COLD START

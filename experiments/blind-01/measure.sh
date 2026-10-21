@@ -7,7 +7,9 @@
 #   usage: bash measure.sh <command> <measure dir> [options]
 #   prepare [--pin sonnet]  copy dut/latent_skeptic + latent_skeptic/frozen read-only, the triage-* roles, the keys link,
 #                           the design args; --pin sonnet rewrites model: 'opus' -> 'sonnet' in the copies (recorded)
-#   design                  headless operator: Workflow pipeline.js mode design  -> out/design_record.json
+#   design [--via wf ...]   headless operator: Workflow pipeline.js mode design  -> out/design_record.json; with --via wf the
+#                           stage runs on dut/pipeline wf.js (OpenCode and Claude families with understudies; flags
+#                           --family, --mode, --on-refusal pass through) under out/wf-<stage>-<stamp>/
 #   gate [--addendum <f>]   headless gate writer (read/write tools only): GATE_COMMIT.md + EXEC_NOTE.md
 #   build                   headless operator: Workflow mode build -> run_<tag>.py onbox_<tag>.sh; then bash -n,
 #                           py_compile, the selftest to a log, hashes
@@ -17,7 +19,7 @@
 #   score                   results_<tag>/out records -> out/PREDICTIONS_SCORED.md + LEDGER.jsonl row (no model)
 #   post                    headless operator: Workflow mode post -> TAKEAWAYS_<tag>.md, out/post_return.json
 #   status                  redacted summary of everything above
-#   wait <stage>            block until that stage's session or launcher has exited (design|gate|build|review|post|launch)
+#   wait <stage>            block until that stage's session or launcher has exited (design|gate|build|review|post|launch|wf)
 set -u
 REPO=/home/hal/dev/interp/metis
 LS=$REPO/dut/latent_skeptic
@@ -25,6 +27,7 @@ FROZEN=/home/hal/dev/interp/latent_skeptic/frozen
 KEYS=/home/hal/dev/interp/dm_hack/.keys
 M3=$REPO/experiments/immersion-coolants/20261020-1020-measure
 EXP=$REPO/experiments/blind-01
+NAME_EXP=blind-01
 PY=python3
 CMD=${1:-}; MD=${2:-}
 [ -n "$CMD" ] && [ -n "$MD" ] && [ -d "$MD" ] || { sed -n 2,22p "$0"; exit 2; }
@@ -84,6 +87,7 @@ prepare() {
   cp "$LS/compositions/pipeline.js" "$MDIR/pipeline.js"; cp "$LS/triage_workflow.js" "$MDIR/triage_workflow.js"
   cp "$LS/compositions/gates/"*.py "$MDIR/gates/"; cp "$LS/agents/"triage-*.md "$MDIR/.claude/agents/"
   cp "$FROZEN/lambda_run.sh" "$FROZEN/remote_run.sh" "$FROZEN/provenance.py" "$MDIR/frozen/"
+  cp "$REPO/dut/pipeline/measure/ONBOX_CONTRACT.md" "$MDIR/frozen/ONBOX_CONTRACT.md"   # the launcher writer's seed (requirements, not code)
   local subs=0
   if [ "$pin" = sonnet ]; then
     subs=$(grep -o "model: 'opus'" "$MDIR/pipeline.js" "$MDIR/triage_workflow.js" | wc -l)
@@ -121,9 +125,27 @@ EOF2
   echo "prepared $MDIR: tag $TAG; pipeline copies $ident; roles $(ls "$MDIR/.claude/agents" | wc -l); gates $(ls "$MDIR/gates" | wc -l); frozen $(ls "$MDIR/frozen" | wc -l)"
 }
 
+# ---------- a stage on wf.js (both model families, understudies; dut/pipeline/launch.js stage) ----------
+# measure.sh <design|build|post> <dir> --via wf [--family opencode|claude] [--mode fallback|shadow|swap|primary-only] [--on-refusal halt|understudy]
+via_wf() {   # stage [flags...]
+  local stage="$1"; shift
+  local n; n=$(ls "$MDIR/out"/wf-"$stage"-* -d 2>/dev/null | wc -l); n=$((n+1))
+  local ref=""; for a in "$@"; do [ "$a" = understudy ] && ref=" (refusals handed to the understudy: owner's explicit choice)"; done
+  ( cd "$REPO" && setsid nohup node dut/pipeline/launch.js "$NAME_EXP" stage --measure "$MDIR" --stage "$stage" "$@" > "$SESS/wf-$stage$n.out" 2>&1 < /dev/null & )
+  sleep 4; local pid; pid="$(pgrep -f "wf.js --script $MDIR/pipeline.js" | head -1)"
+  logrun "stage $stage on wf.js run $n: flags [$*]$ref, pid ${pid:-?}"
+  echo "started $stage on wf.js (run $n, pid ${pid:-?}); flags: $*"
+}
+wf_running() { pgrep -f "wf.js --script $MDIR/pipeline.js" >/dev/null 2>&1; }
+pop_via() {   # splits "--via wf <flags>" out of "$@": sets VIA and REST
+  VIA=""; REST=()
+  while [ $# -gt 0 ]; do case "$1" in --via) VIA="$2"; shift ;; *) REST+=("$1") ;; esac; shift; done
+}
+
 # ---------- design ----------
 design() {
   [ -f "$MDIR/out/design_args.json" ] || { echo "run prepare first"; return 1; }
+  pop_via "$@"; if [ "$VIA" = wf ]; then via_wf design "${REST[@]}"; return; fi
   local n; n=$(count design); n=$((n+1)); local name="design$n"
   local f; f=$(operator_md "design" "$MDIR/out/design_args.json" "$MDIR/out/design_record.json")
   start_session "$name" sonnet "$f"
@@ -153,7 +175,7 @@ $([ -n "$add" ] && echo "5. The report this addendum rules on: \`$add\`. Also re
 2. Time: set \`REMOTE_TIMEOUT\` (at most 7,200 s per launch). \`onbox_$TAG.sh\` reads \`PRICE_USD_PER_HOUR\`, \`BUDGET_LEFT_USD\` and \`REMOTE_TIMEOUT\` from its environment and stops cleanly, writing a void record, before exceeding them.
 3. Scope: measure the inputs on the card's own protocol; no production phase; anchor first, and a missed anchor voids the inputs (run_valid=false propagates to every later record).
 4. Box: Ubuntu 22.04, CUDA 12.8, driver 570, python 3.10, torch 2.7 preinstalled; anything else is installed by \`onbox_$TAG.sh\` inside the time cap. Broken infrastructure: exit non-zero with a void record; never patch around.
-5. Files: the build writes exactly \`run_$TAG.py\` and \`onbox_$TAG.sh\` in \`$MDIR\` (absolute path) and reads the design record and \`frozen/\` (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does). Payload shipped to the box: \`run_$TAG.py onbox_$TAG.sh remote_run_$TAG.sh frozen/provenance.py\` and \`data/\` recursively if it exists, all under \`~/${TAG}_run/\`; results under \`~/${TAG}_run/results_$TAG/out/\`, which the launcher fetches. Nothing else is on the box.
+5. Files: the build writes exactly \`run_$TAG.py\` and \`onbox_$TAG.sh\` in \`$MDIR\` (absolute path) and reads the design record and \`frozen/\` (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does; \`frozen/ONBOX_CONTRACT.md\` is the binding execution contract: its stage order, guards, record fields, selftest contract and failure checks are directive items unless you tighten them). Payload shipped to the box: \`run_$TAG.py onbox_$TAG.sh remote_run_$TAG.sh frozen/provenance.py\` and \`data/\` recursively if it exists, all under \`~/${TAG}_run/\`; results under \`~/${TAG}_run/results_$TAG/out/\`, which the launcher fetches. Nothing else is on the box.
 6. Records, so a script can score them without a model: for each input C1..Cn of QUESTION.md one provenance.py record \`results_$TAG/out/endpoint-C<i>_tag-$TAG.json\` whose \`values\` carries \`measured\` (a number in the card's unit), \`unit\`, \`card_value\` and \`band\` ([lo, hi] from QUESTION.md), and whose \`decision\` is PASS, FAIL or VOID against that band; \`run_valid\` in every record; an anchor record \`endpoint-anchor_tag-$TAG.json\` (values: measured, published, tolerance); \`RUN_VALID.json\`; \`${TAG}_summary.json\`; raw rows as JSON lines.
 7. Selftest: \`python3 run_$TAG.py --selftest\`, stdlib only, no GPU, no network, under 300 s; prints \`selftest: N of M checks passed\` then exactly \`selftest: PASS\` or \`selftest: FAIL\` as its last line; non-zero exit on FAIL. Planted cases for every parser and for the gate-failure (void) path.
 8. Secrets: nothing reads \`.keys\`; nothing prints its environment; \`HF_TOKEN\` is used by downloads only.
@@ -189,7 +211,8 @@ EOF2
 # ---------- build ----------
 build() {
   [ -s "$MDIR/GATE_COMMIT.md" ] && [ -s "$MDIR/EXEC_NOTE.md" ] || { echo "no GATE_COMMIT.md / EXEC_NOTE.md yet"; return 1; }
-  local n; n=$(count build); n=$((n+1)); local name="build$n"
+  pop_via "$@"
+  local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); n=$((n+1)); local name="build$n"
   if [ -f "$MDIR/run_$TAG.py" ] || [ -f "$MDIR/onbox_$TAG.sh" ]; then   # archive the previous build's files
     mkdir -p "$MDIR/out/build$((n-1))"; mv -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files archived under out/build$((n-1))/"
   fi
@@ -201,11 +224,12 @@ args = {"mode": "build", "design_record": f"{m}/out/design_record.json", "gate_c
 json.dump(args, open(f"{m}/out/build{n}_args.json", "w"), indent=1)
 print("out/build%s_args.json: exec_note %d chars" % (n, len(args["exec_note"])))
 PYEOF
+  if [ "$VIA" = wf ]; then via_wf build "${REST[@]}"; return; fi
   local f; f=$(operator_md "build" "$MDIR/out/build${n}_args.json" "$MDIR/out/build${n}_return.json")
   start_session "$name" sonnet "$f"
 }
-build_checks() {   # mechanical, after the build session exits
-  local n; n=$(count build); local log="$MDIR/out/selftest_build$n.log"
+build_checks() {   # mechanical, after the build session or wf run exits
+  local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); local log="$MDIR/out/selftest_build$n.log"
   cd "$MDIR" || return 1
   [ -f "run_$TAG.py" ] && [ -f "onbox_$TAG.sh" ] || { echo "build $n: files missing ($(ls run_$TAG.py onbox_$TAG.sh 2>&1 | grep -c 'No such') of 2)"; return 1; }
   sha256sum "run_$TAG.py" "onbox_$TAG.sh" > "out/BUILT_HASHES_build$n.txt"
@@ -244,7 +268,7 @@ PYEOF
 
 # ---------- review ----------
 review() {
-  local n; n=$(count build); [ "$n" -ge 1 ] && [ -f "$MDIR/run_$TAG.py" ] || { echo "nothing built"; return 1; }
+  local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); [ "$n" -ge 1 ] && [ -f "$MDIR/run_$TAG.py" ] || { echo "nothing built"; return 1; }
   local r; r=$(count review); r=$((r+1)); local name="review$r" f="$SESS/REVIEW_$r.md"
   [ -f "$MDIR/lambda_run_$TAG.sh" ] || { echo "run launcher first (the reviewer checks the launcher copy)"; return 1; }
   cat > "$f" <<EOF2
@@ -416,7 +440,8 @@ PYEOF
 # ---------- post ----------
 post() {
   [ -d "$MDIR/results_$TAG/out" ] || { echo "no results_$TAG/out"; return 1; }
-  local n; n=$(count post); n=$((n+1)); local name="post$n"
+  pop_via "$@"
+  local n; n=$(ls "$MDIR/out"/post*_args.json 2>/dev/null | wc -l); n=$((n+1)); local name="post$n"
   $PY - "$MDIR" "$TAG" "$n" <<'PYEOF'
 import json, sys
 m, tag, n = sys.argv[1:4]
@@ -425,6 +450,7 @@ args = {"mode": "post", "design_record": f"{m}/out/design_record.json", "gate_co
 json.dump(args, open(f"{m}/out/post{n}_args.json", "w"), indent=1)
 print("out/post%s_args.json written" % n)
 PYEOF
+  if [ "$VIA" = wf ]; then via_wf post "${REST[@]}"; return; fi
   local f; f=$(operator_md "post" "$MDIR/out/post${n}_args.json" "$MDIR/out/post${n}_return.json")
   start_session "$name" sonnet "$f"
 }
@@ -478,6 +504,22 @@ for wf in wfs:
         print("    %-8s %-18s %-10s %-14s %-22s %9s  in %8s  out %6s%s" % (d[0], lab[:18], (r.get("phase") or "")[:10], (meta.get(aid, {}).get("agentType") or "")[:14], (u.get("model") or "")[:22], mins, format(u.get("in", 0), ","), format(u.get("out", 0), ","), "  <%d chars>" % d[1] if d[0] == "result" else ""))
 if not wfs: print("  no workflow transcripts yet")
 PYEOF
+  for w in "$MDIR"/out/wf-*/; do [ -d "$w" ] || continue; $PY - "$w" "$MDIR" <<'PYEOF'
+import json, sys, os
+w, m = sys.argv[1:3]
+try: st = json.load(open(os.path.join(w, "out", "status.json")))
+except Exception: print("  %s: no status yet" % os.path.relpath(w, m)); sys.exit()
+calls = st.get("calls", [])
+by = {}
+for c in calls: by[c.get("state")] = by.get(c.get("state"), 0) + 1
+fam = st.get("by_family", {})
+print("  %s: stage %s, %s; %d call(s) %s; substitutions %s, refusals %s; $%.2f; families %s" % (os.path.relpath(w, m), st.get("stage"), "done" if st.get("done") else "running", len(calls), json.dumps(by), st.get("substitutions"), st.get("refusals"), st.get("cost_usd", 0), ", ".join("%s %d calls %d failed" % (f, v.get("calls", 0), v.get("failed", 0)) for f, v in fam.items()) or "-"))
+for c in calls[-6:]:
+    lab = c.get("id", "").split(" ", 1)[-1]; lab = lab.split(":")[0] + (":…" if ":" in lab else "")
+    print("    %-10s %-16s %-26s -> %-26s %-9s %5.1f min $%.3f%s" % (c.get("state"), lab[:16], c.get("model", ""), c.get("understudy") or "-", c.get("kind") or "", c.get("ms", 0) / 60000, c.get("cost_usd", 0), " (by understudy)" if c.get("substituted") else ""))
+PYEOF
+  done
+  wf_running && echo "  wf.js: running" || true
   cd "$MDIR" || return 1
   for f in out/design_record.json out/build*_return.json out/post*_return.json; do [ -s "$f" ] && echo "  $f: $(wc -c < "$f") B $($PY -c "
 import json,sys; d=json.load(open(sys.argv[1])); print('keys', sorted(d.keys())[:8], 'halt' if d.get('halt') else '', 'error' if d.get('error') else '', 'FAILED' if d.get('failed') else '')" "$f" 2>/dev/null)"; done
@@ -498,6 +540,7 @@ wait_stage() {
   while [ $t -lt $max ]; do
     case "$stage" in
       launch) if ! pgrep -f "lambda_run_$TAG.sh" >/dev/null; then launch_finish; echo "launch exited after $((t/60)) min"; return 0; fi ;;
+      wf) if ! wf_running; then echo "wf.js stage exited after $((t/60)) min"; ls "$MDIR"/out/build*_args.json >/dev/null 2>&1 && [ -f "$MDIR/run_$TAG.py" ] && [ "$(ls "$MDIR"/out/wf-build-* -d 2>/dev/null | wc -l)" -ge 1 ] && build_checks; return 0; fi ;;
       *) local last; last=$(ls "$SESS"/$stage*.json 2>/dev/null | sort | tail -1); [ -n "$last" ] || { echo "no $stage session"; return 1; }
          if ! session_running "$(basename "$last" .json)"; then echo "$stage session exited after $((t/60)) min"; [ "$stage" = build ] && build_checks; return 0; fi ;;
     esac
@@ -513,7 +556,7 @@ ask() {   # name instruction-file: one read/write-only sonnet session following 
 
 case "$CMD" in
   ask) ask "$@" ;;
-  prepare) prepare "$@" ;; design) design ;; gate) gate "$@" ;; build) build ;; build-checks) build_checks ;; review) review ;;
-  launcher) launcher ;; launch) launch "$@" ;; score) score ;; post) post ;; status) status ;; wait) wait_stage "$@" ;;
+  prepare) prepare "$@" ;; design) design "$@" ;; gate) gate "$@" ;; build) build "$@" ;; build-checks) build_checks ;; review) review ;;
+  launcher) launcher ;; launch) launch "$@" ;; score) score ;; post) post "$@" ;; status) status ;; wait) wait_stage "$@" ;;
   *) sed -n 2,22p "$0"; exit 2 ;;
 esac

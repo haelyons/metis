@@ -70,5 +70,58 @@
     ],
     "expand_model": "opencode-go/mimo-v2.6-pro"
   },
-  "experiments_dir": "/home/hal/dev/interp/metis/experiments"
+  "experiments_dir": "/home/hal/dev/interp/metis/experiments",
+  "understudy": {
+    "_doc": "see idea/understudy.js header; CLI --family/--mode/--on-refusal/--profile override per run",
+    "primary_family": "opencode",
+    "mode": "fallback",
+    "on_refusal": "halt",
+    "retry_on": [
+      "timeout",
+      "exit",
+      "runner",
+      "nojson",
+      "schema"
+    ],
+    "families": {
+      "opencode": {
+        "models": {}
+      },
+      "claude": {
+        "models": {
+          "strong": "claude/opus",
+          "main": "claude/sonnet",
+          "cheap": "claude/sonnet"
+        }
+      }
+    },
+    "routes": [],
+    "profiles": {
+      "metis": {
+        "default": "qt-bare",
+        "by_label": []
+      },
+      "latent_skeptic": {
+        "default": "ls-general",
+        "by_label": [
+          {
+            "match": "^build$",
+            "role": "ls-builder"
+          },
+          {
+            "match": "^write$",
+            "role": "ls-writer"
+          }
+        ]
+      }
+    },
+    "timeouts_min": {
+      "triage-reader": 15,
+      "triage-runner": 30,
+      "triage-author": 20,
+      "ls-general": 15,
+      "ls-builder": 60,
+      "ls-writer": 20
+    }
+  }
 }
