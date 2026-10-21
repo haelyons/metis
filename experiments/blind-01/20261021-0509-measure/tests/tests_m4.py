@@ -886,10 +886,12 @@ def t_guard_allowance_worked_values():
         got = guard_allowance(ceiling, REMOTE_TIMEOUT_OF_RECORD, elapsed)
         if got != want:
             return False, "%s: allowance %s, directive states %s" % (name, got, want)
-    # the formula must follow a different REMOTE_TIMEOUT, not a constant
-    if guard_allowance(CEILINGS["setup"], 3600, 0) != 3100:
-        return False, "allowance does not follow REMOTE_TIMEOUT=3600 (got %s, expected 3100)" \
-            % guard_allowance(CEILINGS["setup"], 3600, 0)
+    # the formula must follow a different REMOTE_TIMEOUT, not a constant:
+    # item 8 gives min(ceiling, RT - elapsed - 400 - 100), so with RT 3600 the
+    # AlphaFold ceiling 2000 is cut to 3600 - 2000 - 500 = 1100 at elapsed 2000
+    if guard_allowance(CEILINGS["alphafold"], 3600, 2000) != 1100:
+        return False, "allowance does not follow REMOTE_TIMEOUT=3600 (got %s, expected 1100)" \
+            % guard_allowance(CEILINGS["alphafold"], 3600, 2000)
     return True, ""
 
 

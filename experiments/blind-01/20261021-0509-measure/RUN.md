@@ -189,3 +189,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 20:22Z session classify5 started (model sonnet, pid 1780258, session 424428ab)
 - 20:23Z session classify6 started (model sonnet, pid 1781196, session 4ebfe590)
 - 20:23Z LAUNCH 5 (A100, box 899132e1…): env_check PASS; tests 47/48 (one assertion-type failure; full tests stdout fetched to out/launch5_live/); HOLD at 20:20:43Z; two letters-only classifiers deciding test-wrong vs runner-wrong.
+- 20:24Z session testfix1 started (model sonnet, pid 1783762, session d16d4a43)
+- 20:28Z classifier 6 (with the full tests log): the one failing test asserts beyond the directive (test file, ~3 lines, high confidence). TESTFIX 1 (sonnet, 3 min, directive-only): 10 diff lines, compiles; shipped to the held A100 (both paths; sha in out/TESTS_HASHES_revision3.txt) and RESUME written at 20:27:52Z while the box still held.
