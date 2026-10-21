@@ -2,7 +2,7 @@
 # PER-LAUNCH COPY for m4 (2026-10-21), made from frozen/lambda_run.sh while no box runs. Adapted ONLY at
 # the points the frozen header declares: remote dir welfare_probe -> m4_run; scp payload -> m4 files; forwarded
 # env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE REMOTE_TIMEOUT; remote bootstrap renamed remote_run_m4.sh; fetch paths follow
-# results_m4/. data/ shipped recursively if present. REMOTE_TIMEOUT forwarded to the box (declared point 4, additive) so the on-box guard can read it. Billing-safety mechanisms byte-identical.
+# results_m4/. data/ shipped recursively if present. REMOTE_TIMEOUT forwarded to the box (declared point 4, additive) so the on-box guard can read it. Fetch (declared point: fetch paths): results_<tag>/out/*summary*.json and results_<tag>/out/RUN_VALID.json first, then the whole results_<tag>/out/ directory (the criticals-first ordering of the original). Billing-safety mechanisms byte-identical.
 # Local Lambda lifecycle for ONE box: launch -> poll -> scp code -> run on-box batch ->
 # fetch results -> TERMINATE. Teardown on NORMAL completion/error is guaranteed via `trap ... EXIT`;
 # a LOCAL interrupt (Ctrl-C/SIGHUP) AFTER the on-box self-destruct backstop is armed deliberately does

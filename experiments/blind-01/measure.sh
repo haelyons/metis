@@ -133,11 +133,11 @@ via_wf() {   # stage [flags...]
   local n; n=$(ls "$MDIR/out"/wf-"$stage"-* -d 2>/dev/null | wc -l); n=$((n+1))
   local ref=""; for a in "$@"; do [ "$a" = understudy ] && ref=" (refusals handed to the understudy: owner's explicit choice)"; done
   ( cd "$REPO" && setsid nohup node dut/pipeline/launch.js "$NAME_EXP" stage --measure "$MDIR" --stage "$stage" "$@" > "$SESS/wf-$stage$n.out" 2>&1 < /dev/null & )
-  sleep 4; local pid; pid="$(pgrep -f "wf.js --script $MDIR/pipeline.js" | head -1)"
+  sleep 4; local pid; pid="$(pgrep -f "wf.js --script .* --args $MDIR/out/wf-" | head -1)"
   logrun "stage $stage on wf.js run $n: flags [$*]$ref, pid ${pid:-?}"
   echo "started $stage on wf.js (run $n, pid ${pid:-?}); flags: $*"
 }
-wf_running() { pgrep -f "wf.js --script $MDIR/pipeline.js" >/dev/null 2>&1; }
+wf_running() { pgrep -f "wf.js --script .* --args $MDIR/out/wf-" >/dev/null 2>&1; }   # pipeline.js or prompt_stage.js: match on the run folder
 pop_via() {   # splits "--via wf <flags>" out of "$@": sets VIA and REST
   VIA=""; REST=(); REST_WF=()
   while [ $# -gt 0 ]; do case "$1" in --via) VIA="$2"; shift ;; *) REST+=("$1") ;; esac; shift; done
@@ -321,7 +321,7 @@ s = s.replace("# m3 payload: runner, on-box batch, adapted remote bootstrap, rec
               f"# {tag} payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present.")
 s = s.replace("scp -r $SSHOPT data ubuntu@$IP:m3_run/", "[ -d data ] && scp -r $SSHOPT data ubuntu@$IP:m3_run/")
 s = s.replace("remote dir welfare_probe -> m3_run; scp payload -> m3 files", f"remote dir welfare_probe -> {tag}_run; scp payload -> {tag} files")
-s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present. REMOTE_TIMEOUT forwarded to the box (declared point 4, additive) so the on-box guard can read it.")
+s = s.replace("data/ shipped recursively (built box, decks, builder, dataset.csv).", "data/ shipped recursively if present. REMOTE_TIMEOUT forwarded to the box (declared point 4, additive) so the on-box guard can read it. Fetch (declared point: fetch paths): results_<tag>/out/*summary*.json and results_<tag>/out/RUN_VALID.json first, then the whole results_<tag>/out/ directory (the criticals-first ordering of the original).")
 assert s.count('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"') == 1
 s = s.replace('INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\"', 'INSTANCE_TYPE=\\"${INSTANCE_TYPE:-$TYPE}\\" REMOTE_TIMEOUT=\\"$REMOTE_TIMEOUT\\"')
 s = s.replace("forwarded\n# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE;", "forwarded\n# env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE REMOTE_TIMEOUT;")

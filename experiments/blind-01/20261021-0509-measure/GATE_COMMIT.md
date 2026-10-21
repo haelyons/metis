@@ -359,3 +359,241 @@ No launch is authorised until build 3 exists, its selftest passes with matching 
 `lambda_run_m4.sh` (B4).
 
 Build 3 authorised
+
+---
+
+## Addendum 5 (2026-10-21)
+
+Rules on `out/review_build6.md` (review of build 6, execution layer, run on `wf.js`; verdict FAIL: 11 BLOCKING, 15 ADVISORY,
+plus 3 operator findings it verified and an 8-point checklist summary). Inputs added for this addendum: that report, this file
+as it stood, `EXEC_NOTE.md` as it stood, `sessions/GATE_5.md` is the task and is not a source of rulings. The gate ran nothing
+and did not read `run_m4.py`, `onbox_m4.sh` or `frozen/ONBOX_CONTRACT.md`; each ruling rests on the reviewer's line references,
+taken as reported. Every earlier section stands except where an answer below says it is superseded. Answers are numbered E1 to
+E28: E1 to E26 are the report's findings in its order, E27 the three operator findings, E28 the checklist summary. Counts: 28
+answers. The line `Build 5 authorised` at the end is the launcher's literal string for the next build; it does not renumber
+the earlier builds.
+
+**Decision on budget and build (addendum).** GO stands. No GPU money has been spent: the reviewer ran nothing and no launch
+record is among the inputs. Cap arithmetic unchanged: 2 launches x 2.00 h x USD 1.99 = USD 7.96; with 600 s outside each,
+2 x (7,200 + 600) s = 15,600 s = 4.333 h x 1.99 = USD 8.62; under the USD 10 cap with USD 1.38 left; `BUDGET_LEFT_USD=5` per
+launch above the 3.98 a launch can cost. No change to caps, instance or `BUDGET_LEFT_USD`. Three of the findings (E1, E3, E5)
+and finding 2 would each have spent a launch without a valid record; that is why they are binding and why E28 adds a selftest
+layer.
+
+### Blocking findings (E1 to E11)
+
+1. **E1 (finding 1, BLOCKING: tools are called by bare name; the venv's bin is not on PATH).** ACCEPTED. The build resolves every
+   tool through the venv: `onbox_m4.sh` exports `PATH="${VENV}/bin:${PATH}"` before the first stage, and `run_m4.py` builds
+   `child_env` with the venv's bin directory first (taken from `sys.executable`'s directory, not from the inherited PATH) and
+   calls tools by absolute path where it can (`${VENV}/bin/colabfold_batch`, `lightdock3.py`, `lightdock3_setup.py`, `lgd_*`).
+   The smoke check resolves each tool with `shutil.which` against that PATH and records the resolved absolute path; an
+   unresolved tool is exit 2 inside the install stage. Selftest: a planted venv directory with an executable stub is found
+   through `child_env` and not found through the bare inherited PATH.
+
+2. **E2 (finding 2, BLOCKING: the 1,800 s install ceiling is not a stage total).** ACCEPTED. `stage_allowance_s("install")`
+   becomes a running total: every apt, pip, download and smoke-check call takes `min(its own limit, install ceiling minus install
+   seconds already used, time left minus margin and endpoints slot)`. When the install total is exhausted the stage stops with
+   exit 2 (broken infrastructure: nothing measurable exists without the tools; run_valid false, void record, `RUN_DONE`), not
+   exit 3, and it falls under A2(a). Selftest: planted install calls whose sum passes 1,800 s stop at 1,800 s, not at the sum of
+   the per-call limits.
+
+3. **E3 (finding 3, BLOCKING: the parameter archive is downloaded but never extracted; colabfold fetches its own inside the timed
+   call).** ACCEPTED. The install stage verifies the archive's sha256 (recorded), extracts it into `<data>/params` (the same
+   `--data` directory colabfold is given), and verifies that the multimer parameter files for the 5 models are present there
+   before the smoke check ends; missing files are exit 2. No network access is needed in any timed call. If a timed call's log
+   shows a download or extraction anyway, that row carries `download_in_timed_call: true`, is not counted in the mean, and C1 is
+   VOID with the label "download inside timed call"; the run is not otherwise stopped. The extraction wall-clock is install time,
+   never C1 time. Selftest: a planted archive extracts to the expected layout; a planted log line "Downloading" sets the flag.
+
+4. **E4 (finding 4, BLOCKING: stand-in pairs are not checked against item 12 and the evidence is not recorded).** ACCEPTED. After
+   building the three pairs the build asserts: each pair's total length is in 750 to 1,000; the three sequences are pairwise
+   different and the three lengths pairwise differ by at least 20 residues (the answer-2 spread, "as far as the entry allows",
+   now with a floor); the pair has one capsid-role chain set and one receptor-role chain set. If the 6IHB chains cannot meet the
+   range, the build may use more than one copy of a capsid chain (answer 2 allows chain copies) before giving up; if it still
+   cannot, exit 2 with a void record that says which assertion failed (no silent clamp: `want_cap` clamping is an error, not a
+   behaviour). Evidence is written into `results_m4/out/`: `pairs_tag-m4.json` (chain ids and role mapping, sequences, lengths,
+   sha256 of each pair's FASTA and PDB file) and copies of the three FASTA files; each C record cites that file's hash in
+   `inputs`. Selftest: a planted short capsid chain fails the range assertion; planted equal-length pairs fail the spread
+   assertion; planted good pairs pass and the evidence file parses.
+
+5. **E5 (finding 5, BLOCKING: MD runs on the receptor alone, not on a docked complex).** ACCEPTED. The MD input is the merged
+   complex: the pair's capsid-role chains from the stand-in pair file plus the top-ranked docking pose of the receptor, written as
+   one structure, with the chain roles preserved; the build asserts both roles are present and the heavy-atom count of the
+   capsid part is nonzero before solvation, else exit 2. Water padding is chosen so the solvated total is inside 120,000 to
+   180,000 atoms (estimated from the solute's extent before building, then verified on the built system; one rebuild allowed
+   inside the complex's 600 s). If the target cannot be met, C2 is VOID with the atom count kept, per answer 10; the
+   range is not widened. Selftest: a planted receptor-only pose is refused; a planted merged complex passes the role check; a
+   planted solvation count of 119,999 or 180,001 is VOID.
+
+6. **E6 (finding 6, BLOCKING: the engine's rate line is never parsed).** ACCEPTED. The worker's StateDataReporter file (the
+   `out_json + ".log"` in `work_m4`) is copied to `results_m4/out/` and is the file parsed for the engine's ns/day; the tool's
+   stdout log is not. `rates_disagree` then works as answer 7(c) and item 17 say (more than 5 percent apart: label "engine rate
+   and wall-clock disagree", both reported). The unit-and-scale record carries the engine rate lines. If the rate file exists
+   and no rate line parses, the row carries `engine_ns_per_day: null` and the label "engine rate line missing"; the C2 decision
+   still rests on the wall-clock figure. The C4 MD bytes count the trajectory and every log of the segment, this file included.
+   Selftest: a planted file in the reporter's real column layout parses to its number; a planted file with no rate line gives
+   null and the label; the disagreement label fires on a planted 129 versus 100.
+
+7. **E7 (finding 7, BLOCKING: the empty-input control runs a tool, not the harness).** ACCEPTED, as answer 7(b) says. The
+   empty-input control times the harness itself: the same timer, work-directory creation and record path as a real call, around
+   a no-op command (`/bin/true` or `sleep 0`) with no AlphaFold, JAX, TensorFlow or docking import, and measures the bytes in the
+   directory that harness call created. `adjusted_seconds` subtracts only that harness overhead. The 2 s and 1 MiB thresholds
+   and the "setup overhead subtracted" label stand. Selftest: a planted slow-import tool is not what the control times; a planted
+   harness overhead of 5 s triggers the label and the subtraction; 0.5 s and 100 KiB do not.
+
+8. **E8 (finding 8, BLOCKING: no pose and tool timeouts become an anchor miss, exit 4).** ACCEPTED, three routes, no overlap.
+   (a) A docking call that exceeds its allowance is a ceiling stop: exit 3, run_valid as it was, the anchor undecided, C1 to C4
+   VOID "unmeasured, not holding" with the full incomplete-run label; it falls under A2(b). (b) A docking tool that exits
+   non-zero, or exits zero and leaves no parsable ranked pose, is a harness failure: exit 2, run_valid false, raw output kept;
+   it falls under A2(a) and is not an anchor result. (c) Exit 4 only when a pose was obtained and compared and the tolerance
+   was missed. `anchor_decision` never receives a missing pose. Selftest: the three routes planted in the stage flow with the
+   expected exit code, run_valid and records for each.
+
+9. **E9 (finding 9, BLOCKING: `m4_summary.json` does not state the stand-in scope first).** ACCEPTED. The summary is written
+   without `sort_keys` and with `what_this_run_decides` as its first key (stand-in protocol only), then the run_valid and exit
+   fields, the records, the gate result, the fallback text and `unmeasured_inputs`. Other JSON files may stay sorted. Selftest
+   reads the written file as text and checks that the first key is `what_this_run_decides`, not only that the key exists.
+
+10. **E10 (finding 10, BLOCKING: per-record labels are missing).** ACCEPTED. Every measured record's `machine` carries: the CUDA
+    runtime version (the driver's "CUDA Version" from the `nvidia-smi` header, parsed, plus the JAX CUDA plugin package version
+    from pip; absent values are written as null with a reason, never omitted); start and end wall-clock (UTC, ISO 8601, of the
+    stage or run that produced the value, not the record's write time); the AlphaFold parameter archive sha256; the JAX,
+    jaxlib and CUDA-plugin versions and the wheel build tags from the pip report (the build flags as far as a wheel states them);
+    the OpenMM version, platform and precision; the docking code and version; instance type, GPU name and driver; price per
+    hour. Selftest: a planted `nvidia-smi` header parses to its CUDA version; every record kind written by the selftest flow
+    carries every label key.
+
+11. **E11 (finding 11, BLOCKING: the C2 record omits the atom counts and engine precision).** ACCEPTED. The C2 record's `values`
+    carries the atom count of each complex, the engine precision, platform and version, `timestep_fs`, `production_ns`, `n` and
+    the per-complex wall-clock and engine rates, in addition to the item-6 labels. Selftest: a planted C2 record has these keys.
+
+### Advisory findings (E12 to E26)
+
+12. **E12 (finding 12, package forms unverified).** ACCEPTED as a risk, no new authorisation. The build chooses the package forms
+    whose package metadata carries what the smoke check imports (colabfold with its `alphafold` extra if the pinned release
+    declares one; the OpenMM form that carries the CUDA platform if the pinned release declares one), pins every version, and
+    leaves the verdict to the smoke check, as B6 says. A smoke-check failure is exit 2, a clean void record, and A2(a) covers the
+    relaunch; the cause is recorded in RUN.md and the build is re-run, not patched. The reviewer's recollection is not a ruling.
+
+13. **E13 (finding 13, docking CLI and output format untested before the paid anchor).** ACCEPTED in part. The fallback to the
+    lexicographically first pose is removed: the top pose is the first row of the tool's own rank list by its score, and if
+    the named pose file is missing the run is exit 2 (E8b), never `sorted(glob)[0]`. The first thing the anchor stage does with
+    the docking output is parse the rank table; an unparsable table is exit 2 with the raw table kept in `results_m4/out/`, so the
+    format is learned from the first launch's void record under A2(a). The smoke check stays `--help` only (a trial docking
+    inside the install ceiling is not authorised: it would spend the install allowance on an untested guess). Selftest: planted
+    rank tables with the columns the design assumes parse; a table without a rank column is refused, not guessed.
+
+14. **E14 (finding 14, onbox steps before the first stage can fail with no void record).** ACCEPTED. `python3-venv` joins the
+    declared apt packages (recorded with version and `apt-cache show` sha256, B13). `pip install --upgrade pip` is removed: no
+    unrecorded download; the venv's bundled pip is used and pinned packages are installed with `--report`. `onbox_m4.sh` sets its
+    exit trap before the venv step, so any abort before `run_m4.py` starts writes a minimal void record, `RUN_VALID.json`
+    (false) and `RUN_DONE` with exit 2 from the shell itself (stdlib `python3 -c` or plain shell, no venv needed).
+
+15. **E15 (finding 15, failing control and anchor records carry run_valid true).** ACCEPTED; item 3's sentence is revised. The
+    run is marked invalid before the failing record is written, so the failing sleep record, the failing anchor record and every
+    record after carry `run_valid` false; records written before the failing decision keep true. `RUN_VALID.json` and the
+    summary agree. Selftest: a planted sleep failure and a planted anchor miss produce a failing record with `run_valid` false.
+
+16. **E16 (finding 16, `estimated_s` is never passed to the guard).** ACCEPTED. Every `guard_before_stage` call and every unit
+    inside a stage passes an estimate: the mean of the finished units of that kind if any, else a stated floor (anchor serial or
+    parallel 60 s, docking pair 60 s, AlphaFold run 120 s, MD complex 150 s, storage 20 s, endpoints 30 s). A unit whose
+    estimate exceeds the allowance is not started and is recorded as a guard stop (B2 path, exit 3). This also supplies the
+    "guard arithmetic from measured rates" the reviewer says the contract wants (E28). Selftest: a planted stage with 100 s left
+    and a 150 s estimate is not started.
+
+17. **E17 (finding 17, `stage_aux` after a ceiling stop with 2 of 3 pairs is recorded as done).** ACCEPTED. A stage that
+    stopped on a ceiling, guard or timeout is not in `stages_done` even when it returned normally; C3 stays decided on the two
+    finished pairs (B8). Selftest: flow (d) asserts `stages_done` lacks the stage and C3 is decided on 2.
+
+18. **E18 (finding 18, one launcher fetch line not in frozen).** ACCEPTED as additive and harmless; not a build matter. The
+    operator declares it in the header of `lambda_run_m4.sh` (see Operator actions). Nothing changes in the build's two files,
+    which already write `RUN_VALID.json`.
+
+19. **E19 (finding 19, frozen bootstrap time before T0 is unrecorded and eats the margin).** ACCEPTED, handled in the build, not by
+    editing the frozen file. `onbox_m4.sh` sets its T0 to the start of its parent `remote_run_m4.sh` (`ps -o etimes= -p $PPID`),
+    plus 30 s for the ssh start, so the bootstrap counts against `REMOTE_TIMEOUT` and `STOP_AT`; if the parent time cannot be
+    read, it assumes 300 s and labels "bootstrap time assumed 300 s". The pre-T0 seconds are recorded in `env.txt` and the
+    summary. Stage allowances already take the lesser of ceiling and time left, so a slow bootstrap shortens the stages near the
+    end instead of eating the 400 s margin. The 7,200 s ceiling sum is a ceiling sum, not a promise. Selftest: a planted `etimes`
+    value moves T0; a garbage value takes the 300 s default and the label.
+
+20. **E20 (finding 20, writes and sudo beyond the declaration).** ACCEPTED in part. Caches the build controls are moved under
+    `~/m4_run/`: `PIP_CACHE_DIR`, `XDG_CACHE_HOME`, `MPLCONFIGDIR`, `JAX_COMPILATION_CACHE_DIR` (if used) and `TMPDIR` point
+    there. The frozen bootstrap's `~/.local` installs are the operator's file and stay: the payload rule of 5 concerns what the
+    build writes and ships, and the bootstrap is not the build's. `sudo -n env DEBIAN_FRONTEND=noninteractive apt-get update`
+    is accepted as the mandatory first step of the declared apt installs; no other sudo call is allowed, and the apt packages
+    stay the declared ones only.
+
+21. **E21 (finding 21, C1 `gate_pass` reported on a VOID C1).** ACCEPTED. `gate_pass` is computed only when C1 holds a valid
+    measurement: PASS, FAIL, and the marginal VOID (a real number the gate can read, answer 9 keeps `gate_pass` there). For a VOID
+    from not-an-A100, a below-minimum count, zero spread, a stop or `download_in_timed_call`, `gate_pass` is null and
+    `gate: "not evaluated: C1 VOID (<reason>)"`. The summary does not restate the fallback text as triggered for a null gate.
+    Selftest: planted VOID reasons give null; 1.2 (marginal) gives false with the fallback text; 0.9 gives true.
+
+22. **E22 (finding 22, exit 3 also returned for VOIDs that are not guard stops).** ACCEPTED; item 29 is revised. Exit 3 only when
+    a guard stop, ceiling stop, tool timeout or outer timeout left an input unmeasured. VOIDs by rule with no stop (not an A100,
+    zero spread, a marginal value) end with exit 0; `RUN_DONE` carries the exit code and the void reasons per input. Exit 2 and 4
+    as before. A2(b) therefore reads exit 3 only as "stopped on its time guard". Selftest: planted not-an-A100 and zero-spread
+    flows exit 0 with the VOIDs; planted stop flows exit 3.
+
+23. **E23 (finding 23, outer-timeout edge cases).** ACCEPTED. (a) `onbox_m4.sh` routes rc 124 and rc 137 as the outer-timeout
+    route (exit 3 path, B12) when elapsed time since T0 is at least the outer deadline minus 5 s; rc 137 earlier than that is a
+    failure (exit 2, a kill by something else). (b) `kill_recorded_groups` records, with each pgid, the leader's `/proc/<pid>/stat`
+    start time and command name, removes the entry when the tool returns, and signals a group only if its leader is alive and
+    both still match; otherwise it skips it and writes the skip to the log. Selftest: planted rc 137 at the deadline routes to
+    exit 3, rc 137 at 100 s to exit 2; a planted stale pgid entry whose start time differs is not signalled.
+
+24. **E24 (finding 24, pip report hash not cited in `inputs`).** ACCEPTED; item 34 stands as written and the build does it: each
+    record's `inputs` lists the pip report file with its sha256 and the apt hash file, besides the rows file. Selftest: a C record
+    from the selftest flow has an `inputs` entry for the pip report.
+
+25. **E25 (finding 25, C4 docking bytes under-count).** ACCEPTED. The docking bytes of one pair are the apparent bytes of the whole
+    per-pair docking output directory tree (setup files and copied structures, swarm directories, rank tables, every pose file
+    the tool wrote), not `Path(pose).parent`. Selftest: a planted tree with a nested swarm directory and a top-level
+    `setup.json` sums every file.
+
+26. **E26 (finding 26, `frozen/ONBOX_CONTRACT.md` was not reviewed).** ACCEPTED. The contract stays binding under rule 5, its stage
+    order, guards, record fields, selftest contract and failure checks are directive, and nothing here loosens it; the build reads
+    it. The gate did not read it either (it is not on the gate's list) and rules only on what the report says about it: stage
+    order matches item 1, records and state are atomic, guard arithmetic from measured rates exists only in the AlphaFold loop;
+    the last is answered by E16. The next review must have the contract on its read list and check the build against it.
+
+### Operator findings and checklist summary (E27, E28)
+
+27. **E27 (the three operator findings, verified by the reviewer).** ACCEPTED AS-IS. (1) `M4_OUT_DIR`, `REMOTE_T` and `STOP_AT` are
+    set before first use: not defects. (2) Only the two files were written, selftest 253 of 253, hashes and line counts match the
+    build return: nothing changes. (3) The contract was not read by the reviewer: see E26.
+
+28. **E28 (checklist summary, points 1 to 8).** ACCEPTED. Point 1 (EXEC_NOTE items 6, 8, 12, 13, 14, 17, 20, 28, 29, 30 and 33 not
+    carried) is the list answered by E1 to E11 and E15 to E17, and those items are revised in EXEC_NOTE. Points 2 to 6 and 8 (cost
+    and time clamps, records, secrets, writes, launcher copy, `onbox_command`) read as carried or are answered above; nothing more
+    changes. Point 7 (the selftest runs fakes for the stages and never runs the real `stage_*` bodies, so findings 1, 3, 5, 6 and 7
+    were invisible) is BINDING on the build: the selftest must also run the real `stage_*` bodies, with the tool runner,
+    clock and filesystem roots injected and fake tool executables placed in a planted venv bin directory (stdlib only, no GPU,
+    no network, still under 300 s), asserting at least: tools resolve through the venv PATH (E1), the parameter directory is
+    populated before a timed call (E3), pair assertions (E4), the MD input holds both chain roles (E5), the engine rate file is
+    parsed (E6), the empty-run control times the harness (E7), and the three docking failure routes (E8). The selftest's count
+    line and file-hash line stay as in B14.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Cap: 7,200 s = 2.00 h x 1.99 = 3.98;
+two launches 7.96; with 600 s each outside 8.62; under 10. Ceilings unchanged and still sum to 7,200: 1,800 + 700 + 600 + 2,000 +
+1,600 + 100 + 400 = 7,200. Hitting the install total now ends in exit 2, not 3 (E2); the earlier B8 text about ceiling stops
+applies to the later stages only. MD per complex: 0.5 ns at 129 ns/day is 335 s, inside the 600 s per-complex cap with system
+build and equilibration; at 60 ns/day it is 720 s and the complex is cut by the cap (C2 then rests on fewer complexes, minimum 2
+of 3). Estimate floors of E16 (60, 60, 120, 150, 20, 30 s) are each below their ceiling. E21 keeps the answer-9 planted case 1.2
+(VOID, marginal, `gate_pass` false). Counting: the report has 26 numbered findings (11 + 15), 3 operator findings and an 8-point
+summary; answers E1 to E28 cover all.
+
+**Pre-authorisation (addendum).** Unchanged: A1 and A2 stand. A launch-1 halt for a toolchain, install, parameter-extraction,
+docking-format or bootstrap reason is under A2(a); a ceiling or time-guard stop with inputs unmeasured is under A2(b). A failed
+smoke check or a docking table that does not parse is exit 2 and falls under A2(a), not an anchor result. No launch is authorised
+until the new build exists, its selftest passes with matching hashes (B14), and the operator has diffed `lambda_run_m4.sh`
+against `frozen/lambda_run.sh` and declared the fetch line of E18.
+
+Build 5 authorised
+
+## Operator actions
+
+OPERATOR: declare in the header of `lambda_run_m4.sh` the added fetch line for `results_m4/out/RUN_VALID.json` (or remove it; the out directory fetch already covers the file) and re-diff the file against `frozen/lambda_run.sh` before launch 1.
+OPERATOR: leave `remote_run_m4.sh` as `frozen/remote_run.sh` with only the `cd` line changed to `~/m4_run`; the build now counts the bootstrap time itself, so no change to the frozen bootstrap is needed.
+OPERATOR: before launch 1 re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk; keep `REMOTE_TIMEOUT=7200`, `BUDGET_LEFT_USD=5`, `PRICE_USD_PER_HOUR=1.99` (or the chosen instance's price, at most 2.50) and `INSTANCE_TYPE` forwarded as before.
