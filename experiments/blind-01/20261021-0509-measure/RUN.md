@@ -77,3 +77,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:02Z build 10 checks: selftest exit 0
 - 15:02Z review 5 of build 10 requested
 - 15:02Z stage review on wf.js run 2: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1217562
+- 15:03Z build 10 checks: selftest exit 0
+- 15:03Z build 10 ran on build 9's args (addendum 6 directive): launch.js picked the latest args file by string order (build9 > build10); fixed to numeric order; build 10's return had overwritten build9_return.json, restored from its wf run. Build 11 will run on the addendum 7 directive after review 5 finishes.

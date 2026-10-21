@@ -119,7 +119,7 @@ if (kind === 'loop') cmd = node('loop.js', ['--seed', SEED, '--name', name, '--d
 if (kind === 'frame') cmd = node('frame.js', [...extra, '--out', path.join(RUN, 'out')])
 if (kind === 'stage') {
   // the stage's args file as measure.sh wrote it (design_args.json, build<N>_args.json, post<N>_args.json: the latest)
-  const latest = re => fs.readdirSync(path.join(MDIR, 'out')).filter(f => re.test(f)).sort().pop()
+  const latest = re => fs.readdirSync(path.join(MDIR, 'out')).filter(f => re.test(f)).sort((a, b) => Number((a.match(/\d+/) || [0])[0]) - Number((b.match(/\d+/) || [0])[0])).pop()   // numeric: build10 after build9
   const argsFile = STAGE === 'design' ? 'design_args.json' : latest(new RegExp(`^${STAGE}\\d+_args\\.json$`))
   if (!argsFile || !fs.existsSync(path.join(MDIR, 'out', argsFile))) { console.error(`stage: no ${STAGE} args file under ${MDIR}/out (measure.sh writes it)`); process.exit(2) }
   const a = JSON.parse(fs.readFileSync(path.join(MDIR, 'out', argsFile), 'utf8'))
