@@ -263,3 +263,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:08Z build 25 checks: selftest exit 0
 - 22:08Z review 16 of build 25: PASS, 0 blocking, 7 advisory. LAUNCH 9 issued (build 25: per-invocation working directories at the dry-run stage).
 - 22:08Z LAUNCH 9: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=4.01, pid 1946845, log out/launcher_m4_L9.log
+- 22:19Z LAUNCH 9 of record: A100 us-east-1, 22:08Z to 22:18Z, 0.17 h, USD 0.35 est, exit 4 (anchor miss per the contract): environment PASS, tests 48/48, downloads, controls, dry-run stage PASSED for the first time (build 25's fix), anchor record decision FAIL (measured value far from the expected one), inputs VOID by propagation, box terminated. Outputs under out/launch9/. m4 Lambda spend: USD 6.34. A classifier decides genuine miss vs anchor-computation defect.
+- 22:19Z session classify9 started (model sonnet, pid 1963147, session 5c9ce2b4)
