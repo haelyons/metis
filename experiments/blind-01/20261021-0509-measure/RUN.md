@@ -275,3 +275,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:27Z review 17 of build 26: PASS, 0 blocking, 6 advisory. LAUNCH 10 issued (build 26: anchor-stage fix).
 - 22:27Z LAUNCH 10: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=3.66, pid 1975813, log out/launcher_m4_L10.log
 - 22:28Z cap of record raised from USD 10 to USD 20 for later launches (owner 2026-10-21: budget extended, fine to hit the cap, more compute guaranteed); launch 10 already carries BUDGET_LEFT_USD 3.66 under the old arithmetic (about 1.84 h at USD 1.99/h, inside the 2 h window).
+- 22:39Z LAUNCH 10 of record: A100 us-east-1, 22:28Z to 22:38Z, 0.17 h, USD 0.34 est, exit 4 (anchor miss): environment PASS, tests 48/48, downloads, controls, dry run PASS; anchor FAIL again with the measured value moved by about 3x toward the expected zero after build 26's frame fix but still far from it; inputs VOID. Outputs under out/launch10/. m4 Lambda spend: USD 6.68. Classifier 10 decides genuine miss vs remaining defect vs anchor definition.
+- 22:39Z session classify10 started (model sonnet, pid 1992035, session cb2f0c4f)
