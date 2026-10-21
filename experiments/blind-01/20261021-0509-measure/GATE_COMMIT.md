@@ -1618,3 +1618,169 @@ OPERATOR: record the spend of every launch in RUN.md (USD 0.30 so far, launch 1)
 OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of the review of the launched build, state G3's ruling and the scopes of EXEC_NOTE items 65 and 72 to it, and give it the diff against build 11 and against build 14 (J7, L7).
 OPERATOR: before the next launch re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8).
 OPERATOR: launch environment of record for each launch: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (L8).
+
+## Addendum 12 (2026-10-21)
+
+Rules on `out/gate_report_build14.md`: the operator's mechanical note (review 7 of build 14: FAIL, 3 blocking, 3 advisory; build 14's
+`PIP_PINS` has 9 lines, all identical to lines of the addendum 9 set, which has 10; the operator's pre-launch test passed on build 14's
+9 pins (82 packages) and on the 10-line set (83 packages); the earlier resolve failures were the operator's temporary quota) and the
+reviewer's file quoted in it. Rulings asked: (a) the three blocking findings, and build 15 authorised as an in-place edit if the fix is
+the missing pin line and the items it serves; (b) the advisory findings accepted or numbered; (c) launch 2 pre-authorised on a clean
+review 8 with the environment of record. Inputs added for this addendum, in the order the report names them: the report itself; also
+this file as it stood, `EXEC_NOTE.md` as it stood, `QUESTION.md`, `CARD.json`, `out/design_record.json`, and the task text of this
+session, which is not a source of rulings. For the one fact the findings turn on, the gate read three lines of
+`out/pip_release_files_lightdock.txt` (lines 549 to 551) and counted lines of `out/pip_pins_resolve_build14.txt` (0 non-empty lines);
+it did not read `run_m4.py`, `onbox_m4.sh` or `frozen/ONBOX_CONTRACT.md`, so every statement about build 14's code is the reviewer's,
+taken as reported. The two shape-example files named in the task are outside this session's readable directory; this addendum follows
+the shape of the sections above. Every earlier section stands except where an answer below says it is superseded: M3 completes item
+58's comment text, M4 widens the scope of items 65 and 72 by one function, M8 supersedes item 72's scope for build 15, M9 restates the
+conditions of item 62 for the next launch. Answers are numbered M1 to M9. Counts: 9 answers (6 findings, the operator's pin-line
+statement, the build ask, the launch ask with the money and the unchanged rest). The line `Build 12 authorised` at the end is the
+launcher's literal string for the next build; it does not renumber the earlier builds (the build it authorises is build 15).
+
+**What the inputs show (facts, not rulings).**
+- The reviewer's blocking findings are about files and selftest text, not about the pin list: (1) `out/pip_pins_resolve_build14.txt`
+  is empty and `out/pip_pins_list_b14.txt` does not exist; (2) no static check for paths under `out/pip_` or `out/gate`; (3) the
+  `PIP_PINS` comment omits `out/pip_release_files_lightdock.txt` and still says "inferences ... not verified facts". Finding 1 is the
+  operator's; findings 2 and 3 are in `run_m4.py`.
+- The gate counted 0 non-empty lines in `out/pip_pins_resolve_build14.txt`, matching finding 1. The file `out/pip_pins_resolve_build14.json`
+  exists; the gate did not open it.
+- `out/pip_release_files_lightdock.txt` line 550 to 551 reads: `pinned release openmm-cuda==8.1.1.12: requires_python None;
+  requires_dist (1 line(s)): openmm==8.1.1`. So the file the comment must cite does hold the metadata fact finding 3 names. The same file
+  also lists `openmm` 8.2.0 (line 499) and the `lightdock` release files; the gate did not read the rest.
+- The pins of record are nine (J1, K1, L4, item 70). The operator's "addendum 9 set has 10 lines" is the overlay set of L3, which the
+  gate has not seen and which L3 ruled is not the list of record.
+
+**Decision on budget and build (addendum).** GO stands. HALT is not decided: no finding reports a resolution conflict, a wrong pin or a
+cost problem; the three blocking findings are one operator file problem and two missing pieces of selftest and comment text. Builds,
+reviews and the operator's pip tests spend no GPU money. Arithmetic, launches x hours x price, against the USD 10 cap: spent so far,
+launch 1, USD 0.30 (nothing since); the next launch at its caps, 7,200 s command + 600 s outside = 7,800 s = 2.1667 h x 1.99 = USD 4.31
+(the command alone, 2.00 h x 1.99 = 3.98, is under `BUDGET_LEFT_USD=5`); total 0.30 + 4.31 = USD 4.61, USD 5.39 of the cap left. A
+further launch after it would start while the remaining cap is at least 4.31: 0.30 + 2 x 4.31 = 8.92, remaining 1.08, below 4.31, so a
+third would not start. At the fallback ceiling of USD 2.50/h: 2.1667 h x 2.50 = 5.42; total 5.72; remaining 4.28, below 5.42: none after
+it.
+
+### Answers of record (M1 to M9)
+
+1. **M1 (finding 1, BLOCKING: `out/pip_pins_resolve_build14.txt` is 0 bytes, `out/pip_pins_list_b14.txt` does not exist, T2 not
+   reported).** ACCEPTED. It is the operator's, not the build's; no build line changes for it. Until the evidence is in the files the
+   test of record has not been shown (item 66), whatever the operator's note says of its outcome. Before build 15 starts the operator
+   (a) writes `out/pip_pins_list_b14.txt` by hand from item 70, nine lines, with the checks of item 68, (b) runs T0, T1 and T2 of item
+   66 as item 74 amends them, on a host with the disk room of item 74(a), on that file, and (c) writes into `out/pip_pins_resolve_build14.txt`
+   the exact command lines, the `pip --version` of T0, the T1 output, the `df -h` lines, every `.tar.gz` entry of the T1 report with name,
+   version, URL and hash, and the T2 result for each; the same into RUN.md. The file must be non-empty and say whether T1 and T2 passed. A
+   pass of T1 on the nine lines reported by the operator in the note is evidence for the gate only until this is done. The second run of
+   item 66, on the lines read from build 15's `PIP_PINS`, is recorded in the same file before the next launch (item 62(iii)).
+
+2. **M2 (finding 2, BLOCKING: no static check that neither file opens a path under `out/pip_` or `out/gate`).** ACCEPTED. The reviewer is
+   right that item 65 names the check ("the static check of item 67 is part of the selftest cases of this scope") and that build 14's
+   return was wrong to leave it out for scope. Build 15 adds it, as a selftest case only, no change to what either file does. The check
+   reads the text of `run_m4.py` and `onbox_m4.sh` and fails if either contains a path literal beginning `out/pip_` or `out/gate` as an
+   argument of a call that opens, reads, lists or copies (`open`, `Path`, `read_text`, `read_bytes`, `glob`, `os.path` functions, `cat`,
+   `cp`, `<` redirection); a mention inside a comment, such as the sources named on `PIP_PINS`, does not trip it. The check's own text
+   builds the two prefixes from pieces so that it does not match itself. Planted: a text with `open("out/pip_pins_list_b14.txt")` fails;
+   one with `Path("out/gate_report_x.md").read_text()` fails; one with `cat out/pip_release_files_lightdock.txt` fails; a text with those
+   names only inside comments passes; the two real files pass (the reviewer's grep found none). The selftest count rises by the cases
+   added.
+
+3. **M3 (finding 3, BLOCKING: the `PIP_PINS` comment omits `out/pip_release_files_lightdock.txt` and the metadata fact, and still says
+   "inferences ... not verified facts").** ACCEPTED, and the file named does hold the fact (line 550 to 551 of it, quoted above), so the
+   comment may cite it. Build 15 rewrites the comment on `PIP_PINS` to say, and nothing that contradicts it: the sources are
+   `out/gate_report_build13.md`, `out/pip_pins_resolve_build11.txt`, `out/launch1/results_m4/out/tool_logs/install_pip_install.log` and
+   `out/pip_release_files_lightdock.txt`; the index metadata in the last of them states that `openmm-cuda==8.1.1.12` requires
+   `openmm==8.1.1` and that this release has a CPython 3.10 manylinux x86_64 wheel (the wheel half is the gate's reading of the operator's
+   listing; the comment says "per the operator's listing"); the pair is therefore read from metadata and no longer called an inference;
+   the `with_cuda` extra remains the gate's inference, tested by item 66; that the whole set resolves in one call is decided by item 66
+   and that the CUDA platform loads only by the smoke check on the box. The selftest case of item 64 checks the comment for the four
+   file names and for the sentence that `openmm-cuda==8.1.1.12` requires `openmm==8.1.1`, and that the version in that sentence equals
+   the version of the `openmm` pin. Planted: a comment with one of the four names removed fails; a comment still containing "not
+   verified facts" about the pair fails; the good comment passes.
+
+4. **M4 (finding 4, ADVISORY: `pip_pins_problems` gained a lone-sibling refusal, outside item 65's literal list).** ACCEPTED AS
+   IN SCOPE, AND NUMBERED. The reviewer is right that the directive conflicts with itself: item 64 requires "an `openmm-cuda*` entry
+   without a plain `openmm` entry is rejected", and that case cannot pass without the change, and item 65 lists the parser case as
+   in scope. The gate rules that the parser function's change needed by item 64 belongs to the scope of items 65 and 72, limited to the
+   refusal and its own selftest cases; no other line of that function changes. It is not a finding against build 14 and the build
+   keeps it as it is. If build 15's return shows any other change in that function, that change is blocking.
+
+5. **M5 (finding 5, ADVISORY: `EXTRA-NOT-DECLARED jax-cuda12-plugin[with_cuda]` in the check file).** ACCEPTED AS-IS, NOTHING
+   CHANGES, as L2 ruled: a spelling mismatch of the check script (`with_cuda` against `with-cuda`, one name to pip). The pin is not
+   respelled. The report's `.whl` URLs and the `nvidia-cudnn-cu12` entry are what the written T1 output of M1 must show; they are not
+   a build matter.
+
+6. **M6 (finding 6, ADVISORY: the test resolves in a clean venv with `--ignore-installed`; the box's venv sits over the image's torch 2.7
+   and `nvidia-*` pins, and `~/.local` holds `numpy==1.26.4`).** ACCEPTED AS A STATED RISK, NOTHING CHANGES. It is the known gap
+   between item 66 (no GPU, no preinstalled packages) and the box; a conflict with the preinstalled set would end the launch at the
+   smoke check or the install ceiling as exit 2 with a void record (item 8, A2(a)), costing at most the install share of USD 4.31,
+   as in launch 1. The gate adds no pin and no pip option for it (item 71 forbids options that change resolution) and does not authorise a
+   resolve that models the box: it cannot be modelled without the image. The operator may state the risk in RUN.md.
+
+7. **M7 (the operator's statement that the addendum 9 set has 10 lines and build 14's `PIP_PINS` 9, so "one line of record is missing").**
+   NOT A MISSING LINE OF RECORD, AS FAR AS THE GATE CAN SEE; NO PIN IS ADDED. The pins of record are the nine of J1, K1, L4 and EXEC_NOTE
+   item 70. The reviewer did not find a missing pin line and cites items 58, 62, 65 and 67 for different faults (M1 to M3). The overlay set
+   is the gate's candidate pins laid over the then-current pins (L3), is not the list of record, and the gate has not seen its tenth line.
+   The operator's two resolves (82 packages on nine pins, 83 on ten) are consistent with a one-package difference and are evidence for the gate
+   only. The operator does three things (Operator actions): diffs build 14's nine strings against item 70 and writes the result in RUN.md;
+   writes into RUN.md the text of the overlay's tenth line; and, if that line names a requirement that is not one of the nine and the
+   operator wants it in the build, returns to the gate with it. The build never takes a pin from the overlay (item 67).
+
+8. **M8 (ask (a): build 15 authorised, or HALT; supersedes item 72's scope).** BUILD 15 AUTHORISED, narrowly, on one precondition:
+   M1's first run (T0, T1 and T2 on the hand-written list, in the files and in RUN.md) passed. The fix the operator proposed (a missing pin
+   line) is not what the findings ask for, so the scope is widened to what they do ask. Build 15 is an in-place edit of build 14's
+   `run_m4.py` and `onbox_m4.sh`, limited to: (a) the comment on `PIP_PINS` (M3); (b) the selftest static check of item 67 (M2); (c) the
+   selftest case of item 64 extended to the comment (M3); (d) the lone-sibling refusal in the pin parser as build 14 has it, kept (M4);
+   (e) the nine `PIP_PINS` strings, changed only if they differ from item 70, and the pinned `pip install` call, changed only if it
+   differs from item 71 (item 72 (a) and (b) stand); (f) the selftest's count and hash lines, which move. Every other line stays as
+   build 14 has it; nothing is refactored, renamed or reordered. It uses no network and reads no operator file. Its return states the real
+   line counts, the two sha256 values (item 36), the selftest count (build 14: 749 of 749), the exact lines changed, the nine strings and
+   the pip install line. Build 15 is the last build on this matter, as L7 ruled; there is no 16th. If review 8 finds a blocking item the
+   gate rules in an addendum; no build is started on it by anyone else. A changed line outside this list is a blocking finding.
+
+9. **M9 (ask (c): launch 2 pre-authorised on a clean review 8; money; everything else).** AUTHORISED on the conditions of item 62, restated
+   below, with the environment of record. A clean review 8 means zero BLOCKING findings, on a read list that includes
+   `frozen/ONBOX_CONTRACT.md` with G3 applied and the diffs of build 15 against build 14 and against build 11, and a statement that the
+   diff against build 14 is limited to the list of M8. The five conditions: (i) build 15 exists, its selftest passes and the two sha256
+   values printed locally match the files on disk; (ii) the clean review 8; (iii) the second run of item 66 (T0, T1, T2 under item 74)
+   on the nine lines read from build 15's `PIP_PINS`, text-identical to item 70 by `diff`, is written into
+   `out/pip_pins_resolve_build14.txt` (non-empty, with command lines) and RUN.md and passed; (iv) the launch environment of record:
+   `REMOTE_TIMEOUT=7200`, `BUDGET_LEFT_USD` = the lesser of 5 and 10 minus the recorded spend (5 now), `PRICE_USD_PER_HOUR=1.99`,
+   `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1, else the cheapest single GPU with capacity at no more than USD 2.50/h with type and price
+   set to its values and the other three unchanged; (v) the cause is recorded in RUN.md (launch 1's pip failure; the full-disk resolve; the
+   empty evidence file of review 7). The remaining cap must be at least USD 4.31 at 1.99 (5.42 at 2.50): it is 9.70 now. Spent: USD 0.30.
+   Everything else is unchanged: bands, gate scope, stage ceilings (1,800 + 700 + 600 + 2,000 + 1,600 + 100 + 400 = 7,200), the allowance
+   formula, labels, the exit-code table, the selftest contract, the stand-in protocol and every answer of the earlier sections. The only
+   EXEC_NOTE items that move are those marked `(revised, addendum 12)` and items 75 to 78, which are new.
+
+**Checks the gate made before answering (addendum).** Arithmetic and cross-reading only. Spend: 7,800 / 3,600 = 2.1667 h x 1.99 = 4.311;
+0.30 + 4.311 = 4.61; 0.30 + 2 x 4.311 = 8.92; 10 - 8.92 = 1.08, below 4.31; fallback 2.1667 x 2.50 = 5.417, 0.30 + 5.417 = 5.72, 10 - 5.72 =
+4.28, below 5.42. `BUDGET_LEFT_USD` = min(5, 10 - 0.30 = 9.70) = 5; 3.98 under it. Ceilings sum to 7,200. Cross-reading: the report's count of
+blocking findings (3) and advisory (3) matches its list; finding 1's "0 bytes" matches the gate's count of 0 non-empty lines in
+`out/pip_pins_resolve_build14.txt`; `out/pip_pins_list_b14.txt` is not among the files under `out/pip_*` (the gate listed them: it is
+absent); lines 550 to 551 of `out/pip_release_files_lightdock.txt` say what finding 3 says the comment must cite; the nine pins of item
+70 are the nine of L4, one `openmm==8.1.1`, one `openmm-cuda==8.1.1.12`, one `[with_cuda]`, no 8.2.0. Counting: the report has 6
+findings and 3 asks; answers M1 to M6 cover the findings in order, M7 the operator's pin-line statement, M8 and M9 the build and launch asks
+(the advisory ask is answered by M4 to M6). The gate did not re-run any resolution, index query or build and did not verify that the
+list resolves; the reviewer ran nothing either.
+
+**Pre-authorisation (addendum).** A1 stands unchanged. A2 stands with the count removed (L8): the next launch, and a later one, are
+authorised only under all of (i) to (v) of M9, the remaining cap, and either of A2's two reasons (a relaunch only after a launch that
+halted before the anchor decision for a toolchain, install or launcher reason with the cause recorded in RUN.md, or after a launch that
+stopped on its time guard with inputs unmeasured, which reruns the anchor first and then only the unfinished inputs). Not authorised,
+as before: a relaunch to double seeds, to repeat a decided input, to change a band, or after an anchor miss (exit 4) or exit 0; a build
+other than build 15 without a new addendum. What stops a launch: the cost and time guard, an anchor miss (exit 4), the sleep check (exit
+2), any broken infrastructure (exit 2 with a void record, no patching around), a stage ceiling, or the cap. Totals: USD 0.30 spent; the
+next launch at most USD 4.31 (total 4.61); the owner's USD 10 cap is not raised by this gate.
+
+Build 12 authorised
+
+## Operator actions
+
+OPERATOR: write `out/pip_pins_list_b14.txt` by hand from EXEC_NOTE item 70 (nine lines, in order, nothing else; `wc -l` is 9, one `openmm==8.1.1` line, one `openmm-cuda==` line, one `jax-cuda12-plugin[with_cuda]==0.4.35` line, no `openmm==8.2.0`) (M1).
+OPERATOR: run T0, T1 and T2 of item 66 as item 74 amends them on that file, on a host with at least 10 GiB free for the venv, `TMPDIR` and `PIP_CACHE_DIR`; write the command lines, the `pip --version`, the T1 output, `df -h` before and after, every `.tar.gz` entry of the T1 report with name, version, URL and hash, and the T2 result of each into `out/pip_pins_resolve_build14.txt` (non-empty) and `out/pip_pins_resolve_build14.json` and RUN.md; start build 15 only if T1 and T2 pass; if T1 fails with a conflict start no build and return to the gate (K5); if only T2 fails return to the gate; a disk, quota or network error with no conflict is repeated on another host without asking (M1, M8).
+OPERATOR: `diff` build 14's nine `PIP_PINS` strings against `out/pip_pins_list_b14.txt` and write the result into RUN.md; write into RUN.md the text of the tenth line of the addendum 9 overlay set; return to the gate only if that line is a requirement you want in the build (M7).
+OPERATOR: after build 15, `diff` its `PIP_PINS` strings against `out/pip_pins_list_b14.txt`, and its two files against build 14's and against build 11's; run T0, T1 and T2 (item 74) again on the lines read from build 15's file and append both results to `out/pip_pins_resolve_build14.txt` and RUN.md (M9).
+OPERATOR: put `frozen/ONBOX_CONTRACT.md` on the read list of review 8, state G3's ruling and the scope of EXEC_NOTE item 75 to it, and give it the diff against build 14 and against build 11; the launch needs zero blocking findings (M9).
+OPERATOR: before the launch re-run `python3 run_m4.py --selftest` locally and compare the two printed sha256 values with the files on disk (B14); `lambda_run_m4.sh` and `remote_run_m4.sh` stay as launch 1 used them (H8).
+OPERATOR: record the spend of every launch in RUN.md (USD 0.30 so far); before each launch set `BUDGET_LEFT_USD` to the lesser of 5 and 10 minus the recorded spend; do not start a launch whose remaining cap is below 7,800 s x its `PRICE_USD_PER_HOUR` / 3,600 (USD 4.31 at 1.99, USD 5.42 at 2.50) (M9).
+OPERATOR: launch environment of record: `REMOTE_TIMEOUT=7200` (not lower), `BUDGET_LEFT_USD` as above (at most 5), `PRICE_USD_PER_HOUR=1.99` (the chosen instance's price, at most 2.50, if the fallback is used), `INSTANCE_TYPE=gpu_1x_a100_sxm4` in us-east-1 (else the cheapest single GPU with capacity at no more than USD 2.50/h); record which on every record (M9).
+OPERATOR: optional, not required by the gate: state the box-venv gap of finding 6 in RUN.md (M6).

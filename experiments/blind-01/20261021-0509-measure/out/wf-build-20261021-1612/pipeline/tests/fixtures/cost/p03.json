@@ -1,0 +1,52 @@
+{
+ "option_title": "3 R1 I1 (PASS)",
+ "phases": [
+ {"id":"A","what":"1x H100: setup, pilot, 8B runs","stop_rule":"re-estimate tokens, throughput, positives after A2; decide corpus size"},
+ {"id":"B","what":"8x H100: 70B runs"},
+ {"id":"S","what":"storage"}
+],
+ "numbers": [
+ {"id":"h100_sparse","name":"H100 SXM BF16 with sparsity","unit":"TFLOPS","basis":"CITED","value":1979,"source_id":"s_nv_h100"},
+ {"id":"dense_frac","name":"dense = half of sparse","unit":"1","basis":"CITED","value":0.5,"source_id":"s_nv_h100","quote":"With sparsity"},
+ {"id":"h100_dense","name":"H100 dense BF16","unit":"TFLOPS","basis":"DERIVED","expr":"h100_sparse * dense_frac"},
+ {"id":"eff_prefill","name":"vLLM prefill efficiency","unit":"1","basis":"GUESS","value":0.35,"rests_on":"producer's assumption; no published vLLM figure for Llama-3.3-70B on 8x H100","measured_by":"A"},
+ {"id":"eff_hf","name":"HF scoring-pass efficiency","unit":"1","basis":"GUESS","value":0.3,"rests_on":"assumption","measured_by":"A"},
+ {"id":"hbm_frac","name":"decode at fraction of HBM bandwidth","unit":"1","basis":"GUESS","value":0.5,"rests_on":"assumption","measured_by":"A"},
+ {"id":"tok_in","name":"mean paper tokens","unit":"tokens","basis":"GUESS","value":14000,"rests_on":"assumption; pilot measures","measured_by":"A"},
+ {"id":"prefill_tok_70b","name":"70B prefill tokens (2,400 x 14k + 400 x 20k)","unit":"tokens","basis":"DERIVED","expr":"2400 * tok_in + 400 * 20000"},
+ {"id":"flop_tok_70b","name":"FLOPs per token, 70B (2 x 70.6B + attention)","unit":"FLOP","basis":"DERIVED","expr":"2 * 70.6e9 + 4 * 80 * 8192 * 7000"},
+ {"id":"prefill_h_70b","name":"70B prefill time","unit":"h","basis":"DERIVED","expr":"prefill_tok_70b * flop_tok_70b / (8 * h100_dense * 1e12 * eff_prefill) / 3600"},
+ {"id":"decode_h_70b","name":"70B decode time (3.4M tokens; 572 GB per step at 13.4 TB/s; 86 sequences)","unit":"h","basis":"DERIVED","expr":"3.4e6 / (86 / (572e9 / (26.8e12 * hbm_frac))) / 3600"},
+ {"id":"gen_need_70b","name":"70B generation need","unit":"h","basis":"DERIVED","expr":"prefill_h_70b + decode_h_70b"}
+],
+ "cost": {
+  "rates": [
+   {"id":"r1","gpu":"H100 SXM","gpu_memory_gb":80,"n_gpus":1,"per_gpu_usd_h":4.29},
+   {"id":"r8","gpu":"H100 SXM","gpu_memory_gb":80,"n_gpus":8,"per_gpu_usd_h":3.99}
+  ],
+  "lines": [
+   {"id":"A1","phase":"A","kind":"work","rate":"r1","hours":"2"},
+   {"id":"A2","phase":"A","what":"pilot","kind":"work","rate":"r1","hours":"4"},
+   {"id":"A3","phase":"A","kind":"work","rate":"r1","hours":"3"},
+   {"id":"A4","phase":"A","kind":"work","rate":"r1","hours":"2"},
+   {"id":"B0","phase":"B","kind":"work","rate":"r8","hours":"1"},
+   {"id":"B1","phase":"B","kind":"work","rate":"r8","hours":"0.5"},
+   {"id":"B2","phase":"B","what":"70B generation","kind":"work","rate":"r8","hours":"2","need":"gen_need_70b"},
+   {"id":"B3","phase":"B","kind":"work","rate":"r8","hours":"1.5"},
+   {"id":"B4","phase":"B","kind":"work","rate":"r8","hours":"2"},
+   {"id":"B5","phase":"B","kind":"work","rate":"r8","hours":"1"},
+   {"id":"B6","phase":"B","kind":"work","rate":"r8","hours":"0.5"},
+   {"id":"B7","phase":"B","kind":"work","rate":"r8","hours":"0.5"},
+   {"id":"Bc","phase":"B","what":"debugging and reruns","kind":"allotment","rate":"r8","hours":"3"},
+   {"id":"B8","phase":"B","what":"stretch: LoRA probe","kind":"work","rate":"r8","hours":"5","optional":true},
+   {"id":"st","phase":"S","kind":"storage","usd":"50 * fs_usd_gib_month"},
+   {"id":"alt_A_on_8x","phase":"A","what":"variant: A1-A4 on the 8x machine","kind":"work","rate":"r8","hours":"7","instead_of":["A1","A2","A3","A4"]}
+  ],
+  "total_stated": 599.83
+ },
+ "full_scale": [],
+ "outside_budget": [
+ {"what":"human label audit, 400 x 2 min","qty":"400 * 2 / 60","unit":"person-hours"},
+ {"what":"optional Sonnet second-opinion labels, 300 x $0.70","qty":"300 * 0.70","unit":"usd (API)"}
+]
+}

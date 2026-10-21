@@ -119,3 +119,8 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 16:07Z build 14 checks: selftest exit 0
 - 16:07Z gate 12 (addendum) requested
 - 16:07Z stage gate on wf.js run 8: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1332584
+- 16:11Z build 14 checks: selftest exit 0
+- 16:12Z gate addendum 12 (wf.js, claude/sonnet, 3 min): 9 answers, 78 items, build 15 authorised. Addenda 10 and 11 in GATE_COMMIT.md were written by gate runs the operator stopped (run 6 rested on the operator's union test, run 7 on the operator's tmpfs quota); they stand as written and addendum 12 was made with the corrected facts.
+- 16:12Z pins of record (EXEC_NOTE item 70) extracted mechanically to out/pip_pins_of_record.txt; pip dry-run resolve of the item-70 pins of record (9 lines) in CPython 3.10 on disk: exit 0; ResolutionImpossible 0; error lines 0; packages in the report 82
+- 16:12Z launch cap arithmetic of record: REMOTE_TIMEOUT 7,200 s + 600 s fetch margin = 7,800 s = 2.17 h; at USD 1.99/h = USD 4.31 per launch, under the USD 5 BUDGET_LEFT_USD; spent so far USD 0.30 of the USD 10 cap; before each launch BUDGET_LEFT_USD = min(5, 10 - spent).
+- 16:12Z stage build on wf.js run 12: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1342432
