@@ -1,0 +1,119 @@
+{
+  "cell": {
+    "input": "C3",
+    "key": "aux_h_per_pair",
+    "stage": "endpoints",
+    "tag": "m4"
+  },
+  "decision": "VOID",
+  "decision_rule": "inside [0.3333, 3] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; below the minimum sample, on a wrong graphics processor, with zero spread across seeds, or left unmeasured by a stop -> VOID with the raw rows kept",
+  "env": {
+    "git_rev": null,
+    "host": "193-122-154-60",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T15:13:16+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 606,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/apt_packages_tag-m4.json",
+      "present": true,
+      "sha256": "106cce9818a6"
+    }
+  ],
+  "kind": "C3",
+  "metric": "aux_h_per_pair measured on the stand-in protocol, in hours per capsid-receptor pair",
+  "notes": "",
+  "notes_list": [
+    "stand-in pairs built from 6IHB chains, not the card's pairs",
+    "one GPU; one box; 3 pairs; no multi-GPU scaling",
+    "producer's reading of aux hours"
+  ],
+  "run_valid": false,
+  "run_valid_voided_by": "installing the pinned python packages failed: exit 1, see /home/ubuntu/m4_run/results_m4/out/tool_logs/install_pip_install.log",
+  "tag": "m4",
+  "threshold": {
+    "band": [
+      0.3333,
+      3
+    ],
+    "card_value": 1,
+    "marginal_fraction": 0.1
+  },
+  "values": {
+    "band": [
+      0.3333,
+      3
+    ],
+    "basis": "GUESS",
+    "card_value": 1,
+    "engine": {
+      "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+      "alphafold_params_sha256": null,
+      "build_flags": {
+        "alphafold_early_stopping": "off",
+        "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+        "alphafold_models": 5,
+        "alphafold_msa_mode": "single_sequence",
+        "alphafold_params_sha256": null,
+        "alphafold_recycles": 20,
+        "docking_code": "lightdock",
+        "docking_version": null,
+        "jax_cuda_plugin_version": "0.6.0",
+        "jax_version": "0.6.0",
+        "jax_wheel_build_tags": null,
+        "jaxlib_version": "0.6.0",
+        "md_engine": "OpenMM",
+        "md_engine_version": null,
+        "md_platform": "CUDA",
+        "md_precision": "mixed",
+        "pinned_requirements": [
+          "jax==0.4.35",
+          "jaxlib==0.4.35",
+          "jax-cuda12-plugin==0.4.35",
+          "jax-cuda12-pjrt==0.4.35",
+          "colabfold==1.5.5",
+          "alphafold-colabfold==2.3.6",
+          "openmm==8.2.0",
+          "openmm-cuda==8.1.1.12",
+          "lightdock==0.9.4"
+        ]
+      },
+      "docking_code": "lightdock",
+      "docking_version": null,
+      "jax_cuda_plugin_version": "0.6.0",
+      "jax_version": "0.6.0",
+      "jax_wheel_build_tags": null,
+      "jaxlib_version": "0.6.0",
+      "md_engine": "OpenMM",
+      "md_engine_version": null,
+      "md_platform": "CUDA",
+      "md_precision": "mixed"
+    },
+    "gate": "not applicable: the card's gate is on af2_h_per_run",
+    "machine": {
+      "cuda_plugin_version": "0.6.0",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-21T15:13:16Z",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T15:13:16Z"
+    },
+    "marginal": false,
+    "measured": null,
+    "n": 0,
+    "null_reasons": {
+      "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+      "docking_version": "the docking code did not report a version",
+      "jax_wheel_build_tags": "the pip download report named no wheel for the JAX packages",
+      "md_engine_version": "the dynamics engine did not report a version",
+      "measured": "the run ended on broken infrastructure: installing the pinned python packages failed: exit 1, see /home/ubuntu/m4_run/results_m4/out/tool_logs/install_pip_install.log"
+    },
+    "unit": "hours per capsid-receptor pair",
+    "void_reason": "the run ended on broken infrastructure: installing the pinned python packages failed: exit 1, see /home/ubuntu/m4_run/results_m4/out/tool_logs/install_pip_install.log",
+    "voided_by": "the run ended on broken infrastructure: installing the pinned python packages failed: exit 1, see /home/ubuntu/m4_run/results_m4/out/tool_logs/install_pip_install.log"
+  }
+}
