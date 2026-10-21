@@ -2,7 +2,7 @@
  "card": "blind-01-m4-build",
  "kind": "workflow",
  "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-build-20261021-1150/out",
- "stage": "GateCheck",
+ "stage": "done",
  "started": "2026-10-21T11:50:19.796Z",
  "calls": [
   {
@@ -11,19 +11,81 @@
    "model": "claude/sonnet",
    "understudy": "opencode-go/mimo-v2.6-pro",
    "mode": "fallback",
-   "state": "running",
-   "attempts": 0,
-   "ms": 0,
-   "cost_usd": 0,
-   "tokens": 0
+   "state": "ok",
+   "attempts": 1,
+   "ms": 7050,
+   "cost_usd": 0.1080437,
+   "tokens": 315,
+   "kind": "none",
+   "by": "claude/sonnet",
+   "errors": []
+  },
+  {
+   "id": "0002 build",
+   "stage": "",
+   "model": "claude/opus",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "mode": "fallback",
+   "state": "failed",
+   "attempts": 4,
+   "ms": 2720865,
+   "cost_usd": 9.514299414,
+   "tokens": 308053,
+   "kind": "declined",
+   "by": null,
+   "errors": [
+    "declined: the reply names no existing file (declined_if no_files)"
+   ]
   }
  ],
- "cost_usd": 0,
- "tokens": 0,
- "by_model": {},
- "by_family": {},
+ "cost_usd": 9.622343114,
+ "tokens": 308368,
+ "by_model": {
+  "claude/sonnet": {
+   "calls": 1,
+   "cost_usd": 0.1080437,
+   "tokens": 315,
+   "failed": 0,
+   "refusals": 0
+  },
+  "claude/opus": {
+   "calls": 1,
+   "cost_usd": 9.373383599999999,
+   "tokens": 80482,
+   "failed": 1,
+   "refusals": 0
+  },
+  "opencode-go/mimo-v2.6-pro": {
+   "calls": 1,
+   "cost_usd": 0.14091581399999997,
+   "tokens": 227571,
+   "failed": 1,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "claude": {
+   "calls": 2,
+   "cost_usd": 9.481427299999998,
+   "tokens": 80797,
+   "failed": 1,
+   "refusals": 0
+  },
+  "opencode": {
+   "calls": 1,
+   "cost_usd": 0.14091581399999997,
+   "tokens": 227571,
+   "failed": 1,
+   "refusals": 0
+  }
+ },
  "substitutions": 0,
  "refusals": 0,
- "done": false,
- "updated": "2026-10-21T11:50:19.803Z"
+ "done": true,
+ "updated": "2026-10-21T12:35:49.850Z",
+ "go": [
+  "claude/sonnet: $0.108 over 1 calls",
+  "claude/opus: $9.373 over 1 calls, 1 failed",
+  "opencode-go/mimo-v2.6-pro: $0.141 over 1 calls, 1 failed"
+ ]
 }

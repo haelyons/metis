@@ -41,3 +41,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 11:47Z stage build on wf.js run 1: flags [--family opencode --mode fallback], pid 949493
 - 11:49Z build 4 wf run 1 (OpenCode primary) stopped by the operator after the owner's note: the intended order is Claude first, understudy when required; restarting as run 2 with --family claude --on-refusal understudy and a declined-reply handover
 - 11:50Z stage build on wf.js run 2: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 954788
+- 12:36Z build 5 checks: selftest exit 0
+- 12:39Z build 5 (wf run 1150, Claude first): opus built and returned (17 min); the operator's declined_if predicate misclassified the reply (descriptions, not bare paths) and the mimo understudy ran in the same folder, overwriting opus's files at 12:32Z; mimo's reply misclassified the same way; files on disk are mimo's (selftest 250/250). Predicate fixed, snapshot added, understudy accounting fixed. Build 6 Claude-first follows. The operator's diagnostic printed one third-party tool name from the on-box script (a topic-bearing word); disclosed to the owner, probe fixed.
+- 12:40Z stage build on wf.js run 3: flags [--family claude --on-refusal understudy] (refusals handed to the understudy: owner's explicit choice), pid 1019832

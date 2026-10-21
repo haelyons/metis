@@ -25,7 +25,7 @@ const stub = {
     if (label === 'gamma') return f === 'opencode' ? bad(['refusal'], true) : ok({ v: `gamma by ${f}` })
     if (label === 'delta') return ok(null, `delta text by ${f} as ${agent}`)
     if (label === 'eps') return f === 'opencode' ? bad(['$: missing "v"']) : ok({ v: `eps by ${f}` })   // schema failure -> repair turn -> understudy
-    if (label === 'zeta') return f === 'opencode' ? ok({ runner_py: 'STOP: the directive contradicts itself; nothing written', onbox_sh: 'STOP' }) : ok({ runner_py: process.env.E2E_EXISTING_FILE, onbox_sh: process.env.E2E_EXISTING_FILE })
+    if (label === 'zeta') return f === 'opencode' ? ok({ runner_py: 'STOP: the directive contradicts itself; run_zeta.py was not written', onbox_sh: 'STOP: onbox_zeta.sh not written' }) : ok({ runner_py: `Wrote ${process.env.E2E_EXISTING_FILE} (12 lines).`, onbox_sh: process.env.E2E_EXISTING_FILE })
     if (label.startsWith('nested')) return ok({ v: `${label} by ${f}` })
     return ok({ v: `${label} by ${f}` })
   },
@@ -89,7 +89,7 @@ for (const mode of modes) {
     check(res.c === null, 'gamma refused by opencode and halted (on_refusal halt)')
     check(res.e && /eps by claude/.test(res.e.v), 'eps answered by the understudy after a schema failure and a repair turn')
     check(und.length === 3 && und.every(x => x.ok) && und.map(x => x.label).sort().join() === 'beta,eps,zeta', `3 understudy rows, all ok (${und.map(x => x.label).join()})`)
-    check(res.z && res.z.runner_py.endsWith('main.js') && und.some(x => x.label === 'zeta' && x.kind === 'declined'), 'zeta: a schema-valid stop report with no files is kind declined and hands over')
+    check(res.z && /main\.js/.test(res.z.runner_py) && und.some(x => x.label === 'zeta' && x.kind === 'declined'), 'zeta: a schema-valid stop report naming unwritten files is kind declined and hands over; a description naming an existing file is accepted')
     check(stub.calls.filter(c => c.title === 'eps' && c.repair).length === 0 || true, 'repair turn recorded by the stub')   // stub runs in the child; its calls are not visible here
     const failed = J.filter(x => x.type === 'failed'); check(failed.length === 1 && failed[0].kind === 'refusal', 'one failed row of kind refusal')
     const md = fs.readFileSync(path.join(out, 'UNDERSTUDY.md'), 'utf8'); check(/refusals 1/.test(md) && /\| beta \|/.test(md), 'UNDERSTUDY.md written with the refusal count and the beta row')

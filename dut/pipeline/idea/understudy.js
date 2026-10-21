@@ -83,15 +83,18 @@ function resolve(cfg, { label, role, pinned, familyOverride, modeOverride }) {
   return { primary, understudy, mode, tier, route: route ? (route.match || route.role) : null, declined_if: (route && route.declined_if) || null }
 }
 
-// a schema-valid reply that still declines the work; `exists` resolves a path-like string against the call's cwd
+// a schema-valid reply that still declines the work; `exists` resolves a path token against the call's cwd.
+// no_files: the reply names files (tokens ending in .py/.sh/.js/.json/.md anywhere in its strings) and none of them
+// exists. A reply that names no file at all is not judged (not declined): descriptions are not refusals.
+function fileTokens(value) {
+  const out = new Set()
+  const walk = v => { if (typeof v === 'string') { for (const m of v.matchAll(/(?:^|[\s"'`(=:,])(\/?(?:[\w.-]+\/)*[\w-]+\.(?:py|sh|js|json|md))(?=$|[\s"'`),;:.])/g)) out.add(m[1]) } else if (v && typeof v === 'object') Object.values(v).forEach(walk) }
+  walk(value)
+  return [...out]
+}
 function declined(pred, value, exists) {
   if (!pred || value == null) return false
-  if (pred === 'no_files') {
-    const paths = []
-    const walk = v => { if (typeof v === 'string') { if (/\.(py|sh|js|json|md)\s*$/.test(v.trim()) && v.trim().length < 300 && !/\n/.test(v.trim())) paths.push(v.trim()) } else if (v && typeof v === 'object') Object.values(v).forEach(walk) }
-    walk(value)
-    return paths.length > 0 ? !paths.some(exists) : true
-  }
+  if (pred === 'no_files') { const t = fileTokens(value); return t.length > 0 && !t.some(exists) }
   throw new Error(`unknown declined_if predicate "${pred}"`)
 }
 
@@ -145,16 +148,20 @@ function selftest() {
   assert.equal(handover(withDefaults({ on_refusal: 'understudy' }), 'fallback', 'refusal'), true)
   assert.equal(handover(cfg, 'primary-only', 'timeout'), false); assert.equal(handover(cfg, 'fallback', 'none'), false)
   assert.equal(handover(withDefaults({ retry_on: ['timeout'] }), 'fallback', 'schema'), false)
-  const ex = p => p === '/x/run_m4.py'
+  const ex = p => p === '/x/run_m4.py' || p === 'run_m4.py'
   assert.equal(declined('no_files', { runner_py: '/x/run_m4.py', onbox_sh: '/x/onbox_m4.sh' }, ex), false)
-  assert.equal(declined('no_files', { runner_py: 'STOP: the directive contradicts itself; no file written', onbox_sh: 'STOP' }, ex), true)
+  assert.equal(declined('no_files', { runner_py: 'Wrote /x/run_m4.py (3,600 lines): stages extract, generate, endpoints.', onbox_sh: 'see onbox_m4.sh' }, ex), false)   // descriptions naming an existing file
+  assert.equal(declined('no_files', { runner_py: 'STOP: the directive contradicts itself; run_m4.py was not written', onbox_sh: 'STOP' }, ex), false)   // names a file that exists -> not declined
+  assert.equal(declined('no_files', { runner_py: 'STOP: nothing written; /x/other.py would have been the runner', onbox_sh: 'STOP' }, ex), true)
+  assert.equal(declined('no_files', { runner_py: 'STOP: the directive contradicts itself', onbox_sh: 'STOP' }, ex), false)   // names no file: not judged
   assert.equal(declined('no_files', { built: { runner_py: '/x/missing.py' } }, ex), true)
+  assert.deepEqual(fileTokens({ a: 'run x.py and /p/q/r.sh, then "z.json".', b: 1 }).sort(), ['/p/q/r.sh', 'x.py', 'z.json'])
   assert.equal(declined(null, {}, ex), false); assert.throws(() => declined('bogus', {}, ex))
   assert.equal(handover(cfg, 'fallback', 'declined'), true)
   assert.equal(resolve(withDefaults({ routes: [{ match: '^build$', declined_if: 'no_files' }] }), { label: 'build', role: 'ls-builder' }).declined_if, 'no_files')
   assert.equal(claudeTools(cfg, 'qt-bare'), ''); assert.equal(claudeTools(cfg, 'ls-builder'), 'Read,Write,Edit,Glob,Grep,Bash'); assert.equal(claudeTools(cfg, 'unknown-role'), 'Read,Glob,Grep')
-  console.log('understudy selftest: 37 checks passed')
+  console.log('understudy selftest: 40 checks passed')
 }
 
-module.exports = { TIER, KINDS, familyOf, otherFamily, claudeModel, withDefaults, roleFor, resolve, classify, handover, declined, claudeTools, CLAUDE_TOOLS }
+module.exports = { TIER, KINDS, familyOf, otherFamily, claudeModel, withDefaults, roleFor, resolve, classify, handover, declined, fileTokens, claudeTools, CLAUDE_TOOLS }
 if (require.main === module && process.argv.includes('--selftest')) selftest()

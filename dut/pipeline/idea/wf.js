@@ -96,6 +96,16 @@ const acquire = () => new Promise(res => { if (active < CFG.max_concurrency) { a
 const release = () => { const next = waiting.shift(); if (next) next(); else active-- }
 
 const FILE_ROLES = new Set(['qt-research', 'qt-producer', 'qt-extract'])
+const WRITING_ROLES = new Set(['qt-research', 'qt-producer', 'triage-author', 'ls-builder', 'ls-writer'])   // roles that write files where the script says
+// before an understudy runs for a writing role: copy every existing file the primary's reply names into <dir>/primary-files/
+function snapshot(value, cwd, dir) {
+  const kept = []
+  for (const t of U.fileTokens(value || {})) {
+    const p = path.isAbsolute(t) ? t : path.join(cwd, t)
+    if (fs.existsSync(p) && fs.statSync(p).isFile()) { fs.mkdirSync(path.join(dir, 'primary-files'), { recursive: true }); fs.copyFileSync(p, path.join(dir, 'primary-files', path.basename(p))); kept.push(p) }
+  }
+  return kept
+}
 let counter = 0
 
 // one model's attempt at a call: up to two turns (the second repairs a reply that could not be used); the accounting
@@ -154,7 +164,8 @@ async function agent(prompt, opts = {}) {
   const r = U.resolve(UCFG, { label, role, pinned: opts.model, familyOverride: FAMILY, modeOverride: MODE })
   const primary = opts._model || (rule && rule.model) || r.primary
   const understudy = U.familyOf(primary) === U.familyOf(r.understudy) ? U.resolve(UCFG, { label, role, pinned: opts.model, familyOverride: U.otherFamily(U.familyOf(primary)) }).primary : r.understudy
-  const mode = r.mode
+  let mode = r.mode
+  if (mode === 'shadow' && WRITING_ROLES.has(role)) { mode = 'fallback'; journal({ type: 'log', m: `${label}: shadow mode refused for writing role ${role} (both families would write the same files); fallback` }) }
   const full = opts.schema ? prompt + promptSuffix(opts.schema) : String(prompt)
   const key = sha(JSON.stringify({ full, role, model: primary }))
   const rec = { id: `${String(n).padStart(4, '0')} ${label}`, stage: opts.phase || '', model: primary, understudy, mode, state: 'queued', attempts: 0, ms: 0, cost_usd: 0, tokens: 0 }
@@ -192,9 +203,12 @@ async function agent(prompt, opts = {}) {
     if (first.kind === 'none') { producer = primary; value = first.value }
     else if (understudy && U.handover(UCFG, mode, first.kind)) {
       const udir = path.join(dir, 'understudy'); fs.mkdirSync(udir, { recursive: true })
+      const kept = WRITING_ROLES.has(role) ? snapshot(first.res && (opts.schema ? first.res.json : first.res.text), cwd, dir) : []
       rec.state = 'understudy'; saveStatus()
-      second = await callModel({ ...common, model: understudy, dir: udir })
-      journal({ type: 'understudy', n, label, from: primary, kind: first.kind, errors: first.errors, to: understudy, ok: second.kind === 'none', understudy_kind: second.kind })
+      const urec = { ms: 0, cost_usd: 0, tokens: 0 }
+      second = await callModel({ ...common, model: understudy, dir: udir, rec: urec })
+      rec.ms += urec.ms; rec.cost_usd += urec.cost_usd; rec.tokens += urec.tokens; rec.understudy_cost_usd = urec.cost_usd; rec.understudy_ms = urec.ms
+      journal({ type: 'understudy', n, label, from: primary, kind: first.kind, errors: first.errors, to: understudy, ok: second.kind === 'none', understudy_kind: second.kind, primary_files_kept: kept.length, understudy_ms: urec.ms, understudy_cost_usd: urec.cost_usd })
       if (second.kind === 'none') { producer = understudy; value = second.value; rec.substituted = true; status.substitutions++ }
       else errors = second.errors
     } else errors = first.errors
