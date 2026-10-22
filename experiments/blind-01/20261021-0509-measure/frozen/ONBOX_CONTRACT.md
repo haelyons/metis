@@ -8,7 +8,7 @@ suggestion.
 
 ## 1. Shape
 
-Two files, nothing else: `run_<tag>.py` (stages, parsers, records, selftest; stdlib only unless the design names a
+Two files, nothing else: `run_<tag>.py` (stages, parsers, records; stdlib only unless the design names a
 library, and then only inside the on-box stages) and `onbox_<tag>.sh` (environment, order of stages, guards, exit
 codes). The local launcher (`lambda_run_<tag>.sh`, operator-owned, never written by the build) ships the payload,
 starts `remote_run_<tag>.sh bash onbox_<tag>.sh` detached under `timeout REMOTE_TIMEOUT`, polls a marker, fetches
@@ -44,8 +44,13 @@ the anchor. The launcher records the code in `RUN_DONE`; the script never writes
    measured rate with a 1.5x margin; if either projection exceeds its allowance, shorten per the directive's stated
    rule or stop with exit 3; the record carries every number of the arithmetic so a reader can redo it.
 6. **Anchor** (the published value the protocol must reproduce) before the inputs; a miss outside its tolerance
-   writes the anchor record with decision FAIL, sets `run_valid=false` for every later record, and continues only if
-   the directive says the inputs are still worth measuring (default: stop, exit 4).
+   writes the anchor record with decision FAIL and sets `run_valid=false` (scientifically unvalidated) for every later
+   record; the measurement phases still run unless the directive says stop, and the script exits 4 at the end. Every
+   later record carries `calibration_valid`, decided only by that phase's own checks (the guards, completion, and the
+   workload checks the directive names: input sizes, step counts, well-formed outputs), never by the anchor; the
+   anchor's verdict is never changed by what follows. The anchor stage also writes its diagnostics into the anchor
+   record: the reference scored against itself, against a rigidly transformed copy of itself, the count of elements
+   paired between result and reference, and an independent scoring where the directive names one.
 7. **Measurement phases** in the directive's order; each writes its record the moment it finishes (atomic: write a
    temp file, rename), never at the end of the run, so a killed run keeps every finished result.
 8. **Summary** last (`<tag>_summary.json`), then `RUN_VALID.json`; then exit.
@@ -60,7 +65,7 @@ arithmetic uses the launcher's `REMOTE_TIMEOUT` from the environment, never a co
 ## 5. Records (provenance.py)
 
 One record per endpoint, control and phase; the decision rule in the record before the values; `cell`, `inputs`
-with hashes, `metric`, `values`, `threshold`, `decision`, `env`, `run_valid`, `run_valid_voided_by`. The inputs the
+with hashes, `metric`, `values`, `threshold`, `decision`, `env`, `run_valid`, `run_valid_voided_by`, `calibration_valid`. The inputs the
 card is measured on: `endpoint-C<i>_tag-<tag>.json` with `values.measured` (a number, the card's unit), `values.unit`,
 `values.card_value`, `values.band`; `decision` PASS, FAIL or VOID against the band. Labels in every measured record:
 instance type, GPU name and driver, engine version and build flags, precision, wall-clock, process and thread counts
@@ -75,14 +80,16 @@ phase to the main log so the launcher's one-line poll shows movement (a silent h
 `env` dumps, no token in any log. Keep every engine log; keep the first and last lines of large sampling files, not
 the whole.
 
-## 7. Selftest contract
+## 7. Stage interface (what the tests call; no implementer selftest)
 
-`python3 run_<tag>.py --selftest`: stdlib only, no GPU, no network, under 300 s; planted cases for every parser (a
-real-looking output line and a malformed one), for the guard arithmetic (a case that must stop and one that must go),
-for the anchor miss (void propagation to a later record), for record writing through provenance.py, and for the
-directive's own numbers (if two items of the directive disagree, the selftest fails on that contradiction rather than
-picking one). Output: `selftest: N of M checks passed` then exactly `selftest: PASS` or `selftest: FAIL`, non-zero
-exit on FAIL.
+`python3 run_<tag>.py --stage <name> --in <dir> --out <dir>` runs exactly one stage of section 3 (the directive names
+the stages) on the inputs in `--in` (an earlier stage's outputs or a fixture) and writes only under `--out`, with the
+exit codes of section 2. Every external program a stage calls is resolved through an environment variable the
+directive names (default: the real program), so a test can put a replay program in its place. Every parser of external
+output is a module-level function the directive names, taking a path and returning a dict, raising `ValueError` on
+malformed input; the stage turns that into a failed record and its exit code, never a default value. Importing
+`run_<tag>.py` does no work. Tests are written by a separate author against this interface, with fixtures recorded on
+the box, and run locally in a copy of the environment of record before every launch.
 
 ## 8. Predictable failures and the check that catches each before money is spent
 
@@ -99,8 +106,11 @@ exit on FAIL.
 | pip resolver replacing the CUDA torch | install only pure-python packages, never torch |
 | dropped SSH killing the job | the launcher's setsid and marker poll; the build never relies on the session |
 | results written outside the fetched directory | one output root; the summary lists every file written |
-| guard reads a constant instead of the environment | selftest plants a different `REMOTE_TIMEOUT` and checks the arithmetic follows it |
-| the directive contradicts itself (m3 build 1, m4 build 3) | selftest case on the directive's numbers; on contradiction stop and report, never choose |
+| guard reads a constant instead of the environment | local test runs the guard stage with a different `REMOTE_TIMEOUT` and checks the arithmetic follows it |
+| the directive contradicts itself (m3 build 1, m4 build 3) | the build stops and reports the two items, never chooses |
+| parser meets the real program's output for the first time (m4 launch 6) | the box output becomes a fixture; local test of the parser on it and on a malformed copy |
+| repeated program calls share a working directory (m4 launches 7, 8) | local test runs the stage twice with a replay program, checks the outputs stay separate |
+| anchor scoring or pairing wrong (m4 launches 9, 10) | anchor diagnostics in the anchor record; local round-trip and transformation tests on the reference |
 | apt lock held by unattended upgrades at boot | wait loop on the lock with a cap, then exit 2 |
 | disk full during download or compile | free-space check at preflight against the directive's estimate |
 | long phase with no output line | periodic progress line; the launcher's poll shows the tail |
@@ -108,6 +118,6 @@ exit on FAIL.
 
 ## 9. What the build returns
 
-`runner_py` and `onbox_sh` as paths; `selftest_output` verbatim; `onbox_command` as the single line the operator runs
+`runner_py` and `onbox_sh` as paths; `stages`: the stage names with their inputs; `onbox_command` as the single line the operator runs
 through `remote_run_<tag>.sh`; `expected`: a table of phases with projected wall-clock from the design's numbers and
 the record files each writes, so the reviewer can check the projection against the caps before launch.

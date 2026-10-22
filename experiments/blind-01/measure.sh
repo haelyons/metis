@@ -15,7 +15,7 @@
 #   build [--keep] [--fix <evidence dir>] [--review <review file>]  headless operator: Workflow mode build -> run_<tag>.py onbox_<tag>.sh; then bash -n,
 #                           (--fix: in-place fix bounded to the stage that failed on the box, evidence dir named to the builder)
 #                           (--keep leaves the previous build's files in place for a directive that asks for edits)
-#                           py_compile, the selftest to a log, hashes
+#                           py_compile, the author's tests locally (tests_local_build<N>.log), hashes
 #   review [--via wf ...]   headless reviewer (read/write tools only): checklist -> out/review_build<N>.{md,json}; --via wf as for gate
 #   launcher                lambda_run_<tag>.sh + remote_run_<tag>.sh from m3's per-launch copies, declared points only
 #   tests [--via wf flags]  claim-blind author writes tests/tests_<tag>.py from the directive and contract (builder never sees it)
@@ -176,24 +176,24 @@ Read, in this order, with the Read tool:
 2. \`$MDIR/CARD.json\`: the card's calibration record (inputs, measuring phase, anchor, predictions, plan cost).
 3. \`$MDIR/out/design_record.json\`: the design workflow's return value. \`design\` is the typed design the build will implement as its spec; \`diff.departures\` are the questions the diff agent raised; \`triage\` holds the reader's grounding verdicts, the skeptics' cruxes and the run, author, instrument and shared queues; \`gate\` is the gate text. If it carries \`halt\` or \`error\` instead, write both files as a halt record (decision section first) and stop.
 4. Shape examples from an earlier, unrelated run (another experiment: use only their structure, never their content): \`$M3/GATE_COMMIT.md\` and \`$M3/EXEC_NOTE.md\`.
-$([ -n "$add" ] && echo "5. The report this addendum rules on: \`$add\`. Also read the current \`$MDIR/GATE_COMMIT.md\` and \`$MDIR/EXEC_NOTE.md\`, which you will extend, not rewrite.")
+$([ -n "$add" ] && echo "5. The report this addendum rules on: \`$add\`. Also read the current \`$MDIR/GATE_COMMIT.md\` and \`$MDIR/EXEC_NOTE.md\`, which you will extend, not rewrite. Then read yourself the raw files the report rests on (records, logs, diagnostics, code); a ruling on a measured outcome cites in GATE_COMMIT.md the paths it rests on, and a report's conclusion whose evidence you have not read is not a basis for a ruling.")
 
 ## Standing rules (owner, 2026-10-20 and 21; binding)
 
-1. Budget: hard cap USD 10 of box time for the whole run (the owner's calibration rule; the operator records the spend of every launch and launches until the cap is reached, no fixed count); \`BUDGET_LEFT_USD\` per launch = the lesser of 5 and what remains of the cap; \`gpu_1x_a100_sxm4\` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity (the operator records which). If the design's budget exceeds the cap, shorten the protocol to fit as a ruling of record (fewer steps, fewer repeats, one cell), never drop an input silently; if it cannot fit, decide HALT and say what it would cost.
+1. Budget: hard cap USD 20 of box time for the whole run (the owner's calibration rule, raised from 10 on 2026-10-21; more on the owner's approval; the operator records the spend of every launch and launches until the cap is reached, no fixed count); \`BUDGET_LEFT_USD\` per launch = the lesser of 5 and what remains of the cap; \`gpu_1x_a100_sxm4\` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity (the operator records which). If the design's budget exceeds the cap, shorten the protocol to fit as a ruling of record (fewer steps, fewer repeats, one cell), never drop an input silently; if it cannot fit, decide HALT and say what it would cost.
 2. Time: set \`REMOTE_TIMEOUT\` (at most 7,200 s per launch). \`onbox_$TAG.sh\` reads \`PRICE_USD_PER_HOUR\`, \`BUDGET_LEFT_USD\` and \`REMOTE_TIMEOUT\` from its environment and stops cleanly, writing a void record, before exceeding them.
-3. Scope: measure the inputs on the card's own protocol; no production phase; anchor first, and a missed anchor voids the inputs (run_valid=false propagates to every later record).
+3. Scope: measure the inputs on the card's own protocol; no production phase; anchor first; a missed anchor marks every later record scientifically unvalidated (run_valid=false, run_valid_voided_by the anchor) and the inputs are still measured; every later record carries calibration_valid, decided by its own checks only (guards, completion, the workload checks the directive names), never by the anchor; the anchor's verdict never changes (owner ruling 2026-10-22, a deviation of record made after the anchor failed on launches 9 and 10).
 4. Box: Ubuntu 22.04, CUDA 12.8, driver 570, python 3.10, torch 2.7 preinstalled; anything else is installed by \`onbox_$TAG.sh\` inside the time cap. Broken infrastructure: exit non-zero with a void record; never patch around.
-5. Files: the build writes exactly \`run_$TAG.py\` and \`onbox_$TAG.sh\` in \`$MDIR\` (absolute path) and reads the design record and \`frozen/\` (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does; \`frozen/ONBOX_CONTRACT.md\` is the binding execution contract: its stage order, guards, record fields, selftest contract and failure checks are directive items unless you tighten them). Payload shipped to the box: \`run_$TAG.py onbox_$TAG.sh remote_run_$TAG.sh frozen/provenance.py\` and \`data/\` recursively if it exists, all under \`~/${TAG}_run/\`; results under \`~/${TAG}_run/results_$TAG/out/\`, which the launcher fetches. Nothing else is on the box.
+5. Files: the build writes exactly \`run_$TAG.py\` and \`onbox_$TAG.sh\` in \`$MDIR\` (absolute path) and reads the design record and \`frozen/\` (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does; \`frozen/ONBOX_CONTRACT.md\` is the binding execution contract: its stage order, guards, record fields, stage interface and failure checks are directive items unless you tighten them). Payload shipped to the box: \`run_$TAG.py onbox_$TAG.sh remote_run_$TAG.sh frozen/provenance.py\` and \`data/\` recursively if it exists, all under \`~/${TAG}_run/\`; results under \`~/${TAG}_run/results_$TAG/out/\`, which the launcher fetches. Nothing else is on the box.
 6. Records, so a script can score them without a model: for each input C1..Cn of QUESTION.md one provenance.py record \`results_$TAG/out/endpoint-C<i>_tag-$TAG.json\` whose \`values\` carries \`measured\` (a number in the card's unit), \`unit\`, \`card_value\` and \`band\` ([lo, hi] from QUESTION.md), and whose \`decision\` is PASS, FAIL or VOID against that band; \`run_valid\` in every record; an anchor record \`endpoint-anchor_tag-$TAG.json\` (values: measured, published, tolerance); \`RUN_VALID.json\`; \`${TAG}_summary.json\`; raw rows as JSON lines.
-7. Selftest: \`python3 run_$TAG.py --selftest\`, stdlib only, no GPU, no network, under 300 s; prints \`selftest: N of M checks passed\` then exactly \`selftest: PASS\` or \`selftest: FAIL\` as its last line; non-zero exit on FAIL. Planted cases for every parser and for the gate-failure (void) path.
+7. Tests: the runner exposes the contract's stage interface (one stage per invocation, external programs replaceable through environment variables, parsers callable by name, no work at import); the directive names the stages, the variables and the parsers. A separate author writes the tests against that interface with fixtures recorded on the box; they run locally, in the copy of the environment of record, before every launch and must pass; the box does not run them.
 8. Secrets: nothing reads \`.keys\`; nothing prints its environment; \`HF_TOKEN\` is used by downloads only.
 9. Labels: every measured record carries instance type, GPU name and driver, engine version and build flags, wall-clock.
 10. Nothing interactive; \`sudo\` only for declared apt packages; downloads only from sources the design names, URL and hash recorded; the on-box command the build returns is one line the operator runs verbatim through \`remote_run_$TAG.sh\`.
 
 ## Directive form (owner ruling 2026-10-21)
 
-EXEC_NOTE.md is the current truth, not a changelog: in addendum mode REGENERATE it as one bounded directive of at most 40 numbered items, required-for-launch items first (each marked REQUIRED FOR LAUNCH or REPORTING ONLY), with every superseded or satisfied item removed; the history of rulings stays in GATE_COMMIT.md. Three standing changes of record: (i) the Python environment is an artifact, built once from the pins of record by the operator's env_build on a Lambda filesystem and recorded by its lock file hash in out/env_report.json; the on-box script activates that environment and verifies the lock hash instead of installing; pins live in the environment record, not in the runner; (ii) implementer selftests are not required and not credited: tests of the measurement logic are written by a separate claim-blind author from the directive, hidden from the builder, and executed by the runner in the shipped environment before the physics, as records; (iii) on a stage failure on the box the run holds the box open (HOLD marker) for a bounded fixer whose every change is committed to git on the box and fetched as a change log; the fixer may touch environment and glue, never the measurement protocol or the record fields; a change outside that scope is a halt to the gate.
+EXEC_NOTE.md is the current truth, not a changelog: in addendum mode REGENERATE it as one bounded directive of at most 40 numbered items, required-for-launch items first (each marked REQUIRED FOR LAUNCH or REPORTING ONLY), with every superseded or satisfied item removed; the history of rulings stays in GATE_COMMIT.md. Three standing changes of record: (i) the Python environment is an artifact, built once from the pins of record by the operator's env_build on a Lambda filesystem and recorded by its lock file hash in out/env_report.json; the on-box script activates that environment and verifies the lock hash instead of installing; pins live in the environment record, not in the runner; (ii) implementer selftests are not required and not credited: tests are written by a separate author against the stage interface (rule 7), with fixtures recorded on the box, hidden from the builder, and run locally in a copy of the environment of record before every launch; a failure on the box becomes a fixture and a failing local test before the fix is built; (iii) on a stage failure on the box the run holds the box open (HOLD marker) for a bounded fixer whose every change is committed to git on the box and fetched as a change log; the fixer may touch environment and glue, never the measurement protocol or the record fields; a change outside that scope is a halt to the gate.
 
 ## GATE_COMMIT.md, in this order$([ -n "$add" ] && echo " (addendum mode: leave every existing section as it is and append one section \`## Addendum $n (<UTC date>)\` ruling on every item of the report, each ruling saying what the build must change or that nothing changes and why; then a line \`Build $((n)) authorised\` or \`HALT\`)")
 
@@ -207,7 +207,7 @@ EXEC_NOTE.md is the current truth, not a changelog: in addendum mode REGENERATE 
 
 ## EXEC_NOTE.md$([ -n "$add" ] && echo " (addendum mode: revise the items the addendum changes in place, marking each \`(revised, addendum $n)\`; add items at the end)")
 
-A one-paragraph header; \`## Where to write\`; \`## Checklist of gate changes the build must carry\` (numbered; each item traceable to an answer in GATE_COMMIT.md or a standing rule; rules 5 to 10 above appear as items verbatim or tighter); \`## Box\`; \`## Local selftest\`; \`## What the runner writes\`.
+A one-paragraph header; \`## Where to write\`; \`## Checklist of gate changes the build must carry\` (numbered; each item traceable to an answer in GATE_COMMIT.md or a standing rule; rules 5 to 10 above appear as items verbatim or tighter); \`## Box\`; \`## Stage interface\`; \`## What the runner writes\`.
 
 ## Operator actions
 
@@ -258,8 +258,16 @@ PYEOF
   local f; f=$(operator_md "build" "$MDIR/out/build${n}_args.json" "$MDIR/out/build${n}_return.json")
   start_session "$name" sonnet "$f"
 }
+local_tests() {   # log-file: the author's tests, locally, in the copy of the environment of record, against the runner on disk; counts only
+  [ -f "$MDIR/tests/tests_$TAG.py" ] || { echo "local tests: no tests/tests_$TAG.py"; return 1; }
+  [ -x "$MDIR/.venv/bin/python" ] || { echo "local tests: no local environment $MDIR/.venv"; return 1; }
+  ( cd "$MDIR" && timeout 900 .venv/bin/python "tests/tests_$TAG.py" --runner "$MDIR/run_$TAG.py" > "$1" 2>&1 ); local rc=$?
+  echo "local tests: exit $rc; $(grep -E '^TESTS: [0-9]+ of [0-9]+ passed' "$1" | tail -1); $(tail -1 "$1" | grep -oE '^TESTS: (PASS|FAIL)$' || echo 'no verdict line')"
+  tail -1 "$1" | grep -q '^TESTS: PASS$'
+}
+
 build_checks() {   # mechanical, after the build session or wf run exits
-  local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); local log="$MDIR/out/selftest_build$n.log"
+  local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l)
   cd "$MDIR" || return 1
   [ -f "run_$TAG.py" ] && [ -f "onbox_$TAG.sh" ] || { echo "build $n: files missing ($(ls run_$TAG.py onbox_$TAG.sh 2>&1 | grep -c 'No such') of 2)"; return 1; }
   sha256sum "run_$TAG.py" "onbox_$TAG.sh" > "out/BUILT_HASHES_build$n.txt"
@@ -268,9 +276,7 @@ build_checks() {   # mechanical, after the build session or wf run exits
   echo "other files touched in the run dir: $others"
   bash -n "onbox_$TAG.sh" && echo "bash -n onbox: ok" || echo "bash -n onbox: SYNTAX ERROR"
   $PY -m py_compile "run_$TAG.py" && echo "py_compile run: ok" || echo "py_compile run: ERROR"; rm -rf __pycache__
-  local rc=0
-  if grep -q -- '--selftest' "run_$TAG.py"; then timeout 300 $PY "run_$TAG.py" --selftest > "$log" 2>&1; rc=$?; echo "selftest: exit $rc, $(wc -l < "$log") lines; $(grep -E '^selftest: ' "$log" | tr '\n' ';')"
-  else echo "selftest: none (implementer selftests dropped by ruling); author's tests: $([ -f "tests/tests_$TAG.py" ] && { $PY -m py_compile "tests/tests_$TAG.py" && echo "tests/tests_$TAG.py compiles ($(wc -l < tests/tests_$TAG.py) lines)" || echo "tests/tests_$TAG.py DOES NOT COMPILE"; rm -rf tests/__pycache__; } || echo "no tests file")"; fi
+  local rc=0; local_tests "$MDIR/out/tests_local_build$n.log"; rc=$?
   grep -nE "\.keys([^(]|$)|LAMBDA_KEY|HF_KEY" "run_$TAG.py" "onbox_$TAG.sh" | wc -l | sed 's/^/mentions of key files or names in the built files (dict .keys() calls excluded): /'
   $PY - "$MDIR" "$TAG" <<'PYEOF'
 import re, sys
@@ -294,7 +300,7 @@ if d.get("halt"): print("build return: HALT %s, unanswered %d" % (d["halt"], len
 gc = d.get("gatecheck") or {}; b = d.get("built") or {}
 print("build return: gatecheck answered %s, unanswered %d; built keys %s; onbox_command %d chars; expected %d chars" % (gc.get("answered"), len(gc.get("unanswered") or []), sorted(b.keys()), len(b.get("onbox_command") or ""), len(b.get("expected") or "")))
 PYEOF
-  logrun "build $n checks: selftest exit $rc"
+  logrun "build $n checks: local tests exit $rc"
 }
 
 # ---------- review ----------
@@ -306,7 +312,7 @@ review() {
   cat > "$f" <<EOF2
 You review the execution layer of one measure run (tag $TAG) before it spends money. You run nothing and edit nothing. You write exactly two files: \`$MDIR/out/review_build$n.md\` (findings, numbered; each names the file and line, the EXEC_NOTE item or standing rule it concerns, and BLOCKING or ADVISORY) and \`$MDIR/out/review_build$n.json\` (\`{"verdict": "PASS" or "FAIL", "blocking": n, "advisory": n}\`; FAIL if any finding is blocking).
 
-Read with the Read tool: \`$MDIR/out/operator_findings_build$n.txt\` if it exists (the operator's mechanical findings: environment names read on-box that nothing forwards or sets, files touched; verify each); \`$MDIR/EXEC_NOTE.md\`; \`$MDIR/GATE_COMMIT.md\` (the Pre-authorisation section and the latest addendum); \`$MDIR/run_$TAG.py\`; \`$MDIR/onbox_$TAG.sh\`; \`$MDIR/lambda_run_$TAG.sh\`; \`$MDIR/remote_run_$TAG.sh\`; \`$MDIR/frozen/lambda_run.sh\`; \`$MDIR/frozen/remote_run.sh\`; \`$MDIR/frozen/provenance.py\`; \`$MDIR/frozen/ONBOX_CONTRACT.md\` (binding through standing rule 5; a contract item the directive does not carry is ADVISORY unless it would spend money without a valid record); \`$MDIR/out/selftest_build$n.log\`; \`$MDIR/out/build${n}_return.json\`; \`$MDIR/out/pip_pins_check_build$n.txt\` if it exists (the operator's package-index check of the runner's pins).
+Read with the Read tool: \`$MDIR/out/operator_findings_build$n.txt\` if it exists (the operator's mechanical findings: environment names read on-box that nothing forwards or sets, files touched; verify each); \`$MDIR/EXEC_NOTE.md\`; \`$MDIR/GATE_COMMIT.md\` (the Pre-authorisation section and the latest addendum); \`$MDIR/run_$TAG.py\`; \`$MDIR/onbox_$TAG.sh\`; \`$MDIR/lambda_run_$TAG.sh\`; \`$MDIR/remote_run_$TAG.sh\`; \`$MDIR/frozen/lambda_run.sh\`; \`$MDIR/frozen/remote_run.sh\`; \`$MDIR/frozen/provenance.py\`; \`$MDIR/frozen/ONBOX_CONTRACT.md\` (binding through standing rule 5; a contract item the directive does not carry is ADVISORY unless it would spend money without a valid record); \`$MDIR/out/tests_local_build$n.log\`; \`$MDIR/out/build${n}_return.json\`; \`$MDIR/out/pip_pins_check_build$n.txt\` if it exists (the operator's package-index check of the runner's pins).
 
 Checklist:
 1. Every EXEC_NOTE checklist item is carried by the code, item by item (name the item number for each miss).
@@ -315,7 +321,7 @@ Checklist:
 4. Secrets: nothing reads .keys; nothing prints the environment; the token is used by downloads only.
 5. Writes only under ~/${TAG}_run/; nothing interactive; sudo only for declared apt packages; downloads only from named sources with URL and hash recorded.
 6. The launcher copy differs from frozen/lambda_run.sh only at the declared points (remote dir, payload, bootstrap name, fetch paths, header comment) and every billing-safety mechanism is intact; remote_run_$TAG.sh differs from frozen/remote_run.sh only in its cd line.
-7. The selftest log ends with \`selftest: PASS\` and its counts are plausible for the parsers and planted cases present.
+7. The local tests log (\`out/tests_local_build$n.log\`) ends with \`TESTS: PASS\`, and its tests call the runner through the stage interface.
 8. The onbox_command in the build return is what onbox_$TAG.sh runs, and what the launcher runs is onbox_$TAG.sh.
 
 BLOCKING = would spend money without producing a valid record, violates a standing rule or an EXEC_NOTE item, or leaks a secret. Everything else is ADVISORY.
@@ -466,10 +472,11 @@ tests() {   # [--failures <tests record json>] revises the tests after a box run
   local n; n=$(ls out/tests*_args.json 2>/dev/null | wc -l); n=$((n+1))
   [ -f "tests/tests_$TAG.py" ] && { mkdir -p "out/tests$((n-1))"; cp "tests/tests_$TAG.py" "out/tests$((n-1))/"; }
   $PY - "$MDIR" "$TAG" "$n" "$fr" <<'PYEOF'
-import json, sys
+import glob, json, re, sys
 m, tag, n, fr = sys.argv[1:5]
 a = {"directive": f"{m}/EXEC_NOTE.md", "contract": f"{m}/frozen/ONBOX_CONTRACT.md", "design_record": f"{m}/out/design_record.json", "question": f"{m}/QUESTION.md",
-     "out_file": f"{m}/tests/tests_{tag}.py", "tag": tag, "results_dir_on_box": f"results_{tag}/out"}
+     "out_file": f"{m}/tests/tests_{tag}.py", "tag": tag, "runner": f"{m}/run_{tag}.py", "python": f"{m}/.venv/bin/python",
+     "archives": sorted(glob.glob(f"{m}/out/launch*/results_{tag}/out"), key=lambda p: int(re.search(r"launch(\d+)", p).group(1)))}
 if fr: a["failure_report"] = fr
 json.dump(a, open(f"{m}/out/tests{n}_args.json", "w"), indent=1)
 print(f"out/tests{n}_args.json written")
@@ -517,15 +524,8 @@ launch() {
   for f in "lambda_run_$TAG.sh" "remote_run_$TAG.sh" "onbox_$TAG.sh" "run_$TAG.py" frozen/provenance.py; do [ -f "$f" ] || { echo "missing $f"; return 1; }; done
   local rv; rv=$(ls out/review_build*.json 2>/dev/null | sort -V | tail -1); [ -n "$rv" ] && grep -q '"PASS"' "$rv" || { echo "latest review is not PASS ($rv)"; return 1; }
   local bh; bh=$(ls out/BUILT_HASHES_build*.txt | sort -V | tail -1); ( cd "$MDIR" && sha256sum -c --quiet "$bh" ) || { echo "built files changed since $bh"; return 1; }
-  # gate ruling (addenda 5 to 7): re-run the selftest before launch and compare its printed sha256 values with the files on disk
-  if grep -q -- '--selftest' "run_$TAG.py"; then
-    local st; st=$(timeout 300 $PY "run_$TAG.py" --selftest 2>&1 | tee "out/selftest_prelaunch_L$n.log" | grep -E '^selftest: (PASS|FAIL|files sha256)')
-    echo "$st" | grep -q '^selftest: PASS' || { echo "pre-launch selftest did not PASS"; return 1; }
-    local want; want=$(echo "$st" | grep -oE '[0-9a-f]{64}' | sort); local have; have=$(sha256sum "run_$TAG.py" "onbox_$TAG.sh" | awk '{print $1}' | sort)
-    [ "$want" = "$have" ] && echo "pre-launch selftest PASS; its printed hashes match the files on disk" || { echo "pre-launch selftest hashes differ from the files on disk"; return 1; }
-  else
-    [ -f "tests/tests_$TAG.py" ] && $PY -m py_compile "tests/tests_$TAG.py" && rm -rf tests/__pycache__ && echo "pre-launch: author's tests compile; they run on the box in the shipped environment (no implementer selftest by ruling)" || { echo "pre-launch: tests/tests_$TAG.py missing or does not compile"; return 1; }
-  fi
+  # owner direction 2026-10-22: the author's tests pass locally, in the copy of the environment of record, on the files about to ship
+  local_tests "out/tests_local_prelaunch_L$n.log" || { echo "pre-launch: local tests did not PASS"; return 1; }
   pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null && { echo "a launcher is already running"; return 1; }
   [ "$timeout" -le 7200 ] || { echo "timeout above 7,200 s (owner rule)"; return 1; }
   echo "== capacity"; rm -f out/.capacity.json.fallback
@@ -701,7 +701,7 @@ PYEOF
   for f in out/design_record.json out/build*_return.json out/post*_return.json; do [ -s "$f" ] && echo "  $f: $(wc -c < "$f") B $($PY -c "
 import json,sys; d=json.load(open(sys.argv[1])); print('keys', sorted(d.keys())[:8], 'halt' if d.get('halt') else '', 'error' if d.get('error') else '', 'FAILED' if d.get('failed') else '')" "$f" 2>/dev/null)"; done
   for f in GATE_COMMIT.md EXEC_NOTE.md; do [ -s "$f" ] && echo "  $f: $(wc -l < "$f") lines, $(grep -c '^#' "$f") headings, $(grep -c '^## Addendum' "$f") addenda"; done
-  [ -f "run_$TAG.py" ] && echo "  built: run_$TAG.py $(wc -l < run_$TAG.py) lines, onbox_$TAG.sh $(wc -l < onbox_$TAG.sh 2>/dev/null) lines; selftest logs: $(ls out/selftest_build*.log 2>/dev/null | wc -l) ($(for l in out/selftest_build*.log; do [ -f "$l" ] && grep -E '^selftest: (PASS|FAIL)' "$l" | tail -1; done | tr '\n' ' '))"
+  [ -f "run_$TAG.py" ] && echo "  built: run_$TAG.py $(wc -l < run_$TAG.py) lines, onbox_$TAG.sh $(wc -l < onbox_$TAG.sh 2>/dev/null) lines; local test logs: $(ls out/tests_local_*.log 2>/dev/null | wc -l) (latest: $(ls out/tests_local_*.log 2>/dev/null | sort -V | tail -1 | xargs -r tail -1))"
   for r in out/review_build*.json; do [ -s "$r" ] && echo "  $r: $(cat "$r" | tr -d '\n ' | cut -c1-80)"; done
   env_status
   for j in out/launch*.json; do [ -s "$j" ] || continue; local log; log=$($PY -c 'import json,sys; print(json.load(open(sys.argv[1]))["log"])' "$j")
@@ -729,8 +729,15 @@ wait_stage() {
   echo "wait $stage: timed out after $((max/60)) min"; return 1
 }
 
-ask() {   # name instruction-file: one read/write-only sonnet session following the file (classifiers, probes)
-  local name="$1" instr="$2"; [ -f "$instr" ] || { echo "no instruction file $instr"; return 1; }
+ask() {   # name instruction-file [--via wf flags] [--reply <regex>]: one session following the file (classifiers, probes, diagnostics)
+  local name="$1" instr="$2"; shift 2; [ -f "$instr" ] || { echo "no instruction file $instr"; return 1; }
+  local reply=""; local a=(); while [ $# -gt 0 ]; do case "$1" in --reply) reply="$2"; shift ;; *) a+=("$1") ;; esac; shift; done
+  pop_via "${a[@]}"
+  if [ "$VIA" = wf ]; then   # on wf.js: role ls-writer (read, write, bash), the family and mode flags pass through; reply in out/ask<N>_return.json
+    local n; n=$(( $(ls "$MDIR/out"/ask*_args.json 2>/dev/null | wc -l) + 1 ))
+    $PY -c 'import json,sys; json.dump({"prompt": open(sys.argv[1]).read(), "role": "ls-writer", "model": "sonnet", "label": sys.argv[2], "reply_pattern": sys.argv[3] or None}, open(sys.argv[4], "w"), indent=1)' "$(realpath "$instr")" "$name" "$reply" "$MDIR/out/ask${n}_args.json"
+    via_wf ask "${REST[@]}"; return
+  fi
   start_session "$name" sonnet "$(realpath "$instr")" --disallowedTools "$RO_TOOLS"
 }
 

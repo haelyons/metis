@@ -37,8 +37,8 @@ const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').
 // two launches in the same minute get -2, -3 ...
 const mi = rest.indexOf('--measure'), MDIR = mi >= 0 ? path.resolve(rest[mi + 1]) : null
 const sti = rest.indexOf('--stage'), STAGE = sti >= 0 ? rest[sti + 1] : null
-if (kind === 'stage' && (!MDIR || !fs.existsSync(path.join(MDIR, 'pipeline.js')) || !['design', 'build', 'post', 'gate', 'review', 'fix', 'tests'].includes(STAGE))) {
-  console.error('stage needs --measure <measure dir with pipeline.js> and --stage design|build|post|gate|review|fix|tests'); process.exit(2)
+if (kind === 'stage' && (!MDIR || !fs.existsSync(path.join(MDIR, 'pipeline.js')) || !['design', 'build', 'post', 'gate', 'review', 'fix', 'tests', 'ask'].includes(STAGE))) {
+  console.error('stage needs --measure <measure dir with pipeline.js> and --stage design|build|post|gate|review|fix|tests|ask'); process.exit(2)
 }
 let RUN = kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}`) : path.join(EXP, `${stamp}-${kind}`)
 for (let i = 2; fs.existsSync(RUN); i++) RUN = kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}-${i}`) : path.join(EXP, `${stamp}-${kind}-${i}`)
@@ -127,8 +127,8 @@ if (kind === 'stage') {
   fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify(args, null, 1))
   const tag = fs.existsSync(path.join(MDIR, 'TAG')) ? fs.readFileSync(path.join(MDIR, 'TAG'), 'utf8').trim() : 'm'
   const flags = extra.filter((x, i, xs) => !['--measure', '--stage'].includes(x) && !['--measure', '--stage'].includes(xs[i - 1]))
-  // gate and review are one instruction file each: measure/prompt_stage.js turns it into one agent() call (role ls-writer / ls-general)
-  const script = ['gate', 'review'].includes(STAGE) ? path.join(PIPE, 'measure', 'prompt_stage.js') : STAGE === 'fix' ? path.join(PIPE, 'measure', 'fixer_stage.js') : STAGE === 'tests' ? path.join(PIPE, 'measure', 'tests_stage.js') : path.join(MDIR, 'pipeline.js')
+  // gate, review and ask are one instruction file each: measure/prompt_stage.js turns it into one agent() call (role ls-writer / ls-general)
+  const script = ['gate', 'review', 'ask'].includes(STAGE) ? path.join(PIPE, 'measure', 'prompt_stage.js') : STAGE === 'fix' ? path.join(PIPE, 'measure', 'fixer_stage.js') : STAGE === 'tests' ? path.join(PIPE, 'measure', 'tests_stage.js') : path.join(MDIR, 'pipeline.js')
   cmd = node('wf.js', ['--script', script, '--args', path.join(RUN, 'args.json'), '--name', `${name}-${tag}-${STAGE}`, '--out', path.join(RUN, 'out'), '--profile', 'latent_skeptic', ...flags])
   // the stage's return value lands where measure.sh expects it, after the run
   const target = STAGE === 'design' ? 'design_record.json' : argsFile.replace('_args.json', '_return.json')
