@@ -302,3 +302,7 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 19:15Z build 27 (OpenCode mimo, 32 min, in place): run_m4.py 5,831 lines, onbox_m4.sh 1,081 lines; bash -n and py_compile run in build checks; one on-box environment name neither forwarded nor set (M4_BASE).
 - 19:15Z tests 3 (separate author against the stage interface): mimo attempt ended without a return after ~70 min; Claude opus understudy finished it: 44 tests, 59 fixtures recorded from launches 1-10; the author never read the runner's source (10 invocations, 0 reads, checked by command shape).
 - 19:15Z local tests on build 27: 17 of 44 PASS. Started in parallel on OpenCode: build 28 (test-fix: fixes what the directive requires, reports NOT REQUIRED otherwise; the builder sees the test output, never the tests) and tests 4 (revision: tests asserting beyond the directive rewritten, implementation faults kept). Tests stage now asks for the main tier (fallback sonnet, not opus).
+- 20:33Z build 28 checks: local tests exit 1
+- 20:34Z stage build on wf.js run 27: flags [--family opencode], pid 543683
+- 20:34Z TESTS 5: claim-blind author on wf.js (flags [--family opencode])
+- 20:34Z build 28 (mimo, test-fix): 27 FIX lines, 0 NOT REQUIRED; tests 4 (mimo): 45 tests, 1 revised, 26 kept failing as implementation faults; local tests on build 28: 32 of 45 PASS (run_m4.py 6,230 lines). Round 2 started: build 29 (test-fix) and tests 5 (revision) in parallel on OpenCode.

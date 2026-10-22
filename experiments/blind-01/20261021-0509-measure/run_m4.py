@@ -441,7 +441,10 @@ def _read_text(path) -> str:
 
 
 def parse_nvidia_smi_header(path) -> dict:
-    """Read the driver version and the driver's CUDA version from the banner."""
+    """Read the driver version and the driver's CUDA version from the banner.
+
+    Both fields must be present: a banner without them is malformed input.
+    """
     text = _read_text(path)
     driver = None
     cuda = None
@@ -451,22 +454,31 @@ def parse_nvidia_smi_header(path) -> dict:
     m = re.search(r"CUDA Version:\s*([0-9][0-9.]*)", text)
     if m:
         cuda = m.group(1)
+    if driver is None or cuda is None:
+        raise ParseError(
+            "nvidia-smi banner is malformed: it must carry both "
+            f"Driver Version and CUDA Version; got driver={driver!r} "
+            f"cuda={cuda!r}; {first_raw_lines(text, 3)}")
     return {"driver_version": driver, "cuda_version_header": cuda}
 
 
 def parse_nvidia_smi_query(path) -> dict:
-    """Read one comma-separated line of `--query-gpu=name,driver_version`."""
+    """Read one comma-separated line of `--query-gpu=name,driver_version`.
+
+    Both fields must be present on the line: anything else is malformed.
+    """
     text = _read_text(path)
     for line in text.splitlines():
         line = line.strip()
         if not line:
             continue
         parts = [p.strip() for p in line.split(",")]
-        if len(parts) >= 2:
+        if len(parts) >= 2 and parts[0] and parts[1]:
             return {"gpu_name": parts[0], "driver_version": parts[1]}
-        if parts:
-            return {"gpu_name": parts[0], "driver_version": None}
-    return {"gpu_name": None, "driver_version": None}
+        raise ParseError(
+            "nvidia-smi query line is malformed: it must carry a name and a "
+            f"driver version separated by a comma; got {line!r}")
+    raise ParseError("nvidia-smi query output holds no line")
 
 
 def parse_etimes(path) -> dict:
@@ -484,9 +496,24 @@ def is_a100(gpu_name) -> bool:
 
 
 def parse_colabfold_log_text(text: str) -> dict:
+    """Per-model seconds and any download seen in one prediction run log.
+
+    A line that names `took` must carry a complete `took <number> s` timing
+    and a name in front of it: a line with a field missing is malformed.
+    """
     per_model = []
-    for m in re.finditer(r"took\s+([0-9]+(?:\.[0-9]+)?)\s*s", text):
-        per_model.append(float(m.group(1)))
+    for index, line in enumerate(text.splitlines(), start=1):
+        if re.search(r"\btook\b", line):
+            if re.match(r"^\s*took\b", line):
+                raise ParseError(
+                    "colabfold log line %d is malformed: the model name field "
+                    f"is missing; got {line!r}" % index)
+            m = re.search(r"\btook\s+([0-9]+(?:\.[0-9]+)?)\s*s", line)
+            if m is None:
+                raise ParseError(
+                    "colabfold log line %d is malformed: the timing field "
+                    f"is missing or incomplete; got {line!r}" % index)
+            per_model.append(float(m.group(1)))
     downloaded = bool(
         re.search(
             r"(downloading|download complete|extracting|untarring|fetching params)",
@@ -523,10 +550,14 @@ def parse_reporter_file_text(text: str) -> dict:
     n_rows = 0
     last_step = None
     energies_finite = True
+    width = len(cols)
     for ln in lines[1:]:
         parts = [p.strip().strip('"') for p in ln.split(",")]
-        if len(parts) <= speed_idx:
-            continue
+        if len(parts) != width:
+            raise ParseError(
+                "reporter file is malformed: a data row holds %d fields "
+                "against %d in the header; row %r"
+                % (len(parts), width, ln[:120]))
         n_rows += 1
         if step_idx is not None and len(parts) > step_idx:
             try:
@@ -557,14 +588,58 @@ def parse_reporter_file(path) -> dict:
 
 
 def parse_engine_rate_line(path) -> dict:
-    """Read a single engine speed line, for example `Speed (ns/day): 128.96`."""
+    """Read the engine speed from a rate line or a reporter file.
+
+    Accepted shapes: a number written next to `ns/day` on one line (for
+    example `Speed (ns/day): 128.96`), and a state-reporter file whose header
+    names a speed column. A file with no rate at all gives null and a reason.
+    """
     text = _read_text(path)
-    m = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*ns/day", text, re.IGNORECASE)
-    if m:
-        return {"ns_per_day": float(m.group(1)), "reason": None}
-    m = re.search(r"ns/day[^0-9\-]*([0-9]+(?:\.[0-9]+)?)", text, re.IGNORECASE)
-    if m:
-        return {"ns_per_day": float(m.group(1)), "reason": None}
+    for line in text.splitlines():
+        m = re.search(r"([0-9]+(?:\.[0-9]+)?)\s*ns/day", line, re.IGNORECASE)
+        if m:
+            return {"ns_per_day": float(m.group(1)), "reason": None}
+        if re.search(r"ns/day", line, re.IGNORECASE):
+            m = re.search(
+                r"ns/day.*?:\s*([0-9]+(?:\.[0-9]+)?)", line, re.IGNORECASE)
+            if m:
+                return {"ns_per_day": float(m.group(1)), "reason": None}
+    lines = text.splitlines()
+    lowered = None
+    header_index = None
+    for index, line in enumerate(lines):
+        stripped = line.strip().lstrip("#").strip()
+        if not stripped:
+            continue
+        cols = [c.strip().strip('"').strip("'").lower() for c in stripped.split(",")]
+        if any(("speed" in c and "ns/day" in c) or c == "ns/day" for c in cols):
+            lowered = cols
+            header_index = index
+            break
+    if lowered is not None:
+        speed_idx = next(i for i, c in enumerate(lowered)
+                         if ("speed" in c and "ns/day" in c) or c == "ns/day")
+        width = len(lowered)
+        rate = None
+        for line in lines[header_index + 1:]:
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            parts = [p.strip().strip('"') for p in line.split(",")]
+            if len(parts) != width:
+                raise ParseError(
+                    "reporter file is malformed: a data row holds %d fields "
+                    "against %d in the header; row %r"
+                    % (len(parts), width, line[:120]))
+            try:
+                value = float(parts[speed_idx])
+            except ValueError:
+                continue
+            if value > 0:
+                rate = value
+        if rate is not None:
+            return {"ns_per_day": rate, "reason": None}
+        return {"ns_per_day": None, "reason": "engine rate line missing"}
     return {"ns_per_day": None, "reason": "engine rate line missing"}
 
 
@@ -793,7 +868,7 @@ def parse_af2_timing_rows(path) -> dict:
 
 def parse_pdb(path) -> dict:
     """Read atom records; atoms are keyed by chain, residue number, insertion
-    code and atom name."""
+    code and atom name. A malformed or empty structure file is an error."""
     atoms = read_pdb_atoms(_read_text(path))
     by_key = {}
     for a in atoms:
@@ -813,27 +888,32 @@ BACKBONE_ATOMS = ("N", "CA", "C", "O")
 
 
 def read_pdb_atoms(text: str) -> list:
-    """Read atom records of a structure file into plain dictionaries."""
+    """Read atom records of a structure file into plain dictionaries.
+
+    Every ATOM or HETATM line must be complete: a short or unreadable line is
+    malformed input, and a file with no atom record at all is malformed too.
+    """
     atoms = []
-    for line in text.splitlines():
+    for index, line in enumerate(text.splitlines(), start=1):
         if not (line.startswith("ATOM") or line.startswith("HETATM")):
             continue
         if len(line) < 54:
-            continue
+            raise ParseError(
+                f"structure file is malformed: atom line {index} is truncated; "
+                f"got {line!r}")
         try:
             x = float(line[30:38])
             y = float(line[38:46])
             z = float(line[46:54])
+            resseq = int(line[22:26])
         except ValueError:
-            continue
+            raise ParseError(
+                f"structure file is malformed: atom line {index} does not carry "
+                f"readable coordinates and residue number; got {line!r}")
         name = line[12:16].strip()
         element = line[76:78].strip() if len(line) >= 78 else ""
         if not element:
             element = name[0] if name else ""
-        try:
-            resseq = int(line[22:26])
-        except ValueError:
-            continue
         atoms.append({
             "record": line[0:6].strip(),
             "serial": line[6:11].strip(),
@@ -845,6 +925,8 @@ def read_pdb_atoms(text: str) -> list:
             "x": x, "y": y, "z": z,
             "element": element.upper(),
         })
+    if not atoms:
+        raise ParseError("structure file is malformed: it holds no atom record")
     return atoms
 
 
@@ -1431,9 +1513,9 @@ def calibration_checks_c1(rows: list, ctx: dict) -> dict:
 
 
 def calibration_checks_c2(rows: list, ctx: dict) -> dict:
-    counted = [r for r in rows if r.get("atoms") and not r.get("incomplete")
-               and r.get("production_wallclock_s")]
-    checks = _common_checks(ctx, MIN_MD_COMPLEXES, len(counted))
+    counted = [r for r in rows if r.get("atoms") and not r.get("incomplete")]
+    finished = [r for r in counted if r.get("production_wallclock_s")]
+    checks = _common_checks(ctx, MIN_MD_COMPLEXES, len(finished))
     checks.append(_check("gpu_is_a100", ctx.get("gpu_name"),
                          bool(ctx.get("gpu_is_a100")), LABEL_NOT_A100))
     sizes_ok = all(MD_ATOMS_MIN <= (r.get("atoms") or 0) <= MD_ATOMS_MAX
@@ -1452,30 +1534,30 @@ def calibration_checks_c2(rows: list, ctx: dict) -> dict:
     target = MD_EQUIL_STEPS + MD_PRODUCTION_STEPS
     steps_ok = all((r.get("reporter_last_step") or 0) >= target
                    and bool(r.get("energies_finite"))
-                   for r in counted) if counted else False
+                   for r in finished) if finished else False
     checks.append(_check(
         "reporter_reached_production_and_finite",
         [{"last_step": r.get("reporter_last_step"),
-          "energies_finite": r.get("energies_finite")} for r in counted],
+          "energies_finite": r.get("energies_finite")} for r in finished],
         steps_ok,
         "a reporter file does not reach the equilibration plus 250,000 "
         "production steps, or holds a non-finite energy"))
     frames_ok = all(r.get("trajectory_frames") is not None
                     and abs((r.get("trajectory_frames") or 0) - 50) <= 1
-                    for r in counted) if counted else False
+                    for r in finished) if finished else False
     checks.append(_check("trajectory_frame_count",
-                         [r.get("trajectory_frames") for r in counted], frames_ok,
+                         [r.get("trajectory_frames") for r in finished], frames_ok,
                          "a trajectory does not hold 50 frames, plus or minus one"))
     platform_ok = all(r.get("platform") == MD_PLATFORM
                       and r.get("precision") == MD_PRECISION
-                      for r in counted) if counted else False
+                      for r in finished) if finished else False
     checks.append(_check(
         "platform_and_precision",
         [{"platform": r.get("platform"), "precision": r.get("precision")}
-         for r in counted], platform_ok,
+         for r in finished], platform_ok,
         "a segment did not run on the CUDA platform in mixed precision"))
-    checks.append(_check("complex_count", len(counted),
-                         len(counted) >= MIN_MD_COMPLEXES,
+    checks.append(_check("complex_count", len(finished),
+                         len(finished) >= MIN_MD_COMPLEXES,
                          f"fewer than {MIN_MD_COMPLEXES} complexes finished"))
     return _conclude(checks)
 
@@ -1626,9 +1708,10 @@ class RunState:
 
         self.rows = {}
         self.inputs_status = {
-            cid: {"state": "unmeasured",
-                  "status": "unmeasured_by_stop:stage_not_reached",
-                  "reason": "stage not reached", "decision": None,
+            cid: {"state": "not_measured",
+                  "status": "void_by_rule:stage not reached in this invocation",
+                  "reason": "the stage that measures it did not run here",
+                  "decision": None,
                   "voided_by": None, "calibration_valid": False}
             for cid in INPUT_IDS}
         self.failure_kind = None
@@ -1727,8 +1810,11 @@ class RunState:
 
     def record_stop(self, kind: str, stage: str, detail: str) -> None:
         self.stopped = True
+        arithmetic = guard_arithmetic_line(self)
+        reason = f"{detail}; {arithmetic}"
         self.stop_events.append(
-            {"kind": kind, "stage": stage, "reason": detail, "detail": detail,
+            {"kind": kind, "stage": stage, "reason": reason, "detail": detail,
+             "guard_arithmetic": arithmetic,
              "elapsed_s": round(self.elapsed_s(), 3), "at_utc": self.now()})
 
     def set_decided(self, cid: str, decision: str, reason=None,
@@ -2114,13 +2200,16 @@ def load_rows(state: RunState, arm: str) -> list:
         return rows
     path = state.input_path(f"rows_{arm}_tag-{TAG}.jsonl")
     if path is not None:
-        for line in Path(path).read_text().splitlines():
+        for index, line in enumerate(Path(path).read_text().splitlines(), start=1):
             line = line.strip()
-            if line:
-                try:
-                    rows.append(json.loads(line))
-                except ValueError:
-                    continue
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except ValueError as exc:
+                raise ParseError(
+                    f"rows file {path} line {index} is not JSON: {exc}; "
+                    f"got {line[:120]!r}")
     return rows
 
 
@@ -2335,13 +2424,36 @@ class ToolRunner:
 # ===========================================================================
 
 
+def guard_arithmetic_line(state: RunState, estimated_s=None, allowance_s=None) -> str:
+    """Every number of the guard's arithmetic, in one line a reader can redo."""
+    caps = state.caps or {}
+    parts = [
+        "guard arithmetic:",
+        "REMOTE_TIMEOUT %g s" % state.remote_timeout_s,
+        "elapsed %.0f s" % state.elapsed_s(),
+        "pre_t0 %g s" % state.pre_t0_seconds,
+        "price %g USD per hour" % state.price_usd_per_hour,
+        "budget %g USD" % state.budget_left_usd,
+        "dollar_cap %g s" % float(caps.get("dollar_cap_s") or 0.0),
+        "time_cap %g s" % float(caps.get("time_cap_s") or 0.0),
+        "stop_at %g s" % state.stop_at_s,
+    ]
+    if allowance_s is not None:
+        parts.append("allowance %.0f s" % allowance_s)
+    if estimated_s is not None:
+        parts.append("estimate %.0f s" % estimated_s)
+    return "; ".join(parts)
+
+
 def guard_before_stage(state: RunState, stage: str, estimated_s: float) -> float:
     allowance = stage_allowance_s(state, stage)
+    arithmetic = guard_arithmetic_line(state, estimated_s=estimated_s,
+                                       allowance_s=allowance)
     if allowance <= 0:
         raise GuardStop(f"no time left for the {stage} stage", stage=stage,
                         detail=(f"allowance {allowance:.1f}s, "
                                 f"elapsed {state.elapsed_s():.1f}s, "
-                                f"stop_at {state.stop_at_s:.1f}s"))
+                                f"stop_at {state.stop_at_s:.1f}s; {arithmetic}"))
     if estimated_s > allowance:
         raise GuardStop(
             f"estimated {estimated_s:.1f}s for the {stage} stage exceeds its "
@@ -2349,7 +2461,7 @@ def guard_before_stage(state: RunState, stage: str, estimated_s: float) -> float
             detail=(f"elapsed {state.elapsed_s():.1f}s, "
                     f"stop_at {state.stop_at_s:.1f}s, "
                     f"price {state.price_usd_per_hour}/h, "
-                    f"budget {state.budget_left_usd}"))
+                    f"budget {state.budget_left_usd}; {arithmetic}"))
     return allowance
 
 
@@ -2361,7 +2473,9 @@ def guard_before_unit(state: RunState, stage: str, kind: str, allowance_left_s: 
         raise GuardStop(
             f"estimated {estimate:.1f}s for one {kind} exceeds the {budget:.1f}s "
             f"left in the {stage} stage", stage=stage,
-            detail=f"elapsed {state.elapsed_s():.1f}s")
+            detail=f"elapsed {state.elapsed_s():.1f}s; "
+                   + guard_arithmetic_line(state, estimated_s=estimate,
+                                           allowance_s=budget))
     return budget
 
 
@@ -3010,10 +3124,27 @@ def smoke_check(state: RunState, step, params_dir) -> dict:
 # ===========================================================================
 
 
+def compute_lock_sha256(state: RunState):
+    """sha256 of the stdout bytes of the environment's own package list."""
+    cmd = [state.python_executable(), "-m", "pip", "freeze"]
+    try:
+        res = state.runner.capture(cmd, limit_s=120, stage="capability",
+                                   name="pip_freeze")
+    except Exception:
+        return None
+    if not res.get("started"):
+        return None
+    stdout = res.get("stdout") or ""
+    return sha256_text(stdout)
+
+
 def stage_capability(state: RunState) -> dict:
     """Write the environment record, then ask every tool what it can do."""
     started = state.clock()
     allowance = guard_before_stage(state, "capability", UNIT_FLOOR_S["endpoints"])
+    computed_lock = compute_lock_sha256(state)
+    if computed_lock:
+        state.observed_lock_sha256 = computed_lock
     log = {"steps": [], "started_utc": utc_of(started),
            "venv_path": state.venv_path,
            "expected_lock_sha256": state.expected_lock_sha256,
@@ -3670,6 +3801,11 @@ def score_pose_against_native(native_role_atoms: list, pose_text: str,
 
 
 def calibration_context(state: RunState) -> dict:
+    if state.gpu_name is None:
+        try:
+            collect_labels(state)
+        except Exception:
+            pass
     return {
         "sleep_ok": bool(state.sleep_ok),
         "gpu_visible": bool(state.gpu_visible),
@@ -4141,6 +4277,9 @@ def stage_aux(state: RunState) -> dict:
         rec_pdb = work / "receptor.pdb"
         atomic_write_text(cap_pdb, write_pdb(capsid_atoms))
         atomic_write_text(rec_pdb, write_pdb(receptor_atoms))
+        pair_role_atoms = [
+            dict(a, role=("capsid" if a["chain"] in capsid_ids else "receptor"))
+            for a in pair["atoms"]]
         truncated = False
         try:
             dock = run_docking(state, f"aux_{pair['pair']}", cap_pdb, rec_pdb, work,
@@ -4149,12 +4288,13 @@ def stage_aux(state: RunState) -> dict:
             truncated = True
             add_row(state, "aux", {
                 "pair": pair["pair"], "seconds": state.clock() - unit_started,
-                "truncated": True, "incomplete": True, "why": stop.reason})
+                "truncated": True, "incomplete": True, "why": stop.reason,
+                "frame_interval_ps": None})
             stopped = stop
             continue
         try:
             scored = score_pose_against_native(
-                split["native_role_atoms"], dock["pose_text"], capsid_atoms)
+                pair_role_atoms, dock["pose_text"], capsid_atoms)
         except FrameGuardReject as rej:
             diagnostic = write_frame_diagnostic(
                 state, f"aux_{pair['pair']}", rej.frame, dock["pose_text"])
@@ -4296,7 +4436,12 @@ def stage_af2(state: RunState) -> dict:
                 limit_s=left, stage="af2")
             seconds = res.get("harness_seconds")
             log_text = (res.get("stdout", "") or "") + (res.get("stderr", "") or "")
-            parsed = parse_colabfold_log_text(log_text)
+            try:
+                parsed = parse_colabfold_log_text(log_text)
+                parse_error = None
+            except ParseError as exc:
+                parsed = {"per_model_s": [], "download_in_timed_call": False}
+                parse_error = str(exc)
             outputs = inspect_af2_outputs(out_dir)
             row = {
                 "pair": pair["pair"], "seed": seed,
@@ -4305,7 +4450,8 @@ def stage_af2(state: RunState) -> dict:
                 "hours": corrected_seconds(state, seconds) / 3600.0,
                 "per_model_s": parsed["per_model_s"] or None,
                 "per_model_s_reason": (None if parsed["per_model_s"] else
-                                       "the log gave no per-model times"),
+                                       (parse_error
+                                        or "the log gave no per-model times")),
                 "compile_excluded_s": (sum(parsed["per_model_s"][1:])
                                        if len(parsed["per_model_s"]) > 1 else None),
                 "download_in_timed_call": parsed["download_in_timed_call"],
@@ -4386,6 +4532,31 @@ def md_worker_path(state: RunState) -> Path:
     return path
 
 
+def load_pose_text(state: RunState, pair: dict):
+    """One pair's docked pose, from this run's memory or from the files on disk."""
+    if pair.get("pose_text"):
+        return pair["pose_text"]
+    candidates = [f"pose_aux_{pair['pair']}_tag-{TAG}.pdb",
+                  f"pose_{pair['pair']}_tag-{TAG}.pdb"]
+    for name in candidates:
+        p = state.input_path(name)
+        if p is not None:
+            return Path(p).read_text()
+    rows = load_rows(state, "aux")
+    for r in rows:
+        if r.get("pair") != pair["pair"]:
+            continue
+        for key in ("pose_path", "pose", "top_pose"):
+            value = r.get(key)
+            if not value:
+                continue
+            p = state.input_path(Path(str(value)).name) or (
+                Path(value) if Path(value).exists() else None)
+            if p is not None:
+                return Path(p).read_text()
+    return None
+
+
 def stage_md(state: RunState) -> dict:
     """Time one short production segment per docked complex and read its speed."""
     started = state.clock()
@@ -4406,15 +4577,19 @@ def stage_md(state: RunState) -> dict:
         except GuardStop as stop:
             stopped = stop
             break
-        if not pair.get("pose_text"):
-            add_row(state, "md", {"complex": pair["pair"],
+        pose_text = load_pose_text(state, pair)
+        if not pose_text:
+            add_row(state, "md", {"complex": pair["pair"], "atoms": None,
+                                  "steps": None, "production_wallclock_s": None,
+                                  "engine_ns_per_day": None,
+                                  "frame_interval_ps": MD_FRAME_INTERVAL_PS,
                                   "skipped": "no docked pose for this pair"})
             continue
         unit_started = state.clock()
         cap = min(PER_COMPLEX_MD_CEILING_S, left)
         work = state.workdir / f"md_{pair['pair']}"
         work.mkdir(parents=True, exist_ok=True)
-        pose_atoms = read_pdb_atoms(pair["pose_text"])
+        pose_atoms = read_pdb_atoms(pose_text)
         merged = merge_capsid_and_pose(pair, pose_atoms)
         merged_pdb = work / "complex.pdb"
         atomic_write_text(merged_pdb, write_pdb(merged))
@@ -4455,6 +4630,9 @@ def stage_md(state: RunState) -> dict:
             continue
         if not (MD_ATOMS_MIN <= built["atoms"] <= MD_ATOMS_MAX):
             add_row(state, "md", {"complex": pair["pair"], "atoms": built["atoms"],
+                                  "steps": None, "production_wallclock_s": None,
+                                  "engine_ns_per_day": None,
+                                  "frame_interval_ps": MD_FRAME_INTERVAL_PS,
                                   "atom_count_out_of_range": True,
                                   "range": [MD_ATOMS_MIN, MD_ATOMS_MAX]})
             continue
@@ -4472,6 +4650,7 @@ def stage_md(state: RunState) -> dict:
         if res.get("timed_out"):
             add_row(state, "md", {"complex": pair["pair"], "atoms": built["atoms"],
                                   "steps": steps, "incomplete": True,
+                                  "frame_interval_ps": MD_FRAME_INTERVAL_PS,
                                   "why": "the segment ran past the time allowed"})
             stopped = GuardStop("a dynamics segment ran past the time allowed "
                                 "for it", stage="md", detail=res.get("log", ""))
@@ -4590,38 +4769,56 @@ def stage_storage(state: RunState) -> dict:
     """Measure what one run of the grid actually writes, and scale it up."""
     started = state.clock()
     guard_before_stage(state, "storage", state.unit_estimate("storage"))
+    pairs = load_pairs(state)
+    roots = [state.workdir, Path(state.indir) / f"work_{TAG}"]
+
+    def find_dir(name):
+        for root in roots:
+            candidate = Path(root) / name
+            if candidate.exists():
+                return candidate
+        return None
+
     artifacts = []
 
-    af2_dirs = [d for p in state.pairs for d in p.get("af2_out_dirs", [])]
+    af2_dirs = [d for p in pairs for d in p.get("af2_out_dirs", [])]
+    af2_dirs = [find_dir(f"af2_{p['pair']}_seed0") or find_dir(f"af2_{p['pair']}_seed1")
+                for p in pairs] + list(af2_dirs)
+    af2_dirs = [d for d in af2_dirs if d]
     if af2_dirs:
         b = apparent_bytes(af2_dirs[0])
         artifacts.append({"artifact": "prediction outputs of one run",
-                          "path": af2_dirs[0], "bytes": b, "kind": "af2",
+                          "path": str(af2_dirs[0]), "bytes": b, "kind": "af2",
                           "counts_in": True, "intermediate": False,
-                          "source": af2_dirs[0]})
-    docking_dirs = [str(state.workdir / f"aux_{p['pair']}") for p in state.pairs
-                    if Path(state.workdir / f"aux_{p['pair']}").exists()]
+                          "source": str(af2_dirs[0])})
+    docking_dirs = [find_dir(f"aux_{p['pair']}") for p in pairs]
+    docking_dirs = [d for d in docking_dirs if d]
     if docking_dirs:
         b = apparent_bytes(docking_dirs[0])
         artifacts.append({"artifact": "whole docking output tree of one pair",
-                          "path": docking_dirs[0], "bytes": b, "kind": "docking",
+                          "path": str(docking_dirs[0]), "bytes": b, "kind": "docking",
                           "counts_in": True, "intermediate": True,
-                          "source": docking_dirs[0]})
-    md_pairs = [p for p in state.pairs if p.get("md_work")]
+                          "source": str(docking_dirs[0])})
+    md_dirs = [p.get("md_work") or find_dir(f"md_{p['pair']}") for p in pairs]
+    md_dirs = [Path(d) for d in md_dirs if d]
     md_bytes = 0
     md_setup_bytes = 0
     md_breakdown = None
-    if md_pairs:
-        first = md_pairs[0]
-        md_breakdown = md_bytes_breakdown(first["md_work"], first.get("md_logs") or [])
+    if md_dirs:
+        first = md_dirs[0]
+        md_logs = []
+        for p in pairs:
+            if p.get("md_logs"):
+                md_logs = list(p["md_logs"])
+        md_breakdown = md_bytes_breakdown(first, md_logs)
         md_bytes = md_breakdown["md_bytes"]
         md_setup_bytes = md_breakdown["md_setup_bytes"]
         artifacts.append({"artifact": "dynamics trajectory and every log of one "
                                       f"{MD_PRODUCTION_NS} ns segment",
-                          "path": first["md_work"], "bytes": md_bytes,
+                          "path": str(first), "bytes": md_bytes,
                           "kind": "md", "counts_in": True, "intermediate": True,
                           "md_setup_bytes": md_setup_bytes,
-                          "source": first["md_work"]})
+                          "source": str(first)})
 
     for a in artifacts:
         add_row(state, "storage", a)
@@ -4718,46 +4915,97 @@ def emit_anchor_void_record(state: RunState, *, start_epoch, end_epoch,
 
 
 def decide_exit_code(state: RunState) -> int:
-    """The exit table's precedence: 2, then 4, then 3, then 0."""
-    if state.failure_kind or not state.run_valid and not state.anchor_missed:
+    """The exit table's precedence: 2, then 4, then 3, then 0.
+
+    Row 3 applies only when a guard, a ceiling or a timeout actually stopped
+    work and left an input unmeasured. An input a stage simply does not measure
+    is not a stop.
+    """
+    if state.failure_kind or (not state.run_valid and not state.anchor_missed):
         return EXIT_INFRA
     if state.anchor_missed:
         return EXIT_ANCHOR
-    if state.unmeasured_inputs():
+    if state.unmeasured_inputs() and state.stop_events:
         return EXIT_GUARD
     return EXIT_OK
+
+
+def measure_from_rows(state: RunState, cid: str, rows: list):
+    """One input's decision value, from the raw rows alone."""
+    if cid == "C1":
+        summary = parse_af2_timing_rows_text(rows)
+        return summary["mean_h"], summary["n"]
+    if cid == "C2":
+        rates = []
+        for r in rows:
+            if r.get("incomplete") or not r.get("atoms"):
+                continue
+            rate = r.get("wallclock_ns_per_day")
+            if rate is None and r.get("production_wallclock_s"):
+                rate = ns_per_day_from_wallclock(
+                    r.get("steps") or MD_PRODUCTION_STEPS,
+                    r.get("timestep_fs") or MD_TIMESTEP_FS,
+                    r.get("production_wallclock_s"))
+            if rate is not None:
+                rates.append(rate)
+        return (statistics.median(rates) if rates else None), len(rates)
+    if cid == "C3":
+        hours = []
+        for r in rows:
+            if r.get("truncated") or r.get("incomplete") or r.get("seconds") is None:
+                continue
+            hours.append(r.get("hours")
+                         if r.get("hours") is not None
+                         else r.get("seconds") / 3600.0)
+        return ((sum(hours) / len(hours)) if hours else None), len(hours)
+    if cid == "C4":
+        counted = [r for r in rows
+                   if r.get("counts_in") is not False and r.get("bytes") is not None]
+        total = sum(int(r.get("bytes") or 0) for r in counted)
+        if not counted:
+            return None, 0
+        scaled = storage_from_bytes(max(0, total - state.overhead_bytes))
+        return scaled["gib_216_runs"], len(counted)
+    return None, 0
 
 
 def stage_endpoints(state: RunState) -> dict:
     """Close the run: every input gets a record, then the summary is written."""
     started = state.clock()
     anchor_name = f"endpoint-anchor_tag-{TAG}.json"
-    if not (state.outdir / anchor_name).exists():
-        emit_anchor_void_record(
-            state, start_epoch=started, end_epoch=state.clock(),
-            why=(f"{LABEL_ANCHOR_NOT_REACHED}: "
-                 + (state.run_valid_voided_by or state.failure_kind
-                    or "; ".join(e["reason"] for e in state.stop_events)
-                    or "the run ended before the anchor stage")))
+    present = any(state.input_path(f"rows_{arm}_tag-{TAG}.jsonl") is not None
+                  for arm in ("af2", "md", "aux", "storage")) \
+        or state.input_path(f"pairs_tag-{TAG}.json") is not None \
+        or state.input_path(anchor_name) is not None
+    if not present and not state.failure_kind and not state.stop_events:
+        raise HarnessFailure(
+            f"the stage needs rows_af2_tag-{TAG}.jsonl and it is not in the inputs",
+            f"looked in {state.indir} and {state.outdir}", kind="missing_input")
+    ensure_anchor_record(
+        state, why=(f"{LABEL_ANCHOR_NOT_REACHED}: "
+                    + (state.run_valid_voided_by or state.failure_kind
+                       or "; ".join(e["reason"] for e in state.stop_events)
+                       or "the run ended before the anchor stage")))
     for cid in INPUT_IDS:
         name = f"endpoint-{cid}_tag-{TAG}.json"
-        if name in state.records_written or (state.outdir / name).exists():
+        if name in state.records_written or (state.outdir / name).exists() \
+                or state.input_path(name) is not None:
             continue
-        stop_names = "; ".join(e["reason"] for e in state.stop_events) or \
-            "the stage that measures it did not run"
+        rows_arm = {"C1": "af2", "C2": "md", "C3": "aux", "C4": "storage"}[cid]
+        rows = load_rows(state, rows_arm)
+        measured, n = measure_from_rows(state, cid, rows)
         if state.failure_kind:
             why = ("the run ended on broken infrastructure: "
                    f"{state.run_valid_voided_by or state.failure_kind}")
-        else:
+        elif state.stopped and measured is None:
+            stop_names = "; ".join(e["reason"] for e in state.stop_events)
             why = f"{LABEL_UNMEASURED} ({stop_names})"
-        rows_arm = {"C1": "af2", "C2": "md", "C3": "aux", "C4": "storage"}[cid]
-        rows = load_rows(state, rows_arm)
-        calibration = CALIBRATION_CHECKS[cid](rows, calibration_context(state))
+        else:
+            why = None
         emit_input_record(
-            state, cid, None, n=0, rows_arm=rows_arm,
+            state, cid, measured, n=n, rows_arm=rows_arm,
             start_epoch=started, end_epoch=state.clock(),
-            void_reason=why, rows=rows, calibration=calibration,
-            stop_kind=state.last_stop_kind())
+            void_reason=why, rows=rows, stop_kind=state.last_stop_kind())
     state.exit_code = decide_exit_code(state)
     write_env_note(state)
     write_summary(state)
@@ -4869,6 +5117,7 @@ def summary_object(state: RunState) -> dict:
         "note": ("the python environment is an artifact on the attached "
                  "filesystem; this run installs nothing and pins nothing")}
     obj["stop_events"] = state.stop_events
+    obj["guard_arithmetic"] = guard_arithmetic_line(state)
     obj["stages_done"] = state.stages_done
     obj["notes"] = notes
     obj["incomplete_run_label"] = LABEL_INCOMPLETE if state.stopped else None
@@ -4928,6 +5177,7 @@ def write_run_done(state: RunState, exit_code: int) -> Path:
         "exit_code": exit_code, "run_valid": bool(state.run_valid),
         "voided_by": state.run_valid_voided_by,
         "stopped_by": [e["reason"] for e in state.stop_events],
+        "guard_arithmetic": guard_arithmetic_line(state),
         "failure_kind": state.failure_kind,
         "anchor_missed": bool(state.anchor_missed),
         "held_attempts": state.held_attempts, "inputs": per_input,
@@ -5106,6 +5356,11 @@ def run_stages(state: RunState, stages=None, outer_rc=None) -> int:
                 state.failure_kind = exc.kind
                 failure = EXIT_INFRA
                 break
+            except (ParseError, ValueError) as exc:
+                state.void_run(f"broken tool output could not be read: {exc}")
+                state.failure_kind = "parse_error"
+                failure = EXIT_INFRA
+                break
 
     try:
         with StageTimer(state, "endpoints", gpu=False):
@@ -5115,6 +5370,13 @@ def run_stages(state: RunState, stages=None, outer_rc=None) -> int:
         if failure is None:
             failure = EXIT_INFRA
             state.void_run(f"the closing stage failed: {exc}")
+        try:
+            ensure_anchor_record(state)
+            write_env_note(state)
+            write_summary(state)
+            write_run_valid(state)
+        except Exception as exc2:
+            state.notes.append(f"the closing fallback failed: {exc2}")
 
     code = decide_exit_code(state)
     if failure == EXIT_INFRA:
@@ -5133,6 +5395,69 @@ def handle_outer_rc(state: RunState, rc: int) -> int:
     return EXIT_OK
 
 
+def load_prior_state(state: RunState) -> None:
+    """Recover what earlier stages already decided, from the files on disk.
+
+    Every stage runs as its own invocation, so the anchor's verdict, the run's
+    validity and the controls' results must be read back before any later
+    record is written.
+    """
+    def read_doc(name):
+        p = state.input_path(name)
+        if p is None:
+            return None, None
+        try:
+            return json.loads(Path(p).read_text()), p
+        except (OSError, ValueError):
+            return None, p
+
+    valid, _p = read_doc("RUN_VALID.json")
+    if isinstance(valid, dict):
+        if valid.get("run_valid") is False:
+            state.run_valid = False
+            state.run_valid_voided_by = valid.get("voided_by") or \
+                "a record on disk says the run is invalid"
+        if valid.get("stopped"):
+            state.stopped = True
+        for event in valid.get("stop_events") or []:
+            if isinstance(event, dict) and event.get("reason"):
+                state.stop_events.append(event)
+
+    anchor, anchor_path = read_doc(f"endpoint-anchor_tag-{TAG}.json")
+    if isinstance(anchor, dict):
+        state.anchor = {"verdict": {"decision": anchor.get("decision")},
+                        "values": anchor.get("values") or {},
+                        "docking_parameters": (anchor.get("values") or {}).get(
+                            "docking_parameters")}
+        if anchor.get("decision") == "FAIL":
+            state.anchor_missed = (
+                (anchor.get("values") or {}).get("voided_by")
+                or "the anchor record on disk is FAIL")
+            state.run_valid = False
+            state.run_valid_voided_by = state.anchor_missed
+        elif anchor.get("run_valid") is False:
+            state.run_valid = False
+            state.run_valid_voided_by = anchor.get("run_valid_voided_by")
+
+    sleep, _p = read_doc(f"control-sleep_tag-{TAG}.json")
+    if isinstance(sleep, dict):
+        state.sleep_ok = (sleep.get("decision") == "PASS")
+
+    for name in (f"env_check_tag-{TAG}.json", f"control-sleep_tag-{TAG}.json",
+                 f"control-empty-run_tag-{TAG}.json",
+                 f"endpoint-anchor_tag-{TAG}.json"):
+        doc, _p = read_doc(name)
+        if not isinstance(doc, dict):
+            continue
+        machine = (doc.get("values") or {}).get("machine") or {}
+        gpu = machine.get("gpu_name")
+        if gpu:
+            state.gpu_name = gpu
+            state.gpu_visible = True
+            state.gpu_is_a100 = is_a100(gpu)
+            break
+
+
 # ===========================================================================
 # ENTRY POINTS
 # ===========================================================================
@@ -5142,10 +5467,10 @@ def build_state(argv, indir=None) -> "tuple":
     base = Path(argv.base or os.environ.get("M4_BASE") or ".").resolve()
     outdir = Path(argv.outdir) if getattr(argv, "outdir", None) \
         else base / f"results_{TAG}" / "out"
+    # Every working file lives under --out: a stage writes nowhere else.
     workdir = Path(argv.workdir) if getattr(argv, "workdir", None) \
-        else base / f"work_{TAG}"
+        else Path(outdir) / f"work_{TAG}"
     datadir = Path(argv.datadir) if getattr(argv, "datadir", None) else base / "data"
-    datadir.mkdir(parents=True, exist_ok=True)
     sys.path.insert(0, str(base / "frozen"))
     try:
         import provenance
@@ -5156,7 +5481,70 @@ def build_state(argv, indir=None) -> "tuple":
     state = RunState(outdir, workdir, datadir, provenance=provenance, base=base,
                      indir=indir)
     state.runner = ToolRunner(state)
+    load_prior_state(state)
     return state, base
+
+
+STAGE_INPUT_ID = {"aux": "C3", "af2": "C1", "md": "C2", "storage": "C4"}
+
+
+def ensure_anchor_record(state: RunState, why: str = LABEL_ANCHOR_NOT_REACHED) -> None:
+    """One anchor record per run: written if absent, copied if only in --in.
+
+    A verdict already on disk is never changed by a later stage.
+    """
+    name = f"endpoint-anchor_tag-{TAG}.json"
+    out_path = state.outdir / name
+    found = state.input_path(name)
+    if found is not None:
+        if Path(found).resolve() != out_path.resolve() and not out_path.exists():
+            try:
+                atomic_write_text(out_path, Path(found).read_text())
+            except OSError:
+                pass
+        return
+    emit_anchor_void_record(state, start_epoch=state.t0, end_epoch=state.clock(),
+                            why=why)
+
+
+def close_stage_invocation(state: RunState, stage: str, exit_code: int) -> int:
+    """Write what a single-stage run owes before it returns."""
+    cid = STAGE_INPUT_ID.get(stage)
+    try:
+        if cid is not None:
+            name = f"endpoint-{cid}_tag-{TAG}.json"
+            if name not in state.records_written and not (state.outdir / name).exists() \
+                    and state.input_path(name) is None:
+                rows_arm = {"C1": "af2", "C2": "md", "C3": "aux", "C4": "storage"}[cid]
+                if state.failure_kind:
+                    why = ("the run ended on broken infrastructure: "
+                           f"{state.run_valid_voided_by or state.failure_kind}")
+                elif state.stopped:
+                    why = f"{LABEL_UNMEASURED} ({state.last_stop_kind()})"
+                else:
+                    why = f"{LABEL_UNMEASURED} (the stage did not record a value)"
+                emit_input_record(
+                    state, cid, None, n=0, rows_arm=rows_arm,
+                    start_epoch=state.t0, end_epoch=state.clock(),
+                    void_reason=why, stop_kind=state.last_stop_kind())
+        if exit_code in (EXIT_INFRA, EXIT_GUARD):
+            try:
+                ensure_anchor_record(
+                    state, why=(f"{LABEL_ANCHOR_NOT_REACHED}: "
+                                + (state.run_valid_voided_by or state.failure_kind
+                                   or "; ".join(e["reason"] for e in state.stop_events)
+                                   or "the run ended before the anchor stage")))
+            except Exception as exc:
+                state.notes.append(f"the anchor record could not be closed: {exc}")
+        for step in (write_env_note, write_run_valid, write_summary):
+            try:
+                step(state)
+            except Exception as exc:
+                state.notes.append(f"{step.__name__} failed: {exc}")
+    except Exception as exc:
+        state.notes.append(f"closing the stage invocation failed: {exc}")
+    write_run_done(state, exit_code)
+    return exit_code
 
 
 def do_stage(argv) -> int:
@@ -5170,6 +5558,7 @@ def do_stage(argv) -> int:
         return EXIT_INFRA
     if argv.indir:
         state.indir = Path(argv.indir)
+        load_prior_state(state)
     fn, gpu = STAGE_FUNCTIONS[stage]
     try:
         with StageTimer(state, stage, gpu=gpu):
@@ -5177,17 +5566,27 @@ def do_stage(argv) -> int:
     except GuardStop as stop:
         state.record_stop("guard", stop.stage or stage, stop.reason)
         state.exit_code = EXIT_GUARD
-    except FrameGuardReject as rej:
-        state.void_run(f"the frame guard refused a pose: {rej.reason}")
-        state.failure_kind = "anchor_frame"
+    except (FrameGuardReject, HarnessFailure, ParseError, ValueError) as exc:
+        if isinstance(exc, FrameGuardReject):
+            reason = f"the frame guard refused a pose: {exc.reason}"
+            state.failure_kind = "anchor_frame"
+        elif isinstance(exc, HarnessFailure):
+            reason = f"{exc.reason}: {exc.detail}" if exc.detail else exc.reason
+            state.failure_kind = exc.kind
+        else:
+            reason = f"broken tool output could not be read: {exc}"
+            state.failure_kind = "parse_error"
+        state.void_run(reason)
         state.exit_code = EXIT_INFRA
-    except HarnessFailure as exc:
-        state.void_run(f"{exc.reason}: {exc.detail}" if exc.detail else exc.reason)
-        state.failure_kind = exc.kind
-        state.exit_code = EXIT_INFRA
+        print(f"[m4] {stage} failed: {reason}", file=sys.stderr)
     if state.exit_code is None:
-        state.exit_code = decide_exit_code(state)
-    write_run_done(state, state.exit_code)
+        if stage == "endpoints":
+            state.exit_code = decide_exit_code(state)
+        elif state.anchor_missed and stage == "anchor":
+            state.exit_code = EXIT_ANCHOR
+        else:
+            state.exit_code = EXIT_OK
+    close_stage_invocation(state, stage, state.exit_code)
     return state.exit_code
 
 

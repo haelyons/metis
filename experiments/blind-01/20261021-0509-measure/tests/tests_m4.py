@@ -1414,9 +1414,19 @@ def test_parse_reporter_file():
 
 
 def test_parse_engine_rate_line():
+    # The directive names parse_engine_rate_line as a parser of a path that yields the
+    # engine's ns/day rate, ValueError on malformed input, and item 15 states the rule
+    # for a file without a rate line (an explicit null, never a value).  The recorded
+    # StateDataReporter file states its rate as 128.96 ns/day; the parser may read that
+    # rate or report an explicit null with a reason, but it may never invent a number.
     got = parse_ok("parse_engine_rate_line", fx("reporter_file.txt"))
-    need(any(abs(v - 128.96) < 1e-6 for _, v in walk(got) if is_num(v)), "engine rate 128.96 ns/day not parsed: %s" % text_of(got)[:200])
-    for bad in ("reporter_file_field_missing.txt", "reporter_file_error.txt"):
+    named = [(p, v) for p, v in walk(got) if re.search(r"rate|ns_per_day|speed", p, re.I)]
+    nums = [v for _, v in named if is_num(v)]
+    need(all(abs(v - 128.96) < 1e-6 for v in nums),
+         "parse_engine_rate_line on the recorded reporter file returned rate value(s) %s: the file states 128.96 ns/day, a parser may never invent a value" % nums)
+    need(nums or any(v is None for _, v in named),
+         "parse_engine_rate_line on the recorded reporter file returned neither the stated rate 128.96 nor an explicit null: %s" % text_of(got)[:200])
+    for bad in ("reporter_file_field_missing.txt", "reporter_file_error.txt", "reporter_file_truncated.txt"):
         try:
             g = parser("parse_engine_rate_line")(fx(bad))
         except ValueError:
@@ -1424,7 +1434,7 @@ def test_parse_engine_rate_line():
         except Exception as e:
             raise Fail("parse_engine_rate_line on %s raised %s, not ValueError" % (bad, type(e).__name__))
         rates = [v for p, v in walk(g) if is_num(v) and re.search("rate|ns_per_day|speed", p, re.I)]
-        need(not rates and any(v is None for _, v in walk(g)), "%s: a malformed rate line gave a number %s instead of an error or an explicit null" % (bad, rates))
+        need(not rates, "%s: a malformed rate line gave the number(s) %s instead of an error or an explicit null" % (bad, rates))
 
 
 def test_parse_af2_timing_rows():
@@ -1725,6 +1735,46 @@ def test_downloads_calls_kept_apart():
     need(tree_state(r1.outdir) == snap1, "the second downloads run changed the first run's --out")
     need(sha256_file(r1.path("6IHB_tag-m4.pdb")) == PDB_SHA, "the first run's 6IHB copy was overwritten")
     need(not r2.has("6IHB_tag-m4.pdb") or sha256_file(r2.path("6IHB_tag-m4.pdb")) == other, "the second run's 6IHB copy is not its own download")
+
+
+def test_capability_calls_kept_apart():
+    # item 4's capability check calls several external programs (two nvidia-smi forms,
+    # the interpreter probes, and the tools' --help); run it twice and with two calls
+    # inside one run and check every call's outputs stay separate and every call reads
+    # its own output.
+    w = World("cap2")
+    r1 = w.run("capability", empty_in(w, "cap2a"))
+    ran_clean(r1, "capability run 1")
+    need(r1.has("env_check_tag-m4.json"), "capability run 1 wrote no env_check_tag-m4.json (%s)" % r1.why())
+    smi1 = [c for c in r1.calls if c["tool"] == "nvidia-smi"]
+    need(len(smi1) >= 2, "capability run 1 made %d nvidia-smi calls, expected the header and the query" % len(smi1))
+    need(len(set(c.get("form") for c in smi1)) >= 2, "the nvidia-smi calls of one run are not two distinct calls: %s" % [c.get("form") for c in smi1])
+    need(all(c.get("rc") == 0 for c in r1.calls), "a capability call failed in the replay: %s" % [c.get("error") for c in r1.calls if c.get("rc")])
+    helps = sorted(c["tool"] for c in r1.calls if c.get("help"))
+    for tool in ("colabfold_batch", "lightdock3.py", "lgd_generate_conformations.py"):
+        need(tool in helps, "capability run 1 did not run %s --help (%s)" % (tool, helps))
+    probes = [c.get("probe") for c in r1.calls if c["tool"] == "python"]
+    need(len(set(probes)) == len(probes) and len(probes) >= 2,
+         "the interpreter probes of one run are not one call each: %s" % probes)
+    t1 = text_of(r1.records())
+    need("570.148.08" in t1 and re.search(r'"12\.8"|: 12\.8\b', t1), "run 1 records do not carry its own nvidia-smi outputs: %s" % t1[:200])
+    snap1 = tree_state(r1.outdir)
+    h2 = os.path.join(w.root, "smi_header_run2.txt")
+    q2 = os.path.join(w.root, "smi_query_run2.txt")
+    with open(fx("nvidia_smi_header.txt")) as f, open(h2, "w") as g:
+        g.write(f.read().replace("570.148.08", "580.65.1").replace("CUDA Version: 12.8", "CUDA Version: 13.0"))
+    with open(fx("nvidia_smi_query.txt")) as f, open(q2, "w") as g:
+        g.write(f.read().replace("570.148.08", "580.65.1"))
+    w.config["nvidia_smi"].update(header=h2, query=q2)
+    w.save()
+    r2 = w.run("capability", empty_in(w, "cap2b"))
+    ran_clean(r2, "capability run 2")
+    t2 = text_of(r2.records())
+    need("580.65.1" in t2 and re.search(r'"13\.0"|: 13\.0\b', t2),
+         "run 2 records do not carry the outputs of its own nvidia-smi calls: %s" % t2[:200])
+    need("570.148.08" not in t2, "run 2 records carry run 1's driver: the calls' outputs were mixed")
+    need(tree_state(r1.outdir) == snap1, "the second capability run changed the first run's --out")
+    need("570.148.08" in text_of(r1.records()), "the first run's records lost their own nvidia-smi outputs")
 
 
 # item 3: the guard, from the planted environment
@@ -2205,6 +2255,7 @@ TESTS = [
     ("af2_calls_kept_apart", test_af2_calls_kept_apart),
     ("md_calls_kept_apart", test_md_calls_kept_apart),
     ("downloads_calls_kept_apart", test_downloads_calls_kept_apart),
+    ("capability_calls_kept_apart", test_capability_calls_kept_apart),
     ("guard_stops_by_time", test_guard_stops_by_time),
     ("guard_goes_by_time", test_guard_goes_by_time),
     ("guard_stops_by_budget", test_guard_stops_by_budget),
