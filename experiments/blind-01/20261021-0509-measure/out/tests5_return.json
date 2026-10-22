@@ -1,0 +1,32 @@
+{
+ "tests": {
+  "file": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/tests/tests_m4.py",
+  "behaviours": [
+   "every parser (nvidia-smi header and query, etimes, rank table, pdb, colabfold log, reporter file, engine rate line, af2 timing rows) gives the recorded values on the box output",
+   "each parser on a truncated, field-missing or error-line copy raises ValueError or gives an explicit null, never an invented value",
+   "a stage given malformed rank table, pose, nvidia-smi output, colabfold failure or truncated rows exits 2 with RUN_DONE and a failure record",
+   "a stage given an empty --in exits 2 and names the missing file",
+   "stages that call a program several times (anchor, aux, af2, md, downloads, capability) keep each call's working directory and outputs apart",
+   "guard stage arithmetic follows REMOTE_TIMEOUT and budget: stop by time, go, stop by budget, anchor stop left undecided",
+   "reference pose scored against itself and against a rigid copy gives overlap 1.0 and RMSD 0",
+   "a rotated copy is rejected by the frame guard as an exit 2 failure, never scored",
+   "anchor diagnostics are recorded in the anchor record",
+   "anchor miss gives exit 4, FAIL and run_valid false",
+   "every later record after a miss carries run_valid false, the voided-by text and the label",
+   "calibration_valid on later records is decided by their own checks, not by the anchor",
+   "the anchor verdict is unchanged by later stages",
+   "MD atom count and NaN energy checks make C2 calibration_valid false",
+   "control records and the sleep control failure",
+   "env_check record, lock mismatch and unset lock hash fail with exit 2",
+   "anchor, endpoint, downloads and rows records carry the directive's fields and units",
+   "m4_summary has the compute table with every stage, and RUN_VALID.json, RUN_DONE and env.txt are written",
+   "a stage writes only under --out",
+   "a stage that finishes its work exits 0"
+  ],
+  "count": 46,
+  "fixtures": 59,
+  "revised": 1,
+  "kept_failing": 3
+ },
+ "tag": "m4"
+}

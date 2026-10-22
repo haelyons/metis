@@ -830,6 +830,7 @@ def md_worker(c, call):
         with open(os.path.join(work, "solvated.pdb"), "w") as f:
             f.write("REMARK replay build %d\n" % k + " " * 7000 + "\nEND\n")
         res = {"mode": "build", "atoms": n_atoms, "n_atoms": n_atoms, "padding_nm": float(o.get("--padding-nm", 1.0)),
+               "padding_angstrom": 10.0 * float(o.get("--padding-nm", 1.0)),
                "roles_present": ["capsid", "receptor"], "capsid_heavy_atoms": 5510, "system_xml": os.path.join(work, "system.xml"),
                "solvated_pdb": os.path.join(work, "solvated.pdb"), "pdb": o.get("--pdb"), "replay_call": k}
         if out:
@@ -847,32 +848,48 @@ def md_worker(c, call):
     hdr = '#"Step","Time (ps)","Potential Energy (kJ/mole)","Kinetic Energy (kJ/mole)","Total Energy (kJ/mole)","Temperature (K)","Speed (ns/day)"'
     rows = [hdr]
     nan_at = m.get("nan_call") == k
-    for i, st in enumerate(range(eq + every, eq + steps + 1, every)):
+    # the StateDataReporter covers minimisation, the short equilibration and the
+    # 0.5 ns production segment, its step counter continuing (item 12: the last
+    # step reaches the equilibration plus 250,000 production steps)
+    eq_rep = int(m.get("reporter_equil_steps", 50000))
+    last = int(m.get("reporter_last_step", eq + eq_rep + steps))
+    for i, st in enumerate(range(every, last + 1, every)):
         pe = "nan" if (nan_at and i == 10) else "%.1f" % (-2051234.5 + i)
         rows.append("%d,%.1f,%s,371234.5,%.1f,300.12,%s" % (st, st * dt / 1000.0, pe, -1680000.0 + i, "--" if i == 0 else "%.2f" % rate))
     rep = os.path.join(work, "md_state.csv")
     with open(rep, "w") as f:
         f.write("\n".join(rows) + "\n")
     dcd = os.path.join(work, "trajectory.dcd")
-    nframes = steps // 5000
+    nframes = steps // every
     import struct
-    natom = 10
+    natom = n_atoms
     with open(dcd, "wb") as f:
-        icntrl = [nframes, eq // 5000, 5000, nframes * 5000, 0, 0, 0, 0, 0]
-        f.write(struct.pack("<i4s9if10i", 84, b"CORD", *(icntrl + [dt / 1000.0 / 0.04888821] + [0] * 9 + [24])) + struct.pack("<i", 84))
+        # the layout OpenMM's DCDReporter writes: a CORD header of 20 words (frame count,
+        # first step, interval, ..., time step as a float, unit-cell flag), a title block,
+        # the atom count, then per frame a unit-cell block and three coordinate blocks
+        f.write(struct.pack("<i4c9if10ii", 84, b"C", b"O", b"R", b"D", nframes, every, every, 0, 0, 0, 0, 0, 0,
+                            dt / 1000.0 / 0.04888821, 1, 0, 0, 0, 0, 0, 0, 0, 0, 24, 84))
         title = b"REMARKS replay DCD".ljust(80)
-        f.write(struct.pack("<ii", 84, 1) + title + struct.pack("<i", 84))
+        f.write(struct.pack("<ii", 164, 2) + title + title + struct.pack("<i", 164))
         f.write(struct.pack("<iii", 4, natom, 4))
         for fr in range(nframes):
+            f.write(struct.pack("<i6di", 48, 4.0, 0.0, 4.0, 0.0, 0.0, 4.0, 48))
             for axis in range(3):
-                f.write(struct.pack("<i", 4 * natom) + struct.pack("<%df" % natom, *([0.1 * fr + axis] * natom)) + struct.pack("<i", 4 * natom))
+                # the coordinates of a 150,000-atom system are a sparse run of zeros
+                f.write(struct.pack("<i", 4 * natom))
+                f.seek(4 * natom, 1)
+                f.write(struct.pack("<i", 4 * natom))
+        f.truncate(f.tell())
     with open(os.path.join(work, "md_stdout.log"), "w") as f:
         f.write("production %d steps\n" % steps)
     wall = 0.2 + 0.05 * k
     time.sleep(wall)
     res = {"mode": "run", "atoms": n_atoms, "n_atoms": n_atoms, "steps": steps, "production_steps": steps, "equil_steps": eq,
-           "timestep_fs": dt, "production_wall_clock_s": wall, "wall_clock_s": wall, "engine_ns_per_day": rate,
-           "frame_interval_ps": every * dt / 1000.0, "dcd": dcd, "dcd_frames": nframes, "reporter": rep, "reporter_file": rep,
+           "timestep_fs": dt, "production_s": wall, "production_wall_clock_s": wall, "wall_clock_s": wall,
+           "engine_ns_per_day": rate, "rate_ns_per_day": rate, "ns_per_day": rate,
+           "frame_interval_ps": every * dt / 1000.0, "dcd": dcd, "dcd_path": dcd, "dcd_frames": nframes,
+           "trajectory_file": dcd, "trajectory_path": dcd,
+           "reporter": rep, "reporter_file": rep, "reporter_path": rep,
            "platform": "CUDA", "precision": "mixed", "seed": int(o.get("--seed", 0)), "replay_call": k}
     if out:
         os.makedirs(os.path.dirname(out), exist_ok=True)
@@ -1394,13 +1411,30 @@ def test_parse_pdb():
 
 
 def test_parse_colabfold_log():
+    # The real log parses to the times it records.  A structurally broken copy
+    # (truncated mid-line, a time field missing) is malformed input and must
+    # raise ValueError.  The error-line copy is a well-formed log of a run that
+    # died after model 1 started: it holds no completed per-model time, and
+    # item 12 says per-model times are "parsed (or null with a reason, not a
+    # failure)", so the parser may report none or raise, but it may never
+    # invent a number (item 5: never a default).
     got = parse_ok("parse_colabfold_log", fx("colabfold_log.txt"))
     want = [96.4, 61.2, 60.8, 61.0, 60.9]
     lists = [v for _, v in walk(got) if isinstance(v, list) and len(v) == 5 and all(is_num(x) for x in v)]
     lists += [[v[k] for k in sorted(v)] for _, v in walk(got) if isinstance(v, dict) and len(v) == 5 and all(is_num(x) for x in v.values())]
     need(any(all(abs(a - b) < 1e-6 for a, b in zip(l, want)) for l in lists), "per-model times %s not parsed: %s" % (want, text_of(got)[:240]))
-    for bad in ("colabfold_log_field_missing.txt", "colabfold_log_error.txt", "colabfold_log_truncated.txt"):
+    for bad in ("colabfold_log_field_missing.txt", "colabfold_log_truncated.txt"):
         parse_bad("parse_colabfold_log", fx(bad))
+    try:
+        g = parser("parse_colabfold_log")(fx("colabfold_log_error.txt"))
+    except ValueError:
+        return
+    except Exception as e:
+        raise Fail("parse_colabfold_log on the error-line log raised %s: %s" % (type(e).__name__, str(e)[:120]))
+    need(isinstance(g, dict), "parse_colabfold_log returned %s on the error-line log" % type(g).__name__)
+    inv = [l for _, l in walk(g) if isinstance(l, (list, tuple)) and all(is_num(x) for x in l)]
+    inv += [[v[k] for k in sorted(v)] for _, v in walk(g) if isinstance(v, dict) and v and all(is_num(x) for x in v.values())]
+    need(not inv, "parse_colabfold_log invented per-model times %s on a log with no completed model time (item 12: 'or null with a reason, not a failure')" % (inv[:2],))
 
 
 def test_parse_reporter_file():
@@ -1538,9 +1572,13 @@ def test_stage_fails_on_malformed_af2_rows():
     w = Pipe.world
     r = w.run("endpoints", make_in(w, "badrows", [pipe("anchor_pass"), pipe("aux_pass"), r0, pipe("md_pass"), pipe("storage_pass")],
                                     extra_files={"rows_af2_tag-m4.jsonl": text[: len(text) - 40]}))
-    failed_explicitly(r, "endpoints with truncated AlphaFold rows")
-    c1 = r.rec("endpoint-C1_tag-m4.json")
-    need(c1.get("decision") not in ("PASS", "FAIL"), "C1 decided %s on truncated rows" % c1.get("decision"))
+    d = failed_explicitly(r, "endpoints with truncated AlphaFold rows")
+    # item 7: every input not decided before the failure is void_by_failure:<kind> in RUN_DONE; a C1
+    # record, when the stage wrote one, is never a band decision
+    st = str(d.get("inputs", {}).get("C1", {}).get("status"))
+    need(st.startswith("void_by_failure:"), "RUN_DONE C1 status %r after truncated AlphaFold rows, expected void_by_failure:<kind>" % st)
+    if r.has("endpoint-C1_tag-m4.json"):
+        need(r.rec("endpoint-C1_tag-m4.json").get("decision") not in ("PASS", "FAIL"), "C1 decided on truncated rows")
 
 
 def test_stage_reports_missing_inputs():
@@ -1818,19 +1856,44 @@ def guard_arithmetic(res, timeout, elapsed, allowance, estimates, label):
     need(not miss, "%s: the record does not carry the guard arithmetic: %s missing" % (label, ", ".join(miss)))
 
 
+def guard_input_statuses(d):
+    return dict((k, v.get("status") if isinstance(v, dict) else v) for k, v in (d.get("inputs") or {}).items())
+
+
 def test_guard_stops_by_time():
+    # the guard refuses the stage whose estimate exceeds its allowance; item 24:
+    # its unfinished inputs are unmeasured_by_stop:<kind> with VOID records
+    # carrying the full incomplete-run label and calibration_valid false,
+    # run_valid is not changed, and the record carries the arithmetic.
     w = World("gstop")
-    r = w.run("anchor", make_in(w, "gstop"), elapsed=2450, REMOTE_TIMEOUT=3000)
-    need(r.rc == 3, "anchor with 50 s of allowance (3000 - 2450 - 400 - 100) exit %s, expected 3 (%s)" % (r.rc, r.why()))
-    need(not [c for c in r.calls if c["tool"].startswith("l")], "the guard refused the stage but docking was called")
+    r = w.run("af2", make_in(w, "gstop", [pipe("anchor_pass")]), elapsed=2450, REMOTE_TIMEOUT=3000)
+    need(r.rc == 3, "af2 with 49 to 50 s of allowance (3000 - 2450 - 400 - 100) exit %s, expected 3 (%s)" % (r.rc, r.why()))
+    need(not [c for c in r.calls if c["tool"] == "colabfold_batch"], "the guard refused the stage but a prediction call was made")
     d = r.done()
     need(d.get("stopped_by"), "RUN_DONE names no stop")
-    st = [v.get("status", "") for v in d.get("inputs", {}).values() if isinstance(v, dict)]
-    need(st and all(x.startswith("unmeasured_by_stop:") for x in st), "inputs after a guard stop are not unmeasured_by_stop: %s" % st)
+    st = guard_input_statuses(d)
+    need(str(st.get("C1", "")).startswith("unmeasured_by_stop:"), "C1 after a guard stop of af2 is not unmeasured_by_stop: %s" % st)
+    c1 = (d.get("inputs") or {}).get("C1") or {}
+    need(c1.get("calibration_valid") is False, "C1 after a guard stop: calibration_valid %r, expected false" % c1.get("calibration_valid"))
+    need("incomplete run" in text_of(d), "RUN_DONE lacks the incomplete-run label after a stop")
     need(d.get("run_valid") is not False, "a guard stop changed run_valid to false")
-    guard_arithmetic(r, 3000, 2450, 50, (60, 120), "time stop")
+    guard_arithmetic(r, 3000, 2450, 50, (120,), "time stop")
+    rec = r.rec("endpoint-C1_tag-m4.json")
+    need(rec.get("decision") == "VOID" and "incomplete run" in text_of(rec), "C1 after a guard stop is not VOID with the incomplete-run label")
+
+
+def test_guard_anchor_stop_undecided():
+    # a stop before the anchor leaves the anchor undecided: the anchor record is
+    # VOID "unmeasured, not holding" (item 18), never a PASS or a FAIL
+    w = World("ganchor")
+    r = w.run("anchor", make_in(w, "ganchor"), elapsed=2450, REMOTE_TIMEOUT=3000)
+    need(r.rc == 3, "anchor with 50 s of allowance exit %s, expected 3 (%s)" % (r.rc, r.why()))
+    need(not [c for c in r.calls if c["tool"].startswith("l")], "the guard refused the stage but docking was called")
     a = r.rec("endpoint-anchor_tag-m4.json")
-    need(a.get("decision") == "VOID" and "unmeasured, not holding" in text_of(a), "anchor after a guard stop is not VOID 'unmeasured, not holding'")
+    t = text_of(a)
+    need(a.get("decision") == "VOID" and "unmeasured" in t and "not holding" in t,
+         "anchor after a guard stop is not VOID 'unmeasured, not holding': %s" % str(a.get("decision")))
+    need(not is_num(a.get("values", {}).get("measured")), "anchor after a stop measured %r" % a.get("values", {}).get("measured"))
 
 
 def test_guard_goes_by_time():
@@ -2040,6 +2103,20 @@ MACHINE_KEYS = ["instance_type", "gpu_name", "gpu_driver", "cuda_runtime_version
 RECORD_KEYS = ["cell", "inputs", "metric", "values", "threshold", "decision_rule", "decision", "run_valid"]
 
 
+def unit_states(unit, key):
+    """values.unit states the card's unit (item 21): the token or its spelling"""
+    t = str(unit or "").strip().lower()
+    if not t or t == "none":
+        return False
+    if key == "C1":
+        return "run" in t and ("hour" in t or "h/" in t or t.startswith("h ") or t.endswith(" h") or "h per" in t)
+    if key == "C2":
+        return "day" in t and ("ns/day" in t or "ns per day" in t or "nanosecond" in t)
+    if key == "C3":
+        return "pair" in t and ("hour" in t or "h/" in t or t.startswith("h ") or t.endswith(" h") or "h per" in t)
+    return "gib" in t
+
+
 def check_record(rec, fn, extra=()):
     miss = [k for k in RECORD_KEYS if k not in rec]
     need(not miss, "%s lacks %s" % (fn, miss))
@@ -2127,7 +2204,7 @@ def test_records_endpoints():
         v = rec["values"]
         cv, band = CARD["C%d" % i]
         need(is_num(v["measured"]), "%s measured %r is not a number" % (fn, v["measured"]))
-        need(units["C%d" % i] in str(v["unit"]), "%s unit %r, expected %s" % (fn, v["unit"], units["C%d" % i]))
+        need(unit_states(v["unit"], "C%d" % i), "%s unit %r does not state the card's unit (%s)" % (fn, v["unit"], units["C%d" % i]))
         need(v["card_value"] == cv and [float(x) for x in v["band"]] == band, "%s card_value/band %r %r" % (fn, v["card_value"], v["band"]))
         need(rec["decision"] in ("PASS", "FAIL", "VOID"), "%s decision %r" % (fn, rec["decision"]))
         lo, hi = band
@@ -2257,6 +2334,7 @@ TESTS = [
     ("downloads_calls_kept_apart", test_downloads_calls_kept_apart),
     ("capability_calls_kept_apart", test_capability_calls_kept_apart),
     ("guard_stops_by_time", test_guard_stops_by_time),
+    ("guard_anchor_stop_undecided", test_guard_anchor_stop_undecided),
     ("guard_goes_by_time", test_guard_goes_by_time),
     ("guard_stops_by_budget", test_guard_stops_by_budget),
     ("anchor_reference_against_itself", test_anchor_reference_against_itself),

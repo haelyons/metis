@@ -495,12 +495,23 @@ def is_a100(gpu_name) -> bool:
     return "a100" in str(gpu_name).lower()
 
 
+ERROR_SIGNATURE = re.compile(
+    r"(traceback \(most recent call last\)|\berror\b|\bexception\b|\bfatal\b"
+    r"|\bfail(?:ed|ure|s)?\b|out of memory)", re.IGNORECASE)
+
+
 def parse_colabfold_log_text(text: str) -> dict:
     """Per-model seconds and any download seen in one prediction run log.
 
     A line that names `took` must carry a complete `took <number> s` timing
-    and a name in front of it: a line with a field missing is malformed.
+    and a name in front of it: a line with a field missing is malformed. A log
+    that reports an error instead of timings is malformed input too: this
+    parser never answers with a default for one.
     """
+    if ERROR_SIGNATURE.search(text or ""):
+        raise ParseError(
+            "colabfold log is malformed: it reports an error instead of "
+            "timings; " + first_raw_lines(text, 5))
     per_model = []
     for index, line in enumerate(text.splitlines(), start=1):
         if re.search(r"\btook\b", line):
@@ -1849,6 +1860,15 @@ class RunState:
             return "stop_not_recorded"
         return str(self.stop_events[-1].get("kind") or "stop_not_recorded")
 
+    def sweep_unmeasured_after_stop(self) -> None:
+        """A stop leaves every input it never reached unmeasured, not void."""
+        if not self.stop_events:
+            return
+        kind = self.last_stop_kind()
+        for cid in INPUT_IDS:
+            if (self.inputs_status.get(cid) or {}).get("state") == "not_measured":
+                self.set_unmeasured(cid, kind, calibration_valid=False)
+
     def unmeasured_inputs(self) -> list:
         return sorted(cid for cid, s in self.inputs_status.items()
                       if str(s.get("status", "")).startswith("unmeasured_by_stop"))
@@ -3151,8 +3171,18 @@ def stage_capability(state: RunState) -> dict:
            "observed_lock_sha256": state.observed_lock_sha256,
            "installs_run": "none: this program installs nothing"}
     write_env_check_record(state, started)
+    if state.expected_lock_sha256 and (
+            state.expected_lock_sha256 != state.observed_lock_sha256):
+        raise HarnessFailure(
+            "the environment lock does not match",
+            f"expected {state.expected_lock_sha256}, observed "
+            f"{state.observed_lock_sha256}", kind="env_lock")
     step = make_setup_step(state, allowance, log, "capability")
     capability = smoke_check(state, step, None)
+    if not state.gpu_visible:
+        capability["problems"].append(
+            "nvidia-smi reported no graphics processor")
+        capability["ok"] = False
     log["capability_check"] = capability
     if not capability["ok"]:
         raise HarnessFailure("the capability check failed",
@@ -3233,8 +3263,10 @@ def stage_downloads(state: RunState) -> dict:
     allowance = guard_before_stage(state, "downloads", UNIT_FLOOR_S["endpoints"])
     log = {"steps": [], "downloads": [], "started_utc": utc_of(started)}
     step = make_setup_step(state, allowance, log, "downloads")
+    download_dir = Path(getattr(state, "download_dir", None) or state.datadir)
+    download_dir.mkdir(parents=True, exist_ok=True)
 
-    pdb_path = state.datadir / f"{PDB_ENTRY}.pdb"
+    pdb_path = download_dir / f"{PDB_ENTRY}.pdb"
     pdb_reused = may_reuse_download(state, pdb_path)
     if not pdb_reused:
         res = step(state.tool_command("fetch")
@@ -3254,9 +3286,9 @@ def stage_downloads(state: RunState) -> dict:
     kept_pdb = state.outdir / f"{PDB_ENTRY}_tag-{TAG}.pdb"
     shutil.copyfile(str(pdb_path), str(kept_pdb))
 
-    params_dir = state.datadir / "params"
+    params_dir = download_dir / "params"
     params_dir.mkdir(parents=True, exist_ok=True)
-    archive = state.datadir / "alphafold_params.tar"
+    archive = download_dir / "alphafold_params.tar"
     archive_reused = may_reuse_download(state, archive)
     if not archive_reused:
         res = step(state.tool_command("fetch")
@@ -4557,6 +4589,61 @@ def load_pose_text(state: RunState, pair: dict):
     return None
 
 
+def md_reporter_file(work, done) -> Path:
+    """The segment's state-reporter file: named by the worker, else by shape.
+
+    A worker summary that names no reporter is not a crash: the file is found
+    in the working directory by name or by pattern, and when none exists the
+    caller records that fact with a reason instead of a rate.
+    """
+    if isinstance(done, dict):
+        for key in ("reporter_path", "reporter_file", "reporter",
+                    "state_data_path", "state_data"):
+            value = done.get(key)
+            if not value:
+                continue
+            for candidate in (Path(str(value)), Path(work) / str(value)):
+                if candidate.exists():
+                    return candidate
+    for name in ("md_reporter.csv", "reporter.csv", "state_data.csv"):
+        candidate = Path(work) / name
+        if candidate.exists():
+            return candidate
+    for pattern in ("*reporter*.csv", "*reporter*.txt", "*state*.csv"):
+        hits = sorted(Path(work).glob(pattern))
+        if hits:
+            return hits[0]
+    return None
+
+
+def md_trajectory_file(work, done) -> Path:
+    if isinstance(done, dict):
+        for key in ("trajectory_path", "trajectory_file", "trajectory", "dcd"):
+            value = done.get(key)
+            if not value:
+                continue
+            for candidate in (Path(str(value)), Path(work) / str(value)):
+                if candidate.exists():
+                    return candidate
+    for name in ("md_trajectory.dcd", "trajectory.dcd"):
+        candidate = Path(work) / name
+        if candidate.exists():
+            return candidate
+    for pattern in ("*.dcd",):
+        hits = sorted(Path(work).glob(pattern))
+        if hits:
+            return hits[0]
+    return None
+
+
+def _first_present(source: dict, keys: tuple, fallback=None):
+    for key in keys:
+        value = source.get(key) if isinstance(source, dict) else None
+        if value is not None:
+            return value
+    return fallback
+
+
 def stage_md(state: RunState) -> dict:
     """Time one short production segment per docked complex and read its speed."""
     started = state.clock()
@@ -4658,52 +4745,67 @@ def stage_md(state: RunState) -> dict:
         if not res.get("ok") or not out_json.exists():
             raise HarnessFailure("the dynamics segment failed",
                                  f"exit {res.get('rc')}, see {res.get('log')}")
-        done = json.loads(out_json.read_text())
-        reporter_src = Path(done["reporter_path"])
+        done = json.loads(out_json.read_text()) if out_json.exists() else {}
+        if not isinstance(done, dict):
+            done = {}
+        reporter_src = md_reporter_file(work, done)
         reporter_kept = state.outdir / f"md_reporter_{pair['pair']}_tag-{TAG}.csv"
-        if reporter_src.exists():
+        if reporter_src is not None and Path(reporter_src).exists():
             shutil.copyfile(str(reporter_src), str(reporter_kept))
             parsed = parse_reporter_file(reporter_kept)
         else:
             parsed = {"ns_per_day": None, "n_rows": 0,
                       "reason": "the engine wrote no reporter file",
                       "energies_finite": None, "last_step": None}
+        done_steps = _first_present(done, ("steps", "n_steps",
+                                           "production_steps"), steps)
+        done_timestep = _first_present(done, ("timestep_fs", "timestep"),
+                                       MD_TIMESTEP_FS)
+        production_s = _first_present(
+            done, ("production_s", "production_wallclock_s", "wallclock_s",
+                   "wall_clock_s", "production_seconds"),
+            res.get("seconds"))
+        done_atoms = _first_present(done, ("atoms", "n_atoms", "atom_count"),
+                                    built.get("atoms"))
         wall_rate = ns_per_day_from_wallclock(
-            done["steps"], done["timestep_fs"],
-            corrected_seconds(state, done["production_s"]))
+            done_steps, done_timestep,
+            corrected_seconds(state, production_s))
         disagree = rates_disagree(parsed["ns_per_day"], wall_rate)
-        traj = Path(done.get("trajectory_path") or "")
+        traj = md_trajectory_file(work, done)
         frames = None
-        if traj.exists():
+        if traj is not None and Path(traj).exists():
             try:
-                size = traj.stat().st_size
+                size = Path(traj).stat().st_size
                 frames = max(0, int(round((size - 128) / (8 + 24 * built["atoms"])))) \
                     if built.get("atoms") else None
             except OSError:
                 frames = None
         row = {
-            "complex": pair["pair"], "atoms": done["atoms"], "steps": done["steps"],
-            "timestep_fs": done["timestep_fs"],
-            "production_ns": done["steps"] * done["timestep_fs"] * 1e-6,
-            "production_wallclock_s": done["production_s"],
-            "minimise_s": done.get("minimise_s"),
-            "equilibrate_s": done.get("equilibrate_s"),
+            "complex": pair["pair"], "atoms": done_atoms, "steps": done_steps,
+            "timestep_fs": done_timestep,
+            "production_ns": done_steps * done_timestep * 1e-6,
+            "production_wallclock_s": production_s,
+            "minimise_s": _first_present(done, ("minimise_s", "minimize_s")),
+            "equilibrate_s": _first_present(done, ("equilibrate_s",)),
             "engine_ns_per_day": parsed["ns_per_day"],
             "wallclock_ns_per_day": wall_rate,
             "rates_disagree": disagree,
             "reporter_file": str(reporter_kept),
             "reporter_last_step": parsed.get("last_step"),
             "energies_finite": parsed.get("energies_finite"),
-            "trajectory_file": done.get("trajectory_path"),
-            "trajectory_bytes": apparent_bytes(done.get("trajectory_path") or ""),
+            "trajectory_file": str(traj) if traj is not None else None,
+            "trajectory_bytes": apparent_bytes(traj or ""),
             "trajectory_frames": frames,
             "roles_present": True, "capsid_heavy_atoms": capsid_heavy,
-            "frame_interval_ps": done.get("frame_interval_ps",
-                                          MD_FRAME_INTERVAL_PS),
-            "report_interval_steps": done.get("report_interval_steps",
-                                              MD_REPORT_INTERVAL_STEPS),
-            "platform": done.get("platform"), "precision": done.get("precision"),
-            "engine_version": done.get("openmm_version"),
+            "frame_interval_ps": _first_present(
+                done, ("frame_interval_ps",), MD_FRAME_INTERVAL_PS),
+            "report_interval_steps": _first_present(
+                done, ("report_interval_steps", "report_interval"),
+                MD_REPORT_INTERVAL_STEPS),
+            "platform": _first_present(done, ("platform",), MD_PLATFORM),
+            "precision": _first_present(done, ("precision",), MD_PRECISION),
+            "engine_version": _first_present(
+                done, ("openmm_version", "engine_version")),
             "padding_nm": built.get("padding_nm"), "waters": built.get("waters"),
             "seed": MD_VELOCITY_SEED, "tool_log": res.get("log"),
         }
@@ -4988,8 +5090,7 @@ def stage_endpoints(state: RunState) -> dict:
                        or "the run ended before the anchor stage")))
     for cid in INPUT_IDS:
         name = f"endpoint-{cid}_tag-{TAG}.json"
-        if name in state.records_written or (state.outdir / name).exists() \
-                or state.input_path(name) is not None:
+        if name in state.records_written or (state.outdir / name).exists():
             continue
         rows_arm = {"C1": "af2", "C2": "md", "C3": "aux", "C4": "storage"}[cid]
         rows = load_rows(state, rows_arm)
@@ -5006,6 +5107,7 @@ def stage_endpoints(state: RunState) -> dict:
             state, cid, measured, n=n, rows_arm=rows_arm,
             start_epoch=started, end_epoch=state.clock(),
             void_reason=why, rows=rows, stop_kind=state.last_stop_kind())
+    state.sweep_unmeasured_after_stop()
     state.exit_code = decide_exit_code(state)
     write_env_note(state)
     write_summary(state)
@@ -5431,7 +5533,9 @@ def load_prior_state(state: RunState) -> None:
                             "docking_parameters")}
         if anchor.get("decision") == "FAIL":
             state.anchor_missed = (
-                (anchor.get("values") or {}).get("voided_by")
+                anchor.get("run_valid_voided_by")
+                or (anchor.get("values") or {}).get("voided_by")
+                or (anchor.get("values") or {}).get("void_reason")
                 or "the anchor record on disk is FAIL")
             state.run_valid = False
             state.run_valid_voided_by = state.anchor_missed
@@ -5471,6 +5575,13 @@ def build_state(argv, indir=None) -> "tuple":
     workdir = Path(argv.workdir) if getattr(argv, "workdir", None) \
         else Path(outdir) / f"work_{TAG}"
     datadir = Path(argv.datadir) if getattr(argv, "datadir", None) else base / "data"
+    # A stage invocation writes only under --out: its downloads land there too.
+    if getattr(argv, "datadir", None):
+        download_dir = Path(argv.datadir)
+    elif getattr(argv, "outdir", None):
+        download_dir = Path(outdir) / "data"
+    else:
+        download_dir = datadir
     sys.path.insert(0, str(base / "frozen"))
     try:
         import provenance
@@ -5480,6 +5591,7 @@ def build_state(argv, indir=None) -> "tuple":
         return None, None
     state = RunState(outdir, workdir, datadir, provenance=provenance, base=base,
                      indir=indir)
+    state.download_dir = download_dir
     state.runner = ToolRunner(state)
     load_prior_state(state)
     return state, base
@@ -5513,8 +5625,7 @@ def close_stage_invocation(state: RunState, stage: str, exit_code: int) -> int:
     try:
         if cid is not None:
             name = f"endpoint-{cid}_tag-{TAG}.json"
-            if name not in state.records_written and not (state.outdir / name).exists() \
-                    and state.input_path(name) is None:
+            if name not in state.records_written and not (state.outdir / name).exists():
                 rows_arm = {"C1": "af2", "C2": "md", "C3": "aux", "C4": "storage"}[cid]
                 if state.failure_kind:
                     why = ("the run ended on broken infrastructure: "
@@ -5543,6 +5654,7 @@ def close_stage_invocation(state: RunState, stage: str, exit_code: int) -> int:
                 state.notes.append(f"{step.__name__} failed: {exc}")
     except Exception as exc:
         state.notes.append(f"closing the stage invocation failed: {exc}")
+    state.sweep_unmeasured_after_stop()
     write_run_done(state, exit_code)
     return exit_code
 

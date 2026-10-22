@@ -306,3 +306,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 20:34Z stage build on wf.js run 27: flags [--family opencode], pid 543683
 - 20:34Z TESTS 5: claim-blind author on wf.js (flags [--family opencode])
 - 20:34Z build 28 (mimo, test-fix): 27 FIX lines, 0 NOT REQUIRED; tests 4 (mimo): 45 tests, 1 revised, 26 kept failing as implementation faults; local tests on build 28: 32 of 45 PASS (run_m4.py 6,230 lines). Round 2 started: build 29 (test-fix) and tests 5 (revision) in parallel on OpenCode.
+- 22:36Z build 29 checks: local tests exit 1
+- 22:37Z stage build on wf.js run 28: flags [--family opencode], pid 767522
+- 22:37Z round 2 (117 min): build 29 (mimo): 13 FIX lines; tests 5 (mimo timed out, sonnet understudy): 46 tests, 1 revised, 3 kept failing as implementation faults; local tests on build 29: 42 of 46 PASS (run_m4.py 6,342 lines). Round 3: build 30 (test-fix) only, on OpenCode; no tests revision (the author has ruled on these failures).
