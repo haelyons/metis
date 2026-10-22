@@ -287,3 +287,4 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:29Z local copy of the environment of record: 79 of 80 lock lines installed in 20261021-0509-measure/.venv (one distribution needs a CUDA compiler); 10 of 13 modules import locally
 - 15:29Z stage ask on wf.js run 1: flags [--family opencode], pid 78698
 - 15:32Z contract v2 frozen (owner direction 2026-10-22): stage interface replaces the implementer selftest; anchor miss keeps the inputs measured as scientifically unvalidated with calibration_valid by their own checks; anchor diagnostics in the anchor record; v1 kept as out/ONBOX_CONTRACT_v1.md
+- 15:37Z owner 2026-10-22: backtests deferred until after launch 11; compute is logged whatever the anchor decides (contract 3.8 compute table on every exit; score carries it and labels anchor-voided but calibration-valid numbers as unvalidated)

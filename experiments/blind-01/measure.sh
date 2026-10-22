@@ -589,24 +589,29 @@ for i, u in enumerate(rec["required"], 1):
     meas = v.get("measured")
     lo, hi = u["value"] / band(u), u["value"] * band(u)
     held = (meas is not None and lo <= meas <= hi)
-    valid = bool(e and e.get("run_valid"))
+    valid = bool(e and e.get("run_valid")); cal = bool(e and e.get("calibration_valid"))
     ratio = (meas / u["value"]) if (isinstance(meas, (int, float)) and u["value"]) else None
-    state = "no record" if not e else ("void" if not valid else ("held" if held else "refuted"))
-    rows.append({"id": u["id"], "basis": u["basis"], "card_value": u["value"], "band": [lo, hi], "measured": meas, "unit": v.get("unit"), "decision": (e or {}).get("decision"), "run_valid": valid, "state": state, "ratio": ratio, "record": os.path.relpath(f[0], m) if f else None})
+    # calibration branch (owner 2026-10-22): a record voided by the anchor but valid by its own checks is scored, labelled unvalidated
+    state = "no record" if not e else (("held" if held else "refuted") if valid else ((("held" if held else "refuted") + ", unvalidated") if cal and meas is not None else "void"))
+    rows.append({"id": u["id"], "basis": u["basis"], "card_value": u["value"], "band": [lo, hi], "measured": meas, "unit": v.get("unit"), "decision": (e or {}).get("decision"), "run_valid": valid, "calibration_valid": cal, "state": state, "ratio": ratio, "record": os.path.relpath(f[0], m) if f else None})
     lines.append(f"- P{i} ({u['id']}, {u['basis']} {u['value']}): {state}; measured {meas} {v.get('unit') or ''}; band [{lo:.4g}, {hi:.4g}]; record decision {(e or {}).get('decision')}; run_valid {valid}")
     print("  C%d %-5s %-9s ratio %s run_valid %s" % (i, u["basis"], state, ("%.3g" % ratio) if ratio is not None else "-", valid))
 anc = glob.glob(f"{R}/endpoint-anchor_tag-{tag}.json"); a = json.load(open(anc[0])) if anc else None
 print("  anchor: %s; RUN_VALID.json: %s" % ((a or {}).get("decision") or "no record", (rv or {}).get("run_valid") if rv else "missing"))
 launches = [json.load(open(j)) for j in sorted(glob.glob(f"{m}/out/launch*.json"))]
+for l in launches:   # compute is logged whatever the anchor decided (owner 2026-10-22): the summary's compute table of that launch, if it wrote one
+    sm = glob.glob(f"{m}/out/launch{l.get('n')}/results_{tag}/out/{tag}_summary.json")
+    try: l["compute"] = json.load(open(sm[0])).get("compute") if sm else None
+    except Exception: l["compute"] = None
 usd = round(sum(l.get("usd_est") or 0 for l in launches), 2)
 seal = open(f"{m}/out/SEALS.txt").read().split()[0]
 md = ["# Predictions scored (mechanical, measure.sh score; no model)", "", f"Sealed predictions sha256 {seal} (out/SEALS.txt). Rule: held if the measured value lies within the band; void if the record's run_valid is false or the record is missing.", "", *lines, "",
-      f"Anchor: {(a or {}).get('decision') or 'no record'}. Launches: {len(launches)}; estimated USD {usd}. Base rate update: {sum(1 for r in rows if r['state']=='held')} held of {sum(1 for r in rows if r['state'] in ('held','refuted'))} decided."]
+      f"Anchor: {(a or {}).get('decision') or 'no record'}. Launches: {len(launches)}; estimated USD {usd}. Base rate update: {sum(1 for r in rows if r['state']=='held')} held of {sum(1 for r in rows if r['state'] in ('held','refuted'))} decided; measured but scientifically unvalidated (anchor FAIL, calibration valid): {sum(1 for r in rows if r['state'].endswith('unvalidated'))}. Compute tables logged for {sum(1 for l in launches if l.get('compute'))} of {len(launches)} launches."]
 open(f"{m}/out/PREDICTIONS_SCORED.md", "w").write("\n".join(md) + "\n")
 row = {"ts": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), "kind": "card_number_resolved",
        "card": {"run": os.path.relpath(os.path.dirname(os.path.dirname(os.path.dirname(f"{repo}/{card['source']}"))), repo), "source": card["source"], "pick": rec["key"], "title": rec["title"], "result_json_sha256": card["result_json_sha256"], "plan_usd": rec.get("plan_usd"), "expected": rec.get("predictions", {}).get("expected")},
        "numbers": rows, "anchor": {"decision": (a or {}).get("decision"), "values": (a or {}).get("values")},
-       "resolved_by": {"run": os.path.relpath(m, repo), "tag": tag, "launches": [{k: l.get(k) for k in ("n", "type", "region", "hours_wall", "usd_est", "rc", "instance_id")} for l in launches], "usd": usd, "run_valid": (rv or {}).get("run_valid") if rv else None},
+       "resolved_by": {"run": os.path.relpath(m, repo), "tag": tag, "launches": [{k: l.get(k) for k in ("n", "type", "region", "hours_wall", "usd_est", "rc", "instance_id", "compute")} for l in launches], "usd": usd, "run_valid": (rv or {}).get("run_valid") if rv else None},
        "operator": "blind: measure.sh (mechanical) + headless sonnet sessions for the stage operators, the gate and the review; workflow agents pinned as committed", "sealed_predictions_sha256": seal}
 open(f"{repo}/experiments/_meta/LEDGER.jsonl", "a").write(json.dumps(row) + "\n")
 print("  out/PREDICTIONS_SCORED.md written; ledger row appended (kind card_number_resolved, %d numbers, USD %.2f)" % (len(rows), usd))

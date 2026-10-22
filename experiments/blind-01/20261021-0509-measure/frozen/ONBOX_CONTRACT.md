@@ -53,7 +53,10 @@ the anchor. The launcher records the code in `RUN_DONE`; the script never writes
    paired between result and reference, and an independent scoring where the directive names one.
 7. **Measurement phases** in the directive's order; each writes its record the moment it finishes (atomic: write a
    temp file, rename), never at the end of the run, so a killed run keeps every finished result.
-8. **Summary** last (`<tag>_summary.json`), then `RUN_VALID.json`; then exit.
+8. **Summary** last (`<tag>_summary.json`), then `RUN_VALID.json`; then exit. The summary carries a `compute` table:
+   for every stage that ran (stages after an anchor FAIL and the stage that failed included), its wall-clock seconds,
+   GPU-busy seconds where measurable, GPU name and exit code. An exit trap writes it on every exit, early stops
+   included, so every launch leaves its compute record whatever the anchor or a stage decided.
 
 ## 4. Guards
 
