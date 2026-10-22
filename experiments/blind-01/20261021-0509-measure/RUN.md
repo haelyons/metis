@@ -293,3 +293,5 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 17:05Z diagnostician run 2 (mimo-v2.6-pro, 38 min) replied in the fixed form: d0 PASS, d5 PASS, d1 PASS, d2 FAIL, d3 AGREE, d4 FULL, locus computation, confidence high; report in out/diag_anchor/ for the gate. (The wf waiter re-ran the build 26 checks after this non-build run; fixed: it now runs them only after a build.)
 - 17:06Z gate 20 (addendum) requested
 - 17:06Z stage gate on wf.js run 16: flags [--family claude], pid 228617
+- 17:13Z stage build on wf.js run 25: flags [--family opencode], pid 237702
+- 17:13Z TESTS 3: claim-blind author on wf.js (flags [--family opencode])

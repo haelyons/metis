@@ -377,7 +377,7 @@ PYEOF
 launcher() {
   cd "$MDIR" || return 1
   local fs="${ENV_FS_NAME:-}"
-  gen_launcher "lambda_run_$TAG.sh" "results_$TAG" 'scp $SSHOPT run_'"$TAG"'.py remote_run_'"$TAG"'.sh "$RUNNER" ubuntu@$IP:'"$TAG"'_run/; [ -f tests/tests_'"$TAG"'.py ] && { ssh $SSHOPT ubuntu@$IP "mkdir -p '"$TAG"'_run/tests"; scp $SSHOPT tests/tests_'"$TAG"'.py ubuntu@$IP:'"$TAG"'_run/; scp $SSHOPT tests/tests_'"$TAG"'.py ubuntu@$IP:'"$TAG"'_run/tests/; }' "runner, on-box batch, adapted remote bootstrap, record writer (frozen/), the author's tests file, data/ if present" "$fs" || return 1
+  gen_launcher "lambda_run_$TAG.sh" "results_$TAG" 'scp $SSHOPT run_'"$TAG"'.py remote_run_'"$TAG"'.sh "$RUNNER" ubuntu@$IP:'"$TAG"'_run/;' "runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present (the author's tests run locally, not on the box: gate addendum 20)" "$fs" || return 1
   $PY - "$M3" "$MDIR" "$TAG" <<'PYEOF'
 import re, sys
 m3, m, tag = sys.argv[1:4]
