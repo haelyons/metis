@@ -1,0 +1,71 @@
+{
+  "cell": {
+    "control": "empty_run",
+    "stage": "controls",
+    "tag": "m4"
+  },
+  "decision": "PASS",
+  "decision_rule": "under 2 s and under 1 MiB -> PASS and nothing is subtracted; otherwise VOID for this control, and exactly that much harness overhead is taken off later values, labelled",
+  "env": {
+    "git_rev": null,
+    "host": "129-213-23-226",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-21T22:35:20+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 404,
+      "n_items": 2,
+      "path": "/home/ubuntu/m4_run/results_m4/out/rows_controls_tag-m4.jsonl",
+      "present": true,
+      "sha256": "ef1fe467884a"
+    },
+    {
+      "bytes": 1117,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "97dec50a01a5"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    }
+  ],
+  "kind": "control_empty_run",
+  "metric": "wall-clock seconds and bytes written by the harness around a command that does nothing",
+  "notes": "",
+  "notes_list": [],
+  "run_valid": true,
+  "run_valid_voided_by": null,
+  "tag": "m4",
+  "threshold": {
+    "max_bytes": 1048576,
+    "max_seconds": 2.0
+  },
+  "values": {
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-21T22:35:20Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 0,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-21T22:35:20Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "measured_s": 0.002508878707885742,
+    "null_reasons": {},
+    "overhead_subtracted_bytes": 0,
+    "overhead_subtracted_s": 0.0,
+    "unit": "seconds and bytes",
+    "work_dir_bytes": 0
+  }
+}

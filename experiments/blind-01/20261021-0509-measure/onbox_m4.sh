@@ -41,11 +41,11 @@ set -uo pipefail
 
 RUN_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# The measuring program, the ceiling on setting up, and the tests the hidden
-# author wrote, each named once here.
+# The measuring program and the ceiling on setting up, each named once here.
+# No test file is shipped, run or referenced: a separate author writes the
+# tests and runs them locally before every launch.
 RUNNER_PY="$RUN_DIR/run_m4.py"
 RUNNER_CMD=()                     # filled in once the environment of record is on
-TESTS_PY="$RUN_DIR/tests/tests_m4.py"
 SETUP_CEILING_S=1500
 
 cd "$RUN_DIR"
@@ -158,7 +158,6 @@ write_env_txt() {
     echo "HOLD_SECONDS_NOTE=$HOLD_NOTE"
     echo "HELD_ATTEMPTS=$HELD_ATTEMPTS"
     echo "RUN_PY_SHA256_AT_START=$RUNNER_SHA_AT_START"
-    echo "TESTS_PY_SHA256_AT_START=$TESTS_SHA_AT_START"
     echo "HF_TOKEN=<not read, not printed, removed from every child>"
     echo "HUGGING_FACE_HUB_TOKEN=<not read, not printed, removed from every child>"
   } >> "$OUT/env.txt"
@@ -237,6 +236,11 @@ def put(path, cell, metric, values, threshold, rule, notes):
     rec["run_valid"] = run_valid
     rec["run_valid_voided_by"] = reason
     rec["voided_by"] = reason
+    rec["calibration_valid"] = False
+    rec.setdefault("values", {})["calibration_valid"] = False
+    rec["values"].setdefault("calibration_checks", [
+        {"check": "run_completed", "result": False, "value": False,
+         "null_reason": reason}])
     rec["notes_list"] = [INCOMPLETE]
     rec["tag"] = "m4"
     with open(path, "w") as fh:
@@ -359,22 +363,121 @@ HOLD_SIGNAL=""
 # built here and nothing is installed into it.
 VENV="$ENV_DIR/venv"
 
-# The measuring program and the tests, hashed now, before anything can change
-# them. A repair made while the box is held open may change the environment and
-# the glue around it; it may not change either of these two files, and these two
-# hashes are how that is checked before the run is restarted.
+# The measuring program, hashed now, before anything can change it. A repair
+# made while the box is held open may change the environment and the glue
+# around it; it may not change this file, and this hash is how that is checked
+# before the run is restarted.
 sha_of() { [ -f "$1" ] && sha256sum "$1" | cut -d' ' -f1 || echo "missing"; }
 RUNNER_SHA_AT_START="$(sha_of "$RUNNER_PY")"
-TESTS_SHA_AT_START="$(sha_of "$TESTS_PY")"
+
+# The compute table, written on every exit whatever decided the run. Every
+# stage of the run's order is listed, whether it ran or not; a stage that was
+# running when the run ended is closed with the time it had.
+write_compute_summary() {
+  M4_CS_OUT="$OUT" M4_CS_PRICE="$PRICE_USD_PER_HOUR" \
+  M4_CS_INSTANCE="${INSTANCE_TYPE:-}" M4_CS_T0="$T0_EPOCH" \
+  python3 - <<'PYC' >>"$LOG" 2>&1 || say "the compute table could not be written"
+import json, os, time
+
+out = os.environ["M4_CS_OUT"]
+os.makedirs(out, exist_ok=True)
+now = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+now_epoch = time.time()
+try:
+    t0 = float(os.environ.get("M4_CS_T0") or now_epoch)
+except ValueError:
+    t0 = now_epoch
+elapsed = max(0.0, now_epoch - t0)
+price = float(os.environ.get("M4_CS_PRICE") or 0) or None
+
+STAGES = ["capability", "downloads", "controls", "anchor",
+          "aux", "af2", "md", "storage", "endpoints"]
+path = os.path.join(out, "compute_table_tag-m4.json")
+table = None
+if os.path.exists(path):
+    try:
+        table = json.load(open(path))
+    except Exception:
+        table = None
+if not isinstance(table, dict):
+    table = {}
+
+by_name = {}
+for entry in table.get("stages", []):
+    if isinstance(entry, dict) and entry.get("stage"):
+        by_name[entry["stage"]] = entry
+
+rows = []
+for name in STAGES:
+    entry = by_name.get(name) or {}
+    row = {
+        "stage": name,
+        "ran": bool(entry.get("ran")),
+        "reason": entry.get("reason") or ("not started" if not entry.get("ran") else None),
+        "start_utc": entry.get("start_utc"),
+        "end_utc": entry.get("end_utc"),
+        "wall_clock_s": entry.get("wall_clock_s"),
+        "gpu_busy_s": entry.get("gpu_busy_s"),
+        "gpu_busy_reason": entry.get("gpu_busy_reason") or "not sampled",
+        "gpu_name": entry.get("gpu_name"),
+        "exit_code": entry.get("exit_code"),
+    }
+    if row["ran"] and row["end_utc"] is None:
+        row["end_utc"] = now
+        if row["start_utc"]:
+            try:
+                start_epoch = time.mktime(
+                    time.strptime(row["start_utc"], "%Y-%m-%dT%H:%M:%SZ"))
+                row["wall_clock_s"] = round(now_epoch - start_epoch, 3)
+            except Exception:
+                row["wall_clock_s"] = None
+        row["reason"] = row.get("reason") or "cut short when the run ended"
+    rows.append(row)
+
+table = {
+    "stages": rows,
+    "instance_type": os.environ.get("M4_CS_INSTANCE") or None,
+    "price_usd_per_hour": price,
+    "elapsed_since_t0_s": round(elapsed, 3),
+    "estimated_spend_usd": round((elapsed / 3600.0 * price) if price else 0.0, 4),
+    "anchor_decision": table.get("anchor_decision"),
+}
+with open(path, "w") as fh:
+    json.dump(table, fh, indent=2)
+    fh.write("\n")
+
+summary_path = os.path.join(out, "m4_summary.json")
+summary = {}
+if os.path.exists(summary_path):
+    try:
+        summary = json.load(open(summary_path))
+    except Exception:
+        summary = {}
+if not isinstance(summary, dict):
+    summary = {}
+summary.setdefault("what_this_run_decides",
+                   "This run decides the stand-in protocol only.")
+summary["compute"] = table
+if "run_valid" not in summary:
+    summary["run_valid"] = None
+    summary["run_valid_voided_by"] = "the measuring program wrote no summary"
+with open(summary_path, "w") as fh:
+    json.dump(summary, fh, indent=2)
+    fh.write("\n")
+print("[onbox] compute table written")
+PYC
+}
 
 on_exit() {
   local code=$?
+  write_compute_summary
   if [ "$FINISHED" = "0" ]; then
     say "aborted before the measuring program finished (shell code $code)"
     if [ ! -f "$OUT/RUN_DONE" ]; then
       write_minimal_void 2 "the on-box script aborted before the measuring program finished" \
         "void_by_failure:shell_abort"
     fi
+    write_compute_summary
     exit 2
   fi
   exit "$code"
@@ -384,6 +487,7 @@ trap on_exit EXIT
 finish() {
   local code="$1"
   write_env_txt
+  write_compute_summary
   say "finished with exit code $code"
   FINISHED=1
   exit "$code"
@@ -787,7 +891,7 @@ PY
     3) write_minimal_void 3 "a guard, a stage ceiling or a timeout stopped the run" \
          "unmeasured_by_stop:outer_timeout" ;;
     4) write_minimal_void 4 "the anchor redocking missed the published placement" \
-         "void_by_anchor_miss" ;;
+         "unmeasured_by_stop:runner_left_no_marker" ;;
     *) write_minimal_void 2 "the measuring program ended with code $rc and left no marker" \
          "void_by_failure:runner_exit_$rc"
        rc=2
@@ -841,7 +945,7 @@ hold_is_eligible() {
 
 # Returns 0 when the run may be restarted once, non-zero when it may not.
 hold_open() {
-  local waited left runner_now tests_now hold_start next_beat cause ended_utc
+  local waited left runner_now hold_start next_beat cause ended_utc
   if [ "$HELD_ATTEMPTS" -ge 1 ]; then
     say "a second failure that would qualify for a hold: the launch ends here"
     extend_run_done "one hold per launch; the second failure ends the launch"
@@ -868,7 +972,7 @@ hold_open() {
     "hold_seconds: $HOLD_SECONDS_SEEN" \
     "resume_file: $OUT/RESUME" \
     "in_scope: the environment and the glue around it, every change committed to git on this box" \
-    "out_of_scope: run_m4.py and tests/tests_m4.py, which must stay byte for byte as they are" \
+    "out_of_scope: run_m4.py, which must stay byte for byte as it is" \
     > "$OUT/HOLD"
   say "holding the box open for up to ${HOLD_SECONDS_SEEN}s; waiting for $OUT/RESUME"
 
@@ -914,12 +1018,10 @@ hold_open() {
   say "a resume arrived after ${waited}s"
 
   runner_now="$(sha_of "$RUNNER_PY")"
-  tests_now="$(sha_of "$TESTS_PY")"
-  if [ "$runner_now" != "$RUNNER_SHA_AT_START" ] || \
-     [ "$tests_now" != "$TESTS_SHA_AT_START" ]; then
-    say "FATAL: the repair changed the measuring program or the tests; no restart"
+  if [ "$runner_now" != "$RUNNER_SHA_AT_START" ]; then
+    say "FATAL: the repair changed the measuring program; no restart"
     note_hold_label "fixer_out_of_scope"
-    extend_run_done "fixer_out_of_scope: the measuring program or the tests changed"
+    extend_run_done "fixer_out_of_scope: the measuring program changed"
     write_minimal_void 2 "the repair changed the measurement protocol, which is out of its scope" \
       "void_by_failure:fixer_out_of_scope"
     ATTEMPT_RC=2

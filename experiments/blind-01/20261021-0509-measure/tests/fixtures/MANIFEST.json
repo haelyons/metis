@@ -1,0 +1,485 @@
+[
+ {
+  "file": "nvidia_smi_header.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_header.log",
+  "sha256": "17d2b3a3f384b86a07787c6b195837e028f3e4d7af226c9dcc62d82225d307fc",
+  "what": "real stdout of `nvidia-smi` on the box (A100-SXM4-40GB, driver 570.148.08, CUDA Version 12.8)",
+  "malformed": false,
+  "source_sha256": "24f4e09839571d59710ad6229cfaf58af3da7fff11cceb8f257726a9f1879a1e",
+  "derived_by": "the stdout section of the tool log, byte for byte"
+ },
+ {
+  "file": "nvidia_smi_header_truncated.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_header.log",
+  "sha256": "b473289a27db0beae25123c871ce09a9191273f8807190505beaf87c8bb6de36",
+  "what": "the real nvidia-smi header truncated before its CUDA Version field",
+  "malformed": true,
+  "source_sha256": "24f4e09839571d59710ad6229cfaf58af3da7fff11cceb8f257726a9f1879a1e",
+  "derived_by": "truncated at the text 'CUDA Version'"
+ },
+ {
+  "file": "nvidia_smi_header_field_missing.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_header.log",
+  "sha256": "34ee3aff7f8bed7428d2e127d48151c8a3efd47ffa582835630e252e4124869b",
+  "what": "the real nvidia-smi header with the Driver Version and CUDA Version fields blanked",
+  "malformed": true,
+  "source_sha256": "24f4e09839571d59710ad6229cfaf58af3da7fff11cceb8f257726a9f1879a1e",
+  "derived_by": "both fields replaced by spaces"
+ },
+ {
+  "file": "nvidia_smi_header_error.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_header.log",
+  "sha256": "1d58470512e583a0acfabf6896ee5f31e5b493b8231aed54b864f64eb275b02c",
+  "what": "an nvidia-smi error line in place of the header",
+  "malformed": true,
+  "source_sha256": "24f4e09839571d59710ad6229cfaf58af3da7fff11cceb8f257726a9f1879a1e",
+  "derived_by": "the driver error text nvidia-smi prints when no GPU is reachable"
+ },
+ {
+  "file": "nvidia_smi_query.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_query.log",
+  "sha256": "87e57f71425233d0268d28e16587ece0afc17eb2845de5b071c34ef8b2440b77",
+  "what": "real stdout of `nvidia-smi --query-gpu=name,driver_version --format=csv,noheader` on the box",
+  "malformed": false,
+  "source_sha256": "a54591e2d186af894f93275e2c9a601c0c75033ba7bcba614fff3de9ec632f2c",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "nvidia_smi_query_field_missing.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_query.log",
+  "sha256": "7fccf74d382965480d2a05348936560f54f42b62320bae84df21302c36b8c30f",
+  "what": "the real query output with the driver_version field missing",
+  "malformed": true,
+  "source_sha256": "a54591e2d186af894f93275e2c9a601c0c75033ba7bcba614fff3de9ec632f2c",
+  "derived_by": "text after the first comma removed"
+ },
+ {
+  "file": "nvidia_smi_query_error.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_query.log",
+  "sha256": "380e8946df821e75f717713d4c961b306699eec7b342483bb676826e85d922be",
+  "what": "an nvidia-smi error line in place of the query output",
+  "malformed": true,
+  "source_sha256": "a54591e2d186af894f93275e2c9a601c0c75033ba7bcba614fff3de9ec632f2c",
+  "derived_by": "the driver error text"
+ },
+ {
+  "file": "nvidia_smi_query_truncated.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_nvidia_smi_query.log",
+  "sha256": "7c4816bf3b74929e08f13e67195a96d76f5aec8e77ecc229d8fd18af34502180",
+  "what": "the real query output truncated after 10 bytes",
+  "malformed": true,
+  "source_sha256": "a54591e2d186af894f93275e2c9a601c0c75033ba7bcba614fff3de9ec632f2c",
+  "derived_by": "first 10 bytes"
+ },
+ {
+  "file": "probe_imports_stdout.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/setup_smoke_imports.log",
+  "sha256": "3b76498e83fe00880d056c344caf44c9aaceba5444d8c74d2f61d4e2b49ea6f4",
+  "what": "real stdout of the capability import probe (JAX gpu device, AlphaFold, colabfold, OpenMM CUDA) on the box",
+  "malformed": false,
+  "source_sha256": "02e66551881d44a76121281e58e6811ffe9bdd3208d47d94d342fc95da12ae24",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "probe_package_versions_stdout.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/labels_package_versions.log",
+  "sha256": "c5e123abd2fa86ef91f201b4d408ff79d4dceb3f5f780fb6d20f2df4abb5712b",
+  "what": "real stdout of the installed-distribution version probe on the box",
+  "malformed": false,
+  "source_sha256": "1b3464425ce002039da741503b24133f251ddb99bffb4ea625a9e27a327cfdec",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "help_colabfold_batch.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/setup_smoke_help_colabfold_batch.log",
+  "sha256": "12bfe7b15562bd5cd47bbdfc37494aff3938957883460c73292876883c03fdbb",
+  "what": "real stdout of `colabfold_batch --help` on the box",
+  "malformed": false,
+  "source_sha256": "9eacacad16b73ac0dec32de7d776795ac7d752736f14a5be249d49b1898ed34f",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "help_lightdock3_py.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/setup_smoke_help_lightdock3_py.log",
+  "sha256": "23cd3de8a613f00438b979aeda8d5851489dd0df32970d15da7c3050695d11fd",
+  "what": "real stdout of `lightdock3.py --help` on the box",
+  "malformed": false,
+  "source_sha256": "d4f494f1efa54f71e688bb09dbbedbcb5d46137b38edd689241b2bdc3a77813d",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "help_lgd_generate_conformations_py.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/setup_smoke_help_lgd_generate_conformations_py.log",
+  "sha256": "0800fccd613ec337a6bd5b7e9c040cc90a3e809af000f74ad7553ad13498de8f",
+  "what": "real stdout of `lgd_generate_conformations.py --help` on the box",
+  "malformed": false,
+  "source_sha256": "5c572c90aa71e1e319652d98fa7621a5759189fd4ee2b0b01d815c9793ab4ef0",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "lightdock_setup_stdout.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/anchor_anchor_serial_setup.log",
+  "sha256": "99599878dd1a7f7a37554bc999a470d6b6d99d5faad2b051174784dc3aef4709",
+  "what": "real stdout of lightdock3_setup.py for the anchor serial call",
+  "malformed": false,
+  "source_sha256": "dc9f3111711a84b31a2d8b6ea24ce1ac6e5af18aad24372efc39167ed44c7aba",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "lightdock_simulate_stdout.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/anchor_anchor_serial_simulate.log",
+  "sha256": "4fc0e4f70ef5d164e9f77ccdfe0419cbcb9fd583007a8efc7c15d40c68dbc425",
+  "what": "real stdout of lightdock3.py for the anchor serial call",
+  "malformed": false,
+  "source_sha256": "041c666c06f69a5ec1449a90ef9b0a1ea59f91ac0aedf916668f588baab48ffb",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "lightdock_generate_stdout.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/anchor_anchor_serial_generate_conformations.log",
+  "sha256": "42cbeb5ddd432fb5338dfc68cf62026046c132d6afc62661b3be7ce3bad889a2",
+  "what": "real stdout of lgd_generate_conformations.py for the anchor serial call",
+  "malformed": false,
+  "source_sha256": "45eca4a614d4503e3b81616f026ddbf0f5f49edf843741011b42e19fded422e4",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "lightdock_rank_stdout.txt",
+  "source_path": "out/launch10/results_m4/out/tool_logs/anchor_anchor_serial_rank.log",
+  "sha256": "54849d2586090ec27de7a9ad8aa81a6d8c701d734520d5219e40f4f39aead95c",
+  "what": "real stdout of lgd_rank.py for the anchor serial call",
+  "malformed": false,
+  "source_sha256": "03dce37d24a2a80de1fd71a1f473da0e61d6c4e2d9d8eb7a7e8ce2468d7f083a",
+  "derived_by": "the stdout section of the tool log"
+ },
+ {
+  "file": "env_pip_freeze.txt",
+  "source_path": "out/launch10/results_m4/out/env_pip_freeze.txt",
+  "sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+  "what": "real `pip freeze` of the environment of record (its sha256 is the lock f2b089a1...)",
+  "malformed": false,
+  "source_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d"
+ },
+ {
+  "file": "rank_table_anchor_serial_tag-m4.list",
+  "source_path": "out/launch10/results_m4/out/rank_table_anchor_serial_tag-m4.list",
+  "sha256": "b682a74b263d98e79f2b41edb8355ecd4de5f3ef2bda874be5578bcd9d37dfb9",
+  "what": "real lgd_rank.py rank_by_scoring.list of the anchor serial call (40 data rows, top row swarm 0 glowworm 15 lightdock_15.pdb score -23.455)",
+  "malformed": false,
+  "source_sha256": "b682a74b263d98e79f2b41edb8355ecd4de5f3ef2bda874be5578bcd9d37dfb9"
+ },
+ {
+  "file": "rank_table_truncated_tag-m4.list",
+  "source_path": "out/launch10/results_m4/out/rank_table_anchor_serial_tag-m4.list",
+  "sha256": "0de31eac15935d6befb08ef5c1624e13d9bd1caf2e58a498c6680734b9af086b",
+  "what": "the real rank table truncated in its 6th data row right after the Luciferin value (5 rows of 12 fields, one of 6)",
+  "malformed": true,
+  "source_sha256": "b682a74b263d98e79f2b41edb8355ecd4de5f3ef2bda874be5578bcd9d37dfb9",
+  "derived_by": "header + 5 rows + the 6th row cut after its Luciferin field"
+ },
+ {
+  "file": "rank_table_field_missing_tag-m4.list",
+  "source_path": "out/launch10/results_m4/out/rank_table_anchor_serial_tag-m4.list",
+  "sha256": "f208f5948a37218175eff2e82c4a43a2035316db92881f69d2fabd64fdfe28a7",
+  "what": "the real rank table with the header's Scoring field name missing (11 header tokens over 12-field rows, last token not a score name)",
+  "malformed": true,
+  "source_sha256": "b682a74b263d98e79f2b41edb8355ecd4de5f3ef2bda874be5578bcd9d37dfb9",
+  "derived_by": "the token 'Scoring' removed from the header"
+ },
+ {
+  "file": "rank_table_error_tag-m4.list",
+  "source_path": "out/launch10/results_m4/out/rank_table_anchor_serial_tag-m4.list",
+  "sha256": "7d822f41fca6f91da59796f9c694b54cc71ad0acddae7cca1a87454c37212034",
+  "what": "an error traceback in place of the rank table (no data line)",
+  "malformed": true,
+  "source_sha256": "b682a74b263d98e79f2b41edb8355ecd4de5f3ef2bda874be5578bcd9d37dfb9",
+  "derived_by": "replaced by the error lines lgd_rank.py prints on a missing swarm output"
+ },
+ {
+  "file": "rank_table_header_only_tag-m4.list",
+  "source_path": "out/launch10/results_m4/out/rank_table_anchor_serial_tag-m4.list",
+  "sha256": "23a29a9c37b89a052bd415ad2d351d514a9271c26294c5eda6a89ffef918e6e9",
+  "what": "the real rank table's header line alone, no line after it (directive item 28 c: 0 lines after the header)",
+  "malformed": true,
+  "source_sha256": "b682a74b263d98e79f2b41edb8355ecd4de5f3ef2bda874be5578bcd9d37dfb9",
+  "derived_by": "header kept, every data row removed"
+ },
+ {
+  "file": "rank_table_mixed_counts_tag-m4.list",
+  "source_path": null,
+  "sha256": "ebca0df045c9e45a1ccf7cf72f876423d866892e11dee3b4b807bd92ebcb0769",
+  "what": "planted shape of directive item 28: data rows of 7 and 6 fields mixed",
+  "malformed": true
+ },
+ {
+  "file": "rank_table_nonmonotone_tag-m4.list",
+  "source_path": null,
+  "sha256": "bd2c7fd0fb8f52533359d58b3dfa4e120bc8cafe70f30aa61ad5800e961b9c7c",
+  "what": "planted shape of directive item 28: a score column that falls then rises",
+  "malformed": true
+ },
+ {
+  "file": "rank_table_positional_tag-m4.list",
+  "source_path": null,
+  "sha256": "1579875d69e817f10d39ee1282e9d4746ce1e9dde3421041a00596e522e44931",
+  "what": "planted shape of directive item 28: a 9-token header over two rows of 7 fields (positional, last column the score)",
+  "malformed": false
+ },
+ {
+  "file": "pose_anchor_serial_tag-m4.pdb",
+  "source_path": "out/launch10/results_m4/out/pose_anchor_serial_tag-m4.pdb",
+  "sha256": "019645e87b12eaf200d2436060a9ddeb7b1021f03c4a25c133a42e3f2bf11c23",
+  "what": "real top pose of the anchor serial docking on the box (chains A 4142 atoms, R 725 atoms; scored overlap 0.0, interface RMSD 38.61633372529515 A)",
+  "malformed": false,
+  "source_sha256": "019645e87b12eaf200d2436060a9ddeb7b1021f03c4a25c133a42e3f2bf11c23"
+ },
+ {
+  "file": "pose_truncated_tag-m4.pdb",
+  "source_path": "out/launch10/results_m4/out/pose_anchor_serial_tag-m4.pdb",
+  "sha256": "dc68b39b6315f166ec7e4cb7da42cd7c6aeda453c8d41e9e6e41fe69ad9b3dfa",
+  "what": "the real pose truncated in the middle of an ATOM line",
+  "malformed": true,
+  "source_sha256": "019645e87b12eaf200d2436060a9ddeb7b1021f03c4a25c133a42e3f2bf11c23",
+  "derived_by": "cut 30 bytes into the line after byte 2000"
+ },
+ {
+  "file": "pair_pair1_tag-m4.pdb",
+  "source_path": "out/launch10/results_m4/out/pair_pair1_tag-m4.pdb",
+  "sha256": "587a0f7c5104f2d8eba0c4dbeed7f8eaee7c144b5bacc09c0d2733276053fb76",
+  "what": "pair evidence PDB recorded on the box (stand-in pair 1 built from 6IHB chains)",
+  "malformed": false,
+  "source_sha256": "587a0f7c5104f2d8eba0c4dbeed7f8eaee7c144b5bacc09c0d2733276053fb76"
+ },
+ {
+  "file": "pair_pair1_tag-m4.fasta",
+  "source_path": "out/launch10/results_m4/out/pair_pair1_tag-m4.fasta",
+  "sha256": "04d11124ebf266cf66df495fe727b5b42f9a902cdd4dfbd7bb548a99216f25d8",
+  "what": "pair FASTA recorded on the box (stand-in pair 1)",
+  "malformed": false,
+  "source_sha256": "04d11124ebf266cf66df495fe727b5b42f9a902cdd4dfbd7bb548a99216f25d8"
+ },
+ {
+  "file": "pair_pair2_tag-m4.pdb",
+  "source_path": "out/launch10/results_m4/out/pair_pair2_tag-m4.pdb",
+  "sha256": "2748b0d9874869da916034c5600b2c007d156ca1360aefb6cdc7753c0b823090",
+  "what": "pair evidence PDB recorded on the box (stand-in pair 2 built from 6IHB chains)",
+  "malformed": false,
+  "source_sha256": "2748b0d9874869da916034c5600b2c007d156ca1360aefb6cdc7753c0b823090"
+ },
+ {
+  "file": "pair_pair2_tag-m4.fasta",
+  "source_path": "out/launch10/results_m4/out/pair_pair2_tag-m4.fasta",
+  "sha256": "2578d435ec3f4c1243dbbe663a8a92f5386f21f0929078a2c7fbb63671134c0e",
+  "what": "pair FASTA recorded on the box (stand-in pair 2)",
+  "malformed": false,
+  "source_sha256": "2578d435ec3f4c1243dbbe663a8a92f5386f21f0929078a2c7fbb63671134c0e"
+ },
+ {
+  "file": "pair_pair3_tag-m4.pdb",
+  "source_path": "out/launch10/results_m4/out/pair_pair3_tag-m4.pdb",
+  "sha256": "051885176ed4a611ac5c770c28140a5aa42847433d955a9b321af80b7be04646",
+  "what": "pair evidence PDB recorded on the box (stand-in pair 3 built from 6IHB chains)",
+  "malformed": false,
+  "source_sha256": "051885176ed4a611ac5c770c28140a5aa42847433d955a9b321af80b7be04646"
+ },
+ {
+  "file": "pair_pair3_tag-m4.fasta",
+  "source_path": "out/launch10/results_m4/out/pair_pair3_tag-m4.fasta",
+  "sha256": "32459832cc74ef62cfe59b0867d4f9b19a76ab2eb4663532e60fd6fe64411108",
+  "what": "pair FASTA recorded on the box (stand-in pair 3)",
+  "malformed": false,
+  "source_sha256": "32459832cc74ef62cfe59b0867d4f9b19a76ab2eb4663532e60fd6fe64411108"
+ },
+ {
+  "file": "pairs_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/pairs_tag-m4.json",
+  "sha256": "6de141e83e4401f382146116be94f388a28f6b0a0bcd9dd89662df82b7dbf8da",
+  "what": "pair evidence record on the box (chains, roles, sequences, lengths, sha256 of each FASTA and PDB)",
+  "malformed": false,
+  "source_sha256": "6de141e83e4401f382146116be94f388a28f6b0a0bcd9dd89662df82b7dbf8da"
+ },
+ {
+  "file": "6IHB.pdb",
+  "source_path": "data/6IHB.pdb",
+  "sha256": "d3f489cc062d0a4a92490774a51f85782439d5ffd9bfae9445f4f10bf7e0f2c4",
+  "what": "the published structure 6IHB as fetched on the box: not in the fetched results, but its sha256 equals the one the box recorded in out/launch10/results_m4/out/downloads_tag-m4.json (d3f489cc...); chains A and R equal pair_pair1 chains A and R atom for atom",
+  "malformed": false,
+  "source_sha256": "d3f489cc062d0a4a92490774a51f85782439d5ffd9bfae9445f4f10bf7e0f2c4"
+ },
+ {
+  "file": "downloads_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/downloads_tag-m4.json",
+  "sha256": "97dec50a01a58435328c541174ae0eb2cad87f43d0f1ed228853239e7e1d67fa",
+  "what": "download record on the box (URLs and sha256 of 6IHB.pdb and the parameter archive)",
+  "malformed": false,
+  "source_sha256": "97dec50a01a58435328c541174ae0eb2cad87f43d0f1ed228853239e7e1d67fa"
+ },
+ {
+  "file": "download_log_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/download_log_tag-m4.json",
+  "sha256": "b138e69b88d3c7376c22ab19dba02b8e632d15175024891d047d61b7356c82b7",
+  "what": "download log record on the box",
+  "malformed": false,
+  "source_sha256": "b138e69b88d3c7376c22ab19dba02b8e632d15175024891d047d61b7356c82b7"
+ },
+ {
+  "file": "params_markers_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/params_markers_tag-m4.json",
+  "sha256": "4aca384413216ec723e37fa5b1dfafabfac3c03afd34f2300c2277667113e666",
+  "what": "colabfold parameter marker record on the box",
+  "malformed": false,
+  "source_sha256": "4aca384413216ec723e37fa5b1dfafabfac3c03afd34f2300c2277667113e666"
+ },
+ {
+  "file": "env_check_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/env_check_tag-m4.json",
+  "sha256": "1c6726b7e3d86c1a57f1374097cacf39f8236bdceb002a1f5f6fddf82855c56b",
+  "what": "environment lock check record on the box",
+  "malformed": false,
+  "source_sha256": "1c6726b7e3d86c1a57f1374097cacf39f8236bdceb002a1f5f6fddf82855c56b"
+ },
+ {
+  "file": "control-sleep_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/control-sleep_tag-m4.json",
+  "sha256": "88774a7cfb12ee96a92c4c82621387681a8dbf9be0485e2126cc272855649d7e",
+  "what": "60 s sleep control record on the box",
+  "malformed": false,
+  "source_sha256": "88774a7cfb12ee96a92c4c82621387681a8dbf9be0485e2126cc272855649d7e"
+ },
+ {
+  "file": "control-empty-run_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/control-empty-run_tag-m4.json",
+  "sha256": "ea07af511ce3a4f7366ea71a08497b05e3c0cc26d63f1712ef1a660d7ce9f34d",
+  "what": "empty-run control record on the box",
+  "malformed": false,
+  "source_sha256": "ea07af511ce3a4f7366ea71a08497b05e3c0cc26d63f1712ef1a660d7ce9f34d"
+ },
+ {
+  "file": "control-unit-and-scale_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/control-unit-and-scale_tag-m4.json",
+  "sha256": "6c652846db5b7a73eaaebb689da2e38d47294c3419ae7c25f9330d61e8424672",
+  "what": "unit-and-scale record on the box",
+  "malformed": false,
+  "source_sha256": "6c652846db5b7a73eaaebb689da2e38d47294c3419ae7c25f9330d61e8424672"
+ },
+ {
+  "file": "rows_controls_tag-m4.jsonl",
+  "source_path": "out/launch10/results_m4/out/rows_controls_tag-m4.jsonl",
+  "sha256": "ef1fe467884a4b6cc27f325a6ac50ccfb4c245e47a283057656f49b285553019",
+  "what": "control rows on the box (sleep measured 60.0048 s, empty run 0.0025 s and 0 bytes)",
+  "malformed": false,
+  "source_sha256": "ef1fe467884a4b6cc27f325a6ac50ccfb4c245e47a283057656f49b285553019"
+ },
+ {
+  "file": "rows_anchor_tag-m4.jsonl",
+  "source_path": "out/launch10/results_m4/out/rows_anchor_tag-m4.jsonl",
+  "sha256": "49ee351bd498ea5598fa7dba3f695b4030a9e378d14fef9346389eacdfe99f5f",
+  "what": "anchor rows on the box (serial and parallel, overlap 0.0, interface RMSD 38.61633372529515 A)",
+  "malformed": false,
+  "source_sha256": "49ee351bd498ea5598fa7dba3f695b4030a9e378d14fef9346389eacdfe99f5f"
+ },
+ {
+  "file": "endpoint-anchor_tag-m4.json",
+  "source_path": "out/launch10/results_m4/out/endpoint-anchor_tag-m4.json",
+  "sha256": "f82e17515279a22eb397b82e6f21261d68277f56135935e5283687335507b2b9",
+  "what": "anchor record on the box: FAIL (overlap 0.0, interface RMSD 38.6163 A)",
+  "malformed": false,
+  "source_sha256": "f82e17515279a22eb397b82e6f21261d68277f56135935e5283687335507b2b9"
+ },
+ {
+  "file": "env.txt",
+  "source_path": "out/launch10/results_m4/out/env.txt",
+  "sha256": "ef1da23d265ca2daf2bed04b9fc5ba0322ba3b28042dd9f7d53e0e3c2248b68d",
+  "what": "per-run environment file on the box (REMOTE_TIMEOUT 7200, PRE_T0_SECONDS 58)",
+  "malformed": false,
+  "source_sha256": "ef1da23d265ca2daf2bed04b9fc5ba0322ba3b28042dd9f7d53e0e3c2248b68d"
+ },
+ {
+  "file": "etimes_ps.txt",
+  "source_path": "out/launch10/results_m4/out/env.txt",
+  "sha256": "ae9565b0932f9a543fdae2121ce4fe68e62dec226e5495ad00b930343810c0c2",
+  "what": "planted `ps -o etimes= -p $PPID` output matching the box's env.txt (PRE_T0_SECONDS 58 = 28 s + 30 s); the raw ps output was not recorded",
+  "malformed": false,
+  "source_sha256": "ef1da23d265ca2daf2bed04b9fc5ba0322ba3b28042dd9f7d53e0e3c2248b68d",
+  "derived_by": "planted from the recorded value"
+ },
+ {
+  "file": "etimes_error.txt",
+  "source_path": "out/launch10/results_m4/out/env.txt",
+  "sha256": "8c2c8b722500b91daa0ec273868caa1839bffae2e2ac975d58dede229929e302",
+  "what": "a ps error line in place of the etimes value",
+  "malformed": true,
+  "source_sha256": "ef1da23d265ca2daf2bed04b9fc5ba0322ba3b28042dd9f7d53e0e3c2248b68d"
+ },
+ {
+  "file": "etimes_truncated.txt",
+  "source_path": "out/launch10/results_m4/out/env.txt",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "what": "an empty (truncated) etimes output",
+  "malformed": true,
+  "source_sha256": "ef1da23d265ca2daf2bed04b9fc5ba0322ba3b28042dd9f7d53e0e3c2248b68d"
+ },
+ {
+  "file": "colabfold_log.txt",
+  "source_path": null,
+  "sha256": "512af9e2f5e47e046924f0dde0c7c61e53b0f9f9b1334255fc48254b1468553d",
+  "what": "planted colabfold 1.5.5 log.txt for one multimer run (5 models x 20 recycles, model times [96.4, 61.2, 60.8, 61.0, 60.9] s); no launch reached AlphaFold, so no box recording exists",
+  "malformed": false
+ },
+ {
+  "file": "colabfold_log_field_missing.txt",
+  "source_path": null,
+  "sha256": "a98cb0be787bf2b65c5b9f2867a9678972607d8e3ed1e93fa7610c4cb20bda70",
+  "what": "the planted colabfold log with model 3's time field missing",
+  "malformed": true
+ },
+ {
+  "file": "colabfold_log_error.txt",
+  "source_path": null,
+  "sha256": "c921dad578a72321fe293786ad866aa5ebe9ec79e4b98cb1321d5fed5673509f",
+  "what": "the planted colabfold log ending in an error traceback after model 1 started",
+  "malformed": true
+ },
+ {
+  "file": "colabfold_log_truncated.txt",
+  "source_path": null,
+  "sha256": "f08418a60fcbc099aba9790f8111ec5fae1aa274e97209ac3a57263b5af2ce79",
+  "what": "the planted colabfold log truncated in the middle of model 2's time field",
+  "malformed": true
+ },
+ {
+  "file": "reporter_file.txt",
+  "source_path": null,
+  "sha256": "bd4eaaf67477e13c2698dbc0cd6bfd6493020be3a9bd6ffdd8619f4e9a8681c8",
+  "what": "planted OpenMM StateDataReporter file of a 0.5 ns production (250,000 steps of 2 fs, a row every 5,000 steps, Speed 128.96 ns/day); no launch reached MD",
+  "malformed": false
+ },
+ {
+  "file": "reporter_file_nan.txt",
+  "source_path": null,
+  "sha256": "5dbe781278ae370810078db1ff996d6bb10e38067a3ec275eb86c92bb1167ffb",
+  "what": "the planted reporter file with a NaN potential energy (directive item 27)",
+  "malformed": true
+ },
+ {
+  "file": "reporter_file_field_missing.txt",
+  "source_path": null,
+  "sha256": "674267d3fc1558f9c6f975c54240f7ef80974430b2ba87528b339ea673f0d56e",
+  "what": "the planted reporter file whose last row lacks one field",
+  "malformed": true
+ },
+ {
+  "file": "reporter_file_truncated.txt",
+  "source_path": null,
+  "sha256": "68dad00490f0da05d62b1c35741c9d68aacf108b3a0ab0e27414b6a5b1fab5c4",
+  "what": "the planted reporter file truncated in the middle of a row",
+  "malformed": true
+ },
+ {
+  "file": "reporter_file_error.txt",
+  "source_path": null,
+  "sha256": "4fadebc12311aaf9fc38ced8ed5171aaa6e664866bb425cc3a8291a4ac681e8c",
+  "what": "the planted reporter file ending in OpenMM's NaN error line",
+  "malformed": true
+ }
+]

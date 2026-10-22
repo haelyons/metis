@@ -18,7 +18,7 @@ Write ${A.out_file}, and fixtures only under ${fx}/ with a MANIFEST.json (each f
 4. The anchor stage on a fixture that must pass and on one that must fail: the anchor's verdict, run_valid=false on every later record after a miss, calibration_valid on later records decided by their own checks and unchanged by the anchor, and the anchor's verdict unchanged by what follows. Use the hash-verified reference copy in the archive: the reference scored against itself and against a rigidly transformed copy of itself must be perfect.
 5. The records: every file the directive says a stage writes exists, with the fields and units the directive states.
 Each test prints one line "TEST <name>: PASS" or "TEST <name>: FAIL <one-line reason>", and the program ends with "TESTS: <passed> of <total> passed" and exactly "TESTS: PASS" or "TESTS: FAIL" on the last line, exit code 1 on FAIL. A test must be able to fail; a test that only re-checks the directive's own arithmetic without calling the runner does not count. The runner may not have the interface yet; your tests then fail, which is correct. Write nothing else anywhere.`,
-  { label: 'tests-author', agentType: 'ls-writer', model: 'opus', schema: SCHEMA })
+  { label: 'tests-author', agentType: 'ls-writer', model: 'sonnet', schema: SCHEMA })
 if (!r) return { failed: true, stage: 'tests-author' }
 log(`tests author: ${r.count} test(s), ${r.fixtures} fixture(s)`)
 return { tests: r, tag: A.tag }

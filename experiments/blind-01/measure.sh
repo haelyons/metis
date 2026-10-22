@@ -180,7 +180,7 @@ $([ -n "$add" ] && echo "5. The report this addendum rules on: \`$add\`. Also re
 
 ## Standing rules (owner, 2026-10-20 and 21; binding)
 
-1. Budget: hard cap USD 20 of box time for the whole run (the owner's calibration rule, raised from 10 on 2026-10-21; more on the owner's approval; the operator records the spend of every launch and launches until the cap is reached, no fixed count); \`BUDGET_LEFT_USD\` per launch = the lesser of 5 and what remains of the cap; \`gpu_1x_a100_sxm4\` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity (the operator records which). If the design's budget exceeds the cap, shorten the protocol to fit as a ruling of record (fewer steps, fewer repeats, one cell), never drop an input silently; if it cannot fit, decide HALT and say what it would cost.
+1. Budget: hard cap USD 50 of box time for the whole run (the owner's calibration rule, raised from 10 to 20 on 2026-10-21 and to 50 on 2026-10-22; the operator records the spend of every launch and launches until the cap is reached, no fixed count); \`BUDGET_LEFT_USD\` per launch = the lesser of 5 and what remains of the cap; \`gpu_1x_a100_sxm4\` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity (the operator records which). If the design's budget exceeds the cap, shorten the protocol to fit as a ruling of record (fewer steps, fewer repeats, one cell), never drop an input silently; if it cannot fit, decide HALT and say what it would cost.
 2. Time: set \`REMOTE_TIMEOUT\` (at most 7,200 s per launch). \`onbox_$TAG.sh\` reads \`PRICE_USD_PER_HOUR\`, \`BUDGET_LEFT_USD\` and \`REMOTE_TIMEOUT\` from its environment and stops cleanly, writing a void record, before exceeding them.
 3. Scope: measure the inputs on the card's own protocol; no production phase; anchor first; a missed anchor marks every later record scientifically unvalidated (run_valid=false, run_valid_voided_by the anchor) and the inputs are still measured; every later record carries calibration_valid, decided by its own checks only (guards, completion, the workload checks the directive names), never by the anchor; the anchor's verdict never changes (owner ruling 2026-10-22, a deviation of record made after the anchor failed on launches 9 and 10).
 4. Box: Ubuntu 22.04, CUDA 12.8, driver 570, python 3.10, torch 2.7 preinstalled; anything else is installed by \`onbox_$TAG.sh\` inside the time cap. Broken infrastructure: exit non-zero with a void record; never patch around.
@@ -229,17 +229,20 @@ EOF2
 build() {
   [ -s "$MDIR/GATE_COMMIT.md" ] && [ -s "$MDIR/EXEC_NOTE.md" ] || { echo "no GATE_COMMIT.md / EXEC_NOTE.md yet"; return 1; }
   pop_via "$@"
-  local keep=0 fixdir="" revfile="" rest2=(); set -- "${REST[@]}"; while [ $# -gt 0 ]; do case "$1" in --keep) keep=1 ;; --fix) fixdir="$(realpath "$2")"; keep=1; shift ;; --review) revfile="$(realpath "$2")"; keep=1; shift ;; *) rest2+=("$1") ;; esac; shift; done; REST=("${rest2[@]}")
+  local keep=0 fixdir="" revfile="" testlog="" rest2=(); set -- "${REST[@]}"; while [ $# -gt 0 ]; do case "$1" in --keep) keep=1 ;; --fix) fixdir="$(realpath "$2")"; keep=1; shift ;; --review) revfile="$(realpath "$2")"; keep=1; shift ;; --tests) testlog="$(realpath "$2")"; keep=1; shift ;; *) rest2+=("$1") ;; esac; shift; done; REST=("${rest2[@]}")
   local n; n=$(ls "$MDIR/out"/build*_args.json 2>/dev/null | wc -l); n=$((n+1)); local name="build$n"
   if [ -f "$MDIR/run_$TAG.py" ] || [ -f "$MDIR/onbox_$TAG.sh" ]; then   # the previous build's files: archived, or kept in place for an incremental build (--keep)
     mkdir -p "$MDIR/out/build$((n-1))"
     if [ $keep = 1 ]; then cp -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files copied to out/build$((n-1))/ and KEPT in place (--keep)"
     else mv -f "$MDIR/run_$TAG.py" "$MDIR/onbox_$TAG.sh" "$MDIR/out/build$((n-1))/" 2>/dev/null; echo "previous build files archived under out/build$((n-1))/"; fi
   fi
-  $PY - "$MDIR" "$TAG" "$n" "$keep" "$fixdir" "$revfile" <<'PYEOF'
+  $PY - "$MDIR" "$TAG" "$n" "$keep" "$fixdir" "$revfile" "$testlog" <<'PYEOF'
 import json, sys
-m, tag, n, keep, fixdir, revfile = sys.argv[1:7]
+m, tag, n, keep, fixdir, revfile, testlog = sys.argv[1:8]
 note = open(f"{m}/EXEC_NOTE.md").read()
+if testlog:   # a test-fix build: the separate author's local tests failed; the builder sees their output, never the tests file
+    note = (f"OPERATOR NOTE OF RECORD (test-fix build): the local tests, written by a separate author against the stage interface and hidden from you, failed on your files. Their output is {testlog} (one line per test with its reason). Read it first; do not look for the tests file. "
+            f"For each failing test, decide from the directive whether the behaviour it asks for is required. If it is, fix it in run_{tag}.py and/or onbox_{tag}.sh with the smallest change and state 'FIX: <file>: <directive item>: <what>'. If no directive item requires it, change nothing and state 'NOT REQUIRED: <test name>: <why>'. Put these lines in your selftest_output field. Change nothing else.\n\n") + note
 if revfile:   # a review-fix build: bounded to the BLOCKING findings of one review; advisory findings untouched
     note = (f"OPERATOR NOTE OF RECORD (review-fix build): the reviewer's file {revfile} reports BLOCKING finding(s) against directive items the files do not yet satisfy. Read it first. "
             f"Fix EXACTLY those BLOCKING findings in run_{tag}.py and/or onbox_{tag}.sh with the smallest change that satisfies the cited directive items; leave every ADVISORY finding and everything else as it is. State each change in your selftest_output field as 'FIX: <file>: <directive item>: <what>'.\n\n") + note
@@ -517,7 +520,7 @@ launch() {
   cd "$MDIR" || return 1
   local n; n=$(ls out/launch*.json 2>/dev/null | wc -l); n=$((n+1))
   local spent; spent=$($PY -c 'import json,glob; print(round(sum((json.load(open(j)).get("usd_est") or 0) for j in glob.glob("out/launch*.json")+glob.glob("out/envbuild*.json")), 2))')   # launches and environment builds
-  local cap=${CAP_USD:-20}   # owner 2026-10-21 evening: budget extended beyond the USD 10 calibration cap; more compute is guaranteed when the cap is hit
+  local cap=${CAP_USD:-50}   # owner: USD 10 calibration cap raised to 20 (2026-10-21), to 50 (2026-10-22)
   local left; left=$($PY -c "print(round($cap - $spent, 2))"); [ "$($PY -c "print(1 if $left > 0.5 else 0)")" = 1 ] || { echo "launch $n refused: USD $spent of the USD $cap cap already spent"; return 1; }
   budget=$($PY -c "print(min(float('$budget'), $left))"); echo "cap USD $cap: USD $spent spent, USD $left left; this launch's BUDGET_LEFT_USD=$budget"
   [ -r .keys ] || { echo "no readable .keys"; return 1; }
