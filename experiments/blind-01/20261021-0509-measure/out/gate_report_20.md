@@ -26,6 +26,12 @@ The owner ruled on the HALT of addendum 19. Ruling of record:
    launch records (type, hours, USD, exit code).
 6. **Backtests deferred.** Checking the tests against historical defects is postponed until after launch 11.
 
+The diagnostician's one-line reply was `d0=PASS d5=PASS d1=PASS d2=FAIL d3=AGREE d4=FULL locus=computation
+confidence=high`. Before you accept the locus, reconcile it with the failed d2, the known-transformation check. Either d2
+exposes a scorer defect, in which case the locus is `scorer`, or d2 does not apply to the metric as the directive
+defines it (for example, a metric defined in a fixed frame), in which case the check was misapplied. Decide which from
+the script and the code, not from the report's conclusion.
+
 ## Evidence to read yourself (raw)
 - `out/diag_anchor/REPORT.md`, `out/diag_anchor/diag.json`, `out/diag_anchor/diag_anchor.py`
 - `out/launch10/results_m4/out/`: the anchor record and every file it names; `out/launch9/results_m4/out/`: the same

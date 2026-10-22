@@ -1,0 +1,319 @@
+{
+ "checks": {
+  "d0": {
+   "anchor_record_input_sha256_for_6ihb": "d3f489cc062d",
+   "anchor_record_values": {
+    "calls_identical": true,
+    "contact_overlap": 0.0,
+    "decision": "FAIL",
+    "interface_backbone_rmsd_a": 38.61633372529515,
+    "serial_parallel_rmsd_a": 0.0
+   },
+   "downloads_hash_matches_anchor_record_input": true,
+   "downloads_record_sha256_for_6ihb_full": "d3f489cc062d0a4a92490774a51f85782439d5ffd9bfae9445f4f10bf7e0f2c4",
+   "downloads_sha256": "97dec50a01a58435328c541174ae0eb2cad87f43d0f1ed228853239e7e1d67fa",
+   "pose_sha256": "019645e87b12eaf200d2436060a9ddeb7b1021f03c4a25c133a42e3f2bf11c23",
+   "raw_fetched_6ihb_note": "the launcher fetches results_m4/out only (lambda_run_m4.sh fetch line); no local file has sha256 d3f489cc062d0a4a92490774a51f85782439d5ffd9bfae9445f4f10bf7e0f2c4; the pair evidence file is the local copy of the reference's coordinates and its A+R chains reproduce the anchor record exactly under d5",
+   "raw_fetched_6ihb_present_locally": false,
+   "reference_copy": "pair_pair1_tag-m4.pdb (its chains A and R carry the fetched 6IHB's capsid chain and receptor chain at the fetched coordinates; chain B is the stand-in copy shifted 60 A and is excluded)",
+   "reference_copy_hash_matches_pairs_tag": true,
+   "reference_copy_hash_recorded_in": "pairs_tag-m4.json pairs[0].pdb_sha256 = 587a0f7c5104f2d8eba0c4dbeed7f8eaee7c144b5bacc09c0d2733276053fb76",
+   "reference_copy_sha256": "587a0f7c5104f2d8eba0c4dbeed7f8eaee7c144b5bacc09c0d2733276053fb76",
+   "rows_anchor_hash_matches_anchor_record_input": true,
+   "rows_anchor_sha256": "49ee351bd498ea5598fa7dba3f695b4030a9e378d14fef9346389eacdfe99f5f",
+   "saved_result_files": [
+    "pose_anchor_serial_tag-m4.pdb",
+    "pose_anchor_parallel_tag-m4.pdb"
+   ],
+   "saved_result_is_the_named_file": true,
+   "serial_parallel_files_identical": true,
+   "source_hash_matches_anchor_record_input": true,
+   "source_pdb_sha256_in_pairs_tag": "d3f489cc062d0a4a92490774a51f85782439d5ffd9bfae9445f4f10bf7e0f2c4",
+   "verdict": "PASS"
+  },
+  "d1": {
+   "call": "bind",
+   "contact_overlap": 1.0,
+   "frame_shift": {
+    "basis": "capsid atoms matched by chain, residue and atom name",
+    "dx": 0.0,
+    "dy": 0.0,
+    "dz": 0.0,
+    "matched_atoms": 4143
+   },
+   "interface_backbone_rmsd_a": 0.0,
+   "n_pose_contacts": 34,
+   "n_reference_contacts": 34,
+   "verdict": "PASS"
+  },
+  "d2": {
+   "hand_checks_pass": true,
+   "hand_perturbation_interface_backbone_plus_5A_x": {
+    "expected_interface_backbone_rmsd_a": 5.0,
+    "got_interface_backbone_rmsd_a": 5.0
+   },
+   "hand_perturbation_non_interface_plus_20A_y": {
+    "expected_interface_backbone_rmsd_a": 0.0,
+    "expected_whole_chain_above": 0.0,
+    "got_interface_backbone_rmsd_a": 0.0,
+    "whole_chain_rmsd_a": 18.315247087114848
+   },
+   "hand_perturbation_overlap_3_of_6": {
+    "expected": 0.5,
+    "got": 0.5
+   },
+   "rigid_rotation_translation": {
+    "capsid_residual_rmsd_after_runner_frame_step": 39.70931180071987,
+    "contact_overlap": 1.0,
+    "expected": {
+     "contact_overlap": 1.0,
+     "interface_backbone_rmsd_a": 0.0
+    },
+    "frame_shift_used": {
+     "basis": "capsid atoms matched by chain, residue and atom name",
+     "dx": 107.27284021240645,
+     "dy": 75.87307289403786,
+     "dz": 53.509681631667966,
+     "matched_atoms": 4143
+    },
+    "interface_backbone_rmsd_a": 53.284488450165284,
+    "rotation": [
+     [
+      -0.6888437030500958,
+      -0.6183659880696692,
+      -0.37830920893741465
+     ],
+     [
+      0.6530314095461727,
+      -0.30277162004768465,
+      -0.6941752835126292
+     ],
+     [
+      0.31471309301389067,
+      -0.7252260688173874,
+      0.612374736736672
+     ]
+    ],
+    "translation": [
+     -24.108324970703666,
+     1.1274721368608525,
+     -9.50658625495857
+    ]
+   },
+   "rotation_invariance_perfect": false,
+   "translation_invariance_perfect": true,
+   "translation_only": {
+    "contact_overlap": 1.0,
+    "expected": {
+     "contact_overlap": 1.0,
+     "interface_backbone_rmsd_a": 0.0
+    },
+    "interface_backbone_rmsd_a": 1.423969014843977e-12,
+    "translation": [
+     28.379858903477256,
+     -19.668727392107254,
+     -2.340304584764418
+    ]
+   },
+   "verdict": "FAIL"
+  },
+  "d3": {
+   "abs_diff": {
+    "contact_overlap": 0.0,
+    "interface_backbone_rmsd_a": 0.0,
+    "n_pose_contacts": 0,
+    "n_reference_contacts": 0
+   },
+   "independent": {
+    "capsid_atoms_matched": 4142,
+    "capsid_atoms_matched_variant": 4142,
+    "capsid_residual_rmsd_after_frame": 1.0573508226772153e-11,
+    "contact_overlap": 0.0,
+    "frame_translation": [
+     20.813999999998817,
+     14.832000000000672,
+     102.68199999998951
+    ],
+    "interface_backbone_atoms_compared": 60,
+    "interface_backbone_rmsd_a": 38.61633372529515,
+    "interface_backbone_rmsd_a_capsid_frame_variant": 38.61633372529515,
+    "interface_residues": 15,
+    "n_pose_contacts": 114,
+    "n_reference_contacts": 34,
+    "overlap_with_receptor_chain_renamed": [
+     {
+      "cap": "A",
+      "overlap": 0.0,
+      "rec": "R"
+     },
+     {
+      "cap": "A",
+      "overlap": 0.0,
+      "rec": "B"
+     },
+     {
+      "cap": "A",
+      "overlap": 0.0,
+      "rec": "C"
+     },
+     {
+      "cap": "Y",
+      "overlap": 0.0,
+      "rec": "A"
+     },
+     {
+      "cap": "B",
+      "overlap": 0.0,
+      "rec": "A"
+     }
+    ]
+   },
+   "runner": {
+    "contact_overlap": 0.0,
+    "interface_backbone_rmsd_a": 38.61633372529515,
+    "n_pose_contacts": 114,
+    "n_reference_contacts": 34
+   },
+   "verdict": "AGREE"
+  },
+  "d4": {
+   "capsid_atoms_expected_to_pair": 4143,
+   "capsid_atoms_unpaired_reference": [
+    [
+     735,
+     "OXT"
+    ]
+   ],
+   "contacts": {
+    "n_pose_contacts": 114,
+    "n_reference_contacts": 34,
+    "shared": 0
+   },
+   "frame_shift_matched_capsid_atoms": 4142,
+   "identifiers": {
+    "capsid_resseq_range_pose": [
+     219,
+     735
+    ],
+    "capsid_resseq_range_reference": [
+     219,
+     735
+    ],
+    "contact_keying": "by residue number per chain role (contact_pairs_by_index, run_m4.py:1059); chain letters cannot change the pairing",
+    "pose_chains": [
+     "A",
+     "R"
+    ],
+    "receptor_resseq_range_pose": [
+     144,
+     237
+    ],
+    "receptor_resseq_range_reference": [
+     144,
+     237
+    ],
+    "reference_chains_used": [
+     "A",
+     "R"
+    ]
+   },
+   "interface_backbone_atoms_expected": 60,
+   "interface_backbone_atoms_paired": 60,
+   "interface_residues_reference": 15,
+   "receptor_atoms_expected_to_pair": 725,
+   "receptor_atoms_paired": 725,
+   "receptor_atoms_unpaired_reference": [],
+   "reference_elements": {
+    "capsid_atoms": 4143,
+    "receptor_atoms": 725
+   },
+   "saved_result_elements": {
+    "capsid_atoms": 4142,
+    "pose_atoms_total": 4867,
+    "receptor_atoms": 725
+   },
+   "verdict": "FULL"
+  },
+  "d5": {
+   "abs_diff_iface_rmsd": 0.0,
+   "abs_diff_overlap": 0.0,
+   "abs_diff_sp_rmsd": 0.0,
+   "calls_identical_record": true,
+   "calls_identical_rescored": true,
+   "record": {
+    "call": "no-bind",
+    "contact_overlap": 0.0,
+    "interface_backbone_rmsd_a": 38.61633372529515,
+    "n_reference_contacts": 34
+   },
+   "rescore_serial": {
+    "call": "no-bind",
+    "contact_overlap": 0.0,
+    "frame_shift": {
+     "basis": "capsid atoms matched by chain, residue and atom name",
+     "dx": 20.813999999998817,
+     "dy": 14.832000000000672,
+     "dz": 102.68199999998951,
+     "matched_atoms": 4142
+    },
+    "interface_backbone_rmsd_a": 38.61633372529515,
+    "n_pose_contacts": 114,
+    "n_reference_contacts": 34
+   },
+   "serial_parallel_rmsd_a_record": 0.0,
+   "serial_parallel_rmsd_a_rescored": 0.0,
+   "verdict": "PASS"
+  }
+ },
+ "code_locations": {
+  "_backbone_index": "run_m4.py:1088",
+  "anchor_decision": "run_m4.py:1144",
+  "contact_overlap": "run_m4.py:1076",
+  "contact_pairs_by_index": "run_m4.py:1059",
+  "interface_backbone_rmsd": "run_m4.py:1115",
+  "interface_receptor_residues": "run_m4.py:1083",
+  "map_chain_roles": "run_m4.py:1017",
+  "pose_frame_shift": "run_m4.py:3640",
+  "read_pdb_atoms": "run_m4.py:937",
+  "rmsd_no_superposition": "run_m4.py:1101",
+  "score_pose_against_native": "run_m4.py:3689",
+  "split_published_structure": "run_m4.py:3616",
+  "stage_anchor": "run_m4.py:3826",
+  "whole_chain_rmsd": "run_m4.py:1132"
+ },
+ "confidence": "high",
+ "final": {
+  "confidence": "high",
+  "d0": "PASS",
+  "d1": "PASS",
+  "d2": "FAIL",
+  "d3": "AGREE",
+  "d4": "FULL",
+  "d5": "PASS",
+  "locus": "computation"
+ },
+ "locus": "computation",
+ "locus_evidence": {
+  "capsid_displacement_of_saved_result_is_pure_translation": {
+   "note": "the pose's capsid differs from the reference capsid by a pure translation (d5 frame_shift basis 'capsid atoms matched by chain, residue and atom name', 4142 atoms; per-atom residual after the mean shift 1.1e-11 A), so the runner's translation-only frame step (pose_frame_shift, run_m4.py:3640) is exact for this saved result and every recorded value is frame-correct",
+   "residual_rmsd_a": 1.0572797981475494e-11
+  },
+  "d2_gap_not_exercised_by_this_result": true,
+  "saved_result_far_from_reference": {
+   "contact_overlap": 0.0,
+   "interface_backbone_rmsd_a": 38.61633372529515,
+   "n_reference_contacts": 34,
+   "shared_contacts": 0,
+   "tolerance": {
+    "max_interface_backbone_rmsd_a": 5.0,
+    "min_contact_overlap": 0.5
+   }
+  },
+  "smallest_code_change_for_the_d2_gap": "in pose_frame_shift (run_m4.py:3640), replace the mean displacement with a rigid superposition (rotation + translation, e.g. Kabsch) of the matched capsid atoms and apply that rigid motion to the whole pose; this leaves the launch 10 values unchanged because the saved result's capsid displacement is a pure translation (residual 1.06e-11 A)"
+ },
+ "runner": {
+  "build": 26,
+  "path": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/run_m4.py"
+ },
+ "task": "anchor diagnostics on the saved result of launch 10 (local, CPU, no launch)"
+}

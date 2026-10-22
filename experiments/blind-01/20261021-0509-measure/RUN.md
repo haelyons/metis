@@ -288,3 +288,8 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 15:29Z stage ask on wf.js run 1: flags [--family opencode], pid 78698
 - 15:32Z contract v2 frozen (owner direction 2026-10-22): stage interface replaces the implementer selftest; anchor miss keeps the inputs measured as scientifically unvalidated with calibration_valid by their own checks; anchor diagnostics in the anchor record; v1 kept as out/ONBOX_CONTRACT_v1.md
 - 15:37Z owner 2026-10-22: backtests deferred until after launch 11; compute is logged whatever the anchor decides (contract 3.8 compute table on every exit; score carries it and labels anchor-voided but calibration-valid numbers as unvalidated)
+- 16:27Z diagnostician run 1 (mimo-v2.6-pro) stopped by the operator: first attempt timed out at 45 min with no output file (77 shell calls), retry restarted from scratch; re-briefed to write results after each check
+- 16:27Z stage ask on wf.js run 2: flags [--family opencode], pid 172027
+- 17:05Z diagnostician run 2 (mimo-v2.6-pro, 38 min) replied in the fixed form: d0 PASS, d5 PASS, d1 PASS, d2 FAIL, d3 AGREE, d4 FULL, locus computation, confidence high; report in out/diag_anchor/ for the gate. (The wf waiter re-ran the build 26 checks after this non-build run; fixed: it now runs them only after a build.)
+- 17:06Z gate 20 (addendum) requested
+- 17:06Z stage gate on wf.js run 16: flags [--family claude], pid 228617

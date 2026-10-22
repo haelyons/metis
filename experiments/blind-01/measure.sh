@@ -725,7 +725,7 @@ wait_stage() {
       launch) if ! pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null; then launch_finish; echo "launch exited after $((t/60)) min"; return 0; fi ;;
       envbuild) if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then launch_finish; echo "env build exited after $((t/60)) min"; env_status; return 0; fi ;;
       hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then echo "env build exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD || test -f ${TAG}_run/results_${TAG}/out/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
-      wf) if ! wf_running; then echo "wf.js stage exited after $((t/60)) min"; ls "$MDIR"/out/build*_args.json >/dev/null 2>&1 && [ -f "$MDIR/run_$TAG.py" ] && [ "$(ls "$MDIR"/out/wf-build-* -d 2>/dev/null | wc -l)" -ge 1 ] && build_checks; return 0; fi ;;
+      wf) if ! wf_running; then echo "wf.js stage exited after $((t/60)) min"; ls "$MDIR"/out/build*_args.json >/dev/null 2>&1 && [ -f "$MDIR/run_$TAG.py" ] && [ "$(ls -td "$MDIR"/out/wf-*/ 2>/dev/null | head -1 | grep -c '/wf-build-')" = 1 ] && build_checks; return 0; fi ;;   # only when the run that ended was a build
       *) local last; last=$(ls "$SESS"/$stage*.json 2>/dev/null | sort | tail -1); [ -n "$last" ] || { echo "no $stage session"; return 1; }
          if ! session_running "$(basename "$last" .json)"; then echo "$stage session exited after $((t/60)) min"; [ "$stage" = build ] && build_checks; return 0; fi ;;
     esac
