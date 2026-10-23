@@ -325,3 +325,13 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 03:14Z launcher copies written from m3's (declared points only); filesystem metis-env-us-east-1 attached
 - 03:22Z LAUNCH 11: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1165625, log out/launcher_m4_L11.log
 - 03:22Z review 18 of build 31: PASS, 0 blocking, 4 advisory. Launcher regenerated (no tests payload, filesystem attached). LAUNCH 11 issued: A100 SXM4 us-east-1, USD 1.99/h, REMOTE_TIMEOUT 7200, BUDGET_LEFT_USD 5, HOLD_SECONDS 2400; pre-launch local tests 46 of 46; cap USD 50, USD 6.68 spent.
+- 03:29Z FIX 2 requested on the held box (fixer_stage.js, flags [--family claude])
+- 03:37Z stage build on wf.js run 30: flags [--family claude], pid 1187415
+- 03:37Z launch 11: a stage failed ~5 min in; box HELD. Fixer 2 (opus, 7 read-only commands): out_of_scope, the defect is in run_m4.py (a GPU-related check reads an empty value), not the environment; verifier (sonnet): within scope, no changes. Results fetched early from the held box to out/launch11_early/ with the fixer's note as CLASSIFIER_NOTE.txt. Fix build 32 started on Claude (OpenCode timed out on builds 30 and 31). The hold expires by ~04:05Z; the launcher then fetches and terminates.
+- 03:46Z build 32 checks: local tests exit 0
+- 03:51Z build 32 checks: local tests exit 0
+- 03:52Z review 19 of build 32 requested
+- 03:52Z stage review on wf.js run 16: flags [--family claude], pid 1210154
+- 03:52Z build 32 (fix, Claude): 2 FIX lines, 4 inserted lines in one file; local tests 46 of 46 PASS. Review 19 of build 32 started (sonnet).
+- 04:15Z LAUNCH 12: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1244154, log out/launcher_m4_L12.log
+- 04:16Z launch 11 ended: exit 2, 0.79 h wall, USD 1.58, box terminated; archived to out/launch11/. Review 19 of build 32: PASS, 0 blocking, 5 advisory. LAUNCH 12 issued (same settings; pre-launch local tests 46 of 46; USD 8.26 of the USD 50 cap spent).

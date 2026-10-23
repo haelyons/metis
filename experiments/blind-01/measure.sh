@@ -531,6 +531,7 @@ launch() {
   local_tests "out/tests_local_prelaunch_L$n.log" || { echo "pre-launch: local tests did not PASS"; return 1; }
   [ -d data ] && [ "$(du -sm data | cut -f1)" -gt 100 ] && { echo "pre-launch: data/ is $(du -sh data | cut -f1); the launcher ships it to the box; refusing (move it out or have the gate list it)"; return 1; }
   pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null && { echo "a launcher is already running"; return 1; }
+  if [ -d "results_$TAG" ]; then mkdir -p "out/launch$((n-1))"; mv "results_$TAG" "out/launch$((n-1))/"; cp "out/launch$((n-1)).json" "out/launcher_${TAG}_L$((n-1)).log" "out/launch$((n-1))/" 2>/dev/null; echo "previous results archived to out/launch$((n-1))/"; fi   # never let a launch fetch into the last one's results
   [ "$timeout" -le 7200 ] || { echo "timeout above 7,200 s (owner rule)"; return 1; }
   echo "== capacity"; rm -f out/.capacity.json.fallback
   if ! lambda_capacity "$type" "$region" 2.50; then
@@ -728,7 +729,7 @@ wait_stage() {
     case "$stage" in
       launch) if ! pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null; then launch_finish; echo "launch exited after $((t/60)) min"; return 0; fi ;;
       envbuild) if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then launch_finish; echo "env build exited after $((t/60)) min"; env_status; return 0; fi ;;
-      hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env[.]sh" >/dev/null; then echo "env build exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD || test -f ${TAG}_run/results_${TAG}/out/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
+      hold) local ip; ip=$(awk '{print $2}' "$MDIR/.last_lambda_instance" 2>/dev/null); if ! pgrep -f "lambda_run_env[.]sh" >/dev/null && ! pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null; then echo "launcher exited"; return 0; fi; if [ -n "$ip" ] && timeout 25 ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10 -i ~/.ssh/lambda_ed25519 ubuntu@$ip "test -f ${TAG}_run/HOLD || test -f ${TAG}_run/results_${TAG}/out/HOLD" 2>/dev/null; then echo "box is HELD (a stage failed) after $((t/60)) min"; return 3; fi ;;
       wf) if ! wf_running; then echo "wf.js stage exited after $((t/60)) min"; ls "$MDIR"/out/build*_args.json >/dev/null 2>&1 && [ -f "$MDIR/run_$TAG.py" ] && [ "$(ls -td "$MDIR"/out/wf-*/ 2>/dev/null | head -1 | grep -c '/wf-build-')" = 1 ] && build_checks; return 0; fi ;;   # only when the run that ended was a build
       *) local last; last=$(ls "$SESS"/$stage*.json 2>/dev/null | sort | tail -1); [ -n "$last" ] || { echo "no $stage session"; return 1; }
          if ! session_running "$(basename "$last" .json)"; then echo "$stage session exited after $((t/60)) min"; [ "$stage" = build ] && build_checks; return 0; fi ;;

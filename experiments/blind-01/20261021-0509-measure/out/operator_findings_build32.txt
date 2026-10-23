@@ -1,0 +1,5 @@
+Operator's mechanical findings for build 32 (no model; counts and names only):
+1. Build 32 is a fix build for the stage that failed on launch 11. Evidence: out/launch11_early/out/ (fetched from the held box), including CLASSIFIER_NOTE.txt from the held-box fixer, which found the defect in run_m4.py and judged it out of scope for an environment fix. Claude made the build; it reports 2 FIX lines. The diff is 4 inserted lines in one file.
+2. Local tests: 46 of 46 PASS on this build's files (out/tests_local_build32.log).
+3. The only other file changed in the run dir is env/box.sh, the operator's ssh helper, rewritten for launch 11's box.
+4. Check that the fix matches the evidence, and that it does not change the measurement protocol, the record fields or the guard.

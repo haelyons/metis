@@ -3199,6 +3199,10 @@ def stage_capability(state: RunState) -> dict:
                 f"expected {state.expected_lock_sha256}, observed "
                 f"{state.observed_lock_sha256}", kind="env_lock")
     step = make_setup_step(state, allowance, log, "capability")
+    # Ask the box for its labels first: this is what reads nvidia-smi and sets
+    # the graphics-processor flag. Without it the flag is still unset here, and
+    # a working processor is reported as missing.
+    collect_labels(state)
     capability = smoke_check(state, step, None)
     if not state.gpu_visible:
         capability["problems"].append(

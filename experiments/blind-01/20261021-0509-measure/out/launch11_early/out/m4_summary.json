@@ -1,0 +1,1084 @@
+{
+  "what_this_run_decides": "This run decides the stand-in protocol only: four cost inputs measured once on one rented single-GPU box, on pairs built from chains of PDB entry 6IHB, not on the card's own pairs and not on the card's 8-GPU setting. It does not run the card's 54-run pilot or its 216-run grid, and it does not evaluate the card's own prediction. Two runs on the same box are two samples of one box, never a replication.",
+  "tag": "m4",
+  "run_valid": false,
+  "run_valid_voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+  "exit_code": 2,
+  "records": {
+    "endpoint-C1_tag-m4.json": {
+      "cell": {
+        "input": "C1",
+        "key": "af2_h_per_run",
+        "stage": "endpoints",
+        "tag": "m4"
+      },
+      "decision": "VOID",
+      "decision_rule": "inside [0.2, 1.25] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+      "env": {
+        "git_rev": null,
+        "host": "132-145-143-216",
+        "python": "3.10.12",
+        "timestamp_utc": "2026-10-23T03:28:06+00:00"
+      },
+      "inputs": [
+        {
+          "n_items": null,
+          "path": "/home/ubuntu/m4_run/results_m4/out/rows_af2_tag-m4.jsonl",
+          "present": false,
+          "sha256": null
+        },
+        {
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+          "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "what": "the environment of record, by its lock sha256"
+        }
+      ],
+      "kind": "C1",
+      "metric": "af2_h_per_run measured on the stand-in protocol, in hours per AlphaFold-Multimer run",
+      "notes": "",
+      "notes_list": [
+        "stand-in pairs built from 6IHB chains, not the card's pairs",
+        "one GPU; one box; 3 pairs; no multi-GPU scaling",
+        "no-MSA: alignment search time excluded; understates the card's setting"
+      ],
+      "run_valid": false,
+      "run_valid_voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "tag": "m4",
+      "threshold": {
+        "band": [
+          0.2,
+          1.25
+        ],
+        "card_value": 0.5,
+        "marginal_fraction": 0.1
+      },
+      "values": {
+        "band": [
+          0.2,
+          1.25
+        ],
+        "basis": "PROXY",
+        "calibration_checks": [
+          {
+            "check": "sleep_control_passed",
+            "null_reason": "the 60 s sleep control did not pass",
+            "result": false,
+            "value": false
+          },
+          {
+            "check": "gpu_visible",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "stages_before_not_cut",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "minimum_count",
+            "null_reason": "fewer than 3 counted units",
+            "result": false,
+            "value": 0
+          },
+          {
+            "check": "gpu_is_a100",
+            "result": true,
+            "value": "NVIDIA A100-SXM4-80GB"
+          },
+          {
+            "check": "fasta_length_in_range",
+            "null_reason": "a counted run's pair length is outside 750 to 1000 residues",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "command_line_protocol",
+            "null_reason": "a counted run was not 5 models, 20 recycles, early stopping off, single-sequence",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "colabfold_exit_zero",
+            "null_reason": "a counted prediction call did not exit zero",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "structures_and_scores",
+            "null_reason": "a counted run lacks a model structure or a score file, or one does not parse",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "per_model_times_parsed_or_reasoned",
+            "null_reason": "per-model times are missing with no reason given",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "no_download_in_timed_call",
+            "result": true,
+            "value": []
+          },
+          {
+            "check": "runs_cover_all_pairs",
+            "null_reason": "fewer than 3 counted runs covering all 3 pairs",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "nonzero_seed_spread",
+            "result": true,
+            "value": {}
+          }
+        ],
+        "calibration_valid": false,
+        "card_value": 0.5,
+        "engine": {
+          "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+          "alphafold_params_sha256": null,
+          "build_flags": {
+            "alphafold_early_stopping": "off",
+            "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+            "alphafold_models": 5,
+            "alphafold_msa_mode": "single_sequence",
+            "alphafold_params_sha256": null,
+            "alphafold_recycles": 20,
+            "docking_code": "lightdock",
+            "docking_version": "0.9.4",
+            "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+            "jax_cuda_plugin_version": "0.4.35",
+            "jax_version": "0.4.35",
+            "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+            "jaxlib_version": "0.4.35",
+            "md_engine": "OpenMM",
+            "md_engine_version": "8.1.1",
+            "md_platform": "CUDA",
+            "md_precision": "mixed"
+          },
+          "docking_code": "lightdock",
+          "docking_version": "0.9.4",
+          "jax_cuda_plugin_version": "0.4.35",
+          "jax_version": "0.4.35",
+          "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+          "jaxlib_version": "0.4.35",
+          "md_engine": "OpenMM",
+          "md_engine_version": "8.1.1",
+          "md_platform": "CUDA",
+          "md_precision": "mixed"
+        },
+        "gate": "not evaluated: C1 VOID (the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"])",
+        "gate_else": "take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs",
+        "gate_pass": null,
+        "gate_value": 1,
+        "machine": {
+          "cuda_plugin_version": "0.4.35",
+          "cuda_runtime_version": "12.8",
+          "end_utc": "2026-10-23T03:28:06Z",
+          "environment_changed_by_fixer": false,
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "gpu_driver": "570.148.08",
+          "gpu_name": "NVIDIA A100-SXM4-80GB",
+          "held_attempts": 0,
+          "instance_type": "gpu_1x_a100_sxm4",
+          "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "price_usd_per_hour": 1.99,
+          "start_utc": "2026-10-23T03:28:06Z",
+          "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+        },
+        "marginal": false,
+        "measured": null,
+        "n": 0,
+        "null_reasons": {
+          "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+          "colabfold_exit_zero": "a counted prediction call did not exit zero",
+          "command_line_protocol": "a counted run was not 5 models, 20 recycles, early stopping off, single-sequence",
+          "fasta_length_in_range": "a counted run's pair length is outside 750 to 1000 residues",
+          "measured": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+          "minimum_count": "fewer than 3 counted units",
+          "per_model_times_parsed_or_reasoned": "per-model times are missing with no reason given",
+          "runs_cover_all_pairs": "fewer than 3 counted runs covering all 3 pairs",
+          "sleep_control_passed": "the 60 s sleep control did not pass",
+          "structures_and_scores": "a counted run lacks a model structure or a score file, or one does not parse"
+        },
+        "unit": "hours per AlphaFold-Multimer run",
+        "void_reason": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+        "voided_by": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]"
+      }
+    },
+    "endpoint-C2_tag-m4.json": {
+      "cell": {
+        "input": "C2",
+        "key": "md_ns_per_day_a100",
+        "stage": "endpoints",
+        "tag": "m4"
+      },
+      "decision": "VOID",
+      "decision_rule": "inside [51.6, 322.5] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+      "env": {
+        "git_rev": null,
+        "host": "132-145-143-216",
+        "python": "3.10.12",
+        "timestamp_utc": "2026-10-23T03:28:06+00:00"
+      },
+      "inputs": [
+        {
+          "n_items": null,
+          "path": "/home/ubuntu/m4_run/results_m4/out/rows_md_tag-m4.jsonl",
+          "present": false,
+          "sha256": null
+        },
+        {
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+          "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "what": "the environment of record, by its lock sha256"
+        }
+      ],
+      "kind": "C2",
+      "metric": "md_ns_per_day_a100 measured on the stand-in protocol, in nanoseconds simulated per day",
+      "notes": "",
+      "notes_list": [
+        "stand-in pairs built from 6IHB chains, not the card's pairs",
+        "one GPU; one box; 3 pairs; no multi-GPU scaling"
+      ],
+      "run_valid": false,
+      "run_valid_voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "tag": "m4",
+      "threshold": {
+        "band": [
+          51.6,
+          322.5
+        ],
+        "card_value": 129,
+        "marginal_fraction": 0.1
+      },
+      "values": {
+        "band": [
+          51.6,
+          322.5
+        ],
+        "basis": "PROXY",
+        "calibration_checks": [
+          {
+            "check": "sleep_control_passed",
+            "null_reason": "the 60 s sleep control did not pass",
+            "result": false,
+            "value": false
+          },
+          {
+            "check": "gpu_visible",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "stages_before_not_cut",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "minimum_count",
+            "null_reason": "fewer than 2 counted units",
+            "result": false,
+            "value": 0
+          },
+          {
+            "check": "gpu_is_a100",
+            "result": true,
+            "value": "NVIDIA A100-SXM4-80GB"
+          },
+          {
+            "check": "atom_count_in_range",
+            "null_reason": "a built system is outside 120000 to 180000 atoms",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "both_roles_present",
+            "null_reason": "a complex lacks a chain role or a capsid heavy atom",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "reporter_reached_production_and_finite",
+            "null_reason": "a reporter file does not reach the equilibration plus 250,000 production steps, or holds a non-finite energy",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "trajectory_frame_count",
+            "null_reason": "a trajectory does not hold 50 frames, plus or minus one",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "platform_and_precision",
+            "null_reason": "a segment did not run on the CUDA platform in mixed precision",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "complex_count",
+            "null_reason": "fewer than 2 complexes finished",
+            "result": false,
+            "value": 0
+          }
+        ],
+        "calibration_valid": false,
+        "card_value": 129,
+        "engine": {
+          "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+          "alphafold_params_sha256": null,
+          "build_flags": {
+            "alphafold_early_stopping": "off",
+            "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+            "alphafold_models": 5,
+            "alphafold_msa_mode": "single_sequence",
+            "alphafold_params_sha256": null,
+            "alphafold_recycles": 20,
+            "docking_code": "lightdock",
+            "docking_version": "0.9.4",
+            "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+            "jax_cuda_plugin_version": "0.4.35",
+            "jax_version": "0.4.35",
+            "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+            "jaxlib_version": "0.4.35",
+            "md_engine": "OpenMM",
+            "md_engine_version": "8.1.1",
+            "md_platform": "CUDA",
+            "md_precision": "mixed"
+          },
+          "docking_code": "lightdock",
+          "docking_version": "0.9.4",
+          "jax_cuda_plugin_version": "0.4.35",
+          "jax_version": "0.4.35",
+          "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+          "jaxlib_version": "0.4.35",
+          "md_engine": "OpenMM",
+          "md_engine_version": "8.1.1",
+          "md_platform": "CUDA",
+          "md_precision": "mixed"
+        },
+        "gate": "not applicable: the card's gate is on af2_h_per_run",
+        "machine": {
+          "cuda_plugin_version": "0.4.35",
+          "cuda_runtime_version": "12.8",
+          "end_utc": "2026-10-23T03:28:06Z",
+          "environment_changed_by_fixer": false,
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "gpu_driver": "570.148.08",
+          "gpu_name": "NVIDIA A100-SXM4-80GB",
+          "held_attempts": 0,
+          "instance_type": "gpu_1x_a100_sxm4",
+          "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "price_usd_per_hour": 1.99,
+          "start_utc": "2026-10-23T03:28:06Z",
+          "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+        },
+        "marginal": false,
+        "measured": null,
+        "n": 0,
+        "null_reasons": {
+          "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+          "atom_count_in_range": "a built system is outside 120000 to 180000 atoms",
+          "both_roles_present": "a complex lacks a chain role or a capsid heavy atom",
+          "complex_count": "fewer than 2 complexes finished",
+          "measured": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+          "minimum_count": "fewer than 2 counted units",
+          "platform_and_precision": "a segment did not run on the CUDA platform in mixed precision",
+          "reporter_reached_production_and_finite": "a reporter file does not reach the equilibration plus 250,000 production steps, or holds a non-finite energy",
+          "sleep_control_passed": "the 60 s sleep control did not pass",
+          "trajectory_frame_count": "a trajectory does not hold 50 frames, plus or minus one"
+        },
+        "unit": "nanoseconds simulated per day",
+        "void_reason": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+        "voided_by": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]"
+      }
+    },
+    "endpoint-C3_tag-m4.json": {
+      "cell": {
+        "input": "C3",
+        "key": "aux_h_per_pair",
+        "stage": "endpoints",
+        "tag": "m4"
+      },
+      "decision": "VOID",
+      "decision_rule": "inside [0.3333, 3] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+      "env": {
+        "git_rev": null,
+        "host": "132-145-143-216",
+        "python": "3.10.12",
+        "timestamp_utc": "2026-10-23T03:28:06+00:00"
+      },
+      "inputs": [
+        {
+          "n_items": null,
+          "path": "/home/ubuntu/m4_run/results_m4/out/rows_aux_tag-m4.jsonl",
+          "present": false,
+          "sha256": null
+        },
+        {
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+          "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "what": "the environment of record, by its lock sha256"
+        }
+      ],
+      "kind": "C3",
+      "metric": "aux_h_per_pair measured on the stand-in protocol, in hours per capsid-receptor pair",
+      "notes": "",
+      "notes_list": [
+        "stand-in pairs built from 6IHB chains, not the card's pairs",
+        "one GPU; one box; 3 pairs; no multi-GPU scaling",
+        "producer's reading of aux hours"
+      ],
+      "run_valid": false,
+      "run_valid_voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "tag": "m4",
+      "threshold": {
+        "band": [
+          0.3333,
+          3
+        ],
+        "card_value": 1,
+        "marginal_fraction": 0.1
+      },
+      "values": {
+        "band": [
+          0.3333,
+          3
+        ],
+        "basis": "GUESS",
+        "calibration_checks": [
+          {
+            "check": "sleep_control_passed",
+            "null_reason": "the 60 s sleep control did not pass",
+            "result": false,
+            "value": false
+          },
+          {
+            "check": "gpu_visible",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "stages_before_not_cut",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "minimum_count",
+            "null_reason": "fewer than 2 counted units",
+            "result": false,
+            "value": 0
+          },
+          {
+            "check": "docking_parameters_equal_the_anchor",
+            "null_reason": "a pair's docking parameters differ from the anchor's",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "rank_table_and_top_pose",
+            "null_reason": "a pair's rank table does not parse, or its top pose is missing or lacks a chain role",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "interface_analysis_complete",
+            "null_reason": "an interface analysis is missing a field or a call-table row",
+            "result": false,
+            "value": []
+          },
+          {
+            "check": "no_pair_reached_its_limit",
+            "result": true,
+            "value": []
+          },
+          {
+            "check": "pair_count",
+            "null_reason": "fewer than 2 pairs finished",
+            "result": false,
+            "value": []
+          }
+        ],
+        "calibration_valid": false,
+        "card_value": 1,
+        "engine": {
+          "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+          "alphafold_params_sha256": null,
+          "build_flags": {
+            "alphafold_early_stopping": "off",
+            "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+            "alphafold_models": 5,
+            "alphafold_msa_mode": "single_sequence",
+            "alphafold_params_sha256": null,
+            "alphafold_recycles": 20,
+            "docking_code": "lightdock",
+            "docking_version": "0.9.4",
+            "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+            "jax_cuda_plugin_version": "0.4.35",
+            "jax_version": "0.4.35",
+            "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+            "jaxlib_version": "0.4.35",
+            "md_engine": "OpenMM",
+            "md_engine_version": "8.1.1",
+            "md_platform": "CUDA",
+            "md_precision": "mixed"
+          },
+          "docking_code": "lightdock",
+          "docking_version": "0.9.4",
+          "jax_cuda_plugin_version": "0.4.35",
+          "jax_version": "0.4.35",
+          "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+          "jaxlib_version": "0.4.35",
+          "md_engine": "OpenMM",
+          "md_engine_version": "8.1.1",
+          "md_platform": "CUDA",
+          "md_precision": "mixed"
+        },
+        "gate": "not applicable: the card's gate is on af2_h_per_run",
+        "machine": {
+          "cuda_plugin_version": "0.4.35",
+          "cuda_runtime_version": "12.8",
+          "end_utc": "2026-10-23T03:28:06Z",
+          "environment_changed_by_fixer": false,
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "gpu_driver": "570.148.08",
+          "gpu_name": "NVIDIA A100-SXM4-80GB",
+          "held_attempts": 0,
+          "instance_type": "gpu_1x_a100_sxm4",
+          "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "price_usd_per_hour": 1.99,
+          "start_utc": "2026-10-23T03:28:06Z",
+          "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+        },
+        "marginal": false,
+        "measured": null,
+        "n": 0,
+        "null_reasons": {
+          "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+          "docking_parameters_equal_the_anchor": "a pair's docking parameters differ from the anchor's",
+          "interface_analysis_complete": "an interface analysis is missing a field or a call-table row",
+          "measured": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+          "minimum_count": "fewer than 2 counted units",
+          "pair_count": "fewer than 2 pairs finished",
+          "rank_table_and_top_pose": "a pair's rank table does not parse, or its top pose is missing or lacks a chain role",
+          "sleep_control_passed": "the 60 s sleep control did not pass"
+        },
+        "unit": "hours per capsid-receptor pair",
+        "void_reason": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+        "voided_by": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]"
+      }
+    },
+    "endpoint-C4_tag-m4.json": {
+      "cell": {
+        "input": "C4",
+        "key": "n_storage_gib",
+        "stage": "endpoints",
+        "tag": "m4"
+      },
+      "decision": "VOID",
+      "decision_rule": "inside [66.67, 600] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+      "env": {
+        "git_rev": null,
+        "host": "132-145-143-216",
+        "python": "3.10.12",
+        "timestamp_utc": "2026-10-23T03:28:06+00:00"
+      },
+      "inputs": [
+        {
+          "n_items": null,
+          "path": "/home/ubuntu/m4_run/results_m4/out/rows_storage_tag-m4.jsonl",
+          "present": false,
+          "sha256": null
+        },
+        {
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+          "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "what": "the environment of record, by its lock sha256"
+        }
+      ],
+      "kind": "C4",
+      "metric": "n_storage_gib measured on the stand-in protocol, in gibibytes",
+      "notes": "",
+      "notes_list": [
+        "stand-in pairs built from 6IHB chains, not the card's pairs",
+        "one GPU; one box; 3 pairs; no multi-GPU scaling",
+        "linear in runs; intermediates kept; MD length 0.5 ns"
+      ],
+      "run_valid": false,
+      "run_valid_voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "tag": "m4",
+      "threshold": {
+        "band": [
+          66.67,
+          600
+        ],
+        "card_value": 200,
+        "marginal_fraction": 0.1
+      },
+      "values": {
+        "band": [
+          66.67,
+          600
+        ],
+        "basis": "GUESS",
+        "calibration_checks": [
+          {
+            "check": "sleep_control_passed",
+            "null_reason": "the 60 s sleep control did not pass",
+            "result": false,
+            "value": false
+          },
+          {
+            "check": "gpu_visible",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "stages_before_not_cut",
+            "result": true,
+            "value": true
+          },
+          {
+            "check": "minimum_count",
+            "null_reason": "fewer than 1 counted units",
+            "result": false,
+            "value": 0
+          },
+          {
+            "check": "each_artifact_type_nonzero_and_counted",
+            "null_reason": "an artifact type is missing, holds zero bytes, or comes from a run that does not count",
+            "result": false,
+            "value": {
+              "af2": [],
+              "docking": [],
+              "md": []
+            }
+          },
+          {
+            "check": "at_least_one_of_each_type",
+            "null_reason": "not every artifact type was produced",
+            "result": false,
+            "value": {
+              "af2": 0,
+              "docking": 0,
+              "md": 0
+            }
+          },
+          {
+            "check": "md_setup_bytes_excluded",
+            "result": true,
+            "value": []
+          }
+        ],
+        "calibration_valid": false,
+        "card_value": 200,
+        "engine": {
+          "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+          "alphafold_params_sha256": null,
+          "build_flags": {
+            "alphafold_early_stopping": "off",
+            "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+            "alphafold_models": 5,
+            "alphafold_msa_mode": "single_sequence",
+            "alphafold_params_sha256": null,
+            "alphafold_recycles": 20,
+            "docking_code": "lightdock",
+            "docking_version": "0.9.4",
+            "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+            "jax_cuda_plugin_version": "0.4.35",
+            "jax_version": "0.4.35",
+            "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+            "jaxlib_version": "0.4.35",
+            "md_engine": "OpenMM",
+            "md_engine_version": "8.1.1",
+            "md_platform": "CUDA",
+            "md_precision": "mixed"
+          },
+          "docking_code": "lightdock",
+          "docking_version": "0.9.4",
+          "jax_cuda_plugin_version": "0.4.35",
+          "jax_version": "0.4.35",
+          "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+          "jaxlib_version": "0.4.35",
+          "md_engine": "OpenMM",
+          "md_engine_version": "8.1.1",
+          "md_platform": "CUDA",
+          "md_precision": "mixed"
+        },
+        "machine": {
+          "cuda_plugin_version": "0.4.35",
+          "cuda_runtime_version": "12.8",
+          "end_utc": "2026-10-23T03:28:06Z",
+          "environment_changed_by_fixer": false,
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "gpu_driver": "570.148.08",
+          "gpu_name": "NVIDIA A100-SXM4-80GB",
+          "held_attempts": 0,
+          "instance_type": "gpu_1x_a100_sxm4",
+          "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "price_usd_per_hour": 1.99,
+          "start_utc": "2026-10-23T03:28:06Z",
+          "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+        },
+        "marginal": false,
+        "measured": null,
+        "n": 0,
+        "null_reasons": {
+          "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+          "at_least_one_of_each_type": "not every artifact type was produced",
+          "each_artifact_type_nonzero_and_counted": "an artifact type is missing, holds zero bytes, or comes from a run that does not count",
+          "measured": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+          "minimum_count": "fewer than 1 counted units",
+          "sleep_control_passed": "the 60 s sleep control did not pass"
+        },
+        "unit": "gibibytes",
+        "void_reason": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+        "voided_by": "the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"]"
+      }
+    },
+    "endpoint-anchor_tag-m4.json": {
+      "cell": {
+        "endpoint": "anchor",
+        "stage": "anchor",
+        "tag": "m4"
+      },
+      "decision": "VOID",
+      "decision_rule": "PASS when the pose reproduces the published placement and serial and parallel agree; VOID when the run ended before the check could be made",
+      "env": {
+        "git_rev": null,
+        "host": "132-145-143-216",
+        "python": "3.10.12",
+        "timestamp_utc": "2026-10-23T03:28:06+00:00"
+      },
+      "inputs": [
+        {
+          "n_items": null,
+          "path": "/home/ubuntu/m4_run/results_m4/out/rows_anchor_tag-m4.jsonl",
+          "present": false,
+          "sha256": null
+        },
+        {
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+          "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "what": "the environment of record, by its lock sha256"
+        }
+      ],
+      "kind": "anchor",
+      "metric": "contact overlap with the published complex at 4.5 angstrom, or interface backbone displacement, with serial and parallel agreement",
+      "notes": "",
+      "notes_list": [
+        "serial-versus-parallel RMSD is over the whole receptor chain, not the interface"
+      ],
+      "run_valid": false,
+      "run_valid_voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "tag": "m4",
+      "threshold": {
+        "max_interface_backbone_rmsd_a": 5.0,
+        "max_serial_parallel_rmsd_a": 2.0,
+        "min_contact_overlap": 0.5
+      },
+      "values": {
+        "calibration_checks": [
+          {
+            "check": "both_poses_obtained_and_compared",
+            "null_reason": "anchor stage not reached: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+            "result": false,
+            "value": false
+          }
+        ],
+        "calibration_valid": false,
+        "docking_order": [
+          "lightdock3_setup.py (prepare)",
+          "lightdock3.py (simulate)",
+          "lgd_generate_conformations.py (generate the pose structures)",
+          "lgd_rank.py (rank)"
+        ],
+        "engine": {
+          "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+          "alphafold_params_sha256": null,
+          "build_flags": {
+            "alphafold_early_stopping": "off",
+            "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+            "alphafold_models": 5,
+            "alphafold_msa_mode": "single_sequence",
+            "alphafold_params_sha256": null,
+            "alphafold_recycles": 20,
+            "docking_code": "lightdock",
+            "docking_version": "0.9.4",
+            "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+            "jax_cuda_plugin_version": "0.4.35",
+            "jax_version": "0.4.35",
+            "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+            "jaxlib_version": "0.4.35",
+            "md_engine": "OpenMM",
+            "md_engine_version": "8.1.1",
+            "md_platform": "CUDA",
+            "md_precision": "mixed"
+          },
+          "docking_code": "lightdock",
+          "docking_version": "0.9.4",
+          "jax_cuda_plugin_version": "0.4.35",
+          "jax_version": "0.4.35",
+          "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+          "jaxlib_version": "0.4.35",
+          "md_engine": "OpenMM",
+          "md_engine_version": "8.1.1",
+          "md_platform": "CUDA",
+          "md_precision": "mixed"
+        },
+        "independent_code": "not run: single docking code",
+        "machine": {
+          "cuda_plugin_version": "0.4.35",
+          "cuda_runtime_version": "12.8",
+          "end_utc": "2026-10-23T03:28:06Z",
+          "environment_changed_by_fixer": false,
+          "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "gpu_driver": "570.148.08",
+          "gpu_name": "NVIDIA A100-SXM4-80GB",
+          "held_attempts": 0,
+          "instance_type": "gpu_1x_a100_sxm4",
+          "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+          "price_usd_per_hour": 1.99,
+          "start_utc": "2026-10-23T03:26:24Z",
+          "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+        },
+        "measured": null,
+        "null_reasons": {
+          "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+          "measured": "anchor stage not reached: the capability check failed: [\"nvidia-smi reported no graphics processor\"]"
+        },
+        "published": "AAVR-PKD2 bound to the AAV2 spike region adjacent to the icosahedral three-fold axis (PDB 6IHB)",
+        "tolerance": {
+          "calls_must_be_identical": true,
+          "max_interface_backbone_rmsd_a": 5.0,
+          "max_serial_parallel_rmsd_a": 2.0,
+          "min_contact_overlap": 0.5
+        },
+        "unit": "fraction of published contacts, and angstrom",
+        "void_reason": "anchor stage not reached: the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+        "voided_by": "anchor stage not reached: the capability check failed: [\"nvidia-smi reported no graphics processor\"]"
+      }
+    }
+  },
+  "inputs_status": {
+    "C1": {
+      "state": "void_by_failure",
+      "status": "void_by_failure:capability_check",
+      "reason": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "decision": "VOID",
+      "voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "calibration_valid": false
+    },
+    "C2": {
+      "state": "void_by_failure",
+      "status": "void_by_failure:capability_check",
+      "reason": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "decision": "VOID",
+      "voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "calibration_valid": false
+    },
+    "C3": {
+      "state": "void_by_failure",
+      "status": "void_by_failure:capability_check",
+      "reason": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "decision": "VOID",
+      "voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "calibration_valid": false
+    },
+    "C4": {
+      "state": "void_by_failure",
+      "status": "void_by_failure:capability_check",
+      "reason": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "decision": "VOID",
+      "voided_by": "the capability check failed: [\"nvidia-smi reported no graphics processor\"]",
+      "calibration_valid": false
+    }
+  },
+  "gate": {
+    "gate": "af2_h_per_run <= 1",
+    "applied_to": "C1 only",
+    "gate_pass": null,
+    "gate_value": 1,
+    "gate_note": "not evaluated: C1 VOID (the run ended on broken infrastructure: the capability check failed: [\"nvidia-smi reported no graphics processor\"])",
+    "fallback_text": "take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs",
+    "fallback_triggered": false,
+    "fallback_note": "the fallback is not presented as triggered, because the gate was not evaluated"
+  },
+  "unmeasured_inputs": {},
+  "held_attempts": 0,
+  "seed_spread": {
+    "per_pair": {},
+    "high_spread_pairs": []
+  },
+  "anchor": null,
+  "environment": {
+    "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+    "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+    "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+    "environment_changed_by_fixer": false,
+    "hold_seconds_forwarded": "2400",
+    "changes_log_sha256": null,
+    "note": "the python environment is an artifact on the attached filesystem; this run installs nothing and pins nothing"
+  },
+  "stop_events": [],
+  "guard_arithmetic": "guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 103 s; pre_t0 70 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s",
+  "stages_done": [],
+  "notes": [],
+  "incomplete_run_label": null,
+  "no_relaunch_for_spread": "A high spread across seeds is labelled, never answered with another launch on this box; two runs on the same box are two samples of one box, never a replication.",
+  "timing": {
+    "t0_utc": "2026-10-23T03:26:24Z",
+    "elapsed_s": 102.686,
+    "pre_t0_seconds": 70.0,
+    "remote_timeout_seen_s": 7200.0,
+    "remote_timeout_forwarded": true,
+    "stop_at_s": 7200.0,
+    "binding_cap": "time",
+    "price_usd_per_hour": 1.99,
+    "budget_left_usd": 5.0,
+    "estimated_spend_usd": 0.0568,
+    "estimated_spend_note": "seconds since the run's own start times the hourly price; the bootstrap seconds are reported beside this and are not added again",
+    "pre_t0_seconds_reported_not_added": 70.0,
+    "setup_seconds_used": 28.421
+  },
+  "compute": {
+    "stages": [
+      {
+        "stage": "capability",
+        "ran": true,
+        "reason": "the stage failed",
+        "start_utc": "2026-10-23T03:27:39Z",
+        "end_utc": "2026-10-23T03:28:06Z",
+        "wall_clock_s": 26.766,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not a graphics-processor stage",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": 2
+      },
+      {
+        "stage": "downloads",
+        "ran": false,
+        "reason": "not started",
+        "start_utc": null,
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      },
+      {
+        "stage": "controls",
+        "ran": false,
+        "reason": "not started",
+        "start_utc": null,
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      },
+      {
+        "stage": "anchor",
+        "ran": false,
+        "reason": "not started",
+        "start_utc": null,
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      },
+      {
+        "stage": "aux",
+        "ran": false,
+        "reason": "not started",
+        "start_utc": null,
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      },
+      {
+        "stage": "af2",
+        "ran": false,
+        "reason": "not started",
+        "start_utc": null,
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      },
+      {
+        "stage": "md",
+        "ran": false,
+        "reason": "not started",
+        "start_utc": null,
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      },
+      {
+        "stage": "storage",
+        "ran": false,
+        "reason": "not started",
+        "start_utc": null,
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      },
+      {
+        "stage": "endpoints",
+        "ran": true,
+        "reason": null,
+        "start_utc": "2026-10-23T03:28:06Z",
+        "end_utc": null,
+        "wall_clock_s": null,
+        "gpu_busy_s": null,
+        "gpu_busy_reason": "not sampled",
+        "gpu_name": "NVIDIA A100-SXM4-80GB",
+        "exit_code": null
+      }
+    ],
+    "instance_type": "gpu_1x_a100_sxm4",
+    "price_usd_per_hour": 1.99,
+    "elapsed_since_t0_s": 102.686,
+    "estimated_spend_usd": 0.0568,
+    "pre_t0_seconds": 70.0,
+    "anchor_decision": null
+  },
+  "files_written": [
+    "compute_table_tag-m4.json",
+    "endpoint-C1_tag-m4.json",
+    "endpoint-C2_tag-m4.json",
+    "endpoint-C3_tag-m4.json",
+    "endpoint-C4_tag-m4.json",
+    "endpoint-anchor_tag-m4.json",
+    "env.txt",
+    "env_check_tag-m4.json",
+    "env_pip_freeze.txt",
+    "onbox_m4.log",
+    "process_groups.json",
+    "run_m4.stderr.log",
+    "run_m4.stdout.log"
+  ]
+}
