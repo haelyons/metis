@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# PER-LAUNCH COPY for m4 (2026-10-21), made from frozen/lambda_run.sh while no box runs. Adapted ONLY at
+# PER-LAUNCH COPY for m4 (2026-10-23), made from frozen/lambda_run.sh while no box runs. Adapted ONLY at
 # the points the frozen header declares: remote dir welfare_probe -> m4_run; scp payload -> m4 files; forwarded
 # env + PRICE_USD_PER_HOUR BUDGET_LEFT_USD INSTANCE_TYPE; remote bootstrap renamed remote_run_m4.sh; fetch paths follow
 # results_m4/. data/ shipped recursively if present. REMOTE_TIMEOUT, ENV_FS, ENV_TAG, HOLD_SECONDS, ENV_DIR, ENV_LOCK_SHA256 forwarded to the box (declared point 4, additive). REMOTE_TIMEOUT default 5400 -> 7200 (gate ruling, declared point: caps). Fetch (declared point: fetch paths): results_<tag>/out/*summary*.json and results_<tag>/out/RUN_VALID.json first, then the whole results_<tag>/out/ directory (the criticals-first ordering of the original). Filesystem metis-env-us-east-1 attached at launch (file_system_names; declared point: launch payload). Billing-safety mechanisms byte-identical.
@@ -113,10 +113,10 @@ for i in $(seq 1 24); do ssh $SSHOPT ubuntu@$IP true 2>/dev/null && { echo "[ssh
 # that never accepts SSH otherwise bleeds billing for the full marker deadline (2026-06-28 orphan, ~3h).
 [ "$SSHUP" = 0 ] && { echo "[ssh] sshd NEVER came up -> unhealthy box; aborting + tearing down"; exit 1; }
 
-# m4 payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), the author's tests file, data/ if present
+# m4 payload: runner, on-box batch, adapted remote bootstrap, record writer (frozen/), data/ if present (the author's tests run locally, not on the box: gate addendum 20)
 echo "[scp] code -> box"
 ssh $SSHOPT ubuntu@$IP "mkdir -p m4_run/out m4_run/frozen m4_run/results_m4/out"
-scp $SSHOPT run_m4.py remote_run_m4.sh "$RUNNER" ubuntu@$IP:m4_run/; [ -f tests/tests_m4.py ] && { ssh $SSHOPT ubuntu@$IP "mkdir -p m4_run/tests"; scp $SSHOPT tests/tests_m4.py ubuntu@$IP:m4_run/; scp $SSHOPT tests/tests_m4.py ubuntu@$IP:m4_run/tests/; }
+scp $SSHOPT run_m4.py remote_run_m4.sh "$RUNNER" ubuntu@$IP:m4_run/;
 scp $SSHOPT frozen/provenance.py ubuntu@$IP:m4_run/frozen/
 [ -d data ] && scp -r $SSHOPT data ubuntu@$IP:m4_run/
 # CRLF guard: a Windows-checkout (autocrlf) CRLF script shipped raw kills the on-box run at

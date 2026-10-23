@@ -1,0 +1,5 @@
+Operator's mechanical findings for build 31 (no model; counts and names only):
+1. Build 31 is a review-fix build for the 2 BLOCKING findings of out/review_build30.md. OpenCode timed out on both steps; the Claude understudies did the work (sonnet for the gate check, opus for the build). The build reports 1 FIX line.
+2. Local tests: tests/tests_m4.py, 46 of 46 PASS on this build's files (out/tests_local_build31.log). No new file appeared in the run dir.
+3. Still open from build 30: run_m4.py reads M4_BASE, which the launcher does not forward and onbox_m4.sh does not set at top level. Verify it has a safe default that keeps every output under results_m4/out or a work directory inside the run dir.
+4. Payload: run_m4.py, onbox_m4.sh, remote_run_m4.sh and frozen/provenance.py. There is no data/ directory, and the tests are not shipped.

@@ -317,3 +317,11 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 00:25Z found in the run dir: data/ (28 files, 11 GB, written 18:25Z on 2026-10-22, while the tests author was running) and work_m4/ (180 files, same minute, the runner's default work dir); neither is part of the design, and the launcher would have shipped data/ to the box. Both moved out to ~/.cache/blind01/moved_20261023/ (not deleted). The build checks had counted them ('other files touched in the run dir: 2') and I missed it; the launch preflight now refuses a data/ over 100 MB.
 - 00:31Z stage build on wf.js run 29: flags [--family opencode], pid 928696
 - 00:31Z local tests on build 30 re-run without data/ and work_m4/: 46 of 46 PASS (325 s); nothing new written into the run dir. Review 17 of build 30 (sonnet): FAIL, 2 blocking, 3 advisory. Review-fix build 31 started on OpenCode (blocking findings only).
+- 03:08Z build 31 checks: local tests exit 0
+- 03:14Z build 31 checks: local tests exit 0
+- 03:14Z review 18 of build 31 requested
+- 03:14Z stage review on wf.js run 15: flags [--family claude], pid 1153402
+- 03:14Z build 31 (review-fix; OpenCode timed out on both steps; sonnet then opus understudies; ~2 h 40 min wall): 1 FIX line; local tests 46 of 46 PASS; nothing new in the run dir. Review 18 of build 31 started (sonnet).
+- 03:14Z launcher copies written from m3's (declared points only); filesystem metis-env-us-east-1 attached
+- 03:22Z LAUNCH 11: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1165625, log out/launcher_m4_L11.log
+- 03:22Z review 18 of build 31: PASS, 0 blocking, 4 advisory. Launcher regenerated (no tests payload, filesystem attached). LAUNCH 11 issued: A100 SXM4 us-east-1, USD 1.99/h, REMOTE_TIMEOUT 7200, BUDGET_LEFT_USD 5, HOLD_SECONDS 2400; pre-launch local tests 46 of 46; cap USD 50, USD 6.68 spent.

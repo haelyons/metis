@@ -3187,10 +3187,17 @@ def stage_capability(state: RunState) -> dict:
             "ENV_LOCK_SHA256 must be 64 hexadecimal characters and has no "
             f"default; it was {state.expected_lock_sha256!r}", kind="env_lock")
     if state.expected_lock_sha256 != state.observed_lock_sha256:
-        raise HarnessFailure(
-            "the environment lock does not match",
-            f"expected {state.expected_lock_sha256}, observed "
-            f"{state.observed_lock_sha256}", kind="env_lock")
+        # A repair on the box changes the package list, so the hash differs on
+        # purpose. The shell says so, and then the difference is recorded and
+        # labelled, not fatal. Any other difference stops the run.
+        if state.environment_changed_by_fixer:
+            log["lock_mismatch_after_fixer"] = (
+                LABEL_FIXER_CHANGED_ENV % (state.observed_lock_sha256 or "unknown"))
+        else:
+            raise HarnessFailure(
+                "the environment lock does not match",
+                f"expected {state.expected_lock_sha256}, observed "
+                f"{state.observed_lock_sha256}", kind="env_lock")
     step = make_setup_step(state, allowance, log, "capability")
     capability = smoke_check(state, step, None)
     if not state.gpu_visible:
