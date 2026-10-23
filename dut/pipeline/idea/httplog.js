@@ -12,7 +12,7 @@ const SECRET = /^(authorization|x-api-key|x-opencode-org-id|cookie|set-cookie)$/
 const ORG = /org_[A-Z0-9]{20,}/g   // account workspace ids appear in error bodies
 const redact = h => Object.fromEntries(Object.entries(h).map(([k, v]) => [k, SECRET.test(k) ? '[redacted]' : v]))
 
-function start(dir) {
+function start(dir, onLimit) {   // onLimit(msg): called once when the provider answers that the plan's usage limit is spent
   fs.mkdirSync(dir, { recursive: true })
   let n = 0
   const server = http.createServer((req, res) => {
@@ -31,7 +31,7 @@ function start(dir) {
       const up = https.request({ host: UPSTREAM, method: req.method, path: p, headers }, r => {
         out.write(`HTTP ${r.statusCode}\n${JSON.stringify(redact(r.headers))}\n\n`)
         res.writeHead(r.statusCode, r.headers)
-        r.on('data', c => { out.write(String(c).replace(ORG, 'org_[redacted]')); res.write(c) })
+        r.on('data', c => { out.write(String(c).replace(ORG, 'org_[redacted]')); res.write(c); if (r.statusCode === 429 && onLimit && /usage limit/i.test(String(c))) onLimit('runner error: usage limit exceeded (HTTP 429)') })
         r.on('end', () => { out.end(); res.end() })
       })
       up.on('error', e => { out.end(`proxy error: ${e.message}\n`); if (!res.headersSent) res.writeHead(502); res.end() })

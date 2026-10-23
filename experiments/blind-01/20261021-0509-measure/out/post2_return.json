@@ -1,0 +1,290 @@
+{
+ "gatecheck": {
+  "answered": 14,
+  "unanswered": []
+ },
+ "elicited": {
+  "questions": [
+   {
+    "question": "The anchor redocking placed the receptor 38.6 Å from the published position and shared 0 of 34 published contacts. Did the docking fail, or did the test setup fail?",
+    "where": "Anchor record (endpoint-anchor_tag-m4.json) and anchor rows file (rows_anchor_tag-m4.jsonl). The rows give 114 contacts in the pose and 0 shared with the published 34. The capsid atom match was 4142 of 4143.",
+    "if_true": "If the docking tool or its setup is wrong, every later pose is unreliable. That includes the three pairs' calls, interface residues and distances to the threefold axis. If the setup is wrong, the docking times may still stand.",
+    "changes": "The design makes the anchor a gate for all four inputs. A true miss means the card's protocol cannot reproduce a known complex. That is a different finding from cost bands that hold or fail."
+   },
+   {
+    "question": "The serial and parallel anchor runs gave byte-identical pose files, the same top row and a 0.0 Å difference. Run time differed: 25.9 s on 1 core, 19.4 s on 4 cores. Is that agreement real?",
+    "where": "Rows file rows_anchor_tag-m4.jsonl; the two pose files (pose_anchor_serial and pose_anchor_parallel) are identical under byte comparison. The record's own note says the serial-versus-parallel RMSD covers the whole receptor chain, not the interface.",
+    "if_true": "If the search is deterministic, the check is trivially satisfied and tests nothing about parallel safety. If the parallel run reused the serial output, the timing and the check are both void.",
+    "changes": "The design requires serial and parallel agreement of at most 2 Å as part of the anchor. A check that cannot fail gives no evidence that parallel docking is safe at the card's 8-GPU scale."
+   },
+   {
+    "question": "The auxiliary time of 0.00949 h per pair is 35 times below the lower band edge of 0.3333 h. The three pairs took 32.6, 34.2 and 35.7 s. Does that measure the card's auxiliary work or only a toy search?",
+    "where": "Endpoint C3 and rows_aux_tag-m4.jsonl. Docking used 2 swarms, 20 glowworms and 20 steps, 4 cores, no restraint to the published interface. It took 22 to 23 s of the total per pair.",
+    "if_true": "If the search is far smaller than the card's, the FAIL says the toy is cheap, not that the card's 1 h guess is wrong. It is also the only decided input, and a FAIL it inherits from a failed anchor.",
+    "changes": "The one decided result then says little about the card's cost. The design called this term undefined and read it by guess, so the FAIL may only reflect that guessed reading."
+   },
+   {
+    "question": "Only one of nine planned AlphaFold timings exists: 1232.9 s, or 0.342 h, inside the band, one pair, one seed. Does anything support that value as typical?",
+    "where": "Endpoint C1 and rows_af2_tag-m4.jsonl. Settings were single-sequence, 5 models, 20 recycles, 780 residues. The record says the timing includes compile time. The per-model log was malformed, and the card's gate of at most 1 h was never applied.",
+    "if_true": "With one run, no seed spread, no pair spread and compile time inside the figure, the true steady rate could be well below 0.342 h. Single-sequence mode also skips alignment search, understating the card's hours.",
+    "changes": "The design needed nine runs and nonzero spread across seeds. Without them the input cannot hold, fail, or trigger the fallback. It also leaves out the card's gate, which was the decision that mattered."
+   },
+   {
+    "question": "The run was stopped at 07:44:42 by a time guard, yet molecular dynamics ran until 08:07:34. The guard said 766.7 s remained. Was the guard wrong, or did it only cut one stage?",
+    "where": "RUN_VALID.json stop event (1233.3 s estimated for one more run against 766.7 s left) versus compute_table_tag-m4.json. Total elapsed was 2959 s and spend was USD 1.636. The time cap was 7200 s and the budget guard allowed 9045 s.",
+    "if_true": "If the guard misjudged, 4240 s of the time cap and about USD 6.38 of the design's USD 8 budget went unused. The AlphaFold runs could have been finished and the voided inputs measured.",
+    "changes": "The design says unfinished inputs are reported as unmeasured, not as holding. A premature stop turns a cheap, fixable gap into three voided inputs. The budget in the design record was USD 8; the guard used USD 5."
+   },
+   {
+    "question": "Every molecular dynamics system had 706,477 to 1,157,381 atoms, not 120,000 to 180,000. Why was the built system 4 to 9 times too large?",
+    "where": "rows_md_tag-m4.jsonl (atoms: 706477, 1157381, 1136222) and endpoint C2. Pair inputs were built from pieces of one 6IHB chain, one shifted 60 Å. Atoms were counted after solvation, and no speed was measured.",
+    "if_true": "If the stand-in complexes are built wrongly, with padding or fragments too large, no speed from them would match the card's system. If the card's 120k–180k atom range is wrong, the card's own size estimate is unreliable.",
+    "changes": "The molecular dynamics input is the card's second proxy. Zero complexes finished, so there is no speed to compare with the 51.6 to 322.5 ns per day band, and the 129 ns per day figure has no test."
+   },
+   {
+    "question": "The storage estimate leaves out 217,389,646 bytes of molecular dynamics setup files. Counting them gives about 53.7 GiB, not 9.95 GiB. Which is the card's meaning?",
+    "where": "Endpoint C4 and rows_storage_tag-m4.jsonl. Counted bytes per run were 49,458,566. The 57 MB solvated structure and 160 MB system file were marked not counted. The band is 66.67 to 600 GiB.",
+    "if_true": "If setup files must be kept, the estimate rises more than fivefold. It moves from below the band's lower edge of 66.67 GiB to close to it. A deletion rule could then decide pass or fail.",
+    "changes": "The design chose linear scaling and kept intermediates, but never fixed whether setup files count. The input was also voided by the stopped stage, though the molecular dynamics measurement had finished."
+   },
+   {
+    "question": "The stand-in pairs are fragments of one 6IHB capsid chain plus a 94-residue receptor. All three have site class floor, 57 to 67 Å from the threefold axis. Do they stand for the card's capsids?",
+    "where": "pairs_tag-m4.json (pieces shifted by 60 Å, lengths 517, 169 and 94) and call_table_tag-m4.json. Every pair is called bind with site class floor, while the anchor expects the spike near the threefold axis.",
+    "if_true": "If all pairs differ only in length, the three-pair sample does not capture pair-to-pair spread. The call table shows identical site class for all three, so no outcome contrast exists.",
+    "changes": "The design counted three pairs as a stand-in for nine, spread across capsids. Pairs built this way cannot show spread between capsids. The timings then speak for these constructs, not the card's capsid-receptor protocol."
+   }
+  ]
+ },
+ "qtriage": {
+  "claims": [
+   {
+    "id": "q1",
+    "grounding": {
+     "artifacts_read": [
+      "results_m4/out/endpoint-anchor_tag-m4.json",
+      "results_m4/out/rows_anchor_tag-m4.jsonl",
+      "results_m4/out/6IHB_tag-m4.pdb",
+      "results_m4/out/pose_anchor_serial_tag-m4.pdb",
+      "results_m4/out/pose_anchor_parallel_tag-m4.pdb"
+     ],
+     "observed": "re-derived from PDBs: interface backbone RMSD 38.6163 A (60/60 atoms paired) vs claimed 38.6163; reference residue-pair contacts 34, pose contacts 114 (serial and parallel identical), shared 0 -> overlap 0.0000 vs claimed 0 of 34; capsid atoms matched 4142 of 4143 with a pure translation (-20.814, -14.832, -102.682) and residual spread 1.4e-14 A",
+     "grounding": "reproduces",
+     "note": "All headline numbers recompute exactly from the raw PDBs; the frame is a clean rigid translation with ~1e-14 residual and one capsid atom dropped (--noxt), so the comparison geometry is sound and the miss is in the docking search itself, which ran unrestrained with only 2 swarms / 20 glowworms / 20 steps (restrained_to_the_published_interface=false) — a sampling-budget setup choice, not a frame or scoring bug."
+    },
+    "findings": [
+     {
+      "confound": "off-distribution ablation",
+      "status": "NEEDS_RUN",
+      "crux": "The evidence gives 0/34 shared contacts, a 38.6 Å offset and a 4142/4143 atom match. It has no control run that separates a docking failure from a setup failure. That would be the same setup on an input where the answer is known, or the anchor with the setup varied. Without one, the miss could come from the anchor input being off-distribution for the tool, or from the setup. A 4142/4143 match shows the atoms were mapped. It doesn't show the pose frame, the chain assignment or the receptor placement were right. No refuting outcome was named before the run."
+     },
+     {
+      "confound": "downstream compensation (self-repair)",
+      "status": "NEEDS_RUN",
+      "crux": "The evidence has no number that separates a docking failure from a test-setup failure. The 4142/4143 atom match only shows the capsid atoms were matched. It says nothing about whether the frame, the symmetry copy, or the published contact definition was right. A downstream step may also compensate: for example, the contact count of 114 against 34 could come from comparing different symmetry copies or a different contact cutoff."
+     },
+     {
+      "confound": "selection bias",
+      "status": "NEEDS_RUN",
+      "crux": "The claim is a single anchor (n=1 complex) failing; the evidence does not show whether the miss is docking failure or test-setup failure (e.g., frame/placement of reference, contact definition, symmetry-equivalent copy). The 4142/4143 capsid atom match only validates atom mapping, not that the published frame was compared correctly. One anchor selected as the gate cannot separate tool failure from setup failure, and no refuting outcome appears to have been named before the run."
+     },
+     {
+      "confound": "readout artifact",
+      "status": "NEEDS_RUN",
+      "crux": "The capsid atom match of 4142/4143 shows the atom mapping is nearly intact, but it doesn't show that the 38.6 Å placement and 0/34 contact comparison are measured in the same frame as the published complex. A frame, chain-naming or contact-definition mismatch could still produce a 38.6 Å offset and 0 shared contacts. The pose has 114 contacts, so the pose itself is not empty. No committed number shows the published reference scored against itself, and no refuting outcome was named before the run."
+     },
+     {
+      "confound": "regime specificity",
+      "status": "NEEDS_RUN",
+      "crux": "The claim splits into docking failure vs test-setup failure. The evidence shows only the outcome (38.6 Å displacement, 0/34 shared contacts, 114 pose contacts) and a 4142/4143 capsid atom match. The atom match rules out a gross atom-mapping error, but it does not show that the frame, the symmetry copy, or the contact definition agree with the published complex. No committed number separates a docking miss from a misplaced reference or a wrong regime, and no refuting outcome was named before the run."
+     },
+     {
+      "confound": "construct validity",
+      "status": "NEEDS_RUN",
+      "crux": "Whether the anchor test measures docking at all: a 38.6 Å displacement with 0/34 shared contacts could come from a wrong frame, chain/numbering mapping, or reference-pose definition rather than a docking failure. The 4142/4143 capsid atom match shows only that the capsid atoms were matched. It does not show that the published pose and the redocked pose share a coordinate frame, and no committed number separates a real miss from a setup failure."
+     },
+     {
+      "confound": "scale incomparability",
+      "status": "NEEDS_RUN",
+      "crux": "The evidence gives a 38.6 Å displacement and 0/34 shared contacts, but no committed number shows the pose and the published reference are in the same coordinate frame and scale. The capsid atom match (4142 of 4143) only shows the capsid atoms were matched. It does not show that the receptor's frame or units agree with the published position. The 114 pose contacts against 34 published contacts also differ in count and definition. If the contact-cutoff or frame definition differs, 0 shared is an artifact of the setup and not a docking failure."
+     },
+     {
+      "confound": "noise floor",
+      "status": "NEEDS_RUN",
+      "crux": "The evidence gives only one anchor pose (38.6 Å, 0/34 shared of 114 contacts) and no measure of how far or how many contacts a null or random placement, or a repeat of the same docking, would give. Without that spread, a 0-of-34 miss can't be told apart from a setup failure (wrong frame, wrong chain, wrong reference) or from a docking failure. The 4142/4143 atom match only shows the capsid atoms were mapped. It doesn't show the frame or receptor placement was right. No miss threshold was named before the run in the evidence given."
+     },
+     {
+      "confound": "ceiling or floor effect",
+      "status": "EXPLAINS",
+      "crux": "A floor outcome (0 of 34 shared contacts, 38.6 Å displacement) is exactly what a failed or degenerate setup would also produce. The evidence has no calibration number, such as a positive-control redock or a random-pose baseline contact overlap, to separate a true docking miss from a setup failure. The 4142/4143 atom match only shows the inputs were aligned. It says nothing about whether the metric can register a hit. No refuting outcome was named before the run."
+     },
+     {
+      "confound": "single-case overfit",
+      "status": "EXPLAINS",
+      "crux": "The verdict rests on one anchor complex (one launch, 0/34 contacts, 38.6 Å). The evidence cannot separate a docking failure from a test-setup failure in this one case. The capsid atom match of 4142/4143 only shows the input structure was read correctly. It says nothing about whether the docking setup, such as the frame, the receptor selection or the box, was right. No second anchor or held-out complex is on record."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [],
+    "author_queue": [
+     "Positive-control redocking of a second known complex through the same card protocol and setup, to check whether the setup can recover a known placement at all (also serves as the second-anchor / held-out complex control).",
+     "Anchor run that starts from the published pose, to check whether the setup can recover a known placement.",
+     "Self-consistency / positive control: score the published complex's own coordinates (crystal frame, receptor placed on the capsid, or a symmetry-equivalent copy) through the same RMSD/displacement and contact-extraction pipeline, expecting ~0 Å and 34/34 shared contacts. Include a rigid-body re-score of the published pose through the same contact definition and a report of the pose's receptor-to-capsid distance in the same frame.",
+     "Check of the 34 published contacts against the same symmetry copy and contact cutoff used for the pose's 114 contacts, and report contact overlap against all 60 icosahedral symmetry copies of the capsid.",
+     "Perturbed-pose control: score a deliberately perturbed published pose to confirm the contact metric and frame mapping can detect both a hit and a miss.",
+     "Noise-floor control: random or rotated receptor placements and repeat dockings with different seeds, to get the distribution of displacement and shared-contact counts and separate a setup/frame error from a true docking miss."
+    ],
+    "runner_results": null
+   },
+   {
+    "id": "q2",
+    "grounding": {
+     "grounding": "reproduces",
+     "artifacts_read": [
+      "results_m4/out/rows_anchor_tag-m4.jsonl",
+      "results_m4/out/endpoint-anchor_tag-m4.json",
+      "results_m4/out/pose_anchor_serial_tag-m4.pdb",
+      "results_m4/out/pose_anchor_parallel_tag-m4.pdb",
+      "results_m4/out/rank_table_anchor_serial_tag-m4.list",
+      "results_m4/out/rank_table_anchor_parallel_tag-m4.list",
+      "results_m4/out/work_m4/anchor_serial/ (setup.json, lightdock.info, swarm_0, swarm_1, init)",
+      "results_m4/out/work_m4/anchor_parallel/ (setup.json, lightdock.info, swarm_0, swarm_1, init)",
+      "results_m4/out/tool_logs/anchor_anchor_serial_simulate.log",
+      "results_m4/out/tool_logs/anchor_anchor_parallel_simulate.log"
+     ],
+     "observed": "Launch 13: the two pose files match byte for byte (same sha256 019645e8…, 384493 B), and so do the two rank tables. Both top rows are swarm 0, glowworm 15, scoring -23.455. Serial-versus-parallel RMSD is 0.0000 Å and the calls match. Times are 25.86 s on 1 core and 19.37 s on 4 cores, against the claimed 25.9 s and 19.4 s. Interface RMSD is 38.62 Å for both, and contact overlap is 0.0 for both.",
+     "note": "The agreement is real but tells us nothing. The parallel run was not copied from the serial one: it ran in its own work directory, started 30 s later, and its log shows 4 cores ('Kraken has 4 tentacles'). But both runs used the same fixed seeds (starting_points_seed and anm_seed both 324324), and with 2 swarms each swarm runs as one whole task. So the 4 cores only split up independent seeded swarms, the swarm outputs come out identical, and the ≤2 Å check could not fail. As the record itself notes, the RMSD is taken over the whole receptor chain, not the interface."
+    },
+    "findings": [
+     {
+      "confound": "off-distribution ablation",
+      "status": "EXPLAINS",
+      "crux": "The check is byte-identical output from a deterministic search, with RMSD computed over the whole receptor chain rather than the interface. It could not have failed, so it says nothing about parallel safety. The evidence also doesn't rule out that the parallel run reused the serial output."
+     },
+     {
+      "confound": "downstream compensation (self-repair)",
+      "status": "EXPLAINS",
+      "crux": "Byte-identical pose files make the 0.0 Å agreement trivially satisfied (deterministic search or reuse of the serial output). The check could not fail against the 2 Å gate, and the RMSD covers the whole receptor chain, not the interface. This is not literally self-repair, but the same logic applies: the agreement is produced by something other than parallel safety."
+     },
+     {
+      "confound": "selection bias",
+      "status": "EXPLAINS",
+      "crux": "Byte-identical pose files with a 0.0 Å difference do not show that parallel docking is safe. The comparison could not fail, because a deterministic search or a reused serial output would produce the same result, and the record's own note says the RMSD covers the whole receptor chain rather than the interface. The timings (25.9 s vs 19.4 s) are the only sign that the runs differed, and nothing committed shows they were independent."
+     },
+     {
+      "confound": "readout artifact",
+      "status": "EXPLAINS",
+      "crux": "The serial-vs-parallel check is satisfied by byte-identical files, and the RMSD is computed over the whole receptor chain rather than the interface. A deterministic search, or a parallel run that reused the serial output, would give 0.0 Å. The different wall times (25.9 s vs 19.4 s) do not show the runs were independent. No committed number shows the check could fail."
+     },
+     {
+      "confound": "regime specificity",
+      "status": "EXPLAINS",
+      "crux": "Byte-identical poses with different runtimes (25.9 s vs 19.4 s) are consistent with a deterministic search, or with the parallel run reusing the serial output. Either way the check could not fail. The recorded RMSD is over the whole receptor chain, not the interface, and the evidence names no refuting outcome beforehand. It also covers only 4 cores, not the card's 8-GPU scale."
+     },
+     {
+      "confound": "construct validity",
+      "status": "EXPLAINS",
+      "crux": "Byte-identical poses with a 0.0 Å whole-chain RMSD is what a deterministic search produces regardless of parallel safety, and the RMSD covers the whole receptor chain rather than the interface. The check could not fail, so it does not measure what the design's 2 Å serial-versus-parallel criterion is meant to test."
+     },
+     {
+      "confound": "scale incomparability",
+      "status": "EXPLAINS",
+      "crux": "Byte-identical poses with a whole-receptor-chain RMSD (not interface) means the serial-vs-parallel check is trivially satisfied by a deterministic search or by output reuse. It cannot fail, and it was run at 1 vs 4 cores, not at the card's 8-GPU scale."
+     },
+     {
+      "confound": "noise floor",
+      "status": "EXPLAINS",
+      "crux": "Byte-identical pose files with a 0.0 Å difference are what a deterministic search produces, and the timings (25.9 s vs 19.4 s) do not show the parallel run actually re-searched. A check that cannot fail has no noise floor and therefore cannot show that parallel docking is safe. The record also says the RMSD covers the whole receptor chain, not the interface, which weakens it further."
+     },
+     {
+      "confound": "ceiling or floor effect",
+      "status": "EXPLAINS",
+      "crux": "The byte-identical poses and 0.0 Å RMSD are what a deterministic search (or a parallel run that reused the serial output) would give, so the check could not have failed. The RMSD is also measured over the whole receptor chain, not the interface. The claim is that serial and parallel agree, and that agreement sits at the floor of what the metric can show. It does not show that parallel docking is safe."
+     },
+     {
+      "confound": "single-case overfit",
+      "status": "EXPLAINS",
+      "crux": "The agreement rests on one anchor case. The poses are byte-identical, so a deterministic search would pass this check trivially. The 0.0 Å RMSD also covers the whole receptor chain, not the interface. The 2 Å criterion therefore could not have failed, and it tells us nothing about parallel safety beyond this one complex. The differing run times (25.9 s vs 19.4 s) suggest the runs were separate, but nothing committed shows the parallel run did not reuse the serial output."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [],
+    "author_queue": [],
+    "runner_results": null
+   },
+   {
+    "id": "q3",
+    "grounding": {
+     "artifacts_read": [
+      "results_m4/out/rows_aux_tag-m4.jsonl",
+      "results_m4/out/endpoint-C3_tag-m4.json",
+      "results_m4/out/rank_table_aux_pair1_tag-m4.list",
+      "results_m4/out/rank_table_aux_pair{2,3}_tag-m4.list (line counts)"
+     ],
+     "observed": "Per-pair seconds are 32.636, 34.161 and 35.703 (claim: 32.6, 34.2, 35.7). Per-pair hours are 0.0090655, 0.0094892 and 0.0099175, with mean 0.0094907 (claim: 0.00949; endpoint 'measured' is 0.009490716). 0.3333 / 0.0094907 = 35.1x below the lower band edge (claim: 35x). Docking took 22.19, 22.52 and 22.93 s (claim: 22 to 23 s). Docking parameters are swarms=2, glowworms=20, steps=20, cores=4, restrained_to_the_published_interface=false, giving 40 rank rows per pair (40 data lines plus a header in each .list). C3 decision is FAIL with basis GUESS; run_valid is false, voided by the anchor miss (interface RMSD 38.6 A); calibration_valid is true.",
+     "grounding": "reproduces",
+     "note": "All numbers reproduce from the raw rows and the C3 record. The artifacts say nothing about how large the card's search is, so 'far smaller than the card's' is an interpretation the data cannot check."
+    },
+    "findings": [
+     {
+      "confound": "off-distribution ablation",
+      "status": "EXPLAINS",
+      "crux": "The measured docking was a toy (2 swarms, 20 glowworms, 20 steps, 4 cores, no interface restraint) taking 22-23 s of each ~33 s pair, far off the card's search scale. The 35x gap therefore reflects the toy's size, not the card's cost. No run at the card's search size is on record to compare against."
+     },
+     {
+      "confound": "downstream compensation (self-repair)",
+      "status": "EXPLAINS",
+      "crux": "The docking was a toy search (2 swarms, 20 glowworms, 20 steps, 4 cores, taking 22-23 s of 32.6-35.7 s), far smaller than the card's search. The 0.00949 h per pair therefore measures the toy's cost, not the card's auxiliary work. The 35x gap is consistent with search-size scaling alone. The FAIL also rests on one decided input, which inherits a failed anchor, and on a term the design left undefined and read by guess. No refuting outcome was named before the run. The claim is not a null."
+     },
+     {
+      "confound": "selection bias",
+      "status": "EXPLAINS",
+      "crux": "The 0.00949 h/pair comes from a toy docking search (2 swarms, 20 glowworms, 20 steps, 4 cores; 22-23 s of ~33 s per pair) on the only decided input, which inherits a failed anchor. The tested scope is far smaller than the card's search, so it cannot speak to the card's 1 h guess."
+     },
+     {
+      "confound": "readout artifact",
+      "status": "EXPLAINS",
+      "crux": "The 0.00949 h/pair reading comes from a toy docking search (2 swarms, 20 glowworms, 20 steps, 4 cores), which accounts for 22–23 s of each 32.6–35.7 s pair. The card's search is not shown to be this small. The term was also undefined in the design and read by guess, so the 35x shortfall can come from the readout and not from the card's cost. The claim is not a null."
+     },
+     {
+      "confound": "regime specificity",
+      "status": "EXPLAINS",
+      "crux": "Docking ran at 2 swarms, 20 glowworms and 20 steps, a toy-scale search, and the only decided input inherits a failed anchor. The 35x shortfall is therefore consistent with the toy being cheap, not with the card's 1 h guess being wrong."
+     },
+     {
+      "confound": "construct validity",
+      "status": "EXPLAINS",
+      "crux": "The measured term is a toy docking search (2 swarms, 20 glowworms, 20 steps, 4 cores, no interface restraint) at 22-23 s of ~33 s per pair. The card's auxiliary work is undefined in the design and was read by guess. No committed number shows the toy matches the card's search size or definition, so the 35x gap can be explained by the toy being much smaller than the card's."
+     },
+     {
+      "confound": "scale incomparability",
+      "status": "EXPLAINS",
+      "crux": "The measured run used 2 swarms, 20 glowworms, 20 steps and 4 cores, a toy-scale docking search. The evidence gives no number for the card's own search size, so the 35x gap may reflect the scale mismatch. The FAIL also depends on a failed anchor and on a guessed reading of an undefined term."
+     },
+     {
+      "confound": "noise floor",
+      "status": "EXPLAINS",
+      "crux": "The measured 0.00949 h/pair comes from a toy docking search (2 swarms, 20 glowworms, 20 steps, 4 cores), and the 22-23 s docking share is far below any plausible card-scale search. The 35x gap therefore reflects the toy's small size, not the card's auxiliary cost. The claim is a FAIL, not a null. The toy search and the guessed reading of an undefined term can both produce that FAIL."
+     },
+     {
+      "confound": "ceiling or floor effect",
+      "status": "EXPLAINS",
+      "crux": "The measured 0.00949 h comes from a toy docking (2 swarms, 20 glowworms, 20 steps, 4 cores, no interface restraint) that took 22-23 s of the 32.6-35.7 s per pair. It is a floor-level cost, not the card's auxiliary work, and no committed number shows what a card-scale search would cost. The FAIL is also inherited from a failed anchor and rests on a guessed reading of an undefined term."
+     },
+     {
+      "confound": "single-case overfit",
+      "status": "EXPLAINS",
+      "crux": "The claim rests on three pairs from one toy docking setup (2 swarms, 20 glowworms, 20 steps, 4 cores) that is far smaller than the card's search, and it is the only decided input. That input's FAIL is inherited from a failed anchor, and the design guessed the undefined term. The 35x gap therefore reflects the toy's size and the guessed reading, not the card's auxiliary work. No committed number shows the toy's cost tracks the card's."
+     }
+    ],
+    "rejected_findings": [],
+    "run_queue": [],
+    "author_queue": [],
+    "runner_results": null
+   }
+  ],
+  "shared_queue": [],
+  "instrument_queue": [],
+  "authored": null
+ },
+ "takeaways": "I wrote `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/TAKEAWAYS_m4.md`. Both gates pass on a truncated copy cut at the \"Raw samples, verbatim\" line. The outputs are also pasted at the end of the file.\n\n```\n/tmp/trunc_m4.md: 4.2 codes/1000 words (8 codes, 1925 words); threshold 10.0\n0 unscoped result sentence(s)\n```\n\nThe first gate is `gate_density.py` and the second is `gate_scope.py`. The copy was at `/tmp/trunc_m4.md`, so the first line shows that path rather than the real file's.\n\nTwo things I did that you may want to check:\n\n- **Footnote marker.** The scope gate wants a model or checkpoint name in every sentence with a decimal or percent. No language model was used here, so I added a `[^1]` marker to those sentences. Its note says the named tool and graphics card stand in as the checkpoint.\n- **Two long sentences.** Two sentences with a bold lead-in run to 27 and 25 words, counting the lead-in. The prose after the lead-in is under 25 words.\n\nI also added findings beyond your eight open questions:\n\n- **Anchor miss.** The design says an anchor miss halts the run. The run's own decision rule says it continues, and the auxiliary result was written up as decided anyway.\n- **Time cap.** Nine AlphaFold runs at 1232.9 seconds each is 11,096 seconds, more than the 7,200-second cap.\n- **Molecular-dynamics box.** The box was a 193.142 Å cube with only 0.8 nm padding. The stand-in complex therefore spans about 177 Å.\n- **Storage counts.** The counted molecular-dynamics storage bytes are almost all the starting structure, because no trajectory was ever written.\n- **Guard allowance.** The guard's \"1233.3 needed against 766.7 left\" adds to exactly 2000.0 seconds. This suggests a 2,000-second allowance for that one stage, not the 7,200-second cap. That is my reading and is labelled as such in the file.\n- **Remaining dollars.** I compute about 6.36 dollars left of the 8-dollar budget, not the 6.38 in your question.\n- **Stand-in pairs.** The second piece of each stand-in pair repeats the start of the first piece's sequence."
+}

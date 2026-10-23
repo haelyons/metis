@@ -10,12 +10,14 @@ const OCX = path.join(__dirname, 'ocx')
 // httpLogDir: route OpenCode Go traffic through a logging proxy for this call (httplog.js)
 async function run(o) {
   if (!o.httpLogDir || !o.model.startsWith('opencode-go/')) return runOnce(o)
-  const proxy = await require('./httplog.js').start(o.httpLogDir)
+  // a spent usage limit (HTTP 429) stops the call at once instead of letting OpenCode retry until the timeout
+  let stop = null
+  const proxy = await require('./httplog.js').start(o.httpLogDir, msg => { if (stop) { stop(msg); stop = null } })
   const extra = JSON.stringify({ provider: { 'opencode-go': { options: { baseURL: proxy.baseURL } } } })
-  try { return await runOnce({ ...o, env: { OPENCODE_CONFIG_CONTENT: extra } }) } finally { await proxy.close() }
+  try { return await runOnce({ ...o, env: { OPENCODE_CONFIG_CONTENT: extra }, onStop: f => { stop = f } }) } finally { await proxy.close() }
 }
 
-function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, title }) {
+function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, title, onStop }) {
   return new Promise(resolve => {
     const args = ['run', '--pure', '--format', 'json', '-m', model, '--agent', agent]
     if (session) args.push('--session', session)
@@ -56,6 +58,7 @@ function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, 
     child.stdout.on('data', d => { buf += d; let i; while ((i = buf.indexOf('\n')) >= 0) { onLine(buf.slice(0, i)); buf = buf.slice(i + 1) } })
     child.stderr.on('data', d => { err += d; if (err.length > 20000) err = err.slice(-20000) })
     const timer = setTimeout(() => { errors.push(`timeout after ${Math.round(timeoutMs / 60000)} min`); child.kill('SIGTERM'); setTimeout(() => child.kill('SIGKILL'), 5000) }, timeoutMs)
+    onStop && onStop(msg => { errors.unshift(msg); child.kill('SIGTERM'); setTimeout(() => child.kill('SIGKILL'), 5000) })
     child.on('close', code => {
       clearTimeout(timer)
       onLine(buf)
