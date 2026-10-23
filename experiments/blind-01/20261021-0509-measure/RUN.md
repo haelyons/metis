@@ -352,3 +352,6 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 07:05Z build 34 (test-fix, Claude): 1 FIX line; local tests 50 of 50 PASS. Review 20 of build 34 started (sonnet).
 - 07:13Z LAUNCH 13: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1495311, log out/launcher_m4_L13.log
 - 07:13Z review 20 of build 34: PASS, 0 blocking, 6 advisory. LAUNCH 13 issued (A100 us-east-1, 7200 s, budget 5, hold 2400; lock 7dde3c7d5ad3f34f; pre-launch local tests 50 of 50; launch 12 archived to out/launch12/; USD 11.47 of 50 spent).
+- 08:14Z score: ledger row appended
+- 08:14Z launch 13 ended: exit 4 (anchor FAIL; every later stage ran), 0.99 h, USD 1.97, no hold. Records: anchor FAIL (calibration_valid true); C1 VOID with a number (calibration_valid false); C2 VOID, no number; C3 FAIL with a number (calibration_valid true); C4 VOID with a number (calibration_valid false); compute table 6 rows. Score (mechanical): C1 void (ratio 0.685), C2 void, C3 refuted and unvalidated (ratio 0.0095), C4 void (ratio 0.050); anchor FAIL; ledger row appended (13 launches, compute tables for 2 of them, USD 10.72 in launches plus USD 2.72 in environment builds). Post stage started on OpenCode.
+- 08:14Z stage post on wf.js run 1: flags [--family opencode], pid 1580337

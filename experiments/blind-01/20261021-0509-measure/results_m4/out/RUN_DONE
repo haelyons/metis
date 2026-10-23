@@ -1,0 +1,46 @@
+{
+  "exit_code": 4,
+  "run_valid": false,
+  "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+  "stopped_by": [
+    "estimated 1233.3s for one af2_run exceeds the 766.7s left in the af2 stage; guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 1587 s; pre_t0 56 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s"
+  ],
+  "guard_arithmetic": "guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 2959 s; pre_t0 56 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s",
+  "failure_kind": null,
+  "anchor_missed": true,
+  "held_attempts": 0,
+  "inputs": {
+    "C1": {
+      "status": "unmeasured_by_stop:ceiling_or_guard",
+      "decision": "VOID",
+      "reason": "ceiling_or_guard",
+      "calibration_valid": false,
+      "voided_by": "ceiling_or_guard"
+    },
+    "C2": {
+      "status": "void_by_rule:the built system held 1136222 atoms, outside 120000 to 180000; the range is not widened",
+      "decision": "VOID",
+      "reason": "the built system held 1136222 atoms, outside 120000 to 180000; the range is not widened",
+      "calibration_valid": false,
+      "voided_by": "the built system held 1136222 atoms, outside 120000 to 180000; the range is not widened"
+    },
+    "C3": {
+      "status": "decided",
+      "decision": "FAIL",
+      "reason": null,
+      "calibration_valid": true
+    },
+    "C4": {
+      "status": "void_by_rule:calibration checks failed: stages_before_not_cut",
+      "decision": "VOID",
+      "reason": "calibration checks failed: stages_before_not_cut",
+      "calibration_valid": false,
+      "voided_by": "calibration checks failed: stages_before_not_cut"
+    }
+  },
+  "notes": [
+    "incomplete run: unmeasured inputs are VOID, not holding"
+  ],
+  "tag": "m4",
+  "finished_utc": "2026-10-23T08:07:34Z"
+}

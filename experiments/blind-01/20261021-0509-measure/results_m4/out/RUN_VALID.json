@@ -1,0 +1,51 @@
+{
+  "inputs_status": {
+    "C1": {
+      "calibration_valid": false,
+      "decision": "VOID",
+      "reason": "ceiling_or_guard",
+      "state": "unmeasured",
+      "status": "unmeasured_by_stop:ceiling_or_guard",
+      "voided_by": "ceiling_or_guard"
+    },
+    "C2": {
+      "calibration_valid": false,
+      "decision": "VOID",
+      "reason": "the built system held 1136222 atoms, outside 120000 to 180000; the range is not widened",
+      "state": "void_by_rule",
+      "status": "void_by_rule:the built system held 1136222 atoms, outside 120000 to 180000; the range is not widened",
+      "voided_by": "the built system held 1136222 atoms, outside 120000 to 180000; the range is not widened"
+    },
+    "C3": {
+      "calibration_valid": true,
+      "decision": "FAIL",
+      "reason": null,
+      "state": "decided",
+      "status": "decided",
+      "voided_by": null
+    },
+    "C4": {
+      "calibration_valid": false,
+      "decision": "VOID",
+      "reason": "calibration checks failed: stages_before_not_cut",
+      "state": "void_by_rule",
+      "status": "void_by_rule:calibration checks failed: stages_before_not_cut",
+      "voided_by": "calibration checks failed: stages_before_not_cut"
+    }
+  },
+  "run_valid": false,
+  "stop_events": [
+    {
+      "at_utc": "2026-10-23T07:44:42Z",
+      "detail": "estimated 1233.3s for one af2_run exceeds the 766.7s left in the af2 stage",
+      "elapsed_s": 1587.277,
+      "guard_arithmetic": "guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 1587 s; pre_t0 56 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s",
+      "kind": "ceiling_or_guard",
+      "reason": "estimated 1233.3s for one af2_run exceeds the 766.7s left in the af2 stage; guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 1587 s; pre_t0 56 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s",
+      "stage": "af2"
+    }
+  ],
+  "stopped": true,
+  "tag": "m4",
+  "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+}
