@@ -529,6 +529,7 @@ launch() {
   local bh; bh=$(ls out/BUILT_HASHES_build*.txt | sort -V | tail -1); ( cd "$MDIR" && sha256sum -c --quiet "$bh" ) || { echo "built files changed since $bh"; return 1; }
   # owner direction 2026-10-22: the author's tests pass locally, in the copy of the environment of record, on the files about to ship
   local_tests "out/tests_local_prelaunch_L$n.log" || { echo "pre-launch: local tests did not PASS"; return 1; }
+  [ -d data ] && [ "$(du -sm data | cut -f1)" -gt 100 ] && { echo "pre-launch: data/ is $(du -sh data | cut -f1); the launcher ships it to the box; refusing (move it out or have the gate list it)"; return 1; }
   pgrep -f "lambda_run_${TAG}[.]sh" >/dev/null && { echo "a launcher is already running"; return 1; }
   [ "$timeout" -le 7200 ] || { echo "timeout above 7,200 s (owner rule)"; return 1; }
   echo "== capacity"; rm -f out/.capacity.json.fallback

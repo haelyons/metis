@@ -309,3 +309,11 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 22:36Z build 29 checks: local tests exit 1
 - 22:37Z stage build on wf.js run 28: flags [--family opencode], pid 767522
 - 22:37Z round 2 (117 min): build 29 (mimo): 13 FIX lines; tests 5 (mimo timed out, sonnet understudy): 46 tests, 1 revised, 3 kept failing as implementation faults; local tests on build 29: 42 of 46 PASS (run_m4.py 6,342 lines). Round 3: build 30 (test-fix) only, on OpenCode; no tests revision (the author has ruled on these failures).
+- 00:18Z build 30 checks: local tests exit 0
+- 00:24Z build 30 checks: local tests exit 0
+- 00:24Z review 17 of build 30 requested
+- 00:24Z stage review on wf.js run 14: flags [--family claude], pid 918523
+- 00:24Z round 3: build 30 (mimo timed out; Claude opus understudy): 3 FIX lines; local tests on build 30: 46 of 46 PASS. Operator findings written (M4_BASE read on-box, not forwarded or set at top level). Review of build 30 started (sonnet).
+- 00:25Z found in the run dir: data/ (28 files, 11 GB, written 18:25Z on 2026-10-22, while the tests author was running) and work_m4/ (180 files, same minute, the runner's default work dir); neither is part of the design, and the launcher would have shipped data/ to the box. Both moved out to ~/.cache/blind01/moved_20261023/ (not deleted). The build checks had counted them ('other files touched in the run dir: 2') and I missed it; the launch preflight now refuses a data/ over 100 MB.
+- 00:31Z stage build on wf.js run 29: flags [--family opencode], pid 928696
+- 00:31Z local tests on build 30 re-run without data/ and work_m4/: 46 of 46 PASS (325 s); nothing new written into the run dir. Review 17 of build 30 (sonnet): FAIL, 2 blocking, 3 advisory. Review-fix build 31 started on OpenCode (blocking findings only).

@@ -1,0 +1,5 @@
+Operator's mechanical findings for build 30 (no model; counts and names only):
+1. Environment: onbox_m4.sh or run_m4.py reads M4_BASE. The launcher does not forward it, and onbox_m4.sh does not set it at top level. Verify that it has a safe default or is set before use. A missing value on the box must not change a path the records or the stages depend on.
+2. Local tests: tests/tests_m4.py, 46 of 46 PASS on the files of this build, in the local copy of the environment of record (out/tests_local_build30.log). The builder never saw the tests.
+3. Provenance of the edits: builds 27 to 30 were in-place edits. Builds 27, 28 and 29 were made by OpenCode mimo-v2.6-pro. Build 30 was made by the Claude opus understudy after mimo timed out. Archived copies of each previous build are under out/build26 to out/build29.
+4. Launcher: the author's tests are no longer shipped to the box (gate addendum 20). The payload is run_m4.py, onbox_m4.sh, remote_run_m4.sh and frozen/provenance.py, plus data/ if present.

@@ -1869,6 +1869,16 @@ class RunState:
             if (self.inputs_status.get(cid) or {}).get("state") == "not_measured":
                 self.set_unmeasured(cid, kind, calibration_valid=False)
 
+    def sweep_void_by_failure(self) -> None:
+        """A failure voids every input it never reached (exit table, row one)."""
+        if not self.failure_kind:
+            return
+        for cid in INPUT_IDS:
+            if (self.inputs_status.get(cid) or {}).get("state") == "not_measured":
+                self.set_void_by_failure(
+                    cid, self.failure_kind,
+                    self.run_valid_voided_by or self.failure_kind)
+
     def unmeasured_inputs(self) -> list:
         return sorted(cid for cid, s in self.inputs_status.items()
                       if str(s.get("status", "")).startswith("unmeasured_by_stop"))
@@ -3171,8 +3181,12 @@ def stage_capability(state: RunState) -> dict:
            "observed_lock_sha256": state.observed_lock_sha256,
            "installs_run": "none: this program installs nothing"}
     write_env_check_record(state, started)
-    if state.expected_lock_sha256 and (
-            state.expected_lock_sha256 != state.observed_lock_sha256):
+    if not is_lock_hash(state.expected_lock_sha256):
+        raise HarnessFailure(
+            "the lock of the environment of record was not forwarded",
+            "ENV_LOCK_SHA256 must be 64 hexadecimal characters and has no "
+            f"default; it was {state.expected_lock_sha256!r}", kind="env_lock")
+    if state.expected_lock_sha256 != state.observed_lock_sha256:
         raise HarnessFailure(
             "the environment lock does not match",
             f"expected {state.expected_lock_sha256}, observed "
@@ -3193,6 +3207,12 @@ def stage_capability(state: RunState) -> dict:
     atomic_write_json(state.outdir / f"setup_log_tag-{TAG}.json", log)
     state.stages_done.append("capability")
     return log
+
+
+def is_lock_hash(value) -> bool:
+    """True only for the 64 hexadecimal characters of a sha256 sum."""
+    text = str(value or "").strip()
+    return len(text) == 64 and all(c in "0123456789abcdefABCDEF" for c in text)
 
 
 def write_env_check_record(state: RunState, started) -> Path:
@@ -4636,6 +4656,33 @@ def md_trajectory_file(work, done) -> Path:
     return None
 
 
+def dcd_frame_count(path, atoms=None):
+    """How many frames a trajectory file holds.
+
+    A trajectory file in the DCD format opens with an 84-byte block that
+    carries the tag "CORD" and the number of frames written. That number is
+    read first, because it is what the writer itself recorded. Where the tag
+    is absent the count is estimated from the file size: each frame holds
+    three blocks of 4-byte numbers, one per axis, and each block is wrapped
+    in two 4-byte markers.
+    """
+    p = Path(path)
+    try:
+        size = p.stat().st_size
+        with open(str(p), "rb") as fh:
+            head = fh.read(12)
+    except OSError:
+        return None
+    if len(head) >= 12 and head[4:8] == b"CORD":
+        for order in ("little", "big"):
+            if int.from_bytes(head[0:4], order) == 84:
+                return max(0, int.from_bytes(head[8:12], order, signed=True))
+    if not atoms:
+        return None
+    per_frame = 12 * int(atoms) + 24
+    return max(0, int(round((size - 276) / float(per_frame))))
+
+
 def _first_present(source: dict, keys: tuple, fallback=None):
     for key in keys:
         value = source.get(key) if isinstance(source, dict) else None
@@ -4774,12 +4821,7 @@ def stage_md(state: RunState) -> dict:
         traj = md_trajectory_file(work, done)
         frames = None
         if traj is not None and Path(traj).exists():
-            try:
-                size = Path(traj).stat().st_size
-                frames = max(0, int(round((size - 128) / (8 + 24 * built["atoms"])))) \
-                    if built.get("atoms") else None
-            except OSError:
-                frames = None
+            frames = dcd_frame_count(traj, built.get("atoms"))
         row = {
             "complex": pair["pair"], "atoms": done_atoms, "steps": done_steps,
             "timestep_fs": done_timestep,
@@ -5255,6 +5297,7 @@ def write_summary(state: RunState) -> Path:
 
 
 def write_run_valid(state: RunState) -> Path:
+    state.sweep_void_by_failure()
     path = state.outdir / "RUN_VALID.json"
     atomic_write_json(path, {
         "run_valid": bool(state.run_valid),
@@ -5265,6 +5308,7 @@ def write_run_valid(state: RunState) -> Path:
 
 
 def write_run_done(state: RunState, exit_code: int) -> Path:
+    state.sweep_void_by_failure()
     per_input = {}
     for cid, status in state.inputs_status.items():
         entry = {"status": status.get("status", "unmeasured_by_stop:unknown"),
