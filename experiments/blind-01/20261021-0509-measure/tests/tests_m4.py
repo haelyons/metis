@@ -2096,6 +2096,111 @@ def test_md_reporter_nan_and_atoms_calibration():
     need(not bad, "; ".join(bad[:3]))
 
 
+# item 11 and 21: calibration_valid sits in the record itself, beside run_valid (contract section 5 lists it
+# among the record's own fields), on the anchor record and on every record written after the anchor
+
+def top_calib(rec):
+    return rec.get("calibration_valid", "absent")
+
+
+def calib_problems(res, label, expect_anchor=False):
+    """records of one stage run whose calibration_valid is absent from the record itself, not a bool,
+    or at odds with the copy in values"""
+    bad = []
+    recs = stage_records(res)
+    if not expect_anchor:
+        recs = {k: v for k, v in recs.items() if k != "endpoint-anchor_tag-m4.json"}
+    if not recs:
+        bad.append("%s wrote no provenance record (exit %s, %s)" % (label, res.rc, res.why()[:80]))
+    for fn, rec in sorted(recs.items()):
+        if not isinstance(top_calib(rec), bool):
+            bad.append("%s %s: calibration_valid %r in the record (run_valid %r)" % (label, fn, top_calib(rec), rec.get("run_valid")))
+        elif "calibration_valid" in rec["values"] and rec["values"]["calibration_valid"] != rec["calibration_valid"]:
+            bad.append("%s %s: calibration_valid %r in the record, %r in values" % (label, fn, rec["calibration_valid"], rec["values"]["calibration_valid"]))
+    return bad
+
+
+def test_calibration_valid_on_anchor_record():
+    bad = []
+    for kind in ("pass", "fail"):
+        r = pipe("anchor_" + kind)
+        a = r.rec("endpoint-anchor_tag-m4.json")
+        if top_calib(a) is not True:
+            bad.append("anchor %s: calibration_valid %r in the record, expected true (both poses were obtained and compared)" % (kind, top_calib(a)))
+    need(not bad, "; ".join(bad))
+
+
+def test_calibration_valid_on_every_record_after_anchor():
+    bad = []
+    for kind in ("pass", "fail"):
+        for st in ("aux", "af2", "md", "storage", "endpoints"):
+            r = pipe("%s_%s" % (st, kind))
+            bad += calib_problems(r, "%s after an anchor %s" % (st, kind))
+    need(not bad, "; ".join(bad[:4]))
+
+
+def test_calibration_valid_decided_by_own_checks_in_record():
+    bad = []
+    ok, ko = pipe("endpoints_pass"), pipe("endpoints_fail")
+    for i in (1, 2, 3, 4):
+        a, b = endpoint(ok, i), endpoint(ko, i)
+        if top_calib(a) is not True:
+            bad.append("C%d calibration_valid %r in the record on well-formed inputs after an anchor PASS" % (i, top_calib(a)))
+        if top_calib(b) != top_calib(a):
+            bad.append("C%d calibration_valid %r after the anchor miss, %r after the PASS: the anchor changed it" % (i, top_calib(b), top_calib(a)))
+        if b.get("run_valid") is not False or a.get("run_valid") is not True:
+            bad.append("C%d run_valid %r after the miss, %r after the PASS" % (i, b.get("run_valid"), a.get("run_valid")))
+    w = World("calnoscore")
+    w.config["colabfold"]["skip_score_call"] = 2
+    w.save()
+    fail = pipe("anchor_fail")
+    af2 = w.run("af2", make_in(w, "calnoscore", [fail]))
+    bad += calib_problems(af2, "af2 with one run lacking a score file")
+    c1 = af2.rec("endpoint-C1_tag-m4.json") if af2.has("endpoint-C1_tag-m4.json") else None
+    if c1 is not None and top_calib(c1) is not False:
+        bad.append("af2 stage: C1 with a run lacking a score file has calibration_valid %r in the record, expected false" % top_calib(c1))
+    e = w.run("endpoints", make_in(w, "calnoscore_end", [fail, pipe("aux_fail"), af2, pipe("md_fail"), pipe("storage_fail")]))
+    c1 = endpoint(e, 1)
+    if top_calib(c1) is not False or c1.get("decision") != "VOID" or not is_num(c1["values"].get("measured")):
+        bad.append("C1 with a run lacking a score file: record calibration_valid %r, decision %s, measured %r (false, VOID and the raw value expected)"
+                   % (top_calib(c1), c1.get("decision"), c1["values"].get("measured")))
+    for i in (2, 3, 4):
+        if top_calib(endpoint(e, i)) != top_calib(endpoint(ko, i)):
+            bad.append("C%d calibration_valid %r changed by C1's own check" % (i, top_calib(endpoint(e, i))))
+    w2 = World("calatoms")
+    w2.config["md"].update({"atoms": [119999, 150000, 150000]})
+    w2.save()
+    m = w2.run("md", make_in(w2, "calatoms", [pipe("anchor_pass"), pipe("aux_pass")]))
+    bad += calib_problems(m, "md with a complex of 119,999 atoms")
+    c2 = m.rec("endpoint-C2_tag-m4.json") if m.has("endpoint-C2_tag-m4.json") else None
+    if c2 is not None and top_calib(c2) is not False:
+        bad.append("md stage: C2 with a complex of 119,999 atoms has calibration_valid %r in the record, expected false" % top_calib(c2))
+    e2 = w2.run("endpoints", make_in(w2, "calatoms_end", [pipe("anchor_pass"), pipe("aux_pass"), pipe("af2_pass"), m, pipe("storage_pass")]))
+    c2 = endpoint(e2, 2)
+    if top_calib(c2) is not False or c2.get("decision") != "VOID" or not is_num(c2["values"].get("measured")):
+        bad.append("C2 with 119,999 atoms: record calibration_valid %r, decision %s, measured %r (false, VOID and the raw value expected)"
+                   % (top_calib(c2), c2.get("decision"), c2["values"].get("measured")))
+    for i in (1, 3, 4):
+        if top_calib(endpoint(e2, i)) != top_calib(endpoint(ok, i)):
+            bad.append("C%d calibration_valid %r changed by C2's own check" % (i, top_calib(endpoint(e2, i))))
+    need(not bad, "; ".join(bad[:4]))
+
+
+def test_anchor_calibration_unchanged_by_later_stages():
+    bad = []
+    for kind in ("pass", "fail"):
+        a0 = pipe("anchor_" + kind).rec("endpoint-anchor_tag-m4.json")
+        e = pipe("endpoints_" + kind)
+        if e.has("endpoint-anchor_tag-m4.json"):
+            a1 = e.rec("endpoint-anchor_tag-m4.json")
+            for k in ("decision", "calibration_valid", "run_valid"):
+                if a1.get(k, "absent") != a0.get(k, "absent"):
+                    bad.append("anchor %s: %s changed from %r to %r by the later stages" % (kind, k, a0.get(k, "absent"), a1.get(k, "absent")))
+        if top_calib(a0) is not True:
+            bad.append("anchor %s: calibration_valid %r in the record" % (kind, top_calib(a0)))
+    need(not bad, "; ".join(bad[:4]))
+
+
 # item 5: the records
 
 MACHINE_KEYS = ["instance_type", "gpu_name", "gpu_driver", "cuda_runtime_version", "start_utc", "end_utc", "price_usd_per_hour",
@@ -2347,6 +2452,10 @@ TESTS = [
     ("after_miss_own_check_failure_stays_own", test_after_miss_own_check_failure_stays_own),
     ("anchor_verdict_unchanged_by_later_stages", test_anchor_verdict_unchanged_by_later_stages),
     ("md_reporter_nan_and_atoms_calibration", test_md_reporter_nan_and_atoms_calibration),
+    ("calibration_valid_on_anchor_record", test_calibration_valid_on_anchor_record),
+    ("calibration_valid_on_every_record_after_anchor", test_calibration_valid_on_every_record_after_anchor),
+    ("calibration_valid_decided_by_own_checks_in_record", test_calibration_valid_decided_by_own_checks_in_record),
+    ("anchor_calibration_unchanged_by_later_stages", test_anchor_calibration_unchanged_by_later_stages),
     ("records_controls", test_records_controls),
     ("sleep_control_failure", test_sleep_control_failure),
     ("records_env_check_and_lock", test_records_env_check_and_lock),

@@ -1,0 +1,51 @@
+{
+  "inputs_status": {
+    "C1": {
+      "calibration_valid": false,
+      "decision": "VOID",
+      "reason": "ceiling_or_guard",
+      "state": "unmeasured",
+      "status": "unmeasured_by_stop:ceiling_or_guard",
+      "voided_by": "ceiling_or_guard"
+    },
+    "C2": {
+      "calibration_valid": false,
+      "decision": "VOID",
+      "reason": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+      "state": "void_by_failure",
+      "status": "void_by_failure:building_the_solvated_complex_failed",
+      "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+    },
+    "C3": {
+      "calibration_valid": true,
+      "decision": "FAIL",
+      "reason": null,
+      "state": "decided",
+      "status": "decided",
+      "voided_by": null
+    },
+    "C4": {
+      "calibration_valid": false,
+      "decision": "VOID",
+      "reason": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+      "state": "void_by_failure",
+      "status": "void_by_failure:building_the_solvated_complex_failed",
+      "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+    }
+  },
+  "run_valid": false,
+  "stop_events": [
+    {
+      "at_utc": "2026-10-23T04:57:17Z",
+      "detail": "estimated 1210.7s for one af2_run exceeds the 789.3s left in the af2 stage",
+      "elapsed_s": 2101.14,
+      "guard_arithmetic": "guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 2101 s; pre_t0 58 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s",
+      "kind": "ceiling_or_guard",
+      "reason": "estimated 1210.7s for one af2_run exceeds the 789.3s left in the af2 stage; guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 2101 s; pre_t0 58 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s",
+      "stage": "af2"
+    }
+  ],
+  "stopped": true,
+  "tag": "m4",
+  "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+}

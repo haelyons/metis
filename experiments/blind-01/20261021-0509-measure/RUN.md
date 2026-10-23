@@ -341,3 +341,14 @@ Transcripts: /home/hal/.claude/projects/-home-hal-dev-interp-metis-experiments-b
 - 05:03Z stage build on wf.js run 31: flags [--family claude], pid 1311212
 - 05:03Z TESTS 6: claim-blind author on wf.js (flags [--family opencode])
 - 05:04Z launch 12 ended: exit 2, 0.77 h, USD 1.53, terminated; after RESUME the records were unchanged (anchor FAIL; C1 VOID with a number; C2 VOID no number; C3 FAIL with a number; C4 VOID no number; no calibration_valid; compute table 6 rows). Spend USD 9.79 of 50. Started: envbuild 2 (env_build.sh now keeps the environment repo's pins of record so the fixer's commit survives; it re-records lock and report), fix build 33 on Claude (calibration_valid on every post-anchor record; C2/C4 if in code), tests 6 on OpenCode (tests that check calibration_valid on records the stages actually write).
+- 05:54Z envbuild 2: rc 2, 0.84 h, USD 1.68 (held 40 min with no fixer: I watched for the end, not for a hold; a waste of about USD 1.3). The pins of record kept the fixer's commit (6 commits in the environment repo); pip -r on them fails (no matching distribution), but every module imports, and the regenerated lock 7dde3c7d5ad3f34f is the installed state. One package changed version, and the lock now names it by direct reference (installed by the fixer from a path on the box), so the local copy cannot install it. The local environment keeps the previous version of that one package; every other line is equal. For the gate: the pins of record do not resolve, and the environment now depends on a file on the filesystem. Ratify or rebuild.
+- 06:50Z build 33 checks: local tests exit 1
+- 06:51Z stage build on wf.js run 32: flags [--family claude], pid 1462201
+- 06:51Z build 33 (fix, Claude): 3 FIX lines; tests 6 (OpenCode; 101 min for both): 50 tests, 4 new tests of calibration_valid on records the stages write, kept failing as implementation faults; local tests on build 33: 46 of 50. Test-fix build 34 started on Claude.
+- 06:59Z build 34 checks: local tests exit 0
+- 07:05Z build 34 checks: local tests exit 0
+- 07:05Z review 20 of build 34 requested
+- 07:05Z stage review on wf.js run 17: flags [--family claude], pid 1483941
+- 07:05Z build 34 (test-fix, Claude): 1 FIX line; local tests 50 of 50 PASS. Review 20 of build 34 started (sonnet).
+- 07:13Z LAUNCH 13: gpu_1x_a100_sxm4 @ us-east-1, REMOTE_TIMEOUT=7200, BUDGET_LEFT_USD=5.0, pid 1495311, log out/launcher_m4_L13.log
+- 07:13Z review 20 of build 34: PASS, 0 blocking, 6 advisory. LAUNCH 13 issued (A100 us-east-1, 7200 s, budget 5, hold 2400; lock 7dde3c7d5ad3f34f; pre-launch local tests 50 of 50; launch 12 archived to out/launch12/; USD 11.47 of 50 spent).

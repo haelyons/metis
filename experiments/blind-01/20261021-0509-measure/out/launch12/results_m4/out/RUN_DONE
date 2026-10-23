@@ -1,0 +1,48 @@
+{
+  "exit_code": 2,
+  "run_valid": false,
+  "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+  "stopped_by": [
+    "estimated 1210.7s for one af2_run exceeds the 789.3s left in the af2 stage; guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 2101 s; pre_t0 58 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s"
+  ],
+  "guard_arithmetic": "guard arithmetic:; REMOTE_TIMEOUT 7200 s; elapsed 2135 s; pre_t0 58 s; price 1.99 USD per hour; budget 5 USD; dollar_cap 9045.23 s; time_cap 7200 s; stop_at 7200 s",
+  "failure_kind": "building_the_solvated_complex_failed",
+  "anchor_missed": true,
+  "held_attempts": 1,
+  "inputs": {
+    "C1": {
+      "status": "unmeasured_by_stop:ceiling_or_guard",
+      "decision": "VOID",
+      "reason": "ceiling_or_guard",
+      "calibration_valid": false,
+      "voided_by": "ceiling_or_guard"
+    },
+    "C2": {
+      "status": "void_by_failure:building_the_solvated_complex_failed",
+      "decision": "VOID",
+      "reason": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+      "calibration_valid": false,
+      "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+    },
+    "C3": {
+      "status": "decided",
+      "decision": "FAIL",
+      "reason": null,
+      "calibration_valid": true
+    },
+    "C4": {
+      "status": "void_by_failure:building_the_solvated_complex_failed",
+      "decision": "VOID",
+      "reason": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+      "calibration_valid": false,
+      "voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+    }
+  },
+  "notes": [
+    "incomplete run: unmeasured inputs are VOID, not holding",
+    "hold: one hold per launch; the second failure ends the launch"
+  ],
+  "tag": "m4",
+  "finished_utc": "2026-10-23T04:57:51Z",
+  "hold": "one hold per launch; the second failure ends the launch"
+}

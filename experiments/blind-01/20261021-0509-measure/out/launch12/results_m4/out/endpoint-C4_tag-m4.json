@@ -1,0 +1,186 @@
+{
+  "cell": {
+    "input": "C4",
+    "key": "n_storage_gib",
+    "stage": "endpoints",
+    "tag": "m4"
+  },
+  "decision": "VOID",
+  "decision_rule": "inside [66.67, 600] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-90-5",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-23T04:57:51+00:00"
+  },
+  "inputs": [
+    {
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/rows_storage_tag-m4.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "bytes": 1115,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "e5dd7ee0d592"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6",
+      "what": "the environment of record, by its lock sha256"
+    },
+    {
+      "bytes": 6032,
+      "n_items": 3,
+      "path": "/home/ubuntu/m4_run/results_m4/out/pairs_tag-m4.json",
+      "present": true,
+      "sha256": "1cacf6db2153"
+    }
+  ],
+  "kind": "C4",
+  "metric": "n_storage_gib measured on the stand-in protocol, in gibibytes",
+  "notes": "",
+  "notes_list": [
+    "stand-in pairs built from 6IHB chains, not the card's pairs",
+    "one GPU; one box; 3 pairs; no multi-GPU scaling",
+    "linear in runs; intermediates kept; MD length 0.5 ns",
+    "incomplete run: unmeasured inputs are VOID, not holding",
+    "measured after an anchor miss; run_valid false, voided by the anchor; calibration_valid decided by this record's own checks only",
+    "environment changed by the fixer on the box; lock 7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6"
+  ],
+  "run_valid": false,
+  "run_valid_voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+  "tag": "m4",
+  "threshold": {
+    "band": [
+      66.67,
+      600
+    ],
+    "card_value": 200,
+    "marginal_fraction": 0.1
+  },
+  "values": {
+    "band": [
+      66.67,
+      600
+    ],
+    "basis": "GUESS",
+    "calibration_checks": [
+      {
+        "check": "sleep_control_passed",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "gpu_visible",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "stages_before_not_cut",
+        "null_reason": "a guard, ceiling or timeout cut an earlier stage short",
+        "result": false,
+        "value": false
+      },
+      {
+        "check": "minimum_count",
+        "null_reason": "fewer than 1 counted units",
+        "result": false,
+        "value": 0
+      },
+      {
+        "check": "each_artifact_type_nonzero_and_counted",
+        "null_reason": "an artifact type is missing, holds zero bytes, or comes from a run that does not count",
+        "result": false,
+        "value": {
+          "af2": [],
+          "docking": [],
+          "md": []
+        }
+      },
+      {
+        "check": "at_least_one_of_each_type",
+        "null_reason": "not every artifact type was produced",
+        "result": false,
+        "value": {
+          "af2": 0,
+          "docking": 0,
+          "md": 0
+        }
+      },
+      {
+        "check": "md_setup_bytes_excluded",
+        "result": true,
+        "value": []
+      }
+    ],
+    "calibration_valid": false,
+    "card_value": 200,
+    "engine": {
+      "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+      "alphafold_params_sha256": null,
+      "build_flags": {
+        "alphafold_early_stopping": "off",
+        "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+        "alphafold_models": 5,
+        "alphafold_msa_mode": "single_sequence",
+        "alphafold_params_sha256": null,
+        "alphafold_recycles": 20,
+        "docking_code": "lightdock",
+        "docking_version": "0.9.4",
+        "environment_lock_sha256": "7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6",
+        "jax_cuda_plugin_version": "0.4.35",
+        "jax_version": "0.4.35",
+        "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+        "jaxlib_version": "0.4.35",
+        "md_engine": "OpenMM",
+        "md_engine_version": "8.1.1",
+        "md_platform": "CUDA",
+        "md_precision": "mixed"
+      },
+      "docking_code": "lightdock",
+      "docking_version": "0.9.4",
+      "jax_cuda_plugin_version": "0.4.35",
+      "jax_version": "0.4.35",
+      "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+      "jaxlib_version": "0.4.35",
+      "md_engine": "OpenMM",
+      "md_engine_version": "8.1.1",
+      "md_platform": "CUDA",
+      "md_precision": "mixed"
+    },
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-23T04:57:51Z",
+      "environment_changed_by_fixer": true,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 1,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-23T04:57:51Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "marginal": false,
+    "measured": null,
+    "n": 0,
+    "null_reasons": {
+      "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+      "at_least_one_of_each_type": "not every artifact type was produced",
+      "each_artifact_type_nonzero_and_counted": "an artifact type is missing, holds zero bytes, or comes from a run that does not count",
+      "measured": "the run ended on broken infrastructure: the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+      "minimum_count": "fewer than 1 counted units",
+      "stages_before_not_cut": "a guard, ceiling or timeout cut an earlier stage short"
+    },
+    "unit": "gibibytes",
+    "void_reason": "the run ended on broken infrastructure: the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+    "voided_by": "the run ended on broken infrastructure: the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+  }
+}

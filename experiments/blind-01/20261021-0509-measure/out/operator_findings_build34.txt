@@ -1,0 +1,5 @@
+Operator's mechanical findings for builds 33 and 34 (no model; counts and names only):
+1. Build 33 is a fix build from launch 12's evidence (results_m4/out with CLASSIFIER_NOTE.txt): calibration_valid was absent from every record after the anchor, and C2 and C4 had no measured number. Claude made it; it reports 3 FIX lines. Build 34 is a test-fix build for the 4 new tests of calibration_valid on records the stages write; Claude made it; it reports 1 FIX line.
+2. Local tests: 50 of 50 PASS on build 34's files (out/tests_local_build34.log).
+3. Environment of record: re-recorded by envbuild 2 with the held-box fixer's pin change. Lock 7dde3c7d5ad3f34f, every module imports. The pins of record do not resolve with pip -r, and the lock names one package by direct reference to a file on the filesystem. The launch forwards this lock. Check that the on-box environment check verifies the lock hash it is given, and does not reinstall.
+4. Still open: M4_BASE is read on-box, and the launcher neither forwards nor sets it (see the findings for build 31).

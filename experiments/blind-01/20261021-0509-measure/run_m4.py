@@ -2181,6 +2181,11 @@ def write_record(state: RunState, name: str, *, kind: str, cell: dict, inputs: l
             note_list.append(changed)
     rec["run_valid"] = bool(state.run_valid)
     rec["run_valid_voided_by"] = state.run_valid_voided_by
+    # The anchor record and the four input records also carry their own
+    # calibration verdict at the top level, beside run_valid, so a reader sees
+    # both words in the same place in every record that has them.
+    if "calibration_valid" in rec["values"]:
+        rec["calibration_valid"] = bool(rec["values"]["calibration_valid"])
     rec["kind"] = kind
     rec["notes_list"] = note_list
     rec["tag"] = TAG
@@ -2923,6 +2928,70 @@ def water_padding_nm(atoms: list, target_atoms: int = 150000) -> float:
     return round(padding_a / 10.0, 3)
 
 
+def terminal_oxygen(residue_atoms: list):
+    """The second acid oxygen (OXT) for a chain's last residue, or None.
+
+    A chain cut out of a crystal structure normally stops without the second
+    oxygen of its free acid group, because in the crystal the chain carried on.
+    The force field has a template for a chain end only when that oxygen is
+    there, so without it the solvated complex cannot be built. This places the
+    oxygen on the backbone carbon, 1.25 angstrom away, pointing away from the
+    other two atoms bonded to it. It returns None when the oxygen is already
+    there or the backbone is incomplete.
+    """
+    by_name = {a["name"]: a for a in residue_atoms}
+    if "OXT" in by_name:
+        return None
+    carbon, oxygen, alpha = (by_name.get("C"), by_name.get("O"),
+                             by_name.get("CA"))
+    if not (carbon and oxygen and alpha):
+        return None
+
+    def unit(other):
+        v = (other["x"] - carbon["x"], other["y"] - carbon["y"],
+             other["z"] - carbon["z"])
+        length = math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
+        if length < 1e-9:
+            return None
+        return (v[0] / length, v[1] / length, v[2] / length)
+
+    a, b = unit(oxygen), unit(alpha)
+    if a is None or b is None:
+        return None
+    away = (-(a[0] + b[0]), -(a[1] + b[1]), -(a[2] + b[2]))
+    length = math.sqrt(away[0] ** 2 + away[1] ** 2 + away[2] ** 2)
+    if length < 1e-9:
+        return None
+    return dict(carbon, name="OXT", element="O",
+                x=carbon["x"] + 1.25 * away[0] / length,
+                y=carbon["y"] + 1.25 * away[1] / length,
+                z=carbon["z"] + 1.25 * away[2] / length)
+
+
+def cap_chain_ends(atoms: list) -> list:
+    """Give the last residue of every chain its missing acid oxygen.
+
+    Atom order is kept and each new oxygen follows its own residue.
+    """
+    out = [dict(a) for a in atoms]
+    last_of_chain = {}
+    for i, a in enumerate(out):
+        last_of_chain[a["chain"]] = i
+    additions = []
+    for _chain, end in last_of_chain.items():
+        key = (out[end]["chain"], out[end]["resseq"], out[end].get("icode") or "")
+        start = end
+        while start > 0 and (out[start - 1]["chain"], out[start - 1]["resseq"],
+                             out[start - 1].get("icode") or "") == key:
+            start -= 1
+        extra = terminal_oxygen(out[start:end + 1])
+        if extra is not None:
+            additions.append((end, extra))
+    for end, extra in sorted(additions, key=lambda item: -item[0]):
+        out.insert(end + 1, extra)
+    return out
+
+
 def merge_capsid_and_pose(pair: dict, pose_atoms: list) -> list:
     capsid_ids = [c for c, role in pair["chain_map"].items() if role == "capsid"]
     capsid_atoms = [dict(a) for a in pair["atoms"] if a["chain"] in capsid_ids]
@@ -2935,7 +3004,13 @@ def merge_capsid_and_pose(pair: dict, pose_atoms: list) -> list:
             "the molecular-dynamics input holds no capsid heavy atom",
             f"{pair['pair']}")
     receptor_id = pair["receptor_chain"]
-    receptor = [dict(a, chain=receptor_id) for a in pose_atoms]
+    # The docking tool writes the whole complex into its pose file: the capsid
+    # it was given and the receptor it moved. Only the moved receptor belongs
+    # here, because the capsid is taken from the pair's own structure above.
+    from_pose = [a for a in pose_atoms if a["chain"] == receptor_id]
+    if not from_pose:
+        from_pose = [a for a in pose_atoms if a["chain"] not in capsid_ids]
+    receptor = [dict(a, chain=receptor_id) for a in from_pose]
     if not receptor:
         raise HarnessFailure(
             "the molecular-dynamics input holds no receptor-role chain",
@@ -2946,7 +3021,7 @@ def merge_capsid_and_pose(pair: dict, pose_atoms: list) -> list:
         raise HarnessFailure(
             "the merged complex does not hold both chain roles",
             f"roles: {sorted(roles)}")
-    return merged
+    return cap_chain_ends(merged)
 
 
 # ===========================================================================
@@ -6373,6 +6448,80 @@ def _selftest_compute(tmp: Path) -> list:
     return fails
 
 
+def _selftest_md_complex(_tmp: Path) -> list:
+    """The structure handed to the dynamics engine: one capsid, capped ends."""
+    fails = []
+
+    def residue(chain, resseq, resname, origin):
+        x, y, z = origin
+        return [
+            {"name": "N", "resname": resname, "chain": chain, "resseq": resseq,
+             "icode": "", "x": x, "y": y, "z": z, "element": "N"},
+            {"name": "CA", "resname": resname, "chain": chain, "resseq": resseq,
+             "icode": "", "x": x + 1.5, "y": y, "z": z, "element": "C"},
+            {"name": "C", "resname": resname, "chain": chain, "resseq": resseq,
+             "icode": "", "x": x + 3.0, "y": y, "z": z, "element": "C"},
+            {"name": "O", "resname": resname, "chain": chain, "resseq": resseq,
+             "icode": "", "x": x + 3.0, "y": y + 1.2, "z": z, "element": "O"},
+        ]
+
+    def shift(atoms, dx):
+        return [dict(a, x=a["x"] + dx) for a in atoms]
+
+    capsid = (residue("A", 1, "ALA", (0.0, 0.0, 0.0))
+              + residue("A", 2, "GLY", (4.0, 0.0, 0.0))
+              + residue("B", 1, "VAL", (0.0, 8.0, 0.0)))
+    receptor = residue("R", 1, "LYS", (0.0, 0.0, 9.0))
+    pair = {"pair": "pair1", "atoms": capsid + receptor,
+            "chain_map": {"A": "capsid", "B": "capsid", "R": "receptor"},
+            "receptor_chain": "R"}
+    # What the docking tool writes: the capsid it was given, far away in the
+    # file's own frame, and the receptor it moved.
+    pose = shift(capsid, 100.0) + shift(receptor, 50.0)
+    merged = merge_capsid_and_pose(pair, pose)
+
+    counts = {}
+    for a in merged:
+        counts[a["chain"]] = counts.get(a["chain"], 0) + 1
+    if counts != {"A": 9, "B": 5, "R": 5}:
+        fails.append(f"the merged complex holds the wrong atoms: {counts}")
+    if any(a["x"] >= 100.0 for a in merged):
+        fails.append("the capsid was taken from the pose file, not from the pair")
+    moved = [a for a in merged if a["chain"] == "R" and a["name"] == "N"]
+    if not moved or abs(moved[0]["x"] - 50.0) > 1e-9:
+        fails.append(f"the receptor was not taken from the docked pose: {moved}")
+    for chain, resseq in (("A", 2), ("B", 1), ("R", 1)):
+        last = [a for a in merged if a["chain"] == chain and a["resseq"] == resseq]
+        if "OXT" not in {a["name"] for a in last}:
+            fails.append(f"chain {chain} ends without its acid oxygen")
+    for chain, resseq in (("A", 1),):
+        first = [a for a in merged if a["chain"] == chain and a["resseq"] == resseq]
+        if "OXT" in {a["name"] for a in first}:
+            fails.append(f"chain {chain} was capped inside the chain, not at its end")
+
+    one = residue("A", 1, "ALA", (0.0, 0.0, 0.0))
+    extra = terminal_oxygen(one)
+    if extra is None:
+        fails.append("no acid oxygen was built for a complete backbone")
+    else:
+        carbon = [a for a in one if a["name"] == "C"][0]
+        gap = math.sqrt((extra["x"] - carbon["x"]) ** 2
+                        + (extra["y"] - carbon["y"]) ** 2
+                        + (extra["z"] - carbon["z"]) ** 2)
+        if abs(gap - 1.25) > 1e-6:
+            fails.append(f"the acid oxygen sits {gap} angstrom from the carbon")
+        if extra["element"] != "O" or extra["resname"] != "ALA":
+            fails.append(f"the acid oxygen is mislabelled: {extra}")
+        oxygen = [a for a in one if a["name"] == "O"][0]
+        if abs(extra["y"] - (-oxygen["y"] + 2 * carbon["y"])) > 1.3:
+            fails.append("the acid oxygen does not point away from the other two")
+    if terminal_oxygen(one + [extra]) is not None:
+        fails.append("a residue that already carries an acid oxygen got a second")
+    if terminal_oxygen([a for a in one if a["name"] != "CA"]) is not None:
+        fails.append("an incomplete backbone was capped anyway")
+    return fails
+
+
 def selftest() -> int:
     """Check the parsers, the detectors and the arithmetic. Exit non-zero on a
     failure. Nothing here describes two runs on one box as replication."""
@@ -6387,6 +6536,7 @@ def selftest() -> int:
         fails += _selftest_calibration(tmp)
         fails += _selftest_gate_and_records(tmp)
         fails += _selftest_compute(tmp)
+        fails += _selftest_md_complex(tmp)
     for f in fails:
         print("FAIL", f)
     print("selftest:", "PASS" if not fails else f"{len(fails)} FAILURES")

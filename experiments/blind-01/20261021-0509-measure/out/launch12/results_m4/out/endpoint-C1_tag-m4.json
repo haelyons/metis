@@ -1,0 +1,261 @@
+{
+  "cell": {
+    "input": "C1",
+    "key": "af2_h_per_run",
+    "stage": "endpoints",
+    "tag": "m4"
+  },
+  "decision": "VOID",
+  "decision_rule": "inside [0.2, 1.25] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-90-5",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-23T04:57:17+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 1212,
+      "n_items": 1,
+      "path": "/home/ubuntu/m4_run/results_m4/out/rows_af2_tag-m4.jsonl",
+      "present": true,
+      "sha256": "9cc499ed44d7"
+    },
+    {
+      "bytes": 1115,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "e5dd7ee0d592"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6",
+      "what": "the environment of record, by its lock sha256"
+    },
+    {
+      "bytes": 6032,
+      "n_items": 3,
+      "path": "/home/ubuntu/m4_run/results_m4/out/pairs_tag-m4.json",
+      "present": true,
+      "sha256": "1cacf6db2153"
+    }
+  ],
+  "kind": "C1",
+  "metric": "af2_h_per_run measured on the stand-in protocol, in hours per AlphaFold-Multimer run",
+  "notes": "",
+  "notes_list": [
+    "stand-in pairs built from 6IHB chains, not the card's pairs",
+    "one GPU; one box; 3 pairs; no multi-GPU scaling",
+    "no-MSA: alignment search time excluded; understates the card's setting",
+    "incomplete run: unmeasured inputs are VOID, not holding",
+    "measured after an anchor miss; run_valid false, voided by the anchor; calibration_valid decided by this record's own checks only",
+    "environment changed by the fixer on the box; lock 7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6"
+  ],
+  "run_valid": false,
+  "run_valid_voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+  "tag": "m4",
+  "threshold": {
+    "band": [
+      0.2,
+      1.25
+    ],
+    "card_value": 0.5,
+    "marginal_fraction": 0.1
+  },
+  "values": {
+    "band": [
+      0.2,
+      1.25
+    ],
+    "basis": "PROXY",
+    "calibration_checks": [
+      {
+        "check": "sleep_control_passed",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "gpu_visible",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "stages_before_not_cut",
+        "null_reason": "a guard, ceiling or timeout cut an earlier stage short",
+        "result": false,
+        "value": false
+      },
+      {
+        "check": "minimum_count",
+        "null_reason": "fewer than 3 counted units",
+        "result": false,
+        "value": 1
+      },
+      {
+        "check": "gpu_is_a100",
+        "result": true,
+        "value": "NVIDIA A100-SXM4-40GB"
+      },
+      {
+        "check": "fasta_length_in_range",
+        "result": true,
+        "value": [
+          780
+        ]
+      },
+      {
+        "check": "command_line_protocol",
+        "result": true,
+        "value": [
+          {
+            "early_stopping": "off",
+            "models": 5,
+            "msa_mode": "single_sequence",
+            "recycles": 20
+          }
+        ]
+      },
+      {
+        "check": "colabfold_exit_zero",
+        "result": true,
+        "value": [
+          0
+        ]
+      },
+      {
+        "check": "structures_and_scores",
+        "result": true,
+        "value": [
+          {
+            "scores": 5,
+            "structures": 5
+          }
+        ]
+      },
+      {
+        "check": "per_model_times_parsed_or_reasoned",
+        "result": true,
+        "value": [
+          {
+            "per_model_s": null,
+            "reason": "colabfold log is malformed: it reports an error instead of timings; first 5 raw lines: '2026-10-23 04:37:11,098 Running colabfold 1.5.5'; \"2026-10-23 04:37:11,504 Unable to initialize backend 'rocm': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'\"; \"2026-10-23 04:37:11,506 Unable to initialize backend 'tpu': INTERNAL: Failed to open libtpu.so: libtpu.so: cannot open shared object file: No such file or directory\"; '2026-10-23 04:37:24,780 Running on GPU'; '2026-10-23 04:37:25,373 Found 2 citations for tools or databases'"
+          }
+        ]
+      },
+      {
+        "check": "no_download_in_timed_call",
+        "result": true,
+        "value": [
+          false
+        ]
+      },
+      {
+        "check": "runs_cover_all_pairs",
+        "null_reason": "fewer than 3 counted runs covering all 3 pairs",
+        "result": false,
+        "value": [
+          "pair1"
+        ]
+      },
+      {
+        "check": "nonzero_seed_spread",
+        "result": true,
+        "value": {
+          "pair1": {
+            "n": 1,
+            "relative_sd": null,
+            "zero_spread": null
+          }
+        }
+      }
+    ],
+    "calibration_valid": false,
+    "card_value": 0.5,
+    "compile_included": true,
+    "early_stopping": "off",
+    "engine": {
+      "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+      "alphafold_params_sha256": null,
+      "build_flags": {
+        "alphafold_early_stopping": "off",
+        "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+        "alphafold_models": 5,
+        "alphafold_msa_mode": "single_sequence",
+        "alphafold_params_sha256": null,
+        "alphafold_recycles": 20,
+        "docking_code": "lightdock",
+        "docking_version": "0.9.4",
+        "environment_lock_sha256": "7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6",
+        "jax_cuda_plugin_version": "0.4.35",
+        "jax_version": "0.4.35",
+        "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+        "jaxlib_version": "0.4.35",
+        "md_engine": "OpenMM",
+        "md_engine_version": "8.1.1",
+        "md_platform": "CUDA",
+        "md_precision": "mixed"
+      },
+      "docking_code": "lightdock",
+      "docking_version": "0.9.4",
+      "jax_cuda_plugin_version": "0.4.35",
+      "jax_version": "0.4.35",
+      "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+      "jaxlib_version": "0.4.35",
+      "md_engine": "OpenMM",
+      "md_engine_version": "8.1.1",
+      "md_platform": "CUDA",
+      "md_precision": "mixed"
+    },
+    "gate": "not evaluated: C1 VOID (fewer than 3 completed runs covering all 3 pairs; unmeasured, not holding)",
+    "gate_else": "take the docking-plus-MD fallback line with one AlphaFold-Multimer seed per pair, or move the grid to 12 pairs",
+    "gate_pass": null,
+    "gate_value": 1,
+    "halt": null,
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-23T04:57:17Z",
+      "environment_changed_by_fixer": true,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 1,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-23T04:37:06Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "marginal": false,
+    "measured": 0.3362024788724052,
+    "models": 5,
+    "msa_mode": "single_sequence",
+    "n": 1,
+    "null_reasons": {
+      "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+      "minimum_count": "fewer than 3 counted units",
+      "runs_cover_all_pairs": "fewer than 3 counted runs covering all 3 pairs",
+      "stages_before_not_cut": "a guard, ceiling or timeout cut an earlier stage short"
+    },
+    "pairs_covered": [
+      "pair1"
+    ],
+    "per_run_hours": [
+      0.3362024788724052
+    ],
+    "recycles": 20,
+    "runs_counted": 1,
+    "seed_spread": {
+      "pair1": {
+        "n": 1,
+        "relative_sd": null,
+        "zero_spread": null
+      }
+    },
+    "unit": "hours per AlphaFold-Multimer run",
+    "void_reason": "fewer than 3 completed runs covering all 3 pairs; unmeasured, not holding",
+    "voided_by": "fewer than 3 completed runs covering all 3 pairs; unmeasured, not holding"
+  }
+}

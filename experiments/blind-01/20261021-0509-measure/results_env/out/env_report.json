@@ -1,8 +1,8 @@
 {
- "status": "ok",
+ "status": "failed",
  "env_dir": "/lambda/nfs/metis-env-us-east-1/m4",
  "venv": "/lambda/nfs/metis-env-us-east-1/m4/venv",
- "lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+ "lock_sha256": "7dde3c7d5ad3f34f6a7327ba38e65719c54e3305b23360a228d978ffce19bfe6",
  "python": "3.10.12",
  "dists": [
   {
@@ -141,12 +141,36 @@
      "stderr_tail": ""
     }
    ]
+  },
+  {
+   "requirement": "dm-haiku==0.0.13",
+   "installed_version": "0.0.13",
+   "modules": [
+    {
+     "module": "docs",
+     "ok": true,
+     "error_kind": "ok",
+     "stderr_tail": ""
+    },
+    {
+     "module": "examples",
+     "ok": true,
+     "error_kind": "ok",
+     "stderr_tail": ""
+    },
+    {
+     "module": "haiku",
+     "ok": true,
+     "error_kind": "ok",
+     "stderr_tail": ""
+    }
+   ]
   }
  ],
  "all_imports_ok": true,
- "elapsed_s": 2409,
- "git_head": "b907b50a58ea6c1fc0d1687acd9ee5423708ab46",
- "git_commits": "4",
+ "elapsed_s": 135,
+ "git_head": "738debf8a63394ad222858432071d9aa4dd826e6",
+ "git_commits": "6",
  "remote_timeout_s": "5400",
  "hold_seconds": "2400"
 }

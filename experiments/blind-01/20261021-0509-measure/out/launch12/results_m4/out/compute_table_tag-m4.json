@@ -1,0 +1,117 @@
+{
+  "stages": [
+    {
+      "stage": "capability",
+      "ran": true,
+      "reason": null,
+      "start_utc": "2026-10-23T04:33:06Z",
+      "end_utc": "2026-10-23T04:33:18Z",
+      "wall_clock_s": 11.581,
+      "gpu_busy_s": null,
+      "gpu_busy_reason": "not a graphics-processor stage",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 0
+    },
+    {
+      "stage": "downloads",
+      "ran": true,
+      "reason": null,
+      "start_utc": "2026-10-23T04:33:18Z",
+      "end_utc": "2026-10-23T04:33:33Z",
+      "wall_clock_s": 15.25,
+      "gpu_busy_s": null,
+      "gpu_busy_reason": "not a graphics-processor stage",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 0
+    },
+    {
+      "stage": "controls",
+      "ran": true,
+      "reason": null,
+      "start_utc": "2026-10-23T04:33:33Z",
+      "end_utc": "2026-10-23T04:34:33Z",
+      "wall_clock_s": 60.025,
+      "gpu_busy_s": null,
+      "gpu_busy_reason": "not a graphics-processor stage",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 0
+    },
+    {
+      "stage": "anchor",
+      "ran": true,
+      "reason": null,
+      "start_utc": "2026-10-23T04:34:33Z",
+      "end_utc": "2026-10-23T04:35:33Z",
+      "wall_clock_s": 60.113,
+      "gpu_busy_s": 0.0,
+      "gpu_busy_reason": "not sampled",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 0
+    },
+    {
+      "stage": "aux",
+      "ran": true,
+      "reason": null,
+      "start_utc": "2026-10-23T04:35:33Z",
+      "end_utc": "2026-10-23T04:37:06Z",
+      "wall_clock_s": 92.659,
+      "gpu_busy_s": 0.0,
+      "gpu_busy_reason": "not sampled",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 0
+    },
+    {
+      "stage": "af2",
+      "ran": true,
+      "reason": null,
+      "start_utc": "2026-10-23T04:37:06Z",
+      "end_utc": "2026-10-23T04:57:17Z",
+      "wall_clock_s": 1210.703,
+      "gpu_busy_s": 890.0,
+      "gpu_busy_reason": "not sampled",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 0
+    },
+    {
+      "stage": "md",
+      "ran": true,
+      "reason": "the stage failed",
+      "start_utc": "2026-10-23T04:57:17Z",
+      "end_utc": "2026-10-23T04:57:51Z",
+      "wall_clock_s": 33.917,
+      "gpu_busy_s": 0.0,
+      "gpu_busy_reason": "not sampled",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 2
+    },
+    {
+      "stage": "storage",
+      "ran": false,
+      "reason": "not started",
+      "start_utc": null,
+      "end_utc": null,
+      "wall_clock_s": null,
+      "gpu_busy_s": null,
+      "gpu_busy_reason": "not sampled",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": null
+    },
+    {
+      "stage": "endpoints",
+      "ran": true,
+      "reason": null,
+      "start_utc": "2026-10-23T04:57:51Z",
+      "end_utc": "2026-10-23T04:57:51Z",
+      "wall_clock_s": 0.012,
+      "gpu_busy_s": null,
+      "gpu_busy_reason": "not a graphics-processor stage",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "exit_code": 0
+    }
+  ],
+  "instance_type": "gpu_1x_a100_sxm4",
+  "price_usd_per_hour": 1.99,
+  "elapsed_since_t0_s": 2135.258,
+  "estimated_spend_usd": 1.1803,
+  "anchor_decision": "FAIL"
+}
