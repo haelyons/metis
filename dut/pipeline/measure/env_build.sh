@@ -22,7 +22,9 @@ T0=$(date +%s)
 # the environment directory is a git repository: every change (pins, extra packages, fixes) is a commit the launcher fetches
 mkdir -p "$ENVDIR"; cd "$ENVDIR" || exit 2
 [ -d .git ] || { git init -q . && git config user.email env@metis && git config user.name env_build; }
-cp "$HERE/pins.txt" "$ENVDIR/pins.txt"; cp "$HERE/apt.txt" "$ENVDIR/apt.txt" 2>/dev/null || : > "$ENVDIR/apt.txt"
+# once the environment exists, its git history is the record: the shipped pins seed a new environment only, so a fixer's commits survive a re-run
+if [ -f "$ENVDIR/pins.txt" ]; then log "pins of record kept from $ENVDIR (git $(git rev-parse --short HEAD 2>/dev/null), $(git rev-list --count HEAD 2>/dev/null) commits)"
+else cp "$HERE/pins.txt" "$ENVDIR/pins.txt"; cp "$HERE/apt.txt" "$ENVDIR/apt.txt" 2>/dev/null || : > "$ENVDIR/apt.txt"; fi
 git add -A >/dev/null 2>&1; git commit -q -m "env_build: inputs of record (pins.txt, apt.txt)" >/dev/null 2>&1 || true
 
 attempt() {   # one build-and-check pass; returns 0 when everything imports
@@ -84,6 +86,7 @@ import json, sys; json.dump({"status": sys.argv[3], "note": "venv python unavail
 PY2
   git -C "$ENVDIR" add -A >/dev/null 2>&1; git -C "$ENVDIR" commit -q -m "env_build: $1 after attempt $ATTEMPT" >/dev/null 2>&1 || true
   git -C "$ENVDIR" log -p --stat -- pins.txt apt.txt > "$OUT/changes.log" 2>/dev/null || true
+  cp "$ENVDIR/pins.txt" "$ENVDIR/apt.txt" "$OUT/" 2>/dev/null || true   # the inputs of record as they now stand, fetched with the report
 }
 
 ATTEMPT=1

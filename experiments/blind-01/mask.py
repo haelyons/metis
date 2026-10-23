@@ -11,7 +11,7 @@ read list first second once twice only same both instance type region price cap 
 cheapest single record recorded checks check exit code stop proceed may must shall write written listing network offline inputs uses
 mismatch hand edit edits ruling fetch default forwarded forward every each into from that this it its as into""".split())
 FILES = re.compile(r"^(lambda_run_\w+\.sh|remote_run_\w+\.sh|onbox_\w+\.sh|run_\w+\.py|pipeline\.js|triage_workflow\.js|provenance\.py|ONBOX_CONTRACT\.md|EXEC_NOTE\.md|GATE_COMMIT\.md|QUESTION\.md|CARD\.json|RUN\.md|frozen/(lambda_run\.sh|remote_run\.sh|provenance\.py|ONBOX_CONTRACT\.md)|out/(pip_pins_check_\w+\.txt|operator_findings_\w+\.txt|selftest_\w+\.log|review_\w+\.(md|json)|design_record\.json|\w+_return\.json))$")
-ENV = re.compile(r"^[A-Z][A-Z0-9]*[_0-9][A-Z0-9_]*(=[\w.:/-]*)?$")   # case-sensitive; must contain an underscore or digit (a bare metric acronym is masked)
+ENV = re.compile(r"^[A-Z][A-Z0-9]*_[A-Z0-9_]*(=[\w.:/-]*)?$")   # case-sensitive; must contain an underscore (a bare acronym, with or without digits, is masked)
 NUM = re.compile(r"^(USD\s*)?\$?\d[\d,.:]*[a-z%]{0,3}$")
 TYPE = re.compile(r"^(gpu_[a-z0-9_]+|us-[a-z]+-\d|eu-[a-z]+-\d)$")
 for line in sys.stdin:

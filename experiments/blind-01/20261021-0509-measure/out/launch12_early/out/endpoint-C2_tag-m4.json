@@ -1,0 +1,202 @@
+{
+  "cell": {
+    "input": "C2",
+    "key": "md_ns_per_day_a100",
+    "stage": "endpoints",
+    "tag": "m4"
+  },
+  "decision": "VOID",
+  "decision_rule": "inside [51.6, 322.5] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-90-5",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-23T04:29:04+00:00"
+  },
+  "inputs": [
+    {
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/rows_md_tag-m4.jsonl",
+      "present": false,
+      "sha256": null
+    },
+    {
+      "bytes": 1117,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "97dec50a01a5"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    },
+    {
+      "bytes": 6032,
+      "n_items": 3,
+      "path": "/home/ubuntu/m4_run/results_m4/out/pairs_tag-m4.json",
+      "present": true,
+      "sha256": "1cacf6db2153"
+    }
+  ],
+  "kind": "C2",
+  "metric": "md_ns_per_day_a100 measured on the stand-in protocol, in nanoseconds simulated per day",
+  "notes": "",
+  "notes_list": [
+    "stand-in pairs built from 6IHB chains, not the card's pairs",
+    "one GPU; one box; 3 pairs; no multi-GPU scaling",
+    "measured after an anchor miss; run_valid false, voided by the anchor; calibration_valid decided by this record's own checks only"
+  ],
+  "run_valid": false,
+  "run_valid_voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+  "tag": "m4",
+  "threshold": {
+    "band": [
+      51.6,
+      322.5
+    ],
+    "card_value": 129,
+    "marginal_fraction": 0.1
+  },
+  "values": {
+    "band": [
+      51.6,
+      322.5
+    ],
+    "basis": "PROXY",
+    "calibration_checks": [
+      {
+        "check": "sleep_control_passed",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "gpu_visible",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "stages_before_not_cut",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "minimum_count",
+        "null_reason": "fewer than 2 counted units",
+        "result": false,
+        "value": 0
+      },
+      {
+        "check": "gpu_is_a100",
+        "result": true,
+        "value": "NVIDIA A100-SXM4-40GB"
+      },
+      {
+        "check": "atom_count_in_range",
+        "null_reason": "a built system is outside 120000 to 180000 atoms",
+        "result": false,
+        "value": []
+      },
+      {
+        "check": "both_roles_present",
+        "null_reason": "a complex lacks a chain role or a capsid heavy atom",
+        "result": false,
+        "value": []
+      },
+      {
+        "check": "reporter_reached_production_and_finite",
+        "null_reason": "a reporter file does not reach the equilibration plus 250,000 production steps, or holds a non-finite energy",
+        "result": false,
+        "value": []
+      },
+      {
+        "check": "trajectory_frame_count",
+        "null_reason": "a trajectory does not hold 50 frames, plus or minus one",
+        "result": false,
+        "value": []
+      },
+      {
+        "check": "platform_and_precision",
+        "null_reason": "a segment did not run on the CUDA platform in mixed precision",
+        "result": false,
+        "value": []
+      },
+      {
+        "check": "complex_count",
+        "null_reason": "fewer than 2 complexes finished",
+        "result": false,
+        "value": 0
+      }
+    ],
+    "calibration_valid": false,
+    "card_value": 129,
+    "engine": {
+      "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+      "alphafold_params_sha256": null,
+      "build_flags": {
+        "alphafold_early_stopping": "off",
+        "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+        "alphafold_models": 5,
+        "alphafold_msa_mode": "single_sequence",
+        "alphafold_params_sha256": null,
+        "alphafold_recycles": 20,
+        "docking_code": "lightdock",
+        "docking_version": "0.9.4",
+        "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+        "jax_cuda_plugin_version": "0.4.35",
+        "jax_version": "0.4.35",
+        "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+        "jaxlib_version": "0.4.35",
+        "md_engine": "OpenMM",
+        "md_engine_version": "8.1.1",
+        "md_platform": "CUDA",
+        "md_precision": "mixed"
+      },
+      "docking_code": "lightdock",
+      "docking_version": "0.9.4",
+      "jax_cuda_plugin_version": "0.4.35",
+      "jax_version": "0.4.35",
+      "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+      "jaxlib_version": "0.4.35",
+      "md_engine": "OpenMM",
+      "md_engine_version": "8.1.1",
+      "md_platform": "CUDA",
+      "md_precision": "mixed"
+    },
+    "gate": "not applicable: the card's gate is on af2_h_per_run",
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-23T04:29:04Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 0,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-23T04:29:04Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "marginal": false,
+    "measured": null,
+    "n": 0,
+    "null_reasons": {
+      "alphafold_params_sha256": "the parameter archive was not hashed in this run",
+      "atom_count_in_range": "a built system is outside 120000 to 180000 atoms",
+      "both_roles_present": "a complex lacks a chain role or a capsid heavy atom",
+      "complex_count": "fewer than 2 complexes finished",
+      "measured": "the run ended on broken infrastructure: the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+      "minimum_count": "fewer than 2 counted units",
+      "platform_and_precision": "a segment did not run on the CUDA platform in mixed precision",
+      "reporter_reached_production_and_finite": "a reporter file does not reach the equilibration plus 250,000 production steps, or holds a non-finite energy",
+      "trajectory_frame_count": "a trajectory does not hold 50 frames, plus or minus one"
+    },
+    "unit": "nanoseconds simulated per day",
+    "void_reason": "the run ended on broken infrastructure: the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+    "voided_by": "the run ended on broken infrastructure: the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True"
+  }
+}

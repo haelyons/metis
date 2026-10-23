@@ -1,0 +1,334 @@
+{
+  "cell": {
+    "input": "C3",
+    "key": "aux_h_per_pair",
+    "stage": "endpoints",
+    "tag": "m4"
+  },
+  "decision": "FAIL",
+  "decision_rule": "inside [0.3333, 3] -> PASS; outside -> FAIL; within 10 percent of either edge -> VOID and marginal; a record whose own calibration checks fail is VOID with the raw value kept; below the minimum sample, on a wrong graphics processor, or left unmeasured by a stop -> VOID with the raw rows kept",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-90-5",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-23T04:28:19+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 3978,
+      "n_items": 3,
+      "path": "/home/ubuntu/m4_run/results_m4/out/rows_aux_tag-m4.jsonl",
+      "present": true,
+      "sha256": "ef688286ed78"
+    },
+    {
+      "bytes": 1117,
+      "n_items": null,
+      "path": "/home/ubuntu/m4_run/results_m4/out/downloads_tag-m4.json",
+      "present": true,
+      "sha256": "97dec50a01a5"
+    },
+    {
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "path": "/lambda/nfs/metis-env-us-east-1/m4/venv",
+      "sha256_full": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "what": "the environment of record, by its lock sha256"
+    },
+    {
+      "bytes": 6032,
+      "n_items": 3,
+      "path": "/home/ubuntu/m4_run/results_m4/out/pairs_tag-m4.json",
+      "present": true,
+      "sha256": "1cacf6db2153"
+    }
+  ],
+  "kind": "C3",
+  "metric": "aux_h_per_pair measured on the stand-in protocol, in hours per capsid-receptor pair",
+  "notes": "",
+  "notes_list": [
+    "stand-in pairs built from 6IHB chains, not the card's pairs",
+    "one GPU; one box; 3 pairs; no multi-GPU scaling",
+    "producer's reading of aux hours",
+    "measured after an anchor miss; run_valid false, voided by the anchor; calibration_valid decided by this record's own checks only"
+  ],
+  "run_valid": false,
+  "run_valid_voided_by": "the anchor redocking missed its tolerance against the published placement: overlap 0.0000, interface backbone RMSD 38.6163 A, serial-versus-parallel RMSD 0.0000 A, calls identical True",
+  "tag": "m4",
+  "threshold": {
+    "band": [
+      0.3333,
+      3
+    ],
+    "card_value": 1,
+    "marginal_fraction": 0.1
+  },
+  "values": {
+    "band": [
+      0.3333,
+      3
+    ],
+    "basis": "GUESS",
+    "calibration_checks": [
+      {
+        "check": "sleep_control_passed",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "gpu_visible",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "stages_before_not_cut",
+        "result": true,
+        "value": true
+      },
+      {
+        "check": "minimum_count",
+        "result": true,
+        "value": 3
+      },
+      {
+        "check": "docking_parameters_equal_the_anchor",
+        "result": true,
+        "value": [
+          {
+            "docking_parameters": {
+              "cores": 4,
+              "glowworms": 20,
+              "rank_table_columns": {
+                "header": [
+                  "Swarm",
+                  "Glowworm",
+                  "Coordinates",
+                  "RecID",
+                  "LigID",
+                  "Luciferin",
+                  "Neigh",
+                  "VR",
+                  "RMSD",
+                  "PDB",
+                  "Clashes",
+                  "Scoring"
+                ],
+                "mapping": "by_name",
+                "row_field_count": 12
+              },
+              "restrained_to_the_published_interface": false,
+              "setup_flags": [
+                "--noxt",
+                "--noh"
+              ],
+              "steps": 20,
+              "swarms": 2
+            },
+            "pair": "pair1"
+          },
+          {
+            "docking_parameters": {
+              "cores": 4,
+              "glowworms": 20,
+              "rank_table_columns": {
+                "header": [
+                  "Swarm",
+                  "Glowworm",
+                  "Coordinates",
+                  "RecID",
+                  "LigID",
+                  "Luciferin",
+                  "Neigh",
+                  "VR",
+                  "RMSD",
+                  "PDB",
+                  "Clashes",
+                  "Scoring"
+                ],
+                "mapping": "by_name",
+                "row_field_count": 12
+              },
+              "restrained_to_the_published_interface": false,
+              "setup_flags": [
+                "--noxt",
+                "--noh"
+              ],
+              "steps": 20,
+              "swarms": 2
+            },
+            "pair": "pair2"
+          },
+          {
+            "docking_parameters": {
+              "cores": 4,
+              "glowworms": 20,
+              "rank_table_columns": {
+                "header": [
+                  "Swarm",
+                  "Glowworm",
+                  "Coordinates",
+                  "RecID",
+                  "LigID",
+                  "Luciferin",
+                  "Neigh",
+                  "VR",
+                  "RMSD",
+                  "PDB",
+                  "Clashes",
+                  "Scoring"
+                ],
+                "mapping": "by_name",
+                "row_field_count": 12
+              },
+              "restrained_to_the_published_interface": false,
+              "setup_flags": [
+                "--noxt",
+                "--noh"
+              ],
+              "steps": 20,
+              "swarms": 2
+            },
+            "pair": "pair3"
+          }
+        ]
+      },
+      {
+        "check": "rank_table_and_top_pose",
+        "result": true,
+        "value": [
+          {
+            "rank_rows": 40,
+            "rank_table_parsed": true,
+            "top_pose_exists": true,
+            "top_pose_roles_ok": true
+          },
+          {
+            "rank_rows": 40,
+            "rank_table_parsed": true,
+            "top_pose_exists": true,
+            "top_pose_roles_ok": true
+          },
+          {
+            "rank_rows": 40,
+            "rank_table_parsed": true,
+            "top_pose_exists": true,
+            "top_pose_roles_ok": true
+          }
+        ]
+      },
+      {
+        "check": "interface_analysis_complete",
+        "result": true,
+        "value": [
+          {
+            "call_table_row_written": true,
+            "contacts_at_4p5": true,
+            "pair": "pair1"
+          },
+          {
+            "call_table_row_written": true,
+            "contacts_at_4p5": true,
+            "pair": "pair2"
+          },
+          {
+            "call_table_row_written": true,
+            "contacts_at_4p5": true,
+            "pair": "pair3"
+          }
+        ]
+      },
+      {
+        "check": "no_pair_reached_its_limit",
+        "result": true,
+        "value": [
+          {
+            "pair": "pair1",
+            "truncated": false
+          },
+          {
+            "pair": "pair2",
+            "truncated": false
+          },
+          {
+            "pair": "pair3",
+            "truncated": false
+          }
+        ]
+      },
+      {
+        "check": "pair_count",
+        "result": true,
+        "value": [
+          "pair1",
+          "pair2",
+          "pair3"
+        ]
+      }
+    ],
+    "calibration_valid": true,
+    "card_value": 1,
+    "engine": {
+      "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+      "alphafold_params_sha256": null,
+      "build_flags": {
+        "alphafold_early_stopping": "off",
+        "alphafold_implementation": "ColabFold (colabfold_batch) running AlphaFold-Multimer",
+        "alphafold_models": 5,
+        "alphafold_msa_mode": "single_sequence",
+        "alphafold_params_sha256": null,
+        "alphafold_recycles": 20,
+        "docking_code": "lightdock",
+        "docking_version": "0.9.4",
+        "environment_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+        "jax_cuda_plugin_version": "0.4.35",
+        "jax_version": "0.4.35",
+        "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+        "jaxlib_version": "0.4.35",
+        "md_engine": "OpenMM",
+        "md_engine_version": "8.1.1",
+        "md_platform": "CUDA",
+        "md_precision": "mixed"
+      },
+      "docking_code": "lightdock",
+      "docking_version": "0.9.4",
+      "jax_cuda_plugin_version": "0.4.35",
+      "jax_version": "0.4.35",
+      "jax_wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64",
+      "jaxlib_version": "0.4.35",
+      "md_engine": "OpenMM",
+      "md_engine_version": "8.1.1",
+      "md_platform": "CUDA",
+      "md_precision": "mixed"
+    },
+    "gate": "not applicable: the card's gate is on af2_h_per_run",
+    "machine": {
+      "cuda_plugin_version": "0.4.35",
+      "cuda_runtime_version": "12.8",
+      "end_utc": "2026-10-23T04:28:19Z",
+      "environment_changed_by_fixer": false,
+      "expected_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "gpu_driver": "570.148.08",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "held_attempts": 0,
+      "instance_type": "gpu_1x_a100_sxm4",
+      "observed_lock_sha256": "f2b089a164ab725bdec6b06e97c79b2f45586bd0b68ff49600dbc90d1bf6c85d",
+      "price_usd_per_hour": 1.99,
+      "start_utc": "2026-10-23T04:26:32Z",
+      "venv_path": "/lambda/nfs/metis-env-us-east-1/m4/venv"
+    },
+    "marginal": false,
+    "measured": 0.009892967321254588,
+    "n": 3,
+    "null_reasons": {
+      "alphafold_params_sha256": "the parameter archive was not hashed in this run"
+    },
+    "pairs_finished": 3,
+    "per_pair_hours": [
+      0.0092621335056093,
+      0.009708306789398193,
+      0.010708461668756273
+    ],
+    "unit": "hours per capsid-receptor pair",
+    "void_reason": null,
+    "voided_by": null
+  }
+}

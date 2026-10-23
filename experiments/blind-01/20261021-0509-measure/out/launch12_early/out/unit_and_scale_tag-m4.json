@@ -1,0 +1,45 @@
+{
+  "af2_hours_from_seconds": {
+    "rule": "wall-clock seconds of one prediction call divided by 3,600",
+    "unit": "hours per AlphaFold-Multimer run",
+    "worked_example": {
+      "hours": 0.5,
+      "seconds": 1800
+    }
+  },
+  "aux_hours_from_seconds": {
+    "rule": "wall-clock seconds of docking, interface analysis and writing the call-table row for one pair, divided by 3,600",
+    "unit": "hours per capsid-receptor pair",
+    "worked_example": {
+      "hours": 1.0,
+      "seconds": 3600
+    }
+  },
+  "kind": "worked_examples",
+  "md_ns_per_day_from_steps": {
+    "engine_rate_line_example": "Speed (ns/day) column of the reporter file, read beside the wall-clock figure",
+    "rule": "steps times the timestep gives simulated femtoseconds; divided by the production wall-clock and scaled to 86,400 seconds",
+    "unit": "nanoseconds simulated per day",
+    "worked_example": {
+      "ns_per_day": 128.96,
+      "steps": 250000,
+      "timestep_fs": 2.0,
+      "wallclock_s": 335
+    }
+  },
+  "raw_values_in": {
+    "md_engine_rate_lines_with_wallclock_beside_them": "rows_md_tag-m4.jsonl",
+    "note": "this control holds worked examples only; the raw values live in the row files named here",
+    "raw_alphafold_seconds_per_run": "rows_af2_tag-m4.jsonl",
+    "raw_bytes_per_artifact": "rows_storage_tag-m4.jsonl"
+  },
+  "storage_gib_from_bytes": {
+    "rule": "apparent bytes written by one run times 216 divided by 2 to the power 30",
+    "unit": "gibibytes",
+    "worked_example": {
+      "bytes_per_run": 1073741824,
+      "gib_216_runs": 216.0,
+      "gib_432_runs": 432.0
+    }
+  }
+}
