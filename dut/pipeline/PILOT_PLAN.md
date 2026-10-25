@@ -33,6 +33,7 @@ find the first unit not marked DONE, and continue from it.
 - Tests: separate agents for design and implementation, and for tests; neither sees the other's code (the m4 rule).
 - Every change an agent makes to pipeline code is verified by the operator (the tests re-run, a live check, the key diffs read) before it is committed.
 - Karpathy guidelines: the smallest change; subtract before adding.
+- Owner 2026-10-26: Codex may read blind-01 content. Use no Claude agents for now (usage low): this Claude session is the operator only, and agent work goes to Codex, the self-hosted lambda/ models or OpenCode. Fallback chains for m5 runs leave claude out.
 
 ## Units
 - U1 codex family: DONE 2026-10-25 (Codex wrote it; the operator verified: e2e and selftest pass, live codex call ok in 37 s). Independent tests: tools/test_codex_cli.js, written by a separate Codex session from the contract without reading the runner; 20 of 23 passed at first, and the 3 failures were scalar JSON replies, an over-assertion against an ambiguous contract (the runner matches claude_cli.js); after the contract was clarified, all checks pass.
