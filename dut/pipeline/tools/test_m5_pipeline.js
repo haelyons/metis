@@ -60,17 +60,18 @@ async function runCase(name, failedStage, launch = false) {
   const brief = path.join(parent, `${name}-brief.md`)
   fs.writeFileSync(brief, '# Test brief\nNo experiment directory or model is needed.\n')
   const argsFile = path.join(control, 'args.json')
+  const stub = { intake: 'PASS', seal: 'PASS', ...(failedStage ? { [failedStage]: 'FAIL' } : {}) }
   if (!launch) {
     fs.writeFileSync(argsFile, JSON.stringify({
       run_root: runRoot,
       brief,
       tag: name,
-      ...(failedStage ? { stub: { [failedStage]: 'FAIL' } } : {}),
+      stub,
     }))
   }
   const before = snapshot(runRoot)
   const command = launch
-    ? [path.join(ROOT, 'launch.js'), 'stage', '--stage', 'm5', '--run-root', runRoot, '--brief', brief]
+    ? [path.join(ROOT, 'launch.js'), 'stage', '--stage', 'm5', '--run-root', runRoot, '--brief', brief, '--dry-run']
     : [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
       '--args', argsFile, '--out', out, '--disable-family', 'claude']
   // File-backed output also works in sandboxes that restrict synchronous pipes.
@@ -78,17 +79,29 @@ async function runCase(name, failedStage, launch = false) {
   const stderrFile = path.join(runRoot, 'test-stderr.log')
   const stdout = fs.openSync(stdoutFile, 'w')
   const stderr = fs.openSync(stderrFile, 'w')
-  const child = await new Promise(resolve => {
-    const childProcess = spawn(process.execPath, command, {
-      cwd: ROOT,
-      timeout: 30000,
-      stdio: ['ignore', stdout, stderr],
-      env: { ...process.env, WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js') },
+  async function execute(executable, command, cwd = ROOT) {
+    return new Promise(resolve => {
+      const childProcess = spawn(executable, command, {
+        cwd,
+        timeout: 30000,
+        stdio: ['ignore', stdout, stderr],
+        env: { ...process.env, WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js') },
+      })
+      let error
+      childProcess.on('error', value => { error = value })
+      childProcess.on('close', (status, signal) => resolve({ status, signal, error }))
     })
-    let error
-    childProcess.on('error', value => { error = value })
-    childProcess.on('close', (status, signal) => resolve({ status, signal, error }))
-  })
+  }
+  let child = await execute(process.execPath, command)
+  if (launch && child.status === 0 && !child.error) {
+    // The launcher has no stub option. Set overrides in its generated args,
+    // then execute its recorded command against the frozen pipeline copy.
+    const launchArgsFile = path.join(out, 'args.json')
+    fs.writeFileSync(launchArgsFile, JSON.stringify({ ...readJSON(launchArgsFile), stub }))
+    const recordedCommand = fs.readFileSync(path.join(out, 'RUN.md'), 'utf8').match(/^Command: (.+)$/m)
+    assert.ok(recordedCommand, 'launcher must record its workflow command')
+    child = await execute('/bin/sh', ['-c', recordedCommand[1]], path.join(out, 'pipeline'))
+  }
   fs.closeSync(stdout)
   fs.closeSync(stderr)
   check(`${name}: exits successfully`, () => {
