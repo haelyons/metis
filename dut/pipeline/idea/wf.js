@@ -7,6 +7,7 @@
 // usage: node wf.js --args args.json [--script ../dist/question_tree_v2.js] [--name label] [--out dir]
 //                   [--resume <earlier run dir>] [--main provider/model] [--cheap provider/model]
 //                   [--family opencode|claude|codex] [--mode fallback|shadow|swap|primary-only] [--on-refusal halt|understudy]
+//                   [--disable-family opencode|claude|codex] (repeatable; adds to config exclusions for this run)
 //                   [--profile metis|latent_skeptic]
 // args.base "auto" (or missing) puts the pipeline's own files under <run dir>/work; args.cwd is the working directory
 // of file-writing roles when the script writes into an existing folder (latent_skeptic stages).
@@ -38,13 +39,16 @@ const CFG_ALL = JSON.parse(fs.readFileSync(opt('config', path.join(__dirname, 'c
 const CFG = CFG_ALL.workflow
 const MAIN = opt('main', CFG.main_model), CHEAP = opt('cheap', CFG.cheap_model)
 const UCFG = U.withDefaults({ ...(CFG_ALL.understudy || {}), ...(opt('on-refusal') ? { on_refusal: opt('on-refusal') } : {}) })
+UCFG.disabled_families = [...new Set([...UCFG.disabled_families, ...argv.flatMap((a, i) => a === '--disable-family' ? [argv[i + 1]] : [])])]
 UCFG.families.opencode.models = { strong: MAIN, main: MAIN, cheap: CHEAP, ...(UCFG.families.opencode.models || {}) }
 if (opt('main')) UCFG.families.opencode.models.strong = UCFG.families.opencode.models.main = MAIN
 if (opt('cheap')) UCFG.families.opencode.models.cheap = CHEAP
 UCFG.families.opencode.by_role = { ...(CFG.by_role || {}), ...(UCFG.families.opencode.by_role || {}) }
 const FAMILY = opt('family', null), MODE = opt('mode', null), PROFILE = opt('profile', 'metis')
-for (const [k, v, ok] of [['family', FAMILY, ['opencode', 'claude', 'codex', null]], ['mode', MODE, ['fallback', 'shadow', 'swap', 'primary-only', null]], ['on-refusal', UCFG.on_refusal, ['halt', 'understudy']]])
+for (const [k, v, ok] of [['family', FAMILY, ['opencode', 'claude', 'codex', null]], ['mode', MODE, ['fallback', 'shadow', 'swap', 'primary-only', null]], ['on-refusal', UCFG.on_refusal, ['halt', 'understudy']], ...UCFG.disabled_families.map(f => ['disable-family', f, ['opencode', 'claude', 'codex']])])
   if (!ok.includes(v)) { console.error(`--${k} must be one of ${ok.filter(Boolean).join(', ')}`); process.exit(2) }
+try { U.resolve({ ...UCFG, routes: [] }, { familyOverride: FAMILY, modeOverride: MODE }) }
+catch (e) { console.error(e.message); process.exit(2) }
 const SCRIPT = path.resolve(opt('script', path.join(__dirname, '..', 'dist', 'question_tree_v2.js')))
 const ARGS = JSON.parse(fs.readFileSync(opt('args'), 'utf8'))
 const NAME = opt('name', path.basename(opt('args')).replace(/\.json$/, ''))
@@ -61,11 +65,12 @@ const sh = (cmd, a) => { try { return execFileSync(cmd, a, { encoding: 'utf8', s
 const repo = sh('git', ['-C', __dirname, 'rev-parse', '--show-toplevel'])
 const OCX_CFG = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'ocx', 'opencode', 'opencode.json'), 'utf8')) } catch { return {} } })()
 const rolePrompt = role => ((OCX_CFG.agent || {})[role] || {}).prompt || null
+const version = family => UCFG.disabled_families.includes(family) ? null : sh(family, ['--version'])
 const runInfo = {
   name: NAME, run_dir: RUN, script: SCRIPT, script_sha256: sha(src), args: ARGS,
   models: { main: MAIN, cheap: CHEAP, by_role: UCFG.families.opencode.by_role },
-  understudy: { primary_family: FAMILY || UCFG.primary_family, mode: MODE || UCFG.mode, on_refusal: UCFG.on_refusal, retry_on: UCFG.retry_on, profile: PROFILE, families: UCFG.families, chain: UCFG.chain, routes: UCFG.routes },
-  opencode_version: sh('opencode', ['--version']), claude_version: sh('claude', ['--version']), codex_version: sh('codex', ['--version']), node: process.version,
+  understudy: { primary_family: FAMILY || UCFG.primary_family, disabled_families: UCFG.disabled_families, mode: MODE || UCFG.mode, on_refusal: UCFG.on_refusal, retry_on: UCFG.retry_on, profile: PROFILE, families: UCFG.families, chain: UCFG.chain, routes: UCFG.routes },
+  opencode_version: version('opencode'), claude_version: version('claude'), codex_version: version('codex'), node: process.version,
   git: repo && { repo, commit: sh('git', ['-C', repo, 'rev-parse', 'HEAD']), dirty: !!sh('git', ['-C', repo, 'status', '--porcelain']) },
   ocx_config: OCX_CFG, started: new Date().toISOString(),
 }
@@ -85,7 +90,7 @@ const resumeDir = opt('resume')
 if (resumeDir) for (const l of fs.readFileSync(path.join(resumeDir, 'journal.jsonl'), 'utf8').split('\n')) {
   if (!l.trim()) continue
   const r = JSON.parse(l)
-  if (r.type === 'result' && r.key) cache.set(r.key, r.value)
+  if (r.type === 'result' && r.key && !UCFG.disabled_families.includes(U.familyOf(r.model))) cache.set(r.key, r.value)
 }
 
 // ---------- concurrency ----------
@@ -116,6 +121,7 @@ async function callModel({ model, role, label, full, opts, dir, cwd, rec, repair
   let res = null, errors = [], session = null, value = null, attempts = 0
   try {
     for (let attempt = 1; attempt <= 2; attempt++) {
+      if (UCFG.disabled_families.includes(fam)) throw new Error(`family disabled: ${fam}`)
       attempts = attempt
       const repair = `Your reply could not be used: ${errors.slice(0, 15).join('; ')}. Reply again with only the JSON value asked for, complete.`
       const p = attempt === 1 ? full : (session && fam === 'opencode' ? repair : `${full}\n\n${repair}`)
@@ -133,7 +139,7 @@ async function callModel({ model, role, label, full, opts, dir, cwd, rec, repair
       else if (opts.schema) errors = res.json == null ? [res.jsonError || 'no JSON value found in the reply'] : validate(opts.schema, res.json)
       else errors = []
       if (!errors.length) { value = opts.schema ? res.json : res.text; break }
-      if (res.refusal || !repairable) break   // no repair turn after a refusal
+      if (res.refusal || !repairable || errors.some(e => e.startsWith('runner error: usage limit'))) break   // no repair after refusal or quota exhaustion
     }
   } catch (e) { errors = [`runner error: ${e.message}`] }
   let kind = U.classify(res, errors)
@@ -142,7 +148,7 @@ async function callModel({ model, role, label, full, opts, dir, cwd, rec, repair
   }
   if (kind !== 'none') { const bm = status.by_model[model]; if (bm) { bm.failed++; if (kind === 'refusal') bm.refusals++ } const bf = status.by_family[fam]; if (bf) { bf.failed++; if (kind === 'refusal') bf.refusals++ } }
   if (kind === 'refusal') status.refusals++
-  await runner.exportSession(model, session, path.join(dir, 'export.json'))
+  if (!UCFG.disabled_families.includes(fam)) await runner.exportSession(model, session, path.join(dir, 'export.json'))
   fs.writeFileSync(path.join(dir, 'reply.txt'), (res && res.text) || '')
   fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ label, role, model, family: fam, attempts, ms: rec.ms, cost_usd: rec.cost_usd, tokens: res && res.tokens, tools: res && res.tools, errors, kind, session }, null, 1))
   return { res, errors, value, attempts, kind, model }

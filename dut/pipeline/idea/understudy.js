@@ -5,6 +5,7 @@
 //
 // Config (config.json "understudy"; every field optional):
 //   primary_family   "opencode" | "claude" | "codex"   the family that answers first (CLI --family overrides)
+//   disabled_families [family, ...]                 excluded from primary and chain (CLI --disable-family adds)
 //   chain            { family: [family, ...] }      ordered understudies for each primary family
 //   mode             "fallback" | "shadow" | "swap" | "primary-only"   (CLI --mode overrides)
 //                    fallback: the understudy runs only when the primary fails on a kind in retry_on
@@ -47,6 +48,7 @@ const CLAUDE_TOOLS = {
 
 const DEFAULTS = {
   primary_family: 'opencode', mode: 'fallback', on_refusal: 'halt', retry_on: ['timeout', 'exit', 'runner', 'nojson', 'schema', 'declined'],
+  disabled_families: [],
   chain: { opencode: ['codex', 'claude'], claude: ['codex', 'opencode'], codex: ['claude', 'opencode'] },
   families: { opencode: { models: {} }, claude: { models: { strong: 'claude/opus', main: 'claude/sonnet', cheap: 'claude/sonnet' } }, codex: { models: { strong: 'codex/default@high', main: 'codex/default@medium', cheap: 'codex/default@low' } } },
   routes: [], profiles: { metis: { default: 'qt-bare', by_label: [] } }, timeouts_min: {},
@@ -78,12 +80,13 @@ function resolve(cfg, { label, role, pinned, familyOverride, modeOverride, prima
   const tier = TIER[pinned] || (pinnedTier && pinnedTier[0]) || 'main'
   const route = (cfg.routes || []).find(r => (r.match && new RegExp(r.match).test(label || '')) || (r.role && r.role === role)) || null
   const fam = familyOverride || (route && route.primary_family) || cfg.primary_family
+  const enabled = m => !(cfg.disabled_families || []).includes(familyOf(m))
   const modelFor = (f, t) => { const F = cfg.families[f] || {}; return (F.by_role && F.by_role[role]) || (F.models || {})[t] || (F.models || {}).main || null }
   let primary = (route && route.primary) || modelFor(fam, tier)
   const chainFor = p => {
     const seen = new Set([familyOf(p)])
     return [(route && route.understudy), ...(cfg.chain[familyOf(p)] || []).map(f => modelFor(f, tier))].filter(m => {
-      if (!m || seen.has(familyOf(m))) return false
+      if (!m || !enabled(m) || seen.has(familyOf(m))) return false
       seen.add(familyOf(m)); return true
     })
   }
@@ -91,6 +94,12 @@ function resolve(cfg, { label, role, pinned, familyOverride, modeOverride, prima
   let mode = modeOverride || (route && route.mode) || cfg.mode
   if (mode === 'swap') { if (chain.length) { const next = chain.shift(); chain.unshift(primary); primary = next } mode = 'fallback' }
   if (primaryOverride) { if (familyOf(primaryOverride) !== familyOf(primary)) chain = chainFor(primaryOverride); primary = primaryOverride }
+  chain = chain.filter(enabled)
+  if (!enabled(primary)) {
+    const disabled = familyOf(primary)
+    primary = chain.shift()
+    if (!primary) throw new Error(`runner error: family disabled: ${disabled}; no enabled family in chain`)
+  }
   return { primary, understudy: chain[0] || null, chain, mode, tier, route: route ? (route.match || route.role) : null, declined_if: (route && route.declined_if) || null }
 }
 

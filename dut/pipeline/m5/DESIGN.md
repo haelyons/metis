@@ -142,7 +142,7 @@ m5 does not need card/question-tree generation, directive regeneration/gate adde
 
 ## Lean cut (operator, 2026-10-26): build these 7 units, not the 15 above
 Agents for m5 v1: Codex only (allowed for private content), with OpenCode Go as fallback. Lambda narrow calls are deferred, because the serve box and the dev box cannot coexist under one state file. No Claude.
-1. Runtime guard: `understudy.disabled_families` (claude), enforced at every dispatch, fallback and repair; skip the repair turn on quota errors.
+1. DONE 2026-10-26. Runtime guard: `understudy.disabled_families` and the `--disable-family` flag; quota errors skip the repair turn; a run whose families are all disabled exits 2. Codex implemented; tools/test_disabled_families.js by a separate agent; all suites pass.
 2. Signatures v2 (`facts` per stage, fixed keys) and the operator-takeaway adapter.
 3. `m5/pipeline.js` skeleton with an explicit run root (`launch.js` support), stub stages, early stops, and SKIPPED records.
 4. A dev-box stage runner: run a declared command detached on the dev box under a timeout, fetch its outputs to `A/`, and write a receipt (reusing `box.sh`; no new lifecycle layer).

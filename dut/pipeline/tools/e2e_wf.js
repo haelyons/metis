@@ -111,7 +111,7 @@ for (const mode of modes) {
     check(etaRows.length === 2 && etaRows[0].from === 'opencode' && etaRows[0].to === 'codex' && !etaRows[0].ok && etaRows[1].from === 'codex' && etaRows[1].to === 'claude' && etaRows[1].ok && etaRows[1].kind === 'runner', 'ordered family handovers journaled separately')
     const totals = JSON.parse(fs.readFileSync(path.join(out, 'status.json'), 'utf8'))
     check(totals.by_family.opencode.calls === 8 && totals.by_family.codex.calls === 4 && totals.by_family.claude.calls === 1 && totals.substitutions === 4, 'totals include all three families; substitutions count answered calls')
-    check(totals.calls.find(x => / eta$/.test(x.id)).attempts === 5, 'attempt count includes all three families')
+    check(totals.calls.find(x => / eta$/.test(x.id)).attempts === 4, 'attempt count includes all three families (no repair turn after a usage-limit error)')
     const failed = J.filter(x => x.type === 'failed'); check(failed.length === 1 && failed[0].kind === 'refusal', 'one failed row of kind refusal')
     const md = fs.readFileSync(path.join(out, 'UNDERSTUDY.md'), 'utf8'); check(/refusals 1/.test(md) && /\| beta \|/.test(md), 'UNDERSTUDY.md written with the refusal count and the beta row')
     check(md.split('\n').some(l => /\| eta \|/.test(l) && /codex\/default@medium \(runner\), claude\/sonnet \(ok\)/.test(l)), 'report preserves both handovers')
