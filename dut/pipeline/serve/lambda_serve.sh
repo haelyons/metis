@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Serve one Lambda GPU through a local SSH tunnel. No public inference listener.
 # Usage: bash serve/lambda_serve.sh up [--model M] [--types "TYPE ..."] [--max-hours 6] [--port 18000]
+#        bash serve/lambda_serve.sh up --dev [--fs NAME] [--types "TYPE ..."] [--max-hours 8]
 #        bash serve/lambda_serve.sh status | down
+# Only one serve or dev box may exist at once: both modes share one state file.
+# Dev commands: ~/.cache/metis-serve/box.sh <command...>
 # Credentials: LAMBDA_KEYS_FILE (default /home/hal/dev/interp/dm_hack/.keys), LAMBDA_KEY_ONE=...
 # The local watchdog requires this machine to remain awake and connected.
 set +x
@@ -34,10 +37,10 @@ snapshot() {
   api instances | json 'assert isinstance(d["data"], list); print(json.dumps(next((x for x in d["data"] if x["id"] == sys.argv[1]), {"status":"terminated"})))' "$ID"
 }
 save() {
-  python3 - "$STATE" "$ID" "$IP" "$TYPE" "$REGION" "$PRICE" "$MODEL" "$PORT" "$START" "$TUNNEL" "$WATCH" <<'PY'
+  python3 - "$STATE" "$ID" "$IP" "$TYPE" "$REGION" "$PRICE" "$MODEL" "$PORT" "$START" "$TUNNEL" "$WATCH" "$MODE" "$FS" "$BOX" <<'PY'
 import json, os, sys
 p = sys.argv[1]
-d = dict(zip("instance_id ip type region price_usd_h model port started_utc tunnel_pid watchdog_pid".split(), sys.argv[2:]))
+d = dict(zip("instance_id ip type region price_usd_h model port started_utc tunnel_pid watchdog_pid mode filesystem box_helper".split(), sys.argv[2:]))
 for k in ("port", "tunnel_pid", "watchdog_pid"): d[k] = int(d[k] or 0)
 d["price_usd_h"] = float(d["price_usd_h"])
 with open(p + ".tmp", "w") as f: json.dump(d, f, indent=2); f.write("\n")
@@ -46,10 +49,11 @@ PY
 }
 load() {
   local values
-  values=$(json 'print("\n".join(str(d[k]) for k in "instance_id ip type region price_usd_h model port started_utc tunnel_pid watchdog_pid".split()))' < "$STATE")
+  values=$(json 'print("\n".join(str(d.get(k, "serve" if k == "mode" else "")) for k in "instance_id ip type region price_usd_h model port started_utc tunnel_pid watchdog_pid mode filesystem box_helper".split()))' < "$STATE")
   mapfile -t fields <<< "$values"
   ID=${fields[0]}; IP=${fields[1]}; TYPE=${fields[2]}; REGION=${fields[3]}; PRICE=${fields[4]}
   MODEL=${fields[5]}; PORT=${fields[6]}; START=${fields[7]}; TUNNEL=${fields[8]}; WATCH=${fields[9]}
+  MODE=${fields[10]}; FS=${fields[11]:-}; BOX=${fields[12]:-}
 }
 down() {
   echo "Terminating $ID"
@@ -75,8 +79,16 @@ case ${1:-} in
     if [[ $1 == down ]]; then down; exit 0; fi
     instance_state=$(snapshot | json 'print(d["status"])') || instance_state=unavailable
     echo "Instance $ID: $instance_state"
+    echo "mode: $MODE"
+    if [[ $MODE == dev ]]; then
+      if [[ -n $FS ]]; then
+        if remote "mountpoint -q -- $(printf '%q' "/lambda/nfs/$FS")"; then echo "Filesystem /lambda/nfs/$FS: mounted"
+        else echo "Filesystem /lambda/nfs/$FS: not mounted or SSH unavailable"; fi
+      else echo 'Filesystem: none attached'; fi
+    else
     if kill -0 "$TUNNEL" 2>/dev/null && [[ $TUNNEL -gt 1 ]]; then echo 'Tunnel: alive'; else echo 'Tunnel: down'; fi
     if curl -fsS --max-time 5 "http://127.0.0.1:$PORT/v1/models" >/dev/null; then echo 'Models: ready'; else echo 'Models: unavailable'; fi
+    fi
     python3 - "$START" "$PRICE" <<'PY'
 import datetime, sys
 h = (datetime.datetime.now(datetime.timezone.utc) - datetime.datetime.fromisoformat(sys.argv[1].replace("Z", "+00:00"))).total_seconds() / 3600
@@ -84,19 +96,23 @@ print(f"Elapsed: {h:.2f} hours; estimated USD: {h * float(sys.argv[2]):.2f}")
 PY
     exit 0 ;;
   up) shift ;;
-  *) die 'Usage: lambda_serve.sh up [--model M] [--types "TYPE ..."] [--max-hours 6] [--port 18000] | status | down' ;;
+  *) die 'Usage: lambda_serve.sh up [--dev [--fs NAME]] [--model M] [--types "TYPE ..."] [--max-hours HOURS (serve: 6, dev: 8)] [--port 18000] | status | down' ;;
 esac
 if [[ -f $STATE ]]; then
   load
   [[ $(snapshot | json 'print(d["status"])') == terminated ]] || die "Managed instance $ID is live; run down first."
   down
 fi
-MODEL=openai/gpt-oss-120b; TYPES='gpu_1x_h100_pcie gpu_1x_h100_sxm5 gpu_1x_a100_sxm4_80gb'; HOURS=6; PORT=18000
+MODEL=openai/gpt-oss-120b; TYPES='gpu_1x_h100_pcie gpu_1x_h100_sxm5 gpu_1x_a100_sxm4_80gb'; HOURS=; PORT=18000
+MODE=serve; FS=; BOX=
 while (($#)); do
+  if [[ $1 == --dev ]]; then MODE=dev; shift; continue; fi
   (($# >= 2)) || die "Missing value for $1"
-  case $1 in --model) MODEL=$2;; --types) TYPES=$2;; --max-hours) HOURS=$2;; --port) PORT=$2;; --wait-capacity) WAITCAP=$2;; *) die "Unknown option: $1";; esac
+  case $1 in --model) MODEL=$2;; --types) TYPES=$2;; --max-hours) HOURS=$2;; --port) PORT=$2;; --wait-capacity) WAITCAP=$2;; --fs) FS=$2;; *) die "Unknown option: $1";; esac
   shift 2
 done
+if [[ $MODE == dev ]]; then HOURS=${HOURS:-8}; else HOURS=${HOURS:-6}; fi
+[[ -z $FS || $MODE == dev ]] || die '--fs requires --dev'
 SECONDS_LIMIT=$(python3 - "$HOURS" "$PORT" <<'PY'
 import math, sys
 h, p = float(sys.argv[1]), int(sys.argv[2])
@@ -105,23 +121,31 @@ print(math.ceil(h * 3600))
 PY
 )
 [[ -n $MODEL && $MODEL != -* ]] || die 'Invalid model'
+if [[ $MODE == serve ]]; then
 python3 - "$PORT" <<'PY'
 import socket, sys
 with socket.socket() as s: s.bind(("127.0.0.1", int(sys.argv[1])))
 PY
+fi
+FS_REGIONS=
+if [[ -n $FS ]]; then
+  FS_REGIONS=$(api file-systems | json 'print(" ".join(x["region"]["name"] for x in d["data"] if x["name"] == sys.argv[1]))' "$FS")
+  [[ -n $FS_REGIONS ]] || die "Filesystem not found: $FS"
+fi
 cap_deadline=$(( $(date -u +%s) + ${WAITCAP:-0} * 60 ))   # --wait-capacity MIN: poll every 2 min until a requested type has capacity
 while :; do
 selection=$(api instance-types | json '
 for name in sys.argv[1].split():
     item = d["data"].get(name, {}); regions = item.get("regions_with_capacity_available", [])
+    regions = [r for r in regions if not sys.argv[2] or r["name"] in sys.argv[2].split()]
     if regions:
         print(name, regions[0]["name"], item["instance_type"]["price_cents_per_hour"] / 100); break
-' "$TYPES")
+' "$TYPES" "$FS_REGIONS")
 if [[ -n $selection ]]; then
   read -r TYPE REGION PRICE <<< "$selection"
   echo "Selected $TYPE in $REGION at USD $PRICE/hour"
   mkdir -p "$CACHE"
-  payload=$(python3 -c 'import json,sys; print(json.dumps(dict(instance_type_name=sys.argv[1],region_name=sys.argv[2],ssh_key_names=["latent_verify_hal_20260721"],name="metis-serve")))' "$TYPE" "$REGION")
+  payload=$(python3 -c 'import json,sys; print(json.dumps(dict(instance_type_name=sys.argv[1],region_name=sys.argv[2],ssh_key_names=["latent_verify_hal_20260721"],name="metis-serve",**({"file_system_names":[sys.argv[3]]} if sys.argv[3] else {}))))' "$TYPE" "$REGION" "$FS")
   ID=$( (api instance-operations/launch -X POST --data "$payload" || true) | json 'print(d["data"]["instance_ids"][0])' 2>/dev/null || true)
   [[ -n $ID ]] && break
   echo "Launch of $TYPE refused (capacity taken meanwhile?)"
@@ -146,6 +170,23 @@ done
 save
 for ((i=0; i<90; i++)); do remote true 2>/dev/null && break; sleep 10; done   # up to 15 min: a GH200 took more than 4
 ((i < 24)) || die 'SSH never became ready.'
+if [[ $MODE == dev ]]; then
+  BOX=$CACHE/box.sh
+  {
+    printf '#!/usr/bin/env bash\nset -euo pipefail\nIP=%q\n' "$IP"
+    declare -f remote
+    cat <<'HELPER'
+(($#)) || { echo 'Usage: box.sh <command...>' >&2; exit 1; }
+remote "$*"   # like ssh host cmd: the words are joined and the box's shell parses them
+HELPER
+  } > "$BOX"
+  chmod 700 "$BOX"
+  save
+  kill -0 "$WATCH" 2>/dev/null || die 'Watchdog exited unexpectedly.'
+  trap - EXIT INT HUP TERM
+  echo "Ready: dev box $ID; commands: $BOX <command...>"
+  exit 0
+fi
 remote "bash -s -- $(printf '%q' "$MODEL")" <<'REMOTE'
 set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"

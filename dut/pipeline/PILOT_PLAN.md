@@ -41,7 +41,7 @@ find the first unit not marked DONE, and continue from it.
 - U2 signatures and the operator takeaway: DONE 2026-10-25 (Codex implemented it; tools/test_signature.py was written by a separate Codex session from the contract and passes, sentinel and secret-word leak checks included; the operator check on m4 matches the manual tally, 10 infra and 3 anchor exits, 7.19 h, USD 13.44; measure.sh score now writes it). Add `measure/SIGNATURE.md` (a fixed-enum schema: stage, status,
   exit and error class, depth, wall_s, gpu_s, usd, tokens per stage, validity flags, reproducibility blockers) and a
   mechanical `OPERATOR_TAKEAWAY.md` written by `score` in place of PREDICTIONS_SCORED.md. No model calls.
-- U3 dev box: TODO. `measure.sh devbox up|status|down`: a long-held Lambda box with the environment filesystem
+- U3 dev box: DONE 2026-10-25 as `serve/lambda_serve.sh up --dev --fs NAME` (Codex wrote it; the operator fixed box.sh quoting; live check on an A10 in us-east-1: the filesystem was mounted, box.sh ran both a quoted pipeline and plain words, down terminated the box; about USD 0.2). Original plan text: `measure.sh devbox up|status|down`: a long-held Lambda box with the environment filesystem
   attached and `env/box.sh` for agents. It stops itself when idle; the owner authorised always-on cost.
 - U4 benchmark route (m5): WAITING for the owner's brief. Steps: probe the baseline on the dev box (reproduce the
   anchors), profile it, seal the predictions, pick a parallelisation from a fixed menu, implement it as a diff,
