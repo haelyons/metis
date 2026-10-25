@@ -54,7 +54,8 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
       tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wf-codex-'))
       const [name, effort] = String(model).replace(/^codex\//, '').split('@')
       const sandbox = /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(tools || '') ? 'workspace-write' : 'read-only'
-      const args = ['exec', '--json', '--skip-git-repo-check', '--ephemeral', '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
+      // sessions persist so they can be monitored (Codex remote control); writers get network (ssh to the dev box)
+      const args = ['exec', '--json', '--skip-git-repo-check', ...(process.env.CODEX_EPHEMERAL === '1' ? ['--ephemeral'] : []), ...(sandbox === 'workspace-write' ? ['-c', 'sandbox_workspace_write.network_access=true'] : []), '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
       if (name !== 'default') args.push('-m', name)
       if (effort) args.push('-c', `model_reasoning_effort=${effort}`)
       for (const d of addDirs || []) args.push('--add-dir', d)

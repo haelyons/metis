@@ -64,6 +64,7 @@ async function invoke(options = {}, fake = {}) {
   const capture = path.join(dir, 'capture.json')
   const env = {
     PATH: bin,
+    ...fake.env,
     TEST_CODEX_CAPTURE: capture,
     TEST_CODEX_REPLY: fake.reply ?? 'file reply\n',
     TEST_CODEX_EVENTS: JSON.stringify(fake.events ?? usageEvents),
@@ -72,6 +73,9 @@ async function invoke(options = {}, fake = {}) {
     TEST_CODEX_SLEEP: String(fake.sleep ?? 0),
   }
   let watchdog
+  const originalEphemeral = process.env.CODEX_EPHEMERAL
+  if (fake.env?.CODEX_EPHEMERAL === undefined) delete process.env.CODEX_EPHEMERAL
+  else process.env.CODEX_EPHEMERAL = fake.env.CODEX_EPHEMERAL
   const started = performance.now()
   try {
     const res = await Promise.race([
@@ -88,6 +92,8 @@ async function invoke(options = {}, fake = {}) {
     pids.add(sent.pid)
     return { res, sent, elapsed, dir }
   } finally {
+    if (originalEphemeral === undefined) delete process.env.CODEX_EPHEMERAL
+    else process.env.CODEX_EPHEMERAL = originalEphemeral
     clearTimeout(watchdog)
     if (fs.existsSync(capture)) pids.add(JSON.parse(fs.readFileSync(capture, 'utf8')).pid)
   }
@@ -112,16 +118,24 @@ async function main() {
   await check('exec flags, cwd, and output file', async () => {
     const { res, sent, dir } = await invoke()
     assert.equal(sent.args[0], 'exec')
-    for (const name of ['--json', '--skip-git-repo-check', '--ephemeral']) assert.ok(sent.args.includes(name), `missing ${name}`)
+    for (const name of ['--json', '--skip-git-repo-check']) assert.ok(sent.args.includes(name), `missing ${name}`)
+    assert.ok(!sent.args.includes('--ephemeral'), 'default must omit --ephemeral')
     assert.equal(flag(sent.args, '-C'), dir)
     assert.ok(flag(sent.args, '-o'))
     assert.equal(res.text, 'file reply\n', 'text must come from -o, preserving whitespace')
     assert.deepEqual(res.errors, [])
   })
+  for (const value of ['1', '0']) {
+    await check(`ephemeral flag with CODEX_EPHEMERAL=${value}`, async () => {
+      const { sent } = await invoke({}, { env: { CODEX_EPHEMERAL: value } })
+      assert.equal(sent.args.includes('--ephemeral'), value === '1')
+    })
+  }
   for (const tools of ['', 'Read,Glob,Grep', 'Bash', 'Read,Write', 'Read,Edit']) {
     await check(`1 sandbox for ${tools || 'no tools'}`, async () => {
       const { sent } = await invoke({ tools })
       assert.equal(flag(sent.args, '-s'), /Bash|Write|Edit/.test(tools) ? 'workspace-write' : 'read-only')
+      assert.equal(sent.args.some((arg, index) => arg === '-c' && sent.args[index + 1] === 'sandbox_workspace_write.network_access=true'), /Bash|Write|Edit/.test(tools), 'network access config must appear only for workspace-write')
     })
   }
   for (const [model, name, effort] of [['codex/default@low', null, 'low'], ['codex/gpt-x@high', 'gpt-x', 'high']]) {

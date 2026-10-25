@@ -172,7 +172,7 @@ fs.writeSync(1, events.map(e => JSON.stringify(e)).join('\\n'))
   try {
     let r = await run({ systemPrompt: 'Role text', addDirs: [ROOT] })
     let sent = JSON.parse(fs.readFileSync(capture, 'utf8')), args = sent.args
-    check(args[0] === 'exec' && ['--json', '--skip-git-repo-check', '--ephemeral'].every(a => args.includes(a)) && args.at(-1) === '-' && args[args.indexOf('-C') + 1] === dir, 'codex exec flags and stdin selected')
+    check(args[0] === 'exec' && ['--json', '--skip-git-repo-check'].every(a => args.includes(a)) && !args.includes('--ephemeral') && args.at(-1) === '-' && args[args.indexOf('-C') + 1] === dir, 'codex exec flags and stdin selected')
     check(!args.includes('-m') && args.includes('model_reasoning_effort=low') && args[args.indexOf('-s') + 1] === 'read-only', 'default model omitted; low effort and read-only sandbox')
     check(args[args.indexOf('--add-dir') + 1] === ROOT && sent.prompt.includes('Role text') && sent.prompt.includes('reply ok'), 'additional directory and role prompt forwarded')
     check(r.text === '{"ok":true}' && r.json.ok && !r.jsonError && r.sessionID === 'thread-test' && r.errors.length === 0 && !r.refusal, 'last-message file supplies parsed reply and event supplies session')
