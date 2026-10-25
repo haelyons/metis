@@ -16,6 +16,8 @@
 //                                                                 (compiles a card's calibration record into a latent_skeptic
 //                                                                  measure folder: QUESTION.md, SEALED_PREDICTIONS.md,
 //                                                                  out/triage_args.json, CARD.json; runs nothing)
+//        node dut/pipeline/launch.js stage --stage m5 --run-root <dir> [--brief <path>]
+//                                                                  (explicit run root; tag is the run root's basename)
 //        add --dry-run to prepare the run folder and print the command without running it;
 //        add --seed <file> to run card or loop on another seed than the experiment's seed.json (a variant)
 const fs = require('node:fs')
@@ -24,26 +26,31 @@ const { spawn, execFileSync } = require('node:child_process')
 
 const PIPE = __dirname
 const REPO = path.resolve(PIPE, '..', '..')
-const [name, kind, ...rest] = process.argv.slice(2)
+const argv = process.argv.slice(2)
+const [name, kind, ...rest] = argv[0] === 'stage' ? ['m5', ...argv] : argv
+const sti = rest.indexOf('--stage'), STAGE = sti >= 0 ? rest[sti + 1] : null
+const M5 = kind === 'stage' && STAGE === 'm5'
+const ri = rest.indexOf('--run-root'), ROOT = M5 && ri >= 0 && rest[ri + 1] ? path.resolve(rest[ri + 1]) : null
+if (M5 && !ROOT) { console.error('stage m5 needs --run-root <dir>'); process.exit(2) }
 const dry = rest.includes('--dry-run')
 const si = rest.indexOf('--seed'), seedFile = si >= 0 ? path.resolve(rest[si + 1]) : null
 const extra = rest.filter((a, i) => a !== '--dry-run' && !(si >= 0 && (i === si || i === si + 1)))
-const EXP = path.join(REPO, 'experiments', name || '')
-if (!name || !['loop', 'card', 'frame', 'tree', 'measure', 'stage'].includes(kind) || !fs.existsSync(EXP)) {
+const EXP = M5 ? null : path.join(REPO, 'experiments', name || '')
+if (!name || !['loop', 'card', 'frame', 'tree', 'measure', 'stage'].includes(kind) || (!M5 && !fs.existsSync(EXP))) {
   console.error('usage: node dut/pipeline/launch.js <experiment> <loop|card|frame|tree|measure|stage> [args] [--dry-run]; the experiment folder must exist')
   process.exit(2)
 }
 const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\..*/, '').replace('T', '-').slice(0, 13)
 // two launches in the same minute get -2, -3 ...
 const mi = rest.indexOf('--measure'), MDIR = mi >= 0 ? path.resolve(rest[mi + 1]) : null
-const sti = rest.indexOf('--stage'), STAGE = sti >= 0 ? rest[sti + 1] : null
-if (kind === 'stage' && (!MDIR || !fs.existsSync(path.join(MDIR, 'pipeline.js')) || !['design', 'build', 'post', 'gate', 'review', 'fix', 'tests', 'ask'].includes(STAGE))) {
+if (kind === 'stage' && !M5 && (!MDIR || !fs.existsSync(path.join(MDIR, 'pipeline.js')) || !['design', 'build', 'post', 'gate', 'review', 'fix', 'tests', 'ask'].includes(STAGE))) {
   console.error('stage needs --measure <measure dir with pipeline.js> and --stage design|build|post|gate|review|fix|tests|ask'); process.exit(2)
 }
-let RUN = kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}`) : path.join(EXP, `${stamp}-${kind}`)
-for (let i = 2; fs.existsSync(RUN); i++) RUN = kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}-${i}`) : path.join(EXP, `${stamp}-${kind}-${i}`)
+let RUN = M5 ? path.join(ROOT, 'agent', 'wf') : kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}`) : path.join(EXP, `${stamp}-${kind}`)
+if (M5 && fs.existsSync(RUN)) { console.error('stage m5 needs a fresh run root (agent/wf already exists)'); process.exit(2) }
+for (let i = 2; !M5 && fs.existsSync(RUN); i++) RUN = kind === 'stage' ? path.join(MDIR, 'out', `wf-${STAGE}-${stamp}-${i}`) : path.join(EXP, `${stamp}-${kind}-${i}`)
 const COPY = path.join(RUN, 'pipeline')
-fs.mkdirSync(path.join(RUN, 'out'), { recursive: true })
+fs.mkdirSync(M5 ? RUN : path.join(RUN, 'out'), { recursive: true })
 
 // ---------- measure: compile a card's calibration record into a latent_skeptic measure folder (2026-10-21) ----------
 // No model call, no one reads the card: the record main.js returns carries the inputs, their measuring phase, the
@@ -101,7 +108,7 @@ if (kind === 'measure') {
 }
 
 // the copy: everything but node_modules; OpenCode's plugin modules are linked, not copied
-fs.cpSync(PIPE, COPY, { recursive: true, filter: s => !s.split(path.sep).includes('node_modules') && !/\.log$/.test(s) })
+fs.cpSync(PIPE, COPY, { recursive: true, filter: s => !s.split(path.sep).some(p => p === 'node_modules' || p === 'experiments') && !/\.log$/.test(s) })
 const mods = path.join(PIPE, 'idea', 'ocx', 'opencode', 'node_modules')
 if (fs.existsSync(mods)) fs.symlinkSync(mods, path.join(COPY, 'idea', 'ocx', 'opencode', 'node_modules'))
 const lock = d => { for (const e of fs.readdirSync(d, { withFileTypes: true })) {
@@ -114,10 +121,17 @@ lock(COPY)
 const git = a => { try { return execFileSync('git', ['-C', REPO, ...a], { encoding: 'utf8' }).trim() } catch { return '' } }
 const node = (script, args) => ['node', [path.join(COPY, 'idea', script), ...args]]
 let cmd
-const SEED = seedFile || path.join(EXP, 'seed.json')
+const SEED = M5 ? null : seedFile || path.join(EXP, 'seed.json')
 if (kind === 'loop') cmd = node('loop.js', ['--seed', SEED, '--name', name, '--dir', path.join(RUN, 'out')])
 if (kind === 'frame') cmd = node('frame.js', [...extra, '--out', path.join(RUN, 'out')])
-if (kind === 'stage') {
+if (M5) {
+  const bi = rest.indexOf('--brief'), brief = bi >= 0 ? path.resolve(rest[bi + 1]) : undefined
+  const tag = path.basename(ROOT)
+  fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify({ run_root: ROOT, brief, tag }, null, 1))
+  const flags = extra.filter((x, i, xs) => !['--stage', '--run-root', '--brief'].includes(x) && !['--stage', '--run-root', '--brief'].includes(xs[i - 1]))
+  cmd = node('wf.js', ['--script', path.join(COPY, 'm5', 'pipeline.js'), '--args', path.join(RUN, 'args.json'), '--name', `${tag}-m5`, '--out', RUN, '--family', 'codex', '--mode', 'fallback', '--on-refusal', 'halt', '--disable-family', 'claude', ...flags])
+}
+if (kind === 'stage' && !M5) {
   // the stage's args file as measure.sh wrote it (design_args.json, build<N>_args.json, post<N>_args.json: the latest)
   const latest = re => fs.readdirSync(path.join(MDIR, 'out')).filter(f => re.test(f)).sort((a, b) => Number((a.match(/\d+/) || [0])[0]) - Number((b.match(/\d+/) || [0])[0])).pop()   // numeric: build10 after build9
   const argsFile = STAGE === 'design' ? 'design_args.json' : latest(new RegExp(`^${STAGE}\\d+_args\\.json$`))
@@ -150,11 +164,11 @@ const commit = git(['rev-parse', '--short', 'HEAD']), dirty = git(['status', '--
 fs.writeFileSync(path.join(RUN, 'RUN.md'), [`# ${name} · ${kind} · ${stamp}`, '',
   `Pipeline: copy of dut/pipeline/ at commit ${commit}${dirty}, in ./pipeline (read-only).`,
   `Command: ${cmd[0]} ${cmd[1].map(a => (/\s/.test(a) ? JSON.stringify(a) : a)).join(' ')}`,
-  kind === 'stage' ? `Stage: ${STAGE} of ${path.relative(REPO, MDIR)} · args: ./args.json` : `Seed: ${path.relative(EXP, SEED)}`, `Outputs: ./out · console: ./console.log`, ''].join('\n'))
+  M5 ? `Stage: m5 · run root: ${ROOT} · args: ./args.json` : kind === 'stage' ? `Stage: ${STAGE} of ${path.relative(REPO, MDIR)} · args: ./args.json` : `Seed: ${path.relative(EXP, SEED)}`, `Outputs: ${M5 ? '.' : './out'} · console: ./console.log`, ''].join('\n'))
 console.log(`run folder: ${RUN}\n${fs.readFileSync(path.join(RUN, 'RUN.md'), 'utf8')}`)
 if (dry) process.exit(0)
 
 const log = fs.createWriteStream(path.join(RUN, 'console.log'))
-const child = spawn(cmd[0], cmd[1], { stdio: ['ignore', 'pipe', 'pipe'] })
+const child = spawn(cmd[0], cmd[1], { stdio: ['ignore', 'pipe', 'pipe'], ...(M5 ? { cwd: COPY } : {}) })
 for (const s of [child.stdout, child.stderr]) s.on('data', d => { process.stdout.write(d); log.write(d) })
 child.on('close', code => { log.end(`\n[exit ${code}]\n`); process.exitCode = code })
