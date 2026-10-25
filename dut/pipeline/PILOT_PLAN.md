@@ -35,7 +35,7 @@ find the first unit not marked DONE, and continue from it.
 - Karpathy guidelines: the smallest change; subtract before adding.
 
 ## Units
-- U1 codex family: DONE 2026-10-25 (Codex wrote it; the operator verified: e2e and selftest pass, live codex call ok in 37 s). Gap: Codex wrote both the code and its e2e checks, which the testing rule below forbids; an independent test pass is still owed. Add `idea/codex_cli.js` (`codex exec --json -o --output-schema --sandbox`) and make the
+- U1 codex family: DONE 2026-10-25 (Codex wrote it; the operator verified: e2e and selftest pass, live codex call ok in 37 s). Independent tests: tools/test_codex_cli.js, written by a separate Codex session from the contract without reading the runner; 20 of 23 passed at first, and the 3 failures were scalar JSON replies, an over-assertion against an ambiguous contract (the runner matches claude_cli.js); after the contract was clarified, all checks pass.
   understudy a chain (primary, then up to two fallbacks, from config; default opencode, then codex, then claude).
   Add codex to the e2e stub test. Verify with the e2e test and one live call.
 - U2 signatures and the operator takeaway: TODO. Add `measure/SIGNATURE.md` (a fixed-enum schema: stage, status,
