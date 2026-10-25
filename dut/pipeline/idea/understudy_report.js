@@ -11,19 +11,24 @@ function report(run) {
   const J = rows(path.join(run, 'journal.jsonl')), S = rows(path.join(run, 'shadow.jsonl'))
   const info = fs.existsSync(path.join(run, 'run.json')) ? JSON.parse(fs.readFileSync(path.join(run, 'run.json'), 'utf8')) : {}
   const started = J.filter(r => r.type === 'started'), by = {}
-  for (const r of J) if (r.type === 'result' || r.type === 'failed' || r.type === 'cached' || r.type === 'understudy' || r.type === 'shadow') (by[r.n] = by[r.n] || {})[r.type] = r
+  for (const r of J) {
+    const d = by[r.n] = by[r.n] || {}
+    if (r.type === 'understudy') (d.understudies = d.understudies || []).push(r)
+    else if (r.type === 'result' || r.type === 'failed' || r.type === 'cached' || r.type === 'shadow') d[r.type] = r
+  }
   const u = info.understudy || {}
   const L = [`# Understudy report: ${info.name || path.basename(run)}`, '',
     `Primary family ${u.primary_family || '?'}, mode ${u.mode || '?'}, on refusal ${u.on_refusal || '?'}, hands over on ${(u.retry_on || []).join(', ') || '-'}; profile ${u.profile || '?'}; routes ${(u.routes || []).length}.`, '',
     '| # | label | role | tier | primary | kind | understudy | used? | by | ms | USD |', '|---|---|---|---|---|---|---|---|---|---|---|']
   const tally = { calls: 0, ok: 0, failed: 0, cached: 0, substituted: 0, refusals: 0, by_kind: {}, by_role: {} }
   for (const s of started) {
-    const d = by[s.n] || {}, res = d.result, fail = d.failed, und = d.understudy
+    const d = by[s.n] || {}, res = d.result, fail = d.failed, understudies = d.understudies || [], und = understudies[0]
     const kind = (fail && fail.kind) || (und && und.kind) || (res ? 'none' : d.cached ? 'cached' : 'running')
-    const used = und ? (und.ok ? 'yes' : 'tried, failed') : (d.shadow ? 'shadow' : '-')
+    const used = und ? (understudies.some(r => r.ok) ? 'yes' : 'tried, failed') : (d.shadow ? 'shadow' : '-')
+    const chain = understudies.length ? understudies.map(r => `${r.to_model || r.to} (${r.ok ? 'ok' : r.understudy_kind || 'failed'})`).join(', ') : s.understudy || '-'
     const prod = res ? res.model : fail ? '-' : d.cached ? 'cache' : '…'
     const meta = (() => { try { return JSON.parse(fs.readFileSync(path.join(run, 'agents', `${String(s.n).padStart(4, '0')}-${s.label.replace(/[^A-Za-z0-9._-]+/g, '_').slice(0, 80)}`, 'meta.json'), 'utf8')) } catch { return {} } })()
-    L.push(`| ${s.n} | ${s.label} | ${s.role} | ${s.tier || ''} | ${s.model} | ${kind} | ${s.understudy || '-'} | ${used} | ${prod} | ${meta.ms != null ? Math.round(meta.ms / 1000) + ' s' : ''} | ${meta.cost_usd != null ? meta.cost_usd.toFixed(3) : ''} |`)
+    L.push(`| ${s.n} | ${s.label} | ${s.role} | ${s.tier || ''} | ${s.model} | ${kind} | ${chain} | ${used} | ${prod} | ${meta.ms != null ? Math.round(meta.ms / 1000) + ' s' : ''} | ${meta.cost_usd != null ? meta.cost_usd.toFixed(3) : ''} |`)
     tally.calls++
     if (res) tally.ok++; if (fail) tally.failed++; if (d.cached) tally.cached++
     if (res && res.substituted) tally.substituted++

@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 'use strict'
 // Runs a Workflow-tool script (../dist/question_tree_v2.js, ../dist/replay_v2.js, or latent_skeptic's pipeline.js and
-// triage_workflow.js) outside Claude Code: every agent() call is served by a model of one of two families, OpenCode Go
-// models (oc.js, isolated config in ./ocx) or Claude models headless (claude_cli.js), with the other family as its
-// understudy (understudy.js). Same script, same prompts, same gates in either family.
+// triage_workflow.js) outside Claude Code: agent() calls use OpenCode Go (oc.js), Claude headless (claude_cli.js),
+// or Codex CLI (codex_cli.js), with an ordered understudy chain (understudy.js).
 //
 // usage: node wf.js --args args.json [--script ../dist/question_tree_v2.js] [--name label] [--out dir]
 //                   [--resume <earlier run dir>] [--main provider/model] [--cheap provider/model]
-//                   [--family opencode|claude] [--mode fallback|shadow|swap|primary-only] [--on-refusal halt|understudy]
+//                   [--family opencode|claude|codex] [--mode fallback|shadow|swap|primary-only] [--on-refusal halt|understudy]
 //                   [--profile metis|latent_skeptic]
 // args.base "auto" (or missing) puts the pipeline's own files under <run dir>/work; args.cwd is the working directory
 // of file-writing roles when the script writes into an existing folder (latent_skeptic stages).
@@ -44,7 +43,7 @@ if (opt('main')) UCFG.families.opencode.models.strong = UCFG.families.opencode.m
 if (opt('cheap')) UCFG.families.opencode.models.cheap = CHEAP
 UCFG.families.opencode.by_role = { ...(CFG.by_role || {}), ...(UCFG.families.opencode.by_role || {}) }
 const FAMILY = opt('family', null), MODE = opt('mode', null), PROFILE = opt('profile', 'metis')
-for (const [k, v, ok] of [['family', FAMILY, ['opencode', 'claude', null]], ['mode', MODE, ['fallback', 'shadow', 'swap', 'primary-only', null]], ['on-refusal', UCFG.on_refusal, ['halt', 'understudy']]])
+for (const [k, v, ok] of [['family', FAMILY, ['opencode', 'claude', 'codex', null]], ['mode', MODE, ['fallback', 'shadow', 'swap', 'primary-only', null]], ['on-refusal', UCFG.on_refusal, ['halt', 'understudy']]])
   if (!ok.includes(v)) { console.error(`--${k} must be one of ${ok.filter(Boolean).join(', ')}`); process.exit(2) }
 const SCRIPT = path.resolve(opt('script', path.join(__dirname, '..', 'dist', 'question_tree_v2.js')))
 const ARGS = JSON.parse(fs.readFileSync(opt('args'), 'utf8'))
@@ -65,8 +64,8 @@ const rolePrompt = role => ((OCX_CFG.agent || {})[role] || {}).prompt || null
 const runInfo = {
   name: NAME, run_dir: RUN, script: SCRIPT, script_sha256: sha(src), args: ARGS,
   models: { main: MAIN, cheap: CHEAP, by_role: UCFG.families.opencode.by_role },
-  understudy: { primary_family: FAMILY || UCFG.primary_family, mode: MODE || UCFG.mode, on_refusal: UCFG.on_refusal, retry_on: UCFG.retry_on, profile: PROFILE, families: UCFG.families, routes: UCFG.routes },
-  opencode_version: sh('opencode', ['--version']), claude_version: sh('claude', ['--version']), node: process.version,
+  understudy: { primary_family: FAMILY || UCFG.primary_family, mode: MODE || UCFG.mode, on_refusal: UCFG.on_refusal, retry_on: UCFG.retry_on, profile: PROFILE, families: UCFG.families, chain: UCFG.chain, routes: UCFG.routes },
+  opencode_version: sh('opencode', ['--version']), claude_version: sh('claude', ['--version']), codex_version: sh('codex', ['--version']), node: process.version,
   git: repo && { repo, commit: sh('git', ['-C', repo, 'rev-parse', 'HEAD']), dirty: !!sh('git', ['-C', repo, 'status', '--porcelain']) },
   ocx_config: OCX_CFG, started: new Date().toISOString(),
 }
@@ -112,15 +111,16 @@ let counter = 0
 // lands on the call's status record and on the model's and family's totals
 async function callModel({ model, role, label, full, opts, dir, cwd, rec, repairable, declinedIf }) {
   const fam = U.familyOf(model)
-  const sub = fam === 'claude' ? { tools: U.claudeTools(UCFG, role), systemPrompt: rolePrompt(role), addDirs: [ARGS.base, ...(ARGS.cwd ? [ARGS.cwd] : []), ...(ARGS.add_dirs || [])] } : {}
+  const sub = fam !== 'opencode' ? { tools: U.claudeTools(UCFG, role), systemPrompt: rolePrompt(role), addDirs: [ARGS.base, ...(ARGS.cwd ? [ARGS.cwd] : []), ...(ARGS.add_dirs || [])] } : {}
   const timeoutMs = (CFG.timeouts_min[role] || UCFG.timeouts_min[role] || 20) * 60000
   let res = null, errors = [], session = null, value = null, attempts = 0
   try {
     for (let attempt = 1; attempt <= 2; attempt++) {
       attempts = attempt
       const repair = `Your reply could not be used: ${errors.slice(0, 15).join('; ')}. Reply again with only the JSON value asked for, complete.`
-      const p = attempt === 1 ? full : (session && fam !== 'claude' ? repair : `${full}\n\n${repair}`)
-      res = await runner.run({ model, agent: role, role, prompt: p, cwd, session, timeoutMs, rawPath: path.join(dir, fam === 'claude' ? `claude-${attempt}.json` : 'events.jsonl'), httpLogDir: path.join(dir, 'http'), title: label, ...sub })
+      const p = attempt === 1 ? full : (session && fam === 'opencode' ? repair : `${full}\n\n${repair}`)
+      const raw = fam === 'claude' ? `claude-${attempt}.json` : fam === 'codex' ? `codex-${attempt}.jsonl` : 'events.jsonl'
+      res = await runner.run({ model, agent: role, role, prompt: p, cwd, session, timeoutMs, rawPath: path.join(dir, raw), httpLogDir: path.join(dir, 'http'), title: label, ...sub })
       session = res.sessionID
       const tok = res.tokens.input + res.tokens.output + res.tokens.reasoning
       rec.ms += res.ms; rec.cost_usd += res.cost; rec.tokens += tok
@@ -161,16 +161,15 @@ async function agent(prompt, opts = {}) {
   }
   const n = ++counter
   const role = U.roleFor(UCFG, PROFILE, { label, agentType: opts.agentType })
-  const r = U.resolve(UCFG, { label, role, pinned: opts.model, familyOverride: FAMILY, modeOverride: MODE })
-  const primary = opts._model || (rule && rule.model) || r.primary
-  const understudy = U.familyOf(primary) === U.familyOf(r.understudy) ? U.resolve(UCFG, { label, role, pinned: opts.model, familyOverride: U.otherFamily(U.familyOf(primary)) }).primary : r.understudy
+  const r = U.resolve(UCFG, { label, role, pinned: opts.model, familyOverride: FAMILY, modeOverride: MODE, primaryOverride: opts._model || (rule && rule.model) })
+  const { primary, understudy, chain } = r
   let mode = r.mode
   if (mode === 'shadow' && WRITING_ROLES.has(role)) { mode = 'fallback'; journal({ type: 'log', m: `${label}: shadow mode refused for writing role ${role} (both families would write the same files); fallback` }) }
   const full = opts.schema ? prompt + promptSuffix(opts.schema) : String(prompt)
   const key = sha(JSON.stringify({ full, role, model: primary }))
-  const rec = { id: `${String(n).padStart(4, '0')} ${label}`, stage: opts.phase || '', model: primary, understudy, mode, state: 'queued', attempts: 0, ms: 0, cost_usd: 0, tokens: 0 }
+  const rec = { id: `${String(n).padStart(4, '0')} ${label}`, stage: opts.phase || '', model: primary, understudy, chain, mode, state: 'queued', attempts: 0, ms: 0, cost_usd: 0, tokens: 0 }
   status.calls.push(rec)
-  journal({ type: 'started', n, label, phase: opts.phase, role, model: primary, understudy, mode, tier: r.tier, route: r.route, key })
+  journal({ type: 'started', n, label, phase: opts.phase, role, model: primary, understudy, chain, mode, tier: r.tier, route: r.route, key })
   if (cache.has(key)) {
     rec.state = 'cached'; saveStatus(); journal({ type: 'cached', n, label, key })
     return cache.get(key)
@@ -183,7 +182,7 @@ async function agent(prompt, opts = {}) {
   const cwd = (FILE_ROLES.has(role) || /^(ls-|triage-)/.test(role)) ? (ARGS.cwd || ARGS.base) : path.join(dir, 'cwd')
   fs.mkdirSync(cwd, { recursive: true })
   const common = { role, label, full, opts, cwd, rec, repairable: true, declinedIf: r.declined_if }
-  let first, second = null, producer = null, value = null, errors = []
+  let first, second = null, producer = null, value = null, errors = [], attempts = 0
   if (mode === 'shadow' && understudy) {
     const udir = path.join(dir, 'understudy'); fs.mkdirSync(udir, { recursive: true })
     const urec = { ms: 0, cost_usd: 0, tokens: 0 }
@@ -194,28 +193,37 @@ async function agent(prompt, opts = {}) {
     const row = { n, label, role, primary: { model: primary, kind: first.kind, attempts: first.attempts, ms: rec.ms, cost_usd: rec.cost_usd, len: JSON.stringify(first.value || '').length }, understudy: { model: understudy, kind: second.kind, attempts: second.attempts, ms: urec.ms, cost_usd: urec.cost_usd, len: JSON.stringify(second.value || '').length }, agree, fields_differ: differ }
     shadowLog({ ...row, primary_value: first.value, understudy_value: second.value })
     journal({ type: 'shadow', ...row })
+    rec.ms += urec.ms; rec.cost_usd += urec.cost_usd; rec.tokens += urec.tokens
+    attempts = first.attempts + second.attempts
     rec.shadow = { understudy_kind: second.kind, agree }
     if (first.kind === 'none') { producer = primary; value = first.value }
-    else if (second.kind === 'none' && U.handover(UCFG, mode, first.kind)) { producer = understudy; value = second.value; errors = []; rec.substituted = true; status.substitutions++; journal({ type: 'understudy', n, label, from: primary, kind: first.kind, errors: first.errors, to: understudy, ok: true, shadow: true }) }
+    else if (second.kind === 'none' && U.handover(UCFG, mode, first.kind)) { producer = understudy; value = second.value; errors = []; rec.substituted = true; status.substitutions++; journal({ type: 'understudy', n, label, from: U.familyOf(primary), from_model: primary, kind: first.kind, errors: first.errors, to: U.familyOf(understudy), to_model: understudy, ok: true, shadow: true }) }
     else errors = first.errors
   } else {
     first = await callModel({ ...common, model: primary, dir })
+    attempts = first.attempts
     if (first.kind === 'none') { producer = primary; value = first.value }
-    else if (understudy && U.handover(UCFG, mode, first.kind)) {
-      const udir = path.join(dir, 'understudy'); fs.mkdirSync(udir, { recursive: true })
-      const kept = WRITING_ROLES.has(role) ? snapshot(first.res && (opts.schema ? first.res.json : first.res.text), cwd, dir) : []
+    errors = first.errors
+    let previous = first, previousDir = dir
+    for (const [i, model] of chain.entries()) {
+      if (!U.handover(UCFG, mode, previous.kind)) break
+      const udir = path.join(dir, i === 0 ? 'understudy' : `understudy-${i + 1}`); fs.mkdirSync(udir, { recursive: true })
+      const kept = WRITING_ROLES.has(role) ? snapshot(previous.res && (opts.schema ? previous.res.json : previous.res.text), cwd, previousDir) : []
       rec.state = 'understudy'; saveStatus()
       const urec = { ms: 0, cost_usd: 0, tokens: 0 }
-      second = await callModel({ ...common, model: understudy, dir: udir, rec: urec })
-      rec.ms += urec.ms; rec.cost_usd += urec.cost_usd; rec.tokens += urec.tokens; rec.understudy_cost_usd = urec.cost_usd; rec.understudy_ms = urec.ms
-      journal({ type: 'understudy', n, label, from: primary, kind: first.kind, errors: first.errors, to: understudy, ok: second.kind === 'none', understudy_kind: second.kind, primary_files_kept: kept.length, understudy_ms: urec.ms, understudy_cost_usd: urec.cost_usd })
-      if (second.kind === 'none') { producer = understudy; value = second.value; rec.substituted = true; status.substitutions++ }
-      else errors = second.errors
-    } else errors = first.errors
+      second = await callModel({ ...common, model, dir: udir, rec: urec })
+      attempts += second.attempts
+      rec.ms += urec.ms; rec.cost_usd += urec.cost_usd; rec.tokens += urec.tokens
+      rec.understudy_cost_usd = (rec.understudy_cost_usd || 0) + urec.cost_usd; rec.understudy_ms = (rec.understudy_ms || 0) + urec.ms
+      journal({ type: 'understudy', n, label, from: U.familyOf(previous.model), from_model: previous.model, kind: previous.kind, errors: previous.errors, to: U.familyOf(model), to_model: model, ok: second.kind === 'none', understudy_kind: second.kind, primary_files_kept: kept.length, understudy_ms: urec.ms, understudy_cost_usd: urec.cost_usd })
+      errors = second.errors
+      if (second.kind === 'none') { producer = model; value = second.value; rec.substituted = true; status.substitutions++; break }
+      previous = second; previousDir = udir
+    }
   }
-  rec.kind = first.kind; rec.by = producer; rec.attempts = first.attempts + (second ? second.attempts : 0)
-  if (first.kind === 'refusal' && !producer) rec.state = 'refused'
-  rec.state = errors.length ? (first.kind === 'refusal' && !producer ? 'refused' : 'failed') : 'ok'; rec.errors = errors
+  rec.kind = first.kind; rec.by = producer; rec.attempts = attempts
+  const finalKind = mode === 'shadow' ? first.kind : (second || first).kind
+  rec.state = errors.length ? (finalKind === 'refusal' && !producer ? 'refused' : 'failed') : 'ok'; rec.errors = errors
   journal(errors.length ? { type: 'failed', n, label, key, model: primary, kind: first.kind, understudy_kind: second ? second.kind : null, errors } : { type: 'result', n, label, key, model: producer, substituted: !!rec.substituted, value })
   saveStatus()
   release()

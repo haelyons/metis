@@ -29,8 +29,13 @@ find the first unit not marked DONE, and continue from it.
 - On Lambda: the environment of record lives on the filesystem `metis-env-us-east-1`, the launcher fetches the
   results, the box is held open with a fixer, and the summary carries a compute table.
 
+## Rules
+- Tests: separate agents for design and implementation, and for tests; neither sees the other's code (the m4 rule).
+- Every change an agent makes to pipeline code is verified by the operator (the tests re-run, a live check, the key diffs read) before it is committed.
+- Karpathy guidelines: the smallest change; subtract before adding.
+
 ## Units
-- U1 codex family: TODO. Add `idea/codex_cli.js` (`codex exec --json -o --output-schema --sandbox`) and make the
+- U1 codex family: DONE 2026-10-25 (Codex wrote it; the operator verified: e2e and selftest pass, live codex call ok in 37 s). Gap: Codex wrote both the code and its e2e checks, which the testing rule below forbids; an independent test pass is still owed. Add `idea/codex_cli.js` (`codex exec --json -o --output-schema --sandbox`) and make the
   understudy a chain (primary, then up to two fallbacks, from config; default opencode, then codex, then claude).
   Add codex to the e2e stub test. Verify with the e2e test and one live call.
 - U2 signatures and the operator takeaway: TODO. Add `measure/SIGNATURE.md` (a fixed-enum schema: stage, status,
@@ -43,5 +48,7 @@ find the first unit not marked DONE, and continue from it.
   evaluate (anchors, equivalence, speedup at equal cost, outcome against compute), then write both takeaways.
 - U5 lean cuts on that route: TODO. Post in one or two calls, the gate once (and again only on a scope change), one
   review per launch, the baseline's own tests in place of the tests author.
-- U6 open models on Lambda (vLLM as an OpenCode provider): DEFERRED. Decide after U1, once we know whether codex plus
-  OpenCode give enough inference.
+- U6 open models on Lambda (vLLM as an OpenCode provider): NEXT (brought forward by the owner 2026-10-25). One H100 serves
+  one open model; OpenCode reaches it through an ssh tunnel. Check: re-run the anchor diagnostics brief (DIAG_3) and
+  compare its one-line answer with mimo's; measure tokens/s and USD per call. Reference systems: AISLE's
+  github.com/weareaisle/nano-analyzer and github.com/stanislavfort/mythos-jagged-frontier.

@@ -43,10 +43,7 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
       else if (d && d.is_error && d.subtype !== 'success') errors.push(`exit: ${d.subtype}: ${text.slice(0, 300)}`)
       const u = (d && d.usage) || {}
       const tokens = { input: u.input_tokens || 0, output: u.output_tokens || 0, reasoning: ((u.output_tokens_details || {}).thinking_tokens) || 0, cache_read: u.cache_read_input_tokens || 0, cache_write: u.cache_creation_input_tokens || 0 }
-      const whole = text.trim(), meant = /^[[{]/.test(whole) && /[\]}]$/.test(whole)
-      let json = null, jsonError = null
-      if (meant) { try { json = JSON.parse(whole) } catch (e) { jsonError = `the JSON does not parse: ${e.message}` } }
-      else json = extractJSON(text)
+      const { json, jsonError } = parseReply(text)
       resolve({ text, json, jsonError, sessionID: d && d.session_id || null, tokens, cost: (d && d.total_cost_usd) || 0, tools: Math.max(0, ((d && d.num_turns) || 1) - 1), ms: Date.now() - t0, errors, refusal, turns: d && d.num_turns })
     })
     child.stdin.on('error', () => {})
@@ -55,4 +52,12 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
   function fail(msg, t0) { return { text: '', json: null, jsonError: null, sessionID: null, tokens: { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }, cost: 0, tools: 0, ms: Date.now() - t0, errors: [msg], refusal: false } }
 }
 
-module.exports = { run }
+function parseReply(text) {
+  const whole = text.trim(), meant = /^[[{]/.test(whole) && /[\]}]$/.test(whole)
+  let json = null, jsonError = null
+  if (meant) { try { json = JSON.parse(whole) } catch (e) { jsonError = `the JSON does not parse: ${e.message}` } }
+  else json = extractJSON(text)
+  return { json, jsonError }
+}
+
+module.exports = { run, parseReply }

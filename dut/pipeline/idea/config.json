@@ -94,6 +94,13 @@
           "main": "claude/sonnet",
           "cheap": "claude/sonnet"
         }
+      },
+      "codex": {
+        "models": {
+          "strong": "codex/default@high",
+          "main": "codex/default@medium",
+          "cheap": "codex/default@low"
+        }
       }
     },
     "routes": [
@@ -130,6 +137,20 @@
       "ls-builder": 60,
       "ls-writer": 45,
       "ls-fixer": 45
+    },
+    "chain": {
+      "opencode": [
+        "codex",
+        "claude"
+      ],
+      "claude": [
+        "codex",
+        "opencode"
+      ],
+      "codex": [
+        "claude",
+        "opencode"
+      ]
     }
   }
 }
