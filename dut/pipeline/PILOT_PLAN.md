@@ -38,7 +38,7 @@ find the first unit not marked DONE, and continue from it.
 - U1 codex family: DONE 2026-10-25 (Codex wrote it; the operator verified: e2e and selftest pass, live codex call ok in 37 s). Independent tests: tools/test_codex_cli.js, written by a separate Codex session from the contract without reading the runner; 20 of 23 passed at first, and the 3 failures were scalar JSON replies, an over-assertion against an ambiguous contract (the runner matches claude_cli.js); after the contract was clarified, all checks pass.
   understudy a chain (primary, then up to two fallbacks, from config; default opencode, then codex, then claude).
   Add codex to the e2e stub test. Verify with the e2e test and one live call.
-- U2 signatures and the operator takeaway: TODO. Add `measure/SIGNATURE.md` (a fixed-enum schema: stage, status,
+- U2 signatures and the operator takeaway: DONE 2026-10-25 (Codex implemented it; tools/test_signature.py was written by a separate Codex session from the contract and passes, sentinel and secret-word leak checks included; the operator check on m4 matches the manual tally, 10 infra and 3 anchor exits, 7.19 h, USD 13.44; measure.sh score now writes it). Add `measure/SIGNATURE.md` (a fixed-enum schema: stage, status,
   exit and error class, depth, wall_s, gpu_s, usd, tokens per stage, validity flags, reproducibility blockers) and a
   mechanical `OPERATOR_TAKEAWAY.md` written by `score` in place of PREDICTIONS_SCORED.md. No model calls.
 - U3 dev box: TODO. `measure.sh devbox up|status|down`: a long-held Lambda box with the environment filesystem

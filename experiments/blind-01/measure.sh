@@ -621,6 +621,7 @@ row = {"ts": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:
 open(f"{repo}/experiments/_meta/LEDGER.jsonl", "a").write(json.dumps(row) + "\n")
 print("  out/PREDICTIONS_SCORED.md written; ledger row appended (kind card_number_resolved, %d numbers, USD %.2f)" % (len(rows), usd))
 PYEOF
+  $PY "$REPO/dut/pipeline/measure/operator_takeaway.py" "$MDIR" --out "$MDIR/OPERATOR_TAKEAWAY.md" && echo "  OPERATOR_TAKEAWAY.md written (mechanical, no domain content)"
   logrun "score: ledger row appended"
 }
 
