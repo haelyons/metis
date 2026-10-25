@@ -251,10 +251,11 @@ async function cliTests() {
         else if (!options.outputDirectory) assert.equal(fs.existsSync(output), false, 'invalid input created score')
       } else {
         const scored = readJSON(output)
-        const expected = anchors.map(entry => {
+        const expected = options.expectedAnchors ?? anchors.map(entry => {
           const tolerance = typeof entry.tolerance === 'number' ? entry.tolerance : entry.tolerance.abs ?? entry.tolerance.rel * Math.abs(entry.published_value)
+          const passed = Math.abs(measured[entry.id] - entry.published_value) <= tolerance
           return { id: entry.id, published_value: entry.published_value, measured_value: measured[entry.id], tolerance: entry.tolerance,
-            passed: Math.abs(measured[entry.id] - entry.published_value) <= tolerance }
+            passed, ...(!passed ? { reason: 'out_of_tolerance' } : {}) }
         })
         assert.deepEqual(scored, { anchors: expected, anchors_passed: expected.filter(row => row.passed).length, anchors_total: expected.length, all_passed: expected.every(row => row.passed) })
         if (validate) validate(scored)
@@ -269,10 +270,32 @@ async function cliTests() {
   await score('relative just outside boundary fails', relative, { negative: -101.000001, zero: 0 }, 4)
   await score('zero relative reference requires exact equality', relative, { negative: -100, zero: 1e-12 }, 4)
   const secret = anchor(SENTINEL, 1, 0)
+  for (const [label, comparison, published, tolerance, measured, passed, reason] of [
+    ['strict greater passes above threshold ignoring tolerance', '>', 100, 0, 101, true],
+    ['strict greater fails at equality despite tolerance', '>', 100, 10, 100, false, 'threshold_not_met'],
+    ['greater or equal passes at equality', '>=', 100, 0, 100, true],
+    ['explicit equality passes at tolerance boundary', '==', 100, { abs: 1 }, 101, true],
+    ['explicit equality fails outside tolerance', '==', 100, { abs: 1 }, 101.000001, false, 'out_of_tolerance'],
+    ['unknown comparison fails', '!=', 100, 0, 100, false, 'unknown_comparison'],
+    ['non-numeric measured value fails', '>', 100, 0, '101', false, 'non_numeric'],
+  ]) {
+    await score(label, [{ ...anchor(SENTINEL, published, tolerance), comparison }], { [SENTINEL]: measured }, passed ? 0 : 4, null, {
+      expectedAnchors: [{ id: SENTINEL, published_value: published, measured_value: reason === 'non_numeric' ? null : measured,
+        tolerance, passed, ...(reason ? { reason } : {}) }],
+    })
+  }
+  for (const [label, measured, reason, options] of [
+    ['missing measurement', {}, 'missing'],
+    ['boolean measured', { [SENTINEL]: true }, 'non_numeric'],
+    ['string measured', { [SENTINEL]: '1' }, 'non_numeric'],
+    ['null measured', { [SENTINEL]: null }, 'non_numeric'],
+    ['nonfinite measured', {}, 'non_numeric', { rawMeasured: `{"${SENTINEL}":NaN}` }],
+  ]) await score(label, [secret], measured, 4, null, {
+    expectedAnchors: [{ id: SENTINEL, published_value: 1, measured_value: null, tolerance: 0, passed: false, reason }],
+    ...options,
+  })
   for (const [label, anchors, measured, options] of [
     ['empty anchors', [], {}], ['duplicate IDs', [secret, secret], { [SENTINEL]: 1 }],
-    ['missing measurement', [secret], {}], ['boolean measured', [secret], { [SENTINEL]: true }],
-    ['string measured', [secret], { [SENTINEL]: '1' }], ['null measured', [secret], { [SENTINEL]: null }],
     ['boolean reference', [{ ...secret, published_value: true }], { [SENTINEL]: 1 }],
     ['negative tolerance', [{ ...secret, tolerance: -1 }], { [SENTINEL]: 1 }],
     ['boolean tolerance', [{ ...secret, tolerance: false }], { [SENTINEL]: 1 }],
@@ -281,11 +304,10 @@ async function cliTests() {
     ['unknown tolerance', [{ ...secret, tolerance: { other: 1 } }], { [SENTINEL]: 1 }],
     ['overflow difference', [anchor(SENTINEL, 1e308, 0)], { [SENTINEL]: -1e308 }],
     ['overflow relative tolerance', [anchor(SENTINEL, 1e308, { rel: 1e308 })], { [SENTINEL]: 1e308 }],
-    ['nonfinite measured', [secret], {}, { rawMeasured: `{"${SENTINEL}":NaN}` }],
     ['nonfinite reference', [], { [SENTINEL]: 1 }, { rawAnchors: `[{"id":"${SENTINEL}","published_value":Infinity,"tolerance":0}]` }],
     ['malformed JSON', [], {}, { rawAnchors: SENTINEL }], ['missing input', [], {}, { missingInput: true }],
   ]) await score(label, anchors, measured, 1, null, { oldOutput: true, ...options })
-  await score('invalid input creates no output', [secret], {}, 1)
+  await score('invalid input creates no output', [], {}, 1)
   await score('output write failure', ANCHORS, { first: 100, second: 0 }, 1, null, { outputDirectory: true })
 }
 async function main() {
