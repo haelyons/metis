@@ -20,7 +20,7 @@ FIELDS = {
     **{k: {"type": "string", "pattern": ID} for k in ("id", "run", "stage", "type")},
     "status": enum("PASS FAIL VOID ERROR RUNNING SKIPPED"),
     "exit_kind": enum("ok infra guard anchor later_stage unknown"),
-    "error_class": enum("none env install download parse numeric guard anchor timeout oom quota network other"),
+    "error_class": enum("none infra env install download parse numeric guard anchor timeout oom quota network other"),
     **{k: {"type": "integer"} for k in ("exit_code", "tokens_in", "tokens_out", "n")},
     **{k: {"type": "number"} for k in ("wall_s", "gpu_s", "usd")},
     "model_family": enum("opencode codex claude lambda none"),

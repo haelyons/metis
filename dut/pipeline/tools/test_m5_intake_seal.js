@@ -150,7 +150,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   fs.mkdirSync(control, { recursive: true })
   fs.writeFileSync(brief, `# Intake fixture\n${SENTINEL}\n`)
   const argsFile = path.join(control, 'args.json')
-  writeJSON(argsFile, { run_root: runRoot, brief, tag: 'intake-seal-test' })
+  writeJSON(argsFile, { run_root: runRoot, brief, tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS' } })
   // Separate workflow directories prevent WF resume caches from hiding calls.
   const out = path.join(runRoot, 'agent', `wf-${name}`)
   const callsFile = path.join(runRoot, `calls-${name}.jsonl`)

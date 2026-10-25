@@ -1,10 +1,10 @@
-// wf.js script. Only intake and seal are real; other stages remain placeholders.
+// wf.js script. Intake, reproduce, profile and seal are real; later stages are placeholders.
 const meta = { name: 'm5', description: 'Explicit-run-root scientific pipeline skeleton' }
 
 return (async () => {
   const { default: path } = await import('node:path')
-  const { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync } = await import('node:fs')
-  const { createHash } = await import('node:crypto')
+  const { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync } = await import('node:fs')
+  const { createHash, randomUUID } = await import('node:crypto')
   const { execFile } = await import('node:child_process')
   const { promisify } = await import('node:util')
   const exec = promisify(execFile)
@@ -61,10 +61,10 @@ Write only under ${JSON.stringify(directory)}. Never read experiments/, operator
 Never invent a benchmark, citation, published number, tolerance, pin, or command.
 Write all five JSON files, including explicit null/unavailable values and reasons when evidence is missing:
 - benchmark.json: identity, outcome definition, citations, source licences and intended-use permissions, stock CUDA image feasibility and evidence, data plus peak working-set GiB, scoring and repeatability rules; record search candidates if searched.
-- anchors.json: an array of credible independently published reference anchors, each with id, quantity, published_value, tolerance, source (citation). Do not count self-generated checks or unsupported references.
+- anchors.json: an array of credible independently published reference anchors, each with a unique non-empty string id, quantity, finite numeric published_value, tolerance, source (citation). Tolerance must be a nonnegative finite number (absolute), {"abs": x}, or {"rel": x}; relative tolerance means x * abs(published_value). Do not count self-generated checks or unsupported references.
 - data.json: required inputs, availability, access instructions, licences, pins/hashes, splits and seeds; distinguish generated inputs from missing data.
 - baseline.json: repo, commit or immutable pin, build_commands, run_commands, published_configuration; cite their sources. Do not run builds or workloads.
-- EXECUTION.json: representative_scale, inputs, outputs, timing_scope; specify the real representative workload and scoring interface, not a toy extrapolation.
+- EXECUTION.json: representative_scale, inputs, outputs, timing_scope; specify the real representative workload and scoring interface, not a toy extrapolation. Optional timeout_s defaults to 3600 seconds; optional timeouts {setup, run_anchors, profile} override it per script. All timeouts must be positive integers <=999999999.
 Return only the facts matching the supplied schema. anchors_count must equal the credible anchors written.
 data=available only when all required data is accessible. licence=permitted only when intended use is allowed.
 stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
@@ -82,8 +82,10 @@ Gate: found, at least one independent anchor, available required data, permitted
         documents[name] = value
       }
       const anchors = readJSON(path.join(directory, 'anchors.json'))
-      const validAnchors = Array.isArray(anchors) && anchors.every(anchor => anchor &&
-        ['id', 'quantity', 'published_value', 'tolerance', 'source'].every(key => hasValue(anchor[key])))
+      const validAnchors = Array.isArray(anchors) && new Set(anchors.map(anchor => anchor?.id)).size === anchors.length
+        && anchors.every(anchor => anchor && typeof anchor.id === 'string' && anchor.id.trim()
+          && ['quantity', 'source'].every(key => hasValue(anchor[key]))
+          && Number.isFinite(anchor.published_value) && validTolerance(anchor.tolerance))
       const complete = validAnchors && anchors.length === facts.anchors_count
         && ['repo', 'build_commands', 'run_commands', 'published_configuration'].every(key => hasValue(documents.baseline[key]))
         && hasValue(documents.baseline.commit ?? documents.baseline.pin)
@@ -95,8 +97,151 @@ Gate: found, at least one independent anchor, available required data, permitted
       return { status: 'FAIL', facts }
     }
   }
-  function reproduce() { return stub('reproduce') }
-  function profile() { return stub('profile') }
+  function validTolerance(value) {
+    if (Number.isFinite(value)) return value >= 0
+    return value && typeof value === 'object' && !Array.isArray(value)
+      && Object.keys(value).length === 1 && ['abs', 'rel'].some(key => Number.isFinite(value[key]) && value[key] >= 0)
+  }
+  const quote = value => `'${String(value).replace(/'/g, "'\\''")}'`
+  const remoteDirectory = `/tmp/m5-${randomUUID()}`
+  const harnessDirectory = path.join(A, 'harness')
+  const receiptsDirectory = path.join(C, 'receipts')
+  const failure = (facts, error_class) => ({ status: 'FAIL', facts, v1: {
+    error_class, exit_code: error_class === 'anchor' ? 4 : 2,
+  } })
+  function executionTimeout(name) {
+    const execution = readJSON(path.join(A, 'intake', 'EXECUTION.json'))
+    const seconds = execution.timeouts?.[name] ?? execution.timeout_s ?? 3600
+    if (!Number.isInteger(seconds) || seconds <= 0 || seconds > 999999999) throw new Error('invalid timeout')
+    return seconds
+  }
+  async function boxCommand(name, command, destination, timeout) {
+    mkdirSync(receiptsDirectory, { recursive: true })
+    const number = Math.max(0, ...readdirSync(receiptsDirectory)
+      .filter(file => /^\d+-/.test(file)).map(file => Number(file.split('-')[0]))) + 1
+    const id = `${String(number).padStart(4, '0')}-${name}`
+    const receiptPath = path.join(receiptsDirectory, `${id}.json`)
+    // Never score files left by an earlier invocation using the same run root.
+    rmSync(path.join(destination, 'out'), { recursive: true, force: true })
+    try {
+      await exec('bash', ['m5/boxrun.sh', '--name', id, '--cmd', command,
+        '--remote-dir', remoteDirectory, '--timeout', String(timeout), '--fetch', 'out',
+        '--to', destination, '--receipt', receiptPath])
+    } catch {
+      // boxrun's receipt, never command output, determines the public failure class.
+    }
+    let receipt
+    try { receipt = readJSON(receiptPath) } catch { return { error: 'infra' } }
+    if (!Number.isInteger(receipt.rc)) return { error: 'infra' }
+    if (receipt.rc === 0 && receipt.fetched !== true) return { error: 'infra', rc: receipt.rc }
+    return { ...receipt, log: path.join(destination, `${id}.log`) }
+  }
+  async function uploadHarness(names, destination, timeout) {
+    const commands = ['mkdir -p harness out']
+    for (const name of names) {
+      const bytes = readFileSync(path.join(harnessDirectory, name)).toString('base64')
+      commands.push(`printf %s ${quote(bytes)} | base64 -d > ${quote(`harness/${name}`)}`)
+    }
+    return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
+  }
+  async function reproduce() {
+    if (input.stub?.reproduce != null) return stub('reproduce')
+    const facts = { ...nullFacts('reproduce'), stock_verified: false, tokens_known: false, gpu_busy_known: false }
+    const destination = path.join(A, 'results', 'reproduce')
+    const prompt = `Write a baseline harness from ${JSON.stringify(path.join(A, 'intake'))}/*.
+Never read experiments/, operator/, or control/. Write only under ${JSON.stringify(harnessDirectory)}.
+The operator already started the dev box. Do not start, stop, or access it; the pipeline runs your scripts.
+Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
+- setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
+- run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
+- profile.sh: run that same baseline once at representative scale, with stage wall timers and nvidia-smi sampling. Write out/profile/stages.json as [{stage, wall_s, gpu_s}] (finite nonnegative seconds, gpu_s null when unavailable), and out/profile/total_wall_s.json as {total_wall_s} (finite positive seconds). Save raw telemetry under out/profile/. Use critical-path stage wall times without double-counting overlap. Do not invent GPU timings or replace unavailable GPU timings with allocated time.
+Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
+Return a short completion acknowledgement; the pipeline reads the scripts itself.`
+    try {
+      const setupTimeout = executionTimeout('setup'), anchorsTimeout = executionTimeout('run_anchors')
+      mkdirSync(harnessDirectory, { recursive: true })
+      const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
+      if (reply == null) return failure(facts, 'parse')
+      const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'profile.sh'], destination, setupTimeout)
+      if (uploaded.error || uploaded.rc !== 0) return failure(facts, 'infra')
+      let setup = await boxCommand('setup', 'bash harness/setup.sh', destination, setupTimeout)
+      if (setup.error) {
+        facts.stock_verified = setup.rc === 0
+        return failure(facts, setup.error)
+      }
+      if (setup.rc !== 0) {
+        // One repair only; retain its content log in A and expose no log text to S.
+        let tail
+        try {
+          const lines = readFileSync(setup.log, 'utf8').split('\n')
+          if (lines.at(-1) === '') lines.pop()
+          tail = lines.slice(-200).join('\n')
+        }
+        catch { return failure(facts, 'install') }
+        const repair = await agent(`Setup failed (rc ${setup.rc}). Repair only ${JSON.stringify(path.join(harnessDirectory, 'setup.sh'))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. Never read experiments/, operator/, or control/. Do not run workloads or access the box. This is the only repair attempt. Setup log tail (at most 200 lines):\n${tail}`,
+          { label: 'harness-repair', agentType: 'ls-writer', model: 'sonnet' })
+        if (repair == null) return failure(facts, 'install')
+        const repaired = await uploadHarness(['setup.sh'], destination, setupTimeout)
+        if (repaired.error || repaired.rc !== 0) return failure(facts, 'infra')
+        setup = await boxCommand('setup', 'bash harness/setup.sh', destination, setupTimeout)
+        if (setup.error) {
+          facts.stock_verified = setup.rc === 0
+          return failure(facts, setup.error)
+        }
+      }
+      facts.stock_verified = setup.rc === 0
+      if (!facts.stock_verified) return failure(facts, 'install')
+      const anchors = await boxCommand('anchors', 'bash harness/run_anchors.sh', destination, anchorsTimeout)
+      if (anchors.error) return failure(facts, anchors.error)
+      if (anchors.rc !== 0) return failure(facts, 'anchor')
+      const scorePath = path.join(destination, 'anchors_scored.json')
+      try {
+        await exec('python3', ['m5/score_anchors.py', path.join(A, 'intake', 'anchors.json'),
+          path.join(destination, 'out', 'anchors_measured.json'), scorePath])
+      } catch (error) {
+        if (error.code !== 4) return failure(facts, 'parse')
+      }
+      const score = readJSON(scorePath)
+      facts.anchors_passed = score.anchors_passed
+      facts.anchors_total = score.anchors_total
+      const passed = score.all_passed && facts.stock_verified
+      return passed ? { status: 'PASS', facts, v1: { run_valid: true } }
+        : { ...failure(facts, 'anchor'), v1: { error_class: 'anchor', exit_code: 4, run_valid: false } }
+    } catch {
+      return failure(facts, 'parse')
+    }
+  }
+  async function profile() {
+    if (input.stub?.profile != null) return stub('profile')
+    const facts = { ...nullFacts('profile'), profile_complete: false, tokens_known: false, gpu_busy_known: false }
+    try {
+      rmSync(path.join(A, 'profile-packet.json'), { force: true })
+      const destination = path.join(A, 'results', 'profile')
+      const result = await boxCommand('profile', 'bash harness/profile.sh', destination, executionTimeout('profile'))
+      if (result.error) return failure(facts, result.error)
+      if (result.rc !== 0) return failure(facts, 'parse')
+      const directory = path.join(destination, 'out', 'profile')
+      const stages = readJSON(path.join(directory, 'stages.json'))
+      const { total_wall_s } = readJSON(path.join(directory, 'total_wall_s.json'))
+      if (!Number.isFinite(total_wall_s) || total_wall_s <= 0 || !Array.isArray(stages) || !stages.length
+        || !stages.every(item => item && typeof item.stage === 'string' && item.stage.trim()
+          && Number.isFinite(item.wall_s) && item.wall_s >= 0
+          && (item.gpu_s === null || (Number.isFinite(item.gpu_s) && item.gpu_s >= 0)))) return failure(facts, 'parse')
+      const timedWall = stages.reduce((sum, item) => sum + item.wall_s, 0)
+      if (!Number.isFinite(timedWall)) return failure(facts, 'parse')
+      facts.profile_complete = true
+      facts.timed_fraction = Math.min(1, timedWall / total_wall_s)
+      facts.gpu_telemetry = stages.some(item => item.gpu_s !== null)
+      writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify({
+        stages: stages.map(({ stage, wall_s, gpu_s }) => ({ stage, wall_s, gpu_s,
+          wall_fraction: Math.min(1, wall_s / total_wall_s) })), total_wall_s,
+        timed_fraction: facts.timed_fraction, gpu_telemetry: facts.gpu_telemetry,
+      }, null, 2) + '\n')
+      return facts.timed_fraction >= 0.9 ? { status: 'PASS', facts } : failure(facts, 'parse')
+    } catch {
+      return failure(facts, 'parse')
+    }
+  }
   async function seal() {
     if (input.stub?.seal != null) return stub('seal')
     const facts = { ...nullFacts('seal'), seal_present: false, seal_verified: false,
@@ -104,7 +249,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     const predictionPath = path.join(A, 'PREDICTIONS.json')
     const profilePath = path.join(A, 'profile-packet.json')
     const prompt = `Seal a prospective scientific evaluation protocol in one narrow pass.
-Read ${JSON.stringify(path.join(A, 'intake'))}/* only${existsSync(profilePath) ? `, plus ${JSON.stringify(profilePath)}` : '. No profile packet exists; profiling is currently a stub'}.
+Read ${JSON.stringify(path.join(A, 'intake'))}/* only${existsSync(profilePath) ? `, plus ${JSON.stringify(profilePath)}` : '. No profile packet is available'}.
 Never read experiments/, operator/, or control/. Do not search, build, run workloads, or write method code.
 Write only ${JSON.stringify(predictionPath)}. Use intake evidence and the profile when present. Do not invent measurements; label assumptions and unavailable evidence explicitly.
 The method menu is exactly ${JSON.stringify(menu)}. Include every feasible entry once; exclude infeasible entries with reasons in infeasible_methods. With no feasible entry, write predictions=[] as a negative result.
@@ -190,7 +335,8 @@ Return a short completion acknowledgement; the script reads and seals the file i
     const result = stopped_at && stage !== 'takeaways'
       ? { status: 'SKIPPED', facts: nullFacts(stage) }
       : await run()
-    await exec('python3', ['m5/signatures.py', 'emit', '--dir', S, '--stage', stage, '--status', result.status, '--facts', JSON.stringify(result.facts)])
+    await exec('python3', ['m5/signatures.py', 'emit', '--dir', S, '--stage', stage, '--status', result.status,
+      '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(result.v1 || {})])
     stages.push({ stage, status: result.status })
     log(`${stage}: ${result.status}`)
     if (!stopped_at && result.status !== 'PASS') stopped_at = stage

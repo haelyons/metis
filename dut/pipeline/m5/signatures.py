@@ -61,7 +61,8 @@ def validate(value):
         if item is None:
             continue
         valid = (type(item) is str and item in spec) if isinstance(spec, tuple) else (
-            type(item) is spec and (spec is not int or item >= 0)
+            (type(item) in (int, float) if spec is float else type(item) is spec)
+            and (spec is not int or item >= 0)
             and (spec is not float or math.isfinite(item)))
         if not valid:
             errors.append(f"{key}: invalid fact")
