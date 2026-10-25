@@ -145,7 +145,7 @@ Agents for m5 v1: Codex only (allowed for private content), with OpenCode Go as 
 1. DONE 2026-10-26. Runtime guard: `understudy.disabled_families` and the `--disable-family` flag; quota errors skip the repair turn; a run whose families are all disabled exits 2. Codex implemented; tools/test_disabled_families.js by a separate agent; all suites pass.
 2. DONE 2026-10-26. Signatures v2 (`facts` per stage, fixed keys) and the operator takeaway. v1 writes stage records only: no allocation or model_call records, and totals sum the stages. tools/test_m5_signatures.py was written by a separate agent.
 3. DONE 2026-10-26. The `m5/pipeline.js` skeleton with stub stages, and `launch.js stage --stage m5 --run-root R [--brief P]` with claude disabled. tools/test_m5_pipeline.js (40 checks) was written by a separate agent.
-4. A dev-box stage runner: run a declared command detached on the dev box under a timeout, fetch its outputs to `A/`, and write a receipt (reusing `box.sh`; no new lifecycle layer).
+4. DONE 2026-10-26. `m5/boxrun.sh`: a detached command on the dev box under a timeout, its outputs fetched, a receipt written. tools/test_boxrun.sh (32 checks, separate agent); live on an A10: rc 0, outputs and log fetched, box terminated.
 5. Intake, reproduce, profile and seal. The harness scripts per benchmark are written by Codex agents, with an independent test author.
 6. Propose with 5 Codex votes, implement with a separate test author, then evaluate (validity, equivalence, performance) with scorer scripts.
 7. Shakedown on MonteCarloMultiGPU (analytic reference; simplest), fix what breaks, then the private run.
