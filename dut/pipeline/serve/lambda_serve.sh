@@ -94,7 +94,7 @@ fi
 MODEL=openai/gpt-oss-120b; TYPES='gpu_1x_h100_pcie gpu_1x_h100_sxm5 gpu_1x_a100_sxm4_80gb'; HOURS=6; PORT=18000
 while (($#)); do
   (($# >= 2)) || die "Missing value for $1"
-  case $1 in --model) MODEL=$2;; --types) TYPES=$2;; --max-hours) HOURS=$2;; --port) PORT=$2;; *) die "Unknown option: $1";; esac
+  case $1 in --model) MODEL=$2;; --types) TYPES=$2;; --max-hours) HOURS=$2;; --port) PORT=$2;; --wait-capacity) WAITCAP=$2;; *) die "Unknown option: $1";; esac
   shift 2
 done
 SECONDS_LIMIT=$(python3 - "$HOURS" "$PORT" <<'PY'
@@ -109,22 +109,31 @@ python3 - "$PORT" <<'PY'
 import socket, sys
 with socket.socket() as s: s.bind(("127.0.0.1", int(sys.argv[1])))
 PY
+cap_deadline=$(( $(date -u +%s) + ${WAITCAP:-0} * 60 ))   # --wait-capacity MIN: poll every 2 min until a requested type has capacity
+while :; do
 selection=$(api instance-types | json '
 for name in sys.argv[1].split():
     item = d["data"].get(name, {}); regions = item.get("regions_with_capacity_available", [])
     if regions:
         print(name, regions[0]["name"], item["instance_type"]["price_cents_per_hour"] / 100); break
 ' "$TYPES")
-[[ -n $selection ]] || die 'No requested GPU type has capacity.'
-read -r TYPE REGION PRICE <<< "$selection"
-echo "Selected $TYPE in $REGION at USD $PRICE/hour"
-mkdir -p "$CACHE"
-payload=$(python3 -c 'import json,sys; print(json.dumps(dict(instance_type_name=sys.argv[1],region_name=sys.argv[2],ssh_key_names=["latent_verify_hal_20260721"],name="metis-serve")))' "$TYPE" "$REGION")
-ID=$(api instance-operations/launch -X POST --data "$payload" | json 'print(d["data"]["instance_ids"][0])')
+if [[ -n $selection ]]; then
+  read -r TYPE REGION PRICE <<< "$selection"
+  echo "Selected $TYPE in $REGION at USD $PRICE/hour"
+  mkdir -p "$CACHE"
+  payload=$(python3 -c 'import json,sys; print(json.dumps(dict(instance_type_name=sys.argv[1],region_name=sys.argv[2],ssh_key_names=["latent_verify_hal_20260721"],name="metis-serve")))' "$TYPE" "$REGION")
+  ID=$( (api instance-operations/launch -X POST --data "$payload" || true) | json 'print(d["data"]["instance_ids"][0])' 2>/dev/null || true)
+  [[ -n $ID ]] && break
+  echo "Launch of $TYPE refused (capacity taken meanwhile?)"
+fi
+(( $(date -u +%s) < cap_deadline )) || die 'No requested GPU type has capacity.'
+echo "No capacity for: $TYPES; retrying in 2 min"; sleep 120
+done
+
 [[ -n $ID ]] || die 'Launch returned no instance ID.'
 IP=; TUNNEL=0; WATCH=0; START=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 trap 'exit 130' INT HUP TERM
-trap 'rc=$?; trap - EXIT; if ((rc)); then echo "Startup failed; saving ~/vllm.log to $CACHE/vllm_failed.log, then terminating $ID" >&2; [[ -n ${IP:-} ]] && remote "tail -n 300 ~/vllm.log; nvidia-smi --query-gpu=name,driver_version --format=csv,noheader" > "$CACHE/vllm_failed.log" 2>&1; down; fi' EXIT
+trap 'rc=$?; trap - EXIT; if ((rc)); then echo "Startup failed; saving ~/vllm.log to $CACHE/vllm_failed.log, then terminating $ID" >&2; [[ -n ${IP:-} ]] && { (remote "tail -n 300 ~/vllm.log; nvidia-smi --query-gpu=name,driver_version --format=csv,noheader") > "$CACHE/vllm_failed.log" 2>&1 || true; }; down; fi' EXIT   # down runs even when the box never answered ssh
 save
 setsid nohup bash "$SELF" _watch "$ID" "$(( $(date -u +%s) + SECONDS_LIMIT ))" </dev/null >"$CACHE/watchdog.log" 2>&1 & WATCH=$!
 save
@@ -135,7 +144,7 @@ for ((i=0; i<80; i++)); do
 done
 ((i < 80)) || die 'Instance never became active with an IP.'
 save
-for ((i=0; i<24; i++)); do remote true 2>/dev/null && break; sleep 10; done
+for ((i=0; i<90; i++)); do remote true 2>/dev/null && break; sleep 10; done   # up to 15 min: a GH200 took more than 4
 ((i < 24)) || die 'SSH never became ready.'
 remote "bash -s -- $(printf '%q' "$MODEL")" <<'REMOTE'
 set -euo pipefail
@@ -143,6 +152,9 @@ export PATH="$HOME/.local/bin:$PATH"
 command -v uv >/dev/null || { curl -fsSL https://astral.sh/uv/install.sh | sh; }
 uv venv --python 3.12 "$HOME/vllm-venv"
 uv pip install --python "$HOME/vllm-venv/bin/python" "vllm==0.11.0" "transformers<5" --torch-backend=auto   # Lambda driver 570 = CUDA 12.8: newer vllm wheels need libcudart.so.13; vllm 0.11 breaks on transformers 5
+# gpt-oss's tokenizer (openai_harmony) fetches its vocab at start; it failed on a GH200, so fetch it first and point at it
+mkdir -p "$HOME/tiktoken"; for v in o200k_base cl100k_base; do [ -s "$HOME/tiktoken/$v.tiktoken" ] || curl -fsSL --retry 3 -o "$HOME/tiktoken/$v.tiktoken" "https://openaipublic.blob.core.windows.net/encodings/$v.tiktoken"; done
+export TIKTOKEN_ENCODINGS_BASE="$HOME/tiktoken"
 nohup "$HOME/vllm-venv/bin/vllm" serve "$1" --host 127.0.0.1 --port 8000 \
   --served-model-name gpt-oss-120b --enable-auto-tool-choice --tool-call-parser openai \
   --max-model-len 32768 --gpu-memory-utilization 0.90 --max-num-seqs 64 >"$HOME/vllm.log" 2>&1 </dev/null &

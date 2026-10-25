@@ -7,8 +7,19 @@ const path = require('node:path')
 
 const OCX = path.join(__dirname, 'ocx')
 
-// httpLogDir: route OpenCode Go traffic through a logging proxy for this call (httplog.js)
+// Lambda calls use destream.js; httpLogDir routes OpenCode Go traffic through httplog.js for this call.
 async function run(o) {
+  if (o.model.startsWith('lambda/')) {
+    const config = JSON.parse(fs.readFileSync(path.join(OCX, 'opencode', 'opencode.json'), 'utf8'))
+    const proxy = await require('./destream.js').start(config.provider.lambda.options.baseURL)
+    try {
+      const extra = JSON.parse(o.env?.OPENCODE_CONFIG_CONTENT || process.env.OPENCODE_CONFIG_CONTENT || '{}')
+      const provider = extra.provider ||= {}
+      const lambda = provider.lambda ||= {}
+      lambda.options = { ...lambda.options, baseURL: proxy.baseURL }
+      return await runOnce({ ...o, env: { ...o.env, OPENCODE_CONFIG_CONTENT: JSON.stringify(extra) } })
+    } finally { await proxy.close() }
+  }
   if (!o.httpLogDir || !o.model.startsWith('opencode-go/')) return runOnce(o)
   // a spent usage limit (HTTP 429) stops the call at once instead of letting OpenCode retry until the timeout
   let stop = null

@@ -48,7 +48,7 @@ find the first unit not marked DONE, and continue from it.
   evaluate (anchors, equivalence, speedup at equal cost, outcome against compute), then write both takeaways.
 - U5 lean cuts on that route: TODO. Post in one or two calls, the gate once (and again only on a scope change), one
   review per launch, the baseline's own tests in place of the tests author.
-- U6 open models on Lambda (vLLM as an OpenCode provider): NEXT (brought forward by the owner 2026-10-25). One H100 serves
+- U6 open models on Lambda: DONE 2026-10-25. gpt-oss-120b on 1xH100 works for narrow agent calls through OpenCode after the de-streaming shim (bash 10 of 10, a 3-step task 3 of 3), but did not complete the long diagnostics brief in 4 tries, at a 32k or a 131k context. Use it for narrow calls (AISLE pattern); long agent tasks go to Codex, then Claude. About USD 15 of compute in total. Original plan text: One H100 serves
   one open model; OpenCode reaches it through an ssh tunnel. Check: re-run the anchor diagnostics brief (DIAG_3) and
   compare its one-line answer with mimo's; measure tokens/s and USD per call. Reference systems: AISLE's
   github.com/weareaisle/nano-analyzer and github.com/stanislavfort/mythos-jagged-frontier.
