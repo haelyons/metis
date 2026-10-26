@@ -73,26 +73,36 @@ function check(label, test) {
 function fixture(root, config) {
   const profile = {
     stages: [
-      { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6 },
-      { stage: 'transfer', kind: 'transfer', wall_s: 3, gpu_s: 1, wall_fraction: 0.3 },
-      { stage: 'finish', kind: 'other', wall_s: 1, gpu_s: null, wall_fraction: 0.1 },
-    ], total_wall_s: 10, timed_fraction: 1, gpu_telemetry: true, gpu_count: 4,
+      { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6, start_s: 0, mean_gpu_util: 0.125 },
+      { stage: 'transfer', kind: 'transfer', wall_s: 3, gpu_s: 1, wall_fraction: 0.3, start_s: 6, mean_gpu_util: 0.25 },
+      { stage: 'finish', kind: 'other', wall_s: 1, gpu_s: null, wall_fraction: 0.1, start_s: 9, mean_gpu_util: null },
+    ], total_wall_s: 10, timed_fraction: 1, gpu_telemetry: true, gpu_count: 4, content: SENTINEL,
   }
   const intervals = [[1.2, 1.8], [1.05, 1.2], [1.4, 1.8], [1.2, 1.8], [1.01, 1.15]]
   const predictions = {
+    outputs_stochastic: false, content: SENTINEL,
     predictions: MENU.map((method, i) => ({ method,
       expected_speedup_interval: { low: intervals[i][0], high: intervals[i][1] },
       outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({ compute_budget,
-        predicted_outcome: 1, uncertainty: 'exact equality' })) })),
+        predicted_outcome: 1, uncertainty: SENTINEL })) })),
     infeasible_methods: [], equivalence_metrics: ['exact equality'], paired_seed_tests: [0, 1, 2, 3, 4],
-    sample_sizes: { n: 1000 }, confidence_rule: 'paired 95% interval', hardware_cost_basis: 'same box',
+    sample_sizes: { n: 1000 }, confidence_rule: { equivalence: { kind: 'paired_median', confidence: 0.95 },
+      performance: { description: SENTINEL } }, hardware_cost_basis: SENTINEL,
     timing_scope: 'whole run', minimum_worthwhile_gain: config.minimum || 1.1,
     evaluation_inputs: ['generated integers'], splits: { evaluation: [0, 1000] }, compute_budgets: [1, 2, 4],
     repetitions: 5, warmup: 'one run', scheduling_order: 'alternate', equal_outcome_target: 1,
   }
   const bounds = Object.fromEntries(MENU.map((method, i) => {
     const p = [0.6, 0.3, 0.6, 0.6, 0.3][i], k = [8, 4, 4, 8, 2][i]
-    return [method, { p, k, bound: 1 / ((1 - p) + p / k), feasible: true }]
+    const kind = [0, 2, 3].includes(i) ? 'compute' : 'transfer'
+    const methods = kind === 'compute' ? [MENU[0], MENU[2], MENU[3]] : [MENU[1], MENU[4]]
+    const stages = profile.stages.filter(row => row.kind === kind).map(row => ({
+      stage: row.stage, kind, wall_fraction: row.wall_fraction, mean_gpu_util: row.mean_gpu_util, methods,
+    }))
+    const k_derivation = i === 2 ? { rule: 'max(1, gpu_count)', gpu_count: 4 }
+      : { rule: 'min(fixed_cap, 1 / max(mean_util, 0.05))',
+        fixed_cap: [8, 4, null, 8, 2][i], mean_util: 0.125, missing_util_k: 1 }
+    return [method, { p, k, bound: 1 / ((1 - p) + p / k), feasible: true, k_derivation, stages }]
   }))
   if (config.mutate) config.mutate({ predictions, bounds, profile })
   writeJSON(path.join(root, 'agent', 'profile-packet.json'), profile)
@@ -238,28 +248,27 @@ async function main() {
     })
     check('ranking uses sealed midpoints, menu ties; four-GPU method excluded by one-GPU guard', () => {
       const packet = readJSON(path.join(happy.root, 'agent', 'propose-packet.json'))
-      assert.deepEqual(Object.keys(packet).sort(), ['ranked_methods', 'profile_summary', 'sealed_protocol',
-        'minimum_worthwhile_gain', 'resource_guards'].sort())
-      assert.deepEqual(packet.profile_summary, happy.evidence.profile)
-      assert.deepEqual(packet.resource_guards, { allocation_gpus: 1, probe_gpus: 1, available_gpus: 1 })
-      assert.equal(packet.minimum_worthwhile_gain, 1.1)
+      assert.deepEqual(Object.keys(packet).sort(), ['ranked_methods', 'stage_to_method', 'bounds',
+        'sealed_equivalence_rule'].sort())
+      assert.ok(!JSON.stringify(packet).includes(SENTINEL), 'private content leaked into packet')
+      assert.deepEqual(packet.bounds, happy.evidence.bounds)
+      assert.deepEqual(packet.stage_to_method, happy.evidence.profile.stages.map(row => ({
+        stage: row.stage, wall_fraction: row.wall_fraction, mean_gpu_util: row.mean_gpu_util,
+        methods: row.kind === 'compute' ? [MENU[0], MENU[2], MENU[3]]
+          : row.kind === 'transfer' ? [MENU[1], MENU[4]] : [],
+      })))
       const expected = [MENU[0], MENU[3], MENU[1], MENU[4]]
       assert.deepEqual(packet.ranked_methods.map(row => row.method), expected)
       for (const row of packet.ranked_methods) {
-        assert.deepEqual(Object.keys(row).sort(), ['method', 'bounds', 'prediction', 'expected_speedup',
-          'rank_score', 'gpus_required', 'resource_guard_pass'].sort())
-        const prediction = happy.evidence.predictions.predictions.find(value => value.method === row.method)
-        const { low, high } = prediction.expected_speedup_interval
-        assert.equal(row.expected_speedup, low / 2 + high / 2)
-        assert.equal(row.rank_score, Math.min(low / 2 + high / 2, happy.evidence.bounds[row.method].bound))
+        assert.deepEqual(Object.keys(row).sort(), ['bounds', 'method'])
         assert.deepEqual(row.bounds, happy.evidence.bounds[row.method])
-        assert.deepEqual(row.prediction, prediction)
-        assert.equal(row.gpus_required, 1)
-        assert.equal(row.resource_guard_pass, true)
       }
-      for (const [key, value] of Object.entries(happy.evidence.predictions)) {
-        if (!['predictions', 'infeasible_methods', 'minimum_worthwhile_gain'].includes(key)) assert.deepEqual(packet.sealed_protocol[key], value, key)
-      }
+      const sealed = happy.evidence.predictions
+      assert.deepEqual(packet.sealed_equivalence_rule, {
+        outputs_stochastic: sealed.outputs_stochastic, equivalence_metrics: sealed.equivalence_metrics,
+        paired_seed_tests: sealed.paired_seed_tests, sample_sizes: sealed.sample_sizes,
+        confidence_rule: sealed.confidence_rule.equivalence,
+      })
     })
     check('all six calls receive same packet; skeptics receive proposal and no other ballots', () => {
       const packet = readJSON(path.join(happy.root, 'agent', 'propose-packet.json'))
@@ -334,16 +343,16 @@ async function main() {
           votes_approve: 0, votes_total: 5, vote_share: 0, gate_pass: false })) assert.deepEqual(run.record?.facts?.[key], value, key)
       })
     }
-    for (const [name, config, guards] of [
-      ['allocation-limits-probe', { box: { type: 'gpu_8x_a10', gpu_count: 1 }, probeCount: 4 }, [1, 4, 1]],
-      ['probe-limits-allocation', { box: { type: 'gpu_4x_a10', gpu_count: 4 }, probeCount: 1 }, [4, 1, 1]],
-      ['allocation-type-fallback', { box: { type: 'gpu_1x_a10' }, probeCount: 4 }, [1, 4, 1]],
+    for (const [name, config] of [
+      ['allocation-limits-probe', { box: { type: 'gpu_8x_a10', gpu_count: 1 }, probeCount: 4 }],
+      ['probe-limits-allocation', { box: { type: 'gpu_4x_a10', gpu_count: 4 }, probeCount: 1 }],
+      ['allocation-type-fallback', { box: { type: 'gpu_1x_a10' }, probeCount: 4 }],
     ]) {
       const run = await execute(name, config)
       status(name, run)
       check(`${name}: smaller inventory excludes multi-GPU`, () => {
         const packet = readJSON(path.join(run.root, 'agent', 'propose-packet.json'))
-        assert.deepEqual(packet.resource_guards, Object.fromEntries(['allocation_gpus', 'probe_gpus', 'available_gpus'].map((key, i) => [key, guards[i]])))
+        assert.ok(!Object.hasOwn(packet, 'resource_guards'))
         assert.ok(packet.ranked_methods.every(row => row.method !== 'multi-GPU'))
       })
     }
@@ -353,8 +362,8 @@ async function main() {
     check('multi-GPU ranks first with bound factor matching four required GPUs', () => {
       const row = readJSON(path.join(multi.root, 'agent', 'propose-packet.json')).ranked_methods[0]
       assert.equal(row.method, 'multi-GPU')
-      assert.equal(row.gpus_required, 4)
-      assert.equal(row.resource_guard_pass, true)
+      assert.equal(row.bounds.k, 4)
+      assert.equal(row.bounds.k_derivation.gpu_count, 4)
     })
     for (const [name, config] of [
       ['no-allocation', { noBox: true }], ['no-probe', { noProbe: true }], ['zero-probe', { probeCount: 0 }],

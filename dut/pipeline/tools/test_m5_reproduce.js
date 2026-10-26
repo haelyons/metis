@@ -20,11 +20,13 @@ function writeJSON(file, value) {
 }
 const anchor = (id, published_value, tolerance) => ({ id, published_value, tolerance, quantity: 'fixture quantity', source: 'https://example.org/published' })
 const ANCHORS = [anchor('first', 100, { abs: 1 }), anchor('second', 0, 0)]
-const TIMINGS = [{ stage: 'cpu', kind: 'other', wall_s: 3, gpu_s: null },
-  { stage: 'h2d', kind: 'transfer', wall_s: 2, gpu_s: null },
-  { stage: 'compute', kind: 'compute', wall_s: 4.5, gpu_s: 0 }]
-const GPU_UTIL = [{ t: 0, util: 0 }, { t: 1, util: 75 }]
+const TIMINGS = [{ stage: 'cpu', kind: 'other', wall_s: 3, gpu_s: null, start_s: 0 },
+  { stage: 'h2d', kind: 'transfer', wall_s: 2, gpu_s: null, start_s: 3 },
+  { stage: 'compute', kind: 'compute', wall_s: 4.5, gpu_s: 0, start_s: 5 }]
+const GPU_UTIL = [{ t: 0, util: 0 }, { t: 1, util: 75 }, { t: 3, util: 50 },
+  { t: 5, util: 25 }, { t: 6, util: 25 }]
 const PREDICTIONS = {
+  outputs_stochastic: false,
   predictions: [{ method: 'batching', expected_speedup_interval: { low: 1.1, high: 2 },
     outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({ compute_budget, predicted_outcome: 100, uncertainty: 'exact' })) }],
   equivalence_metrics: ['exact equality'], paired_seed_tests: [0, 1, 2, 3, 4], sample_sizes: { n: 10 },
@@ -332,11 +334,23 @@ function profileFacts(name, run, fraction) {
     const total = readJSON(path.join(input, 'total_wall_s.json')).total_wall_s
     const packet = readJSON(path.join(run.root, 'agent', 'profile-packet.json'))
     assert.deepEqual(Object.keys(packet).sort(), ['gpu_count', 'gpu_telemetry', 'stages', 'timed_fraction', 'total_wall_s'])
-    assert.deepEqual(packet.stages, timings.map(({ stage, wall_s, gpu_s, kind }) => ({ stage, wall_s, gpu_s, ...(kind === undefined ? {} : { kind }), wall_fraction: Math.min(1, wall_s / total) })))
+    const telemetry = readJSON(path.join(input, 'gpu_util.json'))
+    assert.deepEqual(packet.stages, timings.map(({ stage, wall_s, gpu_s, kind, start_s = null }) => {
+      const samples = start_s === null ? [] : telemetry.filter(({ t }) => t >= start_s && t < start_s + wall_s)
+      return { stage, wall_s, gpu_s, ...(kind === undefined ? {} : { kind }),
+        wall_fraction: Math.min(1, wall_s / total), start_s,
+        mean_gpu_util: samples.length ? samples.reduce((sum, row) => sum + row.util, 0) / samples.length / 100 : null }
+    }))
     assert.equal(packet.total_wall_s, total)
     assert.equal(packet.timed_fraction, Math.min(1, timings.reduce((sum, row) => sum + row.wall_s, 0) / total))
     assert.equal(packet.timed_fraction, fraction)
-    assert.equal(packet.gpu_count, 1)
+    const boxFile = path.join(run.root, 'control', 'box.json')
+    const box = fs.existsSync(boxFile) ? readJSON(boxFile) : {}
+    const allocationCount = /^gpu_(\d+)x_/.exec(box.type || '')
+    const probe = readJSON(path.join(run.root, 'agent', 'results', 'probe', 'probe.json'))
+    const expectedGpuCount = Number.isInteger(box.gpu_count) && box.gpu_count >= 0 ? box.gpu_count
+      : allocationCount ? Number(allocationCount[1]) : probe.nvidia?.gpus?.length ?? 1
+    assert.equal(packet.gpu_count, expectedGpuCount)
     assert.equal(packet.gpu_telemetry, readJSON(path.join(input, 'gpu_util.json')).length > 0)
     assert.deepEqual(run.stage('profile').facts, { profile_complete: true, timed_fraction: fraction,
       gpu_telemetry: packet.gpu_telemetry, tokens_known: !!(run.config.profileFailures || run.config.profileGateFailure), gpu_busy_known: false })
@@ -513,7 +527,7 @@ function boundsCliTests() {
   fs.mkdirSync(directory)
   const methods = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
   let sequence = 0
-  function bounds(label, stages, compute, transfer, gpuCount = 4) {
+  function bounds(label, stages, compute, transfer, gpuCount = 4, meanUtil = 0.125) {
     check(`CLI bounds: ${label}`, () => {
       const input = path.join(directory, `${++sequence}-packet.json`)
       const output = path.join(directory, `${sequence}-bounds.json`)
@@ -529,17 +543,28 @@ function boundsCliTests() {
       assert.deepEqual(Object.keys(actual).sort(), [...methods].sort())
       for (const [i, method] of methods.entries()) {
         const p = [compute, transfer, compute, compute, transfer][i]
-        const k = [8, 4, Math.max(1, gpuCount ?? 1), 8, 2][i]
+        const factor = meanUtil === null || compute === 0 ? 1 : 1 / Math.max(meanUtil, 0.05)
+        const k = [Math.min(8, factor), Math.min(4, factor), Math.max(1, gpuCount ?? 1), Math.min(8, factor), Math.min(2, factor)][i]
         const expected = 1 / ((1 - p) + p / k)
-        assert.deepEqual(Object.keys(actual[method]).sort(), ['bound', 'feasible', 'k', 'p'])
+        assert.deepEqual(Object.keys(actual[method]).sort(), ['bound', 'feasible', 'k', 'k_derivation', 'p', 'stages'])
         assert.ok(Math.abs(actual[method].p - p) < 1e-12, `${method}: p`)
         assert.equal(actual[method].k, k, `${method}: k`)
         assert.ok(Math.abs(actual[method].bound - expected) < 1e-12, `${method}: bound`)
         assert.equal(actual[method].feasible, expected >= 1.05, `${method}: feasible`)
+        const derivation = actual[method].k_derivation
+        if (method === 'multi-GPU') {
+          assert.equal(derivation.rule, 'max(1, gpu_count)')
+          assert.equal(derivation.gpu_count, gpuCount ?? 1)
+        } else {
+          assert.equal(derivation.mean_util, compute === 0 ? null : meanUtil)
+          assert.equal(derivation.fixed_cap, [8, 4, null, 8, 2][i])
+          assert.equal(derivation.missing_util_k, 1)
+        }
+        assert.ok(Array.isArray(actual[method].stages))
       }
     })
   }
-  const stage = (name, wall_s, kind) => ({ stage: name, wall_s, gpu_s: null, wall_fraction: 1,
+  const stage = (name, wall_s, kind) => ({ stage: name, wall_s, gpu_s: null, wall_fraction: 1, mean_gpu_util: 0.125,
     ...(kind === undefined ? {} : { kind }) })
   bounds('Amdahl compute 0.6, transfer 0.2, serial and unmeasured 0.2',
     [stage('arithmetic', 60, 'compute'), stage('movement', 20, 'transfer'), stage('wait', 10, 'other')], 0.6, 0.2)
@@ -557,6 +582,17 @@ function boundsCliTests() {
   bounds('one GPU makes multi-GPU infeasible', [stage('compute', 90)], 0.9, 0, 1)
   bounds('zero GPUs caps multi-GPU factor at one', [stage('compute', 90)], 0.9, 0, 0)
   bounds('legacy missing GPU count defaults to one', [stage('compute', 90)], 0.9, 0, null)
+  for (const [label, util] of [['100% utilisation gives same-GPU bound 1', 1],
+    ['25% utilisation raises same-GPU cap', 0.25], ['missing utilisation gives conservative cap', null],
+    ['zero utilisation respects fixed caps', 0]]) {
+    bounds(label, [ { ...stage('compute', 80), mean_gpu_util: util }, stage('transfer', 20)], 0.8, 0.2, 4, util)
+  }
+  bounds('compute utilisation is an arithmetic mean',
+    [{ ...stage('compute', 60), mean_gpu_util: 0.125 },
+      { ...stage('kernels', 20), mean_gpu_util: 0.375 }, stage('transfer', 20)], 0.8, 0.2, 4, 0.25)
+  bounds('one missing compute utilisation forces conservative cap',
+    [stage('compute', 60), { ...stage('kernels', 20), mean_gpu_util: null }, stage('transfer', 20)], 0.8, 0.2, 4, null)
+  bounds('multi-GPU factor follows GPU count', [stage('compute', 90)], 0.9, 0, 7)
   bounds('actionable fraction caps at one', [stage('compute', 120)], 1, 0)
 }
 

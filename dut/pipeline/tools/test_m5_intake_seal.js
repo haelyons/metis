@@ -17,13 +17,14 @@ const INTAKE = { found: true, anchors_count: 2, data: 'available', licence: 'per
 // Evidence from the stubbed profile stage: compute 60%, transfer 30%, serial 10%.
 const PROFILE = {
   stages: [
-    { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6 },
+    { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6, start_s: 0, mean_gpu_util: 0.125 },
     { stage: 'h2d', kind: 'transfer', wall_s: 3, gpu_s: 1, wall_fraction: 0.3 },
     { stage: 'postprocessing', kind: 'other', wall_s: 1, gpu_s: null, wall_fraction: 0.1 },
   ],
   total_wall_s: 10, timed_fraction: 1, gpu_telemetry: true, gpu_count: 1,
 }
 const PREDICTIONS = {
+  outputs_stochastic: false,
   predictions: [
     ['data-parallel over inputs', 1.2, 1.8], ['batching', 1.05, 1.2],
     ['ensembles', 1.1, 1.7], ['pipelining', 1.01, 1.15],
@@ -337,6 +338,35 @@ async function main() {
         assert.deepEqual(readJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json')), value)
         const seals = path.join(runRoot, 'control', 'seals')
         assert.deepEqual(fs.existsSync(seals) ? fs.readdirSync(seals) : [], [])
+      })
+    }
+
+    for (const statistical of [false, true]) {
+      const name = statistical ? 'stochastic-statistical' : 'stochastic-exact'
+      const runRoot = path.join(parent, name)
+      const value = JSON.parse(JSON.stringify(PREDICTIONS))
+      value.outputs_stochastic = true
+      // Both cases use paired seeds; only the equivalence rule differs.
+      value.paired_seed_tests = { kind: 'paired_median', seeds: [0, 1, 2, 3, 4, 5] }
+      value.confidence_rule = {
+        equivalence: { kind: 'paired_median', confidence: 0.95 },
+        performance: { kind: 'paired_median', confidence: 0.95 },
+      }
+      value.equivalence_metrics = [{ name: 'sum', source: 'records.metrics.sum',
+        tolerance: { abs: statistical ? 0.1 : 0 } }]
+      writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), value)
+      const run = await runCase(name, INTAKE, { runRoot, preserve: true })
+      checkStatuses(name, run, statistical ? null : 'seal')
+      check(`${name}: deterministic verification enforces stochastic equivalence`, () => {
+        assert.equal(run.calls.filter(row => row.label === 'seal').length, 1)
+        assert.equal(run.stage('seal')?.facts?.seal_verified, statistical)
+        const receipt = path.join(runRoot, 'control', 'seals', '0001.json')
+        assert.equal(fs.existsSync(receipt), statistical)
+        if (statistical) assert.equal(readJSON(receipt).sha256, predictionHash(runRoot))
+        else {
+          assert.equal(run.signature('seal').error_class, 'numeric')
+          assert.equal(run.signature('seal').exit_code, 2)
+        }
       })
     }
 
