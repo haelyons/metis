@@ -1,0 +1,60 @@
+{
+  "required_inputs": [
+    {
+      "name": "European call option parameters",
+      "kind": "generated",
+      "availability": "available",
+      "generator": "srand(123), then libc rand()",
+      "ranges": {
+        "S": [
+          5,
+          50
+        ],
+        "X": [
+          10,
+          25
+        ],
+        "T": [
+          1,
+          5
+        ]
+      },
+      "constants": {
+        "R": 0.06,
+        "V": 0.1
+      },
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L316-L327"
+    },
+    {
+      "name": "Monte Carlo random paths",
+      "kind": "generated",
+      "availability": "available",
+      "generator": "cuRAND; curand_init(blockIdx.x + gridDim.x * device_id, threadIdx.x, 0, ...)",
+      "paths_per_option": 262144,
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L131-L138"
+    }
+  ],
+  "availability": "available",
+  "access_instructions": "No data download; pinned sample generates all required inputs.",
+  "licences": [
+    {
+      "applies_to": "Input generator source",
+      "licence": "NVIDIA cuda-samples licence",
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+      "intended_use": "permitted"
+    }
+  ],
+  "pins_and_hashes": {
+    "generator_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "dataset_hash": null,
+    "dataset_hash_reason": "No external dataset; generated contents depend on libc and GPU geometry."
+  },
+  "splits": null,
+  "splits_reason": "Not a training benchmark; no dataset splits specified.",
+  "seeds": {
+    "host": 123,
+    "gpu": "blockIdx.x + gridDim.x * device_id; sequence threadIdx.x; offset 0"
+  },
+  "missing_required_data": [],
+  "source_access_note": "Required data are generated; source download/build not performed during intake."
+}

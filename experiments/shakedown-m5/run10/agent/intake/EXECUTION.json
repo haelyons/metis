@@ -1,0 +1,84 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "host_setting": "nOptions = 1024 * 1024",
+    "source": "brief.md fixed representative scale instruction",
+    "policy": "One fixed scale; rebuild once. No scale search, doubling or toy extrapolation. Report timeout if stage budget exceeded.",
+    "runtime_s": null,
+    "runtime_s_reason": "No workload run; completion within budget not verified."
+  },
+  "inputs": {
+    "generated_parameters": "S in [5,50], X in [10,25], T in [1,5], R=0.06, V=0.10; srand(123).",
+    "paths": "cuRAND as documented in data.json",
+    "external_data": [],
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu"
+    ]
+  },
+  "outputs": {
+    "timing": "Total time (ms.)",
+    "correctness": [
+      "Average reserve",
+      "Test passed or Test failed!",
+      "process exit status",
+      "L1 norm"
+    ],
+    "configuration": [
+      "GPU count",
+      "option count",
+      "paths per option"
+    ],
+    "observed_values": null,
+    "observed_values_reason": "Intake only; no workload run."
+  },
+  "timing_scope": {
+    "includes": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Completion-event waits"
+    ],
+    "excludes": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ]
+  },
+  "scoring_interface": {
+    "run_commands": [
+      "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+    ],
+    "performance": "Read streamed Total time (ms.) at representative scale.",
+    "anchors": "Use unmodified published 8192-option configuration, 262144 paths per option, one visible GPU. Apply anchors.json comparisons; retain exit status.",
+    "configuration_checks": "Require printed fields to match requested scale; tiny GPUs with <=32 CUDA cores may reduce option count.",
+    "l1": "Record without imposing invented threshold.",
+    "reference_output": null,
+    "reference_output_reason": "No measured output supplied."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate script names or commands supplied.",
+  "budget_evidence": null,
+  "budget_evidence_reason": "Brief provides no measured runtime; do not claim fixed scale completes within budgets."
+}
