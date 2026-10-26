@@ -105,22 +105,100 @@ function script(file, body) {
   fs.writeFileSync(file, '#!/bin/bash\nset -eu\n' + body + '\n', { mode: 0o700 })
 }
 function profilerTests() {
-  for (const mode of ['success', 'collection-failure', 'export-failure', 'missing-nsys']) check(`profile_nsys.sh: ${mode}`, () => {
+  for (const mode of ['success', 'collection-failure', 'export-failure', 'missing-nsys', 'deb-hash-mismatch', 'deb-success']) check(`profile_nsys.sh: ${mode}`, () => {
+    const deb = mode.startsWith('deb-')
     const dir = fs.mkdtempSync(path.join(scratch, 'collect-')), bin = path.join(dir, 'bin')
     fs.mkdirSync(bin)
     fs.mkdirSync(path.join(dir, 'profiler'))
     for (const file of ['profile_nsys.sh', 'profile_summarise.py'])
       fs.copyFileSync(path.join(ROOT, 'm5', file), path.join(dir, 'profiler', file))
     write(path.join(dir, 'profiler/probe.json'), { nvcc: [], nvidia: { gpus: ['Fixture GPU'] }, apt_sources: [] })
+    if (deb) {
+      const source = path.join(dir, 'nvidia.list')
+      const lines = ['deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /']
+      fs.writeFileSync(source, lines.join('\n') + '\n')
+      write(path.join(dir, 'profiler/probe.json'), {
+        nvcc: [], nvidia: { gpus: ['Fixture GPU'] }, apt_sources: [{ file: source, lines }], sudo_nopasswd: true,
+      })
+    }
     // Restricted PATH: installation/network tools cannot reach host tools.
     for (const tool of ['bash', 'python3', 'mkdir', 'rm', 'date', 'sleep', 'cat', 'dirname', 'head', 'tail', 'grep', 'awk', 'sed', 'uname', 'mktemp', 'readlink', 'find', 'sort', 'tr', 'cut', 'timeout', 'tee', 'ls']) {
       const located = execute('/bin/bash', ['-c', 'command -v "$1"', 'locate', tool])
       if (located.status === 0) fs.symlinkSync(located.stdout.trim(), path.join(bin, tool))
     }
-    for (const tool of ['sudo', 'apt', 'apt-get', 'apt-cache', 'curl', 'wget', 'dpkg', 'dpkg-query'])
+    for (const tool of ['sudo', 'apt', 'apt-get', 'apt-cache', 'curl', 'wget', 'sha256sum', 'dpkg', 'dpkg-query'])
       script(path.join(bin, tool), 'printf "%s\\n" "$0 $*" >> "$FAKE_CALLS"\nexit 1')
+    if (deb) {
+      // Route Python download/hash APIs through the same PATH fakes. No real
+      // package can have the official pinned digest, so verification is simulated.
+      fs.writeFileSync(path.join(dir, 'sitecustomize.py'), `import hashlib, io, os, re, subprocess, urllib.request
+real_sha256 = hashlib.sha256
+def download(url, *args, **kwargs):
+    target = os.path.join(os.environ['HOME'], 'download.deb')
+    subprocess.run(['curl', '-o', target, url], check=True)
+    with open(target, 'rb') as stream:
+        return io.BytesIO(stream.read())
+class Digest(str):
+    def __eq__(self, expected):
+        assert re.fullmatch(r'[a-fA-F0-9]{64}', expected)
+        with open(os.environ['FAKE_CALLS'], 'a') as stream:
+            stream.write('checksum ' + expected + '\\n')
+        return self.valid
+    def __ne__(self, expected):
+        return not self == expected
+class Hash:
+    def hexdigest(self):
+        result = subprocess.run(['sha256sum'], input=b'fixture deb\\n', capture_output=True)
+        digest = Digest('0' * 64)
+        digest.valid = result.returncode == 0
+        return digest
+def sha256(data=b'', *args, **kwargs):
+    return Hash() if data == b'fixture deb\\n' else real_sha256(data, *args, **kwargs)
+urllib.request.urlopen = download
+hashlib.sha256 = sha256
+`)
+      script(path.join(bin, 'id'), 'echo 1000')
+      script(path.join(bin, 'sudo'), `printf 'sudo %s\\n' "$*" >> "$FAKE_CALLS"
+test "$1" = -n
+shift
+"$@"`)
+      script(path.join(bin, 'apt-cache'), `printf 'apt-cache %s\\n' "$*" >> "$FAKE_CALLS"
+echo 'nsight-systems-cli - fixture package'`)
+      script(path.join(bin, 'apt-get'), `printf 'apt-get %s\\n' "$*" >> "$FAKE_CALLS"
+[[ " $* " == *" -f "* ]]`)
+      script(path.join(bin, 'curl'), `printf 'curl %s\\n' "$*" >> "$FAKE_CALLS"
+output=
+while (( $# )); do
+  case "$1" in
+    -o|--output) output=$2; shift 2;;
+    https://*) test "$1" = 'https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64/NsightSystems-linux-cli-public-2025.3.1.90-3582212.deb'; shift;;
+    *) shift;;
+  esac
+done
+test -n "$output"
+printf 'fixture deb\\n' > "$output"`)
+      script(path.join(bin, 'sha256sum'), `printf 'sha256sum %s\\n' "$*" >> "$FAKE_CALLS"
+if (( $# == 0 )); then
+  test "$(cat)" = 'fixture deb'
+  ${mode === 'deb-hash-mismatch' ? 'exit 1' : ': > "$HOME/verified"'}
+  printf '%064d  -\\n' 0
+  exit 0
+fi
+[[ " $* " == *" -c "* || " $* " == *" --check "* ]]
+IFS= read -r checksum
+printf 'checksum %s\\n' "$checksum" >> "$FAKE_CALLS"
+[[ "$checksum" =~ ^[[:xdigit:]]{64}[[:space:]]+ ]]
+package=\${checksum#*  }
+test "$(cat "$package")" = 'fixture deb'
+${mode === 'deb-hash-mismatch' ? 'exit 1' : ': > "$HOME/verified"'}`)
+      script(path.join(bin, 'dpkg'), `printf 'dpkg %s\\n' "$*" >> "$FAKE_CALLS"
+test "$1" = -i
+test -f "$HOME/verified"
+test "$(cat "$2")" = 'fixture deb'
+python3 -c 'import os, shutil; shutil.copy(os.environ["HOME"] + "/nsys-fixture", os.environ["PATH"] + "/nsys")'`)
+    }
     script(path.join(bin, 'nvidia-smi'), 'printf "20\\n40\\n"')
-    if (mode !== 'missing-nsys') script(path.join(bin, 'nsys'), `
+    if (mode !== 'missing-nsys') script(deb ? path.join(dir, 'nsys-fixture') : path.join(bin, 'nsys'), `
 printf '%s\\n' "$*" >> "$FAKE_CALLS"
 case "$1" in
   --version) echo 'NVIDIA Nsight Systems version fixture';;
@@ -155,10 +233,28 @@ esac`)
     fs.mkdirSync(out)
     write(path.join(out, 'stages.json'), [{ stage: 'stale' }])
     const env = { PATH: bin, HOME: dir, TMPDIR: dir, FIXTURE_ENV: 'preserved', FAKE_CALLS: path.join(dir, 'calls'),
+      ...(deb ? { PYTHONPATH: dir, PYTHONDONTWRITEBYTECODE: '1' } : {}),
       M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl') }
     const started = process.hrtime.bigint()
     const result = execute('/bin/bash', [path.join(dir, 'profiler/profile_nsys.sh'), 'run_command.sh', out, '10'], { cwd: dir, env })
-    if (mode === 'success') {
+    if (deb) {
+      assert.ok(fs.existsSync(env.FAKE_CALLS), result.stderr + result.stdout)
+      const calls = fs.readFileSync(env.FAKE_CALLS, 'utf8')
+      assert.match(calls, /apt-get .*nsight-systems-cli/)
+      assert.ok(calls.indexOf('apt-get ') < calls.indexOf('curl '), calls + result.stderr + result.stdout)
+      assert.match(calls, /curl .*https:\/\/developer\.download\.nvidia\.com\/devtools\/repos\/ubuntu2204\/amd64\/NsightSystems-linux-cli-public-2025\.3\.1\.90-3582212\.deb/)
+      assert.match(calls, /checksum [a-fA-F0-9]{64}\s+/)
+      if (mode === 'deb-hash-mismatch') {
+        assert.doesNotMatch(calls, /(?:sudo -n )?dpkg /)
+        assert.ok(!fs.existsSync(path.join(bin, 'nsys')))
+      } else {
+        assert.match(calls, /sudo -n dpkg -i /)
+        assert.match(calls, /sudo -n apt-get -f install -y/)
+        assert.ok(calls.indexOf('sha256sum ') < calls.indexOf('dpkg -i '), calls)
+        assert.ok(calls.indexOf('dpkg -i ') < calls.indexOf('profile --trace='), calls)
+      }
+    }
+    if (mode === 'success' || mode === 'deb-success') {
       assert.equal(result.status, 0, result.stderr + result.stdout)
       const calls = fs.readFileSync(env.FAKE_CALLS, 'utf8')
       assert.match(calls, /profile --trace=cuda,nvtx,osrt --sample=none/)
@@ -180,7 +276,7 @@ esac`)
       assert.match(result.stderr + result.stdout, /M5_PROFILER_INFRA/)
       assert.equal(typeof read(path.join(out, 'infra.json')), 'object')
       assert.ok(!fs.existsSync(path.join(out, 'stages.json')), 'stale profile survived')
-      if (mode === 'missing-nsys') assert.ok(!fs.existsSync(path.join(dir, 'command-calls')))
+      if (mode === 'missing-nsys' || mode === 'deb-hash-mismatch') assert.ok(!fs.existsSync(path.join(dir, 'command-calls')))
     }
   })
 }
@@ -196,4 +292,5 @@ try {
   })
 } finally { fs.rmSync(scratch, { recursive: true, force: true }) }
 console.log(`${checks} checks, ${failures} failures`)
+if (!failures) console.log('all checks passed')
 process.exitCode = failures ? 1 : 0

@@ -21,19 +21,17 @@ rm -f -- "$out_dir/infra.json" "$out_dir/stages.json" "$out_dir/total_wall_s.jso
 find_nsys() {
   command -v nsys && return
   local candidate
-  for candidate in /opt/nvidia/nsight-systems*/bin/nsys /opt/nvidia/nsight-systems/*/bin/nsys; do
+  for candidate in /opt/nvidia/nsight-systems*/bin/nsys /opt/nvidia/nsight-systems*/*/bin/nsys \
+                   /opt/nvidia/nsight-systems*/*/target-linux-x64/nsys; do
     if [[ -x $candidate ]]; then printf '%s\n' "$candidate"; return; fi
   done
   return 1
 }
 nsys_bin=$(find_nsys) || {
   python3 - "$script_dir/probe.json" "$out_dir" <<'PY'
-import gzip
 import hashlib
 import json
 from pathlib import Path
-import platform
-import re
 import shutil
 import subprocess
 import sys
@@ -63,55 +61,26 @@ with tempfile.TemporaryDirectory(prefix="m5-nsys-") as temporary:
         if result.returncode == 0:
             sys.exit(0)
 
-    # Resolve the Nsight package selected by the probed CUDA toolkit, rather than
-    # guessing a .deb filename or installing a newer, incompatible profiler.
-    cuda = None
-    for compiler in probe.get("nvcc", []):
-        match = re.search(r"release (\d+)\.(\d+)", compiler.get("version") or "")
-        if match:
-            cuda = match.groups()
-            break
-    if cuda is None:
-        match = re.fullmatch(r"(\d+)\.(\d+)", (probe.get("nvidia") or {}).get("cuda_version") or "")
-        if match:
-            cuda = match.groups()
-    os_info = probe.get("os") or {}
-    distro = os_info.get("id")
-    version = os_info.get("version_id", "")
-    architecture = {"x86_64": "x86_64", "aarch64": "sbsa"}.get(platform.machine())
-    if not cuda or distro not in ("ubuntu", "debian") or not re.fullmatch(r"\d+(?:\.\d+)?", version) or not architecture:
-        raise RuntimeError("no public package for probed platform")
-    base = f"https://developer.download.nvidia.com/compute/cuda/repos/{distro}{version.replace('.', '')}/{architecture}/"
-    with urllib.request.urlopen(base + "Packages.gz", timeout=60) as response:
-        contents = gzip.decompress(response.read()).decode()
-    packages = {}
-    for stanza in contents.split("\n\n"):
-        fields = dict(line.split(": ", 1) for line in stanza.splitlines() if ": " in line and not line.startswith(" "))
-        if "Package" in fields:
-            packages.setdefault(fields["Package"], []).append(fields)
-    selectors = packages.get("cuda-nsight-systems-" + "-".join(cuda), [])
-    if not selectors:
-        raise RuntimeError("CUDA Nsight package unavailable")
-    selector = selectors[-1]
-    names = re.findall(r"(?:^|,\s*)(nsight-systems(?:-cli)?(?:-[\d.]+)?)\b", selector.get("Depends", ""))
-    if not names or names[0] not in packages:
-        raise RuntimeError("Nsight dependency unavailable")
-    package = packages[names[0]][-1]
-    filename = package["Filename"]
-    if filename.startswith("./"):
-        filename = filename[2:]
-    if not re.fullmatch(r"[\w.+/-]+\.deb", filename) or ".." in filename:
-        raise RuntimeError("invalid package filename")
-    destination = Path(sys.argv[2]).resolve() / "nsight-systems.deb"
+    # Official Ubuntu 22.04 amd64 CLI package. Keep the version and SHA-256
+    # pinned together; never trust a downloaded package without checking it.
+    # Hash source: NVIDIA's devtools ubuntu2204/amd64/Packages index.
+    base = "https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64/"
+    filename = "NsightSystems-linux-cli-public-2025.3.1.90-3582212.deb"
+    sha256 = "d2484ad0faf6831b11fa0bf73c54232d9ea8beafb50414019e6ba299c4ed5718"
+    destination = Path(sys.argv[2]).resolve() / filename
     with urllib.request.urlopen(base + filename, timeout=60) as response:
         destination.write_bytes(response.read())
-    if hashlib.sha256(destination.read_bytes()).hexdigest() != package["SHA256"]:
+    if hashlib.sha256(destination.read_bytes()).hexdigest() != sha256:
         raise RuntimeError("package checksum mismatch")
-    subprocess.run(root + ["apt-get", *options, "install", "-y", "--no-install-recommends", str(destination)], check=True)
+    # dpkg may leave the package unconfigured until apt installs dependencies
+    # from the image's existing sources. No repositories are added.
+    subprocess.run(["sudo", "-n", "dpkg", "-i", str(destination)], check=False)
+    subprocess.run(["sudo", "-n", "apt-get", "-f", "install", "-y"], check=True)
 PY
   [[ $? == 0 ]] || infra
   nsys_bin=$(find_nsys) || infra
 }
+export PATH="${nsys_bin%/*}:$PATH"
 "$nsys_bin" --version > "$out_dir/nsys-version.txt"
 
 python3 - "$nsys_bin" "$command_file" "$out_dir" "$budget_s" <<'PY'
