@@ -1,0 +1,94 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "scale_source": "brief.md, Scale (operator revision after raid jackhammer)",
+    "configuration_change": {
+      "file": "Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "change": "Set host nOptions = 1024 * 1024 once; keep PATH_N = 262144, expose one GPU, rebuild once using same commands.",
+      "source": "brief.md, Scale (operator revision after raid jackhammer)",
+      "upstream_published_configuration": false
+    },
+    "scale_search": false
+  },
+  "inputs": {
+    "data": "data.json",
+    "generation": "Sample-generated option parameters and cuRAND streams",
+    "run_commands": [
+      "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+    ],
+    "published_anchor_case": {
+      "gpu_count": 1,
+      "options": 8192,
+      "paths_per_option": 262144,
+      "method": "streamed",
+      "scaling": "strong",
+      "precision": "float; DOUBLE_PRECISION disabled",
+      "threads_per_block": 256,
+      "max_options_per_gpu": 1048576,
+      "grid_cap": "40 * multiProcessorCount",
+      "source": [
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37"
+      ]
+    },
+    "anchor_instructions": "Check anchors against unchanged published 8192-option configuration; representative timing uses fixed 1048576-option configuration.",
+    "configuration_validation": "Check printed GPU count, option count and paths; tiny-GPU adjustment can reduce options on <=32-core devices, invalidating requested scale."
+  },
+  "outputs": {
+    "timing": "Total time (ms.) from streamed path",
+    "correctness": [
+      "Average reserve",
+      "L1 norm",
+      "Test passed or Test failed!",
+      "process exit status"
+    ],
+    "configuration": [
+      "GPU count",
+      "option count",
+      "paths per option"
+    ],
+    "scoring_interface": "Parse sample stdout and process exit status; accept published anchor criterion reserve > 1.0 plus Test passed and successful exit. Report representative timing in milliseconds.",
+    "published_timing_target": null,
+    "published_timing_target_reason": "No timing target or performance reference published in supplied brief."
+  },
+  "timing_scope": {
+    "include": [
+      "option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "wait for completion events"
+    ],
+    "exclude": [
+      "compilation",
+      "allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ]
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "budget_policy": "Use one fixed representative scale. Never search scale or double PATH_N. If fixed-scale run exceeds stage budget, report timeout.",
+  "runtime_feasibility": null,
+  "runtime_feasibility_reason": "No measured duration at fixed representative scale; cannot establish completion within stage budgets without reproduction.",
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate scripts named in task or brief."
+}

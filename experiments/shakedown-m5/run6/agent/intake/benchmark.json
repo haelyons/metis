@@ -1,0 +1,113 @@
+{
+  "identity": {
+    "name": "MonteCarloMultiGPU",
+    "repository": "https://github.com/NVIDIA/cuda-samples",
+    "tag": "v12.8",
+    "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "supported": true
+  },
+  "outcome_definition": {
+    "problem": "Monte Carlo pricing of European call options with analytic Black\u2013Scholes validation",
+    "performance_metric": "streamed Total time (ms.)",
+    "correctness": "Average reserve > 1.0 and Test passed; retain successful process exit status",
+    "l1_metric": "sum(abs(BS-MC))/sum(abs(BS))",
+    "published_l1_target": null,
+    "published_l1_target_reason": "Upstream supplies no numeric L1 target or acceptance threshold."
+  },
+  "citations": {
+    "readme": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md#building-cuda-samples",
+    "description": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/README.md",
+    "cmake": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "host": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+    "kernel": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+    "gold": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_gold.cpp#L43-L81",
+    "precision": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37",
+    "licence": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE"
+  },
+  "source_licences": {
+    "status": "permitted",
+    "licence": "NVIDIA cuda-samples BSD-3-Clause-style grant",
+    "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+    "intended_use": "Local scientific benchmarking and source modification",
+    "permissions": "Use and modification permitted. Preserve notices and disclaimer on redistribution; endorsement using NVIDIA/contributor names requires permission. Licence also links CUDA EULA.",
+    "cuda_toolkit_terms": {
+      "source": "https://docs.nvidia.com/cuda/eula/index.html",
+      "review_status": "Not independently reviewed during intake; no toolkit redistribution proposed."
+    }
+  },
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "reason": "Brief names target Lambda Stack Ubuntu 22.04, CUDA 12.8, driver 570; actual stock image, exact driver patch, GPU architecture and installed dependencies unverified. No build or workload run.",
+    "requirements": [
+      "C/C++ host toolchain",
+      "CUDA Toolkit 12.8 development files including cuRAND",
+      "CMake >=3.20",
+      "CUDA 12.8 GA driver >=570.26",
+      "GPU compatible with sample hardcoded architecture list"
+    ],
+    "evidence": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-installation-guide-linux/index.html#system-requirements",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html#cuda-driver"
+    ],
+    "documentation_caveat": "Brief notes conflicting introductory toolkit versions: top-level prerequisites 12.8, introduction 12.6, sample README 12.5."
+  },
+  "size": {
+    "category": "unknown",
+    "data_gib": null,
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "reason": "No external dataset; inputs generated. Exact resident host/device input storage and peak working set at representative scale not established; do not infer size from option count alone."
+  },
+  "scoring": {
+    "anchors_count": 2,
+    "anchors_source": "anchors.json",
+    "anchor_scale": {
+      "gpu_count": 1,
+      "options": 8192,
+      "paths_per_option": 262144,
+      "method": "streamed",
+      "scaling": "strong",
+      "precision": "float; DOUBLE_PRECISION disabled",
+      "threads_per_block": 256,
+      "max_options_per_gpu": 1048576,
+      "grid_cap": "40 * multiProcessorCount",
+      "source": [
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37"
+      ]
+    },
+    "reserve_definition": "Sum Confidence/abs(MC-BS) only where error >1e-6, divided by full option count; Confidence is discounted 1.96-standard-error width.",
+    "rounding_rule": "Strict reserve threshold: at six-decimal printed boundary use verdict or unrounded statistic.",
+    "reference_performance_ms": null,
+    "reference_performance_reason": "No independently published timing given.",
+    "scoring_interface": "Parse GPU count, option count, path count, Average reserve, L1 norm, Test passed/Test failed!, Total time (ms.); preserve exit status."
+  },
+  "repeatability_rules": {
+    "host_seed": 123,
+    "gpu_rng": "curand_init(blockIdx.x + gridDim.x * device_id, threadIdx.x, 0, ...)",
+    "seed_cli": null,
+    "seed_cli_reason": "No seed CLI upstream.",
+    "record": [
+      "GPU model/count",
+      "grid size",
+      "CUDA toolkit version",
+      "driver version",
+      "libc version",
+      "configuration fields",
+      "exit status"
+    ],
+    "limitations": "GPU geometry changes random streams; host rand() depends on libc.",
+    "repetition_count": null,
+    "repetition_count_reason": "Brief specifies no repeat count or aggregation rule."
+  },
+  "search_candidates": [],
+  "source_verification": {
+    "brief": "Readable and copied verbatim to brief.md",
+    "licence": "Pinned licence retrieved through web tool; use and modification grant verified.",
+    "code": "Pinned source retrieval attempted; web cache misses and sandbox network allowlist blocked fallback. Code facts and acceptance anchors attributed to supplied brief and its pinned citations.",
+    "gate_scripts": null,
+    "gate_scripts_reason": "No gate script path or command supplied; no script invented."
+  }
+}

@@ -1,0 +1,352 @@
+{
+ "name": "args",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/shakedown-m5/run6/agent/wf",
+ "script": "/home/hal/dev/interp/metis/dut/pipeline/m5/pipeline.js",
+ "script_sha256": "23abb247dcfa3bebcb79c924e02a59b3ad6df7cd5234cbb4886f0177b8b04315",
+ "args": {
+  "run_root": "/home/hal/dev/interp/metis/experiments/shakedown-m5/run6",
+  "brief": "/home/hal/dev/interp/metis/experiments/shakedown-m5/BRIEF.md",
+  "tag": "sd6",
+  "blind": false,
+  "record_raid": true,
+  "base": "/home/hal/dev/interp/metis/experiments/shakedown-m5/run6/agent/wf/work",
+  "chat_prefix": "x-ramraid",
+  "cwd": "/home/hal/dev/interp/metis/experiments/shakedown-m5/run6/agent"
+ },
+ "models": {
+  "main": "opencode-go/mimo-v2.6-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "understudy": {
+  "primary_family": "codex",
+  "disabled_families": [
+   "claude"
+  ],
+  "mode": "fallback",
+  "on_refusal": "halt",
+  "retry_on": [
+   "timeout",
+   "exit",
+   "runner",
+   "nojson",
+   "schema",
+   "declined"
+  ],
+  "profile": "latent_skeptic",
+  "families": {
+   "opencode": {
+    "models": {
+     "strong": "opencode-go/mimo-v2.6-pro",
+     "main": "opencode-go/mimo-v2.6-pro",
+     "cheap": "opencode-go/glm-5.3-flash"
+    },
+    "by_role": {}
+   },
+   "claude": {
+    "models": {
+     "strong": "claude/opus",
+     "main": "claude/sonnet",
+     "cheap": "claude/sonnet"
+    },
+    "tools": {
+     "qt-bare": "",
+     "qt-web": "WebFetch,WebSearch",
+     "qt-extract": "Read",
+     "qt-research": "Read,Write,Edit,Glob,Grep,WebFetch,WebSearch",
+     "qt-producer": "Read,Write,Edit,Glob,Grep,WebFetch,WebSearch",
+     "triage-reader": "Read,Grep,Glob,Bash",
+     "triage-runner": "Bash,Read",
+     "triage-author": "Read,Glob,Grep,Write",
+     "ls-general": "Read,Glob,Grep,Bash",
+     "ls-builder": "Read,Write,Edit,Glob,Grep,Bash",
+     "ls-writer": "Read,Write,Glob,Grep,Bash",
+     "ls-fixer": "Bash,Read"
+    }
+   },
+   "codex": {
+    "models": {
+     "strong": "codex/default@high",
+     "main": "codex/default@medium",
+     "cheap": "codex/default@low"
+    }
+   },
+   "cursor": {
+    "models": {
+     "strong": "cursor/default",
+     "main": "cursor/default",
+     "cheap": "cursor/default"
+    }
+   }
+  },
+  "chain": {
+   "opencode": [
+    "codex",
+    "cursor",
+    "claude"
+   ],
+   "claude": [
+    "codex",
+    "opencode"
+   ],
+   "codex": [
+    "cursor",
+    "opencode",
+    "claude"
+   ],
+   "cursor": [
+    "codex",
+    "opencode",
+    "claude"
+   ]
+  },
+  "routes": [
+   {
+    "match": "^build$",
+    "declined_if": "no_files",
+    "_doc": "a build reply whose runner_py/onbox_sh name no existing file declined the work; hands over"
+   }
+  ]
+ },
+ "opencode_version": "1.18.34",
+ "claude_version": null,
+ "codex_version": "codex-cli 0.164.0",
+ "cursor_version": "2026.10.22-27dcf5f",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "52c62a990abf008d0614e314d4f2667418feb341",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "provider": {
+   "lambda": {
+    "npm": "@ai-sdk/openai-compatible",
+    "name": "Lambda GPU",
+    "options": {
+     "baseURL": "http://127.0.0.1:18000/v1"
+    },
+    "models": {
+     "gpt-oss-120b": {
+      "name": "GPT OSS 120B",
+      "tool_call": true,
+      "limit": {
+       "context": 32768,
+       "output": 8192
+      }
+     }
+    }
+   }
+  },
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "triage-author": {
+    "mode": "primary",
+    "description": "Writes ONE new measurement control from a spec, claim-blind. Reads the repo to match conventions; writes a single new file with a model-free selftest and a neutral decision; never edits existing code, never runs anything. Its output is reviewed before the result is trusted.",
+    "prompt": "You write ONE new measurement control from a spec. You build a neutral instrument; you do not know, and must not guess, which outcome would support any hypothesis.\n\n- Claim-blind: you are given a measurement spec, not the claim it bears on. Do not infer a wanted result or tune toward one. Measure the quantity and let the number fall where it does.\n- Read the existing scripts in this repo first (Glob/Grep/Read) to match their conventions, hooks, tokenization, and baselines, so the measurement is correct, not just unbiased. A wrong control is as useless as a biased one.\n- Write exactly ONE new file at the path you are given. Never edit, overwrite, or delete an existing file. No logic beyond what the spec asks.\n- The control must include a model-free `--selftest` and emit a neutral decision: a threshold on the measured number (e.g. \"drop > 30% -> ATTENUATED\"), stated in terms of the measurement only, never in terms of any claim or confound.\n- Do not run it. Writing and running are separate; the runner runs it later, after a human reviews it.\n\nReturn: control_path, the exact run_command (existing launcher + this script, ready for the runner), what it measures, and the neutral decision rule. Output only the JSON.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "write": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Glob, Grep, Write"
+   },
+   "triage-reader": {
+    "mode": "primary",
+    "description": "Read-only grounding check (H3). A claim is grounded by reading the input (the items, labels, or directional-training data a result was computed from) and the outputs (the generations, per-token values, result files), then confirming its numbers reproduce from the raw artifact. Reads in its own context; never runs experiments, never edits. Flags any number whose artifact was never saved as unauditable.",
+    "prompt": "You ground ONE claim by reading the primary artifacts behind it and checking its numbers against the raw data. You read; you do not run experiments (that is the runner) and you do not edit anything.\n\n- Read BOTH sides. The INPUT: the items, labels, or directional-training data a result was computed from. The OUTPUT: the saved generations, the per-token logits / measured values, and the result JSONs. The claim's `evidence` cites where they live; locate them with Glob/Grep.\n- Re-derive the claim's headline number(s) yourself from the raw artifact: load the JSON, recompute the mean / AUROC / count, read the actual generations. Do not trust the summary; reproduce it. Re-derive labels by their STATED MEANING, never by re-running the pipeline under audit (re-running a scorer reproduces its bugs and reports success).\n- Decide:\n  - `reproduces`: your re-derived number matches the claim.\n  - `diverges`: the raw artifact gives a different number (name the gap in `note`).\n  - `unauditable`: the artifact needed to check a number was never saved (say which in `note`). The absence IS the finding, not a failure to look.\n  - `absent`: the cited file does not exist.\n- You read in full so the orchestrator does not have to. Return only the compact verdict, the number(s) you re-derived, and a one-line note, never the raw dump. This preserves the orchestrator's context; it does not replace its reading.\n- Change nothing. No edits, no runs, no commits, no new files. You are a reader.\n\nOutput only the JSON.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "grep": "allow",
+     "glob": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Grep, Glob, Bash"
+   },
+   "triage-runner": {
+    "mode": "primary",
+    "description": "Read-only, non-mutating runner. Runs ONE given control command, returns the control's own result verbatim, confirms teardown. Never edits, commits, or fixes anything. A triager, not a patcher.",
+    "prompt": "You run ONE control command and report what it produced. You are a triager, not a patcher.\n\n- Change nothing. No edits, no commits, no new code, no flag tweaks to make it run. You have no edit tools; if you find yourself wanting them, stop and set matches=\"not_runnable\".\n- Run only the command you are given (an existing script or launcher). If it cannot run without a code change, a new constant, or a model re-pin, set matches=\"not_runnable\" and stop.\n- If the command is long-running, launch it detached and check once when it finishes. Do not poll in a sleep/tail loop.\n- The control decides its own verdict. Read the result it writes and return that decision / those numbers verbatim in `result`. Map `matches`: the control's own verdict supporting the claim -> \"claim\"; supporting the confound -> \"confound\"; unclear or missing -> \"ambiguous\".\n- If the run rents a resource, confirm it is released before returning; `teardown_ok=true` only when nothing remains.\n\nBe literal: report what the control printed, not what you think it means. Output only the JSON.",
+    "permission": {
+     "*": "deny",
+     "bash": "allow",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Bash, Read"
+   },
+   "ls-general": {
+    "mode": "primary",
+    "description": "Reads the files the prompt names and returns the record asked for",
+    "prompt": "You read the files the prompt names and nothing else; you may run read-only shell commands to inspect them. You write no files. You return only the JSON or text asked for. Call tools only in the commentary channel, never in the analysis channel.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Glob, Grep, Bash"
+   },
+   "ls-builder": {
+    "mode": "primary",
+    "description": "Builds the execution layer of one pre-registered experiment",
+    "prompt": "You implement exactly the spec you are given, in the files the prompt names, and run only the local checks it names. You never patch infrastructure or rescope the design: when something is broken or ambiguous you stop and report. You return only the record asked for. Call tools only in the commentary channel, never in the analysis channel.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Write, Edit, Glob, Grep, Bash"
+   },
+   "ls-writer": {
+    "mode": "primary",
+    "description": "Writes the takeaways file under the contract and runs the gates on it",
+    "prompt": "You write the one file the prompt names from the sources it names, run the gate scripts it names on that file, and rewrite until they pass. You return only what the prompt asks for. Call tools only in the commentary channel, never in the analysis channel.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "write": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Write, Glob, Grep, Bash"
+   },
+   "ls-fixer": {
+    "mode": "primary",
+    "description": "Bounded fixer or verifier working on a held-open box through one ssh helper",
+    "prompt": "You work only through the helper command the prompt names, which runs commands on one remote box; you run nothing else and read no local files. You change the smallest thing that explains a failure, inside the scope the prompt states, and commit every change on the box. You return only the record asked for.",
+    "permission": {
+     "*": "deny",
+     "bash": "allow",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Bash, Read"
+   }
+  }
+ },
+ "started": "2026-10-26T11:31:40.838Z",
+ "finished": "2026-10-26T12:00:02.491Z",
+ "totals": {
+  "cost_usd": 0,
+  "tokens": 1026327,
+  "calls": 11,
+  "by_model": {
+   "codex/default@medium": {
+    "calls": 6,
+    "cost_usd": 0,
+    "tokens": 930196,
+    "failed": 0,
+    "refusals": 0
+   },
+   "codex/default@low": {
+    "calls": 5,
+    "cost_usd": 0,
+    "tokens": 96131,
+    "failed": 0,
+    "refusals": 0
+   }
+  },
+  "by_family": {
+   "codex": {
+    "calls": 11,
+    "cost_usd": 0,
+    "tokens": 1026327,
+    "failed": 0,
+    "refusals": 0
+   }
+  },
+  "substitutions": 0,
+  "refusals": 0
+ }
+}

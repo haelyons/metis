@@ -1,0 +1,50 @@
+{
+  "stages": [
+    {
+      "stage": "CUDA discovery and host initialization",
+      "kind": "other",
+      "wall_s": 0.12274857400007022,
+      "gpu_s": null,
+      "wall_fraction": 0.06569966216754229
+    },
+    {
+      "stage": "option input generation",
+      "kind": "other",
+      "wall_s": 0.0730755509998744,
+      "gpu_s": null,
+      "wall_fraction": 0.03911278849883835
+    },
+    {
+      "stage": "GPU setup and streamed pricing",
+      "kind": "compute",
+      "wall_s": 1.4454710790000718,
+      "gpu_s": null,
+      "wall_fraction": 0.7736705891443042
+    },
+    {
+      "stage": "host result finalization",
+      "kind": "other",
+      "wall_s": 0,
+      "gpu_s": null,
+      "wall_fraction": 0
+    },
+    {
+      "stage": "Black-Scholes validation",
+      "kind": "compute",
+      "wall_s": 0.08674225899994781,
+      "gpu_s": null,
+      "wall_fraction": 0.04642772560390612
+    },
+    {
+      "stage": "CUDA teardown and result reporting",
+      "kind": "other",
+      "wall_s": 0.14029138299997612,
+      "gpu_s": null,
+      "wall_fraction": 0.07508923458540906
+    }
+  ],
+  "total_wall_s": 1.8683288459999403,
+  "timed_fraction": 1,
+  "gpu_telemetry": true,
+  "gpu_count": 1
+}
