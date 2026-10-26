@@ -1,0 +1,86 @@
+{
+  "representative_scale": {
+    "initial": {
+      "options": 8192,
+      "paths_per_option": 262144,
+      "gpus": 1,
+      "method": "streamed",
+      "scaling": "strong"
+    },
+    "timing_target_ms": 10000,
+    "adaptive_protocol": [
+      {
+        "condition": "Initial measured interval <10000 ms",
+        "change": "Change host nOptions to 1024 * 1024, rebuild with same command, rerun same arguments.",
+        "options": 1048576,
+        "paths_per_option": 262144,
+        "gpus": 1
+      },
+      {
+        "condition": "Expanded case still <10000 ms",
+        "change": "Double host PATH_N, rebuild and repeat until measured interval >=10000 ms; publish final constants and recheck both anchors."
+      }
+    ],
+    "status": "Initial workload source-published; expanded timing cases proposed in brief, no runtime verified.",
+    "final_options": null,
+    "final_paths_per_option": null,
+    "reason": "Final representative timing case requires future measurement; no workloads run.",
+    "sources": [
+      "brief.md",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu"
+    ]
+  },
+  "inputs": {
+    "data_file": "data.json",
+    "configuration_file": "baseline.json",
+    "external_dataset": null,
+    "generation": "Host srand(123) and sample cuRAND initialization.",
+    "precision": "float"
+  },
+  "outputs": {
+    "configuration_fields": [
+      "Option count",
+      "Path count",
+      "GPU count"
+    ],
+    "metrics": [
+      "Total time (ms.)",
+      "L1 norm",
+      "Average reserve"
+    ],
+    "verdict": [
+      "Test passed",
+      "Test failed!"
+    ],
+    "process_exit_status": "Retain exit status.",
+    "scoring_interface": {
+      "anchor_file": "anchors.json",
+      "mc-bs-reserve": "Compare unrounded average reserve > 1.0; printed boundary requires verdict or recomputation.",
+      "sample-pass": "Map Test passed to 1, Test failed! to 0; compare == 1.",
+      "acceptance": "Both anchors satisfied and successful process exit.",
+      "L1": "Record only; no published numeric criterion."
+    }
+  },
+  "timing_scope": {
+    "reported_field": "Streamed Total time (ms.)",
+    "includes": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Waiting on completion events"
+    ],
+    "excludes": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ]
+  }
+}

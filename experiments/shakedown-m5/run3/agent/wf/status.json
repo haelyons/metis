@@ -1,0 +1,131 @@
+{
+ "card": "args",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/shakedown-m5/run3/agent/wf",
+ "stage": "done",
+ "started": "2026-10-26T01:35:25.974Z",
+ "calls": [
+  {
+   "id": "0001 intake",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 98122,
+   "cost_usd": 0,
+   "tokens": 102251,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0002 harness",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 188695,
+   "cost_usd": 0,
+   "tokens": 212315,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0003 anchors-repair",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 62165,
+   "cost_usd": 0,
+   "tokens": 163009,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0004 profile-repair",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 32363,
+   "cost_usd": 0,
+   "tokens": 126149,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0005 seal",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 139999,
+   "cost_usd": 0,
+   "tokens": 89680,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0,
+ "tokens": 693404,
+ "by_model": {
+  "codex/default@medium": {
+   "calls": 5,
+   "cost_usd": 0,
+   "tokens": 693404,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "codex": {
+   "calls": 5,
+   "cost_usd": 0,
+   "tokens": 693404,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-10-26T01:48:19.337Z",
+ "go": [
+  "codex/default@medium: $0.000 over 5 calls"
+ ]
+}
