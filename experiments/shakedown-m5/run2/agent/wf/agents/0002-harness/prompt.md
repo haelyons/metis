@@ -1,0 +1,10 @@
+Write a baseline harness from "/home/hal/dev/interp/metis/experiments/shakedown-m5/run2/agent/intake"/*.
+Never read experiments/, operator/, or control/. Write only under "/home/hal/dev/interp/metis/experiments/shakedown-m5/run2/agent/harness".
+The operator already started the dev box. Do not start, stop, or access it; the pipeline runs your scripts.
+Run the published build and binary and read measurements from its OUTPUT. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.
+Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
+- setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
+- run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
+- profile.sh: run that same baseline once at representative scale, with stage wall timers and nvidia-smi sampling. Write out/profile/stages.json as [{stage, wall_s, gpu_s}] (finite nonnegative seconds, gpu_s null when unavailable), and out/profile/total_wall_s.json as {total_wall_s} (finite positive seconds). Save raw telemetry under out/profile/. Use critical-path stage wall times without double-counting overlap. Do not invent GPU timings or replace unavailable GPU timings with allocated time.
+Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
+Return a short completion acknowledgement; the pipeline reads the scripts itself.

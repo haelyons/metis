@@ -1,0 +1,129 @@
+{
+  "identity": {
+    "name": "MonteCarloMultiGPU",
+    "repository": "https://github.com/NVIDIA/cuda-samples",
+    "tag": "v12.8",
+    "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample_path": "Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "found": true
+  },
+  "outcome_definition": {
+    "task": "Price European call options with Monte Carlo; compare with analytic Black-Scholes.",
+    "primary_timing": "Streamed Total time (ms.)",
+    "correctness": "Average reserve > 1.0; Test passed and successful exit status.",
+    "published_runtime_ms": null,
+    "published_runtime_reason": "No runtime measurement supplied."
+  },
+  "citations": {
+    "readme": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md#building-cuda-samples",
+    "description": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/README.md",
+    "cmake": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "host": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+    "kernel": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+    "gold": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_gold.cpp#L43-L81",
+    "precision": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37",
+    "licence": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE"
+  },
+  "evidence_provenance": {
+    "primary_intake_source": "brief.md",
+    "source_verification": "Licence and CUDA 12.8 release notes retrieved. Pinned host/kernel/CMake retrieval failed through web; direct network retrieval blocked. Their facts are attributed to supplied brief and its pinned citations.",
+    "search_candidates": [],
+    "search_performed": false
+  },
+  "source_licences": {
+    "status": "permitted",
+    "intended_use": "Local execution and modification for scientific benchmark reproduction.",
+    "licence": "NVIDIA cuda-samples BSD-3-Clause-style licence",
+    "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+    "permissions": "Source and binary use, modification and redistribution permitted subject to conditions.",
+    "conditions": [
+      "Preserve copyright, conditions and disclaimer on redistribution.",
+      "No NVIDIA/contributor endorsement without permission."
+    ],
+    "toolkit_terms": {
+      "source": "https://docs.nvidia.com/cuda/eula/index.html",
+      "verification": null,
+      "reason": "Licence links CUDA EULA; separate toolkit terms not inspected."
+    }
+  },
+  "stock_cuda_image": {
+    "stock_environment": true,
+    "basis": "Provisionally feasible against brief target: Lambda Stack, Ubuntu 22.04, CUDA Toolkit 12.8, driver 570 with compatible patch. No execution verified.",
+    "requirements": [
+      "CUDA-capable GPU",
+      "Host C/C++ toolchain",
+      "CUDA development files including cuRAND",
+      "CMake >=3.20"
+    ],
+    "driver_requirement": "CUDA 12.8 GA corresponding Linux driver >=570.26",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-installation-guide-linux/index.html#system-requirements",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html#cuda-driver"
+    ],
+    "actual_image_digest": null,
+    "actual_gpu": null,
+    "actual_driver_patch": null,
+    "build_run_verified": false,
+    "limitations": "Sample hardcodes architecture list. README versions disagree: top prerequisites 12.8, intro 12.6, sample README 12.5. Actual image contents and GPU compatibility remain unverified."
+  },
+  "size": {
+    "data_gib": 0,
+    "data_gib_scope": "External downloaded dataset only; generated arrays belong to working set.",
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "classification": "unknown",
+    "reason": "No evidenced peak allocation total; GPU geometry and final timing scale unspecified."
+  },
+  "scoring": {
+    "anchor_ids": [
+      "mc-bs-reserve",
+      "sample-pass"
+    ],
+    "reserve_definition": "For options with abs(BS-MC)>1e-6 add Confidence/abs(BS-MC), then divide sum by full option count. Confidence is discounted 1.96 standard-error width.",
+    "reserve_threshold": {
+      "comparison": ">",
+      "published_value": 1.0
+    },
+    "rounding": "At six-decimal printed boundary use verdict or unrounded statistic.",
+    "l1_definition": "sum(abs(BS-MC))/sum(abs(BS))",
+    "l1_expected_value": null,
+    "l1_tolerance": null,
+    "l1_reason": "No published numeric target or acceptance threshold.",
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L426-L486",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L167-L179"
+    ]
+  },
+  "repeatability": {
+    "host_seed": 123,
+    "gpu_rng": "curand_init(blockIdx.x + gridDim.x * device_id, threadIdx.x, 0, ...)",
+    "seed_cli": false,
+    "record": [
+      "GPU model/count",
+      "grid size",
+      "toolkit",
+      "libc",
+      "final nOptions and PATH_N"
+    ],
+    "limitations": "GPU geometry changes random streams; host generation depends on libc rand(). GPU Boost affects timing.",
+    "repeat_count": null,
+    "aggregation": null,
+    "reason": "No repeat count or aggregation rule supplied.",
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu"
+    ]
+  },
+  "gate": {
+    "found": true,
+    "anchors_count": 2,
+    "data": "available",
+    "licence": "permitted",
+    "stock_environment": true,
+    "size": "unknown",
+    "passes": true,
+    "scripts": [],
+    "script_reason": "No gate scripts named; intake gate checked structurally without builds or workloads."
+  }
+}

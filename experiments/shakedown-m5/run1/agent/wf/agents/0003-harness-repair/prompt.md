@@ -1,0 +1,2 @@
+Setup failed (rc 1). Repair only "/home/hal/dev/interp/metis/experiments/shakedown-m5/run1/agent/harness/setup.sh" using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. Never read experiments/, operator/, or control/. Do not run workloads or access the box. This is the only repair attempt. Setup log tail (at most 200 lines):
+setup exit status: 1

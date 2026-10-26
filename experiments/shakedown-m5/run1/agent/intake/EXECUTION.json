@@ -1,0 +1,91 @@
+{
+  "representative_scale": {
+    "initial": {
+      "gpu_count": 1,
+      "options": 8192,
+      "paths_per_option": 262144,
+      "method": "streamed",
+      "scaling": "strong",
+      "precision": "float"
+    },
+    "timing_extension": {
+      "condition": "Initial measured Total time (ms.) < 10000",
+      "next_options": 1048576,
+      "next_paths_per_option": 262144,
+      "next_gpu_count": 1,
+      "procedure": "Change host nOptions to 1024 * 1024, rebuild with same build command, run same arguments. If still below 10000 ms, double host PATH_N, rebuild and repeat until measured interval >=10000 ms. Publish final constants and recheck both anchors.",
+      "status": "Brief-proposed timing workload; not upstream published measurement.",
+      "verified_final_configuration": null,
+      "verified_runtime_ms": null,
+      "reason": "No workload execution authorized for intake."
+    },
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu"
+    ]
+  },
+  "inputs": {
+    "data_file": "data.json",
+    "host_seed": 123,
+    "external_files": [],
+    "required_configuration_checks": [
+      "Printed GPU count is 1",
+      "Printed options count matches selected configuration",
+      "Printed paths count matches selected configuration"
+    ]
+  },
+  "outputs": {
+    "timing": "Total time (ms.)",
+    "correctness": [
+      "Average reserve",
+      "Test passed or Test failed!",
+      "Process exit status"
+    ],
+    "diagnostic": "L1 norm",
+    "configuration": [
+      "GPU count",
+      "Option count",
+      "Paths per option"
+    ],
+    "unavailable_observed_values": null,
+    "reason": "No build or workload run."
+  },
+  "timing_scope": {
+    "included": [
+      "Option preprocessing",
+      "Host-to-device input transfer",
+      "GPU pricing",
+      "Device-to-host result transfer",
+      "Completion-event waits"
+    ],
+    "excluded": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ],
+    "caveat": "Upstream cautions samples are not intended for performance measurements; GPU Boost affects timing."
+  },
+  "scoring_interface": {
+    "run_commands": [
+      "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+    ],
+    "anchors_file": "anchors.json",
+    "reserve_check": "measured average reserve > 1.0, using unrounded value or upstream verdict at printed boundary",
+    "verdict_encoding": {
+      "Test passed": 1,
+      "Test failed!": 0
+    },
+    "exit_status": "Retain and require successful process exit.",
+    "l1_acceptance_threshold": null,
+    "l1_reason": "No upstream numeric target or threshold."
+  },
+  "timeout_s": 3600,
+  "gate_scripts": [],
+  "gate_scripts_reason": "Prompt names no gate scripts; no builds or workloads run."
+}

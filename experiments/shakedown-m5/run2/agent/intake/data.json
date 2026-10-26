@@ -1,0 +1,62 @@
+{
+  "required_inputs": [
+    {
+      "name": "European call option parameters",
+      "origin": "generated",
+      "availability": "available",
+      "access_instructions": "Sample generates inputs internally; no dataset download or credentials.",
+      "generator": {
+        "host_seed": 123,
+        "S_range": [
+          5,
+          50
+        ],
+        "X_range": [
+          10,
+          25
+        ],
+        "T_range": [
+          1,
+          5
+        ],
+        "R": 0.06,
+        "V": 0.1
+      },
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L316-L327"
+    }
+  ],
+  "availability": "available",
+  "missing_required_data": [],
+  "licences": [
+    {
+      "licence": "NVIDIA cuda-samples licence",
+      "intended_use": "Local generation, execution and modification",
+      "status": "permitted",
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE"
+    }
+  ],
+  "pins": {
+    "generator_repository": "https://github.com/NVIDIA/cuda-samples",
+    "generator_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "dataset_hash": null,
+    "dataset_hash_reason": "No external dataset; generated arrays not materialized during intake."
+  },
+  "splits": null,
+  "splits_reason": "No train/test split; validate generated options against Black-Scholes.",
+  "seeds": {
+    "host_srand": 123,
+    "gpu_curand_seed": "blockIdx.x + gridDim.x * device_id",
+    "gpu_curand_sequence": "threadIdx.x",
+    "gpu_curand_offset": 0,
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu"
+    ]
+  },
+  "repeatability_dependencies": [
+    "libc rand implementation",
+    "GPU grid geometry",
+    "GPU count",
+    "CUDA toolkit and cuRAND version"
+  ]
+}

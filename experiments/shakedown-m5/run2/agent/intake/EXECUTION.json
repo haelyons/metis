@@ -1,0 +1,98 @@
+{
+  "representative_scale": {
+    "initial": {
+      "gpu_count": 1,
+      "options": 8192,
+      "paths_per_option": 262144,
+      "method": "streamed",
+      "scaling": "strong"
+    },
+    "timing_target_ms": 10000,
+    "conditional_scale_protocol": [
+      "First time published 8192-option case.",
+      "If Total time <10000 ms, change host nOptions to 1024 * 1024, rebuild with supplied build command, run same arguments.",
+      "If still <10000 ms, double host PATH_N, rebuild and repeat until interval >=10000 ms.",
+      "Record final constants and recheck both anchors."
+    ],
+    "max_options_per_gpu": 1048576,
+    "final_options": null,
+    "final_paths_per_option": null,
+    "achieved_runtime_ms": null,
+    "reason": "Final timing scale requires real measurement. Larger timing case is brief proposal, not published upstream measurement.",
+    "source": [
+      "brief.md",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu"
+    ]
+  },
+  "inputs": {
+    "data_manifest": "data.json",
+    "host_seed": 123,
+    "gpu_count": 1,
+    "generator_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "required_configuration_checks": [
+      "Printed GPU count is 1",
+      "Printed option count matches chosen nOptions",
+      "Printed path count matches chosen PATH_N"
+    ]
+  },
+  "outputs": {
+    "interface": "Sample stdout plus process exit status",
+    "metrics": [
+      {
+        "name": "Total time (ms.)",
+        "unit": "ms",
+        "role": "Streamed timing score"
+      },
+      {
+        "name": "Average reserve",
+        "role": "Strict >1 correctness criterion"
+      },
+      {
+        "name": "L1 norm",
+        "role": "Diagnostic; no published threshold"
+      },
+      {
+        "name": "Test passed / Test failed!",
+        "role": "Final verdict; encode 1 / 0"
+      }
+    ],
+    "retain": [
+      "Raw stdout",
+      "Process exit status",
+      "Chosen source constants",
+      "GPU model/count",
+      "Grid size",
+      "Toolkit",
+      "libc"
+    ],
+    "anchors_file": "anchors.json",
+    "scoring": "Require both anchor comparisons; use verdict or unrounded reserve at printed boundary. Report measured time for real selected workload; no toy extrapolation."
+  },
+  "timing_scope": {
+    "mode": "streamed",
+    "includes": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Completion event waits"
+    ],
+    "excludes": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black-Scholes validation"
+    ],
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ],
+    "caveat": "Upstream warns samples are not intended for performance measurements; GPU Boost affects results."
+  },
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "timeout_s": 3600
+}
