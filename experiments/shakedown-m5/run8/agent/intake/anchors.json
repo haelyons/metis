@@ -1,0 +1,34 @@
+[
+  {
+    "id": "mc-bs-reserve",
+    "quantity": "Average reserve: mean confidence-width / absolute MC-minus-BS error",
+    "published_value": 1.0,
+    "tolerance": 0,
+    "comparison": ">",
+    "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L485-L486",
+    "configuration": {
+      "options": 8192,
+      "paths_per_option": 262144,
+      "gpu_count": 1,
+      "method": "streamed",
+      "scaling": "strong"
+    },
+    "evidence": "NVIDIA published acceptance predicate, independent of this intake; not a measured performance number."
+  },
+  {
+    "id": "sample-pass",
+    "quantity": "Final verdict: 1 for Test passed; 0 for Test failed!",
+    "published_value": 1,
+    "tolerance": 0,
+    "comparison": "==",
+    "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L485-L486",
+    "configuration": {
+      "options": 8192,
+      "paths_per_option": 262144,
+      "gpu_count": 1,
+      "method": "streamed",
+      "scaling": "strong"
+    },
+    "evidence": "NVIDIA published verdict and exit predicate. Same criterion as mc-bs-reserve; not an independent second experiment."
+  }
+]

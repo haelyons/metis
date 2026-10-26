@@ -1,0 +1,55 @@
+{
+  "repo": "https://github.com/NVIDIA/cuda-samples",
+  "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+  "tag": "v12.8",
+  "pin_source": "https://api.github.com/repos/NVIDIA/cuda-samples/git/ref/tags/v12.8",
+  "build_commands": [
+    "python3 -m pip install --user cmake==3.31.6  # omit if suitable cmake is installed",
+    "export PATH=\"$HOME/.local/bin:$PATH\"",
+    "git clone --branch v12.8 --depth 1 https://github.com/NVIDIA/cuda-samples.git",
+    "cd cuda-samples",
+    "git checkout --detach db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample=Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "cmake -S \"$sample\" -B build-mc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc",
+    "cmake --build build-mc --target MonteCarloMultiGPU --parallel"
+  ],
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "command_sources": [
+    "brief.md",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md"
+  ],
+  "published_configuration": {
+    "nOptions": 8192,
+    "PATH_N": 262144,
+    "gpu_count": "Detected at runtime; fixed to 1 by brief run command",
+    "OPT_N": "nOptions * (strongScaling ? 1 : GPU_N)",
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "MAX_OPTIONS_per_gpu": 1048576,
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h"
+    ]
+  },
+  "representative_revision": {
+    "source": "brief.md, Scale paragraph",
+    "change": "Change host int nOptions = 8 * 1024; to int nOptions = 1024 * 1024; then rebuild once with same CMake commands.",
+    "PATH_N": 262144,
+    "gpu_count": 1,
+    "run_command": "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong",
+    "published_upstream_configuration": false
+  },
+  "performed": {
+    "build": false,
+    "run": false
+  },
+  "limitations": [
+    "Tiny GPUs with <=32 CUDA cores trigger automatic option reduction; reject configuration mismatch.",
+    "No representative elapsed-time evidence; report timeout if fixed workload exceeds stage budget."
+  ]
+}
