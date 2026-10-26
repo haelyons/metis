@@ -125,7 +125,7 @@ const slug = value => String(value).toLowerCase().replace(/[^a-z0-9-]+/g, '-').r
 // lands on the call's status record and on the model's and family's totals
 async function callModel({ model, role, label, full, opts, dir, cwd, rec, repairable, declinedIf, chat, fallback = false }) {
   const fam = U.familyOf(model)
-  const sub = fam !== 'opencode' ? { tools: U.claudeTools(UCFG, role), systemPrompt: rolePrompt(role), addDirs: [ARGS.base, ...(ARGS.cwd ? [ARGS.cwd] : []), ...(ARGS.add_dirs || [])] } : {}
+  const sub = fam !== 'opencode' ? { tools: U.claudeTools(UCFG, role), systemPrompt: rolePrompt(role), addDirs: opts.isolation ? [cwd] : [ARGS.base, ...(ARGS.cwd ? [ARGS.cwd] : []), ...(ARGS.add_dirs || [])] } : {}
   const timeoutMs = (CFG.timeouts_min[role] || UCFG.timeouts_min[role] || 20) * 60000
   let res = null, errors = [], session = null, value = null, attempts = 0
   try {
@@ -138,7 +138,7 @@ async function callModel({ model, role, label, full, opts, dir, cwd, rec, repair
       const retry = (opts.retry || 0) + attempt - 1
       const name = chat && [chat.base, ...(chat.group.count > 1 ? [`${chat.index}of${chat.group.count}`] : []), ...(retry ? [`retry${retry}`] : []), ...(fallback ? ['fb'] : [])].join('-')
       usage.calls++; usage.unknown++
-      res = await runner.run({ model, agent: role, role, prompt: p, cwd, session, timeoutMs, rawPath: path.join(dir, raw), httpLogDir: path.join(dir, 'http'), title: label, ...(name ? { name } : {}), ...sub })
+      res = await runner.run({ model, agent: role, role, prompt: p, cwd, session, timeoutMs, rawPath: path.join(dir, raw), httpLogDir: path.join(dir, 'http'), title: label, ...(name ? { name } : {}), ...sub, ...(opts.isolation ? { isolation: opts.isolation } : {}) })
       const known = res.tokens_known !== false && Number.isInteger(res.tokens?.input) && Number.isInteger(res.tokens?.output)
       if (known) { usage.unknown--; usage.tokens_in += res.tokens.input; usage.tokens_out += res.tokens.output }
       session = res.sessionID
@@ -162,7 +162,7 @@ async function callModel({ model, role, label, full, opts, dir, cwd, rec, repair
   }
   if (kind !== 'none') { const bm = status.by_model[model]; if (bm) { bm.failed++; if (kind === 'refusal') bm.refusals++ } const bf = status.by_family[fam]; if (bf) { bf.failed++; if (kind === 'refusal') bf.refusals++ } }
   if (kind === 'refusal') status.refusals++
-  if (!UCFG.disabled_families.includes(fam)) await runner.exportSession(model, session, path.join(dir, 'export.json'))
+  if (!opts.isolation && !UCFG.disabled_families.includes(fam)) await runner.exportSession(model, session, path.join(dir, 'export.json'))
   fs.writeFileSync(path.join(dir, 'reply.txt'), (res && res.text) || '')
   fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ label, role, model, family: fam, attempts, ms: rec.ms, cost_usd: rec.cost_usd, tokens: res && res.tokens, tools: res && res.tools, errors, kind, session }, null, 1))
   return { res, errors, value, attempts, kind, model }
@@ -200,7 +200,7 @@ async function agent(prompt, opts = {}) {
   const rec = { id: `${String(n).padStart(4, '0')} ${label}`, stage: opts.phase || '', model: primary, understudy, chain, mode, state: 'queued', attempts: 0, ms: 0, cost_usd: 0, tokens: 0 }
   status.calls.push(rec)
   journal({ type: 'started', n, label, phase: opts.phase, role, model: primary, understudy, chain, mode, tier: r.tier, route: r.route, key })
-  if (!opts.fresh && cache.has(key)) {
+  if (!opts.fresh && !opts.isolation && cache.has(key)) {
     rec.state = 'cached'; saveStatus(); journal({ type: 'cached', n, label, key, model: cacheModels.get(key) })
     return cache.get(key)
   }
@@ -209,7 +209,8 @@ async function agent(prompt, opts = {}) {
   const dir = path.join(RUN, 'agents', `${String(n).padStart(4, '0')}-${label.replace(/[^A-Za-z0-9._-]+/g, '_').slice(0, 80)}`)
   fs.mkdirSync(dir, { recursive: true })
   fs.writeFileSync(path.join(dir, 'prompt.md'), full)
-  const cwd = (FILE_ROLES.has(role) || /^(ls-|triage-)/.test(role)) ? (ARGS.cwd || ARGS.base) : path.join(dir, 'cwd')
+  const cwd = opts.isolation ? path.resolve(opts.isolation.directory)
+    : (FILE_ROLES.has(role) || /^(ls-|triage-)/.test(role)) ? (ARGS.cwd || ARGS.base) : path.join(dir, 'cwd')
   fs.mkdirSync(cwd, { recursive: true })
   const common = { role, label, full, opts, cwd, rec, repairable: opts.repairable !== false, declinedIf: r.declined_if, chat }
   let first, second = null, producer = null, value = null, errors = [], attempts = 0

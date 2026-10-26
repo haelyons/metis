@@ -7,6 +7,7 @@ const stub = process.env.WF_STUB ? require(path.resolve(process.env.WF_STUB)) : 
 
 async function run(o) {
   if (stub) return stub.run(o)
+  if (o.isolation) return require('./isolated_runner.js').run(o)
   if (familyOf(o.model) === 'claude') return require('./claude_cli.js').run(o)
   if (familyOf(o.model) === 'codex') return require('./codex_cli.js').run(o)
   if (familyOf(o.model) === 'cursor') return require('./cursor_cli.js').run(o)

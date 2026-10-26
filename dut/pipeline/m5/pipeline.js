@@ -1,4 +1,4 @@
-// wf.js script. Intake through propose are real; later stages are placeholders.
+// wf.js script. Intake through implement are real; later stages are placeholders.
 const meta = { name: 'm5', description: 'Explicit-run-root scientific pipeline skeleton' }
 
 return (async () => {
@@ -554,7 +554,11 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
       return finish('numeric')
     } catch { return finish('parse') }
   }
-  function implement() { return stub('implement') }
+  async function implement() {
+    if (input.stub?.implement != null) return stub('implement')
+    const { default: run } = await import(path.resolve('m5/implement.js'))
+    return run({ A, C, root, agent, exec, boxCommand, remoteDirectory, executionTimeout, failure, nullFacts })
+  }
   function evaluate() { return stub('evaluate') }
   function takeaways() { return stub('takeaways') }
 
