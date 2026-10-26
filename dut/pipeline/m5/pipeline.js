@@ -126,16 +126,19 @@ Gate: found, at least one independent anchor, available required data, permitted
     const receiptPath = path.join(receiptsDirectory, `${id}.json`)
     // Never score files left by an earlier invocation using the same run root.
     rmSync(path.join(destination, 'out'), { recursive: true, force: true })
+    let commandFailed = false
     try {
       await exec('bash', ['m5/boxrun.sh', '--name', id, '--cmd', command,
         '--remote-dir', remoteDirectory, '--timeout', String(timeout), '--fetch', 'out',
         '--to', destination, '--receipt', receiptPath])
     } catch {
+      commandFailed = true
       // boxrun's receipt, never command output, determines the public failure class.
     }
     let receipt
     try { receipt = readJSON(receiptPath) } catch { return { error: 'infra' } }
     if (!Number.isInteger(receipt.rc)) return { error: 'infra' }
+    if (commandFailed && receipt.rc === 0) return { error: 'infra', rc: receipt.rc }
     if (receipt.rc === 0 && receipt.fetched !== true) return { error: 'infra', rc: receipt.rc }
     return { ...receipt, log: path.join(destination, `${id}.log`) }
   }
@@ -148,6 +151,25 @@ Gate: found, at least one independent anchor, available required data, permitted
     return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
   }
   const harnessRules = 'Run the published build and binary and read measurements from its OUTPUT. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
+  let boxProbe
+  const boxProbePrompt = () => `Box probe (collected by the pipeline before harness generation):
+${JSON.stringify(boxProbe, null, 2)}
+Use the probe's discovered paths and versions. Never hard-code a toolkit path the probe did not find, even if the brief suggests one. If a required tool is missing, install it with apt only from sources the probe lists; do not add repositories or assume a package exists. Commented source lines are not enabled repositories. If apt cannot supply it, use pip for cmake only; otherwise fail with a clear message.`
+  async function collectBoxProbe(timeout) {
+    const destination = path.join(A, 'results', 'probe')
+    const probePath = path.join(destination, 'probe.json')
+    rmSync(probePath, { force: true })
+    const bytes = readFileSync('m5/box_probe.sh').toString('base64')
+    const uploaded = await boxCommand('upload', `set -e\nmkdir -p harness out\nprintf %s ${quote(bytes)} | base64 -d > harness/box_probe.sh`, destination, timeout)
+    if (uploaded.error || uploaded.rc !== 0) throw new Error('probe upload failed')
+    const result = await boxCommand('probe', 'set -e\nrm -f out/probe.json\nbash harness/box_probe.sh', destination, timeout)
+    if (result.error || result.rc !== 0) throw new Error('probe failed')
+    const content = readFileSync(path.join(destination, 'out', 'probe.json'), 'utf8')
+    const probe = JSON.parse(content)
+    if (!probe || typeof probe !== 'object' || Array.isArray(probe)) throw new Error('invalid probe')
+    writeFileSync(probePath, content)
+    boxProbe = probe
+  }
   async function runHarness(name, operation, destination, timeout) {
     const command = `bash harness/${name}`
     const result = await boxCommand(operation, command, destination, timeout)
@@ -157,7 +179,9 @@ Gate: found, at least one independent anchor, available required data, permitted
       const lines = readFileSync(result.log, 'utf8').trimEnd().split('\n')
       tail = lines.slice(-200).join('\n')
     } catch { return result }
-    const repair = await agent(`${name} failed (rc ${result.rc}). Repair only ${JSON.stringify(path.join(harnessDirectory, name))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this script. Log tail (at most 200 lines):\n${tail}`,
+    const repair = await agent(`${name} failed (rc ${result.rc}). Repair only ${JSON.stringify(path.join(harnessDirectory, name))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this script.
+${boxProbePrompt()}
+Log tail (at most 200 lines):\n${tail}`,
       { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry: 1 })
     if (repair == null) return result
     const uploaded = await uploadHarness([name], destination, executionTimeout('setup'))
@@ -168,10 +192,19 @@ Gate: found, at least one independent anchor, available required data, permitted
     if (input.stub?.reproduce != null) return stub('reproduce')
     const facts = { ...nullFacts('reproduce'), stock_verified: false, tokens_known: false, gpu_busy_known: false }
     const destination = path.join(A, 'results', 'reproduce')
+    let setupTimeout, anchorsTimeout
+    try {
+      setupTimeout = executionTimeout('setup')
+      anchorsTimeout = executionTimeout('run_anchors')
+    } catch { return failure(facts, 'parse') }
+    try {
+      await collectBoxProbe(setupTimeout)
+    } catch { return failure(facts, 'infra') }
     const prompt = `Write a baseline harness from ${JSON.stringify(path.join(A, 'intake'))}/*.
 Never read experiments/, operator/, or control/. Write only under ${JSON.stringify(harnessDirectory)}.
 The operator already started the dev box. Do not start, stop, or access it; the pipeline runs your scripts.
 ${harnessRules}
+${boxProbePrompt()}
 Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
 - setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
 - run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
@@ -179,7 +212,6 @@ Write three self-contained bash scripts, invoked from a shared remote working di
 Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
 Return a short completion acknowledgement; the pipeline reads the scripts itself.`
     try {
-      const setupTimeout = executionTimeout('setup'), anchorsTimeout = executionTimeout('run_anchors')
       mkdirSync(harnessDirectory, { recursive: true })
       const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
       if (reply == null) return failure(facts, 'parse')

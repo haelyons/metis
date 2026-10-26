@@ -7,8 +7,9 @@ const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
 const assert = require('node:assert/strict')
-const { spawn } = require('node:child_process')
+const { spawn, spawnSync } = require('node:child_process')
 const ROOT = path.resolve(__dirname, '..')
+const PROBE_SENTINEL = 'PROBE_PRIVATE_SENTINEL_197352'
 const SENTINEL = 'HARNESS_PRIVATE_SENTINEL_846291'
 const STAGES = ['intake', 'reproduce', 'profile', 'seal', 'propose', 'implement', 'evaluate', 'takeaways']
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -66,7 +67,7 @@ module.exports = {
   async run({ title, prompt, name }) {
     const root = process.env.M5_REPRODUCE_ROOT
     const config = JSON.parse(process.env.M5_REPRODUCE_CONFIG)
-    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name }) + '\n')
+    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name, probeFetched: fs.existsSync(path.join(root, 'agent', 'results', 'probe', 'probe.json')) }) + '\n')
     if (config.agentDelayMs) await new Promise(resolve => setTimeout(resolve, config.agentDelayMs))
     const agent = path.join(root, 'agent')
     let facts = { v: `${title} stub` }
@@ -128,11 +129,11 @@ function check(label, test) {
 function noLeak(directory) {
   assert.ok(fs.statSync(directory).isDirectory())
   for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    assert.ok(!entry.name.includes(SENTINEL), 'sentinel in filename')
+    assert.ok(!entry.name.includes(SENTINEL) && !entry.name.includes(PROBE_SENTINEL), 'sentinel in filename')
     assert.ok(!entry.isSymbolicLink(), 'operator symlink')
     const file = path.join(directory, entry.name)
     if (entry.isDirectory()) noLeak(file)
-    else assert.ok(!fs.readFileSync(file).includes(Buffer.from(SENTINEL)), `private content leaked: ${entry.name}`)
+    else for (const sentinel of [SENTINEL, PROBE_SENTINEL]) assert.ok(!fs.readFileSync(file).includes(Buffer.from(sentinel)), `private content leaked: ${entry.name}`)
   }
 }
 async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null) {
@@ -142,8 +143,27 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   writeJSON(args, { run_root: root, tag: 'reproduce-test' })
   const box = path.join(root, 'box')
   fs.mkdirSync(box, { recursive: true })
+  const fakeProbe = `mkdir -p out
+printf '%s\\n' '{"label":"probe"}' >> "$M5_REPRODUCE_CALLS"
+${config.probeFailure === 'rc' ? 'exit 7' : config.probeFailure === 'json' ? "printf '%s\\n' 'invalid probe JSON' > out/probe.json" : emitJSON('out/probe.json', { kernel: PROBE_SENTINEL, cmake: null, nvcc: [] })}`
+  const replaceProbe = path.join(root, 'replace-probe.js')
+  fs.writeFileSync(replaceProbe, `
+const fs = require('node:fs'), path = require('node:path')
+const original = ${JSON.stringify(fs.readFileSync(path.join(ROOT, 'm5', 'box_probe.sh'), 'utf8'))}
+function visit(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name)
+    if (entry.isDirectory()) visit(file)
+    else if (entry.isFile() && entry.name.endsWith('.sh') && fs.readFileSync(file, 'utf8') === original) {
+      fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: 'probe-upload' }) + '\\n')
+      fs.writeFileSync(file, ${JSON.stringify('#!/usr/bin/env bash\nset -eu\n' + fakeProbe + '\n')})
+    }
+  }
+}
+visit(process.env.BOX_ROOT)
+`)
   // Map the contract's absolute remote /tmp/m5-* paths into this case's box.
-  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\nbash -c "$command"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
+  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
   script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\nexec cp -r -- "$source" "$2"')
   const callsFile = path.join(root, 'calls.jsonl')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w')
@@ -156,7 +176,7 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
         '--args', args, '--out', path.join(root, 'agent', 'wf'), '--disable-family', 'claude'], {
         cwd: pipeline, timeout: 240000, stdio: ['ignore', stdout, stderr], env: { ...process.env,
           WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(config), M5_REPRODUCE_CALLS: callsFile,
-          BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch') },
+          M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch') },
       })
       let error
       proc.on('error', value => { error = value })
@@ -181,7 +201,7 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
     assert.equal(signature.exit_code, errorClass === 'anchor' ? 4 : 2)
   })
   check(`${name}: one harness call and bounded repair`, () => {
-    assert.equal(calls.filter(call => call.label === 'harness').length, 1)
+    assert.equal(calls.filter(call => call.label === 'harness').length, config.probeFailure ? 0 : 1)
     for (const [label, needed] of [['harness-repair', config.setupFailures],
       ['anchors-repair', config.setupFailures < 2 && config.anchorsFailures],
       ['profile-repair', stoppedAt !== 'reproduce' && config.profileFailures]]) {
@@ -194,11 +214,28 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
       }
     }
   })
+  check(`${name}: probe precedes harness and reaches every prompt`, () => {
+    const labels = calls.map(call => call.label)
+    assert.equal(labels.filter(label => label === 'probe-upload').length, 1)
+    assert.equal(labels.filter(label => label === 'probe').length, 1)
+    assert.ok(labels.indexOf('probe-upload') < labels.indexOf('probe'))
+    if (config.probeFailure) {
+      assert.ok(!calls.some(call => ['harness', 'harness-repair', 'anchors-repair', 'profile-repair'].includes(call.label)))
+    } else {
+      assert.ok(labels.indexOf('probe') < labels.indexOf('harness'))
+      const probe = readJSON(path.join(root, 'agent', 'results', 'probe', 'probe.json'))
+      assert.equal(probe.kernel, PROBE_SENTINEL)
+      for (const call of calls.filter(call => ['harness', 'harness-repair', 'anchors-repair', 'profile-repair'].includes(call.label))) {
+        assert.equal(call.probeFetched, true, `${call.label}: probe not fetched before call`)
+        assert.ok(call.prompt.includes(PROBE_SENTINEL), `${call.label}: probe content missing`)
+      }
+    }
+  })
   check(`${name}: receipts under C/receipts`, () => {
     const directory = path.join(root, 'control', 'receipts')
     const files = fs.readdirSync(directory).sort()
     const receipts = files.map(file => {
-      assert.match(file, /^\d{4}-(upload|setup|anchors|profile)\.json$/)
+      assert.match(file, /^\d{4}-[a-z-]+\.json$/)
       const receipt = readJSON(path.join(directory, file))
       assert.equal(receipt.name, file.slice(0, -5))
       assert.ok(Number.isInteger(receipt.rc))
@@ -206,9 +243,18 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
       assert.equal(receipt.fetched, true)
       assert.ok(Number.isInteger(receipt.wall_s) && receipt.wall_s >= 0)
       for (const key of ['started_utc', 'ended_utc']) assert.ok(Number.isFinite(Date.parse(receipt[key])))
-      return { operation: file.match(/-(\w+)\.json$/)[1], ...receipt }
+      return { operation: file.slice(5, -5), ...receipt }
     })
     assert.deepEqual(files.map(file => Number(file.slice(0, 4))), files.map((_, i) => i + 1))
+    const probeIndex = receipts.findIndex(receipt => receipt.operation.includes('probe') && !receipt.operation.includes('upload'))
+    assert.ok(probeIndex >= 1, 'probe run receipt missing or no upload before probe')
+    assert.ok(receipts.slice(0, probeIndex).every(receipt => receipt.operation.includes('upload')), 'probe upload receipt missing')
+    assert.equal(receipts[probeIndex].rc, config.probeFailure === 'rc' ? 7 : 0)
+    if (config.probeFailure) {
+      assert.equal(receipts.length, probeIndex + 1, 'commands executed after failed probe')
+      return
+    }
+    receipts.splice(0, probeIndex + 1)
     const count = operation => receipts.filter(receipt => receipt.operation === operation).length
     const firstSetup = receipts.findIndex(receipt => receipt.operation === 'setup')
     assert.ok(firstSetup >= 1, 'no harness upload before setup')
@@ -228,6 +274,7 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
       config.setupFailures >= 2 ? [7, 7] : config.setupFailures ? [7, 0] : [0])
   })
   check(`${name}: private harness output fetched; operator has no sentinel`, () => {
+    if (config.probeFailure) { noLeak(path.join(root, 'operator')); return }
     const results = path.join(root, 'agent', 'results', 'reproduce')
     assert.ok(fs.readdirSync(results).filter(file => file.endsWith('.log')).some(file => fs.readFileSync(path.join(results, file), 'utf8').includes(SENTINEL)), 'sentinel absent from fetched logs')
     noLeak(path.join(root, 'operator'))
@@ -272,6 +319,77 @@ function profileFacts(name, run, fraction) {
       gpu_telemetry: packet.gpu_telemetry, tokens_known: !!run.config.profileFailures, gpu_busy_known: false })
     assert.ok(fs.readFileSync(path.join(input, 'raw-telemetry.txt'), 'utf8').includes(SENTINEL))
   })
+}
+
+async function probeScriptTests() {
+  const bin = path.join(scratch, 'probe-path')
+  fs.mkdirSync(bin)
+  // Keep required utilities, excluding optional nvcc and cmake deliberately.
+  for (const command of ['mkdir', 'mktemp', 'rm', 'uname', 'nproc', 'awk', 'df', 'head', 'python3']) {
+    const found = spawnSync('/bin/bash', ['-c', 'command -v "$1"', 'probe-test', command], { encoding: 'utf8' })
+    assert.equal(found.status, 0, `required utility missing: ${command}`)
+    fs.symlinkSync(found.stdout.trim(), path.join(bin, command))
+  }
+  for (const restricted of [false, true]) {
+    const directory = path.join(scratch, restricted ? 'probe-restricted' : 'probe-normal')
+    fs.mkdirSync(directory)
+    const result = await new Promise(resolve => {
+      const proc = spawn('/bin/bash', [path.join(ROOT, 'm5', 'box_probe.sh')], {
+        cwd: directory, env: { ...process.env, ...(restricted ? { PATH: bin } : {}) }, timeout: 60000,
+      })
+      let stderr = '', error
+      proc.stderr.on('data', data => { stderr += data })
+      proc.stdout.resume()
+      proc.on('error', value => { error = value })
+      proc.on('close', status => resolve({ status, stderr, error }))
+    })
+    check(`probe script: ${restricted ? 'without nvcc/cmake in PATH' : 'normal PATH'}`, () => {
+      assert.ifError(result.error)
+      assert.equal(result.status, 0, result.stderr)
+      const probe = readJSON(path.join(directory, 'out', 'probe.json'))
+      assert.deepEqual(Object.keys(probe).sort(), ['os', 'kernel', 'nproc', 'memory_kb', 'disk_home_avail_bytes',
+        'nvidia', 'nvcc', 'cmake', 'gcc', 'g++', 'make', 'git', 'python3', 'pip', 'apt_sources', 'sudo_nopasswd'].sort())
+      const nullableString = value => assert.ok(value === null || typeof value === 'string')
+      nullableString(probe.kernel)
+      for (const key of ['nproc', 'memory_kb', 'disk_home_avail_bytes']) assert.ok(probe[key] === null || Number.isInteger(probe[key]), key)
+      if (probe.os !== null) {
+        assert.deepEqual(Object.keys(probe.os).sort(), ['id', 'version_id', 'pretty_name', 'version', 'name'].sort())
+        Object.values(probe.os).forEach(nullableString)
+      }
+      if (probe.nvidia !== null) {
+        assert.deepEqual(Object.keys(probe.nvidia).sort(), ['gpus', 'driver_version', 'cuda_version'].sort())
+        assert.ok(Array.isArray(probe.nvidia.gpus))
+        for (const gpu of probe.nvidia.gpus) assert.equal(typeof gpu, 'string')
+        nullableString(probe.nvidia.driver_version)
+        nullableString(probe.nvidia.cuda_version)
+      }
+      const tool = value => {
+        assert.deepEqual(Object.keys(value).sort(), ['path', 'version'])
+        assert.equal(typeof value.path, 'string')
+        nullableString(value.version)
+      }
+      for (const key of ['cmake', 'gcc', 'g++', 'make', 'git', 'python3', 'pip']) if (probe[key] !== null) tool(probe[key])
+      assert.ok(Array.isArray(probe.nvcc))
+      probe.nvcc.forEach(tool)
+      assert.equal(new Set(probe.nvcc.map(value => value.path)).size, probe.nvcc.length)
+      assert.ok(Array.isArray(probe.apt_sources))
+      for (const source of probe.apt_sources) {
+        assert.deepEqual(Object.keys(source).sort(), ['file', 'lines'])
+        assert.equal(typeof source.file, 'string')
+        assert.ok(Array.isArray(source.lines))
+        for (const line of source.lines) assert.equal(typeof line, 'string')
+      }
+      assert.equal(typeof probe.sudo_nopasswd, 'boolean')
+      if (restricted) {
+        assert.equal(probe.cmake, null)
+        // SCHEMAS.md permits discovering nvcc outside PATH in these two locations.
+        const externalNvcc = ['/usr/local', '/usr/lib'].flatMap(parent => fs.readdirSync(parent)
+          .filter(name => name.startsWith('cuda')).map(name => path.join(parent, name, 'bin', 'nvcc')))
+          .filter(file => { try { fs.accessSync(file, fs.constants.X_OK); return true } catch { return false } })
+        assert.deepEqual(probe.nvcc.map(value => value.path).sort(), externalNvcc.sort())
+      }
+    })
+  }
 }
 
 async function cliTests() {
@@ -368,7 +486,10 @@ async function cliTests() {
 }
 async function main() {
   try {
+    await probeScriptTests()
     await cliTests()
+    await runCase('probe-nonzero', { probeFailure: 'rc' }, 'reproduce', 'infra')
+    await runCase('probe-invalid-json', { probeFailure: 'json' }, 'reproduce', 'infra')
     const happy = await runCase('happy', { agentDelayMs: 1100 })
     reproduceFacts('happy', happy, 2, 2)
     profileFacts('happy', happy, 0.95)
