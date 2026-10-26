@@ -81,7 +81,7 @@ module.exports = async function implement(context) {
       throw new Error('changed tests')
     }
   }
-  async function author(label, output, repairCounts) {
+  async function author(label, output, repairCounts, timeoutFailure) {
     const view = fs.mkdtempSync(path.join(os.tmpdir(), `m5-${label}-`))
     views.push(view)
     for (const name of ['proposal.json', 'PREDICTIONS.json', 'intake', 'harness']) {
@@ -94,6 +94,8 @@ module.exports = async function implement(context) {
     if (repairCounts) copy(method, outputPath)
     const common = `Use only this private view: ${JSON.stringify(view)}. Proposal, intake, baseline harness and sealed PREDICTIONS.json are provided here.
 Never read experiments/, operator/, control/, other role directories, transcripts or sessions. Do not change the sealed protocol, scale, inputs, seeds or tolerances.
+${label === 'tests' ? `Script budget: run_tests.sh=${executionTimeout('run_tests')} seconds.` : `Script budgets in seconds: setup_method.sh=${executionTimeout('setup_method')}, run_method.sh=${executionTimeout('run_method')}, optional run_anchors.sh=${executionTimeout('run_method')}; complete evaluation scorer=${executionTimeout('evaluate')}.`} Use one fixed scale from EXECUTION.json, no scale search or doubling loops, and finish well within the budget.
+${timeoutFailure ? `Timeout repair: budget ${timeoutFailure.budget_s}s; measured elapsed ${timeoutFailure.wall_s ?? 'unavailable'}s; measured overrun ${Number.isFinite(timeoutFailure.wall_s) ? Math.max(0, timeoutFailure.wall_s - timeoutFailure.budget_s) : 'unavailable'}s.` : ''}
 Write only under ${JSON.stringify(outputPath)}. Return a short acknowledgement; the pipeline reads the files.`
     const prompt = label === 'tests' ? `Author independent output tests, before any method is authored or run.
 ${common}
@@ -127,6 +129,7 @@ Evaluation runs in fresh working directories with the same absolute source/data 
   }
   async function command(name, body, to, timeout) {
     const result = await boxCommand(name, `set -e\n${body}`, to, timeout)
+    if (result.rc === 124 || result.timed_out === true) return { ...result, error: 'timeout', budget_s: timeout }
     if (result.error || !Number.isInteger(result.rc) || result.fetched !== true) return { ...result, error: 'infra' }
     return result
   }
@@ -134,7 +137,7 @@ Evaluation runs in fresh working directories with the same absolute source/data 
   async function checkState(attempt, phase, includeTests = true) {
     const to = path.join(destination, `attempt-${attempt}`, phase)
     const result = await command('implement-state', `mkdir -p out\n${stateCommand(includeTests)}`, to, executionTimeout('setup_method'))
-    if (result.error || result.rc !== 0) return 'infra'
+    if (result.error || result.rc !== 0) return result.error || 'infra'
     const current = readJSON(path.join(to, 'out', 'implement-state.json'))
     if (!Object.values(current).every(value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value))) return 'parse'
     if (['baseline_sha256', 'data_sha256', 'baseline_outputs_sha256'].some(key => current[key] !== baselineState[key])) return 'other'
@@ -227,7 +230,7 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
     for (const name of ['setup_method', 'run_method', 'run_tests']) executionTimeout(name)
     const initial = await command('implement-baseline', `test -d baseline-published\ntest ! -L baseline-published\ntest ! -L data\ntest ! -L out\nmkdir -p data out\ntest ! -e baseline-out\ncp -a out baseline-out\n${stateCommand(false)}`,
       path.join(destination, 'baseline'), executionTimeout('setup_method'))
-    if (initial.error || initial.rc !== 0) return failure(facts, 'infra')
+    if (initial.error || initial.rc !== 0) return failure(facts, initial.error || 'infra')
     baselineState = readJSON(path.join(destination, 'baseline', 'out', 'implement-state.json'))
     if (Object.keys(baselineState).sort().join(',') !== 'baseline_outputs_sha256,baseline_sha256,data_sha256'
       || !Object.values(baselineState).every(value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value))) return failure(facts, 'parse')
@@ -253,37 +256,40 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
         timeouts: Object.fromEntries(['setup_method', 'run_method', 'run_tests'].map(name => [name, executionTimeout(name)])) }
       writeJSON(path.join(A, 'implement-payload.json'), payload)
       const uploaded = await upload(attempt)
-      if (uploaded.error || uploaded.rc !== 0) return failure(facts, 'infra')
+      if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
       let stateError = await checkState(attempt, 'before')
       if (stateError) return failure(facts, stateError)
       facts.patch_applies = false
       facts.tests_pass = false
-      let counts, failedClass
+      let counts, failedClass, timeoutFailure
       const to = phase => path.join(destination, `attempt-${attempt}`, phase)
       const apply = `git --git-dir=/dev/null --work-tree=${quote(remoteDirectory + '/method')} -C method apply`
       const patched = await command('implement-patch', `rm -rf method\ncp -a baseline-published method\n${apply} --check -- ${quote(remoteDirectory + '/payload/method/method.patch')}\n${apply} -- ${quote(remoteDirectory + '/payload/method/method.patch')}`,
         to('patch'), executionTimeout('setup_method'))
-      if (patched.error) return failure(facts, 'infra')
+      if (patched.error) return failure(facts, patched.error)
       facts.patch_applies = patched.rc === 0
       if (!facts.patch_applies) { counts = { patch_applies: 1 }; failedClass = 'parse' }
       if (!counts) {
         const setup = await command('setup-method', `rm -rf out\nmkdir -p out\n${environment}\nbash payload/method/setup_method.sh`, to('setup'), executionTimeout('setup_method'))
-        if (setup.error) return failure(facts, 'infra')
+        if (setup.error && setup.error !== 'timeout') return failure(facts, setup.error)
         if (setup.rc !== 0) { counts = { setup_failed: 1 }; failedClass = 'install' }
+        if (setup.error === 'timeout') { counts = { timeout: 1 }; failedClass = 'timeout'; timeoutFailure = setup }
       }
       if (!counts) {
         const run = await command('run-method', `rm -rf out\nmkdir -p out\n${environment}\nbash payload/method/run_method.sh`, to('run'), executionTimeout('run_method'))
-        if (run.error) return failure(facts, 'infra')
+        if (run.error && run.error !== 'timeout') return failure(facts, run.error)
         if (run.rc !== 0) { counts = { run_failed: 1 }; failedClass = 'numeric' }
+        if (run.error === 'timeout') { counts = { timeout: 1 }; failedClass = 'timeout'; timeoutFailure = run }
       }
       stateError = await checkState(attempt, 'after-method')
       if (stateError) return failure(facts, stateError)
       if (!counts) {
         const result = await command('run-tests', `rm -f out/tests.json\n${environment}\nbash payload/tests/run_tests.sh`, to('tests'), executionTimeout('run_tests'))
-        if (result.error) return failure(facts, 'infra')
+        if (result.error && result.error !== 'timeout') return failure(facts, result.error)
         let report
         try { report = scoreTests(path.join(to('tests'), 'out', 'tests.json')) }
         catch { counts = { invalid_report: 1 }; failedClass = 'parse' }
+        if (result.error === 'timeout') timeoutFailure = result
         if (report) {
           facts.tests_pass = result.rc === 0 && report.failed === 0
           if (!facts.tests_pass) {
@@ -295,6 +301,7 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
           }
         }
       }
+      if (timeoutFailure) { counts = { timeout: 1 }; failedClass = 'timeout' }
       stateError = await checkState(attempt, 'after-tests')
       if (stateError) return failure(facts, stateError)
       fs.rmSync(path.join(destination, 'out'), { recursive: true, force: true })
@@ -309,7 +316,7 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
       }
       writeJSON(path.join(control, `attempt-${attempt}.json`), { attempt, reason_code_counts: counts })
       if (attempt === 2) return failure(facts, failedClass)
-      await author('implement', 'method', counts)
+      await author('implement', 'method', counts, timeoutFailure)
     }
   } catch {
     return failure(facts, 'parse')

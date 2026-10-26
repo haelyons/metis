@@ -12,9 +12,10 @@ finish() {
   local status=$?; trap - EXIT
   [[ $status == 0 || $status == 3 ]] || status=2
   if [[ -n $RECEIPT ]]; then
-    python3 - "$RECEIPT" "$NAME" "$RC" "$TIMED_OUT" "$((SECONDS - BEGIN))" "$FETCHED" "$START" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GPU_SAMPLES" <<'PY' || status=2
+    python3 - "$RECEIPT" "$NAME" "$RC" "$TIMED_OUT" "$((SECONDS - BEGIN))" "$FETCHED" "$START" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GPU_SAMPLES" "$LIMIT" <<'PY' || status=2
 import json, math, os, sys
-p, name, rc, timed_out, wall, fetched, start, end, samples = sys.argv[1:]
+p, name, rc, timed_out, wall, fetched, start, end, samples, budget = sys.argv[1:]
+budget = int(budget) if budget.isascii() and budget.isdigit() and 0 < len(budget) <= 9 and int(budget) > 0 else None
 values = []
 for line in open(samples):
     try:
@@ -26,7 +27,8 @@ for line in open(samples):
 os.makedirs(os.path.dirname(os.path.abspath(p)), exist_ok=True)
 with open(p + ".tmp", "w") as f:
     json.dump(dict(name=name, rc=int(rc) if rc else None, timed_out=timed_out == "true",
-                   wall_s=int(wall), gpu_busy_s=sum(values) * 0.02, gpu_busy_known=bool(values), fetched=fetched == "true", started_utc=start, ended_utc=end), f)
+                   wall_s=int(wall), budget_s=budget,
+                   overrun=timed_out == "true" or rc == "124" or (budget is not None and int(wall) > budget), gpu_busy_s=sum(values) * 0.02, gpu_busy_known=bool(values), fetched=fetched == "true", started_utc=start, ended_utc=end), f)
     f.write("\n")
 os.replace(p + ".tmp", p)
 PY

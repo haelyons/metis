@@ -58,6 +58,10 @@ def validate(value):
     schema = dict(FACTS[stage])
     if stage == "takeaways" and type(facts) is dict and "run_box_usd" in facts:
         schema["run_box_usd"] = float
+    if stage in ("reproduce", "profile", "implement", "evaluate") and type(facts) is dict:
+        for key, spec in {"timed_out": bool, "budget_s": int, "overrun": bool}.items():
+            if key in facts:
+                schema[key] = spec
     if type(facts) is not dict or facts.keys() != schema.keys():
         return ["invalid fact keys"]
     for key, spec in schema.items():

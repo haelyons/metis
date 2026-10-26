@@ -85,7 +85,7 @@ Write all five JSON files, including explicit null/unavailable values and reason
 - anchors.json: an array of credible independently published reference anchors, each with a unique non-empty string id, quantity, finite numeric published_value, tolerance, source (citation). Tolerance must be a nonnegative finite number (absolute), {"abs": x}, or {"rel": x}; relative tolerance means x * abs(published_value). Optional comparison is one of "==" (default), ">", ">=", "<", "<=". When the published criterion is a threshold, supply comparison so measured_value comparison published_value expresses that criterion; tolerance is ignored for inequalities and may be 0. Do not count self-generated checks or unsupported references.
 - data.json: required inputs, availability, access instructions, licences, pins/hashes, splits and seeds; distinguish generated inputs from missing data.
 - baseline.json: repo, commit or immutable pin, build_commands, run_commands, published_configuration; cite their sources. Do not run builds or workloads.
-- EXECUTION.json: representative_scale, inputs, outputs, timing_scope; specify the real representative workload and scoring interface, not a toy extrapolation. Optional timeout_s defaults to 3600 seconds; optional timeouts {setup, run_anchors, profile} override it per script. All timeouts must be positive integers <=999999999.
+- EXECUTION.json: representative_scale, inputs, outputs, timing_scope; specify the real representative workload and scoring interface, not a toy extrapolation. Optional stage_budgets_s overrides per-script seconds with keys setup, anchors, profile, method_setup, method_run, tests, evaluate. Defaults are 1200 except tests=900 and evaluate=2400; supplied args budgets are ${JSON.stringify(input.stage_budgets_s || {})}. All budgets must be positive integers <=999999999. Choose one fixed scale; no scale search or doubling loops. Scripts must finish well within their budgets.
 Return only the facts matching the supplied schema. anchors_count must equal the credible anchors written.
 data=available only when all required data is accessible. licence=permitted only when intended use is allowed.
 stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
@@ -128,15 +128,19 @@ Gate: found, at least one independent anchor, available required data, permitted
   const harnessDirectory = path.join(A, 'harness')
   const receiptsDirectory = path.join(C, 'receipts')
   const failure = (facts, error_class) => ({ status: 'FAIL', facts, v1: {
-    error_class, exit_code: error_class === 'anchor' ? 4 : 2,
+    error_class, exit_code: error_class === 'anchor' ? 4 : error_class === 'timeout' ? 3 : 2,
   } })
+  const defaultBudgets = { setup: 1200, anchors: 1200, profile: 1200, method_setup: 1200,
+    method_run: 1200, tests: 900, evaluate: 2400 }
   function executionTimeout(name) {
+    const key = ({ run_anchors: 'anchors', setup_method: 'method_setup', run_method: 'method_run', run_tests: 'tests' })[name] || name
     const execution = readJSON(path.join(A, 'intake', 'EXECUTION.json'))
-    const seconds = execution.timeouts?.[name] ?? execution.timeout_s ?? 3600
-    if (!Number.isInteger(seconds) || seconds <= 0 || seconds > 999999999) throw new Error('invalid timeout')
+    const seconds = execution.stage_budgets_s?.[key] ?? input.stage_budgets_s?.[key] ?? defaultBudgets[key]
+    if (!Number.isInteger(seconds) || seconds <= 0 || seconds > 999999999) throw new Error('invalid budget')
     return seconds
   }
-  async function boxCommand(name, command, destination, timeout) {
+  const budgetPrompt = () => `Script budgets in seconds: setup.sh=${executionTimeout('setup')}, run_anchors.sh=${executionTimeout('anchors')}, profile.sh=${executionTimeout('profile')}, run_evaluation.sh=${executionTimeout('method_run')} per invocation (also run_anchors.sh when used as the evaluation adapter); complete evaluation scorer=${executionTimeout('evaluate')}. Use one fixed scale from EXECUTION.json, no scale search or doubling loops, and finish well within the budget.`
+  async function boxCommand(name, command, destination, timeout, retry = false) {
     mkdirSync(receiptsDirectory, { recursive: true })
     const number = Math.max(0, ...readdirSync(receiptsDirectory)
       .filter(file => /^\d+-/.test(file)).map(file => Number(file.split('-')[0]))) + 1
@@ -155,7 +159,15 @@ Gate: found, at least one independent anchor, available required data, permitted
     }
     let receipt
     try { receipt = readJSON(receiptPath) } catch { return { error: 'infra' } }
+    receipt.budget_s = timeout
+    receipt.overrun = receipt.rc === 124 || receipt.timed_out === true || receipt.wall_s > timeout
     stageReceipts.push(receipt)
+    // Transport and integrity commands have no authored script to change. Repair by one identical retry.
+    const authored = ['setup', 'anchors', 'profile', 'setup-method', 'run-method', 'run-tests']
+    if (!retry && !authored.includes(name) && (receipt.rc === 124 || receipt.timed_out === true)) {
+      return boxCommand(name, command, destination, timeout, true)
+    }
+    if (receipt.rc === 124 || receipt.timed_out === true) return { ...receipt, error: 'timeout', log: path.join(destination, `${id}.log`) }
     if (!Number.isInteger(receipt.rc)) return { error: 'infra' }
     if (commandFailed && receipt.rc === 0) return { error: 'infra', rc: receipt.rc }
     if (receipt.rc === 0 && receipt.fetched !== true) return { error: 'infra', rc: receipt.rc }
@@ -181,9 +193,9 @@ Use the probe's discovered paths and versions. Never hard-code a toolkit path th
     rmSync(probePath, { force: true })
     const bytes = readFileSync('m5/box_probe.sh').toString('base64')
     const uploaded = await boxCommand('upload', `set -e\nmkdir -p harness out\nprintf %s ${quote(bytes)} | base64 -d > harness/box_probe.sh`, destination, timeout)
-    if (uploaded.error || uploaded.rc !== 0) throw new Error('probe upload failed')
+    if (uploaded.error || uploaded.rc !== 0) throw Object.assign(new Error('probe upload failed'), { error_class: uploaded.error || 'infra' })
     const result = await boxCommand('probe', 'set -e\nrm -f out/probe.json\nbash harness/box_probe.sh', destination, timeout)
-    if (result.error || result.rc !== 0) throw new Error('probe failed')
+    if (result.error || result.rc !== 0) throw Object.assign(new Error('probe failed'), { error_class: result.error || 'infra' })
     const content = readFileSync(path.join(destination, 'out', 'probe.json'), 'utf8')
     const probe = JSON.parse(content)
     if (!probe || typeof probe !== 'object' || Array.isArray(probe)) throw new Error('invalid probe')
@@ -204,13 +216,14 @@ Use the probe's discovered paths and versions. Never hard-code a toolkit path th
       tail = ''
     }
     const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). Repair only ${JSON.stringify(path.join(harnessDirectory, name))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this script.
+Budget: ${timeout}s; measured elapsed: ${result.wall_s ?? 'unavailable'}s; measured overrun: ${Number.isFinite(result.wall_s) ? Math.max(0, result.wall_s - timeout) : 'unavailable'}s. ${budgetPrompt()}
 ${name === 'profile.sh' ? profileRules : ''}
 ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
       { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry: 1 })
     if (repair == null) return result
     const uploaded = await uploadHarness([name], destination, executionTimeout('setup'))
-    if (uploaded.error || uploaded.rc !== 0) return { error: 'infra' }
+    if (uploaded.error || uploaded.rc !== 0) return { ...uploaded, error: uploaded.error || 'infra' }
     return inspect(await boxCommand(operation, command, destination, timeout))
   }
   async function reproduce() {
@@ -230,11 +243,12 @@ Log tail (at most 200 lines):\n${tail}`,
     } catch { return failure(facts, 'parse') }
     try {
       await collectBoxProbe(setupTimeout)
-    } catch { return failure(facts, 'infra') }
+    } catch (error) { return failure(facts, error.error_class || 'infra') }
     const prompt = `Write a baseline harness from ${JSON.stringify(path.join(A, 'intake'))}/*.
 Never read experiments/, operator/, or control/. Write only under ${JSON.stringify(harnessDirectory)}.
 The operator already started the dev box. Do not start, stop, or access it; the pipeline runs your scripts.
 ${harnessRules}
+${budgetPrompt()}
 ${boxProbePrompt()}
 Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
 - setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
@@ -249,10 +263,10 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       if (reply == null) return failure(facts, 'parse')
       const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'profile.sh',
         ...(existsSync(path.join(harnessDirectory, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])], destination, setupTimeout)
-      if (uploaded.error || uploaded.rc !== 0) return failure(facts, 'infra')
+      if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
       const setup = await runHarness('setup.sh', 'setup', destination, setupTimeout)
       if (setup.error) {
-        facts.stock_verified = setup.rc === 0
+        facts.stock_verified = setup.rc === 0 && setup.error !== 'timeout'
         return failure(facts, setup.error)
       }
       facts.stock_verified = setup.rc === 0
@@ -581,6 +595,12 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     const result = stopped_at && stage !== 'takeaways'
       ? { status: 'SKIPPED', facts: nullFacts(stage) }
       : await run()
+    const timeouts = stageReceipts.filter(receipt => receipt.rc === 124 || receipt.timed_out === true)
+    if (timeouts.length) {
+      result.facts.timed_out = true
+      result.facts.budget_s = timeouts.at(-1).budget_s
+      result.facts.overrun = timeouts.some(receipt => receipt.overrun === true)
+    }
     const v1 = { ...result.v1, wall_s: (performance.now() - started) / 1000 }
     const families = answeringFamilies(journalOffset)
     v1.model_family = families.at(-1) ?? 'none'

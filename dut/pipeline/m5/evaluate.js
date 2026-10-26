@@ -32,7 +32,7 @@ module.exports = async function evaluate(context) {
   async function command(name, body, timeout) {
     const to = path.join(destination, name)
     const result = await boxCommand(name, `set -e\n${body}`, to, timeout)
-    if (result.timed_out) return { error: 'timeout', rc: 124 }
+    if (result.timed_out || result.rc === 124) return { ...result, error: 'timeout', rc: 124 }
     if (result.error || result.fetched !== true) return { error: 'infra' }
     return { ...result, to }
   }
@@ -55,7 +55,7 @@ module.exports = async function evaluate(context) {
     ])
     const check = `import hashlib,json,pathlib; expected=json.loads(${JSON.stringify(JSON.stringify(expectedFiles))}); assert all(hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==h for p,h in expected.items())`
     const result = await command(`evaluate-state-${phase}`, `mkdir -p out\npython3 -I -c ${quote(check)}\nprintf %s ${quote(helper)} | base64 -d | python3 -I - ${keys.join(' ')} > out/evaluate-state.json`, executionTimeout('setup_method'))
-    if (result.error || result.rc !== 0) return 'infra'
+    if (result.error || result.rc !== 0) return result.error || 'infra'
     const state = read(path.join(result.to, 'out', 'evaluate-state.json'))
     if (!frozenState.evaluation_payload_sha256) frozenState.evaluation_payload_sha256 = state.evaluation_payload_sha256
     if (!frozenState.method_source_sha256) frozenState.method_source_sha256 = state.method_source_sha256
@@ -117,20 +117,20 @@ module.exports = async function evaluate(context) {
     for (const line of uploads) {
       if (size + line.length > 32768) {
         const result = await command('evaluate-upload', batch.join('\n'), executionTimeout('setup_method'))
-        if (result.error || result.rc !== 0) return finish('VOID', 'infra', 2)
+        if (result.error || result.rc !== 0) return finish('VOID', result.error || 'infra', result.error === 'timeout' ? 3 : 2)
         batch = []; size = 0
       }
       batch.push(line); size += line.length + 1
     }
     const uploaded = await command('evaluate-upload', batch.join('\n'), executionTimeout('setup_method'))
-    if (uploaded.error || uploaded.rc !== 0) return finish('VOID', 'infra', 2)
+    if (uploaded.error || uploaded.rc !== 0) return finish('VOID', uploaded.error || 'infra', uploaded.error === 'timeout' ? 3 : 2)
     for (const stage of ['validity', 'equivalence', 'performance']) {
       let error = await intact(`before-${stage}`)
-      if (error) return finish('VOID', error, 2)
+      if (error) return finish('VOID', error, error === 'timeout' ? 3 : 2)
       const result = await command(`evaluate-${stage}`, `python3 -B evaluation-payload/eval_${stage}.py --stage ${stage} --in evaluation-payload/manifest.json --out out/eval`, executionTimeout('evaluate'))
       if (result.error) return finish('VOID', result.error, result.error === 'timeout' ? 3 : 2)
       error = await intact(`after-${stage}`)
-      if (error) return finish('VOID', error, 2)
+      if (error) return finish('VOID', error, error === 'timeout' ? 3 : 2)
       collect(result)
       const verdict = read(path.join(destination, `${stage}.json`))
       if (result.rc === 3) return finish('VOID', 'timeout', 3)
