@@ -73,15 +73,9 @@ module.exports = {
       const harness = path.join(root, 'agent', 'harness')
       script(path.join(harness, 'setup.sh'), `mkdir -p out\nsleep 1\nprintf '%s\\n' '${SENTINEL}'\n` +
         (config.retry && title === 'harness' ? 'exit 7' : 'true'))
-      script(path.join(harness, 'run_anchors.sh'), 'mkdir -p out\nsleep 1\n' +
+      script(path.join(harness, 'run_anchors.sh'), 'mkdir -p out\nbash harness/run_command.sh\n' +
         emit('out/anchors_measured.json', { 'anchor-1': 499500, 'anchor-2': 499500 }))
-      script(path.join(harness, 'profile.sh'), 'mkdir -p out/profile\nsleep 1\n' +
-        emit('out/profile/stages.json', [
-          { stage: 'prepare', kind: 'compute', start_s: 0, wall_s: 3, gpu_s: null },
-          { stage: 'transfer', kind: 'transfer', start_s: 3, wall_s: 5, gpu_s: 999 },
-          { stage: 'finish', kind: 'other', start_s: 8, wall_s: 2, gpu_s: null },
-        ]) + emit('out/profile/total_wall_s.json', { total_wall_s: 10 }) +
-        emit('out/profile/gpu_util.json', [{ t: 0, util: 25 }, { t: 3, util: 25 }, { t: 8, util: 25 }]))
+      script(path.join(harness, 'run_command.sh'), 'sleep 1')
     }
     return { text: JSON.stringify(json), json, jsonError: null, sessionID: 'stub',
       tokens: { input: 10, output: 5 }, tokens_known: true, cost: 123,
@@ -173,7 +167,7 @@ async function runCase(name, config) {
   writeJSON(argsFile, { run_root: root, tag: 'compute-test', ...(config.noCalls ? {
     stub: Object.fromEntries(STAGES.map(stage => [stage, 'PASS'])),
   } : { stub: { propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } }) })
-  script(path.join(bin, 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nbash -c "$command"\n' +
+  script(path.join(bin, 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_PROFILE_FIXTURE" "$BOX_ROOT"\n' +
     // Let detached fixture commands finish before boxrun's first polling check.
     'if [[ $command == *timeout* ]]; then\n' +
     '  for ((i=0; i<1500; i++)); do\n    pending=false\n' +
@@ -198,7 +192,7 @@ if [[ "$*" == *--query-gpu=name* ]]; then printf '%s\\n' 'Fixture GPU'; fi`)
   const env = { ...process.env, HOME: home, PATH: `${bin}:${process.env.PATH}`,
     M5_RAIDS_LEDGER: path.join(root, 'ledger.jsonl'), WF_STUB: __filename,
     M5_COMPUTE_ROOT: root, M5_COMPUTE_CONFIG: JSON.stringify(config),
-    BOX_ROOT: remote, BOX: path.join(bin, 'box'), FETCH: path.join(bin, 'fetch') }
+    M5_TEST_NODE: process.execPath, M5_PROFILE_FIXTURE: path.join(ROOT, 'tools/m5_profile_fixture.js'), BOX_ROOT: remote, BOX: path.join(bin, 'box'), FETCH: path.join(bin, 'fetch') }
   const out = path.join(root, 'agent', 'wf')
   const result = await execute(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
     '--args', argsFile, '--out', out, '--config', path.join(root, 'config.json'), '--disable-family', 'claude'], env, root)
@@ -269,7 +263,8 @@ if [[ "$*" == *--query-gpu=name* ]]; then printf '%s\\n' 'Fixture GPU'; fi`)
     })
     for (const stage of ['reproduce', 'profile']) check(`${name}: ${stage} USD and GPU sum all command receipts`, () => {
       // Profile has its own operation; all preceding uploads/probe/setup/anchors belong to reproduce.
-      const assigned = receipts.filter(receipt => (receipt.operation === 'profile') === (stage === 'profile'))
+      const boundary = receipts.findLastIndex(receipt => receipt.operation === 'anchors')
+      const assigned = receipts.filter((receipt, index) => (index > boundary) === (stage === 'profile'))
       assert.ok(assigned.length > 0)
       const row = records.find(row => row.signature.stage === stage)
       near(row.signature.usd, assigned.reduce((sum, receipt) => sum + receipt.wall_s, 0) / 3600 * box.price_usd_h, 'command USD')

@@ -26,11 +26,10 @@ function script(file, body) {
   fs.mkdirSync(path.dirname(file), { recursive: true })
   fs.writeFileSync(file, '#!/usr/bin/env bash\nset -eu\n' + body + '\n', { mode: 0o700 })
 }
-const emit = (file, value) => `printf '%s\\n' '${JSON.stringify(value)}' > ${file}\n`
 const TARGETS = {
   setup: ['harness-repair', 'setup', 'reproduce', 'harness/setup.sh'],
   anchors: ['anchors-repair', 'anchors', 'reproduce', 'harness/run_anchors.sh'],
-  profile: ['profile-repair', 'profile', 'profile', 'harness/profile.sh'],
+  profile: [null, 'profile', 'profile', 'profiler/profile_nsys.sh'],
   method_setup: ['implement', 'setup-method', 'implement', 'method/setup_method.sh'],
   method_run: ['implement', 'run-method', 'implement', 'method/run_method.sh'],
   tests: ['implement', 'run-tests', 'implement', 'tests/run_tests.sh'],
@@ -43,7 +42,7 @@ module.exports = {
     fs.appendFileSync(callsFile, JSON.stringify({ title: options.title, prompt: options.prompt, name: options.name }) + '\n')
     const view = options.isolation?.directory || options.cwd
     let result
-    if (['harness-repair', 'anchors-repair', 'profile-repair'].includes(options.title)) {
+    if (['harness-repair', 'anchors-repair'].includes(options.title)) {
       const target = Object.values(TARGETS).find(value => value[0] === options.title)[3]
       fs.copyFileSync(path.join(root, 'pristine', target), path.join(root, 'agent', target))
       result = { json: { v: 'repaired' }, tokens: { input: 0, output: 0 }, tokens_known: true }
@@ -51,16 +50,9 @@ module.exports = {
         cost: 0, tools: 0, ms: 1, errors: [], refusal: false }
     } else result = await fixture.run(options)
     if (options.title === 'harness') {
-      script(path.join(root, 'agent/harness/profile.sh'), 'mkdir -p out/profile\n' +
-        emit('out/profile/stages.json', [
-          { stage: 'cpu', kind: 'other', wall_s: 3, gpu_s: null },
-          { stage: 'h2d', kind: 'transfer', wall_s: 2, gpu_s: null },
-          { stage: 'compute', kind: 'compute', wall_s: 4.5, gpu_s: 0 },
-        ]) + emit('out/profile/total_wall_s.json', { total_wall_s: 10 }) +
-        emit('out/profile/gpu_util.json', [{ t: 0, util: 0 }, { t: 1, util: 75 }]))
       fs.cpSync(path.join(root, 'agent/harness'), path.join(root, 'pristine/harness'), { recursive: true })
     }
-    if (config.target) {
+    if (config.target && config.target !== 'profile') {
       const [repair, , , target] = TARGETS[config.target]
       const initial = target.startsWith('harness/') ? 'harness' : target.startsWith('tests/') ? 'tests' : 'implement'
       const isRepair = options.title === repair && (repair !== 'implement' || prior.some(call => call.title === 'implement'))
@@ -154,7 +146,8 @@ function visit(dir) {
       fs.writeFileSync(file, ${JSON.stringify('#!/usr/bin/env bash\nmkdir -p out\nprintf \'{"nvidia":{"gpus":["Fixture GPU"]},"nvcc":[],"cmake":null}\\n\' > out/probe.json\n')})
   }
 }
-visit(process.argv[2])\n`)
+visit(process.argv[2])
+require(${JSON.stringify(path.join(ROOT, 'tools/m5_profile_fixture.js'))}).replace(process.argv[2], { profileTimeout: ${JSON.stringify(config.target === 'profile')} })\n`)
   script(path.join(bin, 'box'), `command=$1
 remote_directory=
 if [[ $command =~ /tmp/m5-[a-z0-9-]+ ]]; then
@@ -213,15 +206,18 @@ fi`)
   const expected = { ...DEFAULTS, ...config.args, ...config.execution }
   check(`${name}: every boxrun receipt has resolved budget_s and overrun`, () => {
     assert.ok(receipts.length > 0, 'no box receipts')
-    for (const receipt of receipts) {
-      assert.equal(receipt.budget_s, expected[budgetKey(receipt.operation)], receipt.name)
+    const profileIndex = receipts.findIndex(receipt => receipt.operation === 'profile')
+    const anchorsIndex = receipts.findLastIndex(receipt => receipt.operation === 'anchors')
+    for (const [index, receipt] of receipts.entries()) {
+      const key = receipt.operation === 'upload' && index > anchorsIndex && index < profileIndex ? 'profile' : budgetKey(receipt.operation)
+      assert.equal(receipt.budget_s, expected[key], receipt.name)
       assert.equal(typeof receipt.overrun, 'boolean', receipt.name)
       assert.equal(receipt.overrun, receipt.rc === 124 || receipt.timed_out || receipt.wall_s > receipt.budget_s, receipt.name)
       assert.equal(receipt.gpu_busy_known, false, receipt.name)
     }
   })
   check(`${name}: author and repair prompts forbid scale search`, () => {
-    const authors = calls.filter(call => ['harness', 'tests', 'implement', 'harness-repair', 'anchors-repair', 'profile-repair'].includes(call.title))
+    const authors = calls.filter(call => ['harness', 'tests', 'implement', 'harness-repair', 'anchors-repair'].includes(call.title))
     assert.ok(authors.length > 0, 'no author prompts')
     for (const call of authors) {
       assert.match(call.prompt, /(?:no|never|do not|without)[^.\n]*(?:scale.search|doubl)|(?:scale.search|doubl)[^.\n]*(?:forbidden|prohibited)/i, call.title)
@@ -230,7 +226,7 @@ fi`)
       assert.match(call.prompt, /well within[^.\n]*budget/i, call.title)
       const scripts = call.title === 'tests' ? { 'run_tests.sh': expected.tests }
         : call.title === 'implement' ? { 'setup_method.sh': expected.method_setup, 'run_method.sh': expected.method_run }
-          : { 'setup.sh': expected.setup, 'run_anchors.sh': expected.anchors, 'profile.sh': expected.profile,
+          : { 'setup.sh': expected.setup, 'run_anchors.sh': expected.anchors,
             'run_evaluation.sh': expected.method_run }
       for (const [file, budget] of Object.entries(scripts)) {
         const escaped = file.replaceAll('.', '\\.')
@@ -247,6 +243,21 @@ fi`)
   } else {
     const [repair, operation, stage] = TARGETS[config.target]
     const attempts = receipts.filter(receipt => receipt.operation === operation)
+    if (config.target === 'profile') {
+      check(`${name}: fixed profiler timeout stops without retry or agent repair`, () => {
+        assert.equal(attempts.length, 1)
+        assert.equal(attempts[0].rc, 124)
+        assert.equal(attempts[0].budget_s, 1)
+        assert.equal(attempts[0].timed_out, true)
+        assert.ok(!calls.some(call => /profile/.test(call.title)))
+        const record = records.find(row => row.signature.stage === 'profile')
+        assert.equal(record.signature.status, 'FAIL')
+        assert.equal(record.signature.error_class, 'timeout')
+        for (const later of ['seal', 'propose', 'implement', 'evaluate'])
+          assert.equal(records.find(row => row.signature.stage === later)?.signature.status, 'SKIPPED')
+      })
+      return
+    }
     check(`${name}: exactly one repair, prompt includes budget and elapsed/overrun`, () => {
       const repairs = calls.filter(call => call.title === repair).slice(repair === 'implement' ? 1 : 0)
       assert.equal(repairs.length, 1)

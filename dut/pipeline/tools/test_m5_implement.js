@@ -158,7 +158,7 @@ printf 'published\\n' > baseline-published/pin
 printf 'inputs\\n' > data/input`)
       script(path.join(harness, 'run_anchors.sh'), emit('out/anchors_measured.json', { anchor: 1 }) +
         emit('out/values.json', [0, 1, 2, 3, 4]) + emit('out/seeds.json', [0, 1, 2, 3, 4]))
-      script(path.join(harness, 'profile.sh'), 'true')
+      script(path.join(harness, 'run_command.sh'), 'true')
     }
     if (['tests', 'implement', 'review'].includes(title)) {
       const view = options.isolation?.directory || options.cwd

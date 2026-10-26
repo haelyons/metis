@@ -117,7 +117,7 @@ printf 'input\\n' > data/input`)
       // Reproduction must pass before the method's intentionally bad anchor is tested.
       script(path.join(agent, 'harness', 'run_anchors.sh'), 'mkdir -p out\nprintf \'{"first":1,"zero":0}\\n\' > out/anchors_measured.json\nprintf \'[0,1,2]\\n\' > out/values.json')
       script(path.join(agent, 'harness', 'run_evaluation.sh'), adapter(config, true))
-      script(path.join(agent, 'harness', 'profile.sh'), 'true')
+      script(path.join(agent, 'harness', 'run_command.sh'), 'true')
     }
     const view = options.isolation?.directory || options.cwd
     if (title === 'tests') {
