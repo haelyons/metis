@@ -280,7 +280,8 @@ function fixture(root, config) {
     benchmark: { name: PRIVATE }, data: { available: true },
     baseline: { repo: 'fixture', pin: 'v1', build_commands: ['true'], run_commands: ['true'], published_configuration: { n: 5 } },
     EXECUTION: { representative_scale: { n: 5 }, inputs: ['data/input'], outputs: ['values.json'], timing_scope: 'whole run',
-      timeout_s: 10, timeouts: { setup_method: 11, run_method: 12, run_tests: 13 } },
+      timeout_s: 10, timeouts: { setup_method: 11, run_method: 12, run_tests: 13 },
+      stage_budgets_s: { method_setup: 21, method_run: 22, tests: 23 } },
   })) writeJSON(path.join(agent, 'intake', name + '.json'), value)
   const predictions = { predictions: [{ method: 'batching', expected_speedup_interval: { low: 1.1, high: 1.2 },
     outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({ compute_budget, predicted_outcome: 1, uncertainty: 'exact' })) }],
@@ -462,7 +463,7 @@ function receiptChecks(run) {
       assert.ok(files(path.join(run.root, 'agent', 'results')).some(log => path.basename(log) === value.name + '.log'), 'missing fetched log')
     }
   })
-  check('payload hashes match final source, frozen tests, seal and script timeouts', () => {
+  check('payload hashes match final source, frozen tests, seal and stage budgets', () => {
     const payload = readJSON(path.join(run.root, 'agent', 'implement-payload.json'))
     const review = run.calls.find(call => call.title === 'review')
     assert.deepEqual(review?.reviewPayload, payload)
@@ -474,7 +475,7 @@ function receiptChecks(run) {
     assert.equal(payload.attempt, 1)
     assert.ok(path.isAbsolute(payload.remote_directory))
     assert.deepEqual([payload.baseline_directory, payload.method_directory, payload.baseline_outputs, payload.method_outputs], ['baseline-published', 'method', 'baseline-out', 'out'])
-    assert.deepEqual(payload.timeouts, { setup_method: 11, run_method: 12, run_tests: 13 })
+    assert.deepEqual(payload.timeouts, { setup_method: 21, run_method: 22, run_tests: 23 })
     assert.equal(payload.tests_sha256, treeHash(path.join(run.root, 'agent', 'tests')))
     assert.equal(payload.seal_sha256, readJSON(path.join(run.root, 'control', 'seals', '0001.json')).sha256)
     assert.deepEqual(payload.method_files.map(row => row.path).sort(), ['method.patch', 'run_method.sh', 'setup_method.sh'])
