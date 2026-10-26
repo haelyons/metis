@@ -53,15 +53,17 @@ module.exports = {
       fs.writeFileSync(path.join(root, 'agent', 'intake', 'brief.md'), SENTINEL)
     }
     if (title === 'seal') {
-      const predictions = ['batching', 'pipelining'].map(method => ({ method,
+      const predictions = ['data-parallel over inputs', 'batching', 'ensembles', 'pipelining'].map(method => ({ method,
         expected_speedup_interval: { low: 1.05, high: method === 'batching' ? 1.3 : 1.2 },
         outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({ compute_budget,
           predicted_outcome: 499500, uncertainty: 'exact equality' })) }))
       writeJSON(path.join(root, 'agent', 'PREDICTIONS.json'), { predictions,
-        infeasible_methods: ['data-parallel over inputs', 'multi-GPU', 'ensembles']
-          .map(method => ({ method, reason: 'No compute stages in this fixture.' })),
-        equivalence_metrics: ['exact equality'], paired_seed_tests: [0, 1, 2, 3, 4], sample_sizes: { n: 1000 },
-        confidence_rule: 'paired 95% interval', hardware_cost_basis: 'same box', timing_scope: 'whole run',
+        infeasible_methods: [{ method: 'multi-GPU', reason: 'Only one GPU in this fixture.' }],
+        outputs_stochastic: false,
+        equivalence_metrics: [{ name: 'sum', tolerance: { abs: 0 }, source: 'Exact integer sum requirement.' }],
+        paired_seed_tests: { kind: 'deterministic', justification: 'Integer summation has no random inputs or operations.' },
+        sample_sizes: { n: 1000 },
+        confidence_rule: { equivalence: { kind: 'exact' } }, hardware_cost_basis: 'same box', timing_scope: 'whole run',
         minimum_worthwhile_gain: 1.05, evaluation_inputs: ['integers'], splits: { evaluation: [0, 1000] },
         compute_budgets: [1, 2, 4], repetitions: 5, warmup: 'one run', scheduling_order: 'alternate',
         equal_outcome_target: 499500, private_content: SENTINEL })
@@ -75,11 +77,11 @@ module.exports = {
         emit('out/anchors_measured.json', { 'anchor-1': 499500, 'anchor-2': 499500 }))
       script(path.join(harness, 'profile.sh'), 'mkdir -p out/profile\nsleep 1\n' +
         emit('out/profile/stages.json', [
-          { stage: 'prepare', kind: 'other', wall_s: 3, gpu_s: null },
-          { stage: 'transfer', kind: 'transfer', wall_s: 5, gpu_s: 999 },
-          { stage: 'finish', kind: 'other', wall_s: 2, gpu_s: null },
+          { stage: 'prepare', kind: 'compute', start_s: 0, wall_s: 3, gpu_s: null },
+          { stage: 'transfer', kind: 'transfer', start_s: 3, wall_s: 5, gpu_s: 999 },
+          { stage: 'finish', kind: 'other', start_s: 8, wall_s: 2, gpu_s: null },
         ]) + emit('out/profile/total_wall_s.json', { total_wall_s: 10 }) +
-        emit('out/profile/gpu_util.json', [{ t: 0, util: 99 }]))
+        emit('out/profile/gpu_util.json', [{ t: 0, util: 25 }, { t: 3, util: 25 }, { t: 8, util: 25 }]))
     }
     return { text: JSON.stringify(json), json, jsonError: null, sessionID: 'stub',
       tokens: { input: 10, output: 5 }, tokens_known: true, cost: 123,
