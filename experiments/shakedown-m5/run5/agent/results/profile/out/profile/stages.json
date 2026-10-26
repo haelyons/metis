@@ -1,0 +1,50 @@
+[
+  {
+    "stage": "host work outside CUDA APIs",
+    "kind": "other",
+    "wall_s": 0.16232341100000003,
+    "gpu_s": null
+  },
+  {
+    "stage": "host CUDA runtime calls",
+    "kind": "other",
+    "wall_s": 0.09970941000000004,
+    "gpu_s": null
+  },
+  {
+    "stage": "host CUDA event and stream handling",
+    "kind": "other",
+    "wall_s": 7.632600000000001e-05,
+    "gpu_s": null
+  },
+  {
+    "stage": "host allocation and release",
+    "kind": "other",
+    "wall_s": 0.013545784,
+    "gpu_s": null
+  },
+  {
+    "stage": "device memset",
+    "kind": "other",
+    "wall_s": 7.0912e-05,
+    "gpu_s": 7.0912e-05
+  },
+  {
+    "stage": "kernel __nv_static_42__c92d0c0d_20_MonteCarlo_kernel_cu_69b259ed__Z14rngSetupStatesP17curandStateXORWOWi",
+    "kind": "compute",
+    "wall_s": 0.003003911,
+    "gpu_s": 0.003003911
+  },
+  {
+    "stage": "device memcpy",
+    "kind": "transfer",
+    "wall_s": 0.0009878110000000001,
+    "gpu_s": 0.0009878110000000001
+  },
+  {
+    "stage": "kernel __nv_static_42__c92d0c0d_20_MonteCarlo_kernel_cu_69b259ed__Z27MonteCarloOneBlockPerOptionP17curandStateXORWOWPK13__TOptionDataP14__TOptionValueii",
+    "kind": "compute",
+    "wall_s": 10.360128607,
+    "gpu_s": 10.360128607
+  }
+]
