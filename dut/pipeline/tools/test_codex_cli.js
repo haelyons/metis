@@ -15,25 +15,86 @@ fs.mkdirSync(bin)
 fs.writeFileSync(path.join(bin, 'codex'), `#!${process.execPath}
 'use strict'
 const fs = require('node:fs')
+const readline = require('node:readline')
 const args = process.argv.slice(2)
-const stdin = fs.readFileSync(0, 'utf8')
-fs.writeFileSync(process.env.TEST_CODEX_CAPTURE, JSON.stringify({ args, stdin, pid: process.pid }))
-const finish = () => {
-  const output = args.indexOf('-o')
-  if (output < 0 || !args[output + 1]) {
-    process.stderr.write('fake codex: missing -o path')
-    process.exit(98)
+const capture = { args, stdin: '', pid: process.pid, requests: [] }
+const save = () => fs.appendFileSync(process.env.TEST_CODEX_CAPTURE, JSON.stringify(capture) + '\\n')
+const events = JSON.parse(process.env.TEST_CODEX_EVENTS)
+const send = message => fs.writeSync(1, JSON.stringify(message) + '\\n')
+if (args[0] === 'app-server') {
+  save()
+  if (process.env.TEST_CODEX_APP_FAIL === '1') {
+    fs.writeSync(2, 'Synthetic app-server failure\\n')
+    process.exit(23)
   }
-  fs.writeFileSync(args[output + 1], process.env.TEST_CODEX_REPLY)
-  const events = JSON.parse(process.env.TEST_CODEX_EVENTS)
-  for (let i = 0; i < events.length; i++) {
-    // Deliberately leave the last event unterminated, as a stream may end there.
-    fs.writeSync(1, JSON.stringify(events[i]) + (i + 1 < events.length ? '\\n' : ''))
-  }
-  fs.writeSync(2, process.env.TEST_CODEX_STDERR)
-  process.exit(Number(process.env.TEST_CODEX_EXIT))
+  const input = readline.createInterface({ input: process.stdin })
+  input.on('line', line => {
+    capture.stdin += line + '\\n'
+    const request = JSON.parse(line)
+    capture.requests.push(request)
+    save()
+    const respond = result => send({ id: request.id, result })
+    switch (request.method) {
+      case 'initialize': respond({ userAgent: 'fake-codex' }); break
+      case 'thread/start': respond({ thread: { id: 'black-box-thread' } }); break
+      case 'thread/name/set': respond({}); break
+      case 'turn/start': {
+        respond({ turn: { id: 'turn-1', status: 'inProgress', items: [] } })
+        setTimeout(() => {
+          const threadId = 'black-box-thread', turnId = 'turn-1'
+          fs.writeSync(2, process.env.TEST_CODEX_STDERR)
+          for (const event of events) {
+            if (event.type === 'turn.completed') {
+              const usage = event.usage
+              send({ method: 'thread/tokenUsage/updated', params: { threadId, turnId,
+                tokenUsage: { total: { inputTokens: usage.input_tokens,
+                  cachedInputTokens: usage.cached_input_tokens, outputTokens: usage.output_tokens,
+                  reasoningOutputTokens: 0, totalTokens: usage.input_tokens + usage.output_tokens },
+                  last: { inputTokens: usage.input_tokens, cachedInputTokens: usage.cached_input_tokens,
+                    outputTokens: usage.output_tokens, reasoningOutputTokens: 0,
+                    totalTokens: usage.input_tokens + usage.output_tokens } } } })
+            }
+            if (event.type === 'turn.failed') {
+              send({ method: 'error', params: { threadId, turnId, error: event.error, willRetry: false } })
+            }
+          }
+          const text = process.env.TEST_CODEX_REPLY
+          const split = Math.floor(text.length / 2)
+          for (const delta of [text.slice(0, split), text.slice(split)]) {
+            send({ method: 'item/agentMessage/delta', params: { threadId, turnId, itemId: 'message-1', delta } })
+          }
+          send({ method: 'item/completed', params: { threadId, turnId,
+            item: { id: 'message-1', type: 'agentMessage', text } } })
+          const error = events.find(event => event.type === 'turn.failed')?.error
+          send({ method: 'turn/completed', params: { threadId,
+            turn: { id: turnId, status: error ? 'failed' : 'completed', items: [], error } } })
+        }, Number(process.env.TEST_CODEX_SLEEP))
+        break
+      }
+      default:
+        if (request.id !== undefined) {
+          send({ id: request.id, error: { code: -32601, message: 'Unsupported fake method: ' + request.method } })
+        }
+    }
+  })
+} else if (args[0] === 'exec') {
+  capture.stdin = fs.readFileSync(0, 'utf8')
+  save()
+  setTimeout(() => {
+    const output = args.indexOf('-o')
+    if (output < 0 || !args[output + 1]) process.exit(98)
+    fs.writeFileSync(args[output + 1], process.env.TEST_CODEX_REPLY)
+    for (let i = 0; i < events.length; i++) {
+      // Exec may end with an unterminated JSONL event.
+      fs.writeSync(1, JSON.stringify(events[i]) + (i + 1 < events.length ? '\\n' : ''))
+    }
+    fs.writeSync(2, process.env.TEST_CODEX_STDERR)
+    process.exit(Number(process.env.TEST_CODEX_EXIT))
+  }, Number(process.env.TEST_CODEX_SLEEP))
+} else {
+  fs.writeSync(2, 'Unexpected codex command: ' + args[0])
+  process.exit(97)
 }
-setTimeout(finish, Number(process.env.TEST_CODEX_SLEEP))
 `, { mode: 0o755 })
 
 // `codex exec --help` confirms --json emits JSONL but does not specify usage fields.
@@ -66,6 +127,7 @@ async function invoke(options = {}, fake = {}) {
     PATH: bin,
     ...fake.env,
     TEST_CODEX_CAPTURE: capture,
+    TEST_CODEX_APP_FAIL: fake.appFail ? '1' : '0',
     TEST_CODEX_REPLY: fake.reply ?? 'file reply\n',
     TEST_CODEX_EVENTS: JSON.stringify(fake.events ?? usageEvents),
     TEST_CODEX_STDERR: fake.stderr ?? '',
@@ -88,14 +150,21 @@ async function invoke(options = {}, fake = {}) {
     ])
     const elapsed = performance.now() - started
     assert.ok(fs.existsSync(capture), 'fake codex was not invoked through PATH')
-    const sent = JSON.parse(fs.readFileSync(capture, 'utf8'))
-    pids.add(sent.pid)
-    return { res, sent, elapsed, dir }
+    const captures = fs.readFileSync(capture, 'utf8').trim().split('\n').map(line => JSON.parse(line))
+    for (const item of captures) pids.add(item.pid)
+    const sent = captures[captures.length - 1]
+    if (!fake.appFail && !fake.sleep) {
+      assert.equal(sent.args[0], 'app-server', `unexpected fallback: ${JSON.stringify(res.errors)}`)
+      assert.ok(sent.requests.some(request => request.method === 'turn/start'), 'app-server never received turn/start')
+    }
+    return { res, sent, captures, elapsed, dir }
   } finally {
     if (originalEphemeral === undefined) delete process.env.CODEX_EPHEMERAL
     else process.env.CODEX_EPHEMERAL = originalEphemeral
     clearTimeout(watchdog)
-    if (fs.existsSync(capture)) pids.add(JSON.parse(fs.readFileSync(capture, 'utf8')).pid)
+    if (fs.existsSync(capture)) {
+      for (const line of fs.readFileSync(capture, 'utf8').trim().split('\n')) pids.add(JSON.parse(line).pid)
+    }
   }
 }
 
@@ -115,32 +184,60 @@ function flag(args, name) {
 }
 
 async function main() {
+  await check('app-server initializes, starts and names thread before turn', async () => {
+    const { res, sent, captures, dir } = await invoke({ name: 'Black-box named conversation' })
+    assert.equal(sent.args[0], 'app-server')
+    assert.ok(captures.every(item => item.args[0] === 'app-server'), 'successful app-server must not fall back')
+    const requests = sent.requests.filter(request => request.id !== undefined)
+    assert.deepEqual(requests.map(request => request.method), ['initialize', 'thread/start', 'thread/name/set', 'turn/start'])
+    assert.equal(requests[1].params.cwd, dir)
+    assert.equal(requests[2].params.threadId, 'black-box-thread')
+    assert.equal(requests[2].params.name, 'Black-box named conversation')
+    assert.equal(requests[3].params.threadId, 'black-box-thread')
+    assert.ok(JSON.stringify(requests[3].params.input).includes('User prompt marker'))
+    assert.equal(res.text, 'file reply\n')
+    assert.deepEqual(res.errors, [])
+  })
+  await check('app-server usage notification maps token fields', async () => {
+    const { res } = await invoke({}, { events: [usageEvents[2]] })
+    assert.equal(res.tokens.input, 13)
+    assert.equal(res.tokens.output, 7)
+    assert.equal(res.tokens.cache_read, 3)
+  })
+  await check('app-server failure falls back to exec and records error', async () => {
+    const { res, captures } = await invoke({}, { appFail: true, reply: '{"fallback":true}' })
+    assert.deepEqual([...new Set(captures.map(item => item.args[0]))], ['app-server', 'exec'])
+    assert.equal(res.text, '{"fallback":true}')
+    assert.deepEqual(res.json, { fallback: true })
+    assert.equal(res.tokens.input, 30)
+    assert.ok(res.errors.some(error => /app.?server|fallback/i.test(error)), JSON.stringify(res.errors))
+  })
   await check('exec flags, cwd, and output file', async () => {
-    const { res, sent, dir } = await invoke()
+    const { res, sent, dir } = await invoke({}, { appFail: true })
     assert.equal(sent.args[0], 'exec')
     for (const name of ['--json', '--skip-git-repo-check']) assert.ok(sent.args.includes(name), `missing ${name}`)
     assert.ok(!sent.args.includes('--ephemeral'), 'default must omit --ephemeral')
     assert.equal(flag(sent.args, '-C'), dir)
     assert.ok(flag(sent.args, '-o'))
     assert.equal(res.text, 'file reply\n', 'text must come from -o, preserving whitespace')
-    assert.deepEqual(res.errors, [])
+    assert.ok(res.errors.some(error => /app.?server|fallback/i.test(error)), JSON.stringify(res.errors))
   })
   for (const value of ['1', '0']) {
     await check(`ephemeral flag with CODEX_EPHEMERAL=${value}`, async () => {
-      const { sent } = await invoke({}, { env: { CODEX_EPHEMERAL: value } })
+      const { sent } = await invoke({}, { appFail: true, env: { CODEX_EPHEMERAL: value } })
       assert.equal(sent.args.includes('--ephemeral'), value === '1')
     })
   }
   for (const tools of ['', 'Read,Glob,Grep', 'Bash', 'Read,Write', 'Read,Edit']) {
     await check(`1 sandbox for ${tools || 'no tools'}`, async () => {
-      const { sent } = await invoke({ tools })
+      const { sent } = await invoke({ tools }, { appFail: true })
       assert.equal(flag(sent.args, '-s'), /Bash|Write|Edit/.test(tools) ? 'workspace-write' : 'read-only')
       assert.equal(sent.args.some((arg, index) => arg === '-c' && sent.args[index + 1] === 'sandbox_workspace_write.network_access=true'), /Bash|Write|Edit/.test(tools), 'network access config must appear only for workspace-write')
     })
   }
   for (const [model, name, effort] of [['codex/default@low', null, 'low'], ['codex/gpt-x@high', 'gpt-x', 'high']]) {
     await check(`2 model and effort for ${model}`, async () => {
-      const { sent } = await invoke({ model })
+      const { sent } = await invoke({ model }, { appFail: true })
       if (name) assert.equal(flag(sent.args, '-m'), name)
       else assert.ok(!sent.args.includes('-m'), 'default must omit -m')
       assert.ok(sent.args.some((arg, index) => arg === '-c' && sent.args[index + 1] === `model_reasoning_effort=${effort}`), 'missing effort config')
@@ -149,7 +246,7 @@ async function main() {
   await check('3 prompt on stdin and system prompt forwarded', async () => {
     const prompt = 'User prompt marker\nSecond line'
     const systemPrompt = 'System role marker: preserve this instruction.'
-    const { sent } = await invoke({ prompt, systemPrompt })
+    const { sent } = await invoke({ prompt, systemPrompt }, { appFail: true })
     assert.ok(sent.stdin.includes(prompt), 'user prompt missing from stdin')
     const inStdin = sent.stdin.includes(systemPrompt)
     const inConfig = sent.args.some((arg, index) => ['-c', '--config'].includes(arg) && (sent.args[index + 1] || '').includes(systemPrompt))
@@ -182,31 +279,39 @@ async function main() {
     assert.ok(res.jsonError, 'malformed JSON must produce jsonError')
     assert.ok(res.json == null, 'malformed JSON must not produce json')
   })
-  await check('5 usage events summed, including final unterminated event', async () => {
-    const { res } = await invoke()
+  await check('5 exec usage events summed, including final unterminated event', async () => {
+    const { res } = await invoke({}, { appFail: true })
     assert.equal(res.tokens.input, 30)
     assert.equal(res.tokens.output, 18)
     assert.equal(res.tokens.cache_read, 8)
   })
   await check('6 timeout terminates sleeping process promptly', async () => {
-    const { res, sent, elapsed } = await invoke({ timeoutMs: 350 }, { sleep: 10000 })
+    const { res, sent, captures, elapsed } = await invoke({ timeoutMs: 350 }, { sleep: 10000 })
+    assert.ok(captures.some(item => item.requests.some(request => request.method === 'turn/start')),
+      'timeout must exercise an app-server turn')
     assert.ok(res.errors.some(error => error.startsWith('timeout after')), JSON.stringify(res.errors))
     // Allow process startup and CI scheduling; still far below the fake's 10-second sleep.
     assert.ok(elapsed < 2000, `timeout took ${Math.round(elapsed)} ms (limit 2000 ms)`)
     assert.ok(!alive(sent.pid), 'fake process remains alive after timeout resolution')
   })
+  await check('7 app-server usage limit classified as runner', async () => {
+    const message = 'Usage limit reached. Rate limit exceeded; try again later.'
+    const { res } = await invoke({}, { events: [{ type: 'turn.failed', error: { message } }] })
+    assert.ok(res.errors.some(error => error.startsWith('runner error: usage limit')), JSON.stringify(res.errors))
+    assert.equal(classify(res, res.errors), 'runner')
+  })
   for (const source of ['stderr', 'event']) {
-    await check(`7 usage limit via ${source} classified as runner`, async () => {
+    await check(`7 exec usage limit via ${source} classified as runner`, async () => {
       const message = 'Usage limit reached. Rate limit exceeded; try again later.'
       const fake = source === 'stderr' ? { stderr: message, exit: 1 }
         : { events: [{ type: 'turn.failed', error: { message } }], exit: 1 }
-      const { res } = await invoke({}, fake)
+      const { res } = await invoke({}, { ...fake, appFail: true })
       assert.ok(res.errors.some(error => error.startsWith('runner error: usage limit')), JSON.stringify(res.errors))
       assert.equal(classify(res, res.errors), 'runner')
     })
   }
   await check('8 non-zero exit reports exit error', async () => {
-    const { res } = await invoke({}, { exit: 23, stderr: 'Synthetic process failure' })
+    const { res } = await invoke({}, { appFail: true, exit: 23, stderr: 'Synthetic process failure' })
     assert.ok(res.errors.some(error => error.startsWith('exit')), JSON.stringify(res.errors))
   })
 }
