@@ -1,0 +1,43 @@
+{
+  "stages": [
+    {
+      "stage": "device discovery and configuration",
+      "kind": "other",
+      "wall_s": 0.04478197900004943,
+      "gpu_s": null,
+      "wall_fraction": 0.05486459233519017
+    },
+    {
+      "stage": "host input generation",
+      "kind": "other",
+      "wall_s": 0.05294006599990553,
+      "gpu_s": null,
+      "wall_fraction": 0.06485946365344132
+    },
+    {
+      "stage": "allocation, RNG setup and streamed pricing",
+      "kind": "compute",
+      "wall_s": 0.6172957940000288,
+      "gpu_s": null,
+      "wall_fraction": 0.7562792633170974
+    },
+    {
+      "stage": "host Black-Scholes validation",
+      "kind": "other",
+      "wall_s": 0.0452474460000758,
+      "gpu_s": null,
+      "wall_fraction": 0.05543485871850258
+    },
+    {
+      "stage": "cleanup and result reporting",
+      "kind": "other",
+      "wall_s": 0.0011220709999406608,
+      "gpu_s": null,
+      "wall_fraction": 0.0013747040518869342
+    }
+  ],
+  "total_wall_s": 0.8162273169999708,
+  "timed_fraction": 0.9328128820761183,
+  "gpu_telemetry": true,
+  "gpu_count": 2
+}

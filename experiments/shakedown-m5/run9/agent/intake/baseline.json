@@ -1,0 +1,55 @@
+{
+  "repo": "https://github.com/NVIDIA/cuda-samples",
+  "tag": "v12.8",
+  "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+  "pin_source": "https://api.github.com/repos/NVIDIA/cuda-samples/git/ref/tags/v12.8",
+  "build_commands": [
+    "python3 -m pip install --user cmake==3.31.6",
+    "export PATH=\"$HOME/.local/bin:$PATH\"",
+    "git clone --branch v12.8 --depth 1 https://github.com/NVIDIA/cuda-samples.git",
+    "cd cuda-samples",
+    "git checkout --detach db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample=Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "cmake -S \"$sample\" -B build-mc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc",
+    "cmake --build build-mc --target MonteCarloMultiGPU --parallel"
+  ],
+  "build_commands_source": {
+    "brief": "brief.md",
+    "upstream": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md"
+    ],
+    "cmake_package_source": "https://pypi.org/project/cmake/3.31.6/"
+  },
+  "build_notes": "Optional pip CMake installation omitted if suitable CMake already installed. Commands assume /usr/local/cuda-12.8. Build only sample.",
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "run_commands_source": {
+    "brief": "brief.md",
+    "upstream": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp"
+  },
+  "published_configuration": {
+    "gpus": 1,
+    "options": 8192,
+    "paths_per_option": 262144,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float; DOUBLE_PRECISION disabled",
+    "threads_per_block": 256,
+    "grid_limit": "40 * multiProcessorCount",
+    "max_options_per_gpu": 1048576,
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h"
+    ]
+  },
+  "execution_status": "Not built or run during intake.",
+  "representative_modification": {
+    "file": "Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+    "change": "Set host nOptions = 1024 * 1024; rebuild once using listed commands.",
+    "source": "brief.md, Scale (operator revision after raid jackhammer)",
+    "note": "This fixed timing scale differs from published anchor configuration. No patch command supplied in brief; none invented."
+  }
+}
