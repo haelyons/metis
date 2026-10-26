@@ -155,7 +155,33 @@ async function codexChecks() {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e_codex_'))
   fs.writeFileSync(path.join(dir, 'codex'), `#!${process.execPath}
 const fs = require('node:fs')
-const args = process.argv.slice(2), prompt = fs.readFileSync(0, 'utf8')
+const args = process.argv.slice(2)
+if (args[0] === 'app-server') {
+  if (process.env.E2E_CODEX_CASE !== 'app-server') process.exit(1)
+  const send = message => fs.writeSync(1, JSON.stringify(message) + '\\n')
+  const requests = []
+  const byte = Buffer.alloc(1)
+  let line = ''
+  while (fs.readSync(0, byte, 0, 1, null)) {
+    if (byte[0] !== 10) { line += byte.toString(); continue }
+    const request = JSON.parse(line)
+    line = ''
+    requests.push(request)
+    fs.writeFileSync(process.env.E2E_CAPTURE, JSON.stringify({ args, requests }))
+    if (request.id == null) continue
+    const result = request.method === 'thread/start' ? { thread: { id: 'thread-app-test' } }
+      : request.method === 'turn/start' ? { turn: { id: 'turn-test', status: 'inProgress', items: [] } } : {}
+    send({ id: request.id, result })
+    if (request.method === 'turn/start') {
+      const threadId = 'thread-app-test', turnId = 'turn-test'
+      send({ method: 'item/completed', params: { threadId, turnId, item: { id: 'message-test', type: 'agentMessage', text: '{"ok":true}' } } })
+      send({ method: 'thread/tokenUsage/updated', params: { threadId, turnId, tokenUsage: { total: { inputTokens: 13, outputTokens: 7, cachedInputTokens: 3, reasoningOutputTokens: 2 } } } })
+      send({ method: 'turn/completed', params: { threadId, turn: { id: turnId, status: 'completed', items: [] } } })
+    }
+  }
+  return
+}
+const prompt = fs.readFileSync(0, 'utf8')
 fs.writeFileSync(process.env.E2E_CAPTURE, JSON.stringify({ args, prompt }))
 if (process.env.E2E_CODEX_CASE === 'timeout') { setInterval(() => {}, 1000); return }
 fs.writeFileSync(args[args.indexOf('-o') + 1], process.env.E2E_REPLY || '{"ok":true}')
@@ -171,12 +197,15 @@ fs.writeSync(1, events.map(e => JSON.stringify(e)).join('\\n'))
   const base = { model: 'codex/default@low', prompt: 'reply ok', cwd: dir, tools: '', timeoutMs: 5000, rawPath, env }
   const run = o => require('../idea/codex_cli.js').run({ ...base, ...o })
   try {
-    let r = await run({ systemPrompt: 'Role text', addDirs: [ROOT] })
+    let r = await run({ name: 'App server test', env: { ...env, E2E_CODEX_CASE: 'app-server' } })
+    const app = JSON.parse(fs.readFileSync(capture, 'utf8'))
+    check(app.args[0] === 'app-server' && ['initialize', 'thread/start', 'thread/name/set', 'turn/start'].every(method => app.requests.some(request => request.method === method)) && r.text === '{"ok":true}' && r.json?.ok && !r.jsonError && r.sessionID === 'thread-app-test' && r.errors.length === 0 && !r.refusal, 'app-server agent message supplies parsed reply and thread supplies session')
+    r = await run({ systemPrompt: 'Role text', addDirs: [ROOT] })
     let sent = JSON.parse(fs.readFileSync(capture, 'utf8')), args = sent.args
     check(args[0] === 'exec' && ['--json', '--skip-git-repo-check'].every(a => args.includes(a)) && !args.includes('--ephemeral') && args.at(-1) === '-' && args[args.indexOf('-C') + 1] === dir, 'codex exec flags and stdin selected')
     check(!args.includes('-m') && args.includes('model_reasoning_effort=low') && args[args.indexOf('-s') + 1] === 'read-only', 'default model omitted; low effort and read-only sandbox')
     check(args[args.indexOf('--add-dir') + 1] === ROOT && sent.prompt.includes('Role text') && sent.prompt.includes('reply ok'), 'additional directory and role prompt forwarded')
-    check(r.text === '{"ok":true}' && r.json.ok && !r.jsonError && r.sessionID === 'thread-test' && r.errors.length === 0 && !r.refusal, 'last-message file supplies parsed reply and event supplies session')
+    check(r.text === '{"ok":true}' && r.json.ok && !r.jsonError && r.sessionID === 'thread-test' && r.errors.length === 1 && r.errors[0].startsWith('app-server fallback to codex exec:') && !r.refusal, 'exec fallback last-message file supplies parsed reply and event supplies session')
     check(r.tokens.input === 13 && r.tokens.output === 7 && r.tokens.reasoning === 2 && r.tokens.cache_read === 3 && r.tools === 1, 'JSONL usage and tool count parsed, including final unterminated line')
     check(rows(rawPath).length === 3 && !fs.existsSync(path.dirname(args[args.indexOf('-o') + 1])), 'raw events saved and temporary reply directory removed')
     r = await run({ model: 'codex/custom@high', tools: 'Read,Edit', env: { ...env, E2E_REPLY: '{"nested":{},}' } })

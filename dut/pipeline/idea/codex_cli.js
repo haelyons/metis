@@ -57,6 +57,7 @@ function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, 
       const sandbox = /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(tools || '') ? 'workspace-write' : 'read-only'
       // sessions persist so they can be monitored (Codex remote control); writers get network (ssh to the dev box)
       const args = ['exec', '--json', '--skip-git-repo-check', ...(sandbox === 'workspace-write' ? ['-c', 'sandbox_workspace_write.network_access=true'] : []), '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
+      if (({ ...process.env, ...env }).CODEX_EPHEMERAL === '1') args.push('--ephemeral')
       if (name !== 'default') args.push('-m', name)
       if (effort) args.push('-c', `model_reasoning_effort=${effort}`)
       for (const d of addDirs || []) args.push('--add-dir', d)
@@ -79,6 +80,7 @@ function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, 
 async function run(options) {
   const started = Date.now(), limit = options.timeoutMs || 20 * 60000
   const name = options.name || options.label
+  if (({ ...process.env, ...options.env }).CODEX_EPHEMERAL === '1') return runExec({ ...options, name, timeoutMs: limit })
   let result
   try {
     result = await runAppServer({ ...options, name, timeoutMs: limit })
