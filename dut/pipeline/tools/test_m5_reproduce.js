@@ -153,7 +153,7 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, gpuUtil: GPU_UTIL, setupFailures: 0, anchorsFailures: 0, profileFailures: 0, ...overrides }
   const profileRepair = stoppedAt !== 'reproduce' && !!(config.profileFailures || config.profileGateFailure)
   const args = path.join(root, 'control', 'args.json')
-  writeJSON(args, { run_root: root, tag: 'reproduce-test' })
+  writeJSON(args, { run_root: root, tag: 'reproduce-test', stub: { propose: 'PASS' } })
   const box = path.join(root, 'box')
   fs.mkdirSync(box, { recursive: true })
   const fakeProbe = `mkdir -p out

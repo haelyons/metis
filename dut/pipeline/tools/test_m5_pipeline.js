@@ -60,7 +60,7 @@ async function runCase(name, failedStage, launch = false) {
   const brief = path.join(parent, `${name}-brief.md`)
   fs.writeFileSync(brief, '# Test brief\nNo experiment directory or model is needed.\n')
   const argsFile = path.join(control, 'args.json')
-  const stub = { intake: 'PASS', reproduce: 'PASS', profile: 'PASS', seal: 'PASS', ...(failedStage ? { [failedStage]: 'FAIL' } : {}) }
+  const stub = { intake: 'PASS', reproduce: 'PASS', profile: 'PASS', seal: 'PASS', propose: 'PASS', ...(failedStage ? { [failedStage]: 'FAIL' } : {}) }
   if (!launch) {
     fs.writeFileSync(argsFile, JSON.stringify({
       run_root: runRoot,
@@ -85,7 +85,7 @@ async function runCase(name, failedStage, launch = false) {
         cwd,
         timeout: 30000,
         stdio: ['ignore', stdout, stderr],
-        env: { ...process.env, WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js'), ...envExtra },
+        env: { ...process.env, M5_RAIDS_LEDGER: path.join(runRoot, 'test-raids_used.jsonl'), WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js'), ...envExtra },
       })
       let error
       childProcess.on('error', value => { error = value })

@@ -1,4 +1,4 @@
-// wf.js script. Intake, reproduce, profile and seal are real; later stages are placeholders.
+// wf.js script. Intake through propose are real; later stages are placeholders.
 const meta = { name: 'm5', description: 'Explicit-run-root scientific pipeline skeleton' }
 
 return (async () => {
@@ -432,7 +432,128 @@ Return a short completion acknowledgement; the script reads and seals the file i
       return failure(facts, 'numeric')
     }
   }
-  function propose() { return stub('propose') }
+  async function propose() {
+    if (input.stub?.propose != null) return stub('propose')
+    const facts = { ...nullFacts('propose'), method: 'none', votes_approve: 0,
+      votes_total: 5, vote_share: 0, gate_pass: false, tokens_known: false, gpu_busy_known: false }
+    const predictionPath = path.join(A, 'PREDICTIONS.json')
+    const proposalPath = path.join(A, 'proposal.json')
+    const gatePath = path.join(A, 'GATE.json')
+    const hash = bytes => createHash('sha256').update(bytes).digest('hex')
+    let predictions
+    // Verify both copies against the latest immutable receipt before reading scientific inputs.
+    try {
+      const seals = path.join(C, 'seals')
+      const latest = readdirSync(seals).filter(name => /^\d{4,}\.json$/.test(name))
+        .sort((a, b) => Number(a.slice(0, -5)) - Number(b.slice(0, -5))).at(-1)
+      if (!latest) return failure(facts, 'other')
+      const receipt = readJSON(path.join(seals, latest))
+      const bytes = readFileSync(predictionPath)
+      if (hash(bytes) !== receipt.sha256 || hash(readFileSync(receipt.path)) !== receipt.sha256) {
+        return failure(facts, 'other')
+      }
+      predictions = JSON.parse(bytes.toString('utf8'))
+    } catch { return failure(facts, 'other') }
+    // A completed decision cannot be voted on again within this run.
+    if (existsSync(gatePath)) return failure(facts, 'other')
+    const finish = error_class => {
+      writeFileSync(gatePath, JSON.stringify(facts, null, 2) + '\n')
+      return facts.gate_pass ? { status: 'PASS', facts } : failure(facts, error_class)
+    }
+    try {
+      const profile = readJSON(path.join(A, 'profile-packet.json'))
+      const bounds = readJSON(path.join(A, 'bounds.json'))
+      let allocation, probe
+      try { allocation = readJSON(path.join(C, 'box.json')) } catch { /* Unknown inventory fails guards. */ }
+      try { probe = readJSON(path.join(A, 'results', 'probe', 'probe.json')) } catch { /* Same. */ }
+      const count = value => Number.isInteger(value) && value >= 0 ? value : null
+      const allocationCount = count(allocation?.gpu_count)
+        ?? count(Number(/^gpu_(\d+)x_/.exec(allocation?.type)?.[1]))
+      const probeCount = Array.isArray(probe?.nvidia?.gpus) ? probe.nvidia.gpus.length : null
+      const available = allocationCount === null || probeCount === null ? 0 : Math.min(allocationCount, probeCount)
+      if (!Array.isArray(predictions.predictions)
+        || !Number.isFinite(predictions.minimum_worthwhile_gain) || predictions.minimum_worthwhile_gain <= 1
+        || new Set(predictions.predictions.map(item => item?.method)).size !== predictions.predictions.length) {
+        return finish('parse')
+      }
+      const ranked = []
+      for (const prediction of predictions.predictions) {
+        const method = prediction?.method, limit = bounds[method]
+        const { low, high } = prediction?.expected_speedup_interval || {}
+        if (!menu.includes(method) || !limit || !Number.isFinite(limit.bound)
+          || !Number.isFinite(low) || low <= 0 || !Number.isFinite(high) || high < low) return finish('parse')
+        if (!limit.feasible || limit.bound < 1.05) continue
+        const midpoint = low / 2 + high / 2
+        const gpus_required = method === 'multi-GPU' ? Math.max(2, limit.k) : 1
+        ranked.push({ method, bounds: limit, prediction, expected_speedup: midpoint,
+          rank_score: Math.min(midpoint, limit.bound), gpus_required,
+          resource_guard_pass: Number.isInteger(gpus_required) && gpus_required <= available })
+      }
+      ranked.sort((a, b) => b.rank_score - a.rank_score || menu.indexOf(a.method) - menu.indexOf(b.method))
+      const methods = ranked.filter(item => item.resource_guard_pass)
+      const packet = { ranked_methods: methods, profile_summary: profile,
+        sealed_protocol: Object.fromEntries(['equivalence_metrics', 'paired_seed_tests', 'sample_sizes',
+          'confidence_rule', 'hardware_cost_basis', 'timing_scope', 'evaluation_inputs', 'splits',
+          'compute_budgets', 'repetitions', 'warmup', 'scheduling_order', 'equal_outcome_target']
+          .map(key => [key, predictions[key]]).filter(([, value]) => value !== undefined)),
+        minimum_worthwhile_gain: predictions.minimum_worthwhile_gain,
+        resource_guards: { allocation_gpus: allocationCount, probe_gpus: probeCount, available_gpus: available } }
+      writeFileSync(path.join(A, 'propose-packet.json'), JSON.stringify(packet, null, 2) + '\n')
+      if (!methods.length) return finish('numeric')
+      const { validate } = await import(path.resolve('idea/schema.js'))
+      const strings = { type: 'array', items: { type: 'string' } }
+      const proposalSchema = { type: 'object', additionalProperties: false,
+        required: ['method', 'rationale', 'plan_steps', 'files_expected', 'risks'],
+        properties: { method: { enum: methods.map(item => item.method) }, rationale: { type: 'string' },
+          plan_steps: strings, files_expected: strings, risks: strings } }
+      rmSync(proposalPath, { force: true })
+      const evidence = JSON.stringify(packet)
+      const reply = await agent(`Choose one feasible method from ranked_methods in this prepared packet.
+Read only the packet embedded below. Never read other files, search, access the box, run workloads, or implement code.
+Write only ${JSON.stringify(proposalPath)}, matching this schema: ${JSON.stringify(proposalSchema)}.
+Explain profile evidence, overheads, scientific equivalence risks, and a concrete implementation plan. Keep the sealed method and protocol unchanged.
+Prepared packet:\n${evidence}
+Return a short completion acknowledgement.`,
+        { label: 'propose', agentType: 'ls-writer', model: 'sonnet', repairable: false, fresh: true })
+      if (reply == null) return finish('parse')
+      const proposal = readJSON(proposalPath)
+      if (validate(proposalSchema, proposal).length || !proposal.rationale.trim()
+        || !proposal.plan_steps.length || !proposal.files_expected.length
+        || ['plan_steps', 'files_expected', 'risks'].some(key => proposal[key].some(item => !item.trim()))) return finish('parse')
+      const chosen = methods.find(item => item.method === proposal.method)
+      facts.method = chosen.method
+      facts.expected_speedup = chosen.expected_speedup
+      const reasons = ['exceeds_bound', 'not_parallelisable', 'changes_method', 'equivalence_risk',
+        'resource_mismatch', 'weak_profile_evidence', 'other']
+      const voteSchema = { type: 'object', additionalProperties: false, required: ['vote', 'reason_codes'],
+        properties: { vote: { enum: ['approve', 'reject', 'abstain'] },
+          reason_codes: { type: 'array', items: { enum: reasons } } } }
+      const votesDirectory = path.join(A, 'votes')
+      mkdirSync(votesDirectory, { recursive: true })
+      // Queue all five siblings together for x-<raid>-skeptic-<i>of5 names and fresh runner sessions.
+      const votes = await Promise.all(Array.from({ length: 5 }, async (_, index) => {
+        const votePath = path.join(votesDirectory, `${index + 1}.json`)
+        rmSync(votePath, { force: true })
+        let vote = null
+        try {
+          vote = await agent(`Independent ballot ${index + 1} of 5. Review this proposal once.
+Use only the embedded prepared packet and proposal. Never read files, other votes, or other sessions; do not search or use tools.
+Approve only if the method stays within its bound, is parallelisable as planned, preserves scientific equivalence, fits resource guards, and has adequate profile evidence.
+Return only vote and reason_codes using the supplied schema. Missing evidence warrants reject or abstain. Vote share is not a calibrated probability.
+Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
+            { label: 'skeptic', agentType: 'qt-bare', model: 'haiku', schema: voteSchema, repairable: false, fresh: true })
+        } catch { /* A failed call counts against approval; never replace it. */ }
+        if (validate(voteSchema, vote).length) vote = null
+        writeFileSync(votePath, JSON.stringify(vote, null, 2) + '\n')
+        return vote
+      }))
+      facts.votes_approve = votes.filter(vote => vote?.vote === 'approve').length
+      facts.vote_share = facts.votes_approve / 5
+      facts.gate_pass = facts.votes_approve >= 4 && chosen.prediction.expected_speedup_interval.high >= predictions.minimum_worthwhile_gain
+        && chosen.prediction.expected_speedup_interval.high <= chosen.bounds.bound && chosen.resource_guard_pass
+      return finish('numeric')
+    } catch { return finish('parse') }
+  }
   function implement() { return stub('implement') }
   function evaluate() { return stub('evaluate') }
   function takeaways() { return stub('takeaways') }

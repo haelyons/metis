@@ -173,7 +173,7 @@ async function agent(prompt, opts = {}) {
   // label rules (config.workflow.label_rules): a panel runs the call on several models and merges the replies;
   // a model rule sends that call to another model (e.g. the second dramaturg to another family)
   const rule = (CFG.label_rules || []).find(r => new RegExp(r.match).test(label))
-  if (rule && rule.panel) {
+  if (rule && rule.panel && opts.repairable !== false) {
     const replies = await Promise.all(rule.panel.map(m => agent(prompt, { ...opts, label: `${label}@${m.split('/').pop()}`, _model: m })))
     const merged = MERGE[rule.merge](replies)
     journal({ type: 'panel', label, members: rule.panel, ok: replies.map(Boolean), value: merged })
@@ -192,13 +192,15 @@ async function agent(prompt, opts = {}) {
   const r = U.resolve(UCFG, { label, role, pinned: opts.model, familyOverride: FAMILY, modeOverride: MODE, primaryOverride: opts._model || (rule && rule.model) })
   const { primary, understudy, chain } = r
   let mode = r.mode
+  // Single-response calls may fail over on transport errors, but never solicit replacement ballots.
+  if (opts.repairable === false && mode === 'shadow') mode = 'fallback'
   if (mode === 'shadow' && WRITING_ROLES.has(role)) { mode = 'fallback'; journal({ type: 'log', m: `${label}: shadow mode refused for writing role ${role} (both families would write the same files); fallback` }) }
   const full = opts.schema ? prompt + promptSuffix(opts.schema) : String(prompt)
   const key = sha(JSON.stringify({ full, role, model: primary }))
   const rec = { id: `${String(n).padStart(4, '0')} ${label}`, stage: opts.phase || '', model: primary, understudy, chain, mode, state: 'queued', attempts: 0, ms: 0, cost_usd: 0, tokens: 0 }
   status.calls.push(rec)
   journal({ type: 'started', n, label, phase: opts.phase, role, model: primary, understudy, chain, mode, tier: r.tier, route: r.route, key })
-  if (cache.has(key)) {
+  if (!opts.fresh && cache.has(key)) {
     rec.state = 'cached'; saveStatus(); journal({ type: 'cached', n, label, key, model: cacheModels.get(key) })
     return cache.get(key)
   }
@@ -209,7 +211,7 @@ async function agent(prompt, opts = {}) {
   fs.writeFileSync(path.join(dir, 'prompt.md'), full)
   const cwd = (FILE_ROLES.has(role) || /^(ls-|triage-)/.test(role)) ? (ARGS.cwd || ARGS.base) : path.join(dir, 'cwd')
   fs.mkdirSync(cwd, { recursive: true })
-  const common = { role, label, full, opts, cwd, rec, repairable: true, declinedIf: r.declined_if, chat }
+  const common = { role, label, full, opts, cwd, rec, repairable: opts.repairable !== false, declinedIf: r.declined_if, chat }
   let first, second = null, producer = null, value = null, errors = [], attempts = 0
   if (mode === 'shadow' && understudy) {
     const udir = path.join(dir, 'understudy'); fs.mkdirSync(udir, { recursive: true })
@@ -234,6 +236,7 @@ async function agent(prompt, opts = {}) {
     errors = first.errors
     let previous = first, previousDir = dir
     for (const [i, model] of chain.entries()) {
+      if (!common.repairable && ['schema', 'nojson'].includes(previous.kind)) break
       if (!U.handover(UCFG, mode, previous.kind)) break
       const udir = path.join(dir, i === 0 ? 'understudy' : `understudy-${i + 1}`); fs.mkdirSync(udir, { recursive: true })
       const kept = WRITING_ROLES.has(role) ? snapshot(previous.res && (opts.schema ? previous.res.json : previous.res.text), cwd, previousDir) : []

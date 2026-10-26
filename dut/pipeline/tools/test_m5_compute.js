@@ -170,7 +170,7 @@ async function runCase(name, config) {
   const argsFile = path.join(root, 'control', 'args.json')
   writeJSON(argsFile, { run_root: root, tag: 'compute-test', ...(config.noCalls ? {
     stub: Object.fromEntries(STAGES.map(stage => [stage, 'PASS'])),
-  } : {}) })
+  } : { stub: { propose: 'PASS' } }) })
   script(path.join(bin, 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nbash -c "$command"\n' +
     // Let detached fixture commands finish before boxrun's first polling check.
     'if [[ $command == *timeout* ]]; then\n' +
