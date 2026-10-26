@@ -1,10 +1,10 @@
 'use strict'
 // Understudy policy for wf.js. Every agent() call has a primary model and an ordered chain of other model families
-// (OpenCode Go, Claude headless and Codex CLI). The policy selects the role, models and failures that hand over.
+// (OpenCode Go, Claude headless, Codex CLI and Cursor Agent). The policy selects the role, models and failures that hand over.
 // Pure functions, no I/O; `node understudy.js --selftest` checks them.
 //
 // Config (config.json "understudy"; every field optional):
-//   primary_family   "opencode" | "claude" | "codex"   the family that answers first (CLI --family overrides)
+//   primary_family   "opencode" | "claude" | "codex" | "cursor"   the family that answers first (CLI --family overrides)
 //   disabled_families [family, ...]                 excluded from primary and chain (CLI --disable-family adds)
 //   chain            { family: [family, ...] }      ordered understudies for each primary family
 //   mode             "fallback" | "shadow" | "swap" | "primary-only"   (CLI --mode overrides)
@@ -31,7 +31,7 @@ const TIER = { opus: 'strong', sonnet: 'main', haiku: 'cheap' }
 const KINDS = ['none', 'refusal', 'timeout', 'exit', 'runner', 'nojson', 'schema', 'declined']   // declined: a schema-valid reply that declines the work (route predicate declined_if)
 const CLAUDE_OK = new Set(['sonnet', 'opus', 'haiku'])   // owner rule 2026-10-20: no Fable agents in any workflow
 
-const familyOf = m => (/^codex\//.test(String(m)) ? 'codex' : /^claude\//.test(String(m)) ? 'claude' : 'opencode')
+const familyOf = m => (/^codex\//.test(String(m)) ? 'codex' : /^claude\//.test(String(m)) ? 'claude' : /^cursor\//.test(String(m)) ? 'cursor' : 'opencode')
 function claudeModel(m) {
   const n = String(m).replace(/^claude\//, '')
   if (!CLAUDE_OK.has(n)) throw new Error(`claude model "${m}" is not one of sonnet, opus, haiku (no Fable agents)`)
@@ -49,8 +49,8 @@ const CLAUDE_TOOLS = {
 const DEFAULTS = {
   primary_family: 'opencode', mode: 'fallback', on_refusal: 'halt', retry_on: ['timeout', 'exit', 'runner', 'nojson', 'schema', 'declined'],
   disabled_families: [],
-  chain: { opencode: ['codex', 'claude'], claude: ['codex', 'opencode'], codex: ['claude', 'opencode'] },
-  families: { opencode: { models: {} }, claude: { models: { strong: 'claude/opus', main: 'claude/sonnet', cheap: 'claude/sonnet' } }, codex: { models: { strong: 'codex/default@high', main: 'codex/default@medium', cheap: 'codex/default@low' } } },
+  chain: { opencode: ['codex', 'cursor', 'claude'], claude: ['codex', 'opencode'], codex: ['cursor', 'opencode', 'claude'], cursor: ['codex', 'opencode', 'claude'] },
+  families: { opencode: { models: {} }, claude: { models: { strong: 'claude/opus', main: 'claude/sonnet', cheap: 'claude/sonnet' } }, codex: { models: { strong: 'codex/default@high', main: 'codex/default@medium', cheap: 'codex/default@low' } }, cursor: { models: { strong: 'cursor/default', main: 'cursor/default', cheap: 'cursor/default' } } },
   routes: [], profiles: { metis: { default: 'qt-bare', by_label: [] } }, timeouts_min: {},
 }
 
@@ -189,20 +189,23 @@ function selftest() {
   assert.equal(resolve(withDefaults({ routes: [{ match: '^build$', declined_if: 'no_files' }] }), { label: 'build', role: 'ls-builder' }).declined_if, 'no_files')
   assert.equal(claudeTools(cfg, 'qt-bare'), ''); assert.equal(claudeTools(cfg, 'ls-builder'), 'Read,Write,Edit,Glob,Grep,Bash'); assert.equal(claudeTools(cfg, 'unknown-role'), 'Read,Glob,Grep')
   assert.equal(familyOf('codex/default@high'), 'codex')
+  assert.equal(familyOf('cursor/default'), 'cursor')
   r = resolve(cfg, { role: 'qt-bare', pinned: 'haiku', familyOverride: 'codex' })
-  assert.deepEqual([r.primary, ...r.chain], ['codex/default@low', 'claude/sonnet', 'opencode-go/glm-5.3-flash'])
+  assert.deepEqual([r.primary, ...r.chain], ['codex/default@low', 'cursor/default', 'opencode-go/glm-5.3-flash', 'claude/sonnet'])
   r = resolve(cfg, { role: 'qt-bare', pinned: 'codex/default@high', familyOverride: 'claude' })
   assert.deepEqual([r.primary, ...r.chain], ['claude/opus', 'codex/default@high', 'opencode-go/mimo-v2.6-pro'])
   r = resolve(cfg, { role: 'qt-bare', modeOverride: 'swap' })
-  assert.deepEqual([r.primary, ...r.chain], ['codex/default@medium', 'opencode-go/mimo-v2.6-pro', 'claude/sonnet'])
+  assert.deepEqual([r.primary, ...r.chain], ['codex/default@medium', 'opencode-go/mimo-v2.6-pro', 'cursor/default', 'claude/sonnet'])
   r = resolve(withDefaults({ ...cfg, chain: { opencode: ['claude', 'codex', 'opencode', 'claude'] } }), { role: 'qt-bare' })
   assert.deepEqual(r.chain, ['claude/sonnet', 'codex/default@medium'])
   r = resolve(cfg, { role: 'qt-bare', primaryOverride: 'codex/custom@low' })
-  assert.deepEqual(r.chain, ['claude/sonnet', 'opencode-go/mimo-v2.6-pro'])
+  assert.deepEqual(r.chain, ['cursor/default', 'opencode-go/mimo-v2.6-pro', 'claude/sonnet'])
   r = resolve(withDefaults({ ...cfg, routes: [{ role: 'qt-bare', understudy: 'claude/opus' }] }), { role: 'qt-bare' })
-  assert.deepEqual(r.chain, ['claude/opus', 'codex/default@medium'])
+  assert.deepEqual(r.chain, ['claude/opus', 'codex/default@medium', 'cursor/default'])
   r = resolve(withDefaults({ ...cfg, chain: { opencode: [] } }), { role: 'qt-bare' })
   assert.deepEqual(r.chain, [])
+  r = resolve(cfg, { role: 'qt-bare', familyOverride: 'cursor' })
+  assert.deepEqual([r.primary, ...r.chain], ['cursor/default', 'codex/default@medium', 'opencode-go/mimo-v2.6-pro', 'claude/sonnet'])
   console.log('understudy selftest: all checks passed')
 }
 

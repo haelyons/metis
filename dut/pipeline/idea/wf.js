@@ -2,12 +2,13 @@
 'use strict'
 // Runs a Workflow-tool script (../dist/question_tree_v2.js, ../dist/replay_v2.js, or latent_skeptic's pipeline.js and
 // triage_workflow.js) outside Claude Code: agent() calls use OpenCode Go (oc.js), Claude headless (claude_cli.js),
-// or Codex CLI (codex_cli.js), with an ordered understudy chain (understudy.js).
+// Codex CLI (codex_cli.js), or Cursor Agent (cursor_cli.js), with an ordered understudy chain (understudy.js).
 //
 // usage: node wf.js --args args.json [--script ../dist/question_tree_v2.js] [--name label] [--out dir]
 //                   [--resume <earlier run dir>] [--main provider/model] [--cheap provider/model]
-//                   [--family opencode|claude|codex] [--mode fallback|shadow|swap|primary-only] [--on-refusal halt|understudy]
-//                   [--disable-family opencode|claude|codex] (repeatable; adds to config exclusions for this run)
+//                   [--family opencode|claude|codex|cursor] [--mode fallback|shadow|swap|primary-only] [--on-refusal halt|understudy]
+//                   [--disable-family opencode|claude|codex|cursor] (repeatable; adds to config exclusions for this run)
+//                   [--chat-prefix x-raid] (or args.chat_prefix; opt-in agent chat names)
 //                   [--profile metis|latent_skeptic]
 // args.base "auto" (or missing) puts the pipeline's own files under <run dir>/work; args.cwd is the working directory
 // of file-writing roles when the script writes into an existing folder (latent_skeptic stages).
@@ -45,7 +46,7 @@ if (opt('main')) UCFG.families.opencode.models.strong = UCFG.families.opencode.m
 if (opt('cheap')) UCFG.families.opencode.models.cheap = CHEAP
 UCFG.families.opencode.by_role = { ...(CFG.by_role || {}), ...(UCFG.families.opencode.by_role || {}) }
 const FAMILY = opt('family', null), MODE = opt('mode', null), PROFILE = opt('profile', 'metis')
-for (const [k, v, ok] of [['family', FAMILY, ['opencode', 'claude', 'codex', null]], ['mode', MODE, ['fallback', 'shadow', 'swap', 'primary-only', null]], ['on-refusal', UCFG.on_refusal, ['halt', 'understudy']], ...UCFG.disabled_families.map(f => ['disable-family', f, ['opencode', 'claude', 'codex']])])
+for (const [k, v, ok] of [['family', FAMILY, ['opencode', 'claude', 'codex', 'cursor', null]], ['mode', MODE, ['fallback', 'shadow', 'swap', 'primary-only', null]], ['on-refusal', UCFG.on_refusal, ['halt', 'understudy']], ...UCFG.disabled_families.map(f => ['disable-family', f, ['opencode', 'claude', 'codex', 'cursor']])])
   if (!ok.includes(v)) { console.error(`--${k} must be one of ${ok.filter(Boolean).join(', ')}`); process.exit(2) }
 try { U.resolve({ ...UCFG, routes: [] }, { familyOverride: FAMILY, modeOverride: MODE }) }
 catch (e) { console.error(e.message); process.exit(2) }
@@ -65,12 +66,12 @@ const sh = (cmd, a) => { try { return execFileSync(cmd, a, { encoding: 'utf8', s
 const repo = sh('git', ['-C', __dirname, 'rev-parse', '--show-toplevel'])
 const OCX_CFG = (() => { try { return JSON.parse(fs.readFileSync(path.join(__dirname, 'ocx', 'opencode', 'opencode.json'), 'utf8')) } catch { return {} } })()
 const rolePrompt = role => ((OCX_CFG.agent || {})[role] || {}).prompt || null
-const version = family => UCFG.disabled_families.includes(family) ? null : sh(family, ['--version'])
+const version = family => UCFG.disabled_families.includes(family) ? null : sh(family === 'cursor' ? 'cursor-agent' : family, ['--version'])
 const runInfo = {
   name: NAME, run_dir: RUN, script: SCRIPT, script_sha256: sha(src), args: ARGS,
   models: { main: MAIN, cheap: CHEAP, by_role: UCFG.families.opencode.by_role },
   understudy: { primary_family: FAMILY || UCFG.primary_family, disabled_families: UCFG.disabled_families, mode: MODE || UCFG.mode, on_refusal: UCFG.on_refusal, retry_on: UCFG.retry_on, profile: PROFILE, families: UCFG.families, chain: UCFG.chain, routes: UCFG.routes },
-  opencode_version: version('opencode'), claude_version: version('claude'), codex_version: version('codex'), node: process.version,
+  opencode_version: version('opencode'), claude_version: version('claude'), codex_version: version('codex'), cursor_version: version('cursor'), node: process.version,
   git: repo && { repo, commit: sh('git', ['-C', repo, 'rev-parse', 'HEAD']), dirty: !!sh('git', ['-C', repo, 'status', '--porcelain']) },
   ocx_config: OCX_CFG, started: new Date().toISOString(),
 }
@@ -111,10 +112,14 @@ function snapshot(value, cwd, dir) {
   return kept
 }
 let counter = 0
+const chatGroups = new Map()
+const usage = { calls: 0, tokens_in: 0, tokens_out: 0, unknown: 0 }
+agent.usage = () => ({ ...usage })
+const slug = value => String(value).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'agent'
 
 // one model's attempt at a call: up to two turns (the second repairs a reply that could not be used); the accounting
 // lands on the call's status record and on the model's and family's totals
-async function callModel({ model, role, label, full, opts, dir, cwd, rec, repairable, declinedIf }) {
+async function callModel({ model, role, label, full, opts, dir, cwd, rec, repairable, declinedIf, chat, fallback = false }) {
   const fam = U.familyOf(model)
   const sub = fam !== 'opencode' ? { tools: U.claudeTools(UCFG, role), systemPrompt: rolePrompt(role), addDirs: [ARGS.base, ...(ARGS.cwd ? [ARGS.cwd] : []), ...(ARGS.add_dirs || [])] } : {}
   const timeoutMs = (CFG.timeouts_min[role] || UCFG.timeouts_min[role] || 20) * 60000
@@ -126,7 +131,12 @@ async function callModel({ model, role, label, full, opts, dir, cwd, rec, repair
       const repair = `Your reply could not be used: ${errors.slice(0, 15).join('; ')}. Reply again with only the JSON value asked for, complete.`
       const p = attempt === 1 ? full : (session && fam === 'opencode' ? repair : `${full}\n\n${repair}`)
       const raw = fam === 'claude' ? `claude-${attempt}.json` : fam === 'codex' ? `codex-${attempt}.jsonl` : 'events.jsonl'
-      res = await runner.run({ model, agent: role, role, prompt: p, cwd, session, timeoutMs, rawPath: path.join(dir, raw), httpLogDir: path.join(dir, 'http'), title: label, ...sub })
+      const retry = (opts.retry || 0) + attempt - 1
+      const name = chat && [chat.base, ...(chat.group.count > 1 ? [`${chat.index}of${chat.group.count}`] : []), ...(retry ? [`retry${retry}`] : []), ...(fallback ? ['fb'] : [])].join('-')
+      usage.calls++; usage.unknown++
+      res = await runner.run({ model, agent: role, role, prompt: p, cwd, session, timeoutMs, rawPath: path.join(dir, raw), httpLogDir: path.join(dir, 'http'), title: label, ...(name ? { name } : {}), ...sub })
+      const known = res.tokens_known !== false && Number.isInteger(res.tokens?.input) && Number.isInteger(res.tokens?.output)
+      if (known) { usage.unknown--; usage.tokens_in += res.tokens.input; usage.tokens_out += res.tokens.output }
       session = res.sessionID
       const tok = res.tokens.input + res.tokens.output + res.tokens.reasoning
       rec.ms += res.ms; rec.cost_usd += res.cost; rec.tokens += tok
@@ -166,6 +176,14 @@ async function agent(prompt, opts = {}) {
     return merged
   }
   const n = ++counter
+  const prefix = opt('chat-prefix', opts.chat_prefix || ARGS.chat_prefix)
+  let chat = null
+  if (prefix) {
+    const base = `${prefix}-${slug(label)}`, key = JSON.stringify([opts.phase || status.stage, base])
+    const group = chatGroups.get(key) || { count: 0 }
+    chatGroups.set(key, group)
+    chat = { base, group, index: ++group.count }
+  }
   const role = U.roleFor(UCFG, PROFILE, { label, agentType: opts.agentType })
   const r = U.resolve(UCFG, { label, role, pinned: opts.model, familyOverride: FAMILY, modeOverride: MODE, primaryOverride: opts._model || (rule && rule.model) })
   const { primary, understudy, chain } = r
@@ -187,12 +205,12 @@ async function agent(prompt, opts = {}) {
   fs.writeFileSync(path.join(dir, 'prompt.md'), full)
   const cwd = (FILE_ROLES.has(role) || /^(ls-|triage-)/.test(role)) ? (ARGS.cwd || ARGS.base) : path.join(dir, 'cwd')
   fs.mkdirSync(cwd, { recursive: true })
-  const common = { role, label, full, opts, cwd, rec, repairable: true, declinedIf: r.declined_if }
+  const common = { role, label, full, opts, cwd, rec, repairable: true, declinedIf: r.declined_if, chat }
   let first, second = null, producer = null, value = null, errors = [], attempts = 0
   if (mode === 'shadow' && understudy) {
     const udir = path.join(dir, 'understudy'); fs.mkdirSync(udir, { recursive: true })
     const urec = { ms: 0, cost_usd: 0, tokens: 0 }
-    ;[first, second] = await Promise.all([callModel({ ...common, model: primary, dir }), callModel({ ...common, model: understudy, dir: udir, rec: urec })])
+    ;[first, second] = await Promise.all([callModel({ ...common, model: primary, dir }), callModel({ ...common, model: understudy, dir: udir, rec: urec, fallback: true })])
     const agree = first.kind === 'none' && second.kind === 'none' && JSON.stringify(first.value) === JSON.stringify(second.value)
     const differ = (first.kind === 'none' && second.kind === 'none' && first.value && typeof first.value === 'object' && second.value && typeof second.value === 'object')
       ? [...new Set([...Object.keys(first.value), ...Object.keys(second.value)])].filter(k => JSON.stringify(first.value[k]) !== JSON.stringify(second.value[k])) : null
@@ -217,7 +235,7 @@ async function agent(prompt, opts = {}) {
       const kept = WRITING_ROLES.has(role) ? snapshot(previous.res && (opts.schema ? previous.res.json : previous.res.text), cwd, previousDir) : []
       rec.state = 'understudy'; saveStatus()
       const urec = { ms: 0, cost_usd: 0, tokens: 0 }
-      second = await callModel({ ...common, model, dir: udir, rec: urec })
+      second = await callModel({ ...common, model, dir: udir, rec: urec, fallback: true })
       attempts += second.attempts
       rec.ms += urec.ms; rec.cost_usd += urec.cost_usd; rec.tokens += urec.tokens
       rec.understudy_cost_usd = (rec.understudy_cost_usd || 0) + urec.cost_usd; rec.understudy_ms = (rec.understudy_ms || 0) + urec.ms

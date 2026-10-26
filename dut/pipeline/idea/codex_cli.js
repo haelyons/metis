@@ -6,11 +6,11 @@ const os = require('node:os')
 const path = require('node:path')
 const { parseReply } = require('./claude_cli.js')
 
-function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs }) {
+function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, name: chatName }) {
   return new Promise(resolve => {
     const t0 = Date.now(), limit = timeoutMs || 20 * 60000
     const tokens = { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }
-    const result = { text: '', json: null, jsonError: null, sessionID: null, tokens, cost: 0, tools: 0, ms: 0, errors: [], refusal: false }
+    const result = { text: '', json: null, jsonError: null, sessionID: null, tokens, tokens_known: false, cost: 0, tools: 0, ms: 0, errors: [], refusal: false }
     let tmp, child, timer, killTimer, out = '', err = '', timedOut = false, finished = false
     const finish = spawnError => {
       if (finished) return
@@ -25,6 +25,7 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
           if (e.type === 'thread.started') result.sessionID = e.thread_id || null
           if (e.type === 'turn.completed') {
             const u = e.usage || {}, detail = u.output_tokens_details || {}
+            result.tokens_known ||= Number.isInteger(u.input_tokens) && Number.isInteger(u.output_tokens)
             tokens.input += u.input_tokens || 0; tokens.output += u.output_tokens || 0
             tokens.reasoning += u.reasoning_output_tokens || u.reasoning_tokens || detail.reasoning_tokens || detail.thinking_tokens || 0
             tokens.cache_read += u.cached_input_tokens || 0
@@ -68,7 +69,7 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
       child.on('close', () => finish())
       child.stdin.on('error', () => {})
       // The CLI help has no system/developer instruction flag; the prompt carries the role instructions instead.
-      child.stdin.end(systemPrompt ? `Role instructions:\n${systemPrompt}\n\nTask:\n${prompt}` : prompt)
+      child.stdin.end((chatName ? `[${chatName}]\n` : '') + (systemPrompt ? `Role instructions:\n${systemPrompt}\n\nTask:\n${prompt}` : prompt))
     } catch (e) { finish(e) }
   })
 }

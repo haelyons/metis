@@ -1,5 +1,5 @@
 'use strict'
-// Family dispatcher: OpenCode, Claude headless or Codex CLI, selected by model name.
+// Family dispatcher: OpenCode, Claude headless, Codex CLI or Cursor Agent, selected by model name.
 // WF_STUB=<module> replaces every family with a stub (tools/e2e_wf.js) for runs without network or models.
 const path = require('node:path')
 const { familyOf } = require('./understudy.js')
@@ -9,6 +9,7 @@ async function run(o) {
   if (stub) return stub.run(o)
   if (familyOf(o.model) === 'claude') return require('./claude_cli.js').run(o)
   if (familyOf(o.model) === 'codex') return require('./codex_cli.js').run(o)
+  if (familyOf(o.model) === 'cursor') return require('./cursor_cli.js').run(o)
   return require('./oc.js').run(o)
 }
 async function exportSession(model, sessionID, outPath) {

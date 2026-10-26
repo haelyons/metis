@@ -13,6 +13,9 @@ return (async () => {
   const root = path.resolve(input.run_root)
   const A = path.join(root, 'agent'), S = path.join(root, 'operator'), C = path.join(root, 'control')
   for (const dir of [A, S, C]) mkdirSync(dir, { recursive: true })
+  const { default: raids } = await import(path.resolve('m5/raids.js'))
+  const { raid } = await raids.reserve(input)
+  input.chat_prefix = `x-${raid}`
   // wf.js gives ls-writer this cwd and its write sandbox; control/operator stay script-owned.
   input.cwd = A
 
@@ -144,6 +147,23 @@ Gate: found, at least one independent anchor, available required data, permitted
     }
     return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
   }
+  const harnessRules = 'Run the published build and binary and read measurements from its OUTPUT. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
+  async function runHarness(name, operation, destination, timeout) {
+    const command = `bash harness/${name}`
+    const result = await boxCommand(operation, command, destination, timeout)
+    if (result.error || result.rc === 0) return result
+    let tail
+    try {
+      const lines = readFileSync(result.log, 'utf8').trimEnd().split('\n')
+      tail = lines.slice(-200).join('\n')
+    } catch { return result }
+    const repair = await agent(`${name} failed (rc ${result.rc}). Repair only ${JSON.stringify(path.join(harnessDirectory, name))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this script. Log tail (at most 200 lines):\n${tail}`,
+      { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry: 1 })
+    if (repair == null) return result
+    const uploaded = await uploadHarness([name], destination, executionTimeout('setup'))
+    if (uploaded.error || uploaded.rc !== 0) return { error: 'infra' }
+    return boxCommand(operation, command, destination, timeout)
+  }
   async function reproduce() {
     if (input.stub?.reproduce != null) return stub('reproduce')
     const facts = { ...nullFacts('reproduce'), stock_verified: false, tokens_known: false, gpu_busy_known: false }
@@ -151,6 +171,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     const prompt = `Write a baseline harness from ${JSON.stringify(path.join(A, 'intake'))}/*.
 Never read experiments/, operator/, or control/. Write only under ${JSON.stringify(harnessDirectory)}.
 The operator already started the dev box. Do not start, stop, or access it; the pipeline runs your scripts.
+${harnessRules}
 Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
 - setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
 - run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
@@ -164,34 +185,14 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       if (reply == null) return failure(facts, 'parse')
       const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'profile.sh'], destination, setupTimeout)
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, 'infra')
-      let setup = await boxCommand('setup', 'bash harness/setup.sh', destination, setupTimeout)
+      const setup = await runHarness('setup.sh', 'setup', destination, setupTimeout)
       if (setup.error) {
         facts.stock_verified = setup.rc === 0
         return failure(facts, setup.error)
       }
-      if (setup.rc !== 0) {
-        // One repair only; retain its content log in A and expose no log text to S.
-        let tail
-        try {
-          const lines = readFileSync(setup.log, 'utf8').split('\n')
-          if (lines.at(-1) === '') lines.pop()
-          tail = lines.slice(-200).join('\n')
-        }
-        catch { return failure(facts, 'install') }
-        const repair = await agent(`Setup failed (rc ${setup.rc}). Repair only ${JSON.stringify(path.join(harnessDirectory, 'setup.sh'))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. Never read experiments/, operator/, or control/. Do not run workloads or access the box. This is the only repair attempt. Setup log tail (at most 200 lines):\n${tail}`,
-          { label: 'harness-repair', agentType: 'ls-writer', model: 'sonnet' })
-        if (repair == null) return failure(facts, 'install')
-        const repaired = await uploadHarness(['setup.sh'], destination, setupTimeout)
-        if (repaired.error || repaired.rc !== 0) return failure(facts, 'infra')
-        setup = await boxCommand('setup', 'bash harness/setup.sh', destination, setupTimeout)
-        if (setup.error) {
-          facts.stock_verified = setup.rc === 0
-          return failure(facts, setup.error)
-        }
-      }
       facts.stock_verified = setup.rc === 0
       if (!facts.stock_verified) return failure(facts, 'install')
-      const anchors = await boxCommand('anchors', 'bash harness/run_anchors.sh', destination, anchorsTimeout)
+      const anchors = await runHarness('run_anchors.sh', 'anchors', destination, anchorsTimeout)
       if (anchors.error) return failure(facts, anchors.error)
       if (anchors.rc !== 0) return failure(facts, 'anchor')
       const scorePath = path.join(destination, 'anchors_scored.json')
@@ -217,7 +218,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
     try {
       rmSync(path.join(A, 'profile-packet.json'), { force: true })
       const destination = path.join(A, 'results', 'profile')
-      const result = await boxCommand('profile', 'bash harness/profile.sh', destination, executionTimeout('profile'))
+      const result = await runHarness('profile.sh', 'profile', destination, executionTimeout('profile'))
       if (result.error) return failure(facts, result.error)
       if (result.rc !== 0) return failure(facts, 'parse')
       const directory = path.join(destination, 'out', 'profile')
@@ -332,14 +333,23 @@ Return a short completion acknowledgement; the script reads and seals the file i
   for (const run of [intake, reproduce, profile, seal, propose, implement, evaluate, takeaways]) {
     const stage = run.name
     phase(stage)
+    const started = performance.now(), before = agent.usage?.()
     const result = stopped_at && stage !== 'takeaways'
       ? { status: 'SKIPPED', facts: nullFacts(stage) }
       : await run()
+    const v1 = { ...result.v1, wall_s: (performance.now() - started) / 1000 }
+    const after = agent.usage?.()
+    if (before && after && after.calls > before.calls) {
+      v1.tokens_in = after.tokens_in - before.tokens_in
+      v1.tokens_out = after.tokens_out - before.tokens_out
+      result.facts.tokens_known = after.unknown === before.unknown
+    }
     await exec('python3', ['m5/signatures.py', 'emit', '--dir', S, '--stage', stage, '--status', result.status,
-      '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(result.v1 || {})])
+      '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(v1)])
     stages.push({ stage, status: result.status })
     log(`${stage}: ${result.status}`)
     if (!stopped_at && result.status !== 'PASS') stopped_at = stage
   }
+  await exec('python3', ['m5/operator_takeaway.py', S, '--raid', raid])
   return { stages, stopped_at }
 })()

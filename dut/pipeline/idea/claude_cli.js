@@ -9,13 +9,14 @@ const fs = require('node:fs')
 const { extractJSON } = require('./oc.js')
 const { claudeModel } = require('./understudy.js')
 
-function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs }) {
+function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, name: chatName }) {
   return new Promise(resolve => {
     const name = claudeModel(model)
     // --restricted: no user hooks, plugins or settings reach the call (the caveman hook did), file tools confined to the
     // working directories; --strict-mcp-config: no MCP servers (the full tool list cost ~170k prompt tokens per call);
     // --bare would do both but drops the login. Named tools are re-enabled under --restricted and pre-approved.
     const args = ['-p', '--model', name, '--output-format', 'json', '--no-session-persistence', '--restricted', '--strict-mcp-config', '--permission-mode', 'dontAsk', '--tools', tools == null ? '' : tools]
+    if (chatName) args.push('--name', chatName)
     if (tools) args.push('--allowedTools', tools)
     for (const d of addDirs || []) args.push('--add-dir', d)
     if (systemPrompt) args.push('--append-system-prompt', systemPrompt)
@@ -44,12 +45,12 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
       const u = (d && d.usage) || {}
       const tokens = { input: u.input_tokens || 0, output: u.output_tokens || 0, reasoning: ((u.output_tokens_details || {}).thinking_tokens) || 0, cache_read: u.cache_read_input_tokens || 0, cache_write: u.cache_creation_input_tokens || 0 }
       const { json, jsonError } = parseReply(text)
-      resolve({ text, json, jsonError, sessionID: d && d.session_id || null, tokens, cost: (d && d.total_cost_usd) || 0, tools: Math.max(0, ((d && d.num_turns) || 1) - 1), ms: Date.now() - t0, errors, refusal, turns: d && d.num_turns })
+      resolve({ text, json, jsonError, sessionID: d && d.session_id || null, tokens, tokens_known: Number.isInteger(u.input_tokens) && Number.isInteger(u.output_tokens), cost: (d && d.total_cost_usd) || 0, tools: Math.max(0, ((d && d.num_turns) || 1) - 1), ms: Date.now() - t0, errors, refusal, turns: d && d.num_turns })
     })
     child.stdin.on('error', () => {})
     child.stdin.end(prompt)
   })
-  function fail(msg, t0) { return { text: '', json: null, jsonError: null, sessionID: null, tokens: { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }, cost: 0, tools: 0, ms: Date.now() - t0, errors: [msg], refusal: false } }
+  function fail(msg, t0) { return { text: '', json: null, jsonError: null, sessionID: null, tokens: { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }, tokens_known: false, cost: 0, tools: 0, ms: Date.now() - t0, errors: [msg], refusal: false } }
 }
 
 function parseReply(text) {

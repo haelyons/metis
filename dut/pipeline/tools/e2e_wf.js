@@ -12,7 +12,7 @@ const fs = require('node:fs'), path = require('node:path'), os = require('node:o
 const ROOT = path.join(__dirname, '..')
 
 // ---- the stub runner: outcome by family and label ----
-const fam = m => (/^codex\//.test(m) ? 'codex' : /^claude\//.test(m) ? 'claude' : 'opencode')
+const fam = m => (/^codex\//.test(m) ? 'codex' : /^cursor\//.test(m) ? 'cursor' : /^claude\//.test(m) ? 'claude' : 'opencode')
 const ok = (json, text) => ({ text: text || JSON.stringify(json), json, jsonError: null, sessionID: 'stub', tokens: { input: 10, output: 5, reasoning: 0 }, cost: 0.001, tools: 0, ms: 5, errors: [], refusal: false })
 const bad = (errors, refusal) => ({ text: '', json: null, jsonError: null, sessionID: 'stub', tokens: { input: 10, output: 0, reasoning: 0 }, cost: 0.001, tools: 0, ms: 5, errors, refusal: !!refusal })
 const stub = {
@@ -106,15 +106,16 @@ for (const mode of modes) {
     check(res.z && /main\.js/.test(res.z.runner_py) && und.some(x => x.label === 'zeta' && x.kind === 'declined'), 'zeta: a schema-valid stop report naming unwritten files is kind declined and hands over; a description naming an existing file is accepted')
     const epsMeta = JSON.parse(fs.readFileSync(path.join(out, 'agents', '0005-eps', 'meta.json'), 'utf8'))
     check(epsMeta.attempts === 2, 'schema failure received a repair turn')
-    check(res.h && res.h.v === 'eta by claude', 'eta answered by claude after opencode and codex failed')
+    check(res.h && res.h.v === 'eta by cursor', 'eta answered by cursor after opencode and codex failed')
+    check(res.h && /eta by cursor/.test(res.h.v) && und.filter(x => x.label === 'eta').some(x => x.to === 'cursor' && x.ok), 'label failing on opencode and codex is answered by cursor')
     const etaRows = und.filter(x => x.label === 'eta')
-    check(etaRows.length === 2 && etaRows[0].from === 'opencode' && etaRows[0].to === 'codex' && !etaRows[0].ok && etaRows[1].from === 'codex' && etaRows[1].to === 'claude' && etaRows[1].ok && etaRows[1].kind === 'runner', 'ordered family handovers journaled separately')
+    check(etaRows.length === 2 && etaRows[0].from === 'opencode' && etaRows[0].to === 'codex' && !etaRows[0].ok && etaRows[1].from === 'codex' && etaRows[1].to === 'cursor' && etaRows[1].ok && etaRows[1].kind === 'runner', 'ordered family handovers journaled separately')
     const totals = JSON.parse(fs.readFileSync(path.join(out, 'status.json'), 'utf8'))
-    check(totals.by_family.opencode.calls === 8 && totals.by_family.codex.calls === 4 && totals.by_family.claude.calls === 1 && totals.substitutions === 4, 'totals include all three families; substitutions count answered calls')
+    check(totals.by_family.opencode.calls === 8 && totals.by_family.codex.calls === 4 && totals.by_family.cursor.calls === 1 && totals.substitutions === 4, 'totals include all three families; substitutions count answered calls')
     check(totals.calls.find(x => / eta$/.test(x.id)).attempts === 4, 'attempt count includes all three families (no repair turn after a usage-limit error)')
     const failed = J.filter(x => x.type === 'failed'); check(failed.length === 1 && failed[0].kind === 'refusal', 'one failed row of kind refusal')
     const md = fs.readFileSync(path.join(out, 'UNDERSTUDY.md'), 'utf8'); check(/refusals 1/.test(md) && /\| beta \|/.test(md), 'UNDERSTUDY.md written with the refusal count and the beta row')
-    check(md.split('\n').some(l => /\| eta \|/.test(l) && /codex\/default@medium \(runner\), claude\/sonnet \(ok\)/.test(l)), 'report preserves both handovers')
+    check(md.split('\n').some(l => /\| eta \|/.test(l) && /codex\/default@medium \(runner\), cursor\/default \(ok\)/.test(l)), 'report preserves both handovers')
   }
   if (mode === 'refusal') check(res.c && /gamma by codex/.test(res.c.v) && und.some(x => x.label === 'gamma' && x.kind === 'refusal'), 'gamma handed to the understudy when on_refusal is understudy')
   if (mode === 'shadow' || mode === 'writing') {
@@ -133,12 +134,12 @@ for (const mode of modes) {
   if (mode === 'primary-only') check(und.length === 0 && res.b === null && res.c === null && res.e === null && res.z === null && res.h === null, 'no understudy: failed calls are null')
   if (mode === 'codex' || mode === 'swap') {
     check(started.every(s => s.model.startsWith('codex/')), 'every primary is codex')
-    check(res.h && res.h.v === 'eta by claude', 'codex failure reaches claude')
-    check(und.filter(x => x.label === 'eta').map(x => x.to).join() === (mode === 'swap' ? 'opencode,claude' : 'claude'), 'swap retains original primary before remaining chain')
+    check(res.h && res.h.v === 'eta by cursor', 'codex failure reaches cursor')
+    check(und.filter(x => x.label === 'eta').map(x => x.to).join() === (mode === 'swap' ? 'opencode,cursor' : 'cursor'), 'swap retains original primary before remaining chain')
   }
   if (mode === 'exhausted' || mode === 'chain-refusal') {
     const etaRows = und.filter(x => x.label === 'eta')
-    check(res.h === null && etaRows.length === (mode === 'exhausted' ? 2 : 1), 'chain stops when exhausted or refused')
+    check(res.h === null && etaRows.length === (mode === 'exhausted' ? 3 : 1), 'chain stops when exhausted or refused')
     const status = JSON.parse(fs.readFileSync(path.join(out, 'status.json'), 'utf8'))
     check(status.calls.find(x => / eta$/.test(x.id)).state === (mode === 'exhausted' ? 'failed' : 'refused'), 'final failure state reflects last family')
   }

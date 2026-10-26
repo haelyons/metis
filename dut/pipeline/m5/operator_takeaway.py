@@ -8,12 +8,12 @@ else:
     from signatures import FACTS, signatures, validate
 
 
-def takeaway(records):
+def takeaway(records, raid=None):
     records = list(records)
     if any(validate(record) for record in records):
         raise ValueError("invalid signature")
     stages = {r["signature"]["stage"]: r for r in records if r["signature"]["kind"] == "stage"}
-    lines = ["# Operator takeaway", "",
+    lines = ["# Operator takeaway" + (f" — raid: {raid}" if raid is not None else ""), "",
              "| Stage | Status | Gate flags | Vote share | Speedup published | Speedup tuned | Expected speedup | Cost ratio | Prediction ratio |",
              "|---|---|---|---|---|---|---|---|---|"]
     columns = ("vote_share", "speedup_published", "speedup_tuned", "expected_speedup",
@@ -52,9 +52,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("S_dir")
     parser.add_argument("--out", type=Path)
+    parser.add_argument("--raid")
     args = parser.parse_args()
     try:
-        page = takeaway(signatures(args.S_dir))
+        page = takeaway(signatures(args.S_dir), args.raid)
         output = args.out if args.out is not None else Path(args.S_dir) / "OPERATOR_TAKEAWAY.md"
         output.write_text(page)
     except (OSError, ValueError):

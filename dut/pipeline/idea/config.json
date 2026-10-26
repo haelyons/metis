@@ -102,6 +102,13 @@
           "main": "codex/default@medium",
           "cheap": "codex/default@low"
         }
+      },
+      "cursor": {
+        "models": {
+          "strong": "cursor/default",
+          "main": "cursor/default",
+          "cheap": "cursor/default"
+        }
       }
     },
     "routes": [
@@ -142,6 +149,7 @@
     "chain": {
       "opencode": [
         "codex",
+        "cursor",
         "claude"
       ],
       "claude": [
@@ -149,8 +157,14 @@
         "opencode"
       ],
       "codex": [
-        "claude",
-        "opencode"
+        "cursor",
+        "opencode",
+        "claude"
+      ],
+      "cursor": [
+        "codex",
+        "opencode",
+        "claude"
       ]
     }
   }

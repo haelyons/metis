@@ -44,15 +44,30 @@ n=0
 n=$((n + 1))
 printf '%s\\n' "$n" > .setup-attempts
 printf '%s\\n' '${SENTINEL}' > out/setup-private.txt
-if (( n <= ${failures} )); then exit 7; fi
+${failureLog('setup', failures)}
 printf '%s\\n' pinned > baseline-published/pin
 printf '%s\\n' representative > data/input`)
 }
+function failureLog(name, failures) {
+  return `if (( n <= ${failures} )); then
+  for ((i=1; i<=240; i++)); do printf '%s:%s:%s\\n' '${SENTINEL}' '${name}' "$i"; done
+  exit 7
+fi`
+}
+function failureScript(name, failures) {
+  return `printf '%s\\n' '${SENTINEL}:${name}'
+n=0
+[[ ! -f .${name}-attempts ]] || read -r n < .${name}-attempts
+n=$((n + 1))
+printf '%s\\n' "$n" > .${name}-attempts
+${failureLog(name, failures)}\n`
+}
 module.exports = {
-  async run({ title, prompt }) {
+  async run({ title, prompt, name }) {
     const root = process.env.M5_REPRODUCE_ROOT
     const config = JSON.parse(process.env.M5_REPRODUCE_CONFIG)
-    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt }) + '\n')
+    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name }) + '\n')
+    if (config.agentDelayMs) await new Promise(resolve => setTimeout(resolve, config.agentDelayMs))
     const agent = path.join(root, 'agent')
     let facts = { v: `${title} stub` }
     if (title === 'intake') {
@@ -67,14 +82,18 @@ module.exports = {
       for (const [name, value] of Object.entries(fixtures)) writeJSON(path.join(agent, 'intake', `${name}.json`), value)
       fs.writeFileSync(path.join(agent, 'intake', 'brief.md'), 'Synthetic contract fixture.\n')
     }
-    if (title === 'harness' || title === 'harness-repair') {
+    if (['harness', 'harness-repair', 'anchors-repair', 'profile-repair'].includes(title)) {
       const harness = path.join(agent, 'harness')
-      setupScript(harness, config.setupFailures)
-      if (title === 'harness') {
-        script(path.join(harness, 'run_anchors.sh'), `test -f baseline-published/pin\ntest -f data/input\nmkdir -p out\nprintf '%s\\n' '${SENTINEL}:anchors'\n` +
+      // A successful repair must replace the script; rerunning the original cannot pass.
+      const failuresFor = field => config[field] && (title === 'harness' || config[field] >= 2) ? 999 : 0
+      if (title === 'harness' || title === 'harness-repair') setupScript(harness, failuresFor('setupFailures'))
+      if (title === 'harness' || title === 'anchors-repair') {
+        script(path.join(harness, 'run_anchors.sh'), failureScript('anchors', failuresFor('anchorsFailures')) + `test -f baseline-published/pin\ntest -f data/input\nmkdir -p out\nprintf '%s\\n' '${SENTINEL}:anchors'\n` +
           (config.missingMeasured ? 'rm -f out/anchors_measured.json\n' : emitJSON('out/anchors_measured.json', config.measured)) +
           `printf '%s\\n' '${SENTINEL}' > out/anchors-private.txt`)
-        script(path.join(harness, 'profile.sh'), `test -f baseline-published/pin\ntest -f out/anchors_measured.json\nmkdir -p out/profile\nprintf '%s\\n' '${SENTINEL}:profile'\n` +
+      }
+      if (title === 'harness' || title === 'profile-repair') {
+        script(path.join(harness, 'profile.sh'), failureScript('profile', failuresFor('profileFailures')) + `test -f baseline-published/pin\ntest -f out/anchors_measured.json\nmkdir -p out/profile\nprintf '%s\\n' '${SENTINEL}:profile'\n` +
           emitJSON('out/profile/stages.json', config.timings.map(row => ({ ...row, private_content: SENTINEL }))) +
           emitJSON('out/profile/total_wall_s.json', { total_wall_s: config.total }) +
           `printf '%s\\n' '${SENTINEL}' > out/profile/raw-telemetry.txt`)
@@ -94,6 +113,13 @@ if (require.main !== module) return
 let failures = 0
 let checks = 0
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_reproduce_'))
+// Run a copied pipeline because SCHEMAS.md does not currently document a ledger override.
+// All relative paths and module paths resolve inside this temporary checkout.
+const pipeline = path.join(scratch, 'pipeline')
+for (const directory of ['m5', 'idea', 'measure']) fs.cpSync(path.join(ROOT, directory), path.join(pipeline, directory), {
+  recursive: true, filter: source => path.basename(source) !== 'experiments',
+})
+fs.writeFileSync(path.join(pipeline, 'm5', 'raids_used.jsonl'), '')
 function check(label, test) {
   checks++
   try { test(); console.log(`ok ${label}`) }
@@ -111,7 +137,7 @@ function noLeak(directory) {
 }
 async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null) {
   const root = path.join(scratch, name)
-  const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, setupFailures: 0, ...overrides }
+  const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, setupFailures: 0, anchorsFailures: 0, profileFailures: 0, ...overrides }
   const args = path.join(root, 'control', 'args.json')
   writeJSON(args, { run_root: root, tag: 'reproduce-test' })
   const box = path.join(root, 'box')
@@ -126,9 +152,9 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   let child
   try {
     child = await new Promise(resolve => {
-      const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
+      const proc = spawn(process.execPath, [path.join(pipeline, 'idea', 'wf.js'), '--script', path.join(pipeline, 'm5', 'pipeline.js'),
         '--args', args, '--out', path.join(root, 'agent', 'wf'), '--disable-family', 'claude'], {
-        cwd: ROOT, timeout: 240000, stdio: ['ignore', stdout, stderr], env: { ...process.env,
+        cwd: pipeline, timeout: 240000, stdio: ['ignore', stdout, stderr], env: { ...process.env,
           WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(config), M5_REPRODUCE_CALLS: callsFile,
           BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch') },
       })
@@ -156,7 +182,17 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   })
   check(`${name}: one harness call and bounded repair`, () => {
     assert.equal(calls.filter(call => call.label === 'harness').length, 1)
-    assert.equal(calls.filter(call => call.label === 'harness-repair').length, config.setupFailures ? 1 : 0)
+    for (const [label, needed] of [['harness-repair', config.setupFailures],
+      ['anchors-repair', config.setupFailures < 2 && config.anchorsFailures],
+      ['profile-repair', stoppedAt !== 'reproduce' && config.profileFailures]]) {
+      assert.equal(calls.filter(call => call.label === label).length, needed ? 1 : 0, label)
+      for (const call of calls.filter(call => call.label === label)) {
+        assert.match(call.name, /-retry1$/, label)
+        const script = { 'harness-repair': 'setup', 'anchors-repair': 'anchors', 'profile-repair': 'profile' }[label]
+        assert.ok(call.prompt.includes(`${SENTINEL}:${script}:240`), 'last failure log line missing')
+        assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:1\n`), 'unbounded failure log')
+      }
+    }
   })
   check(`${name}: receipts under C/receipts`, () => {
     const directory = path.join(root, 'control', 'receipts')
@@ -177,11 +213,17 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
     const firstSetup = receipts.findIndex(receipt => receipt.operation === 'setup')
     assert.ok(firstSetup >= 1, 'no harness upload before setup')
     assert.ok(receipts.slice(0, firstSetup).every(receipt => receipt.operation === 'upload'))
-    assert.equal(count('upload'), firstSetup + (config.setupFailures ? 1 : 0))
+    assert.equal(count('upload'), firstSetup + (config.setupFailures ? 1 : 0) + (config.setupFailures < 2 && config.anchorsFailures ? 1 : 0) + (stoppedAt !== 'reproduce' && config.profileFailures ? 1 : 0))
     if (config.setupFailures) assert.equal(receipts[firstSetup + 1].operation, 'upload')
     assert.equal(count('setup'), config.setupFailures ? 2 : 1)
-    assert.equal(count('anchors'), config.setupFailures >= 2 ? 0 : 1)
-    assert.equal(count('profile'), stoppedAt === 'reproduce' ? 0 : 1)
+    assert.equal(count('anchors'), config.setupFailures >= 2 ? 0 : config.anchorsFailures ? 2 : 1)
+    assert.equal(count('profile'), stoppedAt === 'reproduce' ? 0 : config.profileFailures ? 2 : 1)
+    for (const [operation, failedAttempts] of [['anchors', config.anchorsFailures], ['profile', config.profileFailures]]) {
+      const attempts = receipts.filter(receipt => receipt.operation === operation)
+      if (attempts.length) assert.deepEqual(attempts.map(receipt => receipt.rc),
+        failedAttempts >= 2 ? [7, 7] : failedAttempts ? [7, 0] : [0])
+      for (let i = 1; i < attempts.length; i++) assert.equal(receipts[receipts.indexOf(attempts[i]) - 1].operation, 'upload')
+    }
     assert.deepEqual(receipts.filter(receipt => receipt.operation === 'setup').map(receipt => receipt.rc),
       config.setupFailures >= 2 ? [7, 7] : config.setupFailures ? [7, 0] : [0])
   })
@@ -190,13 +232,27 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
     assert.ok(fs.readdirSync(results).filter(file => file.endsWith('.log')).some(file => fs.readFileSync(path.join(results, file), 'utf8').includes(SENTINEL)), 'sentinel absent from fetched logs')
     noLeak(path.join(root, 'operator'))
   })
+  check(`${name}: per-stage elapsed time and reported usage`, () => {
+    for (const row of stages) {
+      assert.ok(Number.isFinite(row.signature.wall_s) && row.signature.wall_s >= 0, row.signature.stage)
+      const labels = { intake: ['intake'], reproduce: ['harness', 'harness-repair', 'anchors-repair'], profile: ['profile-repair'], seal: ['seal'] }[row.signature.stage]
+      if (labels && row.signature.status !== 'SKIPPED') {
+        const count = calls.filter(call => labels.includes(call.label)).length
+        assert.equal(row.signature.tokens_in, count * 10, row.signature.stage)
+        assert.equal(row.signature.tokens_out, count * 5, row.signature.stage)
+        assert.equal(row.facts.tokens_known, count > 0, row.signature.stage)
+        if (count && config.agentDelayMs) assert.ok(row.signature.wall_s >= count * config.agentDelayMs / 1000 - 0.1, row.signature.stage)
+      }
+      if (row.signature.status === 'SKIPPED' && config.agentDelayMs) assert.ok(row.signature.wall_s < config.agentDelayMs / 1000, 'skip reused earlier duration')
+    }
+  })
   return { root, config, stage }
 }
 function reproduceFacts(name, run, passed, total, stock = true) {
   check(`${name}: reproduce facts and validity`, () => {
     const row = run.stage('reproduce')
     assert.deepEqual(row.facts, { anchors_passed: passed, anchors_total: total, stock_verified: stock,
-      tuned_control_valid: null, tokens_known: false, gpu_busy_known: false })
+      tuned_control_valid: null, tokens_known: true, gpu_busy_known: false })
     if (total !== null) assert.equal(row.signature.run_valid, passed === total)
   })
 }
@@ -213,7 +269,7 @@ function profileFacts(name, run, fraction) {
     assert.equal(packet.timed_fraction, fraction)
     assert.equal(packet.gpu_telemetry, timings.some(row => row.gpu_s !== null))
     assert.deepEqual(run.stage('profile').facts, { profile_complete: true, timed_fraction: fraction,
-      gpu_telemetry: packet.gpu_telemetry, tokens_known: false, gpu_busy_known: false })
+      gpu_telemetry: packet.gpu_telemetry, tokens_known: !!run.config.profileFailures, gpu_busy_known: false })
     assert.ok(fs.readFileSync(path.join(input, 'raw-telemetry.txt'), 'utf8').includes(SENTINEL))
   })
 }
@@ -313,7 +369,7 @@ async function cliTests() {
 async function main() {
   try {
     await cliTests()
-    const happy = await runCase('happy')
+    const happy = await runCase('happy', { agentDelayMs: 1100 })
     reproduceFacts('happy', happy, 2, 2)
     profileFacts('happy', happy, 0.95)
     check('happy: scored anchor file matches measurements', () => {
@@ -333,6 +389,20 @@ async function main() {
     reproduceFacts('setup-repaired', repaired, 2, 2)
     const install = await runCase('setup-twice-failed', { setupFailures: 2 }, 'reproduce', 'install')
     reproduceFacts('setup-twice-failed', install, null, null, false)
+    const anchorsRepaired = await runCase('anchors-repaired', { anchorsFailures: 1 })
+    reproduceFacts('anchors-repaired', anchorsRepaired, 2, 2)
+    const anchorsFailed = await runCase('anchors-twice-failed', { anchorsFailures: 2, agentDelayMs: 1100 }, 'reproduce', 'anchor')
+    reproduceFacts('anchors-twice-failed', anchorsFailed, null, null)
+    const profileRepaired = await runCase('profile-repaired', { profileFailures: 1 })
+    profileFacts('profile-repaired', profileRepaired, 0.95)
+    const profileFailed = await runCase('profile-twice-failed', { profileFailures: 2 }, 'profile', 'parse')
+    check('profile-twice-failed: incomplete profile facts', () => {
+      assert.equal(profileFailed.stage('profile').facts.profile_complete, false)
+      assert.equal(profileFailed.stage('profile').facts.tokens_known, true)
+    })
+    const independent = await runCase('each-script-repaired', { setupFailures: 1, anchorsFailures: 1, profileFailures: 1 })
+    reproduceFacts('each-script-repaired', independent, 2, 2)
+    profileFacts('each-script-repaired', independent, 0.95)
     const missing = await runCase('missing-measured', { missingMeasured: true }, 'reproduce', 'parse')
     reproduceFacts('missing-measured', missing, null, null)
     const low = await runCase('low-coverage', { timings: [{ stage: 'cpu', wall_s: 8.9, gpu_s: null }] }, 'profile', 'parse')

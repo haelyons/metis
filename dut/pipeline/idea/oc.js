@@ -28,12 +28,12 @@ async function run(o) {
   try { return await runOnce({ ...o, env: { OPENCODE_CONFIG_CONTENT: extra }, onStop: f => { stop = f } }) } finally { await proxy.close() }
 }
 
-function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, title, onStop }) {
+function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, title, name, onStop }) {
   return new Promise(resolve => {
     const args = ['run', '--pure', '--format', 'json', '-m', model, '--agent', agent]
     if (session) args.push('--session', session)
     // a given title skips OpenCode's extra title-generation call (seen in the proxy logs)
-    args.push('--title', title || 'qt')
+    args.push('--title', name || title || 'qt')
     // argv strings stop at 128 KiB on Linux: a long prompt goes in an attached file
     if (Buffer.byteLength(prompt) > 100000) {
       const f = path.join(cwd, `.prompt-${process.pid}-${Date.now()}.md`)
@@ -47,7 +47,7 @@ function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, 
     const raw = rawPath ? fs.createWriteStream(rawPath, { flags: 'a' }) : null
     let buf = '', err = '', sessionID = session || null, steps = [], cur = [], tools = 0, errors = []
     const tokens = { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }
-    let cost = 0
+    let cost = 0, tokens_known = false
     const onLine = line => {
       if (!line.trim()) return
       raw && raw.write(line + '\n')
@@ -61,6 +61,7 @@ function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, 
       else if (o.type === 'step_finish') {
         if (cur.length) steps.push(cur.join(''))
         const t = p.tokens || {}
+        tokens_known ||= Number.isInteger(t.input) && Number.isInteger(t.output)
         tokens.input += t.input || 0; tokens.output += t.output || 0; tokens.reasoning += t.reasoning || 0
         tokens.cache_read += (t.cache || {}).read || 0; tokens.cache_write += (t.cache || {}).write || 0
         cost += p.cost || 0
@@ -82,7 +83,7 @@ function runOnce({ model, agent, prompt, cwd, session, timeoutMs, rawPath, env, 
       let json = null, jsonError = null
       if (meant) { try { json = JSON.parse(whole) } catch (e) { jsonError = parseError(e, whole) } }
       else json = extractJSON(text)
-      resolve({ text, json, jsonError, sessionID, tokens, cost, tools, ms: Date.now() - t0, errors })
+      resolve({ text, json, jsonError, sessionID, tokens, tokens_known, cost, tools, ms: Date.now() - t0, errors })
     })
   })
 }

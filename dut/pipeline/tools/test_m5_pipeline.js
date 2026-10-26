@@ -79,20 +79,29 @@ async function runCase(name, failedStage, launch = false) {
   const stderrFile = path.join(runRoot, 'test-stderr.log')
   const stdout = fs.openSync(stdoutFile, 'w')
   const stderr = fs.openSync(stderrFile, 'w')
-  async function execute(executable, command, cwd = ROOT) {
+  async function execute(executable, command, cwd = ROOT, envExtra = {}) {
     return new Promise(resolve => {
       const childProcess = spawn(executable, command, {
         cwd,
         timeout: 30000,
         stdio: ['ignore', stdout, stderr],
-        env: { ...process.env, WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js') },
+        env: { ...process.env, WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js'), ...envExtra },
       })
       let error
       childProcess.on('error', value => { error = value })
       childProcess.on('close', (status, signal) => resolve({ status, signal, error }))
     })
   }
-  let child = await execute(process.execPath, command)
+  const realLedger = path.join(ROOT, 'm5', 'raids_used.jsonl')
+  const realBefore = launch ? (fs.existsSync(realLedger) ? fs.readFileSync(realLedger) : null) : null
+  if (launch) {
+    check(`${name}: real m5/raids_used.jsonl readable before launch`, () => {
+      assert.ok(realBefore === null || Buffer.isBuffer(realBefore))
+    })
+  }
+  // launch.js reserves via the shared ledger for real runs; redirect to a temp file under R.
+  const launchEnv = launch ? { M5_RAIDS_LEDGER: path.join(runRoot, 'test-raids_used.jsonl') } : {}
+  let child = await execute(process.execPath, command, ROOT, launchEnv)
   if (launch && child.status === 0 && !child.error) {
     // The launcher has no stub option. Set overrides in its generated args,
     // then execute its recorded command against the frozen pipeline copy.
@@ -101,6 +110,11 @@ async function runCase(name, failedStage, launch = false) {
     const recordedCommand = fs.readFileSync(path.join(out, 'RUN.md'), 'utf8').match(/^Command: (.+)$/m)
     assert.ok(recordedCommand, 'launcher must record its workflow command')
     child = await execute('/bin/sh', ['-c', recordedCommand[1]], path.join(out, 'pipeline'))
+  }
+  if (launch) {
+    check(`${name}: real m5/raids_used.jsonl byte-identical after launch`, () => {
+      assert.deepEqual(fs.existsSync(realLedger) ? fs.readFileSync(realLedger) : null, realBefore)
+    })
   }
   fs.closeSync(stdout)
   fs.closeSync(stderr)

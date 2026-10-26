@@ -4,7 +4,7 @@
 const fs = require('node:fs'), path = require('node:path'), os = require('node:os')
 const { spawnSync } = require('node:child_process')
 const ROOT = path.join(__dirname, '..')
-const family = model => model.split('/')[0] === 'claude' ? 'claude' : model.startsWith('codex/') ? 'codex' : 'opencode'
+const family = model => model.startsWith('codex/') ? 'codex' : model.startsWith('cursor/') ? 'cursor' : model.split('/')[0] === 'claude' ? 'claude' : 'opencode'
 module.exports = {
   async run({ model, title, prompt }) {
     const f = family(model)
@@ -78,8 +78,8 @@ function exhausted(name, options) {
   run(name, { labels: ['exhausted'], ...options }, ({ child, calls, result }) => {
     check(child.status === 0, `${name}: workflow completed`)
     check(result && result.exhausted === null, `${name}: enabled chain exhausted without an answer`)
-    check(['opencode', 'codex'].every(f => calls.some(c => family(c.model) === f)), `${name}: both enabled families attempted`)
-    check(['opencode', 'codex'].every(f => calls.some(c => family(c.model) === f && c.repair)), `${name}: schema failures exercised repair turns`)
+    check(['opencode', 'codex', 'cursor'].every(f => calls.some(c => family(c.model) === f)), `${name}: all enabled families attempted`)
+    check(['opencode', 'codex', 'cursor'].every(f => calls.some(c => family(c.model) === f && c.repair)), `${name}: schema failures exercised repair turns`)
     check(calls.length > 0 && calls.every(c => !c.model.startsWith('claude/')), `${name}: no claude dispatch, including repairs and fallback`)
   })
 }
@@ -94,7 +94,7 @@ run('(c) disabled primary', { configure: cfg => {
   check(calls.length === 1 && family(calls[0].model) === 'codex', '(c): disabled primary never dispatched')
 })
 run('(d) all disabled', { configure: cfg => {
-  cfg.understudy.disabled_families = ['opencode', 'codex', 'claude']
+  cfg.understudy.disabled_families = ['opencode', 'codex', 'claude', 'cursor']
 } }, ({ child, calls, output }) => {
   check(child.status !== null && child.status !== 0, '(d): workflow fails when no family is enabled')
   check(/runner error: family disabled\b/.test(output), '(d): clear error has required family-disabled prefix')
@@ -107,7 +107,7 @@ run('(e) usage limit', { labels: ['usage-limit'] }, ({ child, calls, result }) =
 })
 run('shadow exclusion', { flags: ['--family', 'codex', '--mode', 'shadow', '--disable-family', 'claude'] }, ({ child, calls, result }) => {
   check(child.status === 0 && result && result.answer && result.answer.v === 'answer by codex', 'shadow: primary answers')
-  check(calls.length === 2 && calls.map(c => family(c.model)).sort().join() === 'codex,opencode', 'shadow: enabled shadow replaces disabled claude; no claude dispatch')
+  check(calls.length === 2 && calls.map(c => family(c.model)).sort().join() === 'codex,cursor', 'shadow: first enabled understudy shadows; no claude dispatch')
 })
 run('repeatable CLI exclusion', { flags: ['--family', 'claude', '--disable-family', 'claude', '--disable-family', 'codex'] }, ({ child, calls, result }) => {
   check(child.status === 0 && result && result.answer && result.answer.v === 'answer by opencode', 'repeatable CLI: skips disabled primary and disabled first fallback')

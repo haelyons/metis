@@ -108,6 +108,12 @@ if (kind === 'measure') {
 }
 
 // the copy: everything but node_modules; OpenCode's plugin modules are linked, not copied
+// m5 reserves against the owner's ledger, rather than a frozen per-run copy.
+if (M5) {
+  const ai = rest.indexOf('--raid')
+  // The launcher remains synchronous; the reservation CLI also serialises direct wf runs.
+  execFileSync(process.execPath, [path.join(PIPE, 'm5', 'raids.js'), ROOT, ...(ai >= 0 ? [rest[ai + 1]] : []), ...(rest.includes('--blind') ? ['--blind'] : [])], { stdio: 'inherit' })
+}
 fs.cpSync(PIPE, COPY, { recursive: true, filter: s => !s.split(path.sep).some(p => p === 'node_modules' || p === 'experiments') && !/\.log$/.test(s) })
 const mods = path.join(PIPE, 'idea', 'ocx', 'opencode', 'node_modules')
 if (fs.existsSync(mods)) fs.symlinkSync(mods, path.join(COPY, 'idea', 'ocx', 'opencode', 'node_modules'))
@@ -127,8 +133,9 @@ if (kind === 'frame') cmd = node('frame.js', [...extra, '--out', path.join(RUN, 
 if (M5) {
   const bi = rest.indexOf('--brief'), brief = bi >= 0 ? path.resolve(rest[bi + 1]) : undefined
   const tag = path.basename(ROOT)
-  fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify({ run_root: ROOT, brief, tag }, null, 1))
-  const flags = extra.filter((x, i, xs) => !['--stage', '--run-root', '--brief'].includes(x) && !['--stage', '--run-root', '--brief'].includes(xs[i - 1]))
+  const raid = JSON.parse(fs.readFileSync(path.join(ROOT, 'control', 'raid.json'), 'utf8'))
+  fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify({ run_root: ROOT, brief, tag, raid: raid.raid, blind: raid.blind }, null, 1))
+  const flags = extra.filter((x, i, xs) => x !== '--blind' && !['--stage', '--run-root', '--brief', '--raid'].includes(x) && !['--stage', '--run-root', '--brief', '--raid'].includes(xs[i - 1]))
   cmd = node('wf.js', ['--script', path.join(COPY, 'm5', 'pipeline.js'), '--args', path.join(RUN, 'args.json'), '--name', `${tag}-m5`, '--out', RUN, '--family', 'codex', '--mode', 'fallback', '--on-refusal', 'halt', '--disable-family', 'claude', ...flags])
 }
 if (kind === 'stage' && !M5) {
