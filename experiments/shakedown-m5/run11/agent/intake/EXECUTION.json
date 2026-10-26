@@ -1,0 +1,84 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "source": "brief.md, final scale revision",
+    "selection_rule": "One fixed representative scale. Set host nOptions=1024*1024 and rebuild once. No scale search or PATH_N doubling.",
+    "printed_configuration_must_match": true
+  },
+  "anchor_configuration": {
+    "options": 8192,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "source": "brief.md; upstream published case",
+    "purpose": "Validate published anchors separately from revised representative timing scale."
+  },
+  "inputs": {
+    "option_parameters": "Generated S/X/T with srand(123); R=0.06, V=0.10.",
+    "random_streams": "cuRAND initialization from block/grid/device geometry and thread sequence.",
+    "external_data": null,
+    "external_data_reason": "None required.",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu"
+    ]
+  },
+  "outputs": {
+    "timing": "Parse streamed Total time (ms.) as milliseconds.",
+    "correctness": [
+      "Average reserve",
+      "L1 norm",
+      "Test passed or Test failed!",
+      "Process exit status"
+    ],
+    "configuration": [
+      "Printed GPU count",
+      "Printed option count",
+      "Printed path count"
+    ],
+    "scoring_interface": "Accept unrounded reserve > 1 with passing verdict and successful exit. At rounded reserve boundary use verdict or recompute unrounded statistic. Record L1 descriptively; no L1 threshold supplied.",
+    "published_timing_target": null,
+    "published_timing_target_reason": "No published runtime or throughput supplied.",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L426-L486"
+    ]
+  },
+  "timing_scope": {
+    "includes": [
+      "Option preprocessing",
+      "Host-to-device input transfer",
+      "GPU pricing",
+      "Device-to-host result transfer",
+      "Completion-event wait"
+    ],
+    "excludes": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black-Scholes validation"
+    ],
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ]
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "budget_policy": "Stop at stage budget and report timeout; do not reduce scale or search. Actual completion time unknown pending reproduction.",
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate scripts named in prompt or brief.",
+  "builds_or_workloads_run": false
+}
