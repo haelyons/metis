@@ -159,7 +159,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   fs.mkdirSync(control, { recursive: true })
   fs.writeFileSync(brief, `# Intake fixture\n${SENTINEL}\n`)
   const argsFile = path.join(control, 'args.json')
-  writeJSON(argsFile, { run_root: runRoot, brief, tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS' } })
+  writeJSON(argsFile, { run_root: runRoot, brief, tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } })
   // The profile stage is stubbed, so provide its documented output directly.
   writeJSON(path.join(runRoot, 'agent', 'profile-packet.json'), PROFILE)
   // Separate workflow directories prevent WF resume caches from hiding calls.

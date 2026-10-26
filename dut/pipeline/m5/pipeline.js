@@ -1,4 +1,4 @@
-// wf.js script. Intake through implement are real; later stages are placeholders.
+// wf.js script. Intake through evaluate are real; takeaways remains a placeholder.
 const meta = { name: 'm5', description: 'Explicit-run-root scientific pipeline skeleton' }
 
 return (async () => {
@@ -240,13 +240,15 @@ Write three self-contained bash scripts, invoked from a shared remote working di
 - setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
 - run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
 - profile.sh: ${profileRules}
+Also provide run_evaluation.sh for the published baseline evaluation interface, or make run_anchors.sh handle non-anchor EVAL_MODE. Evaluation uses fresh working directories with baseline-published/, method/, data/, harness/ and payload/ links and absolute BASELINE_DIR, METHOD_DIR, BASELINE_OUT, METHOD_OUT and EVAL_OUT paths. EVAL_PROTOCOL points to the sealed JSON; EVAL_INPUTS and EVAL_SEEDS contain its JSON input and seed specifications; EVAL_COMPUTE_BUDGET is empty except in curve mode. Modes are equivalence, warmup, performance and curve. Run the published configuration on every sealed input/seed, seeds first then input IDs, and write EVAL_OUT/evaluation.json: {records:[{input_id,seed,metrics:{metric_name:finite_number}}],timing_scope,gpu_count,wall_s,compute_budget}. Use null seed for deterministic protocols; timing_scope must equal the seal; wall_s is required for reported_wall scopes; compute_budget is required for curves. Synchronize every used GPU before returning or stopping reported timers; include launch, transfer and merge overhead. Enforce curve budgets in GPU seconds. Always measure actual outputs; never reuse baseline outputs.
 Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
 Return a short completion acknowledgement; the pipeline reads the scripts itself.`
     try {
       mkdirSync(harnessDirectory, { recursive: true })
       const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
       if (reply == null) return failure(facts, 'parse')
-      const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'profile.sh'], destination, setupTimeout)
+      const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'profile.sh',
+        ...(existsSync(path.join(harnessDirectory, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])], destination, setupTimeout)
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, 'infra')
       const setup = await runHarness('setup.sh', 'setup', destination, setupTimeout)
       if (setup.error) {
@@ -355,6 +357,7 @@ Write an object with these fields:
 - evaluation_inputs and splits: fixed input identities/pins, held-out splits and seeds, or explicit generated-input specifications.
 - compute_budgets: at least three distinct positive numeric budgets, with units in hardware_cost_basis.
 - repetitions: integer >=5 timing pairs; warmup: fixed warmup protocol; scheduling_order: paired randomisation protocol; equal_outcome_target: the fixed scientific target.
+Use executable v1 evaluation fields: evaluation_inputs={ids:[unique string IDs], ...input pins/specification}; sample_sizes={inputs:IDs.length,seeds:seed count}; equivalence_metrics=[{name,tolerance,source}], tolerance a nonnegative absolute number, {abs:number}, or {rel:number}. paired_seed_tests={kind:"deterministic",justification:"scientific reason"} or {kind:"paired_median",seeds:[unique integers]}; stochastic metrics require absolute margins. confidence_rule={performance:{kind:"paired_median",confidence:0.95},equivalence:{kind:"paired_median",confidence:0.95}} uses exact binomial order-statistic bounds (one-sided performance, two-sided equivalence with Bonferroni across metrics). Choose enough repetitions/seeds for finite bounds; 95% needs at least 5 timing pairs and 6 seed pairs for one metric. warmup is a nonnegative integer per arm. scheduling_order={kind:"randomized_pairs",seed:integer}. timing_scope={kind:"process_wall" or "reported_wall",gpu_synchronization:"adapter",description:"scope including launch/transfer/merge"}. hardware_cost_basis={baseline_gpus:positive integer,method_gpus:positive integer,budget_unit:"gpu_s"}. equal_outcome_target={metric:"outcome metric name",comparison:">=",target:finite number} or {not_applicable:true,reason:"why benchmark has no outcome curve"}. Unsupported prose-only protocols produce VOID at evaluation.
 Define the complete protocol now, before method code exists. Scope/tolerance changes require a new sealed run.
 Return a short completion acknowledgement; the script reads and seals the file itself.`
     try {
@@ -559,7 +562,11 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     const { default: run } = await import(path.resolve('m5/implement.js'))
     return run({ A, C, root, agent, exec, boxCommand, remoteDirectory, executionTimeout, failure, nullFacts })
   }
-  function evaluate() { return stub('evaluate') }
+  async function evaluate() {
+    if (input.stub?.evaluate != null) return stub('evaluate')
+    const { default: run } = await import(path.resolve('m5/evaluate.js'))
+    return run({ A, C, exec, boxCommand, remoteDirectory, executionTimeout, nullFacts })
+  }
   function takeaways() { return stub('takeaways') }
 
   const stages = []

@@ -60,7 +60,7 @@ async function runCase(name, failedStage, launch = false) {
   const brief = path.join(parent, `${name}-brief.md`)
   fs.writeFileSync(brief, '# Test brief\nNo experiment directory or model is needed.\n')
   const argsFile = path.join(control, 'args.json')
-  const stub = { intake: 'PASS', reproduce: 'PASS', profile: 'PASS', seal: 'PASS', propose: 'PASS', implement: 'PASS', ...(failedStage ? { [failedStage]: 'FAIL' } : {}) }
+  const stub = { intake: 'PASS', reproduce: 'PASS', profile: 'PASS', seal: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS', ...(failedStage ? { [failedStage]: 'FAIL' } : {}) }
   if (!launch) {
     fs.writeFileSync(argsFile, JSON.stringify({
       run_root: runRoot,

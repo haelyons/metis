@@ -1,0 +1,453 @@
+#!/usr/bin/env node
+'use strict'
+
+// Black-box stage-7 contracts from m5/SCHEMAS.md. Never inspect evaluator source.
+// Usage: node tools/test_m5_evaluate.js
+// All generated workloads, fake GPU tools, ledgers and workflow outputs use /tmp.
+const fs = require('node:fs')
+const path = require('node:path')
+const os = require('node:os')
+const assert = require('node:assert/strict')
+const { spawn } = require('node:child_process')
+const { createHash, randomUUID } = require('node:crypto')
+const ROOT = process.env.M5_TEST_SOURCE_ROOT || path.resolve(__dirname, '..')
+const SECRET = 'EVALUATE_PRIVATE_SENTINEL_486201'
+const IDS = ['dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_handling', 'seeds', 'equivalence']
+const FACTS = ['validity_pass', 'equivalence_pass', 'performance_pass', 'equal_cost', 'speedup_published',
+  'speedup_tuned', 'cost_ratio', 'prediction_ratio', 'curve_points', 'tokens_known', 'gpu_busy_known']
+const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const rows = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
+const sha = value => createHash('sha256').update(value).digest('hex')
+function writeJSON(file, value) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, JSON.stringify(value) + '\n')
+}
+function script(file, text) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, '#!/usr/bin/env bash\nset -eu\n' + text + '\n', { mode: 0o700 })
+}
+function files(directory) {
+  if (!fs.existsSync(directory)) return []
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const file = path.join(directory, entry.name)
+    assert.ok(!entry.isSymbolicLink(), 'unexpected evidence symlink')
+    return entry.isDirectory() ? files(file) : [file]
+  })
+}
+const anchors = [{ id: 'first', quantity: 'fixture', source: 'published fixture', published_value: 1, tolerance: 0 },
+  { id: 'zero', quantity: 'fixture', source: 'published fixture', published_value: 0, tolerance: { abs: 0 } }]
+function protocol(config = {}) {
+  const budgets = [2, 4, 8]
+  return {
+    predictions: [{ method: 'batching', expected_speedup_interval: { low: 1.5, high: 2.5 },
+      outcome_vs_compute_points: budgets.map(compute_budget => ({ compute_budget, predicted_outcome: 1, uncertainty: 'fixture' })) }],
+    infeasible_methods: [], evaluation_inputs: { ids: ['first', 'middle', 'tail'], pin: 'fixture-v1' },
+    sample_sizes: { inputs: 3, seeds: config.stochastic ? (config.seedCount || 6) : 1 },
+    equivalence_metrics: [{ name: 'accuracy', tolerance: { abs: 0.01 }, source: 'fixture scientific requirement' }],
+    paired_seed_tests: config.stochastic ? { kind: 'paired_median', seeds: Array.from({ length: config.seedCount || 6 }, (_, i) => 17 + i) }
+      : { kind: 'deterministic', justification: 'Fixed arithmetic fixture.' },
+    confidence_rule: { equivalence: { kind: 'paired_median', confidence: 0.95 }, performance: { kind: 'paired_median', confidence: 0.95 } },
+    timing_scope: { kind: 'reported_wall', gpu_synchronization: 'adapter', description: 'Complete fixture workload.' },
+    hardware_cost_basis: { baseline_gpus: 1, method_gpus: config.moreGPUs ? 4 : 1, budget_unit: 'gpu_s' },
+    warmup: 1, repetitions: 5, scheduling_order: { kind: 'randomized_pairs', seed: 42 },
+    minimum_worthwhile_gain: 1.1, compute_budgets: budgets, splits: { evaluation: ['first', 'middle', 'tail'] },
+    equal_outcome_target: config.curves ? { metric: 'accuracy', target: config.unachieved ? 2 : 0.9, comparison: '>=' }
+      : { not_applicable: true, reason: 'Fixture has no scientific outcome curve.' },
+  }
+}
+// Synthetic adapter reports exercise the scorer; no real GPU, model or network.
+// Different times by repetition distinguish median(pair ratios) from ratio(medians).
+function adapter(config = {}, baseline = false) {
+  return `printf '%s\\n' '${SECRET}:adapter'
+python3 - <<'FIXTURE_PY'
+import json, os, pathlib
+c = json.loads(${JSON.stringify(JSON.stringify(config))})
+p = json.loads(pathlib.Path(os.environ['EVAL_PROTOCOL']).read_text()) if 'EVAL_PROTOCOL' in os.environ else None
+out = pathlib.Path(os.environ.get('EVAL_OUT', 'out'))
+out.mkdir(parents=True, exist_ok=True)
+arm = os.environ.get('EVAL_ARM', '${baseline ? 'baseline' : 'method'}')
+mode = os.environ.get('EVAL_MODE', 'implement')
+if mode in ('implement', 'anchors'):
+    if not (mode == 'anchors' and c.get('missingAnchor')):
+        measured = {'first': 1, 'zero': 0}
+        if mode == 'anchors' and arm == 'method' and c.get('badAnchor'): measured['first'] = 2
+        if mode == 'anchors' and c.get('partialAnchor'): del measured['zero']
+        (out / 'anchors_measured.json').write_text(json.dumps(measured))
+    (out / 'values.json').write_text('[0,1,2]')
+else:
+    seeds = p['paired_seed_tests'].get('seeds', [None])
+    records = [dict(input_id=i, seed=s, metrics={'accuracy': 1.0 + (c.get('delta', 0) if arm == 'method' else 0)})
+               for s in seeds for i in p['evaluation_inputs']['ids']]
+    if c.get('stochastic'):
+        for row in records:
+            row['metrics']['accuracy'] += row['seed'] / 10
+            if arm == 'method':
+                row['metrics']['accuracy'] += {'first': -0.02, 'middle': 0.02, 'tail': 0}[row['input_id']]
+    if arm == 'method':
+        if c.get('alignment') == 'order': records[0], records[1] = records[1], records[0]
+        if c.get('alignment') == 'drop': records.pop()
+        if c.get('alignment') == 'duplicate': records[-1] = records[0].copy()
+        if c.get('alignment') == 'seed': records[0]['seed'] = 999
+        if c.get('missingMetric'): records[0]['metrics'] = {}
+    # Fresh work directories make repetition index observable without shared counters.
+    index = int(pathlib.Path.cwd().parent.name) if pathlib.Path.cwd().parent.name.isdigit() else 0
+    times = c.get('baselineTimes', [10]*5) if arm == 'baseline' else c.get('methodTimes', [5]*5)
+    wall = times[index % len(times)]
+    if mode == 'warmup': wall = 100 if arm == 'method' else 1
+    report = dict(records=records, timing_scope=p['timing_scope'],
+                  gpu_count=p['hardware_cost_basis'][arm + '_gpus'], wall_s=wall, private='${SECRET}')
+    if mode == 'curve': report['compute_budget'] = float(os.environ['EVAL_COMPUTE_BUDGET'])
+    if c.get('missingScope'): del report['timing_scope']
+    if not (c.get('missingOutput') or (mode == 'curve' and c.get('missingCurve'))):
+        (out / 'evaluation.json').write_text(json.dumps(report))
+FIXTURE_PY`
+}
+module.exports = {
+  async run(options) {
+    const root = process.env.M5_EVALUATE_ROOT, config = JSON.parse(process.env.M5_EVALUATE_CONFIG)
+    const { title } = options
+    fs.appendFileSync(path.join(root, 'calls.jsonl'), JSON.stringify({ title }) + '\n')
+    const agent = path.join(root, 'agent')
+    let json = { v: SECRET }
+    if (title === 'harness') {
+      script(path.join(agent, 'harness', 'setup.sh'), `mkdir -p baseline-published data out
+git init -q --separate-git-dir published-git baseline-published
+printf 'published\\n' > baseline-published/pin
+printf 'input\\n' > data/input`)
+      // Reproduction must pass before the method's intentionally bad anchor is tested.
+      script(path.join(agent, 'harness', 'run_anchors.sh'), 'mkdir -p out\nprintf \'{"first":1,"zero":0}\\n\' > out/anchors_measured.json\nprintf \'[0,1,2]\\n\' > out/values.json')
+      script(path.join(agent, 'harness', 'run_evaluation.sh'), adapter(config, true))
+      script(path.join(agent, 'harness', 'profile.sh'), 'true')
+    }
+    const view = options.isolation?.directory || options.cwd
+    if (title === 'tests') {
+      const report = { passed: IDS.length, failed: 0, cases: IDS.map(id => ({ id, pass: true, reason_code: null })) }
+      script(path.join(view, 'tests', 'run_tests.sh'), `mkdir -p out\nprintf '%s\\n' '${JSON.stringify(report)}' > out/tests.json`)
+    }
+    if (title === 'implement') {
+      const directory = path.join(view, 'method')
+      fs.mkdirSync(directory, { recursive: true })
+      fs.writeFileSync(path.join(directory, 'method.patch'), 'diff --git a/pin b/pin\n--- a/pin\n+++ b/pin\n@@ -1 +1 @@\n-published\n+changed\n')
+      script(path.join(directory, 'setup_method.sh'), 'true')
+      script(path.join(directory, 'run_method.sh'), adapter(config))
+    }
+    if (title === 'review') json = { pass: true, reason_codes: [] }
+    return { text: JSON.stringify(json), json, jsonError: null, sessionID: randomUUID(),
+      tokens: { input: 0, output: 0 }, tokens_known: true, cost: 0, tools: 0, ms: 1, errors: [], refusal: false }
+  },
+  async exportSession(id, file) { fs.writeFileSync(file, '{}') },
+}
+if (require.main !== module) return
+
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_evaluate_'))
+let checks = 0, failures = 0
+function check(label, fn) {
+  checks++
+  try { fn(); console.log(`ok ${label}`) }
+  catch (error) { failures++; console.log(`FAIL ${label}: ${error.message}`) }
+}
+function near(actual, expected) { assert.ok(typeof actual === 'number' && Math.abs(actual - expected) < 1e-10, `${actual} != ${expected}`) }
+function canonical(value) {
+  if (Array.isArray(value)) return value.map(canonical)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(k => [k, canonical(value[k])]))
+  return value
+}
+async function execute(command, args, directory, env = {}, cwd = directory) {
+  const stdout = fs.openSync(path.join(directory, 'stdout.log'), 'w'), stderr = fs.openSync(path.join(directory, 'stderr.log'), 'w')
+  try {
+    return await new Promise(resolve => {
+      const child = spawn(command, args, { cwd, timeout: 180000, stdio: ['ignore', stdout, stderr],
+        env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl'), ...env } })
+      let error
+      child.on('error', value => { error = value })
+      child.on('close', (status, signal) => resolve({ status, signal, error }))
+    })
+  } finally { fs.closeSync(stdout); fs.closeSync(stderr) }
+}
+function hermetic(root) {
+  const bin = path.join(root, 'bin')
+  script(path.join(bin, 'nvidia-smi'), `if [[ "$*" == *--query-gpu=name* ]]; then
+  for ((i=0; i<8; i++)); do printf '%s\\n' 'Fixture GPU'; done
+  exit 0
+fi
+exit 1`)
+  return { PATH: bin + path.delimiter + process.env.PATH }
+}
+function provenance() {
+  return Object.fromEntries(['seal_sha256', 'baseline_sha256', 'data_sha256', 'baseline_outputs_sha256', 'tests_sha256',
+    'method_payload_sha256', 'anchors_sha256', 'harness_sha256'].map(key => [key, sha(key)]))
+}
+async function cli(name, stage, config = {}, explicit = true) {
+  const root = path.join(scratch, 'cli-' + name), remote = path.join(root, 'remote'), out = path.join(remote, 'out', 'eval')
+  for (const directory of ['baseline-published', 'method', 'data', 'baseline-out', 'harness', 'payload/method', 'payload/tests', 'out/eval']) {
+    fs.mkdirSync(path.join(remote, directory), { recursive: true })
+  }
+  script(path.join(remote, 'harness', 'run_evaluation.sh'), adapter(config, true))
+  script(path.join(remote, 'harness', 'run_anchors.sh'), adapter(config, true))
+  script(path.join(remote, 'payload', 'method', 'run_method.sh'), adapter(config))
+  const p = protocol(config), hashes = provenance()
+  hashes.evaluators = Object.fromEntries(['eval_common.py', 'eval_validity.py', 'eval_equivalence.py', 'eval_performance.py', 'score_anchors.py'].map(file => [file, sha(file)]))
+  const method_files = [{ path: 'run_method.sh', sha256: sha(fs.readFileSync(path.join(remote, 'payload/method/run_method.sh'))) }]
+  const manifest = { remote_directory: remote, protocol: p, prediction: p.predictions[0],
+    box: { price_usd_h: config.noPrice ? 0 : 4, type: 'gpu_8x_a100' }, gpu_count: 8, run_timeout_s: 10,
+    method_files, anchors, input_hashes: hashes }
+  writeJSON(path.join(remote, 'evaluation-payload/predictions.json'), p)
+  writeJSON(path.join(root, 'manifest.json'), manifest)
+  fs.chmodSync(path.join(root, 'manifest.json'), 0o444)
+  const child = await execute('python3', [path.join(ROOT, 'm5', `eval_${stage}.py`),
+    ...(explicit ? ['--stage', stage] : []), '--in', path.join(root, 'manifest.json'), '--out', out], root, hermetic(root))
+  return { root, remote, out, child, manifest,
+    verdict: fs.existsSync(path.join(out, stage + '.json')) ? readJSON(path.join(out, stage + '.json')) : null }
+}
+function verdict(name, result, stage, status, code) {
+  check(name, () => {
+    assert.ifError(result.child.error)
+    assert.equal(result.child.status, code, fs.readFileSync(path.join(result.root, 'stderr.log'), 'utf8').slice(-400))
+    assert.equal(result.verdict?.status, status)
+    assert.equal(result.verdict[stage + '_pass'], status === 'VOID' ? null : status === 'PASS')
+    assert.deepEqual(result.verdict.input_hashes, result.manifest.input_hashes)
+    if (status === 'VOID') assert.equal(result.verdict.reason_code, 'missing_or_invalid_measurements')
+  })
+}
+async function pipeline(name, config = {}) {
+  const root = path.join(scratch, 'pipeline-' + name), agent = path.join(root, 'agent'), home = path.join(root, 'home')
+  fs.mkdirSync(root, { recursive: true })
+  const p = protocol(config)
+  for (const [name, value] of Object.entries({ benchmark: { name: SECRET }, data: { available: true }, anchors,
+    baseline: { repo: 'fixture', pin: 'v1', build_commands: ['true'], run_commands: ['true'], published_configuration: { n: 3 } },
+    EXECUTION: { representative_scale: { n: 3 }, inputs: ['data/input'], outputs: ['values.json'], timing_scope: p.timing_scope,
+      timeout_s: 60, timeouts: { setup_method: 30, run_method: 10, run_tests: 10, evaluate: 60 } },
+  })) writeJSON(path.join(agent, 'intake', name + '.json'), value)
+  const sealed = JSON.stringify(canonical(p))
+  fs.mkdirSync(path.join(agent), { recursive: true })
+  fs.writeFileSync(path.join(agent, 'PREDICTIONS.json'), sealed)
+  const frozen = path.join(root, 'control', 'seals', 'frozen.json')
+  fs.mkdirSync(path.dirname(frozen), { recursive: true })
+  fs.writeFileSync(frozen, sealed, { mode: 0o444 })
+  writeJSON(path.join(root, 'control/seals/0001.json'), { sha256: sha(sealed), path: frozen, utc: new Date().toISOString() })
+  writeJSON(path.join(agent, 'proposal.json'), { method: 'batching', rationale: SECRET, plan_steps: ['Preserve paired inputs.'], files_expected: ['pin'], risks: [] })
+  writeJSON(path.join(agent, 'profile-packet.json'), { stages: [], total_wall_s: 10, timed_fraction: 1, gpu_telemetry: true, gpu_count: 8 })
+  writeJSON(path.join(home, '.cache/metis-serve/box.json'), { type: 'gpu_8x_a100', region: SECRET, price_usd_h: 4, started_utc: new Date().toISOString() })
+  script(path.join(home, '.cache/metis-serve/box.sh'), 'exit 99')
+  const box = path.join(root, 'box'), bin = path.join(root, 'bin')
+  fs.mkdirSync(box)
+  const env = hermetic(root)
+  // Keep real /tmp/m5-<uuid> paths: the sealed manifest embeds absolute paths
+  // consumed by adapter subprocesses, so shell-only path rewriting is invalid.
+  script(path.join(bin, 'box'), `command=$1
+remote_directory=
+if [[ $command =~ /tmp/m5-[a-z0-9-]+ ]]; then
+  remote_directory=\${BASH_REMATCH[0]}
+  printf '%s\\n' "$remote_directory" >> "$M5_REMOTE_ROOTS"
+fi
+export PATH="$M5_EVALUATE_BIN:$PATH"
+cd "$BOX_ROOT"
+bash -c "$command"
+if [[ $command == *timeout* && -n $remote_directory ]]; then
+  for ((i=0; i<1000; i++)); do
+    pending=false
+    for file in "$remote_directory"/*.sh; do
+      [[ -f $file ]] || continue
+      [[ -f \${file%.sh}.rc ]] || pending=true
+    done
+    [[ $pending == true ]] || break
+    sleep 0.01
+  done
+fi`)
+  script(path.join(bin, 'fetch'), 'exec cp -r -- "$1" "$2"')
+  const args = path.join(root, 'control/args.json'), output = path.join(agent, 'wf')
+  writeJSON(args, { run_root: root, tag: 'evaluate-' + name, raid: 'evaluate-' + name, stub: { intake: 'PASS', profile: 'PASS', seal: 'PASS', propose: 'PASS', takeaways: 'PASS' } })
+  const child = await execute(process.execPath, [path.join(ROOT, 'idea/wf.js'), '--script', path.join(ROOT, 'm5/pipeline.js'),
+    '--args', args, '--out', output, '--disable-family', 'claude'], root,
+  { ...env, HOME: home, WF_STUB: __filename, M5_TEST_SOURCE_ROOT: ROOT, M5_EVALUATE_ROOT: root,
+    M5_EVALUATE_CONFIG: JSON.stringify(config), M5_REMOTE_ROOTS: path.join(scratch, 'remote-roots'), BOX_ROOT: box, M5_EVALUATE_BIN: bin, BOX: path.join(bin, 'box'), FETCH: path.join(bin, 'fetch') }, ROOT)
+  const records = rows(path.join(root, 'operator/signatures.jsonl')), record = records.find(row => row.signature?.stage === 'evaluate')
+  check(`${name}: evaluate reached through real reproduce and implement`, () => {
+    assert.ifError(child.error)
+    assert.equal(child.status, 0)
+    assert.ok(!readJSON(path.join(output, 'result.json')).error, JSON.stringify(readJSON(path.join(output, 'result.json')).error))
+    for (const stage of ['reproduce', 'implement']) assert.equal(records.find(row => row.signature?.stage === stage)?.signature.status, 'PASS', stage)
+    assert.ok(record)
+  })
+  check(`${name}: exact facts, no model calls, hermetic GPU telemetry`, () => {
+    assert.deepEqual(Object.keys(record.facts).sort(), FACTS.slice().sort())
+    assert.equal(record.facts.tokens_known, true)
+    assert.equal(record.facts.gpu_busy_known, false)
+    assert.equal(record.facts.speedup_tuned, null)
+    assert.ok(rows(path.join(root, 'calls.jsonl')).every(row => ['harness', 'tests', 'implement', 'review'].includes(row.title)))
+    assert.equal(records.find(row => row.signature?.stage === 'takeaways')?.signature.status, 'PASS')
+  })
+  check(`${name}: no scientific sentinel reaches R/operator`, () => {
+    const operator = path.join(root, 'operator')
+    assert.ok(files(operator).length > 0)
+    for (const file of files(operator)) {
+      assert.ok(!file.includes(SECRET))
+      assert.ok(!fs.readFileSync(file, 'utf8').includes(SECRET), path.basename(file))
+    }
+    assert.ok(files(path.join(agent, 'results')).some(file => fs.readFileSync(file).includes(Buffer.from(SECRET))), 'sentinel never entered scientific results')
+  })
+  return { root, record, results: path.join(agent, 'results/evaluate') }
+}
+async function main() {
+  try {
+    const valid = await cli('anchors-pass', 'validity', {}, false)
+    verdict('validity CLI: every anchor passes; --stage optional', valid, 'validity', 'PASS', 0)
+    check('validity preserves exact anchor score', () => {
+      assert.equal(valid.verdict.anchors_passed, 2)
+      assert.equal(valid.verdict.anchors_total, 2)
+      assert.equal(valid.verdict.all_passed, true)
+      assert.deepEqual(valid.verdict.anchors.map(row => row.id), anchors.map(row => row.id))
+    })
+    const invalid = await cli('anchors-fail', 'validity', { badAnchor: true })
+    verdict('validity CLI: one failed anchor exits 4', invalid, 'validity', 'FAIL', 4)
+    check('validity failure classified anchor', () => { assert.equal(invalid.verdict.anchors_passed, 1) })
+    for (const config of [{ missingAnchor: true }, { partialAnchor: true }]) {
+      const r = await cli('anchor-missing-' + Object.keys(config)[0], 'validity', config)
+      verdict('missing anchor measurement is VOID', r, 'validity', 'VOID', 2)
+    }
+    for (const [name, config, status] of [
+      ['exact', {}, 'PASS'], ['within-tolerance', { delta: 0.005 }, 'PASS'], ['outside-tolerance', { delta: 0.02 }, 'FAIL'],
+      ...['order', 'drop', 'duplicate', 'seed'].map(alignment => [alignment, { alignment }, 'FAIL']),
+      ['stochastic-paired', { stochastic: true, delta: 0.005 }, 'PASS'],
+      ['stochastic-outside', { stochastic: true, delta: 0.02 }, 'FAIL'],
+      ['stochastic-underpowered', { stochastic: true, seedCount: 5 }, 'VOID'],
+      ['missing-output', { missingOutput: true }, 'VOID'], ['missing-metric', { missingMetric: true }, 'VOID'],
+    ]) {
+      const r = await cli(name, 'equivalence', config)
+      verdict(`equivalence CLI: ${name}`, r, 'equivalence', status, status === 'PASS' ? 0 : status === 'FAIL' ? 5 : 2)
+      if (config.alignment) check(`${name}: failed alignment row`, () => assert.ok(r.verdict.metrics.some(row => row.passed === false && row.reason_code === 'counts_or_alignment')))
+      if (config.stochastic && status !== 'VOID') check(`${name}: paired effect interval`, () => {
+        const metric = r.verdict.metrics[0]
+        near(metric.difference_interval[0], config.delta); near(metric.difference_interval[1], config.delta)
+        assert.equal(metric.confidence, 0.95)
+      })
+    }
+    for (const [name, config, status] of [
+      ['speedup', {}, 'PASS'],
+      ['fast-but-invalid', { badAnchor: true }, 'PASS'],
+      ['median-pairs', { baselineTimes: [2, 90, 30, 40, 50], methodTimes: [1, 10, 10, 20, 25] }, 'PASS'],
+      ['noisy-confidence', { methodTimes: [20, 5, 5, 5, 5] }, 'FAIL'],
+      ['equal-cost', { methodTimes: [10, 10, 10, 10, 10] }, 'FAIL'],
+      ['higher-cost', { methodTimes: [20, 20, 20, 20, 20] }, 'FAIL'],
+      ['more-gpus-higher-cost', { moreGPUs: true }, 'FAIL'],
+      ['curve-points', { curves: true, unachieved: true }, 'PASS'],
+      ['missing-curve', { curves: true, missingCurve: true }, 'PASS'],
+      ['failed-performance-missing-curve', { curves: true, missingCurve: true, methodTimes: [20, 20, 20, 20, 20] }, 'FAIL'],
+      ['missing-timing-output', { missingOutput: true }, 'VOID'], ['missing-scope', { missingScope: true }, 'VOID'],
+      ['missing-price', { noPrice: true }, 'VOID'],
+    ]) {
+      const r = await cli(name, 'performance', config)
+      verdict(`performance CLI: ${name}`, r, 'performance', status, status === 'FAIL' ? 5 : config.missingCurve ? 2 : status === 'PASS' ? 0 : 2)
+      if (!config.missingOutput && !config.missingScope && !config.noPrice) check(`${name}: measured paired statistics and cost`, () => {
+        const v = r.verdict
+        assert.equal(v.pairs.length, 5)
+        const expected = name === 'median-pairs' ? 2 : name === 'equal-cost' ? 1 : name === 'higher-cost' || name === 'failed-performance-missing-curve' ? 0.5 : 2
+        near(v.speedup_published, expected)
+        near(v.cost_ratio, (config.moreGPUs ? 4 : 1) / expected)
+        assert.equal(v.equal_cost, v.cost_ratio <= 1)
+        near(v.prediction_ratio, expected / 2)
+        assert.equal(v.speedup_tuned, null)
+        assert.equal(v.confidence, 0.95)
+        assert.equal(v.speedup_interval[1], null)
+        if (name === 'noisy-confidence') assert.ok(v.speedup_interval[0] < 1.1)
+        for (const pair of v.pairs) {
+          assert.deepEqual(pair.order.slice().sort(), ['baseline', 'method'])
+          near(pair.speedup, pair.baseline_s / pair.method_s)
+          near(pair.baseline_usd, pair.baseline_s * pair.baseline_gpus * (4 / 8) / 3600)
+          near(pair.method_usd, pair.method_s * pair.method_gpus * (4 / 8) / 3600)
+        }
+      })
+      if (status === 'PASS' || config.missingCurve) check(`${name}: curve measured or explicitly inapplicable`, () => {
+        const curve = readJSON(path.join(r.out, 'curve.json'))
+        assert.deepEqual(curve.input_hashes, r.manifest.input_hashes)
+        if (config.missingCurve) { assert.equal(curve.status, 'VOID'); assert.notEqual(curve.curve_points, 3) }
+        else if (!config.curves) { assert.equal(curve.status, 'PASS'); assert.equal(curve.not_applicable, true); assert.equal(curve.curve_points, 0) }
+        else {
+          assert.equal(curve.status, 'PASS'); assert.equal(curve.curve_points, 3)
+          assert.deepEqual(curve.points.map(point => point.compute_budget), [2, 4, 8])
+          for (const point of curve.points) for (const arm of ['baseline', 'method']) {
+            assert.equal(point[arm].status, 'PASS'); near(point[arm].outcome, 1)
+            assert.equal(point[arm].target_achieved, false)
+            assert.deepEqual(point[arm].uncertainty, { min: 1, max: 1 })
+            assert.ok(point[arm].allocated_gpu_hours > 0); assert.ok(point[arm].usd > 0)
+          }
+        }
+      })
+    }
+    for (const [name, config, status, code, kind] of [
+      ['pass', {}, 'PASS', 0, null],
+      ['curves', { curves: true }, 'PASS', 0, null],
+      ['missing-curves', { curves: true, missingCurve: true }, 'VOID', 2, 'parse'],
+      ['failed-performance-missing-curves', { curves: true, missingCurve: true, methodTimes: [20, 20, 20, 20, 20] }, 'FAIL', 5, 'numeric'],
+      ['anchor-fail-fast', { badAnchor: true }, 'FAIL', 4, 'anchor'],
+      ['equivalence-fail', { delta: 0.02 }, 'FAIL', 5, 'numeric'],
+      ['cost-fail', { moreGPUs: true }, 'FAIL', 5, 'numeric'],
+      ['missing', { missingOutput: true }, 'VOID', 2, 'parse'],
+    ]) {
+      const r = await pipeline(name, config)
+      check(`${name}: overall stage verdict`, () => {
+        assert.equal(r.record.signature.status, status)
+        assert.equal(r.record.signature.exit_code, code)
+        if (kind) assert.equal(r.record.signature.error_class, kind)
+        if (config.badAnchor) assert.equal(r.record.signature.exit_kind, 'anchor')
+      })
+      check(`${name}: immutable manifest and scorer receipts`, () => {
+        const file = path.join(r.root, 'control/evaluate/manifest.json')
+        const manifest = readJSON(file)
+        assert.equal(fs.statSync(file).mode & 0o777, 0o444)
+        assert.deepEqual(Object.keys(manifest).sort(), ['remote_directory', 'protocol', 'prediction', 'box', 'gpu_count',
+          'run_timeout_s', 'method_files', 'anchors', 'input_hashes'].sort())
+        assert.deepEqual(manifest.protocol, protocol(config))
+        for (const key of Object.keys(provenance())) assert.match(manifest.input_hashes[key], /^[0-9a-f]{64}$/)
+        assert.ok(Object.keys(manifest.input_hashes.evaluators).includes('eval_performance.py'))
+        const receipts = files(path.join(r.root, 'control/receipts')).filter(file => file.endsWith('.json'))
+        assert.ok(receipts.some(file => /evaluate-upload/.test(file)))
+        assert.ok(receipts.some(file => /evaluate-validity/.test(file)))
+        for (const file of receipts) assert.equal(readJSON(file).gpu_busy_known, false)
+      })
+      check(`${name}: three independent verdicts`, () => {
+        const values = Object.fromEntries(['validity', 'equivalence', 'performance'].map(stage => [stage, readJSON(path.join(r.results, stage + '.json'))]))
+        for (const [stage, value] of Object.entries(values)) assert.equal(r.record.facts[stage + '_pass'], value[stage + '_pass'] ?? null, stage + ' fact disagrees with verdict')
+        if (status === 'PASS') {
+          for (const value of Object.values(values)) assert.equal(value.status, 'PASS')
+          assert.equal(r.record.facts.equal_cost, true); near(r.record.facts.speedup_published, 2)
+          near(r.record.facts.cost_ratio, 0.5); near(r.record.facts.prediction_ratio, 1)
+          assert.equal(r.record.facts.curve_points, config.curves ? 3 : 0)
+        }
+        if (name === 'missing-curves') {
+          assert.equal(values.performance.status, 'PASS')
+          assert.equal(r.record.facts.curve_points, null)
+        }
+        if (name === 'failed-performance-missing-curves') assert.equal(values.performance.status, 'FAIL')
+        if (config.delta) {
+          assert.equal(values.validity.status, 'PASS')
+          assert.equal(values.equivalence.status, 'FAIL')
+          assert.equal(values.performance.status, 'VOID')
+        }
+        if (config.badAnchor) {
+          assert.equal(values.validity.status, 'FAIL')
+          assert.equal(values.equivalence.status, 'VOID'); assert.equal(values.performance.status, 'VOID')
+          for (const key of ['equal_cost', 'speedup_published', 'cost_ratio', 'prediction_ratio', 'curve_points']) assert.equal(r.record.facts[key], null)
+          // Separate performance CLI proved this same fast adapter passes performance.
+          // Fail-fast validity must still stop overall PASS and leave later verdicts VOID.
+        }
+      })
+    }
+  } catch (error) { failures++; console.log(`FAIL test harness: ${error.stack}`) }
+  finally {
+    function writable(directory) {
+      fs.chmodSync(directory, 0o700)
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) if (entry.isDirectory()) writable(path.join(directory, entry.name))
+    }
+    const registry = path.join(scratch, 'remote-roots')
+    if (fs.existsSync(registry)) for (const directory of new Set(fs.readFileSync(registry, 'utf8').trim().split('\n'))) {
+      assert.match(directory, /^\/tmp\/m5-[0-9a-f-]{36}$/)
+      if (fs.existsSync(directory)) { writable(directory); fs.rmSync(directory, { recursive: true, force: true }) }
+    }
+    writable(scratch)
+    fs.rmSync(scratch, { recursive: true, force: true })
+  }
+  console.log(failures ? `${failures} failure(s) (${checks} checks)` : 'all checks passed')
+  process.exitCode = failures ? 1 : 0
+}
+main()

@@ -79,6 +79,11 @@ async function isolationProbe(options, root) {
   // known absolute sentinel path inside the actual provider sandbox.
   fs.writeFileSync(path.join(bin, 'codex'), `#!${process.execPath}
 const fs = require('node:fs'), path = require('node:path')
+const args = process.argv.slice(2)
+if (args.includes('--version')) {
+  console.log('codex 0.0.0-test')
+  process.exit(0)
+}
 fs.readFileSync(0, 'utf8')
 let readable = false
 try { fs.readFileSync(${JSON.stringify(target)}); readable = true } catch (e) {
@@ -90,8 +95,10 @@ const authPresent = fs.existsSync(credential) && fs.readFileSync(credential, 'ut
 let boxReadable = false
 try { fs.readFileSync(path.join(home, '.cache', 'metis-serve', 'box.sh')); boxReadable = true } catch {}
 fs.writeFileSync(${JSON.stringify(capture)}, JSON.stringify({ readable, home, authPresent, boxReadable }))
-const args = process.argv.slice(2)
-fs.writeFileSync(args[args.indexOf('-o') + 1], '{"v":"ok"}')
+const outputIndex = args.indexOf('-o')
+if (outputIndex !== -1 && args[outputIndex + 1]) {
+  fs.writeFileSync(args[outputIndex + 1], '{"v":"ok"}')
+}
 for (const event of [{type:'thread.started',thread_id:'isolated-stub'}, {type:'turn.completed',usage:{input_tokens:0,output_tokens:0}}]) {
   fs.writeSync(1, JSON.stringify(event) + '\\n')
 }
@@ -113,7 +120,7 @@ return await agent('Run the local isolation probe.', {label:'probe', role:'ls-wr
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', workflow,
         '--args', argsFile, '--out', path.join(work, 'wf'), '--family', 'codex', '--mode', 'primary-only',
         '--disable-family', 'claude', '--disable-family', 'opencode', '--disable-family', 'cursor'], {
-        cwd: ROOT, env, stdio: ['ignore', 'ignore', errorFd], timeout: 15000,
+        cwd: work, env, stdio: ['ignore', 'ignore', errorFd], timeout: 15000,
       })
       let error
       proc.on('error', value => { error = value })
@@ -298,6 +305,7 @@ function fixture(root, config) {
 async function execute(name, config = {}) {
   const root = path.join(scratch, name)
   fs.mkdirSync(root, { recursive: true })
+  fs.symlinkSync(path.join(ROOT, 'm5'), path.join(root, 'm5'), 'dir')
   fixture(root, config)
   const home = path.join(root, 'fixture-home'), box = path.join(root, 'box')
   fs.mkdirSync(box, { recursive: true })
@@ -334,7 +342,7 @@ fi`)
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
-        '--args', args, '--out', output, '--disable-family', 'claude'], { cwd: ROOT, timeout: 180000,
+        '--args', args, '--out', output, '--disable-family', 'claude'], { cwd: root, timeout: 180000,
         stdio: ['ignore', stdout, stderr], env: { ...process.env, HOME: home, PATH: bin + path.delimiter + process.env.PATH,
           WF_STUB: __filename, M5_IMPLEMENT_ROOT: root, M5_IMPLEMENT_CONFIG: JSON.stringify(config),
           M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl'), BOX_ROOT: box, M5_IMPLEMENT_BIN: bin,
