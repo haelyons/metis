@@ -1,12 +1,12 @@
 'use strict'
-// One ephemeral Codex CLI call, shaped like claude_cli.run. JSONL carries usage/errors; -o carries the final reply.
+// Persistent Codex app-server sessions, with an exec fallback, shaped like claude_cli.run.
 const { spawn } = require('node:child_process')
 const fs = require('node:fs')
 const os = require('node:os')
 const path = require('node:path')
 const { parseReply } = require('./claude_cli.js')
 
-function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, name: chatName }) {
+function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, name: chatName }) {
   return new Promise(resolve => {
     const t0 = Date.now(), limit = timeoutMs || 20 * 60000
     const tokens = { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }
@@ -56,7 +56,7 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
       const [name, effort] = String(model).replace(/^codex\//, '').split('@')
       const sandbox = /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(tools || '') ? 'workspace-write' : 'read-only'
       // sessions persist so they can be monitored (Codex remote control); writers get network (ssh to the dev box)
-      const args = ['exec', '--json', '--skip-git-repo-check', ...(process.env.CODEX_EPHEMERAL === '1' ? ['--ephemeral'] : []), ...(sandbox === 'workspace-write' ? ['-c', 'sandbox_workspace_write.network_access=true'] : []), '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
+      const args = ['exec', '--json', '--skip-git-repo-check', ...(sandbox === 'workspace-write' ? ['-c', 'sandbox_workspace_write.network_access=true'] : []), '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
       if (name !== 'default') args.push('-m', name)
       if (effort) args.push('-c', `model_reasoning_effort=${effort}`)
       for (const d of addDirs || []) args.push('--add-dir', d)
@@ -71,6 +71,149 @@ function run({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env,
       // The CLI help has no system/developer instruction flag; the prompt carries the role instructions instead.
       child.stdin.end((chatName ? `[${chatName}]\n` : '') + (systemPrompt ? `Role instructions:\n${systemPrompt}\n\nTask:\n${prompt}` : prompt))
     } catch (e) { finish(e) }
+  })
+}
+
+// App-server uses JSON lines without a jsonrpc field. Keep one overall deadline
+// across startup and fallback so transport negotiation cannot extend a call.
+async function run(options) {
+  const started = Date.now(), limit = options.timeoutMs || 20 * 60000
+  const name = options.name || options.label
+  let result
+  try {
+    result = await runAppServer({ ...options, name, timeoutMs: limit })
+  } catch (error) {
+    const remaining = Math.max(1, limit - (Date.now() - started))
+    result = await runExec({ ...options, name, timeoutMs: remaining })
+    result.errors.push(`app-server fallback to codex exec: ${error.message}`)
+  }
+  result.ms = Date.now() - started
+  return result
+}
+
+function runAppServer({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, name }) {
+  return new Promise((resolve, reject) => {
+    const tokens = { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }
+    const result = { text: '', json: null, jsonError: null, sessionID: null, tokens, tokens_known: false, cost: 0, tools: 0, ms: 0, errors: [], refusal: false }
+    const [modelName, effort] = String(model).replace(/^codex\//, '').split('@')
+    const writer = /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(tools || '')
+    const messages = new Map(), completedItems = new Set(), pending = new Map()
+    let child, timer, startupTimer, killTimer, buffer = '', out = '', err = '', nextId = 0
+    let settled = false, closed = false, failure = null
+    const finish = error => {
+      if (settled) return
+      settled = true; failure = error
+      clearTimeout(timer); clearTimeout(startupTimer)
+      for (const request of pending.values()) request.reject(error || new Error('app-server closed'))
+      pending.clear()
+      try {
+        result.text = [...messages.values()].join('\n')
+        Object.assign(result, parseReply(result.text))
+        if (/usage[_ -]?limit|rate[_ -]?limit|quota[^\n]*(?:exceed|exhaust)|too many requests|\b429\b/i.test(result.errors.join(' ') + '\n' + err)) result.errors.unshift('runner error: usage limit')
+        if (result.refusal) result.errors.push('refusal')
+        if (rawPath) fs.writeFileSync(rawPath, out || err)
+      } catch (e) { result.errors.push(`runner error: ${e.message}`) }
+      // Closing stdin lets the server flush persistent thread state before exit.
+      if (child && !closed) {
+        child.stdin.end()
+        child.kill('SIGTERM')
+        killTimer = setTimeout(() => child.kill('SIGKILL'), 5000)
+      } else deliver()
+    }
+    const deliver = () => {
+      clearTimeout(killTimer)
+      if (failure) reject(failure)
+      else resolve(result)
+    }
+    const send = message => child.stdin.write(JSON.stringify(message) + '\n')
+    const request = (method, params) => new Promise((resolve, reject) => {
+      const id = ++nextId
+      pending.set(id, { resolve, reject, method })
+      send({ id, method, params })
+    })
+    const collect = item => {
+      if (item.type === 'agentMessage') messages.set(item.id, item.text)
+      if (!completedItems.has(item.id) && ['commandExecution', 'fileChange', 'mcpToolCall', 'webSearch'].includes(item.type)) result.tools++
+      completedItems.add(item.id)
+      if (item.type === 'refusal' || item.refusal === true) result.refusal = true
+    }
+    const receive = line => {
+      if (!line.trim() || settled) return
+      try {
+        const event = JSON.parse(line)
+        if (event.id != null) {
+          const call = pending.get(event.id)
+          if (!call || event.method) throw new Error(`unexpected app-server request/response: ${event.method || event.id}`)
+          pending.delete(event.id)
+          if (event.error) call.reject(new Error(`${call.method}: ${JSON.stringify(event.error)}`))
+          else if ('result' in event) call.resolve(event.result)
+          else throw new Error('app-server response missing result')
+          return
+        }
+        const p = event.params || {}
+        if (event.method === 'item/completed') collect(p.item)
+        if (event.method === 'thread/tokenUsage/updated') {
+          // Notifications contain cumulative totals, not increments.
+          const u = p.tokenUsage.total
+          result.tokens_known = Number.isInteger(u.inputTokens) && Number.isInteger(u.outputTokens)
+          Object.assign(tokens, { input: u.inputTokens || 0, output: u.outputTokens || 0,
+            reasoning: u.reasoningOutputTokens || 0, cache_read: u.cachedInputTokens || 0, cache_write: u.cacheWriteInputTokens || 0 })
+        }
+        if (event.method === 'error') {
+          if (!p.willRetry) result.errors.push(`exit: ${JSON.stringify(p.error || p)}`)
+        }
+        if (event.method === 'turn/completed') {
+          for (const item of p.turn.items || []) collect(item)
+          if (p.turn.status !== 'completed') result.errors.push(`exit: ${JSON.stringify(p.turn.error || p.turn.status)}`)
+          finish()
+        }
+      } catch (error) { finish(error) }
+    }
+    try {
+      child = spawn('codex', ['app-server'], { cwd, env: { ...process.env, ...env }, stdio: ['pipe', 'pipe', 'pipe'] })
+      child.stdout.setEncoding('utf8')
+      child.stdout.on('data', data => {
+        out += data; buffer += data
+        let end
+        while ((end = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, end); buffer = buffer.slice(end + 1)
+          receive(line)
+        }
+      })
+      child.stderr.on('data', data => { err = (err + data).slice(-20000) })
+      child.stdin.on('error', error => finish(error))
+      child.on('error', error => { closed = true; finish(error) })
+      child.on('close', code => {
+        closed = true
+        if (!settled && buffer) receive(buffer)
+        if (!settled) finish(new Error(`app-server exited ${code}: ${err.trim().slice(-400)}`))
+        else deliver()
+      })
+      timer = setTimeout(() => {
+        result.errors.unshift(`timeout after ${Math.round(timeoutMs / 60000)} min`)
+        finish()
+      }, timeoutMs)
+      startupTimer = setTimeout(() => finish(new Error('initialize timed out')), Math.min(5000, timeoutMs / 2))
+      ;(async () => {
+        await request('initialize', { clientInfo: { name: 'wf_codex_cli', title: 'Workflow Codex runner', version: '1.0.0' } })
+        clearTimeout(startupTimer)
+        send({ method: 'initialized' })
+        const config = {}
+        if (effort) config.model_reasoning_effort = effort
+        if (writer) config['sandbox_workspace_write.network_access'] = true
+        if (addDirs?.length) config['sandbox_workspace_write.writable_roots'] = addDirs.map(d => path.resolve(cwd, d))
+        const started = await request('thread/start', { cwd, sandbox: writer ? 'workspace-write' : 'read-only',
+          ephemeral: false, approvalPolicy: 'never', config,
+          ...(modelName !== 'default' ? { model: modelName } : {}),
+          ...(systemPrompt ? { developerInstructions: systemPrompt } : {}) })
+        result.sessionID = started.thread.id
+        if (!result.sessionID) throw new Error('thread/start missing thread id')
+        if (name) await request('thread/name/set', { threadId: result.sessionID, name })
+        await request('turn/start', { threadId: result.sessionID,
+          input: [{ type: 'text', text: (name ? `[${name}]\n` : '') + prompt }],
+          ...(effort ? { effort } : {}) })
+      })().catch(error => finish(error))
+    } catch (error) { finish(error) }
   })
 }
 
