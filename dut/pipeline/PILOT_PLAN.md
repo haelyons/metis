@@ -53,3 +53,7 @@ find the first unit not marked DONE, and continue from it.
   one open model; OpenCode reaches it through an ssh tunnel. Check: re-run the anchor diagnostics brief (DIAG_3) and
   compare its one-line answer with mimo's; measure tokens/s and USD per call. Reference systems: AISLE's
   github.com/weareaisle/nano-analyzer and github.com/stanislavfort/mythos-jagged-frontier.
+
+## Status 2026-10-26 15:20 (resume here)
+- m5 route: all 8 stages are built, each tested by a separate agent, and committed. Public shakedowns (experiments/shakedown-m5/run1-9) pass stages 1-4 on single- and multi-GPU boxes. Propose has rejected 0 of 5 twice: the bounds ignore GPU saturation, the skeptics lack profile evidence, and equivalence was exact rather than statistical for Monte Carlo.
+- Running autonomously, as one chain (log ~/.cache/blind01/u11_run.out): Codex fixes all three (x-m5u11-impl), a separate Codex test author (x-m5u11-test), all suites, a commit, then public raid lookout on a 2-GPU box, and a commit of its records. Claude usage was nearly exhausted; resume after the reset by reading that log and the run records.
