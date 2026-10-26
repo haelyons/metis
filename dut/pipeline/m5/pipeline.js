@@ -182,7 +182,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
   }
   const harnessRules = 'Scope: setup.sh builds and checks only the baseline; profiling tools or shims belong only in profile.sh. A repair must change only the failing script and stay within that script\'s scope. Run the published build and binary and read measurements from its OUTPUT. Treat run_anchors.sh as the canonical run command and environment: profile.sh and every later run script must reuse exactly that command, arguments and environment, including CUDA_VISIBLE_DEVICES and the GPU count. Validate the program\'s printed configuration against those same command arguments and environment values; never change the GPU count or visibility for profiling or validate against different defaults. Preserve this consistency in repairs; read the other harness scripts to match their existing choices while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
-  const profileRules = 'Run the same baseline once at representative scale. Measure at least 3 timed stages INSIDE the measured run, for example setup or allocation, host-to-device transfers, compute kernels, device-to-host transfers, or host postprocessing. Use the program\'s own timers or output, CUDA events, nsys if present, or wrapper timings around separable phases. Process-level wrappers (telemetry_start, baseline_process, total process time, etc.) do not count as stages and must not appear in stages.json; any stage wall_s within 2% of total_wall_s counts as a process wrapper. Write out/profile/stages.json as [{stage, kind, wall_s, gpu_s}], with kind compute, transfer, or other (finite nonnegative seconds, gpu_s null when unavailable), and out/profile/total_wall_s.json as {total_wall_s} (finite positive seconds). Sample GPU utilisation with nvidia-smi during the measured run into out/profile/gpu_util.json as a non-empty array [{t, util}], with t finite nonnegative elapsed seconds and util finite percent in [0,100]. Save raw telemetry under out/profile/. Use critical-path stage wall times without double-counting overlap; timed_fraction = min(1, sum(stage.wall_s) / total_wall_s) must be >=0.9. Do not invent GPU timings or replace unavailable GPU timings with allocated time.'
+  const profileRules = 'Run the same baseline once at representative scale. Measure at least 3 timed stages INSIDE the measured run, for example setup or allocation, host-to-device transfers, compute kernels, device-to-host transfers, or host postprocessing. Use the program\'s own timers or output, CUDA events, nsys if present, or wrapper timings around separable phases. Process-level wrappers (telemetry_start, baseline_process, total process time, etc.) do not count as stages and must not appear in stages.json; any stage wall_s within 2% of total_wall_s counts as a process wrapper. Write out/profile/stages.json as [{stage, kind, wall_s, gpu_s, start_s}], with start_s measured elapsed seconds from the same origin as gpu_util.json t, and kind compute, transfer, or other (finite nonnegative seconds, gpu_s null when unavailable), and out/profile/total_wall_s.json as {total_wall_s} (finite positive seconds). Sample GPU utilisation with nvidia-smi during the measured run into out/profile/gpu_util.json as a non-empty array [{t, util}], with t finite nonnegative elapsed seconds and util finite percent in [0,100]. Save raw telemetry under out/profile/. Use critical-path stage wall times without double-counting overlap; timed_fraction = min(1, sum(stage.wall_s) / total_wall_s) must be >=0.9. Do not invent GPU timings or replace unavailable GPU timings with allocated time.'
   let boxProbe
   const boxProbePrompt = () => `Box probe (collected by the pipeline before harness generation):
 ${JSON.stringify(boxProbe, null, 2)}
@@ -314,14 +314,27 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
             && nonnegative(item.util) && item.util <= 100)) return 'parse'
         const timedWall = stages.reduce((sum, item) => sum + item.wall_s, 0)
         if (!Number.isFinite(timedWall)) return 'parse'
+        const measuredStages = stages.map(({ stage, kind, wall_s, gpu_s, start_s }) => {
+          if (start_s !== undefined && (!nonnegative(start_s) || !Number.isFinite(start_s + wall_s))) {
+            throw new Error('invalid stage window')
+          }
+          const samples = start_s === undefined ? [] : gpuUtil.filter(item => item.t >= start_s && item.t < start_s + wall_s)
+          return { stage, ...(kind === undefined ? {} : { kind }), wall_s, gpu_s,
+            start_s: start_s ?? null, wall_fraction: Math.min(1, wall_s / total_wall_s),
+            mean_gpu_util: samples.length ? samples.reduce((sum, item) => sum + item.util / 100, 0) / samples.length : null }
+        })
+        let allocation
+        try { allocation = readJSON(path.join(C, 'box.json')) } catch { /* Probe supplies inventory. */ }
+        const allocationCount = Number.isInteger(allocation?.gpu_count) && allocation.gpu_count >= 0
+          ? allocation.gpu_count : Number(/^gpu_(\d+)x_/.exec(allocation?.type)?.[1])
         facts.profile_complete = true
         facts.timed_fraction = Math.min(1, timedWall / total_wall_s)
         facts.gpu_telemetry = gpuUtil.length > 0
         writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify({
-          stages: stages.map(({ stage, kind, wall_s, gpu_s }) => ({ stage, ...(kind === undefined ? {} : { kind }), wall_s, gpu_s,
-            wall_fraction: Math.min(1, wall_s / total_wall_s) })), total_wall_s,
+          stages: measuredStages, total_wall_s,
           timed_fraction: facts.timed_fraction, gpu_telemetry: facts.gpu_telemetry,
-          gpu_count: Array.isArray(boxProbe?.nvidia?.gpus) ? boxProbe.nvidia.gpus.length : 1,
+          gpu_count: Number.isInteger(allocationCount) && allocationCount >= 0 ? allocationCount
+            : Array.isArray(boxProbe?.nvidia?.gpus) ? boxProbe.nvidia.gpus.length : 1,
         }, null, 2) + '\n')
         const processWrapper = stages.some(item => /(?:^|[\s_-])(?:process|wrapper|telemetry|total|overall)(?:$|[\s_-])/i.test(item.stage)
           || (item.wall_s >= total_wall_s * 0.98 && item.wall_s <= total_wall_s * 1.02))
@@ -363,8 +376,10 @@ Include every feasible entry once; list every entry with bound <1.05 exactly onc
 For each interval require finite low >0, low <= high <= its method's bound, and high-low <= bound-1. When at least two methods are feasible, their intervals must not all be identical. Base each interval on its method's profile evidence and overheads.
 Amdahl bound is 1/((1-p)+p/k). The supplied bounds are ceilings, not measured gains; intervals without measurements are prospective assumptions. Include launch/transfer/merge overhead.
 Write an object with these fields:
+- outputs_stochastic: boolean; true for Monte Carlo, sampling, or outputs affected by random seeds, even when fixed seeds make a run reproducible.
 - predictions: array of {method, expected_speedup_interval: {low, high}, outcome_vs_compute_points}. Each point is {compute_budget, predicted_outcome, uncertainty}. Include all sealed compute budgets for each method.
 - equivalence_metrics: quantities, scientific tolerances, and sources from requirements or baseline variability, never method outputs. Lack of significance is not equivalence.
+For stochastic outputs, equivalence_metrics must be statistical: use paired seeds and positive absolute scientific margins derived from baseline variability (for example Monte Carlo standard error), with a sealed significance level alpha = 1 - confidence_rule.equivalence.confidence. Require the confidence interval for paired differences to lie within those margins. Never demand exact, zero-tolerance, or bitwise equivalence for stochastic outputs. Exact or bitwise equivalence is required only for deterministic outputs.
 - paired_seed_tests: stochastic paired-seed test and fixed seeds, or an explicit scientifically justified deterministic/not-applicable declaration.
 - sample_sizes and confidence_rule: powered equivalence sample sizes and the confidence decision rule.
 - hardware_cost_basis, timing_scope, minimum_worthwhile_gain (a speedup ratio >1).
@@ -383,7 +398,8 @@ Return a short completion acknowledgement; the script reads and seals the file i
       const required = ['equivalence_metrics', 'paired_seed_tests', 'sample_sizes', 'confidence_rule',
         'hardware_cost_basis', 'timing_scope', 'minimum_worthwhile_gain', 'evaluation_inputs', 'splits',
         'compute_budgets', 'repetitions', 'warmup', 'scheduling_order', 'equal_outcome_target']
-      const complete = required.every(key => hasValue(predictions[key]))
+      const complete = typeof predictions.outputs_stochastic === 'boolean'
+        && required.every(key => hasValue(predictions[key]))
         && Array.isArray(predictions.compute_budgets) && new Set(predictions.compute_budgets).size >= 3
         && predictions.compute_budgets.every(value => Number.isFinite(value) && value > 0)
         && Number.isInteger(predictions.repetitions) && predictions.repetitions >= 5
@@ -397,6 +413,23 @@ Return a short completion acknowledgement; the script reads and seals the file i
           && predictions.compute_budgets.every(budget => item.outcome_vs_compute_points.some(point => point
             && point.compute_budget === budget && hasValue(point.predicted_outcome) && hasValue(point.uncertainty))))
       if (!complete) return failure(facts, 'numeric')
+      if (predictions.outputs_stochastic) {
+        const seeds = predictions.paired_seed_tests
+        const rule = predictions.confidence_rule?.equivalence
+        const metrics = predictions.equivalence_metrics
+        if (seeds?.kind !== 'paired_median' || !Array.isArray(seeds.seeds) || seeds.seeds.length < 2
+          || !seeds.seeds.every(Number.isInteger) || new Set(seeds.seeds).size !== seeds.seeds.length
+          || rule?.kind !== 'paired_median' || !Number.isFinite(rule.confidence) || rule.confidence < 0.5 || rule.confidence >= 1
+          || !Array.isArray(metrics) || !metrics.length || !metrics.every(metric => {
+            const tolerance = typeof metric?.tolerance === 'number' ? metric.tolerance : metric?.tolerance?.abs
+            return typeof metric?.name === 'string' && metric.name.trim()
+              && typeof metric.source === 'string' && metric.source.trim()
+              && Number.isFinite(tolerance) && tolerance > 0
+              && (typeof metric.tolerance === 'number' || Object.keys(metric.tolerance).length === 1)
+              && !/\b(?:exact|bitwise)\b/i.test(JSON.stringify({ name: metric.name, kind: metric.kind,
+                rule: metric.rule, comparison: metric.comparison }))
+          })) return failure(facts, 'numeric')
+      }
       const feasible = menu.filter(method => bounds[method].feasible)
       const infeasible = menu.filter(method => !bounds[method].feasible)
       const excluded = predictions.infeasible_methods
@@ -508,13 +541,18 @@ Return a short completion acknowledgement; the script reads and seals the file i
       }
       ranked.sort((a, b) => b.rank_score - a.rank_score || menu.indexOf(a.method) - menu.indexOf(b.method))
       const methods = ranked.filter(item => item.resource_guard_pass)
-      const packet = { ranked_methods: methods, profile_summary: profile,
-        sealed_protocol: Object.fromEntries(['equivalence_metrics', 'paired_seed_tests', 'sample_sizes',
-          'confidence_rule', 'hardware_cost_basis', 'timing_scope', 'evaluation_inputs', 'splits',
-          'compute_budgets', 'repetitions', 'warmup', 'scheduling_order', 'equal_outcome_target']
-          .map(key => [key, predictions[key]]).filter(([, value]) => value !== undefined)),
-        minimum_worthwhile_gain: predictions.minimum_worthwhile_gain,
-        resource_guards: { allocation_gpus: allocationCount, probe_gpus: probeCount, available_gpus: available } }
+      const packet = {
+        ranked_methods: methods.map(({ method, bounds }) => ({ method, bounds })),
+        stage_to_method: profile.stages.map(stage => {
+          const mapped = Object.values(bounds).flatMap(limit => limit.stages || []).find(row => row.stage === stage.stage)
+          return { stage: stage.stage, wall_fraction: Math.min(1, stage.wall_s / profile.total_wall_s),
+            mean_gpu_util: stage.mean_gpu_util ?? null, methods: mapped?.methods || [] }
+        }),
+        bounds,
+        sealed_equivalence_rule: Object.fromEntries(['outputs_stochastic', 'equivalence_metrics',
+          'paired_seed_tests', 'sample_sizes'].map(key => [key, predictions[key]])),
+      }
+      packet.sealed_equivalence_rule.confidence_rule = predictions.confidence_rule?.equivalence ?? predictions.confidence_rule
       writeFileSync(path.join(A, 'propose-packet.json'), JSON.stringify(packet, null, 2) + '\n')
       if (!methods.length) return finish('numeric')
       const { validate } = await import(path.resolve('idea/schema.js'))
@@ -527,6 +565,7 @@ Return a short completion acknowledgement; the script reads and seals the file i
       const evidence = JSON.stringify(packet)
       const reply = await agent(`Choose one feasible method from ranked_methods in this prepared packet.
 Read only the packet embedded below. Never read other files, search, access the box, run workloads, or implement code.
+ranked_methods are ordered by sealed predicted speedup capped by the supplied bounds and have already passed deterministic GPU resource guards.
 Write only ${JSON.stringify(proposalPath)}, matching this schema: ${JSON.stringify(proposalSchema)}.
 Explain profile evidence, overheads, scientific equivalence risks, and a concrete implementation plan. Keep the sealed method and protocol unchanged.
 Prepared packet:\n${evidence}
@@ -555,7 +594,7 @@ Return a short completion acknowledgement.`,
         try {
           vote = await agent(`Independent ballot ${index + 1} of 5. Review this proposal once.
 Use only the embedded prepared packet and proposal. Never read files, other votes, or other sessions; do not search or use tools.
-Approve only if the method stays within its bound, is parallelisable as planned, preserves scientific equivalence, fits resource guards, and has adequate profile evidence.
+ranked_methods have already passed deterministic GPU resource guards. Approve only if the method stays within its bound, is parallelisable as planned, preserves the sealed scientific equivalence rule, and has adequate stage evidence.
 Return only vote and reason_codes using the supplied schema. Missing evidence warrants reject or abstain. Vote share is not a calibrated probability.
 Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
             { label: 'skeptic', agentType: 'qt-bare', model: 'haiku', schema: voteSchema, repairable: false, fresh: true })
