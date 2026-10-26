@@ -139,7 +139,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     if (!Number.isInteger(seconds) || seconds <= 0 || seconds > 999999999) throw new Error('invalid budget')
     return seconds
   }
-  const budgetPrompt = () => `Script budgets in seconds: setup.sh=${executionTimeout('setup')}, run_anchors.sh=${executionTimeout('anchors')}, profile.sh=${executionTimeout('profile')}, run_evaluation.sh=${executionTimeout('method_run')} per invocation (also run_anchors.sh when used as the evaluation adapter); complete evaluation scorer=${executionTimeout('evaluate')}. Use one fixed scale from EXECUTION.json, no scale search or doubling loops, and finish well within the budget.`
+  const budgetPrompt = () => `Script budgets in seconds: setup.sh=${executionTimeout('setup')}, run_anchors.sh=${executionTimeout('anchors')}, fixed profiler=${executionTimeout('profile')}, run_evaluation.sh=${executionTimeout('method_run')} per invocation (also run_anchors.sh when used as the evaluation adapter); complete evaluation scorer=${executionTimeout('evaluate')}. Use one fixed scale from EXECUTION.json, no scale search or doubling loops, and finish well within the budget.`
   async function boxCommand(name, command, destination, timeout, retry = false) {
     mkdirSync(receiptsDirectory, { recursive: true })
     const number = Math.max(0, ...readdirSync(receiptsDirectory)
@@ -181,8 +181,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     }
     return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
   }
-  const harnessRules = 'Scope: setup.sh builds and checks only the baseline; profiling tools or shims belong only in profile.sh. A repair must change only the failing script and stay within that script\'s scope. Run the published build and binary and read measurements from its OUTPUT. Treat run_anchors.sh as the canonical run command and environment: profile.sh and every later run script must reuse exactly that command, arguments and environment, including CUDA_VISIBLE_DEVICES and the GPU count. Validate the program\'s printed configuration against those same command arguments and environment values; never change the GPU count or visibility for profiling or validate against different defaults. Preserve this consistency in repairs; read the other harness scripts to match their existing choices while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
-  const profileRules = 'Run the same baseline once at representative scale. Measure at least 3 timed stages INSIDE the measured run, for example setup or allocation, host-to-device transfers, compute kernels, device-to-host transfers, or host postprocessing. Use the program\'s own timers or output, CUDA events, nsys if present, or wrapper timings around separable phases. Process-level wrappers (telemetry_start, baseline_process, total process time, etc.) do not count as stages and must not appear in stages.json; any stage wall_s within 2% of total_wall_s counts as a process wrapper. Write out/profile/stages.json as [{stage, kind, wall_s, gpu_s, start_s}], with start_s measured elapsed seconds from the same origin as gpu_util.json t, and kind compute, transfer, or other (finite nonnegative seconds, gpu_s null when unavailable), and out/profile/total_wall_s.json as {total_wall_s} (finite positive seconds). Sample GPU utilisation with nvidia-smi during the measured run into out/profile/gpu_util.json as a non-empty array [{t, util}], with t finite nonnegative elapsed seconds and util finite percent in [0,100]. Save raw telemetry under out/profile/. Use critical-path stage wall times without double-counting overlap; timed_fraction = min(1, sum(stage.wall_s) / total_wall_s) must be >=0.9. Do not invent GPU timings or replace unavailable GPU timings with allocated time.'
+  const harnessRules = 'Scope: setup.sh builds and checks only the baseline. The pipeline owns profiling and profiler installation; do not write profile.sh or install profiling tools. A repair must change only the failing script and stay within its scope. Run the published build and binary and read measurements from its OUTPUT. run_command.sh is the canonical measured command and complete environment, including working directory, arguments, CUDA_VISIBLE_DEVICES and GPU count. run_anchors.sh must invoke bash harness/run_command.sh without overriding its environment or duplicating the workload command; parse its saved output for anchor measurements. The fixed profiler invokes that identical file with bash from the same working directory. Keep output paths stable and preserve logs. Every later run script must preserve the published configuration. Validate printed configuration against the actual command and environment. Preserve consistency in repairs; read the other harness scripts while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
   let boxProbe
   const boxProbePrompt = () => `Box probe (collected by the pipeline before harness generation):
 ${JSON.stringify(boxProbe, null, 2)}
@@ -202,10 +201,9 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
     writeFileSync(probePath, content)
     boxProbe = probe
   }
-  async function runHarness(name, operation, destination, timeout, validate = () => null) {
-    const command = `${name === 'profile.sh' ? 'set -e\nrm -rf out/profile\n' : ''}bash harness/${name}`
-    const inspect = result => !result.error && result.rc === 0 ? { ...result, error: validate() } : result
-    const result = inspect(await boxCommand(operation, command, destination, timeout))
+  async function runHarness(name, operation, destination, timeout) {
+    const command = `bash harness/${name}`
+    const result = await boxCommand(operation, command, destination, timeout)
     if (result.error === 'infra' || (result.rc === 0 && !result.error)) return result
     let tail
     try {
@@ -217,14 +215,13 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
     }
     const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). Repair only ${JSON.stringify(path.join(harnessDirectory, name))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this script.
 Budget: ${timeout}s; measured elapsed: ${result.wall_s ?? 'unavailable'}s; measured overrun: ${Number.isFinite(result.wall_s) ? Math.max(0, result.wall_s - timeout) : 'unavailable'}s. ${budgetPrompt()}
-${name === 'profile.sh' ? profileRules : ''}
 ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
       { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry: 1 })
     if (repair == null) return result
     const uploaded = await uploadHarness([name], destination, executionTimeout('setup'))
     if (uploaded.error || uploaded.rc !== 0) return { ...uploaded, error: uploaded.error || 'infra' }
-    return inspect(await boxCommand(operation, command, destination, timeout))
+    return boxCommand(operation, command, destination, timeout)
   }
   async function reproduce() {
     // Snapshot only the current allocation; never reuse a prior run's box record.
@@ -253,7 +250,7 @@ ${boxProbePrompt()}
 Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
 - setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
 - run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
-- profile.sh: ${profileRules}
+- run_command.sh: only the exact measured baseline run command and its complete environment at the fixed representative scale. Run the published binary, save its stdout/stderr for run_anchors.sh to parse, and propagate its exit status. Do not measure stages, sample telemetry, install tools, or write profiling outputs. run_anchors.sh invokes this file; the pipeline profiles this same file.
 Also provide run_evaluation.sh for the published baseline evaluation interface, or make run_anchors.sh handle non-anchor EVAL_MODE. Evaluation uses fresh working directories with baseline-published/, method/, data/, harness/ and payload/ links and absolute BASELINE_DIR, METHOD_DIR, BASELINE_OUT, METHOD_OUT and EVAL_OUT paths. EVAL_PROTOCOL points to the sealed JSON; EVAL_INPUTS and EVAL_SEEDS contain its JSON input and seed specifications; EVAL_COMPUTE_BUDGET is empty except in curve mode. Modes are equivalence, warmup, performance and curve. Run the published configuration on every sealed input/seed, seeds first then input IDs, and write EVAL_OUT/evaluation.json: {records:[{input_id,seed,metrics:{metric_name:finite_number}}],timing_scope,gpu_count,wall_s,compute_budget}. Use null seed for deterministic protocols; timing_scope must equal the seal; wall_s is required for reported_wall scopes; compute_budget is required for curves. Synchronize every used GPU before returning or stopping reported timers; include launch, transfer and merge overhead. Enforce curve budgets in GPU seconds. Always measure actual outputs; never reuse baseline outputs.
 Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
 Return a short completion acknowledgement; the pipeline reads the scripts itself.`
@@ -261,7 +258,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       mkdirSync(harnessDirectory, { recursive: true })
       const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
       if (reply == null) return failure(facts, 'parse')
-      const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'profile.sh',
+      const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'run_command.sh',
         ...(existsSync(path.join(harnessDirectory, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])], destination, setupTimeout)
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
       const setup = await runHarness('setup.sh', 'setup', destination, setupTimeout)
@@ -346,9 +343,23 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
     }
     try {
       rmSync(path.join(A, 'profile-packet.json'), { force: true })
-      const result = await runHarness('profile.sh', 'profile', destination, executionTimeout('profile'), validateProfile)
+      const timeout = executionTimeout('profile')
+      const commands = ['set -e', 'mkdir -p profiler', 'rm -rf out/profile']
+      for (const name of ['profile_nsys.sh', 'profile_summarise.py']) {
+        const bytes = readFileSync(path.join('m5', name)).toString('base64')
+        commands.push(`printf %s ${quote(bytes)} | base64 -d > ${quote(`profiler/${name}`)}`)
+      }
+      const probeBytes = Buffer.from(JSON.stringify(boxProbe)).toString('base64')
+      commands.push(`printf %s ${quote(probeBytes)} | base64 -d > profiler/probe.json`)
+      const uploaded = await boxCommand('upload', commands.join('\n'), destination, timeout)
+      if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
+      const result = await boxCommand('profile',
+        `bash profiler/profile_nsys.sh harness/run_command.sh out/profile ${timeout}`, destination, timeout)
       if (result.error) return failure(facts, result.error)
+      if (existsSync(path.join(destination, 'out', 'profile', 'infra.json'))) return failure(facts, 'infra')
       if (result.rc !== 0) return failure(facts, 'parse')
+      const invalid = validateProfile()
+      if (invalid) return failure(facts, invalid)
       return { status: 'PASS', facts }
     } catch {
       return failure(facts, 'parse')
