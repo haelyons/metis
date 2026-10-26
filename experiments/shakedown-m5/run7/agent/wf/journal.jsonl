@@ -1,0 +1,22 @@
+{"ts":"2026-10-26T13:07:50.850Z","type":"phase","t":"intake"}
+{"ts":"2026-10-26T13:07:50.853Z","type":"started","n":1,"label":"intake","role":"ls-writer","model":"codex/default@medium","understudy":"cursor/default","chain":["cursor/default","opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":null,"key":"a9b67f7ec786b87c773030e515b8e5ea0b8f3dbfeed8f4496dad011ef9ad3b92"}
+{"ts":"2026-10-26T13:09:52.957Z","type":"result","n":1,"label":"intake","key":"a9b67f7ec786b87c773030e515b8e5ea0b8f3dbfeed8f4496dad011ef9ad3b92","model":"codex/default@medium","substituted":false,"value":{"found":true,"anchors_count":2,"data":"available","licence":"permitted","stock_environment":null,"size":"unknown"}}
+{"ts":"2026-10-26T13:09:53.039Z","type":"log","m":"intake: PASS"}
+{"ts":"2026-10-26T13:09:53.039Z","type":"phase","t":"reproduce"}
+{"ts":"2026-10-26T13:10:08.178Z","type":"started","n":2,"label":"harness","role":"ls-writer","model":"codex/default@medium","understudy":"cursor/default","chain":["cursor/default","opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":null,"key":"504e30bdad0f86a8d1cf4eb796fba8481930257e76aea9928f0bcdf3516955ae"}
+{"ts":"2026-10-26T13:16:52.685Z","type":"result","n":2,"label":"harness","key":"504e30bdad0f86a8d1cf4eb796fba8481930257e76aea9928f0bcdf3516955ae","model":"codex/default@medium","substituted":false,"value":"{\"status\":\"written\",\"validation\":\"Four harness scripts pass syntax checks. No local builds or workloads run.\"}"}
+{"ts":"2026-10-26T13:17:30.287Z","type":"started","n":3,"label":"harness-repair","role":"ls-writer","model":"codex/default@medium","understudy":"cursor/default","chain":["cursor/default","opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":null,"key":"4ad86c4601cf4d6ecb993d8a9a7b170ca1640138426deec53bc8cbea34db9b8f"}
+{"ts":"2026-10-26T13:18:38.369Z","type":"result","n":3,"label":"harness-repair","key":"4ad86c4601cf4d6ecb993d8a9a7b170ca1640138426deec53bc8cbea34db9b8f","model":"codex/default@medium","substituted":false,"value":"Repaired `harness/setup.sh`: discovers installed CUDA headers, passes include path to both builds and trace compilation. Pin, configuration, stock image preserved.\n\n`bash -n` passed. No local workloads or box access."}
+{"ts":"2026-10-26T13:20:20.294Z","type":"log","m":"reproduce: FAIL"}
+{"ts":"2026-10-26T13:20:20.295Z","type":"phase","t":"profile"}
+{"ts":"2026-10-26T13:20:20.369Z","type":"log","m":"profile: SKIPPED"}
+{"ts":"2026-10-26T13:20:20.369Z","type":"phase","t":"seal"}
+{"ts":"2026-10-26T13:20:20.444Z","type":"log","m":"seal: SKIPPED"}
+{"ts":"2026-10-26T13:20:20.444Z","type":"phase","t":"propose"}
+{"ts":"2026-10-26T13:20:20.519Z","type":"log","m":"propose: SKIPPED"}
+{"ts":"2026-10-26T13:20:20.519Z","type":"phase","t":"implement"}
+{"ts":"2026-10-26T13:20:20.599Z","type":"log","m":"implement: SKIPPED"}
+{"ts":"2026-10-26T13:20:20.599Z","type":"phase","t":"evaluate"}
+{"ts":"2026-10-26T13:20:20.677Z","type":"log","m":"evaluate: SKIPPED"}
+{"ts":"2026-10-26T13:20:20.677Z","type":"phase","t":"takeaways"}
+{"ts":"2026-10-26T13:20:20.753Z","type":"log","m":"takeaways: PASS"}

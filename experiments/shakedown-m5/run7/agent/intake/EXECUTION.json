@@ -1,0 +1,112 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpu_count": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "source": "brief.md, Scale (operator revision after raid jackhammer)",
+    "selection": "One fixed scale; no search, doubling, or toy extrapolation.",
+    "preparation": "Set host nOptions = 1024 * 1024 and rebuild once with baseline build commands.",
+    "budget_policy": "If fixed-scale run exceeds stage budget, report timeout; do not reduce or search scale.",
+    "runtime_within_budget": null,
+    "runtime_reason": "No build/run or evidenced representative-scale runtime available; completion within budgets unverified."
+  },
+  "anchor_validation_scale": {
+    "options": 8192,
+    "paths_per_option": 262144,
+    "gpu_count": 1,
+    "source": {
+      "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L269-L314",
+      "publisher": "NVIDIA",
+      "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+      "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+    }
+  },
+  "inputs": {
+    "source": "data.json",
+    "external_downloads": false,
+    "configuration_checks": [
+      "Printed GPU count equals 1",
+      "Printed option count equals intended stage scale",
+      "Printed paths per option equals 262144"
+    ],
+    "tiny_gpu_caveat": "Sample can reduce options on devices with <=32 CUDA cores; mismatch invalidates intended scale."
+  },
+  "outputs": {
+    "performance": {
+      "field": "Total time (ms.)",
+      "unit": "ms",
+      "method": "streamed"
+    },
+    "correctness": [
+      "Average reserve",
+      "Test passed or Test failed!",
+      "process exit status",
+      "L1 norm"
+    ],
+    "scoring_interface": {
+      "correctness_anchors": "anchors.json; validate at published 8192-option scale.",
+      "timing": "Report raw streamed Total time (ms.) for fixed 1048576-option workload.",
+      "numeric_L1_threshold": null,
+      "reason": "No published numeric L1 threshold; do not invent.",
+      "reserve_boundary": "Use final verdict or unrounded reserve at six-decimal printed boundary."
+    },
+    "additional_records": [
+      "GPU model",
+      "GPU count",
+      "multiprocessor count",
+      "grid size",
+      "CUDA toolkit version",
+      "driver version",
+      "libc version",
+      "precision",
+      "option count",
+      "path count"
+    ]
+  },
+  "timing_scope": {
+    "includes": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Waiting on completion events"
+    ],
+    "excludes": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "source": [
+      {
+        "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+        "publisher": "NVIDIA",
+        "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+        "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+      },
+      {
+        "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223",
+        "publisher": "NVIDIA",
+        "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+        "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+      }
+    ]
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "gate_scripts": {
+    "named_scripts": [],
+    "reason": "Prompt and brief name no gate scripts."
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "repo": "https://github.com/NVIDIA/cuda-samples",
+  "tag": "v12.8",
+  "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+  "pin_source": "https://api.github.com/repos/NVIDIA/cuda-samples/git/ref/tags/v12.8",
+  "build_commands": [
+    "python3 -m pip install --user cmake==3.31.6",
+    "export PATH=\"$HOME/.local/bin:$PATH\"",
+    "git clone --branch v12.8 --depth 1 https://github.com/NVIDIA/cuda-samples.git",
+    "cd cuda-samples",
+    "git checkout --detach db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample=Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "cmake -S \"$sample\" -B build-mc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc",
+    "cmake --build build-mc --target MonteCarloMultiGPU --parallel"
+  ],
+  "build_command_notes": [
+    "Optional pip CMake step may be omitted when suitable CMake exists.",
+    "Commands assume /usr/local/cuda-12.8.",
+    "Build only MonteCarloMultiGPU."
+  ],
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "command_sources": [
+    {
+      "source": "brief.md",
+      "section": "Build only this sample; shell block"
+    },
+    {
+      "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+      "publisher": "NVIDIA",
+      "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+      "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+    },
+    {
+      "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md",
+      "publisher": "NVIDIA",
+      "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+      "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+    }
+  ],
+  "published_configuration": {
+    "nOptions": 8192,
+    "PATH_N": 262144,
+    "OPT_N": "nOptions * scale",
+    "strong_scale": 1,
+    "weak_scale": "GPU_N",
+    "GPU_N": "cudaGetDeviceCount after visibility filtering",
+    "THREAD_N": 256,
+    "MAX_OPTIONS_per_gpu": 1048576,
+    "grid_cap": "40 * multiProcessorCount",
+    "precision": "float; DOUBLE_PRECISION disabled",
+    "source": [
+      {
+        "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L269-L314",
+        "publisher": "NVIDIA",
+        "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+        "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+      },
+      {
+        "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L49-L74",
+        "publisher": "NVIDIA",
+        "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+        "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+      },
+      {
+        "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37",
+        "publisher": "NVIDIA",
+        "repository_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+        "evidence": "Cited and described in supplied brief; direct source retrieval unavailable during intake."
+      }
+    ]
+  },
+  "representative_modification": {
+    "file": "Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+    "change": "Set host nOptions = 1024 * 1024, then rebuild once using supplied build commands.",
+    "source": "brief.md, Scale (operator revision after raid jackhammer)",
+    "published_upstream_configuration": false
+  },
+  "executed": false,
+  "measured_results": null,
+  "reason": "Intake only; builds and workloads prohibited."
+}
