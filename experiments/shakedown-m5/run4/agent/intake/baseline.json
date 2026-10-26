@@ -1,0 +1,55 @@
+{
+  "repo": "https://github.com/NVIDIA/cuda-samples",
+  "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+  "tag": "v12.8",
+  "pin_source": "https://api.github.com/repos/NVIDIA/cuda-samples/git/ref/tags/v12.8",
+  "build_commands": [
+    "python3 -m pip install --user cmake==3.31.6",
+    "export PATH=\"$HOME/.local/bin:$PATH\"",
+    "git clone --branch v12.8 --depth 1 https://github.com/NVIDIA/cuda-samples.git",
+    "cd cuda-samples",
+    "git checkout --detach db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample=Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "cmake -S \"$sample\" -B build-mc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc",
+    "cmake --build build-mc --target MonteCarloMultiGPU --parallel"
+  ],
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "commands_source": "intake/brief.md, supplied build/run code block; upstream references below support requirements.",
+  "build_sources": [
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md#building-cuda-samples",
+    "https://pypi.org/project/cmake/3.31.6/"
+  ],
+  "run_sources": [
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L269-L314"
+  ],
+  "build_notes": [
+    "Optional pip CMake installation omitted if suitable CMake exists.",
+    "Commands assume /usr/local/cuda-12.8; installed path unverified.",
+    "Sample CMake hardcodes architecture list; no architecture override assumed."
+  ],
+  "published_configuration": {
+    "gpu_count": 1,
+    "nOptions": 8192,
+    "PATH_N": 262144,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float; DOUBLE_PRECISION disabled",
+    "THREAD_N": 256,
+    "MAX_OPTIONS_per_gpu": 1048576,
+    "grid_size": "Capped at 40 * multiProcessorCount",
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L269-L314",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L49-L74",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37"
+    ]
+  },
+  "executed": false,
+  "provenance": {
+    "basis": "Readable supplied brief with pinned upstream citations; no build or workload executed.",
+    "retrieval": "Pinned host, kernel and CMake URLs returned web cache misses; shell fetch blocked by domain allowlist. Pinned LICENSE independently retrieved through web.",
+    "missing_evidence": "Source implementation details below are attributed to brief and its citations; direct source verification unavailable in this pass."
+  }
+}

@@ -1,0 +1,21 @@
+diff --git a/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp b/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp
+index 71b3f8a..af5105e 100644
+--- a/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp
++++ b/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp
+@@ -269,14 +269,14 @@ int main(int argc, char **argv) {
+   // GPU number present in the system
+   int GPU_N;
+   checkCudaErrors(cudaGetDeviceCount(&GPU_N));
+-  int nOptions = 8 * 1024;
++  int nOptions = 1048576;
+ 
+   nOptions = adjustProblemSize(GPU_N, nOptions);
+ 
+   // select problem size
+   int scale = (strongScaling) ? 1 : GPU_N;
+   int OPT_N = nOptions * scale;
+-  int PATH_N = 262144;
++  int PATH_N = 2097152;
+ 
+   // initialize the timers
+   hTimer = new StopWatchInterface *[GPU_N];
