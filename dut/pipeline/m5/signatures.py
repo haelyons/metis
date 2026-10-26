@@ -54,9 +54,13 @@ def validate(value):
             or not re.fullmatch(r"(?:r[0-9]+|run[0-9]+|none)", record["run"])
             or record["type"] not in ("unknown", "none", "dev", "serve", *FACTS)):
         return ["invalid signature identifiers"]
-    if type(facts) is not dict or facts.keys() != FACTS[stage].keys():
+    # The run summary is an optional extension, so existing v2 stage records remain readable.
+    schema = dict(FACTS[stage])
+    if stage == "takeaways" and type(facts) is dict and "run_box_usd" in facts:
+        schema["run_box_usd"] = float
+    if type(facts) is not dict or facts.keys() != schema.keys():
         return ["invalid fact keys"]
-    for key, spec in FACTS[stage].items():
+    for key, spec in schema.items():
         item = facts[key]
         if item is None:
             continue
@@ -70,6 +74,8 @@ def validate(value):
             errors.append(f"{key}: out of range")
         elif key == "votes_total" and item != 5:
             errors.append("votes_total: must be five")
+        elif key == "run_box_usd" and item < 0:
+            errors.append("run_box_usd: must be nonnegative")
     if record["status"] == "SKIPPED" and any(v is not None for v in facts.values()):
         errors.append("SKIPPED facts must be null")
     return errors

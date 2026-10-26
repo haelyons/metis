@@ -7,6 +7,8 @@ return (async () => {
   const { createHash, randomUUID } = await import('node:crypto')
   const { execFile } = await import('node:child_process')
   const { promisify } = await import('node:util')
+  const { homedir } = await import('node:os')
+  const runStarted = Date.now()
   const exec = promisify(execFile)
   const input = (typeof args === 'string' ? JSON.parse(args) : args) || {}
   if (!input.run_root || !input.tag) throw new Error('m5 needs run_root and tag')
@@ -44,6 +46,22 @@ return (async () => {
     },
   }
   const readJSON = file => JSON.parse(readFileSync(file, 'utf8'))
+  const boxPath = path.join(homedir(), '.cache', 'metis-serve', 'box.json')
+  let box = null, stageReceipts = []
+  const nonnegative = value => typeof value === 'number' && Number.isFinite(value) && value >= 0
+  const journalText = () => agent.journal && existsSync(agent.journal) ? readFileSync(agent.journal, 'utf8') : ''
+  function answeringFamilies(offset) {
+    return journalText().slice(offset).split('\n').filter(Boolean).map(line => JSON.parse(line))
+      .filter(row => ['result', 'cached'].includes(row.type) && typeof row.model === 'string')
+      .map(row => /^(codex|cursor|lambda|claude)\//.exec(row.model)?.[1] ?? 'opencode')
+  }
+  function runBoxUSD(fallback) {
+    if (!box || !nonnegative(box.price_usd_h)) return fallback
+    const start = Date.parse(box.started_utc)
+    const end = box.ended_utc == null ? Date.now() : Date.parse(box.ended_utc)
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return fallback
+    return Math.max(0, Math.min(Date.now(), end) - Math.max(runStarted, start)) / 3600000 * box.price_usd_h
+  }
   const hasValue = value => value != null && (typeof value !== 'string' || value.trim() !== '')
     && (typeof value !== 'object' || Object.keys(value).length > 0)
   const menu = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
@@ -137,6 +155,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     }
     let receipt
     try { receipt = readJSON(receiptPath) } catch { return { error: 'infra' } }
+    stageReceipts.push(receipt)
     if (!Number.isInteger(receipt.rc)) return { error: 'infra' }
     if (commandFailed && receipt.rc === 0) return { error: 'infra', rc: receipt.rc }
     if (receipt.rc === 0 && receipt.fetched !== true) return { error: 'infra', rc: receipt.rc }
@@ -151,6 +170,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
   }
   const harnessRules = 'Run the published build and binary and read measurements from its OUTPUT. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
+  const profileRules = 'Run the same baseline once at representative scale. Measure at least 3 timed stages INSIDE the measured run, for example setup or allocation, host-to-device transfers, compute kernels, device-to-host transfers, or host postprocessing. Use the program\'s own timers or output, CUDA events, nsys if present, or wrapper timings around separable phases. Process-level wrappers (telemetry_start, baseline_process, total process time, etc.) do not count as stages and must not appear in stages.json; any stage wall_s within 2% of total_wall_s counts as a process wrapper. Write out/profile/stages.json as [{stage, kind, wall_s, gpu_s}], with kind compute, transfer, or other (finite nonnegative seconds, gpu_s null when unavailable), and out/profile/total_wall_s.json as {total_wall_s} (finite positive seconds). Sample GPU utilisation with nvidia-smi during the measured run into out/profile/gpu_util.json as a non-empty array [{t, util}], with t finite nonnegative elapsed seconds and util finite percent in [0,100]. Save raw telemetry under out/profile/. Use critical-path stage wall times without double-counting overlap; timed_fraction = min(1, sum(stage.wall_s) / total_wall_s) must be >=0.9. Do not invent GPU timings or replace unavailable GPU timings with allocated time.'
   let boxProbe
   const boxProbePrompt = () => `Box probe (collected by the pipeline before harness generation):
 ${JSON.stringify(boxProbe, null, 2)}
@@ -170,25 +190,36 @@ Use the probe's discovered paths and versions. Never hard-code a toolkit path th
     writeFileSync(probePath, content)
     boxProbe = probe
   }
-  async function runHarness(name, operation, destination, timeout) {
-    const command = `bash harness/${name}`
-    const result = await boxCommand(operation, command, destination, timeout)
-    if (result.error || result.rc === 0) return result
+  async function runHarness(name, operation, destination, timeout, validate = () => null) {
+    const command = `${name === 'profile.sh' ? 'set -e\nrm -rf out/profile\n' : ''}bash harness/${name}`
+    const inspect = result => !result.error && result.rc === 0 ? { ...result, error: validate() } : result
+    const result = inspect(await boxCommand(operation, command, destination, timeout))
+    if (result.error === 'infra' || (result.rc === 0 && !result.error)) return result
     let tail
     try {
       const lines = readFileSync(result.log, 'utf8').trimEnd().split('\n')
       tail = lines.slice(-200).join('\n')
-    } catch { return result }
-    const repair = await agent(`${name} failed (rc ${result.rc}). Repair only ${JSON.stringify(path.join(harnessDirectory, name))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this script.
+    } catch {
+      if (!result.error) return result
+      tail = ''
+    }
+    const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). Repair only ${JSON.stringify(path.join(harnessDirectory, name))} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this script.
+${name === 'profile.sh' ? profileRules : ''}
 ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
       { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry: 1 })
     if (repair == null) return result
     const uploaded = await uploadHarness([name], destination, executionTimeout('setup'))
     if (uploaded.error || uploaded.rc !== 0) return { error: 'infra' }
-    return boxCommand(operation, command, destination, timeout)
+    return inspect(await boxCommand(operation, command, destination, timeout))
   }
   async function reproduce() {
+    // Snapshot only the current allocation; never reuse a prior run's box record.
+    rmSync(path.join(C, 'box.json'), { force: true })
+    if (existsSync(boxPath)) {
+      writeFileSync(path.join(C, 'box.json'), readFileSync(boxPath))
+      try { box = readJSON(path.join(C, 'box.json')) } catch { box = null }
+    }
     if (input.stub?.reproduce != null) return stub('reproduce')
     const facts = { ...nullFacts('reproduce'), stock_verified: false, tokens_known: false, gpu_busy_known: false }
     const destination = path.join(A, 'results', 'reproduce')
@@ -208,7 +239,7 @@ ${boxProbePrompt()}
 Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
 - setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
 - run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
-- profile.sh: run that same baseline once at representative scale, with stage wall timers and nvidia-smi sampling. Write out/profile/stages.json as [{stage, wall_s, gpu_s}] (finite nonnegative seconds, gpu_s null when unavailable), and out/profile/total_wall_s.json as {total_wall_s} (finite positive seconds). Save raw telemetry under out/profile/. Use critical-path stage wall times without double-counting overlap. Do not invent GPU timings or replace unavailable GPU timings with allocated time.
+- profile.sh: ${profileRules}
 Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
 Return a short completion acknowledgement; the pipeline reads the scripts itself.`
     try {
@@ -247,30 +278,49 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
   async function profile() {
     if (input.stub?.profile != null) return stub('profile')
     const facts = { ...nullFacts('profile'), profile_complete: false, tokens_known: false, gpu_busy_known: false }
+    const destination = path.join(A, 'results', 'profile')
+    function validateProfile() {
+      facts.profile_complete = false
+      facts.timed_fraction = null
+      facts.gpu_telemetry = null
+      rmSync(path.join(A, 'profile-packet.json'), { force: true })
+      try {
+        const directory = path.join(destination, 'out', 'profile')
+        const stages = readJSON(path.join(directory, 'stages.json'))
+        const { total_wall_s } = readJSON(path.join(directory, 'total_wall_s.json'))
+        const gpuUtil = readJSON(path.join(directory, 'gpu_util.json'))
+        if (!Number.isFinite(total_wall_s) || total_wall_s <= 0 || !Array.isArray(stages)
+          || !stages.every(item => item && typeof item.stage === 'string' && item.stage.trim()
+            && (item.kind === undefined || ['compute', 'transfer', 'other'].includes(item.kind))
+            && Number.isFinite(item.wall_s) && item.wall_s >= 0
+            && (item.gpu_s === null || (Number.isFinite(item.gpu_s) && item.gpu_s >= 0)))
+          || !Array.isArray(gpuUtil) || !gpuUtil.every(item => item && nonnegative(item.t)
+            && nonnegative(item.util) && item.util <= 100)) return 'parse'
+        const timedWall = stages.reduce((sum, item) => sum + item.wall_s, 0)
+        if (!Number.isFinite(timedWall)) return 'parse'
+        facts.profile_complete = true
+        facts.timed_fraction = Math.min(1, timedWall / total_wall_s)
+        facts.gpu_telemetry = gpuUtil.length > 0
+        writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify({
+          stages: stages.map(({ stage, kind, wall_s, gpu_s }) => ({ stage, ...(kind === undefined ? {} : { kind }), wall_s, gpu_s,
+            wall_fraction: Math.min(1, wall_s / total_wall_s) })), total_wall_s,
+          timed_fraction: facts.timed_fraction, gpu_telemetry: facts.gpu_telemetry,
+          gpu_count: Array.isArray(boxProbe?.nvidia?.gpus) ? boxProbe.nvidia.gpus.length : 1,
+        }, null, 2) + '\n')
+        const processWrapper = stages.some(item => /(?:^|[\s_-])(?:process|wrapper|telemetry|total|overall)(?:$|[\s_-])/i.test(item.stage)
+          || (item.wall_s >= total_wall_s * 0.98 && item.wall_s <= total_wall_s * 1.02))
+        return stages.length >= 3 && !processWrapper && facts.timed_fraction >= 0.9 && facts.gpu_telemetry
+          ? null : 'numeric'
+      } catch {
+        return 'parse'
+      }
+    }
     try {
       rmSync(path.join(A, 'profile-packet.json'), { force: true })
-      const destination = path.join(A, 'results', 'profile')
-      const result = await runHarness('profile.sh', 'profile', destination, executionTimeout('profile'))
+      const result = await runHarness('profile.sh', 'profile', destination, executionTimeout('profile'), validateProfile)
       if (result.error) return failure(facts, result.error)
       if (result.rc !== 0) return failure(facts, 'parse')
-      const directory = path.join(destination, 'out', 'profile')
-      const stages = readJSON(path.join(directory, 'stages.json'))
-      const { total_wall_s } = readJSON(path.join(directory, 'total_wall_s.json'))
-      if (!Number.isFinite(total_wall_s) || total_wall_s <= 0 || !Array.isArray(stages) || !stages.length
-        || !stages.every(item => item && typeof item.stage === 'string' && item.stage.trim()
-          && Number.isFinite(item.wall_s) && item.wall_s >= 0
-          && (item.gpu_s === null || (Number.isFinite(item.gpu_s) && item.gpu_s >= 0)))) return failure(facts, 'parse')
-      const timedWall = stages.reduce((sum, item) => sum + item.wall_s, 0)
-      if (!Number.isFinite(timedWall)) return failure(facts, 'parse')
-      facts.profile_complete = true
-      facts.timed_fraction = Math.min(1, timedWall / total_wall_s)
-      facts.gpu_telemetry = stages.some(item => item.gpu_s !== null)
-      writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify({
-        stages: stages.map(({ stage, wall_s, gpu_s }) => ({ stage, wall_s, gpu_s,
-          wall_fraction: Math.min(1, wall_s / total_wall_s) })), total_wall_s,
-        timed_fraction: facts.timed_fraction, gpu_telemetry: facts.gpu_telemetry,
-      }, null, 2) + '\n')
-      return facts.timed_fraction >= 0.9 ? { status: 'PASS', facts } : failure(facts, 'parse')
+      return { status: 'PASS', facts }
     } catch {
       return failure(facts, 'parse')
     }
@@ -281,12 +331,21 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       prediction_count: 0, tokens_known: false, gpu_busy_known: false }
     const predictionPath = path.join(A, 'PREDICTIONS.json')
     const profilePath = path.join(A, 'profile-packet.json')
+    const boundsPath = path.join(A, 'bounds.json')
+    let bounds
+    try {
+      rmSync(boundsPath, { force: true })
+      await exec('python3', ['m5/bounds.py', profilePath, boundsPath])
+      bounds = readJSON(boundsPath)
+    } catch { return failure(facts, 'numeric') }
     const prompt = `Seal a prospective scientific evaluation protocol in one narrow pass.
-Read ${JSON.stringify(path.join(A, 'intake'))}/* only${existsSync(profilePath) ? `, plus ${JSON.stringify(profilePath)}` : '. No profile packet is available'}.
+Read ${JSON.stringify(path.join(A, 'intake'))}/*, ${JSON.stringify(profilePath)}, and ${JSON.stringify(boundsPath)} only.
 Never read experiments/, operator/, or control/. Do not search, build, run workloads, or write method code.
 Write only ${JSON.stringify(predictionPath)}. Use intake evidence and the profile when present. Do not invent measurements; label assumptions and unavailable evidence explicitly.
-The method menu is exactly ${JSON.stringify(menu)}. Include every feasible entry once; exclude infeasible entries with reasons in infeasible_methods. With no feasible entry, write predictions=[] as a negative result.
-Amdahl speedup bound for parallel fraction p and worker count n is 1/((1-p)+p/n). Apply it only to recorded timed fractions, include launch/transfer/merge overhead, and declare bounds unavailable if profile evidence is missing. Intervals without measurements are prospective assumptions, not measured gains.
+The method menu is exactly ${JSON.stringify(menu)}. Deterministic bounds (p is the actionable timed fraction; k is the maximum factor): ${JSON.stringify(bounds)}.
+Include every feasible entry once; list every entry with bound <1.05 exactly once as {method, reason} in infeasible_methods, never in predictions. With no feasible entry, write predictions=[] as a negative result.
+For each interval require finite low >0, low <= high <= its method's bound, and high-low <= bound-1. When at least two methods are feasible, their intervals must not all be identical. Base each interval on its method's profile evidence and overheads.
+Amdahl bound is 1/((1-p)+p/k). The supplied bounds are ceilings, not measured gains; intervals without measurements are prospective assumptions. Include launch/transfer/merge overhead.
 Write an object with these fields:
 - predictions: array of {method, expected_speedup_interval: {low, high}, outcome_vs_compute_points}. Each point is {compute_budget, predicted_outcome, uncertainty}. Include all sealed compute budgets for each method.
 - equivalence_metrics: quantities, scientific tolerances, and sources from requirements or baseline variability, never method outputs. Lack of significance is not equivalence.
@@ -300,9 +359,9 @@ Define the complete protocol now, before method code exists. Scope/tolerance cha
 Return a short completion acknowledgement; the script reads and seals the file itself.`
     try {
       const reply = await agent(prompt, { label: 'seal', agentType: 'ls-writer', model: 'sonnet' })
-      if (reply == null) return { status: 'FAIL', facts }
+      if (reply == null) return failure(facts, 'numeric')
       const predictions = readJSON(predictionPath)
-      if (!predictions || !Array.isArray(predictions.predictions)) return { status: 'FAIL', facts }
+      if (!predictions || !Array.isArray(predictions.predictions)) return failure(facts, 'numeric')
       facts.prediction_count = predictions.predictions.length
       const required = ['equivalence_metrics', 'paired_seed_tests', 'sample_sizes', 'confidence_rule',
         'hardware_cost_basis', 'timing_scope', 'minimum_worthwhile_gain', 'evaluation_inputs', 'splits',
@@ -320,7 +379,24 @@ Return a short completion acknowledgement; the script reads and seals the file i
           && Array.isArray(item.outcome_vs_compute_points)
           && predictions.compute_budgets.every(budget => item.outcome_vs_compute_points.some(point => point
             && point.compute_budget === budget && hasValue(point.predicted_outcome) && hasValue(point.uncertainty))))
-      if (!complete) return { status: 'FAIL', facts }
+      if (!complete) return failure(facts, 'numeric')
+      const feasible = menu.filter(method => bounds[method].feasible)
+      const infeasible = menu.filter(method => !bounds[method].feasible)
+      const excluded = predictions.infeasible_methods
+      const validBounds = facts.prediction_count === feasible.length
+        && feasible.every(method => predictions.predictions.some(item => item.method === method))
+        && Array.isArray(excluded) && excluded.length === infeasible.length
+        && new Set(excluded.map(item => item?.method)).size === excluded.length
+        && excluded.every(item => item && infeasible.includes(item.method)
+          && typeof item.reason === 'string' && item.reason.trim())
+        && predictions.predictions.every(item => {
+          const { low, high } = item.expected_speedup_interval
+          const bound = bounds[item.method].bound
+          return high <= bound && high - low <= bound - 1
+        })
+        && (feasible.length < 2 || new Set(predictions.predictions.map(item =>
+          JSON.stringify([item.expected_speedup_interval.low, item.expected_speedup_interval.high]))).size > 1)
+      if (!validBounds) return failure(facts, 'numeric')
 
       // Sort recursively, preserving array order. Hash the exact UTF-8 bytes, with no spaces/newline.
       const canonical = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
@@ -350,9 +426,10 @@ Return a short completion acknowledgement; the script reads and seals the file i
       const receipt = readJSON(receiptPath)
       facts.seal_verified = hash(readFileSync(receipt.path)) === receipt.sha256
         && hash(readFileSync(predictionPath)) === receipt.sha256
-      return { status: facts.seal_verified && facts.prediction_count > 0 ? 'PASS' : 'FAIL', facts }
+      return facts.seal_verified && facts.prediction_count > 0 ? { status: 'PASS', facts }
+        : failure(facts, 'numeric')
     } catch {
-      return { status: 'FAIL', facts }
+      return failure(facts, 'numeric')
     }
   }
   function propose() { return stub('propose') }
@@ -361,21 +438,46 @@ Return a short completion acknowledgement; the script reads and seals the file i
   function takeaways() { return stub('takeaways') }
 
   const stages = []
+  let stageUSD = 0
   let stopped_at = null
   for (const run of [intake, reproduce, profile, seal, propose, implement, evaluate, takeaways]) {
     const stage = run.name
     phase(stage)
+    stageReceipts = []
+    const journalOffset = journalText().length
     const started = performance.now(), before = agent.usage?.()
     const result = stopped_at && stage !== 'takeaways'
       ? { status: 'SKIPPED', facts: nullFacts(stage) }
       : await run()
     const v1 = { ...result.v1, wall_s: (performance.now() - started) / 1000 }
+    const families = answeringFamilies(journalOffset)
+    v1.model_family = families.at(-1) ?? 'none'
+    v1.gpu_s = stageReceipts.reduce((sum, receipt) => sum + (nonnegative(receipt.gpu_busy_s) ? receipt.gpu_busy_s : 0), 0)
+    v1.usd = box && nonnegative(box.price_usd_h)
+      ? stageReceipts.reduce((sum, receipt) => sum + (nonnegative(receipt.wall_s) ? receipt.wall_s : 0), 0) / 3600 * box.price_usd_h : 0
+    stageUSD += v1.usd
+    if (stageReceipts.length) result.facts.gpu_busy_known = stageReceipts.every(receipt => receipt.gpu_busy_known === true)
+    if (stage === 'takeaways') {
+      // A down during the run may have completed the allocation since the snapshot.
+      try {
+        const current = readJSON(boxPath)
+        if (current && typeof current === 'object' && (!box || (current.started_utc === box.started_utc
+          && current.type === box.type && current.region === box.region && current.price_usd_h === box.price_usd_h))) {
+          box = current
+          writeFileSync(path.join(C, 'box.json'), JSON.stringify(box) + '\n')
+        }
+      } catch { /* The initial snapshot remains sufficient for an active allocation. */ }
+      result.facts.run_box_usd = result.status === 'SKIPPED' ? null : runBoxUSD(stageUSD)
+    }
     const after = agent.usage?.()
     if (before && after && after.calls > before.calls) {
       v1.tokens_in = after.tokens_in - before.tokens_in
       v1.tokens_out = after.tokens_out - before.tokens_out
       result.facts.tokens_known = after.unknown === before.unknown
     }
+    mkdirSync(path.join(C, 'stages'), { recursive: true })
+    writeFileSync(path.join(C, 'stages', `${stage}.json`), JSON.stringify({ stage, status: result.status,
+      ...v1, notes: new Set(families).size > 1 ? ['multiple_model_families'] : [] }) + '\n')
     await exec('python3', ['m5/signatures.py', 'emit', '--dir', S, '--stage', stage, '--status', result.status,
       '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(v1)])
     stages.push({ stage, status: result.status })

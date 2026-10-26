@@ -87,11 +87,14 @@ saveStatus()
 
 // ---------- resume cache: same prompt, role and primary model -> the stored value ----------
 const cache = new Map()
+const cacheModels = new Map()
 const resumeDir = opt('resume')
 if (resumeDir) for (const l of fs.readFileSync(path.join(resumeDir, 'journal.jsonl'), 'utf8').split('\n')) {
   if (!l.trim()) continue
   const r = JSON.parse(l)
-  if (r.type === 'result' && r.key && !UCFG.disabled_families.includes(U.familyOf(r.model))) cache.set(r.key, r.value)
+  if (r.type === 'result' && r.key && !UCFG.disabled_families.includes(U.familyOf(r.model))) {
+    cache.set(r.key, r.value); cacheModels.set(r.key, r.model)
+  }
 }
 
 // ---------- concurrency ----------
@@ -115,6 +118,7 @@ let counter = 0
 const chatGroups = new Map()
 const usage = { calls: 0, tokens_in: 0, tokens_out: 0, unknown: 0 }
 agent.usage = () => ({ ...usage })
+agent.journal = J
 const slug = value => String(value).toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '') || 'agent'
 
 // one model's attempt at a call: up to two turns (the second repairs a reply that could not be used); the accounting
@@ -195,7 +199,7 @@ async function agent(prompt, opts = {}) {
   status.calls.push(rec)
   journal({ type: 'started', n, label, phase: opts.phase, role, model: primary, understudy, chain, mode, tier: r.tier, route: r.route, key })
   if (cache.has(key)) {
-    rec.state = 'cached'; saveStatus(); journal({ type: 'cached', n, label, key })
+    rec.state = 'cached'; saveStatus(); journal({ type: 'cached', n, label, key, model: cacheModels.get(key) })
     return cache.get(key)
   }
   await acquire()

@@ -14,17 +14,26 @@ const ROOT = path.resolve(__dirname, '..')
 const SENTINEL = 'SENTINEL_CONTENT_77'
 const STAGES = ['intake', 'reproduce', 'profile', 'seal', 'propose', 'implement', 'evaluate', 'takeaways']
 const INTAKE = { found: true, anchors_count: 2, data: 'available', licence: 'permitted', stock_environment: true, size: 'small' }
+// Evidence from the stubbed profile stage: compute 60%, transfer 30%, serial 10%.
+const PROFILE = {
+  stages: [
+    { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6 },
+    { stage: 'h2d', kind: 'transfer', wall_s: 3, gpu_s: 1, wall_fraction: 0.3 },
+    { stage: 'postprocessing', kind: 'other', wall_s: 1, gpu_s: null, wall_fraction: 0.1 },
+  ],
+  total_wall_s: 10, timed_fraction: 1, gpu_telemetry: true, gpu_count: 1,
+}
 const PREDICTIONS = {
   predictions: [
-    { method: 'batching', expected_speedup_interval: { low: 1.2, high: 2 },
-      outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({
-        compute_budget, predicted_outcome: 499500, uncertainty: 'exact integer equality',
-      })), content: SENTINEL },
-    { method: 'pipelining', expected_speedup_interval: { low: 1.1, high: 1.5 },
-      outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({
-        compute_budget, predicted_outcome: 499500, uncertainty: 'exact integer equality',
-      })), content: SENTINEL },
-  ],
+    ['data-parallel over inputs', 1.2, 1.8], ['batching', 1.05, 1.2],
+    ['ensembles', 1.1, 1.7], ['pipelining', 1.01, 1.15],
+  ].map(([method, low, high]) => ({
+    method, expected_speedup_interval: { low, high },
+    outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({
+      compute_budget, predicted_outcome: 499500, uncertainty: 'exact integer equality',
+    })), content: SENTINEL,
+  })),
+  infeasible_methods: [{ method: 'multi-GPU', reason: 'Only one GPU; bound is 1, below 1.05.' }],
   equivalence_metrics: ['exact integer equality'],
   paired_seed_tests: [0, 1, 2, 3, 4],
   sample_sizes: { integers: 1000 },
@@ -151,6 +160,8 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   fs.writeFileSync(brief, `# Intake fixture\n${SENTINEL}\n`)
   const argsFile = path.join(control, 'args.json')
   writeJSON(argsFile, { run_root: runRoot, brief, tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS' } })
+  // The profile stage is stubbed, so provide its documented output directly.
+  writeJSON(path.join(runRoot, 'agent', 'profile-packet.json'), PROFILE)
   // Separate workflow directories prevent WF resume caches from hiding calls.
   const out = path.join(runRoot, 'agent', `wf-${name}`)
   const callsFile = path.join(runRoot, `calls-${name}.jsonl`)
@@ -168,6 +179,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
         '--out', out, '--disable-family', 'claude'], {
         cwd: ROOT, timeout: 30000, stdio: ['ignore', stdout, stderr],
         env: { ...process.env, WF_STUB: __filename, M5_INTAKE_SEAL_ROOT: runRoot,
+          M5_RAIDS_LEDGER: path.join(parent, 'raids_used.jsonl'),
           M5_INTAKE_SEAL_FACTS: JSON.stringify(facts), M5_INTAKE_SEAL_BRIEF: brief,
           M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
           M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '' },
@@ -235,7 +247,34 @@ async function main() {
       const facts = happy.stage('seal')?.facts
       assert.equal(facts?.seal_present, true)
       assert.equal(facts?.seal_verified, true)
-      assert.equal(facts?.prediction_count, 2)
+      assert.equal(facts?.prediction_count, PREDICTIONS.predictions.length)
+    })
+    check('happy: bounds computed from profile; feasible coverage and intervals conform', () => {
+      assert.deepEqual(readJSON(path.join(happy.runRoot, 'agent', 'profile-packet.json')), PROFILE)
+      const boundsFile = path.join(happy.runRoot, 'agent', 'bounds.json')
+      const bounds = readJSON(boundsFile)
+      const expected = {
+        'data-parallel over inputs': [0.6, 8], batching: [0.3, 4],
+        'multi-GPU': [0.6, 1], ensembles: [0.6, 8], pipelining: [0.3, 2],
+      }
+      assert.deepEqual(Object.keys(bounds).sort(), Object.keys(expected).sort())
+      for (const [method, [p, k]] of Object.entries(expected)) {
+        const bound = 1 / ((1 - p) + p / k)
+        assert.equal(bounds[method].p, p, method)
+        assert.equal(bounds[method].k, k, method)
+        assert.ok(Math.abs(bounds[method].bound - bound) < 1e-12, method)
+        assert.equal(bounds[method].feasible, bound >= 1.05, method)
+      }
+      assert.deepEqual(PREDICTIONS.predictions.map(row => row.method).sort(),
+        Object.keys(bounds).filter(method => bounds[method].feasible).sort())
+      assert.deepEqual(PREDICTIONS.infeasible_methods.map(row => row.method), ['multi-GPU'])
+      for (const { method, expected_speedup_interval: { low, high } } of PREDICTIONS.predictions) {
+        assert.ok(low > 0 && low <= high && high <= bounds[method].bound, method)
+        assert.ok(high - low <= bounds[method].bound - 1, method)
+      }
+      const prompt = happy.calls.find(row => row.label === 'seal')?.prompt
+      assert.ok(prompt.includes(boundsFile), 'bounds path missing from seal prompt')
+      assert.ok(prompt.includes('multi-GPU') && prompt.includes('feasible'), 'bounds content missing from seal prompt')
     })
     const firstFile = path.join(happy.runRoot, 'control', 'seals', '0001.json')
     let firstBytes
@@ -268,6 +307,38 @@ async function main() {
       const seals = path.join(invalidRoot, 'control', 'seals')
       assert.deepEqual(fs.existsSync(seals) ? fs.readdirSync(seals) : [], [])
     })
+
+    for (const [name, mutate] of [
+      ['above-bound', value => {
+        value.predictions[0].expected_speedup_interval = { low: 100, high: 100 }
+      }],
+      ['identical-intervals', value => {
+        for (const row of value.predictions) row.expected_speedup_interval = { low: 1.01, high: 1.1 }
+      }],
+      ['infeasible-predicted', value => {
+        value.predictions.push({ ...value.predictions[0], method: 'multi-GPU',
+          expected_speedup_interval: { low: 1, high: 1 } })
+        value.infeasible_methods = []
+      }],
+      ['infeasible-unlisted', value => { value.infeasible_methods = [] }],
+    ]) {
+      const runRoot = path.join(parent, name)
+      const value = JSON.parse(JSON.stringify(PREDICTIONS))
+      mutate(value)
+      writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), value)
+      const run = await runCase(name, INTAKE, { runRoot, preserve: true })
+      checkStatuses(name, run, 'seal')
+      check(`${name}: numeric failure; submitted count retained; no seal`, () => {
+        assert.equal(run.calls.filter(row => row.label === 'seal').length, 1)
+        assert.equal(run.signature('seal').error_class, 'numeric')
+        assert.equal(run.signature('seal').exit_code, 2)
+        assert.equal(run.stage('seal')?.facts?.seal_verified, false)
+        assert.equal(run.stage('seal')?.facts?.prediction_count, value.predictions.length)
+        assert.deepEqual(readJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json')), value)
+        const seals = path.join(runRoot, 'control', 'seals')
+        assert.deepEqual(fs.existsSync(seals) ? fs.readdirSync(seals) : [], [])
+      })
+    }
 
     const second = await runCase('second', INTAKE, { runRoot: happy.runRoot })
     checkStatuses('second', second, null)

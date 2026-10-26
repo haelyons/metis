@@ -45,6 +45,11 @@ for k in ("port", "tunnel_pid", "watchdog_pid"): d[k] = int(d[k] or 0)
 d["price_usd_h"] = float(d["price_usd_h"])
 with open(p + ".tmp", "w") as f: json.dump(d, f, indent=2); f.write("\n")
 os.replace(p + ".tmp", p)
+box = os.path.join(os.path.dirname(p), "box.json")
+with open(box + ".tmp", "w") as f:
+    json.dump({k: d[k] for k in ("type", "region", "price_usd_h", "started_utc")}, f, indent=2)
+    f.write("\n")
+os.replace(box + ".tmp", box)
 PY
 }
 load() {
@@ -63,6 +68,18 @@ down() {
   done
   [[ $TUNNEL -gt 1 ]] && kill "$TUNNEL" 2>/dev/null || true
   [[ $WATCH -gt 1 && $WATCH != $$ ]] && kill -- "-$WATCH" 2>/dev/null || true
+  python3 - "$CACHE/box.json" "$TYPE" "$REGION" "$PRICE" "$START" <<'PY'
+import datetime, json, os, sys
+p, kind, region, price, start = sys.argv[1:]
+end = datetime.datetime.now(datetime.timezone.utc)
+hours = max(0, (end - datetime.datetime.fromisoformat(start.replace("Z", "+00:00"))).total_seconds() / 3600)
+d = dict(type=kind, region=region, price_usd_h=float(price), started_utc=start,
+         ended_utc=end.isoformat().replace("+00:00", "Z"), hours=hours)
+with open(p + ".tmp", "w") as f:
+    json.dump(d, f, indent=2)
+    f.write("\n")
+os.replace(p + ".tmp", p)
+PY
   if [[ -f $STATE ]]; then mv -- "$STATE" "$CACHE/state.$ID.$(date -u +%Y%m%dT%H%M%SZ).json"; fi
   echo "Terminated $ID; state archived."
 }

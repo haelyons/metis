@@ -1,5 +1,7 @@
 """Write a mechanical operator takeaway from validated m5 signatures only."""
 import argparse
+import json
+import math
 from pathlib import Path
 
 if __package__:
@@ -8,14 +10,23 @@ else:
     from signatures import FACTS, signatures, validate
 
 
-def takeaway(records, raid=None):
+BOX_TYPES = {
+    "gpu_1x_a10", "gpu_1x_a100", "gpu_1x_a100_sxm4", "gpu_1x_a100_sxm4_80gb",
+    "gpu_8x_a100", "gpu_8x_a100_80gb_sxm4", "gpu_1x_h100_pcie", "gpu_1x_h100_sxm5",
+    "gpu_8x_h100_sxm5", "gpu_1x_gh200", "gpu_1x_h200", "gpu_8x_h200_sxm5",
+    "gpu_1x_b200", "gpu_8x_b200",
+}
+
+
+def takeaway(records, raid=None, box=None):
     records = list(records)
     if any(validate(record) for record in records):
         raise ValueError("invalid signature")
     stages = {r["signature"]["stage"]: r for r in records if r["signature"]["kind"] == "stage"}
-    lines = ["# Operator takeaway" + (f" — raid: {raid}" if raid is not None else ""), "",
-             "| Stage | Status | Gate flags | Vote share | Speedup published | Speedup tuned | Expected speedup | Cost ratio | Prediction ratio |",
-             "|---|---|---|---|---|---|---|---|---|"]
+    compute = ("wall_s", "gpu_s", "usd", "tokens_in", "tokens_out", "model_family")
+    lines = ["# Operator takeaway" + (f" — raid: {raid}" if raid is not None else ""), "", "## Compute", "",
+             "| Stage | Status | Gate flags | Vote share | Speedup published | Speedup tuned | Expected speedup | Cost ratio | Prediction ratio | " + " | ".join(compute) + " |",
+             "|" + "---|" * (9 + len(compute))]
     columns = ("vote_share", "speedup_published", "speedup_tuned", "expected_speedup",
                "cost_ratio", "prediction_ratio")
     for stage, schema in FACTS.items():
@@ -29,6 +40,8 @@ def takeaway(records, raid=None):
         rendered = ", ".join(f"{key}={str(value).lower() if value is not None else 'null'}"
                              for key, value in flags.items())
         values = [str(facts[key]) if facts.get(key) is not None else "null" for key in columns]
+        values += [str(entry["signature"][key]) if entry else ("none" if key == "model_family" else "0")
+                   for key in compute]
         lines.append("| " + " | ".join([stage, status, rendered, *values]) + " |")
     rows = [r["signature"] for r in records]
     launches = [r for r in rows if r["kind"] == "launch"]
@@ -39,6 +52,16 @@ def takeaway(records, raid=None):
     costs, tokens = launches or stage_rows, calls or stage_rows
     totals = {key: sum(r[key] for r in costs) for key in ("wall_s", "gpu_s", "usd")}
     totals.update({key: sum(r[key] for r in tokens) for key in ("tokens_in", "tokens_out")})
+    run_usd = stages.get("takeaways", {}).get("facts", {}).get("run_box_usd")
+    if run_usd is not None:
+        totals["usd"] = run_usd
+    # No arbitrary strings from control state enter the operator view.
+    box = box if type(box) is dict else {}
+    kind = box.get("type")
+    kind = kind if type(kind) is str and kind in BOX_TYPES else "unknown"
+    price = box.get("price_usd_h")
+    price = price if type(price) in (int, float) and math.isfinite(price) and price >= 0 else None
+    lines += ["", "| box_type | price_usd_h |", "|---|---|", f"| {kind} | {price if price is not None else 'null'} |"]
     lines += ["", "## Totals", "", "| " + " | ".join(totals) + " |",
               "|" + "---|" * len(totals),
               "| " + " | ".join(str(value) for value in totals.values()) + " |",
@@ -55,7 +78,11 @@ if __name__ == "__main__":
     parser.add_argument("--raid")
     args = parser.parse_args()
     try:
-        page = takeaway(signatures(args.S_dir), args.raid)
+        try:
+            box = json.loads((Path(args.S_dir).parent / "control" / "box.json").read_text())
+        except (OSError, ValueError):
+            box = None
+        page = takeaway(signatures(args.S_dir), args.raid, box)
         output = args.out if args.out is not None else Path(args.S_dir) / "OPERATOR_TAKEAWAY.md"
         output.write_text(page)
     except (OSError, ValueError):

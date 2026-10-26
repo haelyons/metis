@@ -6,23 +6,32 @@ set -euo pipefail
 umask 077
 BOX=${BOX:-$HOME/.cache/metis-serve/box.sh}
 NAME=; CMD=; DIR=; LIMIT=; SUBDIR=; DEST=; RECEIPT=
-RC=; TIMED_OUT=false; FETCHED=false; START=$(date -u +%Y-%m-%dT%H:%M:%SZ); BEGIN=$SECONDS
+GPU_SAMPLES=$(mktemp); RC=; TIMED_OUT=false; FETCHED=false; START=$(date -u +%Y-%m-%dT%H:%M:%SZ); BEGIN=$SECONDS
 die() { echo "$*" >&2; exit 2; }
 finish() {
   local status=$?; trap - EXIT
   [[ $status == 0 || $status == 3 ]] || status=2
   if [[ -n $RECEIPT ]]; then
-    python3 - "$RECEIPT" "$NAME" "$RC" "$TIMED_OUT" "$((SECONDS - BEGIN))" "$FETCHED" "$START" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" <<'PY' || status=2
-import json, os, sys
-p, name, rc, timed_out, wall, fetched, start, end = sys.argv[1:]
+    python3 - "$RECEIPT" "$NAME" "$RC" "$TIMED_OUT" "$((SECONDS - BEGIN))" "$FETCHED" "$START" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$GPU_SAMPLES" <<'PY' || status=2
+import json, math, os, sys
+p, name, rc, timed_out, wall, fetched, start, end, samples = sys.argv[1:]
+values = []
+for line in open(samples):
+    try:
+        value = float(line.strip())
+        if math.isfinite(value) and 0 <= value <= 100:
+            values.append(value)
+    except ValueError:
+        pass
 os.makedirs(os.path.dirname(os.path.abspath(p)), exist_ok=True)
 with open(p + ".tmp", "w") as f:
     json.dump(dict(name=name, rc=int(rc) if rc else None, timed_out=timed_out == "true",
-                   wall_s=int(wall), fetched=fetched == "true", started_utc=start, ended_utc=end), f)
+                   wall_s=int(wall), gpu_busy_s=sum(values) * 0.02, gpu_busy_known=bool(values), fetched=fetched == "true", started_utc=start, ended_utc=end), f)
     f.write("\n")
 os.replace(p + ".tmp", p)
 PY
   fi
+  rm -f -- "$GPU_SAMPLES"
   exit "$status"
 }
 trap finish EXIT
@@ -45,8 +54,8 @@ fetch() {
     -o BatchMode=yes -o ExitOnForwardFailure=yes -i "$HOME/.ssh/lambda_ed25519" "ubuntu@$ip:$1" "$2"
 }
 # Quote each value before embedding it in the remote shell or run script.
-printf -v script '#!/usr/bin/env bash\ncd -- %q || exit 2\ntimeout %q bash -c %q >%q 2>&1\nrc=$?\nprintf "%%s\\n" "$rc" >%q && mv -- %q %q\n' \
-  "$DIR" "$LIMIT" "$CMD" "$NAME.log" "$NAME.rc.tmp" "$NAME.rc.tmp" "$NAME.rc"
+printf -v script '#!/usr/bin/env bash\ncd -- %q || exit 2\nsamples=%q\n: > "$samples"\n(while :; do nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits >> "$samples" 2>/dev/null; sleep 2; done) &\nsampler=$!\ntrap "kill \"$sampler\" 2>/dev/null; wait \"$sampler\" 2>/dev/null" EXIT\ntimeout %q bash -c %q >%q 2>&1\nrc=$?\nkill "$sampler" 2>/dev/null; wait "$sampler" 2>/dev/null\ntrap - EXIT\nprintf "%%s\\n" "$rc" >%q && mv -- %q %q\n' \
+  "$DIR" "$NAME.gpu" "$LIMIT" "$CMD" "$NAME.log" "$NAME.rc.tmp" "$NAME.rc.tmp" "$NAME.rc"
 # Background only the runner; setup errors must reach the caller.
 printf -v launch 'mkdir -p -- %q && rm -f -- %q %q && printf %%s %q >%q && { setsid nohup bash %q </dev/null >/dev/null 2>&1 & }' \
   "$DIR" "$DIR/$NAME.rc" "$DIR/$NAME.rc.tmp" "$script" "$DIR/$NAME.sh" "$DIR/$NAME.sh"
@@ -62,6 +71,9 @@ while :; do
   remaining=$((deadline - SECONDS)); ((remaining > 0)) || continue
   sleep "$((remaining < 20 ? remaining : 20))"
 done
+# Telemetry is optional and must never turn an otherwise successful run into a failure.
+printf -v telemetry 'cat -- %q' "$DIR/$NAME.gpu"
+timeout 30 "$BOX" "$telemetry" > "$GPU_SAMPLES" 2>/dev/null || true
 if mkdir -p -- "$DEST"; then
   FETCHED=true
   fetch "$DIR/$SUBDIR" "$DEST" || FETCHED=false

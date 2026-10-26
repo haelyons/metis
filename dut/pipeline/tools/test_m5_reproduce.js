@@ -20,7 +20,10 @@ function writeJSON(file, value) {
 }
 const anchor = (id, published_value, tolerance) => ({ id, published_value, tolerance, quantity: 'fixture quantity', source: 'https://example.org/published' })
 const ANCHORS = [anchor('first', 100, { abs: 1 }), anchor('second', 0, 0)]
-const TIMINGS = [{ stage: 'cpu', wall_s: 5, gpu_s: null }, { stage: 'compute', wall_s: 4.5, gpu_s: 0 }]
+const TIMINGS = [{ stage: 'cpu', kind: 'other', wall_s: 3, gpu_s: null },
+  { stage: 'h2d', kind: 'transfer', wall_s: 2, gpu_s: null },
+  { stage: 'compute', kind: 'compute', wall_s: 4.5, gpu_s: 0 }]
+const GPU_UTIL = [{ t: 0, util: 0 }, { t: 1, util: 75 }]
 const PREDICTIONS = {
   predictions: [{ method: 'batching', expected_speedup_interval: { low: 1.1, high: 2 },
     outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({ compute_budget, predicted_outcome: 100, uncertainty: 'exact' })) }],
@@ -94,15 +97,24 @@ module.exports = {
           `printf '%s\\n' '${SENTINEL}' > out/anchors-private.txt`)
       }
       if (title === 'harness' || title === 'profile-repair') {
+        const profile = title === 'profile-repair' && config.repairProfile
+          ? { ...config, timings: TIMINGS, total: 10, gpuUtil: GPU_UTIL } : config
         script(path.join(harness, 'profile.sh'), failureScript('profile', failuresFor('profileFailures')) + `test -f baseline-published/pin\ntest -f out/anchors_measured.json\nmkdir -p out/profile\nprintf '%s\\n' '${SENTINEL}:profile'\n` +
-          emitJSON('out/profile/stages.json', config.timings.map(row => ({ ...row, private_content: SENTINEL }))) +
-          emitJSON('out/profile/total_wall_s.json', { total_wall_s: config.total }) +
+          emitJSON('out/profile/stages.json', profile.timings.map(row => ({ ...row, private_content: SENTINEL }))) +
+          emitJSON('out/profile/total_wall_s.json', { total_wall_s: profile.total }) +
+          (profile.gpuUtil === null ? 'rm -f out/profile/gpu_util.json\n' : emitJSON('out/profile/gpu_util.json', profile.gpuUtil)) +
           `printf '%s\\n' '${SENTINEL}' > out/profile/raw-telemetry.txt`)
       }
     }
     if (title === 'seal') {
-      writeJSON(path.join(agent, 'PREDICTIONS.json'), PREDICTIONS)
-      facts = { seal_present: true, seal_verified: true, prediction_count: 1 }
+      const bounds = readJSON(path.join(agent, 'bounds.json'))
+      const predictions = Object.entries(bounds).filter(([, value]) => value.feasible).map(([method, value]) => ({
+        ...PREDICTIONS.predictions[0], method, expected_speedup_interval: { low: 1, high: 1 + (value.bound - 1) / 2 },
+      }))
+      const infeasible_methods = Object.entries(bounds).filter(([, value]) => !value.feasible)
+        .map(([method]) => ({ method, reason: 'Amdahl bound below 1.05' }))
+      writeJSON(path.join(agent, 'PREDICTIONS.json'), { ...PREDICTIONS, predictions, infeasible_methods })
+      facts = { seal_present: true, seal_verified: true, prediction_count: predictions.length }
     }
     return { text: JSON.stringify(facts), json: facts, jsonError: null, sessionID: 'stub',
       tokens: { input: 10, output: 5, reasoning: 0 }, cost: 0.001, tools: 0, ms: 5, errors: [], refusal: false }
@@ -114,13 +126,13 @@ if (require.main !== module) return
 let failures = 0
 let checks = 0
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_reproduce_'))
-// Run a copied pipeline because SCHEMAS.md does not currently document a ledger override.
 // All relative paths and module paths resolve inside this temporary checkout.
+// Exclude the real ledger and use M5_RAIDS_LEDGER for every workflow.
 const pipeline = path.join(scratch, 'pipeline')
 for (const directory of ['m5', 'idea', 'measure']) fs.cpSync(path.join(ROOT, directory), path.join(pipeline, directory), {
-  recursive: true, filter: source => path.basename(source) !== 'experiments',
+  recursive: true, filter: source => !['experiments', 'raids_used.jsonl'].includes(path.basename(source)),
 })
-fs.writeFileSync(path.join(pipeline, 'm5', 'raids_used.jsonl'), '')
+const raidsLedger = path.join(scratch, 'raids_used.jsonl')
 function check(label, test) {
   checks++
   try { test(); console.log(`ok ${label}`) }
@@ -138,7 +150,8 @@ function noLeak(directory) {
 }
 async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null) {
   const root = path.join(scratch, name)
-  const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, setupFailures: 0, anchorsFailures: 0, profileFailures: 0, ...overrides }
+  const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, gpuUtil: GPU_UTIL, setupFailures: 0, anchorsFailures: 0, profileFailures: 0, ...overrides }
+  const profileRepair = stoppedAt !== 'reproduce' && !!(config.profileFailures || config.profileGateFailure)
   const args = path.join(root, 'control', 'args.json')
   writeJSON(args, { run_root: root, tag: 'reproduce-test' })
   const box = path.join(root, 'box')
@@ -163,7 +176,10 @@ function visit(directory) {
 visit(process.env.BOX_ROOT)
 `)
   // Map the contract's absolute remote /tmp/m5-* paths into this case's box.
-  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
+  const boxBin = path.join(root, 'box-bin')
+  // Keep receipt telemetry unavailable regardless of the host's GPU tools.
+  script(path.join(boxBin, 'nvidia-smi'), 'exit 1')
+  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
   script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\nexec cp -r -- "$source" "$2"')
   const callsFile = path.join(root, 'calls.jsonl')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w')
@@ -175,7 +191,7 @@ visit(process.env.BOX_ROOT)
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea', 'wf.js'), '--script', path.join(pipeline, 'm5', 'pipeline.js'),
         '--args', args, '--out', path.join(root, 'agent', 'wf'), '--disable-family', 'claude'], {
         cwd: pipeline, timeout: 240000, stdio: ['ignore', stdout, stderr], env: { ...process.env,
-          WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(config), M5_REPRODUCE_CALLS: callsFile,
+          M5_RAIDS_LEDGER: raidsLedger, WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(config), M5_REPRODUCE_CALLS: callsFile,
           M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch') },
       })
       let error
@@ -204,13 +220,18 @@ visit(process.env.BOX_ROOT)
     assert.equal(calls.filter(call => call.label === 'harness').length, config.probeFailure ? 0 : 1)
     for (const [label, needed] of [['harness-repair', config.setupFailures],
       ['anchors-repair', config.setupFailures < 2 && config.anchorsFailures],
-      ['profile-repair', stoppedAt !== 'reproduce' && config.profileFailures]]) {
+      ['profile-repair', profileRepair]]) {
       assert.equal(calls.filter(call => call.label === label).length, needed ? 1 : 0, label)
       for (const call of calls.filter(call => call.label === label)) {
         assert.match(call.name, /-retry1$/, label)
         const script = { 'harness-repair': 'setup', 'anchors-repair': 'anchors', 'profile-repair': 'profile' }[label]
-        assert.ok(call.prompt.includes(`${SENTINEL}:${script}:240`), 'last failure log line missing')
-        assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:1\n`), 'unbounded failure log')
+        if (label !== 'profile-repair' || config.profileFailures) {
+          assert.ok(call.prompt.includes(`${SENTINEL}:${script}:240`), 'last failure log line missing')
+          assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:1\n`), 'unbounded failure log')
+        } else {
+          assert.ok(call.prompt.includes(config.gpuUtil === null ? 'parse' : 'numeric'), 'fixed failure class missing')
+          assert.ok(call.prompt.includes(`${SENTINEL}:profile`), 'profile log missing')
+        }
       }
     }
   })
@@ -259,15 +280,15 @@ visit(process.env.BOX_ROOT)
     const firstSetup = receipts.findIndex(receipt => receipt.operation === 'setup')
     assert.ok(firstSetup >= 1, 'no harness upload before setup')
     assert.ok(receipts.slice(0, firstSetup).every(receipt => receipt.operation === 'upload'))
-    assert.equal(count('upload'), firstSetup + (config.setupFailures ? 1 : 0) + (config.setupFailures < 2 && config.anchorsFailures ? 1 : 0) + (stoppedAt !== 'reproduce' && config.profileFailures ? 1 : 0))
+    assert.equal(count('upload'), firstSetup + (config.setupFailures ? 1 : 0) + (config.setupFailures < 2 && config.anchorsFailures ? 1 : 0) + (profileRepair ? 1 : 0))
     if (config.setupFailures) assert.equal(receipts[firstSetup + 1].operation, 'upload')
     assert.equal(count('setup'), config.setupFailures ? 2 : 1)
     assert.equal(count('anchors'), config.setupFailures >= 2 ? 0 : config.anchorsFailures ? 2 : 1)
-    assert.equal(count('profile'), stoppedAt === 'reproduce' ? 0 : config.profileFailures ? 2 : 1)
+    assert.equal(count('profile'), stoppedAt === 'reproduce' ? 0 : profileRepair ? 2 : 1)
     for (const [operation, failedAttempts] of [['anchors', config.anchorsFailures], ['profile', config.profileFailures]]) {
       const attempts = receipts.filter(receipt => receipt.operation === operation)
       if (attempts.length) assert.deepEqual(attempts.map(receipt => receipt.rc),
-        failedAttempts >= 2 ? [7, 7] : failedAttempts ? [7, 0] : [0])
+        failedAttempts >= 2 ? [7, 7] : failedAttempts ? [7, 0] : operation === 'profile' && profileRepair ? [0, 0] : [0])
       for (let i = 1; i < attempts.length; i++) assert.equal(receipts[receipts.indexOf(attempts[i]) - 1].operation, 'upload')
     }
     assert.deepEqual(receipts.filter(receipt => receipt.operation === 'setup').map(receipt => receipt.rc),
@@ -300,6 +321,7 @@ function reproduceFacts(name, run, passed, total, stock = true) {
     const row = run.stage('reproduce')
     assert.deepEqual(row.facts, { anchors_passed: passed, anchors_total: total, stock_verified: stock,
       tuned_control_valid: null, tokens_known: true, gpu_busy_known: false })
+    assert.equal(row.signature.gpu_s, 0)
     if (total !== null) assert.equal(row.signature.run_valid, passed === total)
   })
 }
@@ -309,14 +331,16 @@ function profileFacts(name, run, fraction) {
     const timings = readJSON(path.join(input, 'stages.json'))
     const total = readJSON(path.join(input, 'total_wall_s.json')).total_wall_s
     const packet = readJSON(path.join(run.root, 'agent', 'profile-packet.json'))
-    assert.deepEqual(Object.keys(packet).sort(), ['gpu_telemetry', 'stages', 'timed_fraction', 'total_wall_s'])
-    assert.deepEqual(packet.stages, timings.map(({ stage, wall_s, gpu_s }) => ({ stage, wall_s, gpu_s, wall_fraction: Math.min(1, wall_s / total) })))
+    assert.deepEqual(Object.keys(packet).sort(), ['gpu_count', 'gpu_telemetry', 'stages', 'timed_fraction', 'total_wall_s'])
+    assert.deepEqual(packet.stages, timings.map(({ stage, wall_s, gpu_s, kind }) => ({ stage, wall_s, gpu_s, ...(kind === undefined ? {} : { kind }), wall_fraction: Math.min(1, wall_s / total) })))
     assert.equal(packet.total_wall_s, total)
     assert.equal(packet.timed_fraction, Math.min(1, timings.reduce((sum, row) => sum + row.wall_s, 0) / total))
     assert.equal(packet.timed_fraction, fraction)
-    assert.equal(packet.gpu_telemetry, timings.some(row => row.gpu_s !== null))
+    assert.equal(packet.gpu_count, 1)
+    assert.equal(packet.gpu_telemetry, readJSON(path.join(input, 'gpu_util.json')).length > 0)
     assert.deepEqual(run.stage('profile').facts, { profile_complete: true, timed_fraction: fraction,
-      gpu_telemetry: packet.gpu_telemetry, tokens_known: !!run.config.profileFailures, gpu_busy_known: false })
+      gpu_telemetry: packet.gpu_telemetry, tokens_known: !!(run.config.profileFailures || run.config.profileGateFailure), gpu_busy_known: false })
+    assert.equal(run.stage('profile').signature.gpu_s, 0)
     assert.ok(fs.readFileSync(path.join(input, 'raw-telemetry.txt'), 'utf8').includes(SENTINEL))
   })
 }
@@ -484,10 +508,63 @@ async function cliTests() {
   await score('invalid input creates no output', [], {}, 1)
   await score('output write failure', ANCHORS, { first: 100, second: 0 }, 1, null, { outputDirectory: true })
 }
+function boundsCliTests() {
+  const directory = path.join(scratch, 'bounds-cli')
+  fs.mkdirSync(directory)
+  const methods = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
+  let sequence = 0
+  function bounds(label, stages, compute, transfer, gpuCount = 4) {
+    check(`CLI bounds: ${label}`, () => {
+      const input = path.join(directory, `${++sequence}-packet.json`)
+      const output = path.join(directory, `${sequence}-bounds.json`)
+      writeJSON(input, { stages, total_wall_s: 100, timed_fraction: 0.99, gpu_telemetry: true,
+        ...(gpuCount === null ? {} : { gpu_count: gpuCount }) })
+      const result = spawnSync('python3', [path.join(ROOT, 'm5', 'bounds.py'), input, output], {
+        encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000,
+        env: { ...process.env, M5_RAIDS_LEDGER: raidsLedger },
+      })
+      assert.ifError(result.error)
+      assert.equal(result.status, 0, result.stderr)
+      const actual = readJSON(output)
+      assert.deepEqual(Object.keys(actual).sort(), [...methods].sort())
+      for (const [i, method] of methods.entries()) {
+        const p = [compute, transfer, compute, compute, transfer][i]
+        const k = [8, 4, Math.max(1, gpuCount ?? 1), 8, 2][i]
+        const expected = 1 / ((1 - p) + p / k)
+        assert.deepEqual(Object.keys(actual[method]).sort(), ['bound', 'feasible', 'k', 'p'])
+        assert.ok(Math.abs(actual[method].p - p) < 1e-12, `${method}: p`)
+        assert.equal(actual[method].k, k, `${method}: k`)
+        assert.ok(Math.abs(actual[method].bound - expected) < 1e-12, `${method}: bound`)
+        assert.equal(actual[method].feasible, expected >= 1.05, `${method}: feasible`)
+      }
+    })
+  }
+  const stage = (name, wall_s, kind) => ({ stage: name, wall_s, gpu_s: null, wall_fraction: 1,
+    ...(kind === undefined ? {} : { kind }) })
+  bounds('Amdahl compute 0.6, transfer 0.2, serial and unmeasured 0.2',
+    [stage('arithmetic', 60, 'compute'), stage('movement', 20, 'transfer'), stage('wait', 10, 'other')], 0.6, 0.2)
+  bounds('explicit kind overrides conflicting names',
+    [stage('compute', 20, 'transfer'), stage('h2d', 60, 'compute'), stage('kernel copy', 10, 'other')], 0.6, 0.2)
+  for (const token of ['compute', 'kernel', 'kernels', 'inference', 'training', 'forward', 'backward']) {
+    bounds(`legacy compute token ${token}`, [stage(`phase_${token.toUpperCase()}-end`, 60)], 0.6, 0)
+  }
+  for (const token of ['transfer', 'transfers', 'h2d', 'd2h', 'htod', 'dtoh', 'copy', 'memcpy', 'upload', 'download']) {
+    bounds(`legacy transfer token ${token} wins over compute`, [stage(`compute.${token.toUpperCase()}`, 60)], 0, 0.6)
+  }
+  bounds('substrings do not classify; other remains serial', [stage('precompute copycat', 90)], 0, 0)
+  bounds('small actionable fractions make every method infeasible',
+    [stage('compute', 1), stage('transfer', 1), stage('wait', 98)], 0.01, 0.01)
+  bounds('one GPU makes multi-GPU infeasible', [stage('compute', 90)], 0.9, 0, 1)
+  bounds('zero GPUs caps multi-GPU factor at one', [stage('compute', 90)], 0.9, 0, 0)
+  bounds('legacy missing GPU count defaults to one', [stage('compute', 90)], 0.9, 0, null)
+  bounds('actionable fraction caps at one', [stage('compute', 120)], 1, 0)
+}
+
 async function main() {
   try {
     await probeScriptTests()
     await cliTests()
+    boundsCliTests()
     await runCase('probe-nonzero', { probeFailure: 'rc' }, 'reproduce', 'infra')
     await runCase('probe-invalid-json', { probeFailure: 'json' }, 'reproduce', 'infra')
     const happy = await runCase('happy', { agentDelayMs: 1100 })
@@ -526,9 +603,38 @@ async function main() {
     profileFacts('each-script-repaired', independent, 0.95)
     const missing = await runCase('missing-measured', { missingMeasured: true }, 'reproduce', 'parse')
     reproduceFacts('missing-measured', missing, null, null)
-    const low = await runCase('low-coverage', { timings: [{ stage: 'cpu', wall_s: 8.9, gpu_s: null }] }, 'profile', 'parse')
+    const low = await runCase('low-coverage', { timings: TIMINGS.map((row, i) => ({ ...row, wall_s: [3, 2, 3.9][i] })), profileGateFailure: true }, 'profile', 'numeric')
     reproduceFacts('low-coverage', low, 2, 2)
     profileFacts('low-coverage', low, 0.89)
+    const two = await runCase('two-stages', { timings: [TIMINGS[0], { ...TIMINGS[2], wall_s: 6.5 }],
+      profileGateFailure: true }, 'profile', 'numeric')
+    profileFacts('two-stages', two, 0.95)
+    for (const wall of [9.8, 10, 10.2]) {
+      const name = `duration-wrapper-${wall}`
+      const wrapper = await runCase(name, { timings: [...TIMINGS, { stage: 'baseline', wall_s: wall, gpu_s: null }],
+        profileGateFailure: true }, 'profile', 'numeric')
+      profileFacts(name, wrapper, 1)
+    }
+    const namedWrapper = await runCase('named-wrapper', { timings: [...TIMINGS, { stage: 'BASELINE_Process', wall_s: 0.1, gpu_s: null }],
+      profileGateFailure: true }, 'profile', 'numeric')
+    profileFacts('named-wrapper', namedWrapper, 0.96)
+    const noTelemetry = await runCase('missing-gpu-util', { gpuUtil: null, profileGateFailure: true }, 'profile', 'parse')
+    check('missing-gpu-util: incomplete profile despite numeric GPU stage times', () => {
+      assert.equal(noTelemetry.stage('profile').facts.profile_complete, false)
+    })
+    const emptyTelemetry = await runCase('empty-gpu-util', { gpuUtil: [], profileGateFailure: true }, 'profile', 'numeric')
+    profileFacts('empty-gpu-util', emptyTelemetry, 0.95)
+    for (const [name, overrides] of [
+      ['gate-repaired', { timings: TIMINGS.slice(0, 2) }],
+      ['parse-repaired', { gpuUtil: null }],
+    ]) {
+      const run = await runCase(name, { ...overrides, profileGateFailure: true, repairProfile: true })
+      profileFacts(name, run, 0.95)
+      check(`${name}: repair replaces profile.sh and reruns only profile`, () => {
+        assert.equal(fs.readFileSync(path.join(run.root, 'agent', 'harness', 'profile.sh'), 'utf8')
+          .includes(JSON.stringify(TIMINGS.map(row => ({ ...row, private_content: SENTINEL })))), true)
+      })
+    }
   } catch (error) {
     failures++
     console.log(`FAIL test harness: ${error.stack}`)

@@ -23,7 +23,7 @@ FIELDS = {
     "error_class": enum("none infra env install download parse numeric guard anchor timeout oom quota network other"),
     **{k: {"type": "integer"} for k in ("exit_code", "tokens_in", "tokens_out", "n")},
     **{k: {"type": "number"} for k in ("wall_s", "gpu_s", "usd")},
-    "model_family": enum("opencode codex claude lambda none"),
+    "model_family": enum("opencode codex cursor claude lambda none"),
     **{k: {"type": ["boolean", "null"]} for k in ("run_valid", "calibration_valid")},
     "ratio_to_card": {"type": ["number", "null"]},
     "depth": {"type": ["integer", "null"], "minimum": 0, "maximum": 8},
