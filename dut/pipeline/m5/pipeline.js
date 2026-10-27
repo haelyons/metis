@@ -392,12 +392,14 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
     const predictionPath = path.join(A, 'PREDICTIONS.json')
     const profilePath = path.join(A, 'profile-packet.json')
     const boundsPath = path.join(A, 'bounds.json')
+    const reject = code => ({ ...failure(facts, 'numeric'), reason_codes: [code] })
+    let check = 'bounds_generation_failed'
     let bounds
     try {
       rmSync(boundsPath, { force: true })
       await exec('python3', ['m5/bounds.py', profilePath, boundsPath])
       bounds = readJSON(boundsPath)
-    } catch { return failure(facts, 'numeric') }
+    } catch { return reject(check) }
     const prompt = `Seal a prospective scientific evaluation protocol in one narrow pass.
 Read ${JSON.stringify(path.join(A, 'intake'))}/*, ${JSON.stringify(profilePath)}, and ${JSON.stringify(boundsPath)} only.
 Never read experiments/, operator/, or control/. Do not search, build, run workloads, or write method code.
@@ -408,7 +410,7 @@ For each interval require finite low >0, low <= high <= its method's bound, and 
 Amdahl bound is 1/((1-p)+p/k). The supplied bounds are ceilings, not measured gains; intervals without measurements are prospective assumptions. Include launch/transfer/merge overhead.
 Write an object with these fields:
 - outputs_stochastic: boolean; true for Monte Carlo, sampling, or outputs affected by random seeds, even when fixed seeds make a run reproducible.
-- predictions: array of {method, expected_speedup_interval: {low, high}, outcome_vs_compute_points}. Each point is {compute_budget, predicted_outcome, uncertainty}. Include all sealed compute budgets for each method.
+- predictions: array of {method, expected_speedup_interval: {low, high}, outcome_vs_compute_points}. Each point is {compute_budget, predicted_outcome, uncertainty}. Include all sealed compute budgets for each method. Both predicted_outcome and uncertainty must be non-null, nonempty values at every budget. If no numeric outcome forecast is scientifically supported, use an explicit nonempty declaration such as predicted_outcome={not_applicable:true,reason:"fixed-work benchmark; no calibrated outcome curve"} and explain assumptions or unavailable evidence in uncertainty. Never invent a numeric forecast or use null; equal_outcome_target.not_applicable does not waive these point fields.
 - equivalence_metrics: quantities, scientific tolerances, and sources from requirements or baseline variability, never method outputs. Lack of significance is not equivalence.
 For stochastic outputs, equivalence_metrics must be statistical: use paired seeds and positive absolute scientific margins derived from baseline variability (for example Monte Carlo standard error), with a sealed significance level alpha = 1 - confidence_rule.equivalence.confidence. Require the confidence interval for paired differences to lie within those margins. Never demand exact, zero-tolerance, or bitwise equivalence for stochastic outputs. Exact or bitwise equivalence is required only for deterministic outputs.
 - paired_seed_tests: stochastic paired-seed test and fixed seeds, or an explicit scientifically justified deterministic/not-applicable declaration.
@@ -421,11 +423,14 @@ Use executable v1 evaluation fields: evaluation_inputs={ids:[unique string IDs],
 Define the complete protocol now, before method code exists. Scope/tolerance changes require a new sealed run.
 Return a short completion acknowledgement; the script reads and seals the file itself.`
     try {
+      check = 'agent_failed'
       const reply = await agent(prompt, { label: 'seal', agentType: 'ls-writer', model: 'sonnet' })
-      if (reply == null) return failure(facts, 'numeric')
+      if (reply == null) return reject(check)
+      check = 'predictions_read_failed'
       const predictions = readJSON(predictionPath)
-      if (!predictions || !Array.isArray(predictions.predictions)) return failure(facts, 'numeric')
+      if (!predictions || !Array.isArray(predictions.predictions)) return reject('predictions_invalid')
       facts.prediction_count = predictions.predictions.length
+      check = 'protocol_incomplete'
       const required = ['equivalence_metrics', 'paired_seed_tests', 'sample_sizes', 'confidence_rule',
         'hardware_cost_basis', 'timing_scope', 'minimum_worthwhile_gain', 'evaluation_inputs', 'splits',
         'compute_budgets', 'repetitions', 'warmup', 'scheduling_order', 'equal_outcome_target']
@@ -435,16 +440,19 @@ Return a short completion acknowledgement; the script reads and seals the file i
         && predictions.compute_budgets.every(value => Number.isFinite(value) && value > 0)
         && Number.isInteger(predictions.repetitions) && predictions.repetitions >= 5
         && Number.isFinite(predictions.minimum_worthwhile_gain) && predictions.minimum_worthwhile_gain > 1
-        && new Set(predictions.predictions.map(item => item.method)).size === facts.prediction_count
-        && predictions.predictions.every(item => menu.includes(item.method)
+        && new Set(predictions.predictions.map(item => item?.method)).size === facts.prediction_count
+        && predictions.predictions.every(item => item && menu.includes(item.method)
           && Number.isFinite(item.expected_speedup_interval?.low) && item.expected_speedup_interval.low > 0
           && Number.isFinite(item.expected_speedup_interval?.high)
-          && item.expected_speedup_interval.high >= item.expected_speedup_interval.low
-          && Array.isArray(item.outcome_vs_compute_points)
-          && predictions.compute_budgets.every(budget => item.outcome_vs_compute_points.some(point => point
-            && point.compute_budget === budget && hasValue(point.predicted_outcome) && hasValue(point.uncertainty))))
-      if (!complete) return failure(facts, 'numeric')
+          && item.expected_speedup_interval.high >= item.expected_speedup_interval.low)
+      if (!complete) return reject(check)
+      check = 'compute_points_incomplete'
+      const completePoints = predictions.predictions.every(item => Array.isArray(item.outcome_vs_compute_points)
+        && predictions.compute_budgets.every(budget => item.outcome_vs_compute_points.some(point => point
+          && point.compute_budget === budget && hasValue(point.predicted_outcome) && hasValue(point.uncertainty))))
+      if (!completePoints) return reject(check)
       if (predictions.outputs_stochastic) {
+        check = 'stochastic_equivalence_invalid'
         const seeds = predictions.paired_seed_tests
         const rule = predictions.confidence_rule?.equivalence
         const metrics = predictions.equivalence_metrics
@@ -459,26 +467,30 @@ Return a short completion acknowledgement; the script reads and seals the file i
               && (typeof metric.tolerance === 'number' || Object.keys(metric.tolerance).length === 1)
               && !/\b(?:exact|bitwise)\b/i.test(JSON.stringify({ name: metric.name, kind: metric.kind,
                 rule: metric.rule, comparison: metric.comparison }))
-          })) return failure(facts, 'numeric')
+          })) return reject(check)
       }
+      check = 'bounds_coverage_invalid'
       const feasible = menu.filter(method => bounds[method].feasible)
       const infeasible = menu.filter(method => !bounds[method].feasible)
       const excluded = predictions.infeasible_methods
-      const validBounds = facts.prediction_count === feasible.length
-        && feasible.every(method => predictions.predictions.some(item => item.method === method))
+      const validCoverage = facts.prediction_count === feasible.length
+        && feasible.every(method => predictions.predictions.some(item => item?.method === method))
         && Array.isArray(excluded) && excluded.length === infeasible.length
         && new Set(excluded.map(item => item?.method)).size === excluded.length
         && excluded.every(item => item && infeasible.includes(item.method)
           && typeof item.reason === 'string' && item.reason.trim())
-        && predictions.predictions.every(item => {
-          const { low, high } = item.expected_speedup_interval
-          const bound = bounds[item.method].bound
-          return high <= bound && high - low <= bound - 1
-        })
-        && (feasible.length < 2 || new Set(predictions.predictions.map(item =>
-          JSON.stringify([item.expected_speedup_interval.low, item.expected_speedup_interval.high]))).size > 1)
-      if (!validBounds) return failure(facts, 'numeric')
+      if (!validCoverage) return reject(check)
+      check = 'interval_bounds_invalid'
+      const validIntervals = predictions.predictions.every(item => {
+        const { low, high } = item.expected_speedup_interval
+        const bound = bounds[item.method].bound
+        return high <= bound && high - low <= bound - 1
+      })
+      if (!validIntervals) return reject(check)
+      if (!(feasible.length < 2 || new Set(predictions.predictions.map(item =>
+          JSON.stringify([item.expected_speedup_interval.low, item.expected_speedup_interval.high]))).size > 1)) return reject('intervals_identical')
 
+      check = 'seal_write_failed'
       // Sort recursively, preserving array order. Hash the exact UTF-8 bytes, with no spaces/newline.
       const canonical = value => value === null || typeof value !== 'object' ? JSON.stringify(value)
         : Array.isArray(value) ? `[${value.map(canonical).join(',')}]`
@@ -503,14 +515,16 @@ Return a short completion acknowledgement; the script reads and seals the file i
           if (error.code !== 'EEXIST') throw error
         }
       }
+      check = 'seal_verification_failed'
       facts.seal_present = existsSync(receiptPath)
       const receipt = readJSON(receiptPath)
       facts.seal_verified = hash(readFileSync(receipt.path)) === receipt.sha256
         && hash(readFileSync(predictionPath)) === receipt.sha256
-      return facts.seal_verified && facts.prediction_count > 0 ? { status: 'PASS', facts }
-        : failure(facts, 'numeric')
+      if (!facts.seal_verified) return reject(check)
+      return facts.prediction_count > 0 ? { status: 'PASS', facts, reason_codes: [] }
+        : reject('no_feasible_methods')
     } catch {
-      return failure(facts, 'numeric')
+      return reject(check)
     }
   }
   async function propose() {
@@ -699,7 +713,8 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     }
     mkdirSync(path.join(C, 'stages'), { recursive: true })
     writeFileSync(path.join(C, 'stages', `${stage}.json`), JSON.stringify({ stage, status: result.status,
-      ...v1, notes: new Set(families).size > 1 ? ['multiple_model_families'] : [] }) + '\n')
+      ...v1, ...(stage === 'seal' ? { reason_codes: result.reason_codes ?? [] } : {}),
+      notes: new Set(families).size > 1 ? ['multiple_model_families'] : [] }) + '\n')
     await exec('python3', ['m5/signatures.py', 'emit', '--dir', S, '--stage', stage, '--status', result.status,
       '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(v1)])
     stages.push({ stage, status: result.status })

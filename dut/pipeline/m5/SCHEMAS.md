@@ -97,12 +97,30 @@
 ## A/PREDICTIONS.json (written by the seal agent; checked, then sealed)
 - `predictions`: an array, one item per feasible method, with unique methods taken from the menu ["data-parallel over inputs", "batching", "multi-GPU", "ensembles", "pipelining"]. Each item has:
   - `expected_speedup_interval` with finite numbers satisfying `low > 0`, `low <= high <= bound`, and width `high-low <= bound-1` for that method;
-  - `outcome_vs_compute_points`, holding for every value in compute_budgets one {compute_budget, predicted_outcome, uncertainty}, all non-empty.
+  - `outcome_vs_compute_points`, holding for every value in compute_budgets one {compute_budget, predicted_outcome, uncertainty}, all non-empty. `predicted_outcome` and `uncertainty` must not be null, empty strings, or empty objects/arrays. When no numeric forecast is supported, use an explicit non-empty declaration such as `predicted_outcome={not_applicable:true,reason:"fixed-work benchmark; no calibrated outcome curve"}` and explain unavailable evidence in `uncertainty`. Do not invent a number. `equal_outcome_target.not_applicable` does not waive these point fields.
 - `outputs_stochastic` is a required boolean. It is true for Monte Carlo, sampling, or outputs affected by random seeds, including reproducible fixed-seed runs.
 - Stochastic seals require statistical `equivalence_metrics` with positive absolute margins and non-empty names/sources, `paired_seed_tests.kind="paired_median"` with unique integer seeds, and `confidence_rule.equivalence={kind:"paired_median",confidence}` with finite confidence in [0.5,1). The sealed significance level is `1-confidence`. Margins come from scientific requirements or baseline variability (for example Monte Carlo standard error); paired-difference confidence intervals must lie within the sealed margins. Exact/bitwise rules, zero margins, relative margins, deterministic seed declarations, and prose-only rules are rejected for stochastic outputs. Exact or bitwise rules apply only to deterministic outputs.
 - Required non-empty keys: equivalence_metrics, paired_seed_tests, sample_sizes, confidence_rule, hardware_cost_basis, timing_scope, minimum_worthwhile_gain (a number > 1), evaluation_inputs, splits, compute_budgets (at least 3 distinct positive numbers), repetitions (an integer >= 5), warmup, scheduling_order and equal_outcome_target.
 - `infeasible_methods` is a required array of `{method, reason}`, exactly once for every method with `bound < 1.05`; reasons are non-empty strings. These methods must never appear in predictions. Every feasible method must appear exactly once in predictions and never in infeasible_methods. With at least two feasible methods, all prediction intervals must not be identical. One feasible method is exempt from this comparison.
 - Seal failures use `error_class: numeric` (exit 2), including invalid protocol, invalid intervals, missing/duplicate method coverage, or unavailable bounds. Facts retain exactly `seal_present`, `seal_verified`, `prediction_count` plus common facts; `prediction_count` counts submitted prediction rows, excluding infeasible entries. An empty feasible menu may be sealed as a negative result, then fails the gate and stops method work.
+- `C/stages/seal.json` adds `reason_codes`, an array containing the first failed check's fixed code, or `[]` for PASS, SKIPPED, and stub results. Checks stop at the first failure, in the order below. Exceptions use the code for the operation/check in progress. Codes are script-owned literals; no agent text, exception messages, methods, paths, or scientific content enter this field. Existing numeric error class, exit code, signature facts, and immutable seal receipt format are unchanged.
+
+  | Code | Failed check or operation |
+  | --- | --- |
+  | `bounds_generation_failed` | Regenerate and read bounds from the profile packet. |
+  | `agent_failed` | Seal agent threw or returned no reply. |
+  | `predictions_read_failed` | Read and parse the predictions file. |
+  | `predictions_invalid` | Predictions object must contain a predictions array. |
+  | `protocol_incomplete` | Required fields, stochastic flag, budgets, repetitions, worthwhile gain, unique menu methods, or finite positive ordered intervals are invalid. |
+  | `compute_points_incomplete` | Every predicted method needs a point at every budget with non-empty outcome and uncertainty. |
+  | `stochastic_equivalence_invalid` | Stochastic paired seeds, confidence rule, or positive absolute statistical margins are invalid. |
+  | `bounds_coverage_invalid` | Feasible prediction coverage or infeasible exclusions/reasons are invalid. |
+  | `interval_bounds_invalid` | An interval exceeds its bound or its allowed width. |
+  | `intervals_identical` | At least two methods are feasible but all intervals are identical. |
+  | `seal_write_failed` | Canonicalize/write predictions and create the immutable seal files. |
+  | `seal_verification_failed` | Read/hash verification of the current and frozen predictions failed. |
+  | `no_feasible_methods` | Verified negative seal has zero predictions; stop method work. |
+
 - Seal: C/seals/NNNN.json {sha256, path, utc}. The sha256 is over the canonical JSON: keys sorted recursively, array order kept, compact separators, UTF-8. Numbering continues; nothing is overwritten.
 
 ## Propose, independent votes, and the one-shot gate

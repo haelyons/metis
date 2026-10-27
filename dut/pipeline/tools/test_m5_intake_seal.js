@@ -51,6 +51,12 @@ const PREDICTIONS = {
   equal_outcome_target: 499500,
   content: SENTINEL,
 }
+const SEAL_REASON_CODES = [
+  'bounds_generation_failed', 'agent_failed', 'predictions_read_failed',
+  'predictions_invalid', 'protocol_incomplete', 'compute_points_incomplete',
+  'stochastic_equivalence_invalid', 'bounds_coverage_invalid', 'interval_bounds_invalid',
+  'intervals_identical', 'seal_write_failed', 'seal_verification_failed', 'no_feasible_methods',
+]
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
 const readRows = file => fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse)
 const writeJSON = (file, value) => {
@@ -58,8 +64,31 @@ const writeJSON = (file, value) => {
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n')
 }
 
+// Install before the workflow imports filesystem functions.
+if (process.env.M5_INTAKE_SEAL_FAULT === 'verification') {
+  const runRoot = process.env.M5_INTAKE_SEAL_ROOT
+  let reads = 0
+  const failVerificationRead = file => {
+    if (String(file).startsWith(path.join(runRoot, 'control', 'seals') + path.sep) ||
+        (String(file) === path.join(runRoot, 'agent', 'PREDICTIONS.json') && ++reads > 1)) {
+      throw new Error('synthetic prediction verification read failure')
+    }
+  }
+  const originalRead = fs.readFileSync
+  fs.readFileSync = function (file, ...args) {
+    failVerificationRead(file)
+    return originalRead.call(this, file, ...args)
+  }
+  const originalAsyncRead = fs.promises.readFile
+  fs.promises.readFile = async function (file, ...args) {
+    failVerificationRead(file)
+    return originalAsyncRead.call(this, file, ...args)
+  }
+}
+
 // The same module is loaded by WF_STUB. Only these two agents write content;
-// neither agent computes hashes or writes control/operator state.
+// neither agent computes hashes or writes operator state. Fault injection below
+// simulates unavailable storage and failed verification without reading pipeline code.
 module.exports = {
   async run({ title, prompt }) {
     const runRoot = process.env.M5_INTAKE_SEAL_ROOT
@@ -106,6 +135,10 @@ module.exports = {
       fs.writeFileSync(path.join(runRoot, 'agent', 'intake', 'brief.md'), brief)
     }
     if (title === 'seal') {
+      const fault = process.env.M5_INTAKE_SEAL_FAULT
+      if (fault === 'agent') throw new Error('synthetic seal agent failure')
+      if (fault === 'write') fs.writeFileSync(path.join(runRoot, 'control', 'seals'), 'blocked')
+
       if (!process.env.M5_INTAKE_SEAL_PRESERVE) writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), PREDICTIONS)
       // Deliberately claim verification: the deterministic step must verify it.
       facts = { seal_present: true, seal_verified: true, prediction_count: PREDICTIONS.predictions.length }
@@ -148,13 +181,19 @@ function noLeak(runRoot) {
       const file = path.join(dir, entry.name)
       assert.ok(!entry.isSymbolicLink(), 'operator symlink could expose content')
       if (entry.isDirectory()) visit(file)
-      else assert.ok(!fs.readFileSync(file).includes(Buffer.from(SENTINEL)), `content leaked to ${path.relative(operator, file)}`)
+      else {
+        const bytes = fs.readFileSync(file)
+        assert.ok(!bytes.includes(Buffer.from(SENTINEL)), `content leaked to ${path.relative(operator, file)}`)
+        for (const code of SEAL_REASON_CODES) {
+          assert.ok(!bytes.includes(Buffer.from(code)), `${code} leaked to ${path.relative(operator, file)}`)
+        }
+      }
     }
   }
   visit(operator)
 }
 
-async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false } = {}) {
+async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '' } = {}) {
   const control = path.join(runRoot, 'control')
   const brief = path.join(runRoot, 'brief.md')
   fs.mkdirSync(control, { recursive: true })
@@ -162,7 +201,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   const argsFile = path.join(control, 'args.json')
   writeJSON(argsFile, { run_root: runRoot, brief, tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } })
   // The profile stage is stubbed, so provide its documented output directly.
-  writeJSON(path.join(runRoot, 'agent', 'profile-packet.json'), PROFILE)
+  writeJSON(path.join(runRoot, 'agent', 'profile-packet.json'), profile)
   // Separate workflow directories prevent WF resume caches from hiding calls.
   const out = path.join(runRoot, 'agent', `wf-${name}`)
   const callsFile = path.join(runRoot, `calls-${name}.jsonl`)
@@ -182,7 +221,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
         env: { ...process.env, WF_STUB: __filename, M5_INTAKE_SEAL_ROOT: runRoot,
           M5_RAIDS_LEDGER: path.join(parent, 'raids_used.jsonl'),
           M5_INTAKE_SEAL_FACTS: JSON.stringify(facts), M5_INTAKE_SEAL_BRIEF: brief,
-          M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
+          M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_FAULT: sealFault, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
           M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '' },
       })
       let error
@@ -219,7 +258,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
     }
     assert.ok(calls.find(row => row.label === 'intake')?.prompt.includes(brief), 'args.brief path not passed to intake')
   })
-  check(`${name}: sentinel absent throughout R/operator`, () => noLeak(runRoot))
+  check(`${name}: sentinel and seal reason codes absent throughout R/operator`, () => noLeak(runRoot))
   return { runRoot, out, stages, signature, stage, calls }
 }
 
@@ -367,6 +406,77 @@ async function main() {
           assert.equal(run.signature('seal').error_class, 'numeric')
           assert.equal(run.signature('seal').exit_code, 2)
         }
+      })
+    }
+
+    // Set compute utilization to 100% and remove transfer work: only multi-GPU
+    // remains feasible. Its lone interval must be exempt from identical checks.
+    const singleProfile = JSON.parse(JSON.stringify(PROFILE))
+    singleProfile.gpu_count = 2
+    singleProfile.stages[0].mean_gpu_util = 1
+    singleProfile.stages[1].wall_s = 0
+    singleProfile.stages[2].wall_s = 4
+    const singlePredictions = JSON.parse(JSON.stringify(PREDICTIONS))
+    singlePredictions.predictions = [{ ...singlePredictions.predictions[0], method: 'multi-GPU',
+      expected_speedup_interval: { low: 1.1, high: 1.3 } }]
+    singlePredictions.infeasible_methods = PREDICTIONS.predictions.map(({ method }) => ({ method, reason: 'Bound is 1.' }))
+    const singleRoot = path.join(parent, 'single-feasible')
+    writeJSON(path.join(singleRoot, 'agent', 'PREDICTIONS.json'), singlePredictions)
+    const single = await runCase('single-feasible', INTAKE, { runRoot: singleRoot, preserve: true, profile: singleProfile })
+    checkStatuses('single-feasible', single, null)
+    check('single-feasible: one valid interval seals with no reason codes', () => {
+      const bounds = readJSON(path.join(singleRoot, 'agent', 'bounds.json'))
+      assert.deepEqual(Object.keys(bounds).filter(method => bounds[method].feasible), ['multi-GPU'])
+      assert.equal(single.stage('seal').facts.seal_verified, true)
+      assert.equal(single.stage('seal').facts.prediction_count, 1)
+      assert.deepEqual(readJSON(path.join(singleRoot, 'control', 'stages', 'seal.json')).reason_codes, [])
+      assert.equal(readJSON(path.join(singleRoot, 'control', 'seals', '0001.json')).sha256, predictionHash(singleRoot))
+    })
+
+    const reasonCases = [
+      ['bounds_generation_failed', null, { profile: {} }],
+      ['agent_failed', null, { sealFault: 'agent' }],
+      ['predictions_read_failed', null, {}, '{invalid JSON'],
+      ['predictions_invalid', value => { value.predictions = {} }],
+      ['protocol_incomplete', value => { value.repetitions = 3 }],
+      ['compute_points_incomplete', value => { value.predictions[0].outcome_vs_compute_points.pop() }],
+      ['stochastic_equivalence_invalid', value => { value.outputs_stochastic = true }],
+      ['bounds_coverage_invalid', value => { value.infeasible_methods = [] }],
+      ['interval_bounds_invalid', value => {
+        value.predictions[0].expected_speedup_interval = { low: 100, high: 100 }
+      }],
+      ['intervals_identical', value => {
+        for (const row of value.predictions) row.expected_speedup_interval = { low: 1.01, high: 1.1 }
+      }],
+      ['seal_write_failed', null, { sealFault: 'write' }],
+      ['seal_verification_failed', null, { sealFault: 'verification' }],
+      ['no_feasible_methods', value => {
+        value.predictions = []
+        value.infeasible_methods = [...PREDICTIONS.predictions, { method: 'multi-GPU' }]
+          .map(({ method }) => ({ method, reason: 'Bound is 1.' }))
+      }, { profile: { ...singleProfile, gpu_count: 1 } }],
+    ]
+    check('reason cases cover every documented seal code', () => {
+      const schema = fs.readFileSync(path.join(ROOT, 'm5', 'SCHEMAS.md'), 'utf8')
+      const table = schema.slice(schema.indexOf('  | Code | Failed check or operation |'), schema.indexOf('- Seal: C/seals/'))
+      const documented = [...table.matchAll(/\| `([^`]+)` \|/g)].map(match => match[1])
+      assert.deepEqual(SEAL_REASON_CODES, documented)
+      assert.deepEqual(reasonCases.map(([code]) => code), documented)
+    })
+    for (const [code, mutate, options = {}, raw] of reasonCases) {
+      const runRoot = path.join(parent, `reason-${code}`)
+      const value = JSON.parse(JSON.stringify(PREDICTIONS))
+      if (mutate) mutate(value)
+      const predictionsFile = path.join(runRoot, 'agent', 'PREDICTIONS.json')
+      writeJSON(predictionsFile, value)
+      if (raw) fs.writeFileSync(predictionsFile, raw)
+      const run = await runCase(`reason-${code}`, INTAKE, { ...options, runRoot, preserve: true })
+      checkStatuses(code, run, 'seal')
+      check(`${code}: exact first-failure code in stage receipt`, () => {
+        const receipt = readJSON(path.join(runRoot, 'control', 'stages', 'seal.json'))
+        assert.deepEqual(receipt.reason_codes, [code])
+        assert.equal(run.signature('seal').error_class, 'numeric')
+        assert.equal(run.signature('seal').exit_code, 2)
       })
     }
 
