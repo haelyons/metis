@@ -10,6 +10,8 @@ const assert = require('node:assert/strict')
 const { createHash, randomUUID } = require('node:crypto')
 const { spawn } = require('node:child_process')
 const ROOT = path.resolve(__dirname, '..')
+// Recorded public runs used read-only as regression fixtures; files are copied into scratch.
+const RUNS = path.resolve(ROOT, '..', '..', 'experiments', 'shakedown-m5')
 const SENTINEL = 'PRIVATE_PROPOSAL_SENTINEL_58321'
 const MENU = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
 const REASONS = ['exceeds_bound', 'not_parallelisable', 'changes_method', 'equivalence_risk',
@@ -86,7 +88,39 @@ function check(label, test) {
   try { test(); console.log(`ok ${label}`) }
   catch (error) { failures++; console.log(`FAIL ${label}: ${error.message}`) }
 }
+const recordedBallots = run => [1, 2, 3, 4, 5].map(i => readJSON(path.join(RUNS, run, 'agent', 'votes', `${i}.json`)))
+const recordedProposal = run => readJSON(path.join(RUNS, run, 'agent', 'proposal.json'))
+const recordedBox = run => readJSON(path.join(RUNS, run, 'control', 'box.json'))
+// Replays propose on a recorded run's inputs under a fresh seal of the recorded prediction bytes.
+function replayFixture(root, run) {
+  const from = path.join(RUNS, run)
+  const copy = relative => {
+    fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true })
+    fs.copyFileSync(path.join(from, relative), path.join(root, relative))
+  }
+  for (const relative of ['agent/PREDICTIONS.json', 'agent/bounds.json', 'control/box.json', 'agent/results/probe/probe.json']) copy(relative)
+  if (fs.existsSync(path.join(from, 'agent', 'profile-packet.json'))) copy('agent/profile-packet.json')
+  else {
+    // Rebuild a profile packet carrying the recorded stage mapping (wall fractions, utilisation, kinds).
+    const recorded = readJSON(path.join(from, 'agent', 'propose-packet.json'))
+    const stages = recorded.stage_to_method.map(row => ({ stage: row.stage,
+      kind: row.methods.includes('pipelining') ? 'transfer' : row.methods.includes('multi-GPU') ? 'compute' : 'other',
+      wall_s: row.wall_fraction * 100, gpu_s: null, wall_fraction: row.wall_fraction, start_s: null, mean_gpu_util: row.mean_gpu_util }))
+    writeJSON(path.join(root, 'agent', 'profile-packet.json'), { stages, total_wall_s: 100,
+      timed_fraction: Math.min(1, stages.reduce((sum, row) => sum + row.wall_fraction, 0)), gpu_telemetry: true, concurrency: null })
+  }
+  const live = path.join(root, 'agent', 'PREDICTIONS.json')
+  const bytes = fs.readFileSync(live)
+  const frozen = path.join(root, 'control', 'seals', 'predictions-frozen.json')
+  fs.mkdirSync(path.dirname(frozen), { recursive: true })
+  fs.writeFileSync(frozen, bytes)
+  writeJSON(path.join(root, 'control', 'seals', '0001.json'), { sha256: createHash('sha256').update(bytes).digest('hex'),
+    path: frozen, utc: new Date().toISOString() })
+  return { predictions: readJSON(live), bounds: readJSON(path.join(root, 'agent', 'bounds.json')),
+    profile: readJSON(path.join(root, 'agent', 'profile-packet.json')) }
+}
 function fixture(root, config) {
+  if (config.replay) return replayFixture(root, config.replay)
   const profile = {
     stages: [
       { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6, start_s: 0, mean_gpu_util: 0.125 },
@@ -207,20 +241,59 @@ function status(name, run, errorClass) {
     assert.equal(result.stages.find(row => row.stage === 'takeaways').status, 'PASS')
   })
 }
-function facts(name, run, approvals, pass, selected = MENU[0]) {
-  check(`${name}: exact facts and persisted gate`, () => {
+const FACT_KEYS = ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass',
+  'votes_reject', 'votes_abstain', 'outcome', 'tokens_known', 'gpu_busy_known']
+// Ballot counts are { approve, reject, abstain }; null ballots are the remainder of five.
+// Outcome once counted: approved exactly when the gate passes; rejected with two or more rejections/nulls;
+// otherwise conditions_unmet (SCHEMAS.md, propose facts).
+function facts(name, run, counts, pass, selected = MENU[0]) {
+  const { approve = 0, reject = 0, abstain = 0 } = counts
+  const nulls = 5 - approve - reject - abstain
+  const outcome = pass ? 'approved' : reject + nulls >= 2 ? 'rejected' : 'conditions_unmet'
+  check(`${name}: exact facts (outcome ${outcome}) and persisted gate`, () => {
     const actual = run.record?.facts
-    assert.deepEqual(Object.keys(actual).sort(), ['method', 'expected_speedup', 'votes_approve', 'votes_total',
-      'vote_share', 'gate_pass', 'tokens_known', 'gpu_busy_known'].sort())
-    const { tokens_known, gpu_busy_known, ...scientific } = actual
+    assert.deepEqual(Object.keys(actual).sort(), [...FACT_KEYS].sort())
+    const { tokens_known, gpu_busy_known, expected_speedup, ...scientific } = actual
     const interval = run.evidence.predictions.predictions.find(row => row.method === selected)?.expected_speedup_interval
-    assert.deepEqual(scientific, { method: selected, expected_speedup: interval ? interval.low / 2 + interval.high / 2 : null,
-      votes_approve: approvals, votes_total: 5, vote_share: approvals / 5, gate_pass: pass })
+    if (interval) assert.ok(Math.abs(expected_speedup - (interval.low / 2 + interval.high / 2)) <= 1e-12, `expected_speedup ${expected_speedup}`)
+    else assert.equal(expected_speedup, null)
+    scientific.expected_speedup = expected_speedup
+    assert.deepEqual(scientific, { method: selected, expected_speedup,
+      votes_approve: approve, votes_total: 5, vote_share: approve / 5, gate_pass: pass,
+      votes_reject: reject, votes_abstain: abstain, outcome })
     assert.equal(typeof tokens_known, 'boolean')
     assert.equal(typeof gpu_busy_known, 'boolean')
     const gate = readJSON(path.join(run.root, 'agent', 'GATE.json'))
     for (const [key, value] of Object.entries(scientific)) assert.deepEqual(gate[key], value, key)
   })
+  check(`${name}: null ballots = 5 - approve - reject - abstain = ${nulls}`, () => {
+    const ballots = [1, 2, 3, 4, 5].map(i => readJSON(path.join(run.root, 'agent', 'votes', `${i}.json`)))
+    assert.equal(ballots.filter(value => value === null).length, nulls)
+    const f = run.record.facts
+    assert.equal(5 - f.votes_approve - f.votes_reject - f.votes_abstain, nulls)
+    for (const [vote, count] of [['approve', approve], ['reject', reject], ['abstain', abstain]])
+      assert.equal(ballots.filter(value => value?.vote === vote).length, count, vote)
+  })
+}
+// Stages that stop before ballots are counted emit the new facts at their initial values, outcome null.
+function uncounted(name, run) {
+  check(`${name}: stopped before counting; votes 0/0/0 and outcome null`, () => {
+    const actual = run.record?.facts
+    for (const key of FACT_KEYS) assert.ok(Object.hasOwn(actual, key), `missing ${key}`)
+    for (const [key, value] of Object.entries({ votes_approve: 0, votes_total: 5, vote_share: 0, gate_pass: false,
+      votes_reject: 0, votes_abstain: 0, outcome: null })) assert.deepEqual(actual[key], value, key)
+  })
+}
+// Phrases the skeptic prompt must carry (SCHEMAS.md "Ballot meanings"), matched by meaning, not wording.
+function ballotMeanings(prompt) {
+  const near = (a, b, span = 240) => new RegExp(`(?:${a})[\\s\\S]{0,${span}}(?:${b})|(?:${b})[\\s\\S]{0,${span}}(?:${a})`, 'i').test(prompt)
+  assert.ok(near('\\breject', 'defect|fail'), 'reject not described as naming a defect that makes the method fail')
+  assert.ok(near('\\babstain', 'insufficient|not enough|cannot (?:be )?judged?|unable to judge|too little'),
+    'abstain not described as insufficient evidence to judge')
+  assert.ok(near('\\bapprove', 'no defect|adequate|sufficient'), 'approve not described as no defect with adequate evidence')
+  assert.ok(near('(?:missing|weak)[\\s\\S]{0,40}evidence', '\\babstain'), 'missing or weak evidence not tied to abstain')
+  assert.ok(/abstain[\s\S]{0,80}(?:not|never|rather than|instead of)\s+(?:to\s+|a\s+)?reject|(?:not|never|do not|don't)\s+reject[\s\S]{0,160}(?:missing|weak)[\s\S]{0,40}evidence/i.test(prompt),
+    'prompt does not say missing or weak evidence warrants abstain, not reject')
 }
 function noLeak(root) {
   for (const entry of fs.readdirSync(root, { withFileTypes: true })) {
@@ -252,7 +325,12 @@ async function main() {
   try {
     const happy = await execute('four-approvals')
     status('four-approvals', happy)
-    facts('four-approvals', happy, 4, true)
+    facts('four-approvals', happy, { approve: 4, reject: 1 }, true)
+    check('every skeptic prompt states the three ballot meanings; missing or weak evidence warrants abstain, not reject', () => {
+      const skeptics = happy.calls.filter(isSkeptic)
+      assert.equal(skeptics.length, 5)
+      for (const call of skeptics) ballotMeanings(call.prompt)
+    })
     check('one proposer writes proposal; five skeptics have exact names and fresh sessions', () => {
       assert.equal(happy.calls.filter(call => call.title === 'propose').length, 1)
       const votes = happy.calls.filter(isSkeptic)
@@ -326,34 +404,56 @@ async function main() {
     const voteBytes = [1, 2, 3, 4, 5].map(i => fs.readFileSync(path.join(happy.root, 'agent', 'votes', `${i}.json`)))
     const rerun = await execute('no-revote', {}, happy)
     status('no-revote', rerun, 'other')
+    uncounted('no-revote', rerun)
     check('existing gate prohibits proposer and ballots; preserves gate and votes', () => {
       assert.equal(rerun.calls.length, 0)
       assert.deepEqual(fs.readFileSync(path.join(happy.root, 'agent', 'GATE.json')), gateBytes)
       for (let i = 1; i <= 5; i++) assert.deepEqual(fs.readFileSync(path.join(happy.root, 'agent', 'votes', `${i}.json`)), voteBytes[i - 1])
     })
-    for (const [name, votes, approvals, pass] of [
-      ['three-approvals', [ballot(), ballot(), ballot(), ballot('reject'), ballot('abstain')], 3, false],
-      ['one-missing', [ballot(), ballot(), ballot(), ballot(), null], 4, true],
-      ['missing-and-invalid', [ballot(), ballot(), ballot(), null, ballot('approve', ['invented_code'])], 3, false],
-      ['invalid-enum', [ballot(), ballot(), ballot(), ballot(), ballot('yes')], 4, true],
-      ['invalid-extra-key', [ballot(), ballot(), ballot(), ballot(), { ...ballot(), extra: true }], 4, true],
-      ['invalid-reasons', [ballot(), ballot(), ballot(), ballot(), { vote: 'approve', reason_codes: 'other' }], 4, true],
+    // Gate ballot condition: at most one ballot that is a rejection or null; abstentions never count
+    // against it, no minimum number of approvals, and reason codes never reclassify a ballot.
+    const A = ballot(), R = ballot('reject', ['exceeds_bound']), AB = ballot('abstain', ['weak_profile_evidence'])
+    const weakReject = ballot('reject', ['weak_profile_evidence'])
+    const allFamilies = kind => ({ codex: kind, opencode: kind, claude: kind, cursor: kind })
+    for (const [name, votes, counts, pass, extra = {}] of [
+      ['three-approvals-reject-abstain', [A, A, A, ballot('reject'), ballot('abstain')], { approve: 3, reject: 1, abstain: 1 }, true],
+      ['five-abstentions', [AB, AB, AB, AB, ballot('abstain')], { abstain: 5 }, true],
+      ['one-reject-four-abstain', [R, AB, AB, AB, AB], { reject: 1, abstain: 4 }, true],
+      ['one-missing-four-abstain', [null, AB, AB, AB, AB], { abstain: 4 }, true],
+      ['one-missing', [A, A, A, A, null], { approve: 4 }, true],
+      ['two-rejections', [A, A, A, R, ballot('reject', [])], { approve: 3, reject: 2 }, false],
+      ['reject-and-missing', [A, A, AB, R, null], { approve: 2, reject: 1, abstain: 1 }, false],
+      ['missing-and-invalid', [A, A, A, null, ballot('approve', ['invented_code'])], { approve: 3 }, false],
+      ['weak-evidence-rejections', [A, A, AB, weakReject, weakReject], { approve: 2, reject: 2, abstain: 1 }, false],
+      ['codes-do-not-reclassify', [ballot('abstain', ['exceeds_bound', 'changes_method']), ballot('abstain', ['equivalence_risk']),
+        ballot('approve', ['weak_profile_evidence']), A, weakReject], { approve: 2, reject: 1, abstain: 2 }, true],
+      ['invalid-enum', [A, A, A, A, ballot('yes')], { approve: 4 }, true],
+      ['invalid-extra-key', [A, A, A, A, { ...A, extra: true }], { approve: 4 }, true],
+      ['invalid-reasons', [A, A, A, A, { vote: 'approve', reason_codes: 'other' }], { approve: 4 }, true],
+      ['one-failed-four-abstain', [A, AB, AB, AB, AB], { abstain: 4 }, true, { failures: { 'skeptic-1': allFamilies('transport') } }],
+      ['two-failed', [A, A, A, A, A], { approve: 3 }, false,
+        { failures: { 'skeptic-1': allFamilies('transport'), 'skeptic-2': allFamilies('transport') } }],
+      ['failed-and-invalid', [A, AB, AB, ballot('abstain', ['invented_code']), A], { approve: 1, abstain: 2 }, false,
+        { failures: { 'skeptic-1': allFamilies('transport') } }],
     ]) {
-      const run = await execute(name, { votes })
+      const run = await execute(name, { votes, ...extra })
       status(name, run, pass ? undefined : 'numeric')
-      facts(name, run, approvals, pass)
-      if (name === 'three-approvals') {
+      facts(name, run, counts, pass)
+      if (name === 'two-rejections') {
         const repeated = await execute('no-revote-after-failure', {}, run)
         status('no-revote-after-failure', repeated, 'other')
+        uncounted('no-revote-after-failure', repeated)
         check('failed gate cannot request replacement votes', () => assert.equal(repeated.calls.length, 0))
       }
-      check(`${name}: exactly five calls, no repairs or replacements, invalid votes null`, () => {
+      check(`${name}: one proposer, five ballots without repairs or replacements, failed/invalid votes null`, () => {
         assert.equal(run.calls.filter(call => call.title === 'propose').length, 1)
-        assert.equal(run.calls.filter(isSkeptic).length, 5)
-        assert.equal(run.calls.length, 6)
+        // Transport failures may hand over along the family chain; the ballot set is still exactly five labels.
+        assert.deepEqual([...new Set(run.calls.filter(isSkeptic).map(call => call.title))].sort(), [1, 2, 3, 4, 5].map(i => `skeptic-${i}`))
+        if (!extra.failures) assert.equal(run.calls.length, 6)
         for (let i = 0; i < 5; i++) {
           const value = votes[i]
-          const valid = value && Object.keys(value).length === 2 && ['approve', 'reject', 'abstain'].includes(value.vote)
+          const failed = Object.hasOwn(extra.failures || {}, `skeptic-${i + 1}`)
+          const valid = !failed && value && Object.keys(value).length === 2 && ['approve', 'reject', 'abstain'].includes(value.vote)
             && Array.isArray(value.reason_codes) && value.reason_codes.every(code => REASONS.includes(code))
           assert.deepEqual(readJSON(path.join(run.root, 'agent', 'votes', `${i + 1}.json`)), valid ? value : null)
         }
@@ -367,6 +467,7 @@ async function main() {
         for (const [key, value] of Object.entries({ method: 'none', expected_speedup: null,
           votes_approve: 0, votes_total: 5, vote_share: 0, gate_pass: false })) assert.deepEqual(run.record?.facts?.[key], value, key)
       })
+      uncounted(`seal-${tamper}`, run)
     }
     for (const [name, config] of [
       ['allocation-limits-probe', { box: { type: 'gpu_8x_a10', gpu_count: 1 }, probeCount: 4 }],
@@ -383,7 +484,7 @@ async function main() {
     }
     const multi = await execute('four-gpu-feasible', { box: { type: 'gpu_4x_a10', gpu_count: 4 }, probeCount: 4, method: 'multi-GPU' })
     status('four-gpu-feasible', multi)
-    facts('four-gpu-feasible', multi, 4, true, 'multi-GPU')
+    facts('four-gpu-feasible', multi, { approve: 4, reject: 1 }, true, 'multi-GPU')
     check('multi-GPU ranks first with bound factor matching four required GPUs', () => {
       const row = readJSON(path.join(multi.root, 'agent', 'propose-packet.json')).ranked_methods[0]
       assert.equal(row.method, 'multi-GPU')
@@ -397,10 +498,23 @@ async function main() {
       const run = await execute(name, config)
       status(name, run, 'numeric')
       check(`${name}: no safe method means no model calls`, () => assert.equal(run.calls.length, 0))
+      uncounted(name, run)
     }
+    // Interval conditions fail the gate even when the ballot condition holds: outcome conditions_unmet.
     const worthwhile = await execute('below-worthwhile', { minimum: 1.85 })
     status('below-worthwhile', worthwhile, 'numeric')
-    facts('below-worthwhile', worthwhile, 4, false)
+    facts('below-worthwhile', worthwhile, { approve: 4, reject: 1 }, false)
+    const abstainedBelow = await execute('below-worthwhile-all-abstain', { minimum: 1.85, votes: [AB, AB, AB, AB, AB] })
+    status('below-worthwhile-all-abstain', abstainedBelow, 'numeric')
+    facts('below-worthwhile-all-abstain', abstainedBelow, { abstain: 5 }, false)
+    // Selected high 1.8 above a still-feasible bound of 1.5 (ranking ties keep the menu's first method first).
+    const aboveBound = await execute('high-above-bound', { mutate: ({ bounds }) => { bounds[MENU[0]].bound = 1.5 } })
+    status('high-above-bound', aboveBound, 'numeric')
+    facts('high-above-bound', aboveBound, { approve: 4, reject: 1 }, false)
+    // Both conditions failing: ballots decide the outcome label.
+    const both = await execute('rejected-and-below-worthwhile', { minimum: 1.85, votes: [A, A, A, R, null] })
+    status('rejected-and-below-worthwhile', both, 'numeric')
+    facts('rejected-and-below-worthwhile', both, { approve: 3, reject: 1 }, false)
     for (const [name, config] of [
       ['missing-proposal', { missingProposal: true }],
       ['unsafe-selection', { method: 'multi-GPU' }],
@@ -409,6 +523,7 @@ async function main() {
       const run = await execute(name, config)
       status(name, run, 'parse')
       check(`${name}: one proposer, no skeptic calls`, () => assert.deepEqual(run.calls.map(call => call.title), ['propose']))
+      uncounted(name, run)
     }
     for (const [name, mutate] of [
       ['duplicate-method', ({ predictions }) => predictions.predictions.push(predictions.predictions[0])],
@@ -418,12 +533,13 @@ async function main() {
       const run = await execute(name, { mutate })
       status(name, run, 'parse')
       check(`${name}: malformed sealed input rejected before agents`, () => assert.equal(run.calls.length, 0))
+      uncounted(name, run)
     }
     // SCHEMAS.md "m5 model policy": run under m5/wf_config.json with --family codex.
     const approveAll = [ballot(), ballot(), ballot(), ballot(), ballot()]
     const routed = await execute('policy-routing', { m5Policy: true, votes: approveAll })
     status('policy-routing', routed)
-    facts('policy-routing', routed, 5, true)
+    facts('policy-routing', routed, { approve: 5 }, true)
     check('policy-routing: ballots 1-3 and proposer on codex, ballots 4-5 on claude/sonnet, names without suffix', () => {
       assert.equal(routed.calls.length, 6)
       const skeptics = routed.calls.filter(isSkeptic).sort((a, b) => ballotNumber(a.title) - ballotNumber(b.title))
@@ -438,8 +554,9 @@ async function main() {
     const refused = await execute('policy-claude-refusal', { m5Policy: true,
       votes: [ballot(), ballot(), ballot(), ballot(), ballot('reject')], failures: { 'skeptic-4': { claude: 'refusal' } } })
     status('policy-claude-refusal', refused, 'numeric')
-    facts('policy-claude-refusal', refused, 3, false)
-    check('policy-claude-refusal: refused ballot written as null, counted against approval, not handed over', () => {
+    // One refused (null) ballot plus one rejection: two against the gate.
+    facts('policy-claude-refusal', refused, { approve: 3, reject: 1 }, false)
+    check('policy-claude-refusal: refused ballot written as null, counted against the gate like a rejection, not handed over', () => {
       const ballot4 = refused.calls.filter(call => call.title === 'skeptic-4')
       assert.deepEqual(ballot4.map(call => call.model), ['claude/sonnet'], 'refusal handed to another family')
       assert.equal(refused.calls.length, 6)
@@ -450,7 +567,7 @@ async function main() {
     const handed = await execute('policy-claude-transport', { m5Policy: true, votes: approveAll,
       failures: { 'skeptic-5': { claude: 'transport' } }, familyVotes: { 'skeptic-5': { codex: ballot('approve', ['other']) } } })
     status('policy-claude-transport', handed)
-    facts('policy-claude-transport', handed, 5, true)
+    facts('policy-claude-transport', handed, { approve: 5 }, true)
     check('policy-claude-transport: transport failure on a claude ballot hands over to codex', () => {
       const ballot5 = handed.calls.filter(call => call.title === 'skeptic-5').sort((a, b) => a.time - b.time)
       assert.deepEqual(ballot5.map(call => familyOf(call.model)), ['claude', 'codex'])
@@ -459,6 +576,34 @@ async function main() {
       assert.equal(handed.calls.length, 7)
       assert.deepEqual(readJSON(path.join(handed.root, 'agent', 'votes', '5.json')), ballot('approve', ['other']))
     })
+    // A single refused ballot alone is one null ballot: the gate still passes.
+    const refusedOnly = await execute('policy-claude-refusal-alone', { m5Policy: true,
+      votes: [AB, AB, ballot(), ballot(), ballot()], failures: { 'skeptic-5': { claude: 'refusal' } } })
+    status('policy-claude-refusal-alone', refusedOnly)
+    facts('policy-claude-refusal-alone', refusedOnly, { approve: 2, abstain: 2 }, true)
+
+    // Recorded-run regressions: run16's inputs, proposal and ballots; then run16's inputs with the
+    // recorded ballots of run6, run9 and run15. Fixtures are copied into scratch, never written in place.
+    const fixtureDigest = () => ['run6', 'run9', 'run15', 'run16'].flatMap(run => ['agent/PREDICTIONS.json', 'agent/bounds.json',
+      'agent/proposal.json', 'control/box.json', 'agent/results/probe/probe.json', ...[1, 2, 3, 4, 5].map(i => `agent/votes/${i}.json`)]
+      .map(relative => path.join(RUNS, run, relative)).filter(file => fs.existsSync(file))
+      .map(file => [file, createHash('sha256').update(fs.readFileSync(file)).digest('hex')]))
+    const fixtureBefore = fixtureDigest()
+    const proposal16 = recordedProposal('run16')
+    const replays = [['run16', { approve: 2, abstain: 3 }, true]]
+      .concat(['run6', 'run9', 'run15'].map(run => [run, { reject: 5 }, false]))
+    for (const [ballots, counts, pass] of replays) {
+      const name = `replay-run16-ballots-${ballots}`
+      const votes = recordedBallots(ballots)
+      check(`${name}: recorded ballots are ${JSON.stringify(counts)}`, () => {
+        for (const vote of ['approve', 'reject', 'abstain'])
+          assert.equal(votes.filter(value => value?.vote === vote).length, counts[vote] || 0, vote)
+      })
+      const run = await execute(name, { replay: 'run16', box: recordedBox('run16'), proposal: proposal16, votes })
+      status(name, run, pass ? undefined : 'numeric')
+      facts(name, run, counts, pass, proposal16.method)
+    }
+    check('recorded fixtures unchanged by the replays', () => assert.deepEqual(fixtureDigest(), fixtureBefore))
   } catch (error) {
     failures++
     console.log(`FAIL test harness: ${error.stack}`)

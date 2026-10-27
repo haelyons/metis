@@ -41,6 +41,13 @@ def takeaway(records, raid=None, box=None):
                       for key in ("run_valid", "calibration_valid")})
         rendered = ", ".join(f"{key}={str(value).lower() if value is not None else 'null'}"
                              for key, value in flags.items())
+        if stage == "propose":
+            ballots = {key: facts.get(key) for key in ("votes_approve", "votes_reject", "votes_abstain")}
+            ballots["votes_null"] = (5 - sum(ballots.values())
+                                     if all(value is not None for value in ballots.values()) else None)
+            rendered += ", outcome=" + (facts.get("outcome") or "null")
+            rendered += ", " + ", ".join(f"{key}={value if value is not None else 'null'}"
+                                        for key, value in ballots.items())
         values = [str(facts[key]) if facts.get(key) is not None else "null" for key in columns]
         values += [str(entry["signature"][key]) if entry else ("none" if key == "model_family" else "0")
                    for key in compute]

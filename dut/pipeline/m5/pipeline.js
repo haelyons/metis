@@ -26,7 +26,8 @@ return (async () => {
     reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid'],
     profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
-    propose: ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass'],
+    propose: ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass',
+      'votes_reject', 'votes_abstain', 'outcome'],
     implement: ['patch_applies', 'tests_pass', 'blind_tests', 'launch_review_pass'],
     evaluate: ['validity_pass', 'equivalence_pass', 'performance_pass', 'equal_cost', 'speedup_published', 'speedup_tuned', 'cost_ratio', 'prediction_ratio', 'curve_points'],
     takeaways: ['operator_written', 'research_written', 'teardown_confirmed'],
@@ -541,7 +542,7 @@ Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
   }
   async function propose() {
     if (input.stub?.propose != null) return stub('propose')
-    const facts = { ...nullFacts('propose'), method: 'none', votes_approve: 0,
+    const facts = { ...nullFacts('propose'), method: 'none', votes_approve: 0, votes_reject: 0, votes_abstain: 0,
       votes_total: 5, vote_share: 0, gate_pass: false, tokens_known: false, gpu_busy_known: false }
     const predictionPath = path.join(A, 'PREDICTIONS.json')
     const proposalPath = path.join(A, 'proposal.json')
@@ -652,19 +653,26 @@ Return a short completion acknowledgement.`,
         try {
           vote = await agent(`Independent ballot ${index + 1} of 5. Review this proposal once.
 Use only the embedded prepared packet and proposal. Never read files, other votes, or other sessions; do not search or use tools.
-ranked_methods have already passed deterministic GPU resource guards. Approve only if the method stays within its bound, is parallelisable as planned, preserves the sealed scientific equivalence rule, and has adequate stage evidence.
-Return only vote and reason_codes using the supplied schema. Missing evidence warrants reject or abstain. Vote share is not a calibrated probability.
+ranked_methods have already passed deterministic GPU resource guards.
+reject = a named defect that would make the method fail as planned: exceeds its bound, cannot be parallelised as planned, changes the sealed method, risks breaking the sealed equivalence rule, or mismatches resources.
+abstain = the packet is insufficient to judge. approve = no defect is found and the evidence is adequate.
+Return only vote and reason_codes using the supplied schema. Missing or weak evidence warrants abstain, not reject. Vote share is not a calibrated probability.
 Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
             { label: `skeptic-${index + 1}`, agentType: 'qt-bare', model: 'haiku', schema: voteSchema, repairable: false, fresh: true })
-        } catch { /* A failed call counts against approval; never replace it. */ }
+        } catch { /* A failed call is a null ballot; never replace it. */ }
         if (validate(voteSchema, vote).length) vote = null
         writeFileSync(votePath, JSON.stringify(vote, null, 2) + '\n')
         return vote
       }))
       facts.votes_approve = votes.filter(vote => vote?.vote === 'approve').length
+      facts.votes_reject = votes.filter(vote => vote?.vote === 'reject').length
+      facts.votes_abstain = votes.filter(vote => vote?.vote === 'abstain').length
       facts.vote_share = facts.votes_approve / 5
-      facts.gate_pass = facts.votes_approve >= 4 && chosen.prediction.expected_speedup_interval.high >= predictions.minimum_worthwhile_gain
+      const votesNull = 5 - facts.votes_approve - facts.votes_reject - facts.votes_abstain
+      const ballotPass = facts.votes_reject + votesNull <= 1
+      facts.gate_pass = ballotPass && chosen.prediction.expected_speedup_interval.high >= predictions.minimum_worthwhile_gain
         && chosen.prediction.expected_speedup_interval.high <= chosen.bounds.bound && chosen.resource_guard_pass
+      facts.outcome = facts.gate_pass ? 'approved' : ballotPass ? 'conditions_unmet' : 'rejected'
       return finish('numeric')
     } catch { return finish('parse') }
   }

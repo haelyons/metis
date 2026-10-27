@@ -43,6 +43,15 @@ FACTS = {
 }
 FACTS = {stage: dict(facts, **COMMON) for stage, facts in FACTS.items()}
 OMITTED = object()
+# SCHEMAS.md "Propose, independent votes, and the one-shot gate": optional propose facts.
+PROPOSE_OPTIONAL = ("votes_reject", "votes_abstain", "outcome")
+OUTCOMES = ("approved", "rejected", "conditions_unmet")
+BALLOT_LABELS = {
+    "approve": r"(?:votes_)?approv(?:e|es|ed|als?)",
+    "reject": r"(?:votes_)?reject(?:s|ed|ions?)?",
+    "abstain": r"(?:votes_)?abstain(?:s|ed)?|abstentions?",
+    "null": r"(?:votes_)?nulls?(?: ballots?)?|missing",
+}
 
 
 def require(condition, message):
@@ -162,6 +171,11 @@ def takeaway(directory):
     allowed.update(FIELDS)
     # SCHEMAS.md A/intake/: `anchored` is shown among the intake gate flags.
     allowed.add("anchored")
+    # SCHEMAS.md propose facts: the propose row shows `outcome` and the four ballot counts.
+    allowed.update(PROPOSE_OPTIONAL)
+    allowed.update(OUTCOMES)
+    allowed.update(("votes_null", "approve", "reject", "abstain", "approvals", "rejections",
+                    "abstentions", "nulls", "votes", "ballots", "outcome"))
     for spec in FIELDS.values():
         allowed.update(spec.get("enum", []))
         allowed.update(spec.get("items", {}).get("enum", []))
@@ -243,6 +257,81 @@ def anchored_takeaway(directory, value):
     require(result.returncode == 0, "takeaway exit " + str(result.returncode))
     shown = takeaway_anchored(output.read_text())
     require(shown == json.dumps(value), "anchored shown as " + repr(shown))
+
+
+def propose_rows(text):
+    """Propose table rows as header->cell maps, plus every text line mentioning propose."""
+    def cells(line):
+        return [cell.strip().strip("`*") for cell in line.strip().strip("|").split("|")]
+    mapped, block, blocks = [], [], []
+    for line in text.splitlines() + [""]:
+        if line.strip().startswith("|"):
+            block.append(line)
+        elif block:
+            blocks.append(block)
+            block = []
+    for table in blocks:
+        header = cells(table[0])
+        for row in map(cells, table[1:]):
+            if "propose" in row:
+                mapped.append(dict(zip(header, row)))
+    lines = [line for line in text.splitlines() if re.search(r"\bpropose\b", line)]
+    return mapped, " ".join(lines)
+
+
+def takeaway_ballots(text):
+    """Ballot counts and outcome shown for propose, accepting any unambiguous format:
+    a column per count, labelled counts (`reject 1`, `reject=1`, `1 reject`), or
+    slash-joined labels with slash-joined counts."""
+    mapped, line = propose_rows(text)
+    found = {name: set() for name in BALLOT_LABELS}
+    for row in mapped:
+        for header, cell in row.items():
+            for name, label in BALLOT_LABELS.items():
+                if re.fullmatch(label, header.strip().lower()) and re.fullmatch(r"\d+", cell):
+                    found[name].add(int(cell))
+    lowered = line.lower()
+    for name, label in BALLOT_LABELS.items():
+        for match in re.finditer(r"\b(?:%s)\b[\s:=]{0,3}(\d+)\b" % label, lowered):
+            found[name].add(int(match.group(1)))
+        for match in re.finditer(r"\b(\d+)[\s]{0,2}(?:%s)\b" % label, lowered):
+            found[name].add(int(match.group(1)))
+    slashed = [(words, numbers) for words, numbers in
+               re.findall(r"([a-z_]+(?:/[a-z_]+){3})\W{0,6}(\d+(?:/\d+){3})", lowered)]
+    slashed += [(words, numbers) for numbers, words in
+                re.findall(r"(\d+(?:/\d+){3})\W{0,6}([a-z_]+(?:/[a-z_]+){3})", lowered)]
+    for words, numbers in slashed:
+        for word, count in zip(words.split("/"), numbers.split("/")):
+            for name, label in BALLOT_LABELS.items():
+                if re.fullmatch(label, word):
+                    found[name].add(int(count))
+    counts = {name: (next(iter(values)) if len(values) == 1 else sorted(values) or None)
+              for name, values in found.items()}
+    # An outcome shown as a value, not used as a count label (`rejected 2`, `2 rejected`).
+    haystack = " ".join(" ".join(row.values()) for row in mapped) + " " + line
+    shown = [outcome for outcome in OUTCOMES
+             if re.search(r"(?<!\d)(?<!\d )\b%s\b(?![\s:=]{0,3}\d)" % outcome, haystack)]
+    return counts, shown
+
+
+def ballot_takeaway(directory, approve, reject, abstain, outcome):
+    # SCHEMAS.md: OPERATOR_TAKEAWAY.md shows `outcome` and the four ballot counts
+    # (approve, reject, abstain, null) in the propose row.
+    directory.mkdir()
+    nulls = 5 - approve - reject - abstain
+    for stage, facts in FACTS.items():
+        if stage == "propose":
+            facts = dict(facts, votes_approve=approve, vote_share=approve / 5,
+                         gate_pass=outcome == "approved", votes_reject=reject,
+                         votes_abstain=abstain, outcome=outcome)
+        accepted(directory, stage, facts=facts)
+    output = directory / "OPERATOR_TAKEAWAY.md"
+    result = run("m5/operator_takeaway.py", directory, "--out", output)
+    require(result.returncode == 0, "takeaway exit " + str(result.returncode))
+    counts, shown = takeaway_ballots(output.read_text())
+    expected = dict(approve=approve, reject=reject, abstain=abstain, null=nulls)
+    require(counts == expected, "propose ballots shown as %r, expected %r" % (counts, expected))
+    require(outcome in shown, "propose outcome %s not shown (found %r)" % (outcome, shown))
 
 
 def main():
@@ -364,6 +453,43 @@ def main():
         for value in (True, False):
             check("takeaway shows intake anchored=" + repr(value),
                   lambda v=value: anchored_takeaway(root / ("takeaway-anchored-" + str(v)), v))
+        # SCHEMAS.md propose facts: optional votes_reject, votes_abstain (nonnegative
+        # integers) and outcome (approved, rejected, conditions_unmet or null).
+        ballots = root / "ballots"
+        for extra in (dict(votes_reject=1, votes_abstain=0, outcome="conditions_unmet"),
+                      dict(votes_reject=0, votes_abstain=5, outcome="approved"),
+                      dict(votes_reject=5, votes_abstain=0, outcome="rejected"),
+                      dict(votes_reject=0, votes_abstain=0, outcome=None),
+                      dict(votes_reject=None, votes_abstain=None, outcome=None),
+                      dict(outcome="approved"), dict(votes_reject=2), dict(votes_abstain=3)):
+            check("accept propose " + repr(extra),
+                  lambda e=extra: accepted(ballots, "propose", facts=dict(FACTS["propose"], **e)))
+        check("accept propose without optional ballot facts (older records)",
+              lambda: accepted(ballots, "propose", facts=FACTS["propose"]))
+        check("accept SKIPPED propose with null ballot facts",
+              lambda: accepted(ballots, "propose", "SKIPPED",
+                               facts=dict.fromkeys(list(FACTS["propose"]) + list(PROPOSE_OPTIONAL))))
+        for key in ("votes_reject", "votes_abstain"):
+            for value in (-1, 1.5, 2.0, True, False, "2", [2], {"n": 2}, math.nan, math.inf):
+                check("reject propose %s=%r" % (key, value),
+                      lambda k=key, v=value: rejected(invalid, stage="propose",
+                                                      facts=dict(FACTS["propose"], **{k: v})))
+        for value in ("Approved", "APPROVED", "approve", "reject", "abstain", "passed",
+                      "conditions-unmet", "", SENTINEL, True, 1, [], {"outcome": "approved"}):
+            check("reject propose outcome=%r" % (value,),
+                  lambda v=value: rejected(invalid, stage="propose",
+                                           facts=dict(FACTS["propose"], outcome=v)))
+        for key, value in (("votes_reject", 1), ("votes_abstain", 1), ("outcome", "approved")):
+            check("reject %s on a non-propose stage" % key,
+                  lambda k=key, v=value: rejected(invalid, stage="seal",
+                                                  facts=dict(FACTS["seal"], **{k: v})))
+        for approve, reject, abstain, outcome in ((2, 1, 1, "conditions_unmet"),
+                                                  (0, 3, 0, "rejected"),
+                                                  (1, 0, 4, "approved")):
+            check("takeaway propose row shows outcome %s and ballots %d/%d/%d/%d"
+                  % (outcome, approve, reject, abstain, 5 - approve - reject - abstain),
+                  lambda a=approve, r=reject, b=abstain, o=outcome: ballot_takeaway(
+                      root / ("takeaway-ballots-" + o), a, r, b, o))
         check("reject unknown stage", lambda: rejected(
             invalid, stage=SENTINEL, facts=FACTS["intake"]))
         check("reject unknown status", lambda: rejected(
