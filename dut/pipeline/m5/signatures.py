@@ -64,7 +64,7 @@ def validate(value):
         schema["headroom"] = float
     if stage == "propose" and type(facts) is dict:
         for key, spec in {"votes_reject": int, "votes_abstain": int,
-                          "outcome": ("approved", "rejected", "conditions_unmet")}.items():
+                          "outcome": ("approved", "rejected", "conditions_unmet", "no_feasible_method")}.items():
             if key in facts:
                 schema[key] = spec
     if stage in ("reproduce", "profile", "implement", "evaluate") and type(facts) is dict:

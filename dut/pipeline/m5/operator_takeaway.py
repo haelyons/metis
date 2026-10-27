@@ -44,7 +44,8 @@ def takeaway(records, raid=None, box=None):
         if stage == "propose":
             ballots = {key: facts.get(key) for key in ("votes_approve", "votes_reject", "votes_abstain")}
             ballots["votes_null"] = (5 - sum(ballots.values())
-                                     if all(value is not None for value in ballots.values()) else None)
+                                     if facts.get("outcome") in ("approved", "rejected", "conditions_unmet")
+                                     and all(value is not None for value in ballots.values()) else None)
             rendered += ", outcome=" + (facts.get("outcome") or "null")
             rendered += ", " + ", ".join(f"{key}={value if value is not None else 'null'}"
                                         for key, value in ballots.items())
@@ -52,6 +53,8 @@ def takeaway(records, raid=None, box=None):
         values += [str(entry["signature"][key]) if entry else ("none" if key == "model_family" else "0")
                    for key in compute]
         lines.append("| " + " | ".join([stage, status, rendered, *values]) + " |")
+    if stages.get("propose", {}).get("facts", {}).get("outcome") == "no_feasible_method":
+        lines += ["", "Finding: negative. No menu method has measured headroom of at least 1.05 on this hardware."]
     rows = [r["signature"] for r in records]
     launches = [r for r in rows if r["kind"] == "launch"]
     stage_rows = [r for r in rows if r["kind"] == "stage"]

@@ -29,6 +29,7 @@ function canonical(value) {
   return JSON.stringify(value)
 }
 const ballot = (vote = 'approve', reason_codes = []) => ({ vote, reason_codes })
+const INFINITE_PLACEHOLDER = 424242.5
 // Ballot i uses label skeptic-<i> (SCHEMAS.md, "Propose, independent votes, and the one-shot gate").
 const ballotNumber = title => { const match = /^skeptic-([1-5])$/.exec(String(title)); return match ? Number(match[1]) : null }
 const isSkeptic = call => ballotNumber(call.title) !== null
@@ -161,6 +162,9 @@ function fixture(root, config) {
   }))
   if (config.mutate) config.mutate({ predictions, bounds, profile })
   writeJSON(path.join(root, 'agent', 'profile-packet.json'), profile)
+  // JSON cannot spell a non-finite number; 1e999 parses as Infinity.
+  if (config.infiniteFactor) fs.writeFileSync(path.join(root, 'agent', 'profile-packet.json'),
+    fs.readFileSync(path.join(root, 'agent', 'profile-packet.json'), 'utf8').split(`"factor": ${INFINITE_PLACEHOLDER}`).join('"factor": 1e999'))
   writeJSON(path.join(root, 'agent', 'bounds.json'), bounds)
   if (!config.noBox) writeJSON(path.join(root, 'control', 'box.json'), config.box || { type: 'gpu_1x_a10', gpu_count: 1 })
   if (!config.noProbe) writeJSON(path.join(root, 'agent', 'results', 'probe', 'probe.json'), {
@@ -284,6 +288,89 @@ function uncounted(name, run) {
       votes_reject: 0, votes_abstain: 0, outcome: null })) assert.deepEqual(actual[key], value, key)
   })
 }
+// SCHEMAS.md propose: "When no feasible resource-safe method remains ... propose makes no model calls, writes
+// `A/propose-packet.json` and `A/GATE.json` as usual, and keeps `method="none"`, `expected_speedup=null` and
+// `gate_pass=false`."
+const FINDING = 'Finding: negative. No menu method has measured headroom of at least 1.05 on this hardware.'
+const findingLines = root => fs.readFileSync(path.join(root, 'operator', 'OPERATOR_TAKEAWAY.md'), 'utf8')
+  .split('\n').filter(line => line.trim() === FINDING).length
+function noFinding(name, run) {
+  check(`${name}: OPERATOR_TAKEAWAY.md has no Finding line`, () => assert.equal(findingLines(run.root), 0))
+}
+// Whole-workload bounds with a measured factor of 1.02 (k = min(cap, 1.02) < 1.05); every other menu method
+// except `keep` infeasible. Predictions keep only `keep`; every other method is listed as infeasible.
+function absence(keep = [], factor = 1.02) {
+  return ({ predictions, bounds, profile }) => {
+    profile.concurrency.factor = factor
+    profile.concurrency.batches = profile.concurrency.batches.map(row => ({ ...row, factor: Number.isFinite(factor) ? Math.min(factor, row.factor) : factor }))
+    for (const method of MENU) {
+      if (keep.includes(method)) continue
+      const row = bounds[method]
+      // k_derivation.factor is null when the factor is unavailable (null or the non-finite placeholder).
+      if (row.k_derivation.rule.startsWith('min(')) {
+        row.k = 1.02; row.bound = 1.02
+        row.k_derivation.factor = factor === null || factor === INFINITE_PLACEHOLDER ? null : factor
+      }
+      else if (method === 'pipelining') { row.p = 0.04; row.bound = 1 / (0.96 + 0.02) }
+      else { row.k = 1; row.bound = 0.6 }
+      row.feasible = false
+    }
+    predictions.predictions = predictions.predictions.filter(row => keep.includes(row.method))
+    predictions.infeasible_methods = MENU.filter(method => !keep.includes(method))
+      .map(method => ({ method, reason: 'Bound is below 1.05.' }))
+  }
+}
+function absenceArtifacts(name, run) {
+  check(`${name}: propose-packet.json written with no ranked methods; GATE.json written`, () => {
+    const packet = readJSON(path.join(run.root, 'agent', 'propose-packet.json'))
+    assert.deepEqual(Object.keys(packet).sort(), ['ranked_methods', 'stage_to_method', 'bounds', 'sealed_equivalence_rule'].sort())
+    assert.deepEqual(packet.ranked_methods, [])
+    assert.deepEqual(packet.bounds, run.evidence.bounds)
+    const gate = readJSON(path.join(run.root, 'agent', 'GATE.json'))
+    for (const key of ['method', 'expected_speedup', 'gate_pass', 'outcome'])
+      assert.deepEqual(gate[key], run.record.facts[key], key)
+  })
+  check(`${name}: no proposer or skeptic calls`, () => assert.equal(run.calls.length, 0))
+}
+// Measured negative finding: PASS, outcome no_feasible_method, implement/evaluate SKIPPED with null facts,
+// takeaways runs, stop point propose, fixed Finding line in OPERATOR_TAKEAWAY.md.
+function negativeFinding(name, run) {
+  check(`${name}: measured absence PASSes with outcome no_feasible_method and all ballot counts 0`, () => {
+    assert.equal(run.signature?.status, 'PASS')
+    const { tokens_known, gpu_busy_known, ...scientific } = run.record.facts
+    assert.deepEqual(Object.keys(run.record.facts).sort(), [...FACT_KEYS].sort())
+    assert.deepEqual(scientific, { method: 'none', expected_speedup: null, votes_approve: 0, votes_total: 5,
+      vote_share: 0, gate_pass: false, votes_reject: 0, votes_abstain: 0, outcome: 'no_feasible_method' })
+  })
+  absenceArtifacts(name, run)
+  check(`${name}: implement and evaluate SKIPPED with null facts; takeaways runs; stopped at propose`, () => {
+    const result = readJSON(path.join(run.out, 'result.json'))
+    assert.equal(result.stopped_at, 'propose')
+    const statuses = Object.fromEntries(result.stages.map(row => [row.stage, row.status]))
+    assert.deepEqual([statuses.propose, statuses.implement, statuses.evaluate, statuses.takeaways], ['PASS', 'SKIPPED', 'SKIPPED', 'PASS'])
+    const records = rows(path.join(run.root, 'operator', 'signatures.jsonl'))
+    for (const stage of ['implement', 'evaluate']) {
+      const record = records.filter(row => (row.signature || row).stage === stage).at(-1)
+      assert.equal((record.signature || record).status, 'SKIPPED', stage)
+      assert.ok(record.facts && Object.keys(record.facts).length, `${stage}: no facts`)
+      for (const [key, value] of Object.entries(record.facts)) assert.equal(value, null, `${stage}.${key}`)
+    }
+    const takeaways = records.filter(row => (row.signature || row).stage === 'takeaways').at(-1)
+    assert.equal((takeaways.signature || takeaways).status, 'PASS')
+  })
+  check(`${name}: OPERATOR_TAKEAWAY.md has the fixed Finding line exactly once`, () => assert.equal(findingLines(run.root), 1))
+}
+// Unmeasured absence: FAIL numeric (exit 2), outcome null, no model calls, downstream skipped as for any failure.
+function unmeasured(name, run) {
+  status(name, run, 'numeric')
+  uncounted(name, run)
+  check(`${name}: method none, expected_speedup null`, () => {
+    assert.equal(run.record.facts.method, 'none')
+    assert.equal(run.record.facts.expected_speedup, null)
+  })
+  absenceArtifacts(name, run)
+  noFinding(name, run)
+}
 // Phrases the skeptic prompt must carry (SCHEMAS.md "Ballot meanings"), matched by meaning, not wording.
 function ballotMeanings(prompt) {
   const near = (a, b, span = 240) => new RegExp(`(?:${a})[\\s\\S]{0,${span}}(?:${b})|(?:${b})[\\s\\S]{0,${span}}(?:${a})`, 'i').test(prompt)
@@ -326,6 +413,7 @@ async function main() {
     const happy = await execute('four-approvals')
     status('four-approvals', happy)
     facts('four-approvals', happy, { approve: 4, reject: 1 }, true)
+    noFinding('four-approvals', happy)
     check('every skeptic prompt states the three ballot meanings; missing or weak evidence warrants abstain, not reject', () => {
       const skeptics = happy.calls.filter(isSkeptic)
       assert.equal(skeptics.length, 5)
@@ -440,6 +528,7 @@ async function main() {
       status(name, run, pass ? undefined : 'numeric')
       facts(name, run, counts, pass)
       if (name === 'two-rejections') {
+        noFinding(name, run)
         const repeated = await execute('no-revote-after-failure', {}, run)
         status('no-revote-after-failure', repeated, 'other')
         uncounted('no-revote-after-failure', repeated)
@@ -491,15 +580,60 @@ async function main() {
       assert.equal(row.bounds.k, 4)
       assert.equal(row.bounds.k_derivation.gpu_count, 4)
     })
+    // SCHEMAS.md propose: "The absence is a negative finding exactly when it rests on measurements: the profile
+    // packet's `concurrency.factor` is a finite number and both GPU inventories used by the resource guards (box
+    // and probe) are available. Then the stage PASSes with `outcome="no_feasible_method"`; implement and evaluate
+    // are SKIPPED with null facts, takeaways runs, and the run's stop point is propose."
+    // An empty inventory (zero GPUs) is available: "an empty inventory records 0".
+    const measured = [
+      ['measured-zero-predictions', { mutate: absence() }],
+      ['measured-multi-gpu-only-on-one-gpu', { mutate: absence(['multi-GPU']) }],
+      ['measured-factor-below-one', { mutate: absence([], 0.8) }],
+      ['measured-zero-probe', { probeCount: 0 }],
+      ['measured-zero-allocation', { box: { type: 'gpu_4x_a10', gpu_count: 0 } }],
+      ['measured-zero-predictions-type-fallback', { mutate: absence(), box: { type: 'gpu_1x_a10' } }],
+    ]
+    let negative
+    for (const [name, config] of measured) {
+      const run = await execute(name, config)
+      negativeFinding(name, run)
+      negative = negative || run
+    }
+    check('measured-multi-gpu-only-on-one-gpu: the sealed multi-GPU method is feasible but fails the GPU guard', () => {
+      const bounds = readJSON(path.join(scratch, 'measured-multi-gpu-only-on-one-gpu', 'agent', 'bounds.json'))
+      assert.equal(bounds['multi-GPU'].feasible, true)
+      assert.ok(bounds['multi-GPU'].bound >= 1.05 && bounds['multi-GPU'].k > 1)
+    })
+    // "Its presence prevents another proposal/vote round in the same run (fails with `other`)."
+    const afterNegative = await execute('no-revote-after-negative-finding', {}, negative)
+    status('no-revote-after-negative-finding', afterNegative, 'other')
+    uncounted('no-revote-after-negative-finding', afterNegative)
+    check('no-revote-after-negative-finding: no model calls', () => assert.equal(afterNegative.calls.length, 0))
+    // "Otherwise (concurrency missing, null or not finite, or either GPU inventory unavailable) the absence
+    // reflects missing measurements: the stage FAILs with `numeric` (exit 2) as before and `outcome` stays null."
+    const withoutConcurrency = ({ profile }) => { delete profile.concurrency }
+    const nullConcurrency = ({ profile }) => { profile.concurrency = null }
+    const compose = (...steps) => evidence => steps.forEach(step => step(evidence))
     for (const [name, config] of [
-      ['no-allocation', { noBox: true }], ['no-probe', { noProbe: true }], ['zero-probe', { probeCount: 0 }],
-      ['zero-allocation', { box: { type: 'gpu_4x_a10', gpu_count: 0 } }],
+      ['unmeasured-concurrency-missing', { mutate: compose(absence([], null), withoutConcurrency) }],
+      ['unmeasured-concurrency-null', { mutate: compose(absence([], null), nullConcurrency) }],
+      ['unmeasured-factor-null', { mutate: absence([], null) }],
+      ['unmeasured-factor-infinite', { mutate: absence([], INFINITE_PLACEHOLDER), infiniteFactor: true }],
+      ['unmeasured-multi-gpu-only-concurrency-missing', { mutate: compose(absence(['multi-GPU'], null), withoutConcurrency) }],
+      ['unmeasured-zero-predictions-no-allocation', { mutate: absence(), noBox: true }],
+      ['unmeasured-zero-predictions-no-probe', { mutate: absence(), noProbe: true }],
+      ['unmeasured-zero-predictions-untyped-allocation', { mutate: absence(), box: { type: 'cpu_only' } }],
+      ['no-allocation', { noBox: true }], ['no-probe', { noProbe: true }],
     ]) {
       const run = await execute(name, config)
-      status(name, run, 'numeric')
-      check(`${name}: no safe method means no model calls`, () => assert.equal(run.calls.length, 0))
-      uncounted(name, run)
+      unmeasured(name, run)
     }
+    check('measured-factor-below-one / unmeasured-factor-infinite fixtures carry the intended factor', () => {
+      const below = readJSON(path.join(scratch, 'measured-factor-below-one', 'agent', 'profile-packet.json'))
+      assert.equal(below.concurrency.factor, 0.8)
+      const infinite = readJSON(path.join(scratch, 'unmeasured-factor-infinite', 'agent', 'profile-packet.json'))
+      assert.equal(infinite.concurrency.factor, Infinity)
+    })
     // Interval conditions fail the gate even when the ballot condition holds: outcome conditions_unmet.
     const worthwhile = await execute('below-worthwhile', { minimum: 1.85 })
     status('below-worthwhile', worthwhile, 'numeric')

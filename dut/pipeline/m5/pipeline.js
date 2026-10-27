@@ -534,8 +534,7 @@ Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
       facts.seal_verified = hash(readFileSync(receipt.path)) === receipt.sha256
         && hash(readFileSync(predictionPath)) === receipt.sha256
       if (!facts.seal_verified) return reject(check)
-      return facts.prediction_count > 0 ? { status: 'PASS', facts, reason_codes: [] }
-        : reject('no_feasible_methods')
+      return { status: 'PASS', facts, reason_codes: [] }
     } catch {
       return reject(check)
     }
@@ -566,7 +565,8 @@ Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
     if (existsSync(gatePath)) return failure(facts, 'other')
     const finish = error_class => {
       writeFileSync(gatePath, JSON.stringify(facts, null, 2) + '\n')
-      return facts.gate_pass ? { status: 'PASS', facts } : failure(facts, error_class)
+      return facts.gate_pass || facts.outcome === 'no_feasible_method'
+        ? { status: 'PASS', facts } : failure(facts, error_class)
     }
     try {
       const profile = readJSON(path.join(A, 'profile-packet.json'))
@@ -612,7 +612,12 @@ Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
       }
       packet.sealed_equivalence_rule.confidence_rule = predictions.confidence_rule?.equivalence ?? predictions.confidence_rule
       writeFileSync(path.join(A, 'propose-packet.json'), JSON.stringify(packet, null, 2) + '\n')
-      if (!methods.length) return finish('numeric')
+      if (!methods.length) {
+        if (Number.isFinite(profile.concurrency?.factor) && allocationCount !== null && probeCount !== null) {
+          facts.outcome = 'no_feasible_method'
+        }
+        return finish('numeric')
+      }
       const { validate } = await import(path.resolve('idea/schema.js'))
       const strings = { type: 'array', items: { type: 'string' } }
       const proposalSchema = { type: 'object', additionalProperties: false,
@@ -740,7 +745,7 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
       '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(v1)])
     stages.push({ stage, status: result.status })
     log(`${stage}: ${result.status}`)
-    if (!stopped_at && result.status !== 'PASS') stopped_at = stage
+    if (!stopped_at && (result.status !== 'PASS' || result.facts.outcome === 'no_feasible_method')) stopped_at = stage
   }
   await exec('python3', ['m5/operator_takeaway.py', S, '--raid', raid])
   return { stages, stopped_at }

@@ -59,7 +59,7 @@ const SEAL_REASON_CODES = [
   'bounds_generation_failed', 'agent_failed', 'predictions_read_failed',
   'predictions_invalid', 'protocol_incomplete', 'compute_points_incomplete',
   'stochastic_equivalence_invalid', 'bounds_coverage_invalid', 'interval_bounds_invalid',
-  'intervals_identical', 'seal_write_failed', 'seal_verification_failed', 'no_feasible_methods',
+  'intervals_identical', 'seal_write_failed', 'seal_verification_failed',
 ]
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
 const readRows = file => fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse)
@@ -666,6 +666,49 @@ async function main() {
       assert.equal(readJSON(path.join(singleRoot, 'control', 'seals', '0001.json')).sha256, predictionHash(singleRoot))
     })
 
+    // SCHEMAS.md A/PREDICTIONS.json: "An empty feasible menu may be sealed as a negative result: a verified
+    // seal with zero predictions (every menu method listed in `infeasible_methods`) PASSes the seal stage with
+    // `prediction_count=0` and `reason_codes: []`." Verified negative results do not trigger repair.
+    for (const [name, profile] of [['zero-predictions-uncalibrated', noneProfile],
+      ['zero-predictions-calibrated', (() => {
+        // Measured calibration with factor 1.02 (< 1.05): whole-workload bounds 1.02, still infeasible.
+        const value = JSON.parse(JSON.stringify(noneProfile))
+        value.concurrency = { mps: false, mps_failed: false, single_wall_s: [1, 1, 1],
+          batches: [{ n: 2, wall_s: 2 / 1.02, all_ok: true, skipped: false, factor: 1.02 },
+            { n: 4, wall_s: 4, all_ok: true, skipped: false, factor: 1 }], factor: 1.02 }
+        return value
+      })()]]) {
+      const runRoot = path.join(parent, name)
+      const value = JSON.parse(JSON.stringify(PREDICTIONS))
+      value.predictions = []
+      value.infeasible_methods = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
+        .map(method => ({ method, reason: 'Bound is below 1.05.' }))
+      writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), value)
+      const run = await runCase(name, INTAKE, { runRoot, preserve: true, profile })
+      checkStatuses(name, run, null)
+      check(`${name}: verified zero-prediction seal PASSes with prediction_count 0 and no reason codes`, () => {
+        const bounds = readJSON(path.join(runRoot, 'agent', 'bounds.json'))
+        assert.deepEqual(Object.keys(bounds).filter(method => bounds[method].feasible), [])
+        const seal = run.signature('seal')
+        assert.equal(seal.status, 'PASS')
+        assert.equal(seal.exit_code, 0)
+        assert.equal(run.stage('seal').facts.seal_present, true)
+        assert.equal(run.stage('seal').facts.seal_verified, true)
+        assert.equal(run.stage('seal').facts.prediction_count, 0)
+        assert.deepEqual(readJSON(path.join(runRoot, 'control', 'stages', 'seal.json')).reason_codes, [])
+        assert.equal(readJSON(path.join(runRoot, 'control', 'seals', '0001.json')).sha256, predictionHash(runRoot))
+        assert.deepEqual(readJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json')), value)
+      })
+      check(`${name}: verified negative result triggers no repair`, () => {
+        assert.deepEqual(run.calls.filter(row => ['seal', 'seal-repair'].includes(row.label)).map(row => row.label), ['seal'])
+      })
+    }
+    check('no_feasible_methods is no longer a documented seal code', () => {
+      const schema = fs.readFileSync(path.join(ROOT, 'm5', 'SCHEMAS.md'), 'utf8')
+      const table = schema.slice(schema.indexOf('  | Code | Failed check or operation |'), schema.indexOf('- Seal: C/seals/'))
+      assert.ok(!table.includes('no_feasible_methods'))
+    })
+
     const reasonCases = [
       ['bounds_generation_failed', null, { profile: {} }],
       ['agent_failed', null, { sealFault: 'agent' }],
@@ -683,11 +726,6 @@ async function main() {
       }],
       ['seal_write_failed', null, { sealFault: 'write' }],
       ['seal_verification_failed', null, { sealFault: 'verification' }],
-      ['no_feasible_methods', value => {
-        value.predictions = []
-        value.infeasible_methods = [...PREDICTIONS.predictions, { method: 'multi-GPU' }]
-          .map(({ method }) => ({ method, reason: 'Bound is 1.' }))
-      }, { profile: noneProfile }],
     ]
     check('reason cases cover every documented seal code', () => {
       const schema = fs.readFileSync(path.join(ROOT, 'm5', 'SCHEMAS.md'), 'utf8')

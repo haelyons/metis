@@ -169,7 +169,9 @@ async function runCase(name, failedStage, launch = false) {
 async function main() {
   try {
     await runCase('all-pass')
-    for (const stage of ['intake', 'profile', 'implement']) await runCase(`fail-${stage}`, stage)
+    // A failed seal or propose (including propose's unmeasured absence of a feasible method) skips
+    // downstream stages as for any failure; the measured negative finding is covered in test_m5_propose.js.
+    for (const stage of ['intake', 'profile', 'seal', 'propose', 'implement']) await runCase(`fail-${stage}`, stage)
     await runCase('launch-pass', null, true)
   } catch (error) {
     failures++

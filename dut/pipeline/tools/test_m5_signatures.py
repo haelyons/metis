@@ -43,9 +43,14 @@ FACTS = {
 }
 FACTS = {stage: dict(facts, **COMMON) for stage, facts in FACTS.items()}
 OMITTED = object()
+MISSING = "<not shown>"
 # SCHEMAS.md "Propose, independent votes, and the one-shot gate": optional propose facts.
 PROPOSE_OPTIONAL = ("votes_reject", "votes_abstain", "outcome")
-OUTCOMES = ("approved", "rejected", "conditions_unmet")
+OUTCOMES = ("approved", "rejected", "conditions_unmet", "no_feasible_method")
+# Outcomes for which ballots were counted; otherwise the null-ballot count shows null.
+COUNTED = ("approved", "rejected", "conditions_unmet")
+FINDING = ("Finding: negative. No menu method has measured headroom of at least 1.05 "
+           "on this hardware.")
 BALLOT_LABELS = {
     "approve": r"(?:votes_)?approv(?:e|es|ed|als?)",
     "reject": r"(?:votes_)?reject(?:s|ed|ions?)?",
@@ -282,30 +287,38 @@ def propose_rows(text):
 def takeaway_ballots(text):
     """Ballot counts and outcome shown for propose, accepting any unambiguous format:
     a column per count, labelled counts (`reject 1`, `reject=1`, `1 reject`), or
-    slash-joined labels with slash-joined counts."""
+    slash-joined labels with slash-joined counts. A count shown as `null` is None;
+    a count not shown at all is MISSING."""
     mapped, line = propose_rows(text)
     found = {name: set() for name in BALLOT_LABELS}
+    def parse(cell):
+        return int(cell) if cell.isdigit() else None
     for row in mapped:
         for header, cell in row.items():
             for name, label in BALLOT_LABELS.items():
-                if re.fullmatch(label, header.strip().lower()) and re.fullmatch(r"\d+", cell):
-                    found[name].add(int(cell))
+                if (re.fullmatch(label, header.strip().lower())
+                        and re.fullmatch(r"\d+|null", cell.strip().lower())):
+                    found[name].add(parse(cell.strip()))
     lowered = line.lower()
     for name, label in BALLOT_LABELS.items():
-        for match in re.finditer(r"\b(?:%s)\b[\s:=]{0,3}(\d+)\b" % label, lowered):
-            found[name].add(int(match.group(1)))
+        for match in re.finditer(r"\b(?:%s)\b[\s:=]{0,3}(\d+|null)\b" % label, lowered):
+            found[name].add(parse(match.group(1)))
         for match in re.finditer(r"\b(\d+)[\s]{0,2}(?:%s)\b" % label, lowered):
             found[name].add(int(match.group(1)))
+    count = r"(?:\d+|null)"
     slashed = [(words, numbers) for words, numbers in
-               re.findall(r"([a-z_]+(?:/[a-z_]+){3})\W{0,6}(\d+(?:/\d+){3})", lowered)]
+               re.findall(r"([a-z_]+(?:/[a-z_]+){3})\W{0,6}(%s(?:/%s){3})" % (count, count),
+                          lowered)]
     slashed += [(words, numbers) for numbers, words in
-                re.findall(r"(\d+(?:/\d+){3})\W{0,6}([a-z_]+(?:/[a-z_]+){3})", lowered)]
+                re.findall(r"(%s(?:/%s){3})\W{0,6}([a-z_]+(?:/[a-z_]+){3})" % (count, count),
+                           lowered)]
     for words, numbers in slashed:
-        for word, count in zip(words.split("/"), numbers.split("/")):
+        for word, value in zip(words.split("/"), numbers.split("/")):
             for name, label in BALLOT_LABELS.items():
                 if re.fullmatch(label, word):
-                    found[name].add(int(count))
-    counts = {name: (next(iter(values)) if len(values) == 1 else sorted(values) or None)
+                    found[name].add(parse(value))
+    counts = {name: (next(iter(values)) if len(values) == 1
+                     else sorted(values, key=repr) if values else MISSING)
               for name, values in found.items()}
     # An outcome shown as a value, not used as a count label (`rejected 2`, `2 rejected`).
     haystack = " ".join(" ".join(row.values()) for row in mapped) + " " + line
@@ -314,24 +327,61 @@ def takeaway_ballots(text):
     return counts, shown
 
 
-def ballot_takeaway(directory, approve, reject, abstain, outcome):
-    # SCHEMAS.md: OPERATOR_TAKEAWAY.md shows `outcome` and the four ballot counts
-    # (approve, reject, abstain, null) in the propose row.
+def finding_lines(text):
+    return [line for line in text.splitlines() if line.strip() == FINDING]
+
+
+def anchored_text(directory):
+    """Takeaway text for records without the optional propose facts."""
     directory.mkdir()
-    nulls = 5 - approve - reject - abstain
     for stage, facts in FACTS.items():
-        if stage == "propose":
-            facts = dict(facts, votes_approve=approve, vote_share=approve / 5,
-                         gate_pass=outcome == "approved", votes_reject=reject,
-                         votes_abstain=abstain, outcome=outcome)
         accepted(directory, stage, facts=facts)
     output = directory / "OPERATOR_TAKEAWAY.md"
     result = run("m5/operator_takeaway.py", directory, "--out", output)
     require(result.returncode == 0, "takeaway exit " + str(result.returncode))
-    counts, shown = takeaway_ballots(output.read_text())
+    return output.read_text()
+
+
+def ballot_takeaway(directory, approve, reject, abstain, outcome):
+    # SCHEMAS.md: OPERATOR_TAKEAWAY.md shows `outcome` and the four ballot counts
+    # (approve, reject, abstain, null) in the propose row. "Its null-ballot count is
+    # `5 - votes_approve - votes_reject - votes_abstain` only when ballots were counted
+    # (outcome `approved`, `rejected` or `conditions_unmet`); otherwise it shows null,
+    # because no ballot was requested." The fixed Finding line appears exactly when
+    # outcome is no_feasible_method.
+    directory.mkdir()
+    counted = outcome in COUNTED
+    nulls = 5 - approve - reject - abstain if counted else None
+    for stage, facts in FACTS.items():
+        status, v1 = "PASS", OMITTED
+        if stage == "propose":
+            facts = dict(facts, votes_approve=approve, vote_share=approve / 5,
+                         gate_pass=outcome == "approved", votes_reject=reject,
+                         votes_abstain=abstain, outcome=outcome)
+            if not counted:
+                facts.update(method="none", expected_speedup=None)
+            if outcome in ("rejected", "conditions_unmet", None):
+                status = "FAIL"
+                v1 = dict(exit_code=2, exit_kind="guard", error_class="numeric")
+        if outcome == "no_feasible_method" and stage in ("implement", "evaluate"):
+            accepted(directory, stage, "SKIPPED")
+            continue
+        accepted(directory, stage, status, facts=facts, v1=v1)
+    output = directory / "OPERATOR_TAKEAWAY.md"
+    result = run("m5/operator_takeaway.py", directory, "--out", output)
+    require(result.returncode == 0, "takeaway exit " + str(result.returncode))
+    text = output.read_text()
+    counts, shown = takeaway_ballots(text)
     expected = dict(approve=approve, reject=reject, abstain=abstain, null=nulls)
-    require(counts == expected, "propose ballots shown as %r, expected %r" % (counts, expected))
-    require(outcome in shown, "propose outcome %s not shown (found %r)" % (outcome, shown))
+    require(counts == expected, "propose ballots shown as %r, expected %r; propose text: %r"
+            % (counts, expected, propose_rows(text)))
+    if outcome is not None:
+        require(outcome in shown, "propose outcome %s not shown (found %r)" % (outcome, shown))
+    else:
+        require(not shown, "outcome null shown as %r" % (shown,))
+    lines = finding_lines(text)
+    require(len(lines) == (1 if outcome == "no_feasible_method" else 0),
+            "Finding line shown %d times for outcome %r" % (len(lines), outcome))
 
 
 def main():
@@ -454,7 +504,8 @@ def main():
             check("takeaway shows intake anchored=" + repr(value),
                   lambda v=value: anchored_takeaway(root / ("takeaway-anchored-" + str(v)), v))
         # SCHEMAS.md propose facts: optional votes_reject, votes_abstain (nonnegative
-        # integers) and outcome (approved, rejected, conditions_unmet or null).
+        # integers) and outcome (approved, rejected, conditions_unmet, no_feasible_method
+        # or null).
         ballots = root / "ballots"
         for extra in (dict(votes_reject=1, votes_abstain=0, outcome="conditions_unmet"),
                       dict(votes_reject=0, votes_abstain=5, outcome="approved"),
@@ -483,13 +534,32 @@ def main():
             check("reject %s on a non-propose stage" % key,
                   lambda k=key, v=value: rejected(invalid, stage="seal",
                                                   facts=dict(FACTS["seal"], **{k: v})))
+        # SCHEMAS.md: "`no_feasible_method` is set only by the measured negative finding
+        # above, with all ballot counts 0."
+        check("accept propose measured negative finding",
+              lambda: accepted(ballots, "propose", facts=dict(
+                  FACTS["propose"], method="none", expected_speedup=None, votes_approve=0,
+                  vote_share=0, gate_pass=False, votes_reject=0, votes_abstain=0,
+                  outcome="no_feasible_method")))
+        for value in ("no_feasible_methods", "No_feasible_method", "no-feasible-method"):
+            check("reject propose outcome=%r" % (value,),
+                  lambda v=value: rejected(invalid, stage="propose",
+                                           facts=dict(FACTS["propose"], outcome=v)))
         for approve, reject, abstain, outcome in ((2, 1, 1, "conditions_unmet"),
                                                   (0, 3, 0, "rejected"),
-                                                  (1, 0, 4, "approved")):
-            check("takeaway propose row shows outcome %s and ballots %d/%d/%d/%d"
-                  % (outcome, approve, reject, abstain, 5 - approve - reject - abstain),
+                                                  (1, 0, 4, "approved"),
+                                                  (0, 0, 5, "conditions_unmet"),
+                                                  (0, 0, 0, "no_feasible_method"),
+                                                  (0, 0, 0, None)):
+            nulls = (5 - approve - reject - abstain) if outcome in COUNTED else None
+            check("takeaway propose row shows outcome %s and ballots %d/%d/%d/%s"
+                  % (outcome, approve, reject, abstain, nulls)
+                  + ("; Finding line" if outcome == "no_feasible_method" else "; no Finding line"),
                   lambda a=approve, r=reject, b=abstain, o=outcome: ballot_takeaway(
-                      root / ("takeaway-ballots-" + o), a, r, b, o))
+                      root / ("takeaway-ballots-%s-%d%d%d" % (o, a, r, b)), a, r, b, o))
+        check("takeaway without propose outcome has no Finding line",
+              lambda: require(not finding_lines(anchored_text(root / "takeaway-plain")),
+                              "Finding line without no_feasible_method"))
         check("reject unknown stage", lambda: rejected(
             invalid, stage=SENTINEL, facts=FACTS["intake"]))
         check("reject unknown status", lambda: rejected(
