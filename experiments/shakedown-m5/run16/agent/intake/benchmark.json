@@ -1,0 +1,109 @@
+{
+  "identity": {
+    "name": "MonteCarloMultiGPU",
+    "publisher": "NVIDIA",
+    "repository": "https://github.com/NVIDIA/cuda-samples",
+    "tag": "v12.8",
+    "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample": "Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "found": true
+  },
+  "outcome_definition": {
+    "task": "Price European call options by Monte Carlo and validate against analytic Black\u2013Scholes.",
+    "performance_quantity": "Streamed Total time (ms.)",
+    "direction": "minimize subject to upstream correctness criterion",
+    "correctness": "Average reserve > 1.0; final Test passed and successful process exit.",
+    "L1": "sum(abs(BS-MC))/sum(abs(BS)); record only, published expected value and acceptance threshold unavailable.",
+    "L1_published_value": null,
+    "L1_tolerance": null
+  },
+  "citations": {
+    "readme": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md#building-cuda-samples",
+    "description": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/README.md",
+    "cmake": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "host": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+    "kernel": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+    "gold": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_gold.cpp#L43-L81",
+    "precision": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37",
+    "licence": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE"
+  },
+  "source_licences": [
+    {
+      "name": "NVIDIA cuda-samples BSD-3-Clause-style licence",
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+      "verification": "Pinned LICENSE retrieved successfully.",
+      "intended_use": "Local scientific benchmarking and modification",
+      "permission": "permitted",
+      "conditions": "Preserve notices/disclaimer on redistribution; endorsement requires permission. Licence links CUDA EULA."
+    }
+  ],
+  "stock_cuda_image": {
+    "feasible": null,
+    "reason": "Brief documents provisional compatibility with Ubuntu 22.04, CUDA 12.8 and driver >=570.26; actual stock image inventory, driver patch, GPU architecture and build/run remain unverified.",
+    "requirements": [
+      "CUDA Toolkit 12.8 including cuRAND development files",
+      "Host C/C++ compiler",
+      "CMake >=3.20",
+      "One compatible NVIDIA GPU",
+      "Driver >=570.26 for documented CUDA 12.8 GA target"
+    ],
+    "architecture_constraint": "Pinned sample CMake hardcodes architecture list; no override assumed.",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html#cuda-driver",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-installation-guide-linux/index.html#system-requirements"
+    ]
+  },
+  "size": {
+    "data_gib": null,
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "class": "unknown",
+    "reason": "No external dataset; generated input and total host/device peak allocation sizes not established by supplied evidence. Path count does not imply all paths are materialized."
+  },
+  "scoring": {
+    "anchors": [
+      "mc-bs-reserve",
+      "sample-pass"
+    ],
+    "independence": "Both criteria are published upstream by NVIDIA, independently of this intake; both encode the same correctness predicate and are not independent statistical validations.",
+    "reserve_definition": "Add Confidence / abs(MC-BS) only where error >1e-6, divide by full option count. Confidence is discounted 1.96-standard-error width.",
+    "printed_boundary": "Six-decimal reserve output can round to 1.000000; use verdict or unrounded statistic at boundary.",
+    "source": {
+      "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "evidence": "Brief cites pinned upstream source; direct retrieval unavailable during intake.",
+      "lines": "426\u2013442, 479\u2013486"
+    }
+  },
+  "repeatability": {
+    "host_seed": 123,
+    "gpu_rng": "curand_init(blockIdx.x + gridDim.x * device_id, threadIdx.x, 0, ...)",
+    "seed_cli": false,
+    "record": [
+      "GPU model",
+      "GPU count",
+      "grid size",
+      "toolkit version",
+      "libc version",
+      "process exit status",
+      "printed configuration"
+    ],
+    "limits": "GPU geometry changes random streams; libc rand() determines host inputs. No published repeat count or aggregation rule supplied.",
+    "repeats": null,
+    "aggregation": null,
+    "sources": [
+      {
+        "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+        "evidence": "Brief cites pinned upstream source; direct retrieval unavailable during intake.",
+        "lines": "57\u201359, 81\u201385, 316\u2013327"
+      },
+      {
+        "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+        "evidence": "Brief cites pinned upstream source; direct retrieval unavailable during intake.",
+        "lines": "131\u2013138"
+      }
+    ]
+  },
+  "search_candidates": [],
+  "retrieval_notes": "No benchmark search or substitution. Pinned host/kernel/CMake raw and GitHub retrievals failed (cache miss); direct network fetch blocked by domain allowlist. Source claims retained as brief-supported, not independently fetched."
+}

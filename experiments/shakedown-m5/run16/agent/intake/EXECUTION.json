@@ -1,0 +1,84 @@
+{
+  "representative_scale": {
+    "nOptions": 1048576,
+    "PATH_N": 262144,
+    "GPU_N": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "source": "intake/brief.md, Scale (operator revision after raid jackhammer)",
+    "scale_policy": "One fixed scale; rebuild once. No scale search, path doubling or toy extrapolation. Timeout if stage budget exceeded."
+  },
+  "inputs": {
+    "generated": "Option parameters and cuRAND streams described in data.json",
+    "external_data": null,
+    "source_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "setup": "Set host nOptions to 1024 * 1024 before representative build.",
+    "run_command": "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  },
+  "outputs": {
+    "scoring_interface": "Parse stdout Total time (ms.), L1 norm, Average reserve, final verdict and process exit status; confirm printed options, paths and GPU count.",
+    "performance": {
+      "quantity": "Total time (ms.)",
+      "unit": "ms",
+      "direction": "minimize"
+    },
+    "correctness": {
+      "reserve_comparison": ">",
+      "reserve_threshold": 1.0,
+      "required_verdict": "Test passed",
+      "required_exit_status": 0
+    },
+    "anchor_validation": {
+      "nOptions": 8192,
+      "PATH_N": 262144,
+      "GPU_N": 1,
+      "purpose": "Validate published anchors with original published configuration; separate from fixed representative timing workload.",
+      "anchors": [
+        "mc-bs-reserve",
+        "sample-pass"
+      ]
+    },
+    "output_artifact_format": null,
+    "output_artifact_format_reason": "Upstream interface is stdout and process exit status; brief supplies no file schema."
+  },
+  "timing_scope": {
+    "included": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Completion-event waits"
+    ],
+    "excluded": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "source": {
+      "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "evidence": "Brief cites pinned upstream source; direct retrieval unavailable during intake.",
+      "lines": "147\u2013194"
+    },
+    "additional_source": {
+      "url": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+      "evidence": "Brief cites pinned upstream source; direct retrieval unavailable during intake.",
+      "lines": "190\u2013223"
+    }
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "runtime_feasibility": null,
+  "runtime_feasibility_reason": "No workload run authorized during intake; representative runtime within budgets unverified.",
+  "repetitions": null,
+  "repetitions_reason": "No published repetition or aggregation requirement supplied."
+}
