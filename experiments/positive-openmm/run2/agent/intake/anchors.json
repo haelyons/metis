@@ -1,0 +1,14 @@
+[
+  {
+    "id": "nvidia_dhfr_8replica_tuned_throughput_reference",
+    "quantity": "Aggregate DHFR throughput for eight concurrent simulations with tuned MPS on one H100 or L40S (ns/day), approximate",
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "published_value": 5000,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "kind": "reference",
+    "configuration": "OpenMM 8.2.0 benchmark.py pme, fixed-time 60-second target; eight processes; CUDA_MPS_ACTIVE_THREAD_PERCENTAGE=25.",
+    "notes": "Article reports approaching 5 microseconds/day; unit conversion to 5000 ns/day. Approximate reference, no acceptance tolerance. Not a fixed-work ensemble measurement."
+  }
+]

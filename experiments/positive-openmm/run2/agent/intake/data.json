@@ -1,0 +1,94 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "verification": "Downloaded into memory and hashed during intake; not executed.",
+      "access": "Public HTTPS; no credentials. Place PDB in driver working directory; XML files supplied by OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    {
+      "name": "amber99sb.xml",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "verification": "Downloaded into memory and hashed during intake; not executed.",
+      "access": "Public HTTPS; no credentials. Place PDB in driver working directory; XML files supplied by OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    {
+      "name": "tip3p.xml",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "verification": "Downloaded into memory and hashed during intake; not executed.",
+      "access": "Public HTTPS; no credentials. Place PDB in driver working directory; XML files supplied by OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    }
+  ],
+  "licences_and_permissions": {
+    "status": "permitted",
+    "intended_use": "Local scientific benchmarking, execution and modification.",
+    "software": [
+      {
+        "component": "OpenMM API, Reference and CPU platforms",
+        "license": "MIT",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "CUDA and OpenCL platforms",
+        "license": "GNU LGPL",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      }
+    ],
+    "data": {
+      "license": "Repository distribution; no separate PDB-specific licence identified.",
+      "permission_evidence": "Brief explicitly states local running and modification permitted; PDB and force fields distributed in OpenMM repository.",
+      "source": [
+        "brief.md",
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      ]
+    },
+    "conditions": "Preserve applicable notices and comply with component licence obligations for redistribution.",
+    "nvidia_article_reuse_permission": null,
+    "nvidia_article_reuse_reason": "Cited as scientific evidence; no permission to redistribute article established."
+  },
+  "generated_inputs": [
+    {
+      "name": "initial velocities and stochastic streams",
+      "generation": "OpenMM at 300 K; seeds 1000 through 1007, used for velocities and Langevin integrator.",
+      "source": "brief.md"
+    }
+  ],
+  "missing_required_data": [],
+  "splits": null,
+  "splits_reason": "Simulation benchmark; no training/validation/test split.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "software_pin": "openmm==8.2.0; OpenMM-CUDA-12==8.2.0",
+  "dependency_hashes": null,
+  "dependency_hashes_reason": "Transitive dependency versions/hashes not pinned by brief.",
+  "total_required_input_bytes": 2282791,
+  "peak_working_set_gib": null,
+  "peak_working_set_reason": "Not measured or published for fixed ensemble."
+}

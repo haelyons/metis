@@ -1,0 +1,131 @@
+{
+  "representative_scale": {
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "atoms_per_replica": 23558,
+    "gpu_count": 1,
+    "simulated_ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "scale_selection": "One fixed scale specified by brief; no scale search.",
+    "configuration": {
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_ps": 0.004,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "precision": "single",
+      "DeterministicForces": true,
+      "gpu_count": 1,
+      "source": [
+        "brief.md",
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+      ]
+    }
+  },
+  "inputs": {
+    "required_data": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "coordinates": "Published equilibrated PDB, unchanged for each replica.",
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "source": "brief.md"
+  },
+  "outputs": {
+    "baseline_file": "ensemble.json",
+    "fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_series": {
+      "samples_per_replica": 100,
+      "unit": "kJ/mol",
+      "interval_steps": 250,
+      "availability": "Driver samples energies internally but emits only mean and final value; full series output unavailable without later instrumentation."
+    },
+    "source": "brief.md"
+  },
+  "timing_scope": {
+    "ensemble": "perf_counter starts after PDB/force-field/system/platform preparation, before first context/integrator creation; ends after last context/integrator deletion. Includes context creation/kernel compilation, velocity initialization, stepping, energy queries, and context destruction. Excludes installation, input parsing, shared system creation and final JSON write.",
+    "per_replica": "Starts after positions/velocities initialized; covers integration and energy sampling, excludes context construction and destruction.",
+    "concurrent": "Measure elapsed time to finish all eight replicas on same one GPU with equivalent ensemble boundaries; concurrent driver and its timing implementation not supplied.",
+    "source": "brief.md"
+  },
+  "scoring_interface": {
+    "performance_inputs": [
+      "Sequential ensemble total_wall_s",
+      "Concurrent ensemble total_wall_s"
+    ],
+    "speedup_formula": "sequential_total_wall_s / concurrent_total_wall_s",
+    "throughput_formula": "0.8 / ensemble_total_wall_s * 86400",
+    "correctness_inputs": [
+      "Matched per-replica seed",
+      "mean_potential_kj_mol",
+      "final_potential_kj_mol",
+      "Full energy series if instrumented"
+    ],
+    "acceptance_tolerance": null,
+    "acceptance_reason": "No published fixed-work numerical acceptance tolerance; deterministic trajectory prediction remains unverified.",
+    "reference_ids": [
+      "nvidia_dhfr_8replica_tuned_throughput_reference"
+    ],
+    "evaluator_command": null,
+    "evaluator_command_reason": "No executable scoring/evaluation command published in brief."
+  },
+  "stage_budgets_s": {},
+  "budget_defaults_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "runtime_evidence": {
+    "source": "brief.md",
+    "claim": "Approximately one minute on H100, a few minutes on slower GPUs, unverified for CUDA.",
+    "measured_runtime_s": null,
+    "budget_fit": "Expected to fit default method_run budget based on brief; no measured guarantee."
+  },
+  "unavailable": {
+    "mps_driver_command": "Brief supplies hypothesis and public fixed-time study command, but no fixed-work concurrent launch script.",
+    "gate_scripts": "No gate script paths or commands supplied; JSON structure and consistency checked during intake."
+  }
+}
