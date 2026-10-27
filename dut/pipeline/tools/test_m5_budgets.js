@@ -102,6 +102,8 @@ function protocol() {
 function budgetKey(operation) {
   if (['upload', 'probe', 'setup'].includes(operation)) return 'setup'
   if (['anchors', 'profile'].includes(operation)) return operation
+  // The concurrency probe runs with the resolved profile budget.
+  if (operation === 'concurrency') return 'profile'
   if (operation === 'setup-method') return 'method_setup'
   if (operation === 'run-method') return 'method_run'
   if (operation === 'run-tests') return 'tests'
@@ -133,6 +135,8 @@ async function runCase(name, config) {
   script(path.join(home, '.cache/metis-serve/box.sh'), 'exit 99')
   // Both controller and fake remote use this GPU tool, regardless of host GPUs.
   script(path.join(bin, 'nvidia-smi'), 'if [[ "$*" == *--query-gpu=name* ]]; then\n  printf "%s\\n" "Fixture GPU"\n  exit 0\nfi\nexit 1')
+  // Shadow any host MPS control binary so the concurrency probe never starts a real daemon.
+  script(path.join(bin, 'nvidia-cuda-mps-control'), '[[ $# -gt 0 ]] || cat > /dev/null')
   // Replace only the uploaded probe with a deterministic fixture, following the
   // existing reproduce test. Actual boxrun, timeout and receipt logic stays real.
   const probe = fs.readFileSync(path.join(ROOT, 'm5/box_probe.sh'), 'utf8')
@@ -208,9 +212,13 @@ fi`)
     assert.ok(receipts.length > 0, 'no box receipts')
     const profileIndex = receipts.findIndex(receipt => receipt.operation === 'profile')
     const anchorsIndex = receipts.findLastIndex(receipt => receipt.operation === 'anchors')
+    const concurrencyIndex = receipts.findIndex(receipt => receipt.operation === 'concurrency')
     for (const [index, receipt] of receipts.entries()) {
       const key = receipt.operation === 'upload' && index > anchorsIndex && index < profileIndex ? 'profile' : budgetKey(receipt.operation)
-      assert.equal(receipt.budget_s, expected[key], receipt.name)
+      // SCHEMAS.md fixes the probe run's budget, not its upload's: accept profile or setup there.
+      if (receipt.operation === 'upload' && index > profileIndex && index < concurrencyIndex) {
+        assert.ok([expected.profile, expected.setup].includes(receipt.budget_s), receipt.name)
+      } else assert.equal(receipt.budget_s, expected[key], receipt.name)
       assert.equal(typeof receipt.overrun, 'boolean', receipt.name)
       assert.equal(receipt.overrun, receipt.rc === 124 || receipt.timed_out || receipt.wall_s > receipt.budget_s, receipt.name)
       assert.equal(receipt.gpu_busy_known, false, receipt.name)
@@ -237,6 +245,7 @@ fi`)
   if (!config.target) {
     check(`${name}: all seven budgets exercised through real stages`, () => {
       assert.deepEqual(new Set(receipts.map(receipt => budgetKey(receipt.operation))), new Set(Object.keys(DEFAULTS)))
+      assert.equal(receipts.filter(receipt => receipt.operation === 'concurrency').length, 1, 'probe after passing profile gate')
       assert.deepEqual(records.map(row => [row.signature.stage, row.signature.status]), STAGES.map(stage => [stage, 'PASS']))
       assert.ok(receipts.every(receipt => !receipt.timed_out && receipt.rc === 0), 'unexpected timeout or command failure')
     })

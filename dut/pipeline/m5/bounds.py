@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compute deterministic profile-based Amdahl bounds for the m5 method menu."""
+"""Compute deterministic profile-based bounds for the m5 method menu."""
 import json
 import math
 import os
@@ -9,10 +9,10 @@ import sys
 
 
 METHODS = {
-    "data-parallel over inputs": ("compute", 8),
-    "batching": ("transfer", 4),
+    "data-parallel over inputs": ("whole", 8),
+    "batching": ("whole", 4),
     "multi-GPU": ("compute", None),
-    "ensembles": ("compute", 8),
+    "ensembles": ("whole", 8),
     "pipelining": ("transfer", 2),
 }
 
@@ -42,6 +42,13 @@ def bounds(packet):
     if (not number(total) or total <= 0 or not isinstance(stages, list) or not stages
             or type(gpus) is not int or gpus < 0):
         raise ValueError("invalid profile")
+    concurrency = packet.get("concurrency")
+    if concurrency is not None and not isinstance(concurrency, dict):
+        raise ValueError("invalid concurrency")
+    factor = concurrency.get("factor") if concurrency is not None else None
+    if factor is not None and not number(factor):
+        raise ValueError("invalid concurrency factor")
+    mps = concurrency.get("mps") if factor is not None else None
     times = dict(compute=0.0, transfer=0.0, other=0.0)
     mapping = []
     for stage in stages:
@@ -56,21 +63,24 @@ def bounds(packet):
         mapping.append(dict(stage=stage["stage"], kind=kind,
                             wall_fraction=min(1.0, stage["wall_s"] / total),
                             mean_gpu_util=util,
-                            methods=[m for m, (k, _) in METHODS.items() if k == kind]))
+                            methods=[m for m, (k, _) in METHODS.items() if k in ("whole", kind)]))
     if not all(math.isfinite(value) for value in times.values()):
         raise ValueError("invalid stage times")
     result = {}
-    compute_util = [s["mean_gpu_util"] for s in mapping if s["kind"] == "compute"]
-    # Missing measurements must not manufacture GPU headroom.
-    mean_util = (sum(compute_util) / len(compute_util)
-                 if compute_util and all(u is not None for u in compute_util) else None)
     for method, (kind, cap) in METHODS.items():
-        p = min(1.0, times[kind] / total)
-        k = max(1, gpus) if cap is None else (min(cap, 1 / max(mean_util, 0.05)) if mean_util is not None else 1)
-        bound = 1.0 / ((1.0 - p) + p / k)
-        derivation = (dict(rule="max(1, gpu_count)", gpu_count=gpus) if cap is None else
-                      dict(rule="min(fixed_cap, 1 / max(mean_util, 0.05))", fixed_cap=cap,
-                           mean_util=mean_util, missing_util_k=1))
+        p = 1 if kind == "whole" else min(1.0, times[kind] / total)
+        if kind == "whole":
+            k = min(cap, factor) if factor is not None and factor >= 1 else 1
+            bound = k
+            derivation = dict(rule="min(fixed_cap, concurrency factor)", fixed_cap=cap,
+                              factor=factor, mps=mps)
+        else:
+            k = max(1, gpus) if cap is None else cap
+            amdahl = 1.0 / ((1.0 - p) + p / k)
+            bound = amdahl / k if cap is None else amdahl
+            derivation = (dict(rule="max(1, gpu_count)", gpu_count=gpus, amdahl=amdahl,
+                               cost_basis="equal_gpu_seconds") if cap is None else
+                          dict(rule="fixed_cap", fixed_cap=cap))
         result[method] = dict(p=p, k=k, bound=bound, feasible=bound >= 1.05,
                               k_derivation=derivation, stages=[s for s in mapping if method in s["methods"]])
     return result

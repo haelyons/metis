@@ -58,6 +58,8 @@ def validate(value):
     schema = dict(FACTS[stage])
     if stage == "takeaways" and type(facts) is dict and "run_box_usd" in facts:
         schema["run_box_usd"] = float
+    if stage == "profile" and type(facts) is dict and "headroom" in facts:
+        schema["headroom"] = float
     if stage in ("reproduce", "profile", "implement", "evaluate") and type(facts) is dict:
         for key, spec in {"timed_out": bool, "budget_s": int, "overrun": bool}.items():
             if key in facts:
@@ -80,6 +82,8 @@ def validate(value):
             errors.append("votes_total: must be five")
         elif key == "run_box_usd" and item < 0:
             errors.append("run_box_usd: must be nonnegative")
+        elif key == "headroom" and item <= 0:
+            errors.append("headroom: must be positive")
     if record["status"] == "SKIPPED" and any(v is not None for v in facts.values()):
         errors.append("SKIPPED facts must be null")
     return errors

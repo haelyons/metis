@@ -9,6 +9,7 @@ const os = require('node:os')
 const assert = require('node:assert/strict')
 const { spawn } = require('node:child_process')
 const ROOT = path.resolve(__dirname, '..')
+const fixture = require('./m5_profile_fixture.js')
 const STAGES = ['intake', 'reproduce', 'profile', 'seal', 'propose', 'implement', 'evaluate', 'takeaways']
 const SENTINEL = 'PRIVATE_COMPUTE_SENTINEL_97413'
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -180,6 +181,8 @@ async function runCase(name, config) {
   exit 0
 fi
 if [[ "$*" == *--query-gpu=name* ]]; then printf '%s\\n' 'Fixture GPU'; fi`)
+  // Shadow any host MPS control binary; the real concurrency probe runs on the fake box.
+  script(path.join(bin, 'nvidia-cuda-mps-control'), '[[ $# -gt 0 ]] || cat > /dev/null')
   const policy = readJSON(path.join(ROOT, 'idea', 'config.json'))
   policy.workflow.label_rules = []
   policy.understudy.routes = []
@@ -234,7 +237,7 @@ if [[ "$*" == *--query-gpu=name* ]]; then printf '%s\\n' 'Fixture GPU'; fi`)
     const receipts = fs.existsSync(receiptDir) ? fs.readdirSync(receiptDir).filter(file => file.endsWith('.json')).sort()
       .map(file => ({ operation: file.replace(/^\d+-|\.json$/g, ''), ...readJSON(path.join(receiptDir, file)) })) : []
     check(`${name}: box commands include probe, uploads, setup, anchors, profile`, () => {
-      for (const op of ['probe', 'upload', 'setup', 'anchors', 'profile']) assert.ok(receipts.some(row => row.operation === op), op)
+      for (const op of ['probe', 'upload', 'setup', 'anchors', 'profile', 'concurrency']) assert.ok(receipts.some(row => row.operation === op), op)
       assert.equal(receipts.filter(row => row.operation === 'setup').length, config.retry ? 2 : 1)
       if (config.retry) assert.deepEqual(receipts.filter(row => row.operation === 'setup').map(row => row.rc), [7, 0])
     })
@@ -246,7 +249,8 @@ if [[ "$*" == *--query-gpu=name* ]]; then printf '%s\\n' 'Fixture GPU'; fi`)
         for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
           const file = path.join(dir, entry.name)
           if (entry.isDirectory()) visit(file)
-          else if (entry.name === `${receipt.name}.gpu`) files.push(file)
+          // Probe work directories symlink every top-level entry; count only real files.
+          else if (entry.isFile() && entry.name === `${receipt.name}.gpu`) files.push(file)
         }
       }
       visit(remote)
@@ -271,6 +275,28 @@ if [[ "$*" == *--query-gpu=name* ]]; then printf '%s\\n' 'Fixture GPU'; fi`)
       near(row.signature.gpu_s, assigned.reduce((sum, receipt) => sum + receipt.gpu_busy_s, 0), 'command GPU seconds')
       assert.equal(row.facts.gpu_busy_known, assigned.every(receipt => receipt.gpu_busy_known))
       assert.notEqual(row.signature.gpu_s, 999, 'profile GPU timings substituted for receipts')
+    })
+    check(`${name}: real concurrency probe calibrates whole-workload bounds`, () => {
+      // run_command.sh sleeps 1 s, so concurrent copies overlap: factor_n = n * T1 / wall_n near n.
+      const packet = readJSON(path.join(root, 'agent', 'profile-packet.json'))
+      fixture.assertConcurrencyShape(packet.concurrency)
+      const { single_wall_s: singles, batches, factor } = packet.concurrency
+      assert.ok(singles.every(wall => wall >= 1 && wall < 3), `single walls ${singles}`)
+      const t1 = [...singles].sort((a, b) => a - b)[1]
+      for (const batch of batches) {
+        assert.equal(batch.all_ok, true)
+        assert.equal(batch.skipped, false)
+        assert.ok(Math.abs(batch.factor - batch.n * t1 / batch.wall_s) < 1e-6 * batch.factor, `factor_${batch.n}`)
+      }
+      assert.equal(factor, Math.max(...batches.map(batch => batch.factor)))
+      assert.ok(factor > 2.5, `four overlapping 1 s copies should give factor near 4, got ${factor}`)
+      assert.equal(records.find(row => row.signature.stage === 'profile').facts.headroom, factor)
+      const bounds = readJSON(path.join(root, 'agent', 'bounds.json'))
+      for (const [method, cap] of [['data-parallel over inputs', 8], ['batching', 4], ['ensembles', 8]]) {
+        near(bounds[method].k, Math.min(cap, factor), `${method} k`)
+        assert.equal(bounds[method].k_derivation.factor, factor)
+        assert.equal(bounds[method].k_derivation.mps, packet.concurrency.mps)
+      }
     })
   }
   check(`${name}: all stage gates pass`, () => assert.ok(records.every(row => row.signature.status === 'PASS')))

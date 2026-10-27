@@ -24,7 +24,7 @@ return (async () => {
   const fields = {
     intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size'],
     reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid'],
-    profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry'],
+    profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
     propose: ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass'],
     implement: ['patch_applies', 'tests_pass', 'blind_tests', 'launch_review_pass'],
@@ -147,7 +147,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     const id = `${String(number).padStart(4, '0')}-${name}`
     const receiptPath = path.join(receiptsDirectory, `${id}.json`)
     // Never score files left by an earlier invocation using the same run root.
-    rmSync(path.join(destination, 'out'), { recursive: true, force: true })
+    rmSync(path.join(destination, 'out', name === 'concurrency' ? 'concurrency' : ''), { recursive: true, force: true })
     let commandFailed = false
     try {
       await exec('bash', ['m5/boxrun.sh', '--name', id, '--cmd', command,
@@ -163,7 +163,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     receipt.overrun = receipt.rc === 124 || receipt.timed_out === true || receipt.wall_s > timeout
     stageReceipts.push(receipt)
     // Transport and integrity commands have no authored script to change. Repair by one identical retry.
-    const authored = ['setup', 'anchors', 'profile', 'setup-method', 'run-method', 'run-tests']
+    const authored = ['setup', 'anchors', 'profile', 'concurrency', 'setup-method', 'run-method', 'run-tests']
     if (!retry && !authored.includes(name) && (receipt.rc === 124 || receipt.timed_out === true)) {
       return boxCommand(name, command, destination, timeout, true)
     }
@@ -181,7 +181,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     }
     return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
   }
-  const harnessRules = 'Scope: setup.sh builds and checks only the baseline. The pipeline owns profiling and profiler installation; do not write profile.sh or install profiling tools. A repair must change only the failing script and stay within its scope. Run the published build and binary and read measurements from its OUTPUT. run_command.sh is the canonical measured command and complete environment, including working directory, arguments, CUDA_VISIBLE_DEVICES and GPU count. run_anchors.sh must invoke bash harness/run_command.sh without overriding its environment or duplicating the workload command; parse its saved output for anchor measurements. The fixed profiler invokes that identical file with bash from the same working directory. Keep output paths stable and preserve logs. Every later run script must preserve the published configuration. Validate printed configuration against the actual command and environment. Preserve consistency in repairs; read the other harness scripts while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
+  const harnessRules = 'Scope: setup.sh builds and checks only the baseline. The pipeline owns profiling and profiler installation; do not write profile.sh or install profiling tools. A repair must change only the failing script and stay within its scope. Run the published build and binary and read measurements from its OUTPUT. run_command.sh is the canonical measured command and complete environment, including working directory, arguments, CUDA_VISIBLE_DEVICES and GPU count. run_command.sh must use paths relative to its working directory, never absolute paths into the run directory, and write only under out/ or temporary files. Concurrency and evaluation run it from sibling work directories linking the same trees. run_anchors.sh must invoke bash harness/run_command.sh without overriding its environment or duplicating the workload command; parse its saved output for anchor measurements. The fixed profiler invokes that identical file with bash from the same working directory. Keep output paths stable and preserve logs. Every later run script must preserve the published configuration. Validate printed configuration against the actual command and environment. Preserve consistency in repairs; read the other harness scripts while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
   let boxProbe
   let harnessSource
   const writeHarnessSource = () => writeFileSync(path.join(C, 'harness_source.json'), JSON.stringify(harnessSource, null, 2) + '\n')
@@ -348,7 +348,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         facts.timed_fraction = Math.min(1, timedWall / total_wall_s)
         facts.gpu_telemetry = gpuUtil.length > 0
         writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify({
-          stages: measuredStages, total_wall_s,
+          stages: measuredStages, total_wall_s, concurrency: null,
           timed_fraction: facts.timed_fraction, gpu_telemetry: facts.gpu_telemetry,
           gpu_count: Number.isInteger(allocationCount) && allocationCount >= 0 ? allocationCount
             : Array.isArray(boxProbe?.nvidia?.gpus) ? boxProbe.nvidia.gpus.length : 1,
@@ -380,10 +380,49 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       if (result.rc !== 0) return failure(facts, 'parse')
       const invalid = validateProfile()
       if (invalid) return failure(facts, invalid)
+      let concurrency = null
+      try {
+        const bytes = readFileSync('m5/concurrency_probe.py').toString('base64')
+        const probe = await boxCommand('concurrency', `set -e
+mkdir -p profiler
+printf %s ${quote(bytes)} | base64 -d > profiler/concurrency_probe.py
+rm -rf out/concurrency
+python3 -I profiler/concurrency_probe.py harness/run_command.sh out/concurrency ${timeout}`, destination, timeout)
+        if (!probe.error && probe.rc === 0) {
+          const value = readJSON(path.join(destination, 'out', 'concurrency', 'concurrency.json'))
+          if (validConcurrency(value)) concurrency = value
+        }
+      } catch { /* Calibration is optional evidence and never changes the profile gate. */ }
+      const packet = readJSON(path.join(A, 'profile-packet.json'))
+      packet.concurrency = concurrency
+      facts.headroom = concurrency?.factor ?? null
+      writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify(packet, null, 2) + '\n')
       return { status: 'PASS', facts }
     } catch {
       return failure(facts, 'parse')
     }
+  }
+  function validConcurrency(value) {
+    const keys = (item, expected) => item && typeof item === 'object' && !Array.isArray(item)
+      && Object.keys(item).length === expected.length && expected.every(key => Object.hasOwn(item, key))
+    const positive = item => Number.isFinite(item) && item > 0
+    const nullable = item => item === null || positive(item)
+    if (!keys(value, ['mps', 'mps_failed', 'single_wall_s', 'batches', 'factor'])
+      || typeof value.mps !== 'boolean' || typeof value.mps_failed !== 'boolean'
+      || !Array.isArray(value.single_wall_s) || value.single_wall_s.length !== 3
+      || !value.single_wall_s.every(nullable) || !nullable(value.factor)
+      || !Array.isArray(value.batches) || value.batches.length !== 2) return false
+    const singlesOK = value.single_wall_s.every(positive)
+    const t1 = [...value.single_wall_s].sort((a, b) => a - b)[1]
+    if (!value.batches.every((batch, index) => {
+      if (!keys(batch, ['n', 'wall_s', 'all_ok', 'skipped', 'factor'])
+        || batch.n !== [2, 4][index] || typeof batch.all_ok !== 'boolean' || typeof batch.skipped !== 'boolean'
+        || !nullable(batch.wall_s) || !nullable(batch.factor)) return false
+      if (batch.skipped || !batch.all_ok || !singlesOK) return batch.factor === null
+      return positive(batch.wall_s) && batch.factor === batch.n * t1 / batch.wall_s
+    })) return false
+    const factors = value.batches.filter(batch => batch.factor !== null).map(batch => batch.factor)
+    return value.factor === (singlesOK && factors.length ? Math.max(...factors) : null)
   }
   async function seal() {
     if (input.stub?.seal != null) return stub('seal')
@@ -408,7 +447,7 @@ Write only ${JSON.stringify(predictionPath)}. Use intake evidence and the profil
 The method menu is exactly ${JSON.stringify(menu)}. Deterministic bounds (p is the actionable timed fraction; k is the maximum factor): ${JSON.stringify(bounds)}.
 Include every feasible entry once; list every entry with bound <1.05 exactly once as {method, reason} in infeasible_methods, never in predictions. With no feasible entry, write predictions=[] as a negative result.
 For each interval require finite low >0, low <= high <= its method's bound, and high-low <= bound-1. When at least two methods are feasible, their intervals must not all be identical. Base each interval on its method's profile evidence and overheads.
-Amdahl bound is 1/((1-p)+p/k). The supplied bounds are ceilings, not measured gains; intervals without measurements are prospective assumptions. Include launch/transfer/merge overhead.
+Whole-workload bounds are measured concurrent throughput on one GPU (p=1, capped at 8 for data-parallel over inputs and ensembles, 4 for batching); missing headroom gives bound 1. Pipelining is Amdahl over transfer time with k=2. Multi-GPU bounds are per GPU-second at equal cost: Amdahl/k with k=max(1,gpu_count). Amdahl is 1/((1-p)+p/k). The supplied bounds are ceilings, not measured method gains; intervals without measurements are prospective assumptions. Include launch/transfer/merge overhead.
 Write an object with these fields:
 - outputs_stochastic: boolean; true for Monte Carlo, sampling, or outputs affected by random seeds, even when fixed seeds make a run reproducible.
 - predictions: array of {method, expected_speedup_interval: {low, high}, outcome_vs_compute_points}. Each point is {compute_budget, predicted_outcome, uncertainty}. Include all sealed compute budgets for each method. Both predicted_outcome and uncertainty must be non-null, nonempty values at every budget. If no numeric outcome forecast is scientifically supported, use an explicit nonempty declaration such as predicted_outcome={not_applicable:true,reason:"fixed-work benchmark; no calibrated outcome curve"} and explain assumptions or unavailable evidence in uncertainty. Never invent a numeric forecast or use null; equal_outcome_target.not_applicable does not waive these point fields.
@@ -570,6 +609,7 @@ Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
       const reply = await agent(`Choose one feasible method from ranked_methods in this prepared packet.
 Read only the packet embedded below. Never read other files, search, access the box, run workloads, or implement code.
 ranked_methods are ordered by sealed predicted speedup capped by the supplied bounds and have already passed deterministic GPU resource guards.
+Whole-workload bounds are measured concurrent throughput on one GPU; pipelining is Amdahl over transfer time with k=2; multi-GPU bounds are Amdahl/k per GPU-second at equal cost.
 Write only ${JSON.stringify(proposalPath)}, matching this schema: ${JSON.stringify(proposalSchema)}.
 Explain profile evidence, overheads, scientific equivalence risks, and a concrete implementation plan. Keep the sealed method and protocol unchanged.
 Prepared packet:\n${evidence}
@@ -590,7 +630,7 @@ Return a short completion acknowledgement.`,
           reason_codes: { type: 'array', items: { enum: reasons } } } }
       const votesDirectory = path.join(A, 'votes')
       mkdirSync(votesDirectory, { recursive: true })
-      // Queue all five siblings together for x-<raid>-skeptic-<i>of5 names and fresh runner sessions.
+      // Queue all five ballots together with distinct labels and fresh runner sessions.
       const votes = await Promise.all(Array.from({ length: 5 }, async (_, index) => {
         const votePath = path.join(votesDirectory, `${index + 1}.json`)
         rmSync(votePath, { force: true })
@@ -601,7 +641,7 @@ Use only the embedded prepared packet and proposal. Never read files, other vote
 ranked_methods have already passed deterministic GPU resource guards. Approve only if the method stays within its bound, is parallelisable as planned, preserves the sealed scientific equivalence rule, and has adequate stage evidence.
 Return only vote and reason_codes using the supplied schema. Missing evidence warrants reject or abstain. Vote share is not a calibrated probability.
 Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
-            { label: 'skeptic', agentType: 'qt-bare', model: 'haiku', schema: voteSchema, repairable: false, fresh: true })
+            { label: `skeptic-${index + 1}`, agentType: 'qt-bare', model: 'haiku', schema: voteSchema, repairable: false, fresh: true })
         } catch { /* A failed call counts against approval; never replace it. */ }
         if (validate(voteSchema, vote).length) vote = null
         writeFileSync(votePath, JSON.stringify(vote, null, 2) + '\n')

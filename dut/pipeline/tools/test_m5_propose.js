@@ -27,15 +27,31 @@ function canonical(value) {
   return JSON.stringify(value)
 }
 const ballot = (vote = 'approve', reason_codes = []) => ({ vote, reason_codes })
+// Ballot i uses label skeptic-<i> (SCHEMAS.md, "Propose, independent votes, and the one-shot gate").
+const ballotNumber = title => { const match = /^skeptic-([1-5])$/.exec(String(title)); return match ? Number(match[1]) : null }
+const isSkeptic = call => ballotNumber(call.title) !== null
+const familyOf = model => /^claude\//.test(String(model)) ? 'claude' : /^codex\//.test(String(model)) ? 'codex'
+  : /^cursor\//.test(String(model)) ? 'cursor' : 'opencode'
 
 module.exports = {
   async run(options) {
-    const { title, prompt, name } = options
+    const { title, prompt, name, model } = options
     const root = process.env.M5_PROPOSE_ROOT
     const config = JSON.parse(process.env.M5_PROPOSE_CONFIG)
     const sessionID = randomUUID()
     const capture = { ...options, event: 'start', time: Date.now(), returnedSession: sessionID }
     fs.appendFileSync(path.join(root, 'calls.jsonl'), JSON.stringify(capture) + '\n')
+    // Scripted per-family failures: { "<label>": { "<family>": "refusal" | "transport" } }.
+    const failure = ((config.failures || {})[title] || {})[familyOf(model)]
+    if (failure) {
+      await new Promise(resolve => setTimeout(resolve, 80))
+      fs.appendFileSync(path.join(root, 'calls.jsonl'), JSON.stringify({ event: 'end', title, name,
+        time: Date.now(), returnedSession: sessionID }) + '\n')
+      return { text: failure === 'refusal' ? 'I cannot help with this request.' : '', json: null, jsonError: null, sessionID,
+        tokens: { input: 10, output: 0 }, tokens_known: true, cost: 0, tools: 0, ms: 1,
+        errors: [failure === 'refusal' ? 'refusal: the model declined the request' : 'exit 1: connection reset by peer'],
+        refusal: failure === 'refusal' }
+    }
     let json = { v: 'fixture' }, text, jsonError = null
     if (title === 'propose') {
       if (!config.missingProposal) writeJSON(path.join(root, 'agent', 'proposal.json'), config.proposal || {
@@ -44,11 +60,11 @@ module.exports = {
         files_expected: ['candidate.py'], risks: ['Equivalence must be checked.'],
       })
     }
-    if (title === 'skeptic') {
-      const match = name.match(/-(\d)of5$/)
-      const index = match ? Number(match[1]) - 1 : 0
+    if (ballotNumber(title) !== null) {
+      const index = ballotNumber(title) - 1
       const votes = config.votes || [ballot(), ballot(), ballot(), ballot(), ballot('reject', REASONS)]
-      json = votes[index]
+      const byFamily = ((config.familyVotes || {})[title] || {})[familyOf(model)]
+      json = byFamily !== undefined ? byFamily : votes[index]
       if (json === null) { text = ''; jsonError = 'No JSON in synthetic response' }
       // Keep calls overlapping so concurrency is observable without timing thresholds.
       await new Promise(resolve => setTimeout(resolve, 80))
@@ -77,6 +93,9 @@ function fixture(root, config) {
       { stage: 'transfer', kind: 'transfer', wall_s: 3, gpu_s: 1, wall_fraction: 0.3, start_s: 6, mean_gpu_util: 0.25 },
       { stage: 'finish', kind: 'other', wall_s: 1, gpu_s: null, wall_fraction: 0.1, start_s: 9, mean_gpu_util: null },
     ], total_wall_s: 10, timed_fraction: 1, gpu_telemetry: true, gpu_count: 4, content: SENTINEL,
+    concurrency: { mps: false, mps_failed: false, single_wall_s: [1, 1, 1],
+      batches: [{ n: 2, wall_s: 1, all_ok: true, skipped: false, factor: 2 },
+        { n: 4, wall_s: 0.5, all_ok: true, skipped: false, factor: 8 }], factor: 8 },
   }
   const intervals = [[1.2, 1.8], [1.05, 1.2], [1.4, 1.8], [1.2, 1.8], [1.01, 1.15]]
   const predictions = {
@@ -93,15 +112,17 @@ function fixture(root, config) {
     repetitions: 5, warmup: 'one run', scheduling_order: 'alternate', equal_outcome_target: 1,
   }
   const bounds = Object.fromEntries(MENU.map((method, i) => {
-    const p = [0.6, 0.3, 0.6, 0.6, 0.3][i], k = [8, 4, 4, 8, 2][i]
+    // Whole-workload methods: p = 1, k = min(cap, concurrency factor 8). The multi-GPU row is a
+    // hand-written resource-guard fixture (feasible only with superlinear evidence).
+    const p = [1, 1, 0.6, 1, 0.3][i], k = [8, 4, 4, 8, 2][i]
     const kind = [0, 2, 3].includes(i) ? 'compute' : 'transfer'
     const methods = kind === 'compute' ? [MENU[0], MENU[2], MENU[3]] : [MENU[1], MENU[4]]
     const stages = profile.stages.filter(row => row.kind === kind).map(row => ({
       stage: row.stage, kind, wall_fraction: row.wall_fraction, mean_gpu_util: row.mean_gpu_util, methods,
     }))
-    const k_derivation = i === 2 ? { rule: 'max(1, gpu_count)', gpu_count: 4 }
-      : { rule: 'min(fixed_cap, 1 / max(mean_util, 0.05))',
-        fixed_cap: [8, 4, null, 8, 2][i], mean_util: 0.125, missing_util_k: 1 }
+    const k_derivation = i === 2 ? { rule: 'max(1, gpu_count)', gpu_count: 4, amdahl: 1 / ((1 - p) + p / k), cost_basis: 'equal_gpu_seconds' }
+      : i === 4 ? { rule: 'fixed_cap', fixed_cap: 2 }
+        : { rule: 'min(fixed_cap, concurrency factor)', fixed_cap: [8, 4, null, 8][i], factor: 8, mps: false }
     return [method, { p, k, bound: 1 / ((1 - p) + p / k), feasible: true, k_derivation, stages }]
   }))
   if (config.mutate) config.mutate({ predictions, bounds, profile })
@@ -140,7 +161,8 @@ async function execute(name, config = {}, previous) {
   fs.writeFileSync(brief, 'Synthetic stage-5 contract fixture.\n')
   writeJSON(args, { run_root: root, brief, tag: 'propose-test', raid: 'propose-test',
     stub: { intake: 'PASS', reproduce: 'PASS', profile: 'PASS', seal: 'PASS', implement: 'PASS', evaluate: 'PASS', takeaways: 'PASS' } })
-  const policy = readJSON(path.join(ROOT, 'idea', 'config.json'))
+  // config.m5Policy: run under m5/wf_config.json with --family codex, as SCHEMAS.md "m5 model policy" prescribes.
+  const policy = readJSON(path.join(ROOT, config.m5Policy ? 'm5/wf_config.json' : 'idea/config.json'))
   policy.workflow.max_concurrency = 8
   policy.workflow.runs_dir = path.join(root, 'agent', 'workflow-runs')
   const configFile = path.join(root, 'control', 'workflow-config.json')
@@ -155,7 +177,8 @@ async function execute(name, config = {}, previous) {
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
-        '--args', args, '--out', out, '--config', configFile, '--disable-family', 'claude'], { cwd: ROOT, timeout: 30000,
+        '--args', args, '--out', out, '--config', configFile,
+        ...(config.m5Policy ? ['--profile', 'latent_skeptic', '--family', 'codex'] : ['--disable-family', 'claude'])], { cwd: ROOT, timeout: 30000,
         stdio: ['ignore', stdout, stderr], env: { ...process.env, WF_STUB: __filename,
           HOME: home, M5_PROPOSE_ROOT: root, M5_PROPOSE_CONFIG: JSON.stringify(config), M5_RAIDS_LEDGER: path.join(scratch, 'raids.jsonl') } })
       let error
@@ -232,8 +255,10 @@ async function main() {
     facts('four-approvals', happy, 4, true)
     check('one proposer writes proposal; five skeptics have exact names and fresh sessions', () => {
       assert.equal(happy.calls.filter(call => call.title === 'propose').length, 1)
-      const votes = happy.calls.filter(call => call.title === 'skeptic')
-      assert.deepEqual(votes.map(call => call.name).sort(), [1, 2, 3, 4, 5].map(i => `x-propose-test-skeptic-${i}of5`))
+      const votes = happy.calls.filter(isSkeptic)
+      assert.deepEqual(votes.map(call => call.title).sort(), [1, 2, 3, 4, 5].map(i => `skeptic-${i}`))
+      // no sibling suffix: each ballot's own label yields its name
+      for (const call of votes) assert.equal(call.name, `x-propose-test-${call.title}`)
       assert.equal(new Set(votes.map(call => call.cwd)).size, 5)
       for (const call of votes) assert.equal(call.role, 'qt-bare')
       assert.equal(happy.calls.find(call => call.title === 'propose').role, 'ls-writer')
@@ -243,7 +268,7 @@ async function main() {
       const proposal = readJSON(path.join(happy.root, 'agent', 'proposal.json'))
       assert.deepEqual(Object.keys(proposal).sort(), ['method', 'rationale', 'plan_steps', 'files_expected', 'risks'].sort())
       assert.equal(proposal.rationale, SENTINEL)
-      const events = happy.events.filter(row => row.title === 'skeptic')
+      const events = happy.events.filter(isSkeptic)
       assert.equal(events.slice(0, 5).every(row => row.event === 'start'), true, 'skeptics not concurrent')
     })
     check('ranking uses sealed midpoints, menu ties; four-GPU method excluded by one-GPU guard', () => {
@@ -277,10 +302,10 @@ async function main() {
         assert.ok(embedded(call.prompt, packet), `${call.title}: packet absent or modified`)
         assert.ok(!call.prompt.includes(path.join(happy.root, 'control')), 'control path in evidence')
         assert.ok(!call.prompt.includes(path.join(happy.root, 'agent', 'intake')), 'raw intake supplied')
-        if (call.title === 'skeptic') {
+        if (isSkeptic(call)) {
           assert.ok(embedded(call.prompt, proposal), 'proposal absent or modified')
           assert.ok(!/"vote"\s*:\s*"(?:approve|reject|abstain)"/.test(call.prompt), 'another ballot supplied')
-          const number = call.name.match(/-(\d)of5$/)[1]
+          const number = ballotNumber(call.title)
           assert.match(call.prompt, new RegExp(`(?:ballot|skeptic|vote)[^\\n]{0,30}\\b${number}\\b`, 'i'))
         }
       }
@@ -324,7 +349,7 @@ async function main() {
       }
       check(`${name}: exactly five calls, no repairs or replacements, invalid votes null`, () => {
         assert.equal(run.calls.filter(call => call.title === 'propose').length, 1)
-        assert.equal(run.calls.filter(call => call.title === 'skeptic').length, 5)
+        assert.equal(run.calls.filter(isSkeptic).length, 5)
         assert.equal(run.calls.length, 6)
         for (let i = 0; i < 5; i++) {
           const value = votes[i]
@@ -394,6 +419,46 @@ async function main() {
       status(name, run, 'parse')
       check(`${name}: malformed sealed input rejected before agents`, () => assert.equal(run.calls.length, 0))
     }
+    // SCHEMAS.md "m5 model policy": run under m5/wf_config.json with --family codex.
+    const approveAll = [ballot(), ballot(), ballot(), ballot(), ballot()]
+    const routed = await execute('policy-routing', { m5Policy: true, votes: approveAll })
+    status('policy-routing', routed)
+    facts('policy-routing', routed, 5, true)
+    check('policy-routing: ballots 1-3 and proposer on codex, ballots 4-5 on claude/sonnet, names without suffix', () => {
+      assert.equal(routed.calls.length, 6)
+      const skeptics = routed.calls.filter(isSkeptic).sort((a, b) => ballotNumber(a.title) - ballotNumber(b.title))
+      assert.deepEqual(skeptics.map(call => call.title), [1, 2, 3, 4, 5].map(i => `skeptic-${i}`))
+      assert.deepEqual(skeptics.map(call => call.name), [1, 2, 3, 4, 5].map(i => `x-propose-test-skeptic-${i}`))
+      for (const call of skeptics.slice(0, 3)) assert.equal(familyOf(call.model), 'codex', `${call.title}: ${call.model}`)
+      for (const call of skeptics.slice(3)) assert.equal(call.model, 'claude/sonnet', call.title)
+      const proposer = routed.calls.filter(call => call.title === 'propose')
+      assert.equal(proposer.length, 1)
+      assert.equal(familyOf(proposer[0].model), 'codex', proposer[0].model)
+    })
+    const refused = await execute('policy-claude-refusal', { m5Policy: true,
+      votes: [ballot(), ballot(), ballot(), ballot(), ballot('reject')], failures: { 'skeptic-4': { claude: 'refusal' } } })
+    status('policy-claude-refusal', refused, 'numeric')
+    facts('policy-claude-refusal', refused, 3, false)
+    check('policy-claude-refusal: refused ballot written as null, counted against approval, not handed over', () => {
+      const ballot4 = refused.calls.filter(call => call.title === 'skeptic-4')
+      assert.deepEqual(ballot4.map(call => call.model), ['claude/sonnet'], 'refusal handed to another family')
+      assert.equal(refused.calls.length, 6)
+      assert.equal(readJSON(path.join(refused.root, 'agent', 'votes', '4.json')), null)
+      for (const i of [1, 2, 3]) assert.deepEqual(readJSON(path.join(refused.root, 'agent', 'votes', `${i}.json`)), ballot())
+      assert.deepEqual(readJSON(path.join(refused.root, 'agent', 'votes', '5.json')), ballot('reject'))
+    })
+    const handed = await execute('policy-claude-transport', { m5Policy: true, votes: approveAll,
+      failures: { 'skeptic-5': { claude: 'transport' } }, familyVotes: { 'skeptic-5': { codex: ballot('approve', ['other']) } } })
+    status('policy-claude-transport', handed)
+    facts('policy-claude-transport', handed, 5, true)
+    check('policy-claude-transport: transport failure on a claude ballot hands over to codex', () => {
+      const ballot5 = handed.calls.filter(call => call.title === 'skeptic-5').sort((a, b) => a.time - b.time)
+      assert.deepEqual(ballot5.map(call => familyOf(call.model)), ['claude', 'codex'])
+      assert.equal(ballot5[0].model, 'claude/sonnet')
+      assert.deepEqual(ballot5.map(call => call.name), ['x-propose-test-skeptic-5', 'x-propose-test-skeptic-5-fb'])
+      assert.equal(handed.calls.length, 7)
+      assert.deepEqual(readJSON(path.join(handed.root, 'agent', 'votes', '5.json')), ballot('approve', ['other']))
+    })
   } catch (error) {
     failures++
     console.log(`FAIL test harness: ${error.stack}`)

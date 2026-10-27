@@ -1,0 +1,61 @@
+{
+  "workflow": {
+    "main_model": "opencode-go/mimo-v2.6-pro",
+    "cheap_model": "opencode-go/glm-5.3-flash",
+    "by_role": {},
+    "max_concurrency": 4,
+    "timeouts_min": {
+      "qt-bare": 10,
+      "qt-web": 25,
+      "qt-research": 40,
+      "qt-producer": 60,
+      "qt-extract": 15
+    },
+    "runs_dir": "/home/hal/dev/interp/metis/experiments/_scratch/wf",
+    "label_rules": [
+      {
+        "match": ":critic(-resample)?$",
+        "panel": [
+          "opencode-go/qwen3.8-flash",
+          "opencode-go/mimo-v2.6-flash",
+          "opencode-go/minimax-m3"
+        ],
+        "merge": "critique"
+      },
+      {
+        "match": ":dramaturg-2(-resample)?$",
+        "model": "opencode-go/glm-5.3-flash"
+      }
+    ]
+  },
+  "understudy": {
+    "primary_family": "codex",
+    "mode": "fallback",
+    "on_refusal": "halt",
+    "disabled_families": [],
+    "chain": {
+      "codex": [
+        "opencode"
+      ],
+      "opencode": [
+        "codex"
+      ],
+      "claude": [
+        "codex"
+      ],
+      "cursor": [
+        "codex"
+      ]
+    },
+    "routes": [
+      {
+        "match": "^skeptic-[45]$",
+        "primary": "claude/sonnet"
+      },
+      {
+        "match": "^review$",
+        "primary": "claude/sonnet"
+      }
+    ]
+  }
+}

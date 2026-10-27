@@ -28,7 +28,7 @@ find_nsys() {
   return 1
 }
 nsys_bin=$(find_nsys) || {
-  python3 - "$script_dir/probe.json" "$out_dir" <<'PY'
+  python3 - "$script_dir/probe.json" <<'PY'
 import hashlib
 import json
 from pathlib import Path
@@ -41,7 +41,7 @@ import urllib.request
 probe = json.loads(Path(sys.argv[1]).read_text())
 root = [] if subprocess.run(["id", "-u"], capture_output=True, text=True).stdout.strip() == "0" else ["sudo", "-n"]
 
-with tempfile.TemporaryDirectory(prefix="m5-nsys-") as temporary:
+with tempfile.TemporaryDirectory(prefix="m5-nsys-", dir="/tmp") as temporary:
     sources = Path(temporary) / "sources.list.d"
     sources.mkdir()
     sources.chmod(0o755)
@@ -67,7 +67,7 @@ with tempfile.TemporaryDirectory(prefix="m5-nsys-") as temporary:
     base = "https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64/"
     filename = "NsightSystems-linux-cli-public-2025.3.1.90-3582212.deb"
     sha256 = "d2484ad0faf6831b11fa0bf73c54232d9ea8beafb50414019e6ba299c4ed5718"
-    destination = Path(sys.argv[2]).resolve() / filename
+    destination = Path(temporary) / filename
     with urllib.request.urlopen(base + filename, timeout=60) as response:
         destination.write_bytes(response.read())
     if hashlib.sha256(destination.read_bytes()).hexdigest() != sha256:

@@ -136,7 +136,7 @@ if (M5) {
   const raid = JSON.parse(fs.readFileSync(path.join(ROOT, 'control', 'raid.json'), 'utf8'))
   fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify({ run_root: ROOT, brief, tag, raid: raid.raid, blind: raid.blind }, null, 1))
   const flags = extra.filter((x, i, xs) => x !== '--blind' && !['--stage', '--run-root', '--brief', '--raid'].includes(x) && !['--stage', '--run-root', '--brief', '--raid'].includes(xs[i - 1]))
-  cmd = node('wf.js', ['--script', path.join(COPY, 'm5', 'pipeline.js'), '--args', path.join(RUN, 'args.json'), '--name', `${tag}-m5`, '--out', RUN, '--family', 'codex', '--mode', 'fallback', '--on-refusal', 'halt', '--disable-family', 'claude', ...flags])
+  cmd = node('wf.js', ['--config', 'm5/wf_config.json', '--script', path.join(COPY, 'm5', 'pipeline.js'), '--args', path.join(RUN, 'args.json'), '--name', `${tag}-m5`, '--out', RUN, '--profile', 'latent_skeptic', '--family', 'codex', '--mode', 'fallback', '--on-refusal', 'halt', ...flags])
 }
 if (kind === 'stage' && !M5) {
   // the stage's args file as measure.sh wrote it (design_args.json, build<N>_args.json, post<N>_args.json: the latest)

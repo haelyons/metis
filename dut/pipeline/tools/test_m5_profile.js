@@ -253,6 +253,25 @@ esac`)
         assert.ok(calls.indexOf('sha256sum ') < calls.indexOf('dpkg -i '), calls)
         assert.ok(calls.indexOf('dpkg -i ') < calls.indexOf('profile --trace='), calls)
       }
+      // SCHEMAS.md: the package goes to a temporary directory outside out/, never out/.
+      const files = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry =>
+        entry.isDirectory() ? files(path.join(directory, entry.name)) : [path.join(directory, entry.name)])
+      for (const file of files(out)) {
+        assert.ok(!file.endsWith('.deb'), `package in out_dir: ${file}`)
+        if (fs.lstatSync(file).isFile()) assert.notEqual(fs.readFileSync(file, 'utf8'), 'fixture deb\n', `package bytes in out_dir: ${file}`)
+      }
+      const inside = target => target === out || target.startsWith(out + path.sep)
+      const downloaded = /^curl .*?(?:-o|--output) (\S+)/m.exec(calls)
+      if (downloaded) assert.ok(!inside(path.resolve(dir, downloaded[1])), `download target in out_dir: ${downloaded[1]}`)
+      // The installed package is the profiler's own temporary copy (the urlopen fake's
+      // $HOME/download.deb belongs to this test); it must be outside out_dir and removed.
+      const installed = /^dpkg -i (\S+)/m.exec(calls)
+      if (installed) {
+        const target = path.resolve(dir, installed[1])
+        assert.ok(!inside(target), `dpkg installed a package from out_dir: ${target}`)
+        if (mode === 'deb-success') assert.ok(!fs.existsSync(target), `package not removed after installation: ${target}`)
+      }
+      if (mode === 'deb-success') assert.ok(installed, 'no dpkg -i call')
     }
     if (mode === 'success' || mode === 'deb-success') {
       assert.equal(result.status, 0, result.stderr + result.stdout)
@@ -284,11 +303,13 @@ try {
   summariserTests()
   profilerTests()
   check('pipeline coverage/gate and shared command contracts; no profile agent or repair', () => {
-    const result = execute(process.execPath, [path.join(__dirname, 'test_m5_reproduce.js'), '--profile-only'], { timeout: 240000 })
+    const result = execute(process.execPath, [path.join(__dirname, 'test_m5_reproduce.js'), '--profile-only'], { timeout: 600000 })
     assert.equal(result.status, 0, result.stdout + result.stderr)
     assert.match(result.stdout, /low-coverage/)
     assert.match(result.stdout, /empty-gpu-util/)
     assert.match(result.stdout, /fixed profiler uses shared command without profile agent/)
+    for (const mode of ['real', 'valid', 'valid-null', 'timeout', 'rc', 'missing', 'invalid-json'])
+      assert.match(result.stdout, new RegExp(`ok concurrency-${mode}: packet concurrency and headroom fact`))
   })
 } finally { fs.rmSync(scratch, { recursive: true, force: true }) }
 console.log(`${checks} checks, ${failures} failures`)

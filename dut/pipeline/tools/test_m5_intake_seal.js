@@ -14,7 +14,8 @@ const ROOT = path.resolve(__dirname, '..')
 const SENTINEL = 'SENTINEL_CONTENT_77'
 const STAGES = ['intake', 'reproduce', 'profile', 'seal', 'propose', 'implement', 'evaluate', 'takeaways']
 const INTAKE = { found: true, anchors_count: 2, data: 'available', licence: 'permitted', stock_environment: true, size: 'small' }
-// Evidence from the stubbed profile stage: compute 60%, transfer 30%, serial 10%.
+// Evidence from the stubbed profile stage: compute 60%, transfer 30%, serial 10%,
+// and a same-GPU concurrency calibration with factor 6 (T1 = 1; factor_n = n * T1 / wall_n).
 const PROFILE = {
   stages: [
     { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6, start_s: 0, mean_gpu_util: 0.125 },
@@ -22,6 +23,9 @@ const PROFILE = {
     { stage: 'postprocessing', kind: 'other', wall_s: 1, gpu_s: null, wall_fraction: 0.1 },
   ],
   total_wall_s: 10, timed_fraction: 1, gpu_telemetry: true, gpu_count: 1,
+  concurrency: { mps: true, mps_failed: false, single_wall_s: [1, 1, 1],
+    batches: [{ n: 2, wall_s: 0.5, all_ok: true, skipped: false, factor: 4 },
+      { n: 4, wall_s: 4 / 6, all_ok: true, skipped: false, factor: 6 }], factor: 6 },
 }
 const PREDICTIONS = {
   outputs_stochastic: false,
@@ -302,13 +306,14 @@ async function main() {
       assert.deepEqual(readJSON(path.join(happy.runRoot, 'agent', 'profile-packet.json')), PROFILE)
       const boundsFile = path.join(happy.runRoot, 'agent', 'bounds.json')
       const bounds = readJSON(boundsFile)
+      // Whole-workload: p = 1, k = min(cap, factor 6); pipelining Amdahl k = 2; multi-GPU Amdahl / k.
       const expected = {
-        'data-parallel over inputs': [0.6, 8], batching: [0.3, 4],
-        'multi-GPU': [0.6, 1], ensembles: [0.6, 8], pipelining: [0.3, 2],
+        'data-parallel over inputs': [1, 6], batching: [1, 4],
+        'multi-GPU': [0.6, 1], ensembles: [1, 6], pipelining: [0.3, 2],
       }
       assert.deepEqual(Object.keys(bounds).sort(), Object.keys(expected).sort())
       for (const [method, [p, k]] of Object.entries(expected)) {
-        const bound = 1 / ((1 - p) + p / k)
+        const bound = 1 / ((1 - p) + p / k) / (method === 'multi-GPU' ? k : 1)
         assert.equal(bounds[method].p, p, method)
         assert.equal(bounds[method].k, k, method)
         assert.ok(Math.abs(bounds[method].bound - bound) < 1e-12, method)
@@ -523,24 +528,29 @@ async function main() {
       })
     }
 
-    // Set compute utilization to 100% and remove transfer work: only multi-GPU
-    // remains feasible. Its lone interval must be exempt from identical checks.
+    // Without a concurrency calibration, whole-workload bounds are 1, and multi-GPU
+    // per GPU-second never exceeds 1: only pipelining (bound 1/0.85) remains feasible.
+    // Its lone interval must be exempt from identical checks.
     const singleProfile = JSON.parse(JSON.stringify(PROFILE))
+    delete singleProfile.concurrency
     singleProfile.gpu_count = 2
-    singleProfile.stages[0].mean_gpu_util = 1
-    singleProfile.stages[1].wall_s = 0
-    singleProfile.stages[2].wall_s = 4
     const singlePredictions = JSON.parse(JSON.stringify(PREDICTIONS))
-    singlePredictions.predictions = [{ ...singlePredictions.predictions[0], method: 'multi-GPU',
-      expected_speedup_interval: { low: 1.1, high: 1.3 } }]
-    singlePredictions.infeasible_methods = PREDICTIONS.predictions.map(({ method }) => ({ method, reason: 'Bound is 1.' }))
+    singlePredictions.predictions = [{ ...singlePredictions.predictions[0], method: 'pipelining',
+      expected_speedup_interval: { low: 1.05, high: 1.15 } }]
+    singlePredictions.infeasible_methods = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles']
+      .map(method => ({ method, reason: 'Bound is at most 1.' }))
+    // No calibration and no transfer time: nothing is feasible.
+    const noneProfile = JSON.parse(JSON.stringify(singleProfile))
+    noneProfile.gpu_count = 1
+    noneProfile.stages[1].wall_s = 0
+    noneProfile.stages[2].wall_s = 4
     const singleRoot = path.join(parent, 'single-feasible')
     writeJSON(path.join(singleRoot, 'agent', 'PREDICTIONS.json'), singlePredictions)
     const single = await runCase('single-feasible', INTAKE, { runRoot: singleRoot, preserve: true, profile: singleProfile })
     checkStatuses('single-feasible', single, null)
     check('single-feasible: one valid interval seals with no reason codes', () => {
       const bounds = readJSON(path.join(singleRoot, 'agent', 'bounds.json'))
-      assert.deepEqual(Object.keys(bounds).filter(method => bounds[method].feasible), ['multi-GPU'])
+      assert.deepEqual(Object.keys(bounds).filter(method => bounds[method].feasible), ['pipelining'])
       assert.equal(single.stage('seal').facts.seal_verified, true)
       assert.equal(single.stage('seal').facts.prediction_count, 1)
       assert.deepEqual(readJSON(path.join(singleRoot, 'control', 'stages', 'seal.json')).reason_codes, [])
@@ -568,7 +578,7 @@ async function main() {
         value.predictions = []
         value.infeasible_methods = [...PREDICTIONS.predictions, { method: 'multi-GPU' }]
           .map(({ method }) => ({ method, reason: 'Bound is 1.' }))
-      }, { profile: { ...singleProfile, gpu_count: 1 } }],
+      }, { profile: noneProfile }],
     ]
     check('reason cases cover every documented seal code', () => {
       const schema = fs.readFileSync(path.join(ROOT, 'm5', 'SCHEMAS.md'), 'utf8')

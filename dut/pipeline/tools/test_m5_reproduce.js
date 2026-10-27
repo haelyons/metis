@@ -9,6 +9,7 @@ const os = require('node:os')
 const assert = require('node:assert/strict')
 const { spawn, spawnSync } = require('node:child_process')
 const ROOT = path.resolve(__dirname, '..')
+const fixture = require('./m5_profile_fixture.js')
 const PROBE_SENTINEL = 'PROBE_PRIVATE_SENTINEL_197352'
 const SENTINEL = 'HARNESS_PRIVATE_SENTINEL_846291'
 const STAGES = ['intake', 'reproduce', 'profile', 'seal', 'propose', 'implement', 'evaluate', 'takeaways']
@@ -147,7 +148,8 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   const root = path.join(scratch, name)
   const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, gpuUtil: GPU_UTIL, setupFailures: 0, anchorsFailures: 0, profileFailures: 0, ...overrides }
   const args = path.join(root, 'control', 'args.json')
-  writeJSON(args, { run_root: root, tag: 'reproduce-test', stub: { propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } })
+  writeJSON(args, { run_root: root, tag: 'reproduce-test', stub: { propose: 'PASS', implement: 'PASS', evaluate: 'PASS' },
+    ...(config.profileBudget ? { stage_budgets_s: { profile: config.profileBudget } } : {}) })
   const box = path.join(root, 'box')
   fs.mkdirSync(box, { recursive: true })
   const fakeProbe = `mkdir -p out
@@ -174,6 +176,17 @@ require(${JSON.stringify(path.join(ROOT, 'tools/m5_profile_fixture.js'))}).repla
   const boxBin = path.join(root, 'box-bin')
   // Keep receipt telemetry unavailable regardless of the host's GPU tools.
   script(path.join(boxBin, 'nvidia-smi'), 'exit 1')
+  // Never start a host MPS daemon: the real probe sees this no-op control binary.
+  script(path.join(boxBin, 'nvidia-cuda-mps-control'), 'if [[ $# -gt 0 ]]; then printf \'args %s\\n\' "$*"; else printf \'stdin %s\\n\' "$(cat)"; fi >> "$BOX_ROOT/../mps-calls.log"')
+  // The probe may be written by the same command that runs it, so substitute the fake
+  // at the documented invocation `python3 -I profiler/concurrency_probe.py ...`.
+  const realPython = spawnSync('/bin/bash', ['-c', 'command -v python3'], { encoding: 'utf8' }).stdout.trim()
+  const fakeConcurrency = path.join(root, 'fake-concurrency-probe.py')
+  if (config.concurrency && config.concurrency !== 'real') fs.writeFileSync(fakeConcurrency, fixture.concurrencyProbe(config.concurrency))
+  script(path.join(boxBin, 'python3'), `if [[ $# -ge 2 && $1 == -I && $2 == profiler/concurrency_probe.py && -f '${fakeConcurrency}' ]]; then
+  cp -- '${fakeConcurrency}' profiler/concurrency_probe.py
+fi
+exec '${realPython}' "$@"`)
   script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
   script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\nexec cp -r -- "$source" "$2"')
   const callsFile = path.join(root, 'calls.jsonl')
@@ -185,8 +198,9 @@ require(${JSON.stringify(path.join(ROOT, 'tools/m5_profile_fixture.js'))}).repla
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea', 'wf.js'), '--script', path.join(pipeline, 'm5', 'pipeline.js'),
         '--args', args, '--out', path.join(root, 'agent', 'wf'), '--disable-family', 'claude'], {
-        cwd: pipeline, timeout: 240000, stdio: ['ignore', stdout, stderr], env: { ...process.env,
+        cwd: pipeline, timeout: 240000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr], env: { ...process.env,
           M5_RAIDS_LEDGER: raidsLedger, WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(config), M5_REPRODUCE_CALLS: callsFile,
+          M5_CONCURRENCY_CALLS: path.join(root, 'concurrency-calls.jsonl'),
           M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch') },
       })
       let error
@@ -257,6 +271,8 @@ require(${JSON.stringify(path.join(ROOT, 'tools/m5_profile_fixture.js'))}).repla
       assert.match(file, /^\d{4}-[a-z-]+\.json$/)
       const receipt = readJSON(path.join(directory, file))
       assert.equal(receipt.name, file.slice(0, -5))
+      // Only the deliberately slow concurrency probe may time out.
+      if (config.concurrency === 'timeout' && file.slice(5, -5) === 'concurrency') return { operation: 'concurrency', ...receipt }
       assert.ok(Number.isInteger(receipt.rc))
       assert.equal(receipt.timed_out, false)
       assert.equal(receipt.fetched, true)
@@ -274,6 +290,16 @@ require(${JSON.stringify(path.join(ROOT, 'tools/m5_profile_fixture.js'))}).repla
       return
     }
     receipts.splice(0, probeIndex + 1)
+    // SCHEMAS.md "Concurrency probe": after a passing gate, optional upload(s) then exactly one
+    // `concurrency` command (no execution retry); nothing after a failed profile.
+    const profileAt = receipts.findIndex(receipt => receipt.operation === 'profile')
+    const afterProfile = profileAt < 0 ? [] : receipts.splice(profileAt + 1)
+    if (stoppedAt === null) {
+      assert.ok(afterProfile.length >= 1, `concurrency receipt missing: ${[...receipts, ...afterProfile].map(r => r.operation).join(',')}`)
+      assert.equal(afterProfile.at(-1).operation, 'concurrency')
+      assert.ok(afterProfile.slice(0, -1).every(receipt => receipt.operation === 'upload'), afterProfile.map(r => r.operation).join(','))
+      assert.equal(afterProfile.at(-1).budget_s, config.profileBudget ?? 1200, 'probe must use the resolved profile budget')
+    } else assert.deepEqual(afterProfile.map(receipt => receipt.operation), [], 'box commands after failed profile')
     const count = operation => receipts.filter(receipt => receipt.operation === operation).length
     const firstSetup = receipts.findIndex(receipt => receipt.operation === 'setup')
     assert.ok(firstSetup >= 1, 'no harness upload before setup')
@@ -312,7 +338,75 @@ require(${JSON.stringify(path.join(ROOT, 'tools/m5_profile_fixture.js'))}).repla
       if (row.signature.status === 'SKIPPED' && config.agentDelayMs) assert.ok(row.signature.wall_s < config.agentDelayMs / 1000, 'skip reused earlier duration')
     }
   })
+  if (!config.probeFailure && stoppedAt !== 'reproduce') concurrencyChecks(name, root, config, stage, stoppedAt)
   return { root, config, stage }
+}
+// SCHEMAS.md "Concurrency probe" and the profile packet `concurrency` bullet.
+const VALID_PROBE_MODES = { valid: fixture.VALID_CONCURRENCY, 'valid-null': fixture.NULL_CONCURRENCY }
+function concurrencyChecks(name, root, config, stage, stoppedAt) {
+  const ran = stoppedAt === null
+  const mode = config.concurrency ?? 'real'
+  const receiptDir = path.join(root, 'control', 'receipts')
+  const receipt = fs.readdirSync(receiptDir).filter(file => /^\d{4}-concurrency\.json$/.test(file))
+  const packetFile = path.join(root, 'agent', 'profile-packet.json')
+  const fetched = path.join(root, 'agent', 'results', 'profile', 'out', 'concurrency')
+  check(`${name}: concurrency probe runs only after a passing profile gate`, () => {
+    assert.equal(receipt.length, ran ? 1 : 0)
+    if (fs.existsSync(packetFile)) assert.ok(Object.hasOwn(readJSON(packetFile), 'concurrency'), 'packet lacks concurrency key')
+    if (!ran) {
+      if (fs.existsSync(packetFile)) assert.equal(readJSON(packetFile).concurrency, null, 'stale/unrun probe reached packet')
+      assert.equal(stage('profile').facts.headroom, null)
+      assert.ok(Object.hasOwn(stage('profile').facts, 'headroom'), 'executed profile stage must emit headroom')
+    }
+  })
+  if (!ran) return
+  const id = receipt[0].slice(0, -5)
+  check(`${name}: probe log, fetched results, stage unaffected (${mode})`, () => {
+    assert.ok(fs.statSync(path.join(root, 'agent', 'results', 'profile', `${id}.log`)).isFile(), 'probe log missing')
+    assert.equal(stage('profile').signature.status, 'PASS')
+    assert.ok(!fs.existsSync(path.join(fetched, 'stale-marker')), 'remote out/concurrency was not cleared first')
+    const calls = rows(path.join(root, 'concurrency-calls.jsonl'))
+    if (mode === 'real') {
+      assert.equal(calls.length, 0)
+    } else {
+      assert.equal(calls.length, 1, 'probe must run exactly once (no retry)')
+      const budget = String(config.profileBudget ?? 1200)
+      assert.deepEqual(calls[0].argv, ['profiler/concurrency_probe.py', 'harness/run_command.sh', 'out/concurrency', budget])
+      assert.equal(calls[0].isolated, true, 'probe must run with python3 -I')
+      assert.equal(calls[0].harness, true, 'probe must run from the shared run directory')
+      assert.ok(calls[0].stale === null || calls[0].stale.length === 0, `stale out/concurrency: ${calls[0].stale}`)
+    }
+  })
+  check(`${name}: packet concurrency and headroom fact (${mode})`, () => {
+    const packet = readJSON(packetFile)
+    const facts = stage('profile').facts
+    if (VALID_PROBE_MODES[mode]) {
+      assert.deepEqual(packet.concurrency, VALID_PROBE_MODES[mode])
+      assert.deepEqual(readJSON(path.join(fetched, 'concurrency.json')), VALID_PROBE_MODES[mode])
+      assert.deepEqual(facts.headroom, VALID_PROBE_MODES[mode].factor)
+    } else if (mode === 'real') {
+      fixture.assertConcurrencyShape(packet.concurrency)
+      assert.deepEqual(packet.concurrency, readJSON(path.join(fetched, 'concurrency.json')))
+      assert.equal(packet.concurrency.mps, true, 'MPS control binary on PATH must be used')
+      assert.equal(facts.headroom, packet.concurrency.factor)
+      const mps = fs.readFileSync(path.join(root, 'mps-calls.log'), 'utf8').split('\n').filter(Boolean)
+      assert.equal(mps[0], 'args -d')
+      assert.equal(mps.at(-1), 'stdin quit', 'daemon must be stopped with `echo quit | nvidia-cuda-mps-control`')
+    } else {
+      assert.equal(packet.concurrency, null, `probe ${mode} must give packet concurrency null`)
+      assert.ok(Object.hasOwn(facts, 'headroom'))
+      assert.equal(facts.headroom, null)
+    }
+    if (mode !== 'timeout') {
+      const r = readJSON(path.join(receiptDir, receipt[0]))
+      assert.equal(r.rc, mode === 'rc' ? 3 : 0)
+    }
+    // Whole-workload bounds consume exactly this factor.
+    const bounds = readJSON(path.join(root, 'agent', 'bounds.json'))
+    const factor = packet.concurrency?.factor ?? null
+    if (factor !== null && factor >= 1) assert.equal(bounds.batching.k_derivation.factor, factor)
+    assert.equal(bounds.batching.k, factor !== null && factor >= 1 ? Math.min(4, factor) : 1)
+  })
 }
 function reproduceFacts(name, run, passed, total, stock = true) {
   check(`${name}: reproduce facts and validity`, () => {
@@ -329,7 +423,7 @@ function profileFacts(name, run, fraction) {
     const timings = readJSON(path.join(input, 'stages.json'))
     const total = readJSON(path.join(input, 'total_wall_s.json')).total_wall_s
     const packet = readJSON(path.join(run.root, 'agent', 'profile-packet.json'))
-    assert.deepEqual(Object.keys(packet).sort(), ['gpu_count', 'gpu_telemetry', 'stages', 'timed_fraction', 'total_wall_s'])
+    assert.deepEqual(Object.keys(packet).sort(), ['concurrency', 'gpu_count', 'gpu_telemetry', 'stages', 'timed_fraction', 'total_wall_s'])
     const telemetry = readJSON(path.join(input, 'gpu_util.json'))
     assert.deepEqual(packet.stages, timings.map(({ stage, wall_s, gpu_s, kind, start_s = null }) => {
       const samples = start_s === null ? [] : telemetry.filter(({ t }) => t >= start_s && t < start_s + wall_s)
@@ -348,8 +442,15 @@ function profileFacts(name, run, fraction) {
       : allocationCount ? Number(allocationCount[1]) : probe.nvidia?.gpus?.length ?? 1
     assert.equal(packet.gpu_count, expectedGpuCount)
     assert.equal(packet.gpu_telemetry, readJSON(path.join(input, 'gpu_util.json')).length > 0)
-    assert.deepEqual(run.stage('profile').facts, { profile_complete: true, timed_fraction: fraction,
-      gpu_telemetry: packet.gpu_telemetry, tokens_known: false, gpu_busy_known: false })
+    // Every executed profile stage emits headroom = packet concurrency.factor or null.
+    // A probe box timeout may add the optional typed timeout fields (SCHEMAS.md receipts section).
+    const { timed_out, budget_s, overrun, ...facts } = run.stage('profile').facts
+    if (run.config.concurrency === 'timeout' && timed_out !== undefined) {
+      assert.deepEqual({ timed_out, budget_s, overrun }, { timed_out: true, budget_s: run.config.profileBudget, overrun: true })
+    } else assert.deepEqual([timed_out, budget_s, overrun], [undefined, undefined, undefined], 'timeout fields without a timeout')
+    assert.deepEqual(facts, { profile_complete: true, timed_fraction: fraction,
+      gpu_telemetry: packet.gpu_telemetry, tokens_known: false, gpu_busy_known: false,
+      headroom: packet.concurrency === null ? null : packet.concurrency.factor })
     assert.equal(run.stage('profile').signature.gpu_s, 0)
     assert.ok(fs.readFileSync(path.join(input, 'raw-telemetry.txt'), 'utf8').includes(SENTINEL))
   })
@@ -522,74 +623,138 @@ function boundsCliTests() {
   const directory = path.join(scratch, 'bounds-cli')
   fs.mkdirSync(directory)
   const methods = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
+  // SCHEMAS.md "A/bounds.json": whole-workload k = min(cap, concurrency factor), p = 1;
+  // pipelining is Amdahl over transfer time with k = 2; multi-GPU is Amdahl / k.
+  const WHOLE = { 'data-parallel over inputs': 8, batching: 4, ensembles: 8 }
+  const TRANSFER_TOKENS = new Set(['transfer', 'transfers', 'h2d', 'd2h', 'htod', 'dtoh', 'copy', 'memcpy', 'upload', 'download'])
+  const COMPUTE_TOKENS = new Set(['compute', 'kernel', 'kernels', 'inference', 'training', 'forward', 'backward'])
+  const kindOf = row => {
+    if (row.kind !== undefined) return row.kind
+    const tokens = row.stage.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+    return tokens.some(t => TRANSFER_TOKENS.has(t)) ? 'transfer' : tokens.some(t => COMPUTE_TOKENS.has(t)) ? 'compute' : 'other'
+  }
+  const actsOn = (method, kind) => method in WHOLE || (method === 'pipelining' ? kind === 'transfer' : kind === 'compute')
+  const amdahl = (p, k) => 1 / ((1 - p) + p / k)
+  const near = (actual, expected, label) => assert.ok(typeof actual === 'number' && Math.abs(actual - expected) < 1e-12, `${label}: ${actual} != ${expected}`)
+  const OMIT = Symbol('omit')
+  const calibration = (factor, mps = false) => ({ ...fixture.VALID_CONCURRENCY, mps, factor })
   let sequence = 0
-  function bounds(label, stages, compute, transfer, gpuCount = 4, meanUtil = 0.125) {
+  function runBounds(packet, raw) {
+    const input = path.join(directory, `${++sequence}-packet.json`)
+    const output = path.join(directory, `${sequence}-bounds.json`)
+    if (raw !== undefined) fs.writeFileSync(input, raw)
+    else writeJSON(input, packet)
+    const result = spawnSync('python3', [path.join(ROOT, 'm5', 'bounds.py'), input, output], {
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000,
+      env: { ...process.env, M5_RAIDS_LEDGER: raidsLedger },
+    })
+    assert.ifError(result.error)
+    return { result, output }
+  }
+  const packetOf = (stages, gpuCount, concurrency) => ({ stages, total_wall_s: 100, timed_fraction: 0.99, gpu_telemetry: true,
+    ...(gpuCount === null ? {} : { gpu_count: gpuCount }), ...(concurrency === OMIT ? {} : { concurrency }) })
+  function bounds(label, stages, compute, transfer, { gpuCount = 4, concurrency = calibration(3, true) } = {}) {
     check(`CLI bounds: ${label}`, () => {
-      const input = path.join(directory, `${++sequence}-packet.json`)
-      const output = path.join(directory, `${sequence}-bounds.json`)
-      writeJSON(input, { stages, total_wall_s: 100, timed_fraction: 0.99, gpu_telemetry: true,
-        ...(gpuCount === null ? {} : { gpu_count: gpuCount }) })
-      const result = spawnSync('python3', [path.join(ROOT, 'm5', 'bounds.py'), input, output], {
-        encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000,
-        env: { ...process.env, M5_RAIDS_LEDGER: raidsLedger },
-      })
-      assert.ifError(result.error)
+      const { result, output } = runBounds(packetOf(stages, gpuCount, concurrency))
       assert.equal(result.status, 0, result.stderr)
       const actual = readJSON(output)
       assert.deepEqual(Object.keys(actual).sort(), [...methods].sort())
-      for (const [i, method] of methods.entries()) {
-        const p = [compute, transfer, compute, compute, transfer][i]
-        const factor = meanUtil === null || compute === 0 ? 1 : 1 / Math.max(meanUtil, 0.05)
-        const k = [Math.min(8, factor), Math.min(4, factor), Math.max(1, gpuCount ?? 1), Math.min(8, factor), Math.min(2, factor)][i]
-        const expected = 1 / ((1 - p) + p / k)
-        assert.deepEqual(Object.keys(actual[method]).sort(), ['bound', 'feasible', 'k', 'k_derivation', 'p', 'stages'])
-        assert.ok(Math.abs(actual[method].p - p) < 1e-12, `${method}: p`)
-        assert.equal(actual[method].k, k, `${method}: k`)
-        assert.ok(Math.abs(actual[method].bound - expected) < 1e-12, `${method}: bound`)
-        assert.equal(actual[method].feasible, expected >= 1.05, `${method}: feasible`)
-        const derivation = actual[method].k_derivation
-        if (method === 'multi-GPU') {
-          assert.equal(derivation.rule, 'max(1, gpu_count)')
-          assert.equal(derivation.gpu_count, gpuCount ?? 1)
+      const measured = concurrency !== OMIT && concurrency !== null ? concurrency.factor : null
+      const usable = typeof measured === 'number' && measured >= 1
+      for (const method of methods) {
+        const row = actual[method]
+        assert.deepEqual(Object.keys(row).sort(), ['bound', 'feasible', 'k', 'k_derivation', 'p', 'stages'])
+        const derivation = row.k_derivation
+        let p, k, bound
+        if (method in WHOLE) {
+          p = 1; k = usable ? Math.min(WHOLE[method], measured) : 1; bound = k
+          if (usable) assert.deepEqual(derivation, { rule: 'min(fixed_cap, concurrency factor)', fixed_cap: WHOLE[method], factor: measured, mps: concurrency.mps }, method)
+          else if (concurrency === OMIT || concurrency === null) assert.deepEqual(derivation, { rule: 'min(fixed_cap, concurrency factor)', fixed_cap: WHOLE[method], factor: null, mps: null }, method)
+          else {
+            assert.equal(derivation.rule, 'min(fixed_cap, concurrency factor)')
+            assert.equal(derivation.fixed_cap, WHOLE[method])
+          }
+        } else if (method === 'pipelining') {
+          p = transfer; k = 2; bound = amdahl(p, k)
+          assert.deepEqual(derivation, { rule: 'fixed_cap', fixed_cap: 2 })
         } else {
-          assert.equal(derivation.mean_util, compute === 0 ? null : meanUtil)
-          assert.equal(derivation.fixed_cap, [8, 4, null, 8, 2][i])
-          assert.equal(derivation.missing_util_k, 1)
+          const gpus = gpuCount ?? 1
+          p = compute; k = Math.max(1, gpus); bound = amdahl(p, k) / k
+          assert.deepEqual(Object.keys(derivation).sort(), ['amdahl', 'cost_basis', 'gpu_count', 'rule'])
+          assert.equal(derivation.rule, 'max(1, gpu_count)')
+          assert.equal(derivation.gpu_count, gpus)
+          assert.equal(derivation.cost_basis, 'equal_gpu_seconds')
+          near(derivation.amdahl, amdahl(p, k), `${method}: amdahl`)
         }
-        assert.ok(Array.isArray(actual[method].stages))
+        near(row.p, p, `${method}: p`)
+        near(row.k, k, `${method}: k`)
+        near(row.bound, bound, `${method}: bound`)
+        assert.equal(row.feasible, bound >= 1.05, `${method}: feasible`)
+        assert.equal(row.feasible, row.bound >= 1.05, `${method}: feasible exactly when bound >= 1.05`)
+        const expectedRows = stages.filter(stage => actsOn(method, kindOf(stage)))
+        assert.deepEqual(row.stages.map(stage => stage.stage), expectedRows.map(stage => stage.stage), `${method}: stage rows`)
+        row.stages.forEach((stage, i) => {
+          const source = expectedRows[i], kind = kindOf(source)
+          assert.deepEqual(Object.keys(stage).sort(), ['kind', 'mean_gpu_util', 'methods', 'stage', 'wall_fraction'])
+          assert.equal(stage.kind, kind)
+          near(stage.wall_fraction, Math.min(1, source.wall_s / 100), `${method}/${stage.stage}: recomputed wall_fraction`)
+          assert.equal(stage.mean_gpu_util, source.mean_gpu_util)
+          assert.deepEqual([...stage.methods].sort(), methods.filter(m => actsOn(m, kind)).sort(), `${method}/${stage.stage}: methods`)
+        })
       }
+    })
+  }
+  function rejected(label, packet, raw) {
+    check(`CLI bounds: ${label} exits 1 without output`, () => {
+      const { result, output } = runBounds(packet, raw)
+      assert.equal(result.status, 1, result.stderr)
+      assert.ok(!fs.existsSync(output), 'output written for invalid input')
     })
   }
   const stage = (name, wall_s, kind) => ({ stage: name, wall_s, gpu_s: null, wall_fraction: 1, mean_gpu_util: 0.125,
     ...(kind === undefined ? {} : { kind }) })
-  bounds('Amdahl compute 0.6, transfer 0.2, serial and unmeasured 0.2',
-    [stage('arithmetic', 60, 'compute'), stage('movement', 20, 'transfer'), stage('wait', 10, 'other')], 0.6, 0.2)
+  const mixed = [stage('arithmetic', 60, 'compute'), stage('movement', 20, 'transfer'), stage('wait', 10, 'other')]
+  bounds('Amdahl compute 0.6, transfer 0.2, serial and unmeasured 0.2', mixed, 0.6, 0.2)
   bounds('explicit kind overrides conflicting names',
     [stage('compute', 20, 'transfer'), stage('h2d', 60, 'compute'), stage('kernel copy', 10, 'other')], 0.6, 0.2)
-  for (const token of ['compute', 'kernel', 'kernels', 'inference', 'training', 'forward', 'backward']) {
+  for (const token of COMPUTE_TOKENS) {
     bounds(`legacy compute token ${token}`, [stage(`phase_${token.toUpperCase()}-end`, 60)], 0.6, 0)
   }
-  for (const token of ['transfer', 'transfers', 'h2d', 'd2h', 'htod', 'dtoh', 'copy', 'memcpy', 'upload', 'download']) {
+  for (const token of TRANSFER_TOKENS) {
     bounds(`legacy transfer token ${token} wins over compute`, [stage(`compute.${token.toUpperCase()}`, 60)], 0, 0.6)
   }
-  bounds('substrings do not classify; other remains serial', [stage('precompute copycat', 90)], 0, 0)
-  bounds('small actionable fractions make every method infeasible',
-    [stage('compute', 1), stage('transfer', 1), stage('wait', 98)], 0.01, 0.01)
-  bounds('one GPU makes multi-GPU infeasible', [stage('compute', 90)], 0.9, 0, 1)
-  bounds('zero GPUs caps multi-GPU factor at one', [stage('compute', 90)], 0.9, 0, 0)
-  bounds('legacy missing GPU count defaults to one', [stage('compute', 90)], 0.9, 0, null)
-  for (const [label, util] of [['100% utilisation gives same-GPU bound 1', 1],
-    ['25% utilisation raises same-GPU cap', 0.25], ['missing utilisation gives conservative cap', null],
-    ['zero utilisation respects fixed caps', 0]]) {
-    bounds(label, [ { ...stage('compute', 80), mean_gpu_util: util }, stage('transfer', 20)], 0.8, 0.2, 4, util)
-  }
-  bounds('compute utilisation is an arithmetic mean',
-    [{ ...stage('compute', 60), mean_gpu_util: 0.125 },
-      { ...stage('kernels', 20), mean_gpu_util: 0.375 }, stage('transfer', 20)], 0.8, 0.2, 4, 0.25)
-  bounds('one missing compute utilisation forces conservative cap',
-    [stage('compute', 60), { ...stage('kernels', 20), mean_gpu_util: null }, stage('transfer', 20)], 0.8, 0.2, 4, null)
-  bounds('multi-GPU factor follows GPU count', [stage('compute', 90)], 0.9, 0, 7)
+  bounds('substrings do not classify; other stage still lists whole-workload methods', [stage('precompute copycat', 90)], 0, 0)
   bounds('actionable fraction caps at one', [stage('compute', 120)], 1, 0)
+  // Whole-workload factor comes only from the concurrency calibration.
+  for (const [label, concurrency] of [['missing concurrency key', OMIT], ['null concurrency', null],
+    ['null factor', calibration(null, true)], ['factor below one', calibration(0.8, true)],
+    ['factor exactly one', calibration(1)], ['factor 1.04 just infeasible', calibration(1.04)],
+    ['factor 1.05 exactly feasible', calibration(1.05)], ['factor 2.5 below both caps', calibration(2.5, true)],
+    ['factor 6 between caps', calibration(6)], ['factor 12 capped', calibration(12, true)]]) {
+    bounds(`whole workload, ${label}`, mixed, 0.6, 0.2, { concurrency })
+  }
+  bounds('stage utilisation never sets a factor',
+    [{ ...stage('compute', 80), mean_gpu_util: 0.05 }, { ...stage('transfer', 20), mean_gpu_util: null }], 0.8, 0.2, { concurrency: OMIT })
+  // Pipelining feasibility threshold: 1 / (1 - p/2) >= 1.05 iff p >= 2/21.
+  bounds('pipelining p=0.1 feasible', [stage('h2d', 10), stage('wait', 90)], 0, 0.1)
+  bounds('pipelining p=0.09 infeasible', [stage('h2d', 9), stage('wait', 91)], 0, 0.09)
+  // Multi-GPU per GPU-second never exceeds 1.
+  for (const gpus of [1, 2, 4, 8]) for (const p of [0, 0.25, 0.5, 0.9, 1]) {
+    bounds(`multi-GPU infeasible at p=${p}, gpu_count=${gpus}`,
+      [stage('kernels', p * 100), stage('wait', 100 - p * 100)], p, 0, { gpuCount: gpus })
+  }
+  bounds('zero GPUs uses k=1', [stage('compute', 90)], 0.9, 0, { gpuCount: 0 })
+  bounds('legacy missing GPU count defaults to one', [stage('compute', 90)], 0.9, 0, { gpuCount: null })
+  bounds('multi-GPU factor follows GPU count', [stage('compute', 90)], 0.9, 0, { gpuCount: 7 })
+  for (const [label, concurrency] of [['numeric concurrency', 5], ['string concurrency', 'x'],
+    ['array concurrency', []], ['boolean concurrency', true], ['string factor', calibration('2')],
+    ['boolean factor', calibration(true)]]) {
+    rejected(label, packetOf(mixed, 4, concurrency))
+  }
+  for (const constant of ['NaN', 'Infinity', '-Infinity']) {
+    rejected(`nonfinite factor ${constant}`, null,
+      JSON.stringify(packetOf(mixed, 4, calibration(1234.5))).replace('"factor":1234.5}', `"factor":${constant}}`))
+  }
 }
 
 async function main() {
@@ -653,6 +818,13 @@ async function main() {
     })
     const emptyTelemetry = await runCase('empty-gpu-util', { gpuUtil: [] }, 'profile', 'numeric')
     profileFacts('empty-gpu-util', emptyTelemetry, 0.95)
+    // Passing profile gate: the concurrency probe runs and can never fail the stage.
+    for (const [mode, extra] of [['real'], ['valid'], ['valid-null'], ['timeout', { profileBudget: 2 }], ['rc'], ['missing'],
+      ['invalid-json'], ['invalid-extra-key'], ['invalid-batch-order'], ['invalid-nonfinite'], ['invalid-singles']]) {
+      const name = `concurrency-${mode}`
+      const run = await runCase(name, { concurrency: mode, ...extra })
+      profileFacts(name, run, 0.95)
+    }
 
   } catch (error) {
     failures++

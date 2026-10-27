@@ -284,6 +284,21 @@ def main():
             check("reject malformed v1 " + key,
                   lambda k=key, v=value: rejected(invalid, facts=FACTS["intake"],
                                                  v1={k: v}))
+        # SCHEMAS.md profile facts: optional `headroom`, a finite positive ratio or null.
+        headroom = root / "headroom"
+        for value in (2.2, 3, 1, None):
+            check("accept profile headroom=" + repr(value),
+                  lambda v=value: accepted(headroom, "profile",
+                                           facts=dict(FACTS["profile"], headroom=v)))
+        check("accept profile without optional headroom",
+              lambda: accepted(headroom, "profile", facts=FACTS["profile"]))
+        for value in (math.nan, math.inf, -math.inf, True, "2.2", [2.2], {"factor": 2.2}):
+            check("reject profile headroom=" + repr(value),
+                  lambda v=value: rejected(invalid, stage="profile",
+                                           facts=dict(FACTS["profile"], headroom=v)))
+        check("reject headroom on a non-profile stage",
+              lambda: rejected(invalid, stage="reproduce",
+                               facts=dict(FACTS["reproduce"], headroom=2.2)))
         check("reject unknown stage", lambda: rejected(
             invalid, stage=SENTINEL, facts=FACTS["intake"]))
         check("reject unknown status", lambda: rejected(
