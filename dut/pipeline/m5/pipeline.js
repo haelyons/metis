@@ -183,6 +183,8 @@ Gate: found, at least one independent anchor, available required data, permitted
   }
   const harnessRules = 'Scope: setup.sh builds and checks only the baseline. The pipeline owns profiling and profiler installation; do not write profile.sh or install profiling tools. A repair must change only the failing script and stay within its scope. Run the published build and binary and read measurements from its OUTPUT. run_command.sh is the canonical measured command and complete environment, including working directory, arguments, CUDA_VISIBLE_DEVICES and GPU count. run_anchors.sh must invoke bash harness/run_command.sh without overriding its environment or duplicating the workload command; parse its saved output for anchor measurements. The fixed profiler invokes that identical file with bash from the same working directory. Keep output paths stable and preserve logs. Every later run script must preserve the published configuration. Validate printed configuration against the actual command and environment. Preserve consistency in repairs; read the other harness scripts while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
   let boxProbe
+  let harnessSource
+  const writeHarnessSource = () => writeFileSync(path.join(C, 'harness_source.json'), JSON.stringify(harnessSource, null, 2) + '\n')
   const boxProbePrompt = () => `Box probe (collected by the pipeline before harness generation):
 ${JSON.stringify(boxProbe, null, 2)}
 Use the probe's discovered paths and versions. Accept either a complete CUDA toolkit root containing bin/nvcc, include/cuda_runtime.h and lib64/libcudart.so, or the distro layout with /usr/bin/nvcc, /usr/include/cuda_runtime.h and libcudart.so under /usr/lib/x86_64-linux-gnu. Have the scripts check all three selected paths with ls on the box. Prefer a complete toolkit root when both layouts exist; otherwise accept the complete distro layout without requiring /usr/lib64/libcudart.so. Use the same selected compiler, include and library paths in every script, including repairs. For a complete root, pass it explicitly via CUDAToolkit_ROOT or -DCMAKE_CUDA_COMPILER=<root>/bin/nvcc and prepend <root>/bin to PATH. For the distro layout, use /usr/bin/nvcc with its distro include and library paths explicitly; do not treat /usr as a toolkit root requiring lib64. Never rely on /usr/bin/nvcc when a complete toolkit root exists. Never hard-code a toolkit path the probe did not find, even if the brief suggests one. If a required tool is missing, install it with apt only from sources the probe lists; do not add repositories or assume a package exists. Commented source lines are not enabled repositories. If apt cannot supply it, use pip for cmake only; otherwise fail with a clear message.`
@@ -219,6 +221,10 @@ ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
       { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry: 1 })
     if (repair == null) return result
+    if (harnessSource) {
+      harnessSource.files[name].modified = true
+      writeHarnessSource()
+    }
     const uploaded = await uploadHarness([name], destination, executionTimeout('setup'))
     if (uploaded.error || uploaded.rc !== 0) return { ...uploaded, error: uploaded.error || 'infra' }
     return boxCommand(operation, command, destination, timeout)
@@ -256,8 +262,22 @@ Create output directories, preserve logs, and exit nonzero on failure. Read all 
 Return a short completion acknowledgement; the pipeline reads the scripts itself.`
     try {
       mkdirSync(harnessDirectory, { recursive: true })
-      const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
-      if (reply == null) return failure(facts, 'parse')
+      if (input.harness_from != null) {
+        if (typeof input.harness_from !== 'string' || !input.harness_from.trim()) return failure(facts, 'parse')
+        const source = path.resolve(input.harness_from)
+        const names = ['setup.sh', 'run_anchors.sh', 'run_command.sh',
+          ...(existsSync(path.join(source, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])]
+        const scripts = names.map(name => [name, readFileSync(path.join(source, name))])
+        harnessSource = { source, files: {} }
+        for (const [name, bytes] of scripts) {
+          writeFileSync(path.join(harnessDirectory, name), bytes)
+          harnessSource.files[name] = { sha256: createHash('sha256').update(bytes).digest('hex'), modified: false }
+        }
+        writeHarnessSource()
+      } else {
+        const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
+        if (reply == null) return failure(facts, 'parse')
+      }
       const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'run_command.sh',
         ...(existsSync(path.join(harnessDirectory, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])], destination, setupTimeout)
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
