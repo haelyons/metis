@@ -1,0 +1,24 @@
+[
+  {
+    "id": "mc-bs-reserve",
+    "quantity": "Average reserve: mean confidence-width / absolute MC-minus-BS error",
+    "published_value": 1.0,
+    "tolerance": 0,
+    "comparison": ">",
+    "source": {
+      "citation": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L426-L486",
+      "evidence": "Brief transcribes upstream published acceptance predicate sumReserve > 1.0f; independent NVIDIA source, not an intake-generated measurement. Direct source retrieval unavailable."
+    }
+  },
+  {
+    "id": "sample-pass",
+    "quantity": "Final verdict: 1 for Test passed; 0 for Test failed!",
+    "published_value": 1,
+    "tolerance": 0,
+    "comparison": "==",
+    "source": {
+      "citation": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L485-L486",
+      "evidence": "Brief transcribes upstream Test passed/Test failed predicate and corresponding exit status. Numeric verdict encoding supplied by brief. Same criterion as mc-bs-reserve, not a second independent experiment; direct source retrieval unavailable."
+    }
+  }
+]

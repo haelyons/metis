@@ -1,0 +1,308 @@
+{
+  "outputs_stochastic": true,
+  "predictions": [
+    {
+      "method": "multi-GPU",
+      "expected_speedup_interval": {
+        "low": 1.05,
+        "high": 1.35
+      },
+      "outcome_vs_compute_points": [
+        {
+          "compute_budget": 24,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated outcome-versus-compute curve. Same 1048576 options and 262144 paths per option at every budget."
+          },
+          "uncertainty": {
+            "status": "prospective assumption; no numerical outcome forecast supported",
+            "missing_evidence": [
+              "paired-seed baseline variability",
+              "multi-GPU results",
+              "process-wall runtime distribution"
+            ],
+            "budget_rule": "Per-execution allocated GPU-second cap, per arm; timeout is censored failure, never a reduced workload or an outcome estimate."
+          }
+        },
+        {
+          "compute_budget": 48,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated outcome-versus-compute curve. Same 1048576 options and 262144 paths per option at every budget."
+          },
+          "uncertainty": {
+            "status": "prospective assumption; no numerical outcome forecast supported",
+            "missing_evidence": [
+              "paired-seed baseline variability",
+              "multi-GPU results",
+              "process-wall runtime distribution"
+            ],
+            "budget_rule": "Per-execution allocated GPU-second cap, per arm; timeout is censored failure, never a reduced workload or an outcome estimate."
+          }
+        },
+        {
+          "compute_budget": 96,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated outcome-versus-compute curve. Same 1048576 options and 262144 paths per option at every budget."
+          },
+          "uncertainty": {
+            "status": "prospective assumption; no numerical outcome forecast supported",
+            "missing_evidence": [
+              "paired-seed baseline variability",
+              "multi-GPU results",
+              "process-wall runtime distribution"
+            ],
+            "budget_rule": "Per-execution allocated GPU-second cap, per arm; timeout is censored failure, never a reduced workload or an outcome estimate."
+          }
+        }
+      ],
+      "interval_basis": {
+        "status": "prospective assumption, not measured gain",
+        "profile_source": "profile-packet.json",
+        "p": 0.3575907905024089,
+        "k": 8,
+        "amdahl_bound": 1.4553751595622577,
+        "profile_wall_s": 2.5383444180000083,
+        "kernel_wall_s": 0.907688587,
+        "transfer_wall_s": 0.001495279,
+        "nonactionable_fraction": 0.6424092094975911,
+        "assumed_effective_kernel_factor": [
+          4,
+          8
+        ],
+        "assumed_added_overhead_baseline_wall_fraction": [
+          0.035,
+          0.137
+        ],
+        "explanation": "Nominal effective kernel factors 4 to 8 and added overhead approximately 0.035 to 0.137 of baseline wall imply approximately 1.05 to 1.39 speedup; upper endpoint reduced to 1.35 for timing-scope uncertainty. Include extra host launch, H2D/D2H transfer, device synchronization, partitioning and result merge overhead. Host/API time remains serial; no utilization inferred from missing telemetry. Profile GPU count is available hardware, not proof baseline used eight GPUs. Profile scope and representative-scale provenance unavailable; transfer to selected process-wall scope is an explicit assumption."
+      }
+    }
+  ],
+  "infeasible_methods": [
+    {
+      "method": "data-parallel over inputs",
+      "reason": "Bound 1.0 < 1.05; missing utilization forces k=1 despite kernel fraction 0.3575907905024089."
+    },
+    {
+      "method": "batching",
+      "reason": "Bound 1.0 < 1.05; missing utilization forces k=1; transfer fraction only 0.0005890764820552398."
+    },
+    {
+      "method": "ensembles",
+      "reason": "Bound 1.0 < 1.05; missing utilization forces k=1; no supported reduction of fixed scientific work."
+    },
+    {
+      "method": "pipelining",
+      "reason": "Bound 1.0 < 1.05; missing utilization forces k=1; transfer fraction only 0.0005890764820552398."
+    }
+  ],
+  "equivalence_metrics": [
+    {
+      "name": "mean_normalized_call_price",
+      "tolerance": {
+        "abs": 0.0008668070054853656
+      },
+      "source": {
+        "requirements": "intake/brief.md and intake/data.json: European call, V=0.10, T<=5, 262144 paths per option; intake/benchmark.json defines discounted Monte Carlo price and Black-Scholes reference.",
+        "definition": "For each seed, arithmetic mean across representative options of discounted Monte Carlo call price divided by its stock price S. Paired difference is method minus baseline.",
+        "baseline_variability_derivation": "Under independent Black-Scholes paths, discounted terminal stock / S has variance exp(V^2*T)-1. Call payoff is 1-Lipschitz, so its variance is no larger. Per-option baseline standard-error upper bound is sqrt(expm1(0.10^2*5)/262144). The same conservative bound applies to the mean across options even with shared streams. Absolute scientific margin is 1.96 times this theoretical baseline standard error, sealed as the maximum allowable median paired shift.",
+        "baseline_standard_error_upper_bound": 0.000442248472186411,
+        "status": "Analytic baseline Monte Carlo uncertainty bound, not measured variability or a published L1 tolerance. Scientific assumption: price shifts below one conservative baseline 95% Monte Carlo error width are negligible. IID path approximation and financial model must hold; violations invalidate equivalence claim."
+      }
+    }
+  ],
+  "paired_seed_tests": {
+    "kind": "paired_median",
+    "seeds": [
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007,
+      1008,
+      1009,
+      1010,
+      1011,
+      1012,
+      1013,
+      1014,
+      1015,
+      1016,
+      1017,
+      1018,
+      1019,
+      1020,
+      1021,
+      1022,
+      1023,
+      1024,
+      1025,
+      1026,
+      1027,
+      1028,
+      1029,
+      1030,
+      1031,
+      1032
+    ],
+    "pairing": "Keep host srand(123) fixed. Each listed integer identifies an independent Monte Carlo replicate. Baseline and method must use identical logical option/path random-stream mapping for each seed, independent of GPU assignment. Compare normalized-price paired differences across seeds.",
+    "implementation_prerequisite": "Upstream provides no seed CLI and seeds depend on block/device geometry. Future evaluation adapter must expose listed seeds and stable logical stream mapping identically in both arms and extract per-option price/S. Seed mapping and extraction must be recorded before executing any pair. No such capability is evidenced now; if unavailable, report protocol unevaluable rather than substitute repeated fixed-seed runs."
+  },
+  "sample_sizes": {
+    "inputs": 1,
+    "seeds": 32,
+    "power_analysis": {
+      "target_power": 0.8,
+      "assumed_true_paired_median_shift": 0,
+      "paired_difference_model": "Independent seed pairs, approximately normal centered paired differences; SD <= sqrt(2) times analytic baseline standard-error bound. Conservative maximum covariance across options allowed. This distributional assumption is not empirically established.",
+      "seed_pairs": 32,
+      "metric_count": 1,
+      "equivalence_order_indices_1_based": [
+        10,
+        23
+      ],
+      "alpha": 0.05,
+      "conservative_power_lower_bound_under_assumed_model": 0.999642816796134,
+      "calculation": "For q=P(D >= margin)=P(D <= -margin) under stated normal SD bound, power >= 1-2*P(Binomial(32,q)>=k). Powered for equivalence at zero shift under stated assumptions only; no distribution-free power guarantee or measured variance claim."
+    }
+  },
+  "confidence_rule": {
+    "performance": {
+      "kind": "paired_median",
+      "confidence": 0.95
+    },
+    "equivalence": {
+      "kind": "paired_median",
+      "confidence": 0.95
+    }
+  },
+  "confidence_decision_details": {
+    "equivalence_alpha": "1 - confidence_rule.equivalence.confidence = 0.05",
+    "equivalence": "Exact two-sided binomial order-statistic interval for median paired differences; Bonferroni alpha/metric_count across metrics. Require entire confidence interval strictly inside [-absolute_margin,+absolute_margin]. With 32 seeds and one metric use order statistics 10 and 23. Failure to reject a difference is not equivalence.",
+    "performance": "Exact one-sided 95% binomial order-statistic lower bound for median paired baseline_wall/method_wall ratios. With 11 timing pairs use third-smallest ratio (binomial lower tail 67/2048). Require lower bound > minimum_worthwhile_gain and all scientific checks passing. Calculate independently per budget; no selection of best budget, and successful claim requires every sealed budget to pass.",
+    "missing_or_timeout": "Any missing seed, metric, failed execution, or timeout prevents positive equivalence/performance decision. Never drop unsuccessful pairs or extrapolate censored times."
+  },
+  "hardware_cost_basis": {
+    "baseline_gpus": 1,
+    "method_gpus": 8,
+    "budget_unit": "gpu_s",
+    "accounting": "Allocated visible GPU count times process-wall seconds, including idle allocations. Each compute budget caps one execution in each arm; total study cost sums all seeds, timing pairs and warmups separately. Wall speedup and GPU-second efficiency must both be reported; eight-GPU method is not assumed cost-efficient.",
+    "hardware_pin": "Same eight-GPU host, same GPU model, driver, toolkit and libc across arms; baseline exposes device 0, method exposes devices 0 through 7. Record exact versions/model/grid before evaluation; intake supplies no actual hardware identity. No host substitution or geometry tuning."
+  },
+  "timing_scope": {
+    "kind": "process_wall",
+    "gpu_synchronization": "adapter",
+    "description": "Elapsed process launch through successful process completion, including preprocessing, allocation, RNG initialization, all GPU launches, H2D and D2H transfers, waits, method partitioning and result merge, CPU result finalization and validation. Adapter ensures all devices completed before ending clock. Compilation excluded. Printed streamed Total time (ms.) retained as secondary diagnostic; its narrower scope excludes allocation/RNG/finalization and is not substituted for process-wall score."
+  },
+  "minimum_worthwhile_gain": 1.05,
+  "evaluation_inputs": {
+    "ids": [
+      "mc-representative-1048576x262144-host123"
+    ],
+    "generator_commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "generator_tag": "v12.8",
+    "specification": {
+      "options": 1048576,
+      "paths_per_option": 262144,
+      "host_seed": 123,
+      "S_range": [
+        5,
+        50
+      ],
+      "X_range": [
+        10,
+        25
+      ],
+      "T_range": [
+        1,
+        5
+      ],
+      "R": 0.06,
+      "V": 0.1,
+      "precision": "float; DOUBLE_PRECISION disabled",
+      "scaling": "strong",
+      "baseline_method": "streamed"
+    },
+    "identity_policy": "Same full generated option arrays in both arms; persist hashes and libc version before pairs. Hash unavailable at seal because generator has not been executed. No scale search, path doubling, dataset substitution, or GPU-specific option count adjustment."
+  },
+  "splits": {
+    "development": "No evaluation input or evaluation seed may be used for tuning. Supplied aggregate profile is the sole performance-design evidence.",
+    "held_out_inputs": [
+      "mc-representative-1048576x262144-host123"
+    ],
+    "held_out_seeds": [
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007,
+      1008,
+      1009,
+      1010,
+      1011,
+      1012,
+      1013,
+      1014,
+      1015,
+      1016,
+      1017,
+      1018,
+      1019,
+      1020,
+      1021,
+      1022,
+      1023,
+      1024,
+      1025,
+      1026,
+      1027,
+      1028,
+      1029,
+      1030,
+      1031,
+      1032
+    ],
+    "training": "Not applicable: fixed generated numerical benchmark; no learned model.",
+    "anchor_validation": {
+      "options": 8192,
+      "paths_per_option": 262144,
+      "host_seed": 123,
+      "role": "Separate published acceptance check; excluded from performance and equivalence sample count."
+    }
+  },
+  "compute_budgets": [
+    24,
+    48,
+    96
+  ],
+  "repetitions": 11,
+  "warmup": 1,
+  "warmup_protocol": "One complete untimed fixed-work execution per arm before timing each budget; host seed 123 and Monte Carlo seed 999. Warmup cost recorded separately; no adaptive repetition or warmup. Each of 11 timing pairs uses seed 1001 identically in both arms; correctness equivalence uses all 32 independent listed seeds, separately from repeated timing.",
+  "scheduling_order": {
+    "kind": "randomized_pairs",
+    "seed": 271828,
+    "protocol": "For each budget in ascending order, generate arm order by successive unbiased bits from Python random.Random(271828), timing pairs first then correctness seed pairs in ascending seed order. Execute paired arms sequentially, no concurrent workloads; retain pair identity and all failures. No order adaptation."
+  },
+  "equal_outcome_target": {
+    "not_applicable": true,
+    "reason": "Fixed-work option-pricing benchmark has no calibrated outcome-versus-compute curve. Every arm must price identical options with identical paths per option and satisfy statistical price equivalence plus published reserve acceptance."
+  },
+  "scientific_acceptance": {
+    "reserve": "Unrounded Average reserve > 1.0 in both arms for anchor and representative cases; use final verdict at printed boundary. This is an acceptance predicate, not a zero equivalence margin.",
+    "verdict": "Both arms report Test passed and successful process exit. Binary verdict is a validity gate, not stochastic exact equivalence.",
+    "l1": "Record L1 norm diagnostically; supplied evidence has no numeric L1 target, so none imposed.",
+    "no_exact_stochastic_equivalence": true
+  },
+  "limitations": [
+    "No empirical baseline outcome variability or method outputs supplied; positive margin and power use explicit analytic Monte Carlo assumptions.",
+    "Profile missing utilization, stage start times, clock-scope provenance and representative-scale confirmation.",
+    "Seed control, stable stream mapping and per-option normalized output extraction are unimplemented prerequisites, not claimed existing capabilities.",
+    "Budgets are prospective per-execution caps, not runtime forecasts; cumulative completion within intake stage budgets is unverified. Respect intake stage caps and report incomplete evaluation if exhausted; never reduce sample size or fixed workload."
+  ],
+  "seal_policy": "Prospective protocol; no method code exists or was inspected. Any scope, margin, seed, sample size, workload, hardware allocation or decision-rule change requires a new sealed run."
+}
