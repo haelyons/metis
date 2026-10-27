@@ -1,0 +1,144 @@
+{
+  "availability": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "kind": "published input",
+      "availability": "available",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "download_url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "verification": "Public bytes retrieved and SHA-256 computed during intake.",
+      "access_instructions": "Retrieve pinned public URL; PDB must be in driver working directory. Force fields also ship in OpenMM 8.2.0 package.",
+      "licence_source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "separate_input_licence": null,
+      "licence_reason": "No separate per-input licence verified; see repository licences and brief local-use permission."
+    },
+    {
+      "name": "amber99sb.xml",
+      "kind": "published input",
+      "availability": "available",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "download_url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "verification": "Public bytes retrieved and SHA-256 computed during intake.",
+      "access_instructions": "Retrieve pinned public URL; PDB must be in driver working directory. Force fields also ship in OpenMM 8.2.0 package.",
+      "licence_source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "separate_input_licence": null,
+      "licence_reason": "No separate per-input licence verified; see repository licences and brief local-use permission."
+    },
+    {
+      "name": "tip3p.xml",
+      "kind": "published input",
+      "availability": "available",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "download_url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "verification": "Public bytes retrieved and SHA-256 computed during intake.",
+      "access_instructions": "Retrieve pinned public URL; PDB must be in driver working directory. Force fields also ship in OpenMM 8.2.0 package.",
+      "licence_source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "separate_input_licence": null,
+      "licence_reason": "No separate per-input licence verified; see repository licences and brief local-use permission."
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities",
+      "generation": "context.setVelocitiesToTemperature(300 * unit.kelvin, seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md"
+    },
+    {
+      "name": "Stochastic integrator random stream",
+      "generation": "integrator.setRandomNumberSeed(seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md"
+    }
+  ],
+  "missing_required_data": [],
+  "expected_scientific_outputs": {
+    "availability": "unavailable",
+    "reason": "No published per-replica energies or energy trajectories for supplied fixed-work seeds. These are generated outputs, not missing required inputs."
+  },
+  "splits": null,
+  "splits_reason": "Molecular dynamics workload; no training/test split.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "resources": {
+    "data_GiB": 0.002126014791429043,
+    "data_bytes": 2282791,
+    "data_scope": "PDB plus two force-field XML source files; excludes installed dependencies.",
+    "peak_working_set_GiB": null,
+    "data_plus_peak_working_set_GiB": null,
+    "reason": "No published or measured host/device peak memory for sequential or eight-process execution. Package download sizes do not establish working set.",
+    "size": "unknown"
+  },
+  "licences": {
+    "status": "permitted",
+    "intended_use": "Local scientific execution and modification.",
+    "components": [
+      {
+        "component": "OpenMM API, Reference, CPU",
+        "licence": "MIT",
+        "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "CUDA and OpenCL platforms",
+        "licence": "GNU LGPL",
+        "version": null,
+        "version_reason": "Licenses.txt names LGPL without version in its summary; not resolved here.",
+        "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "PDB and force-field XML inputs",
+        "licence": "Distributed in OpenMM repository; no separate input-specific licence verified.",
+        "source": [
+          "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+          "brief.md"
+        ],
+        "intended_use_permission": "Brief explicitly permits local running and modification; repository distribution supports supplied benchmark use."
+      },
+      {
+        "component": "Brief sequential driver",
+        "licence": null,
+        "reason": "Brief supplies code for local benchmark use, but no separate redistribution licence.",
+        "source": "brief.md"
+      }
+    ],
+    "redistribution_permission": null,
+    "redistribution_reason": "Intake establishes intended local execution only; no blanket redistribution assessment."
+  },
+  "authentication_required": false
+}

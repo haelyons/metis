@@ -1,0 +1,106 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "tag": "8.2.0",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "pin_source": "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0",
+  "build_commands": [
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0"
+  ],
+  "build_commands_source": [
+    "brief.md",
+    "https://pypi.org/project/openmm/8.2.0/",
+    "https://pypi.org/project/OpenMM-CUDA-12/8.2.0/"
+  ],
+  "build_note": "Published wheel installation; no source build command supplied or run.",
+  "installation_check_command": "python3 -m openmm.testInstallation",
+  "installation_check_source": "brief.md",
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "run_commands_source": "brief.md",
+  "run_working_directory": "Directory containing 5dfr_solv-cube_equil.pdb and dhfr_ensemble.py transcribed exactly from brief.md.",
+  "driver": {
+    "source": "brief.md",
+    "availability": "Complete code block supplied in copied brief; no independent public immutable driver URL.",
+    "sha256": null,
+    "reason": "Driver is embedded in brief; whole brief hash recorded in benchmark.json."
+  },
+  "public_upstream_command": "python benchmark.py --platform=CUDA --test=pme --seconds=60",
+  "public_upstream_command_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+  "public_upstream_script": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+  "public_upstream_script_sha256": "942d21b57d50000499bda4df222cfbd146d32b5da7a5356311f0da3fda4ce25a",
+  "published_configuration": {
+    "fixed_work_brief": {
+      "scale": {
+        "gpu_count": 1,
+        "replicas": 8,
+        "steps_per_replica": 25000,
+        "ps_per_replica": 100,
+        "total_simulated_ns": 0.8,
+        "energy_sample_interval_steps": 250,
+        "energy_samples_per_replica": 100,
+        "seed0": 1000,
+        "seeds": [
+          1000,
+          1001,
+          1002,
+          1003,
+          1004,
+          1005,
+          1006,
+          1007
+        ],
+        "source": "brief.md",
+        "scale_search": false
+      },
+      "model": {
+        "system": "DHFR in explicit water",
+        "atoms": 23558,
+        "forcefields": [
+          "amber99sb.xml",
+          "tip3p.xml"
+        ],
+        "nonbonded_method": "PME",
+        "cutoff_nm": 0.9,
+        "constraints": "HBonds",
+        "hydrogen_mass_amu": 1.5,
+        "integrator": "LangevinMiddleIntegrator",
+        "temperature_K": 300,
+        "friction_per_ps": 1,
+        "step_ps": 0.004,
+        "constraint_tolerance": 1e-05,
+        "platform": "CUDA",
+        "precision": "single",
+        "DeterministicForces": true,
+        "sources": [
+          "brief.md",
+          "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+          "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+        ]
+      },
+      "execution": "Sequential replicas in one process, one GPU."
+    },
+    "independent_study": {
+      "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+      "OpenMM": "8.2.0",
+      "Python": "3.12",
+      "CUDA": "12",
+      "workload": "DHFR PME, fixed-time 60 seconds per process",
+      "process_counts": [
+        1,
+        2,
+        4,
+        8
+      ],
+      "tuned_thread_percentage_rule": "200 / number of MPS processes",
+      "fixed_work_ensemble_tested": false
+    }
+  },
+  "dependency_pins": {
+    "openmm": "8.2.0",
+    "OpenMM-CUDA-12": "8.2.0",
+    "transitive_dependencies": null,
+    "reason": "Published pip command leaves NVIDIA dependencies and numpy unpinned."
+  },
+  "executed": false
+}

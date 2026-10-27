@@ -1,0 +1,175 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "energy_sample_interval_steps": 250,
+    "energy_samples_per_replica": 100,
+    "seed0": 1000,
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "source": "brief.md",
+    "scale_search": false
+  },
+  "inputs": {
+    "files": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "initial_coordinates": "Published equilibrated PDB; no extra equilibration or minimization in supplied driver.",
+    "model": {
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "forcefields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_ps": 0.004,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "precision": "single",
+      "DeterministicForces": true,
+      "sources": [
+        "brief.md",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+        "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+      ]
+    },
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "source": "brief.md"
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "file_source": "brief.md",
+    "json_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "per_replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout_fields": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_series": {
+      "sampling_interval_steps": 250,
+      "samples_per_replica": 100,
+      "persisted_by_supplied_driver": false,
+      "reason": "Driver collects energies then writes only mean and final values. Full-series identity requires retaining samples in later implementation; no such implementation run during intake."
+    }
+  },
+  "timing_scope": {
+    "ensemble": "perf_counter starts before first integrator/context creation; stops after final context and integrator deletion. Includes per-replica context setup/JIT, position and velocity initialization, integration and energy reads.",
+    "per_replica": "Starts after context, positions and velocities initialized; includes integration and energy reads; excludes context creation and deletion.",
+    "excluded": [
+      "Imports",
+      "PDB parsing",
+      "Force-field loading and System construction",
+      "Output JSON writing and printing",
+      "Dependency installation"
+    ],
+    "concurrent_method": "Compare complete eight-replica ensemble elapsed time including every replica context setup, integration, energy sampling, and completion; sum of individual process times is not ensemble wall time.",
+    "concurrent_published_fixed_work_command": null,
+    "concurrent_command_reason": "Brief supplies sequential driver only; independent publication supplies fixed-time MPS process pattern. No published fixed-work MPS ensemble launcher verified."
+  },
+  "scoring_interface": {
+    "primary_metric": "Ensemble time to completion, seconds; lower is better.",
+    "throughput": "aggregate_ns_per_day = 0.8 / total_wall_s * 86400",
+    "speedup": "sequential_total_wall_s / concurrent_total_wall_s",
+    "scientific_outputs": [
+      "Per-replica final potential energy in kJ/mol",
+      "Per-replica mean potential energy over 100 samples in kJ/mol",
+      "Potential energy every 250 steps, when retained"
+    ],
+    "scientific_acceptance": {
+      "published_numeric_tolerance": null,
+      "reason": "No independently published energy acceptance criterion or fixed-work baseline energies. Brief predicts bit-identical series; fallback uses unquantified same-seed sequential run-to-run variation.",
+      "brief_proposed_rule": "Same-seed energy series identical; if not identical, mean-energy difference no greater than sequential same-seed run-to-run variation.",
+      "fallback_threshold": null,
+      "fallback_threshold_reason": "No baseline variability, repetition count, statistic, or numeric threshold supplied."
+    },
+    "performance_acceptance": null,
+    "performance_acceptance_reason": "Brief GPU-specific speedup ranges are predictions, not published acceptance criteria. Published fixed-time throughput reference has no tolerance.",
+    "references_are_acceptance_tests": false
+  },
+  "repeatability": {
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "seed_applies_to": [
+      "Initial velocity generation",
+      "Integrator random stream"
+    ],
+    "controlled_conditions": [
+      "Same GPU model",
+      "Same OpenMM and CUDA software",
+      "Single precision",
+      "DeterministicForces=true",
+      "Same initial coordinates and model",
+      "One GPU"
+    ],
+    "repetition_count": null,
+    "reason": "Brief does not specify full-workload repeat count.",
+    "evidence": [
+      "brief.md",
+      "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+    ],
+    "limitation": "Deterministic forces do not independently establish complete stochastic trajectory equality under MPS. Brief only reports CPU smoke testing, not CUDA reproduction."
+  },
+  "baseline_command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+  "baseline_command_source": "brief.md",
+  "stage_budgets_s": {},
+  "budget_policy": "Use supplied defaults: setup, anchors, profile, method_setup, method_run=1200 s; tests=900 s; evaluate=2400 s. No timing measurements performed.",
+  "runtime_evidence": {
+    "source": "brief.md",
+    "expected_wall_time": "Brief estimates about one minute on H100, a few minutes on slower GPUs.",
+    "verified": false,
+    "reason": "Only CPU smoke run reported; full CUDA workload and context setup time unmeasured."
+  },
+  "scale_policy": "Single fixed ensemble; no scale search, doubling loop, or toy extrapolation.",
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate script paths or commands supplied. JSON structure and cross-file consistency checked without builds or workloads."
+}

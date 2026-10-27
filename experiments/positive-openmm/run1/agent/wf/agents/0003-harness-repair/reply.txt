@@ -1,0 +1,5 @@
+Read intake, setup, sibling scripts. Repair archive failure; check shell syntax without running workload.
+Archive check rejects every symlink, including valid upstream links. Repair: allow links contained within pinned source tree; reject traversal and special files. Keep pin, workload, CUDA selection, sibling scripts unchanged.
+Repaired only `harness/setup.sh`: preserve safe upstream links; reject escaping paths and special files. Pin, configuration, stock image unchanged.
+
+Shell syntax passes. No local workload or box access.

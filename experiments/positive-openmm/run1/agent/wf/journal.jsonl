@@ -1,0 +1,24 @@
+{"ts":"2026-10-27T20:17:18.383Z","type":"phase","t":"intake"}
+{"ts":"2026-10-27T20:17:18.388Z","type":"started","n":1,"label":"intake","role":"ls-writer","model":"codex/default@medium","understudy":"opencode-go/mimo-v2.6-pro","chain":["opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":null,"key":"eca7bc3450d049eab13b48d9ba1ef89ac9a49c241ac94ac0150367f9bf476e38"}
+{"ts":"2026-10-27T20:19:10.979Z","type":"result","n":1,"label":"intake","key":"eca7bc3450d049eab13b48d9ba1ef89ac9a49c241ac94ac0150367f9bf476e38","model":"codex/default@medium","substituted":false,"value":{"found":true,"anchors_count":1,"anchored":false,"data":"available","licence":"permitted","stock_environment":null,"size":"unknown"}}
+{"ts":"2026-10-27T20:19:11.066Z","type":"log","m":"intake: PASS"}
+{"ts":"2026-10-27T20:19:11.067Z","type":"phase","t":"reproduce"}
+{"ts":"2026-10-27T20:19:35.171Z","type":"started","n":2,"label":"harness","role":"ls-writer","model":"codex/default@medium","understudy":"opencode-go/mimo-v2.6-pro","chain":["opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":null,"key":"8a7761354a71d5c55675f71939a00691d87724115d3b1106f34408ebb2b5f87c"}
+{"ts":"2026-10-27T20:21:50.797Z","type":"result","n":2,"label":"harness","key":"8a7761354a71d5c55675f71939a00691d87724115d3b1106f34408ebb2b5f87c","model":"codex/default@medium","substituted":false,"value":"Read intake, write harness scripts, check syntax locally. Pipeline runs builds and workloads.\nIntake pins OpenMM 8.2.0 wheels and sequential eight-replica driver. Reference uses µs/day; adapter will convert measured throughput. Evaluation seal absent from intake; adapter will read supplied seal and input/seed specs at runtime.\nScripts written. Bash syntax checks pass; no builds or workloads run locally. Reviewing output validation and evaluation budget handling before handoff.\nCreated four harness scripts. Bash syntax checks pass. No local builds or workloads run."}
+{"ts":"2026-10-27T20:22:35.746Z","type":"started","n":3,"label":"harness-repair","role":"ls-writer","model":"codex/default@medium","understudy":"opencode-go/mimo-v2.6-pro","chain":["opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":null,"key":"391b9266bafbcff77be4828ff5fe50bd66eca796241f3e2b0eb2e8e8dcb9efc5"}
+{"ts":"2026-10-27T20:23:28.172Z","type":"result","n":3,"label":"harness-repair","key":"391b9266bafbcff77be4828ff5fe50bd66eca796241f3e2b0eb2e8e8dcb9efc5","model":"codex/default@medium","substituted":false,"value":"Read intake, setup, sibling scripts. Repair archive failure; check shell syntax without running workload.\nArchive check rejects every symlink, including valid upstream links. Repair: allow links contained within pinned source tree; reject traversal and special files. Keep pin, workload, CUDA selection, sibling scripts unchanged.\nRepaired only `harness/setup.sh`: preserve safe upstream links; reject escaping paths and special files. Pin, configuration, stock image unchanged.\n\nShell syntax passes. No local workload or box access."}
+{"ts":"2026-10-27T20:26:23.515Z","type":"log","m":"reproduce: PASS"}
+{"ts":"2026-10-27T20:26:23.516Z","type":"phase","t":"profile"}
+{"ts":"2026-10-27T20:44:09.245Z","type":"log","m":"profile: PASS"}
+{"ts":"2026-10-27T20:44:09.246Z","type":"phase","t":"seal"}
+{"ts":"2026-10-27T20:44:09.286Z","type":"started","n":4,"label":"seal","role":"ls-writer","model":"codex/default@medium","understudy":"opencode-go/mimo-v2.6-pro","chain":["opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":null,"key":"9860326713a1bfdd04e9408117201d715c7a8c96535ae1cea6edaf655746110e"}
+{"ts":"2026-10-27T20:46:07.354Z","type":"result","n":4,"label":"seal","key":"9860326713a1bfdd04e9408117201d715c7a8c96535ae1cea6edaf655746110e","model":"codex/default@medium","substituted":false,"value":"I’ll read permitted intake, profile, bounds; write sealed protocol with unsupported forecasts marked explicitly.\nAll five methods fall below 1.05 bound. Protocol records negative result. Baseline energy variability unavailable; statistical margins use explicit baseline-only calibration rule, with no equivalence claim before calibration.\nWrote PREDICTIONS.json. Negative result: five infeasible methods; predictions=[]."}
+{"ts":"2026-10-27T20:46:07.432Z","type":"log","m":"seal: PASS"}
+{"ts":"2026-10-27T20:46:07.433Z","type":"phase","t":"propose"}
+{"ts":"2026-10-27T20:46:07.513Z","type":"log","m":"propose: PASS"}
+{"ts":"2026-10-27T20:46:07.513Z","type":"phase","t":"implement"}
+{"ts":"2026-10-27T20:46:07.589Z","type":"log","m":"implement: SKIPPED"}
+{"ts":"2026-10-27T20:46:07.590Z","type":"phase","t":"evaluate"}
+{"ts":"2026-10-27T20:46:07.664Z","type":"log","m":"evaluate: SKIPPED"}
+{"ts":"2026-10-27T20:46:07.665Z","type":"phase","t":"takeaways"}
+{"ts":"2026-10-27T20:46:07.745Z","type":"log","m":"takeaways: PASS"}
