@@ -36,6 +36,10 @@ function files(directory) {
 }
 const anchors = [{ id: 'first', quantity: 'fixture', source: 'published fixture', published_value: 1, tolerance: 0 },
   { id: 'zero', quantity: 'fixture', source: 'published fixture', published_value: 0, tolerance: { abs: 0 } }]
+// SCHEMAS.md A/intake/: "==" items with null tolerance are references (never pass or fail).
+const references = anchors.map(item => ({ ...item, tolerance: null }))
+const ANCHOR_SETS = { anchors, references, empty: [], mixed: [anchors[1], references[0]] }
+const anchorsFor = config => ANCHOR_SETS[config.anchorSet || 'anchors']
 function protocol(config = {}) {
   const budgets = [2, 4, 8]
   return {
@@ -190,7 +194,7 @@ async function cli(name, stage, config = {}, explicit = true) {
   const method_files = [{ path: 'run_method.sh', sha256: sha(fs.readFileSync(path.join(remote, 'payload/method/run_method.sh'))) }]
   const manifest = { remote_directory: remote, protocol: p, prediction: p.predictions[0],
     box: { price_usd_h: config.noPrice ? 0 : 4, type: 'gpu_8x_a100' }, gpu_count: 8, run_timeout_s: 10,
-    method_files, anchors, input_hashes: hashes }
+    method_files, anchors: anchorsFor(config), input_hashes: hashes }
   writeJSON(path.join(remote, 'evaluation-payload/predictions.json'), p)
   writeJSON(path.join(root, 'manifest.json'), manifest)
   fs.chmodSync(path.join(root, 'manifest.json'), 0o444)
@@ -213,7 +217,7 @@ async function pipeline(name, config = {}) {
   const root = path.join(scratch, 'pipeline-' + name), agent = path.join(root, 'agent'), home = path.join(root, 'home')
   fs.mkdirSync(root, { recursive: true })
   const p = protocol(config)
-  for (const [name, value] of Object.entries({ benchmark: { name: SECRET }, data: { available: true }, anchors,
+  for (const [name, value] of Object.entries({ benchmark: { name: SECRET }, data: { available: true }, anchors: anchorsFor(config),
     baseline: { repo: 'fixture', pin: 'v1', build_commands: ['true'], run_commands: ['true'], published_configuration: { n: 3 } },
     EXECUTION: { representative_scale: { n: 3 }, inputs: ['data/input'], outputs: ['values.json'], timing_scope: p.timing_scope,
       timeout_s: 60, timeouts: { setup_method: 30, run_method: 10, run_tests: 10, evaluate: 60 } },
@@ -277,6 +281,11 @@ fi`)
     assert.ok(rows(path.join(root, 'calls.jsonl')).every(row => ['harness', 'tests', 'implement', 'review'].includes(row.title)))
     assert.equal(records.find(row => row.signature?.stage === 'takeaways')?.signature.status, 'PASS')
   })
+  check(`${name}: stubbed intake record has null anchored`, () => {
+    const intake = records.find(row => row.signature?.stage === 'intake')
+    assert.ok(intake, 'missing intake record')
+    assert.equal(intake.facts.anchored ?? null, null)
+  })
   check(`${name}: no scientific sentinel reaches R/operator`, () => {
     const operator = path.join(root, 'operator')
     assert.ok(files(operator).length > 0)
@@ -286,13 +295,14 @@ fi`)
     }
     assert.ok(files(path.join(agent, 'results')).some(file => fs.readFileSync(file).includes(Buffer.from(SECRET))), 'sentinel never entered scientific results')
   })
-  return { root, record, results: path.join(agent, 'results/evaluate') }
+  return { root, record, records, results: path.join(agent, 'results/evaluate') }
 }
 async function main() {
   try {
     const valid = await cli('anchors-pass', 'validity', {}, false)
     verdict('validity CLI: every anchor passes; --stage optional', valid, 'validity', 'PASS', 0)
     check('validity preserves exact anchor score', () => {
+      assert.deepEqual(valid.verdict.anchors.map(row => row.kind), ['anchor', 'anchor'])
       assert.equal(valid.verdict.anchors_passed, 2)
       assert.equal(valid.verdict.anchors_total, 2)
       assert.equal(valid.verdict.all_passed, true)
@@ -304,6 +314,27 @@ async function main() {
     for (const config of [{ missingAnchor: true }, { partialAnchor: true }]) {
       const r = await cli('anchor-missing-' + Object.keys(config)[0], 'validity', config)
       verdict('missing anchor measurement is VOID', r, 'validity', 'VOID', 2)
+    }
+    // SCHEMAS.md validity: references never fail validity; with no anchors validity passes when
+    // the method arm's anchor protocol exits 0 with a valid measurement file.
+    for (const [name, config, status, code, total] of [
+      ['no-anchors', { anchorSet: 'empty' }, 'PASS', 0, 0],
+      ['no-anchors-no-file', { anchorSet: 'empty', missingAnchor: true }, 'VOID', 2],
+      ['references-off', { anchorSet: 'references', badAnchor: true }, 'PASS', 0, 0],
+      ['references-unmeasured', { anchorSet: 'references', partialAnchor: true }, 'PASS', 0, 0],
+      ['references-no-file', { anchorSet: 'references', missingAnchor: true }, 'VOID', 2],
+      ['mixed-reference-off', { anchorSet: 'mixed', badAnchor: true }, 'PASS', 0, 1],
+      ['mixed-anchor-unmeasured', { anchorSet: 'mixed', partialAnchor: true }, 'VOID', 2],
+    ]) {
+      const r = await cli('validity-' + name, 'validity', config)
+      verdict(`validity CLI: ${name}`, r, 'validity', status, code)
+      if (status === 'PASS') check(`validity CLI: ${name} anchor score counts anchors only`, () => {
+        assert.equal(r.verdict.anchors_total, total)
+        assert.equal(r.verdict.anchors_passed, total)
+        assert.equal(r.verdict.all_passed, true)
+        assert.deepEqual(r.verdict.anchors.map(row => [row.id, row.kind, row.kind === 'reference' ? row.passed : true]),
+          anchorsFor(config).map(item => [item.id, item.tolerance === null ? 'reference' : 'anchor', item.tolerance === null ? null : true]))
+      })
     }
     for (const [name, config, status] of [
       ['exact', {}, 'PASS'], ['within-tolerance', { delta: 0.005 }, 'PASS'], ['outside-tolerance', { delta: 0.02 }, 'FAIL'],
@@ -383,13 +414,28 @@ async function main() {
       ['equivalence-fail', { delta: 0.02 }, 'FAIL', 5, 'numeric'],
       ['cost-fail', { moreGPUs: true }, 'FAIL', 5, 'numeric'],
       ['missing', { missingOutput: true }, 'VOID', 2, 'parse'],
+      ['no-anchors', { anchorSet: 'empty' }, 'PASS', 0, null],
+      ['references-only', { anchorSet: 'references', badAnchor: true }, 'PASS', 0, null],
     ]) {
       const r = await pipeline(name, config)
+      const anchored = anchorsFor(config).some(item => item.tolerance !== null)
       check(`${name}: overall stage verdict`, () => {
         assert.equal(r.record.signature.status, status)
         assert.equal(r.record.signature.exit_code, code)
         if (kind) assert.equal(r.record.signature.error_class, kind)
-        if (config.badAnchor) assert.equal(r.record.signature.exit_kind, 'anchor')
+        if (config.badAnchor && anchored) assert.equal(r.record.signature.exit_kind, 'anchor')
+      })
+      if (!anchored) check(`${name}: no anchors: reproduce passes on stock verification; run_valid null`, () => {
+        const reproduce = r.records.find(row => row.signature?.stage === 'reproduce')
+        assert.equal(reproduce.signature.status, 'PASS')
+        assert.equal(reproduce.facts.stock_verified, true)
+        assert.equal(reproduce.facts.anchors_total, 0)
+        assert.equal(reproduce.signature.run_valid ?? null, null, 'reproduce run_valid')
+        assert.equal(r.record.facts.validity_pass, true)
+        assert.equal(r.record.signature.run_valid ?? null, null, 'evaluate run_valid')
+      })
+      if (config.badAnchor && anchored) check(`${name}: validity failure sets run_valid false`, () => {
+        assert.equal(r.record.signature.run_valid, false)
       })
       check(`${name}: immutable manifest and scorer receipts`, () => {
         const file = path.join(r.root, 'control/evaluate/manifest.json')
@@ -424,7 +470,7 @@ async function main() {
           assert.equal(values.equivalence.status, 'FAIL')
           assert.equal(values.performance.status, 'VOID')
         }
-        if (config.badAnchor) {
+        if (config.badAnchor && anchored) {
           assert.equal(values.validity.status, 'FAIL')
           assert.equal(values.equivalence.status, 'VOID'); assert.equal(values.performance.status, 'VOID')
           for (const key of ['equal_cost', 'speedup_published', 'cost_ratio', 'prediction_ratio', 'curve_points']) assert.equal(r.record.facts[key], null)

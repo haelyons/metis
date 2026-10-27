@@ -160,6 +160,8 @@ def takeaway(directory):
              for line in text.splitlines() if "|" in line]
     allowed = {"true", "false", "null", "none", "unknown", "-", "—", "n/a"}
     allowed.update(FIELDS)
+    # SCHEMAS.md A/intake/: `anchored` is shown among the intake gate flags.
+    allowed.add("anchored")
     for spec in FIELDS.values():
         allowed.update(spec.get("enum", []))
         allowed.update(spec.get("items", {}).get("enum", []))
@@ -204,10 +206,51 @@ def takeaway(directory):
     require("data_unavailable" in text, "failure blocker missing")
 
 
+def takeaway_anchored(text):
+    """Value shown for `anchored` among the intake gate flags (table column or inline)."""
+    blocks, block = [], []
+    for line in text.splitlines():
+        if line.strip().startswith("|"):
+            block.append(line)
+        elif block:
+            blocks.append(block)
+            block = []
+    if block:
+        blocks.append(block)
+    def cells(line):
+        return [cell.strip().strip("`*") for cell in line.strip().strip("|").split("|")]
+    for table in blocks:
+        header = cells(table[0])
+        if "anchored" not in header:
+            continue
+        column = header.index("anchored")
+        for row in map(cells, table[1:]):
+            if "intake" in row and column < len(row):
+                return row[column]
+    match = re.search(r"\banchored\b\W{0,4}(true|false|null)\b", text)
+    return match.group(1) if match else None
+
+
+def anchored_takeaway(directory, value):
+    # SCHEMAS.md A/intake/: OPERATOR_TAKEAWAY.md shows `anchored` among the intake gate flags.
+    directory.mkdir()
+    for stage, facts in FACTS.items():
+        if stage == "intake":
+            facts = dict(facts, anchored=value)
+        accepted(directory, stage, facts=facts)
+    output = directory / "OPERATOR_TAKEAWAY.md"
+    result = run("m5/operator_takeaway.py", directory, "--out", output)
+    require(result.returncode == 0, "takeaway exit " + str(result.returncode))
+    shown = takeaway_anchored(output.read_text())
+    require(shown == json.dumps(value), "anchored shown as " + repr(shown))
+
+
 def main():
     failures = 0
+    checks = 0
     def check(name, operation):
-        nonlocal failures
+        nonlocal failures, checks
+        checks += 1
         try:
             operation()
         except Exception as error:
@@ -299,6 +342,28 @@ def main():
         check("reject headroom on a non-profile stage",
               lambda: rejected(invalid, stage="reproduce",
                                facts=dict(FACTS["reproduce"], headroom=2.2)))
+        # SCHEMAS.md A/intake/: optional intake `anchored` (boolean); null on stub records.
+        anchored = root / "anchored"
+        for value in (True, False, None):
+            check("accept intake anchored=" + repr(value),
+                  lambda v=value: accepted(anchored, "intake",
+                                           facts=dict(FACTS["intake"], anchored=v)))
+        check("accept intake without optional anchored",
+              lambda: accepted(anchored, "intake", facts=FACTS["intake"]))
+        check("accept intake anchored=false with zero anchors_count",
+              lambda: accepted(anchored, "intake",
+                               facts=dict(FACTS["intake"], anchors_count=0, anchored=False)))
+        for value in (1, 0, 1.0, "true", "false", "", [], [True], {"anchored": True},
+                      math.nan, SENTINEL):
+            check("reject intake anchored=" + repr(value),
+                  lambda v=value: rejected(invalid, stage="intake",
+                                           facts=dict(FACTS["intake"], anchored=v)))
+        check("reject anchored on a non-intake stage",
+              lambda: rejected(invalid, stage="reproduce",
+                               facts=dict(FACTS["reproduce"], anchored=True)))
+        for value in (True, False):
+            check("takeaway shows intake anchored=" + repr(value),
+                  lambda v=value: anchored_takeaway(root / ("takeaway-anchored-" + str(v)), v))
         check("reject unknown stage", lambda: rejected(
             invalid, stage=SENTINEL, facts=FACTS["intake"]))
         check("reject unknown status", lambda: rejected(
@@ -309,7 +374,8 @@ def main():
         check("mixed takeaway rows, totals, blockers, no sentinel",
               lambda: takeaway(root / "takeaway"))
 
-    print(str(failures) + " failures" if failures else "all checks passed")
+    print("%d failures (%d checks)" % (failures, checks) if failures
+          else "all checks passed (%d checks)" % checks)
     return 1 if failures else 0
 
 

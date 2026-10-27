@@ -13,7 +13,7 @@ def number(value):
 
 
 def score(anchors, measured):
-    if not isinstance(anchors, list) or not anchors or type(measured) is not dict:
+    if not isinstance(anchors, list) or type(measured) is not dict:
         raise ValueError("invalid inputs")
     rows, ids = [], set()
     for anchor in anchors:
@@ -23,17 +23,26 @@ def score(anchors, measured):
         published = anchor.get("published_value")
         tolerance = anchor.get("tolerance")
         comparison = anchor.get("comparison", "==")
+        reference = comparison == "==" and tolerance is None
         if not isinstance(ident, str) or not ident.strip() or ident in ids or not number(published):
             raise ValueError("invalid anchor")
         ids.add(ident)
-        if comparison == "==":
+        if "tolerance" not in anchor:
+            raise ValueError("invalid tolerance")
+        uncertainty = anchor.get("uncertainty")
+        if uncertainty is not None and (type(uncertainty) is not dict
+                or set(uncertainty) != {"kind", "value"}
+                or uncertainty["kind"] not in ("standard_error", "standard_deviation", "interval_halfwidth")
+                or not number(uncertainty["value"]) or uncertainty["value"] < 0):
+            raise ValueError("invalid uncertainty")
+        if tolerance is not None:
             if number(tolerance):
                 absolute = tolerance
             elif type(tolerance) is dict and set(tolerance) in ({"abs"}, {"rel"}):
                 amount = next(iter(tolerance.values()))
                 if not number(amount) or amount < 0:
                     raise ValueError("invalid tolerance")
-                absolute = amount * abs(published) if "rel" in tolerance else amount
+                absolute = amount * abs(published) if comparison == "==" and "rel" in tolerance else amount
             else:
                 raise ValueError("invalid tolerance")
             if not number(absolute) or absolute < 0:
@@ -47,23 +56,29 @@ def score(anchors, measured):
         elif not number(value):
             reason = "non_numeric"
         elif comparison == "==":
-            error = abs(value - published)
-            if not number(error):
+            difference = value - published
+            if not number(difference):
                 raise ValueError("invalid difference")
-            if error > absolute:
+            if not reference and abs(difference) > absolute:
                 reason = "out_of_tolerance"
         else:
             compare = {">": operator.gt, ">=": operator.ge, "<": operator.lt, "<=": operator.le}
             if not compare[comparison](value, published):
                 reason = "threshold_not_met"
-        row = dict(id=ident, published_value=published, measured_value=value if number(value) else None,
-                   tolerance=tolerance, passed=reason is None)
+        row = dict(id=ident, kind="reference" if reference else "anchor", published_value=published,
+                   measured_value=value if number(value) else None,
+                   tolerance=tolerance, passed=None if reference else reason is None)
+        if "uncertainty" in anchor:
+            row["uncertainty"] = uncertainty
+        if reference:
+            row["difference"] = difference if reason is None else None
         if reason is not None:
             row["reason"] = reason
         rows.append(row)
-    passed = sum(row["passed"] for row in rows)
-    return dict(anchors=rows, anchors_passed=passed, anchors_total=len(rows),
-                all_passed=passed == len(rows))
+    passed = sum(row["passed"] is True for row in rows)
+    total = sum(row["kind"] == "anchor" for row in rows)
+    return dict(anchors=rows, anchors_passed=passed, anchors_total=total,
+                all_passed=passed == total, references_total=len(rows) - total)
 
 
 def main():

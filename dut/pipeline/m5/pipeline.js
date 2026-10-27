@@ -22,7 +22,7 @@ return (async () => {
   input.cwd = A
 
   const fields = {
-    intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size'],
+    intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size', 'anchored'],
     reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid'],
     profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
@@ -36,9 +36,10 @@ return (async () => {
 
   const intakeSchema = {
     type: 'object', additionalProperties: false,
-    required: fields.intake,
+    required: fields.intake.filter(key => key !== 'anchored'),
     properties: {
       found: { type: 'boolean' }, anchors_count: { type: 'integer', minimum: 0 },
+      anchored: { type: 'boolean' },
       data: { enum: ['available', 'partial', 'unavailable', 'unknown'] },
       licence: { enum: ['permitted', 'restricted', 'unknown'] },
       stock_environment: { type: ['boolean', 'null'] },
@@ -82,42 +83,54 @@ Write only under ${JSON.stringify(directory)}. Never read experiments/, operator
 Never invent a benchmark, citation, published number, tolerance, pin, or command.
 Write all five JSON files, including explicit null/unavailable values and reasons when evidence is missing:
 - benchmark.json: identity, outcome definition, citations, source licences and intended-use permissions, stock CUDA image feasibility and evidence, data plus peak working-set GiB, scoring and repeatability rules; record search candidates if searched.
-- anchors.json: an array of credible independently published reference anchors, each with a unique non-empty string id, quantity, finite numeric published_value, tolerance, source (citation). Tolerance must be a nonnegative finite number (absolute), {"abs": x}, or {"rel": x}; relative tolerance means x * abs(published_value). Optional comparison is one of "==" (default), ">", ">=", "<", "<=". When the published criterion is a threshold, supply comparison so measured_value comparison published_value expresses that criterion; tolerance is ignored for inequalities and may be 0. Do not count self-generated checks or unsupported references.
+- anchors.json: an array, possibly empty, of independently published anchors and references, each with a unique non-empty string id, non-empty quantity and source (citation), finite numeric published_value, and tolerance. Tolerance must be a nonnegative finite number (absolute), {"abs": x}, or {"rel": x}; relative tolerance means x * abs(published_value). Optional comparison is one of "==" (default), ">", ">=", "<", "<=". When the published criterion is a threshold, supply comparison so measured_value comparison published_value expresses that criterion; tolerance is ignored for inequalities and may be 0 or null. Without a published acceptance criterion, record the published value as a reference with comparison "==" and tolerance null; never invent tolerances or convert published uncertainty into tolerance. Optional uncertainty is null or exactly {kind, value}, with kind standard_error, standard_deviation or interval_halfwidth and finite nonnegative value. Uncertainty never affects scoring. Do not count self-generated checks or unsupported references.
 - data.json: required inputs, availability, access instructions, licences, pins/hashes, splits and seeds; distinguish generated inputs from missing data.
 - baseline.json: repo, commit or immutable pin, build_commands, run_commands, published_configuration; cite their sources. Do not run builds or workloads.
 - EXECUTION.json: representative_scale, inputs, outputs, timing_scope; specify the real representative workload and scoring interface, not a toy extrapolation. Optional stage_budgets_s overrides per-script seconds with keys setup, anchors, profile, method_setup, method_run, tests, evaluate. Defaults are 1200 except tests=900 and evaluate=2400; supplied args budgets are ${JSON.stringify(input.stage_budgets_s || {})}. All budgets must be positive integers <=999999999. Choose one fixed scale; no scale search or doubling loops. Scripts must finish well within their budgets.
-Return only the facts matching the supplied schema. anchors_count must equal the credible anchors written.
+Return only the facts matching the supplied schema. anchors_count must equal the number of items written, including references. Optional anchored is true exactly when at least one item is an anchor rather than a reference; the pipeline derives it from anchors.json.
+found means a public benchmark with executable published code, command and inputs. A benchmark without published tolerances qualifies; record its published values as references without inventing tolerances.
 data=available only when all required data is accessible. licence=permitted only when intended use is allowed.
 stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
 size is data plus peak working set: tiny <=1 GiB, small <=10 GiB, medium <=100 GiB, large >100 GiB, otherwise unknown.
-Gate: found, at least one independent anchor, available required data, permitted licence, and stock_environment is not false. Missing evidence must stay unknown.`
+Gate: complete files, found, available required data, permitted licence, and stock_environment is not false. Missing published tolerances do not block. Missing evidence must stay unknown.`
     try {
       const reply = await agent(prompt, { label: 'intake', agentType: 'ls-writer', model: 'sonnet', schema: intakeSchema })
-      if (reply == null) return { status: 'FAIL', facts }
       // Whitelist facts: no benchmark content or arbitrary reply keys can reach S.
-      for (const key of fields.intake) facts[key] = reply[key]
+      if (reply != null) {
+        for (const key of fields.intake.filter(key => key !== 'anchored')) facts[key] = reply[key]
+      }
+      const anchors = readJSON(path.join(directory, 'anchors.json'))
+      const validAnchors = Array.isArray(anchors) && new Set(anchors.map(anchor => anchor?.id)).size === anchors.length
+        && anchors.every(anchor => anchor && typeof anchor.id === 'string' && anchor.id.trim()
+          && ['quantity', 'source'].every(key => hasValue(anchor[key]))
+          && Number.isFinite(anchor.published_value)
+          && ['==', '>', '>=', '<', '<='].includes(anchor.comparison === undefined ? '==' : anchor.comparison)
+          && (validTolerance(anchor.tolerance) || anchor.tolerance === null)
+          && (anchor.uncertainty === undefined || anchor.uncertainty === null
+            || (typeof anchor.uncertainty === 'object' && !Array.isArray(anchor.uncertainty)
+              && Object.keys(anchor.uncertainty).length === 2
+              && ['standard_error', 'standard_deviation', 'interval_halfwidth'].includes(anchor.uncertainty.kind)
+              && nonnegative(anchor.uncertainty.value))))
+      facts.anchored = validAnchors && anchors.length === facts.anchors_count ? anchors.some(anchor => !isReference(anchor)) : null
+      if (reply == null) return { status: 'FAIL', facts }
       const documents = {}
       for (const name of ['benchmark', 'data', 'baseline', 'EXECUTION']) {
         const value = readJSON(path.join(directory, `${name}.json`))
         if (!hasValue(value) || typeof value !== 'object' || Array.isArray(value)) return { status: 'FAIL', facts }
         documents[name] = value
       }
-      const anchors = readJSON(path.join(directory, 'anchors.json'))
-      const validAnchors = Array.isArray(anchors) && new Set(anchors.map(anchor => anchor?.id)).size === anchors.length
-        && anchors.every(anchor => anchor && typeof anchor.id === 'string' && anchor.id.trim()
-          && ['quantity', 'source'].every(key => hasValue(anchor[key]))
-          && Number.isFinite(anchor.published_value) && validTolerance(anchor.tolerance))
       const complete = validAnchors && anchors.length === facts.anchors_count
         && ['repo', 'build_commands', 'run_commands', 'published_configuration'].every(key => hasValue(documents.baseline[key]))
         && hasValue(documents.baseline.commit ?? documents.baseline.pin)
         && ['representative_scale', 'inputs', 'outputs', 'timing_scope'].every(key => hasValue(documents.EXECUTION[key]))
-      const pass = complete && facts.found && facts.anchors_count >= 1 && facts.data === 'available'
+      const pass = complete && facts.found && facts.data === 'available'
         && facts.licence === 'permitted' && facts.stock_environment !== false
       return { status: pass ? 'PASS' : 'FAIL', facts }
     } catch {
       return { status: 'FAIL', facts }
     }
   }
+  const isReference = anchor => (anchor.comparison === undefined ? '==' : anchor.comparison) === '==' && anchor.tolerance === null
   function validTolerance(value) {
     if (Number.isFinite(value)) return value >= 0
     return value && typeof value === 'object' && !Array.isArray(value)
@@ -181,7 +194,7 @@ Gate: found, at least one independent anchor, available required data, permitted
     }
     return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
   }
-  const harnessRules = 'Scope: setup.sh builds and checks only the baseline. The pipeline owns profiling and profiler installation; do not write profile.sh or install profiling tools. A repair must change only the failing script and stay within its scope. Run the published build and binary and read measurements from its OUTPUT. run_command.sh is the canonical measured command and complete environment, including working directory, arguments, CUDA_VISIBLE_DEVICES and GPU count. run_command.sh must use paths relative to its working directory, never absolute paths into the run directory, and write only under out/ or temporary files. Concurrency and evaluation run it from sibling work directories linking the same trees. run_anchors.sh must invoke bash harness/run_command.sh without overriding its environment or duplicating the workload command; parse its saved output for anchor measurements. The fixed profiler invokes that identical file with bash from the same working directory. Keep output paths stable and preserve logs. Every later run script must preserve the published configuration. Validate printed configuration against the actual command and environment. Preserve consistency in repairs; read the other harness scripts while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
+  const harnessRules = 'Scope: setup.sh builds and checks only the baseline. The pipeline owns profiling and profiler installation; do not write profile.sh or install profiling tools. A repair must change only the failing script and stay within its scope. Run the published build and binary and read measurements from its OUTPUT. run_command.sh is the canonical measured command and complete environment, including working directory, arguments, CUDA_VISIBLE_DEVICES and GPU count. run_command.sh must use paths relative to its working directory, never absolute paths into the run directory, and write only under out/ or temporary files. Concurrency and evaluation run it from sibling work directories linking the same trees. run_anchors.sh must invoke bash harness/run_command.sh without overriding its environment or duplicating the workload command; parse its saved output for every intake item ID, anchors and references. With an empty anchors.json, still run the published command and write out/anchors_measured.json as {}. The fixed profiler invokes that identical file with bash from the same working directory. Keep output paths stable and preserve logs. Every later run script must preserve the published configuration. Validate printed configuration against the actual command and environment. Preserve consistency in repairs; read the other harness scripts while editing only the failing script. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
   let boxProbe
   let harnessSource
   const writeHarnessSource = () => writeFileSync(path.join(C, 'harness_source.json'), JSON.stringify(harnessSource, null, 2) + '\n')
@@ -255,7 +268,7 @@ ${budgetPrompt()}
 ${boxProbePrompt()}
 Write three self-contained bash scripts, invoked from a shared remote working directory with bash harness/<name>:
 - setup.sh: build/install the published baseline at its exact intake pin in the stock image. Use sudo only for apt. Preserve stock torch and published source/configuration. Stage source in baseline-published/ and inputs in data/. Do not silently substitute or tune the baseline. Make setup safe to retry once in this directory.
-- run_anchors.sh: run the published anchor protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {anchor_id: measured_number}, one finite number per intake anchor. Never copy published values as measurements.
+- run_anchors.sh: run the published protocol at the real representative scale declared in EXECUTION.json. Write out/anchors_measured.json as {item_id: measured_number}, one finite number per intake item ID (anchors and references). With an empty anchors.json, still run the published command and write {}. Never copy published values as measurements.
 - run_command.sh: only the exact measured baseline run command and its complete environment at the fixed representative scale. Run the published binary, save its stdout/stderr for run_anchors.sh to parse, and propagate its exit status. Do not measure stages, sample telemetry, install tools, or write profiling outputs. run_anchors.sh invokes this file; the pipeline profiles this same file.
 Also provide run_evaluation.sh for the published baseline evaluation interface, or make run_anchors.sh handle non-anchor EVAL_MODE. Evaluation uses fresh working directories with baseline-published/, method/, data/, harness/ and payload/ links and absolute BASELINE_DIR, METHOD_DIR, BASELINE_OUT, METHOD_OUT and EVAL_OUT paths. EVAL_PROTOCOL points to the sealed JSON; EVAL_INPUTS and EVAL_SEEDS contain its JSON input and seed specifications; EVAL_COMPUTE_BUDGET is empty except in curve mode. Modes are equivalence, warmup, performance and curve. Run the published configuration on every sealed input/seed, seeds first then input IDs, and write EVAL_OUT/evaluation.json: {records:[{input_id,seed,metrics:{metric_name:finite_number}}],timing_scope,gpu_count,wall_s,compute_budget}. Use null seed for deterministic protocols; timing_scope must equal the seal; wall_s is required for reported_wall scopes; compute_budget is required for curves. Synchronize every used GPU before returning or stopping reported timers; include launch, transfer and merge overhead. Enforce curve budgets in GPU seconds. Always measure actual outputs; never reuse baseline outputs.
 Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
@@ -302,8 +315,9 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       facts.anchors_passed = score.anchors_passed
       facts.anchors_total = score.anchors_total
       const passed = score.all_passed && facts.stock_verified
-      return passed ? { status: 'PASS', facts, v1: { run_valid: true } }
-        : { ...failure(facts, 'anchor'), v1: { error_class: 'anchor', exit_code: 4, run_valid: false } }
+      const run_valid = score.anchors_total === 0 ? null : score.all_passed
+      return passed ? { status: 'PASS', facts, v1: { run_valid } }
+        : { ...failure(facts, 'anchor'), v1: { error_class: 'anchor', exit_code: 4, run_valid } }
     } catch {
       return failure(facts, 'parse')
     }

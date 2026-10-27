@@ -12,9 +12,9 @@ module.exports = async function evaluate(context) {
   const facts = { ...nullFacts('evaluate'), tokens_known: true, gpu_busy_known: false }
   const destination = path.join(A, 'results', 'evaluate'), control = path.join(C, 'evaluate')
   const helpers = ['eval_common.py', 'score_anchors.py', 'eval_validity.py', 'eval_equivalence.py', 'eval_performance.py']
-  let seal, manifest, frozenState
+  let seal, manifest, frozenState, anchorsTotal = null
   const finish = (status, error_class, exit_code) => ({ status, facts, v1: {
-    error_class, exit_code, run_valid: facts.validity_pass,
+    error_class, exit_code, run_valid: anchorsTotal === 0 ? null : facts.validity_pass,
   } })
   function verifySeal() {
     const seals = path.join(C, 'seals')
@@ -141,6 +141,7 @@ module.exports = async function evaluate(context) {
           || (result.rc !== 0 && !(stage === 'performance' && result.rc === 2))))
         || (verdict.status === 'FAIL' && passed !== false)) return finish('VOID', 'parse', 2)
       facts[`${stage}_pass`] = typeof passed === 'boolean' ? passed : null
+      if (stage === 'validity') anchorsTotal = verdict.anchors_total ?? null
       if (stage === 'performance') {
         for (const key of ['equal_cost', 'speedup_published', 'speedup_tuned', 'cost_ratio', 'prediction_ratio']) facts[key] = verdict[key] ?? null
         const curve = read(path.join(destination, 'curve.json'))

@@ -103,7 +103,11 @@ module.exports = {
     }
     fs.appendFileSync(process.env.M5_INTAKE_SEAL_CALLS, JSON.stringify({ label: title, prompt, sealFiles }) + '\n')
     let facts = { v: `${title} stub` }
-    if (title === 'intake') {
+    if (title === 'intake' && process.env.M5_INTAKE_SEAL_RECORDED) {
+      // Replay a recorded run's intake files (already copied to a temporary directory).
+      facts = JSON.parse(process.env.M5_INTAKE_SEAL_FACTS)
+      fs.cpSync(process.env.M5_INTAKE_SEAL_RECORDED, path.join(runRoot, 'agent', 'intake'), { recursive: true })
+    } else if (title === 'intake') {
       facts = JSON.parse(process.env.M5_INTAKE_SEAL_FACTS)
       const brief = fs.readFileSync(process.env.M5_INTAKE_SEAL_BRIEF, 'utf8')
       const fixtures = {
@@ -132,7 +136,10 @@ module.exports = {
       }
       if (process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE) delete fixtures.baseline.published_configuration
       for (const name of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
-        const content = name === 'anchors'
+        const custom = process.env.M5_INTAKE_SEAL_ANCHORS
+        const content = name === 'anchors' && custom
+          ? JSON.parse(custom).map(item => ({ ...item, content: SENTINEL, brief }))
+          : name === 'anchors'
           ? Array.from({ length: facts.anchors_count }, (_, i) => ({
             id: `anchor-${i + 1}`, quantity: 'sum', published_value: 499500,
             tolerance: 0.01, source: `https://example.org/reference-${i + 1}`,
@@ -205,7 +212,7 @@ function noLeak(runRoot) {
   visit(operator)
 }
 
-async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions } = {}) {
+async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded } = {}) {
   const control = path.join(runRoot, 'control')
   const brief = path.join(runRoot, 'brief.md')
   fs.mkdirSync(control, { recursive: true })
@@ -235,7 +242,8 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
           M5_INTAKE_SEAL_FACTS: JSON.stringify(facts), M5_INTAKE_SEAL_BRIEF: brief,
           M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_FAULT: sealFault, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
           M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '',
-          M5_INTAKE_SEAL_REPAIR: repairPredictions ? JSON.stringify(repairPredictions) : '' },
+          M5_INTAKE_SEAL_REPAIR: repairPredictions ? JSON.stringify(repairPredictions) : '',
+          M5_INTAKE_SEAL_ANCHORS: anchors ? JSON.stringify(anchors) : '', M5_INTAKE_SEAL_RECORDED: recorded || '' },
       })
       let error
       proc.on('error', value => { error = value })
@@ -257,13 +265,14 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   const calls = fs.existsSync(callsFile) ? readRows(callsFile) : []
   check(`${name}: exactly one intake call`, () => assert.equal(calls.filter(row => row.label === 'intake').length, 1))
   check(`${name}: intake facts emitted unchanged`, () => {
-    for (const [key, value] of Object.entries(facts)) assert.deepEqual(stage('intake')?.facts?.[key], value, key)
+    // `anchored` is computed by the pipeline from anchors.json, never copied from the agent.
+    for (const [key, value] of Object.entries(facts)) if (key !== 'anchored') assert.deepEqual(stage('intake')?.facts?.[key], value, key)
   })
-  check(`${name}: intake files contain stub content and supplied brief`, () => {
+  if (!recorded) check(`${name}: intake files contain stub content and supplied brief`, () => {
     for (const file of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
       const value = readJSON(path.join(runRoot, 'agent', 'intake', `${file}.json`))
       if (file === 'baseline' && incompleteBaseline) assert.ok(!Object.hasOwn(value, 'published_configuration'))
-      if (file === 'anchors') assert.equal(value.length, facts.anchors_count)
+      if (file === 'anchors') assert.equal(value.length, anchors ? anchors.length : facts.anchors_count)
       for (const entry of file === 'anchors' ? value : [value]) {
         assert.equal(entry.content, SENTINEL)
         assert.equal(entry.brief, fs.readFileSync(brief, 'utf8'))
@@ -273,6 +282,38 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   })
   check(`${name}: sentinel and seal reason codes absent throughout R/operator`, () => noLeak(runRoot))
   return { runRoot, out, stages, signature, stage, calls }
+}
+
+// SCHEMAS.md A/intake/: OPERATOR_TAKEAWAY.md shows `anchored` among the intake gate flags.
+// Accept a table column named `anchored` (read from the intake row) or an inline flag.
+function takeawayAnchored(runRoot) {
+  const text = fs.readFileSync(path.join(runRoot, 'operator', 'OPERATOR_TAKEAWAY.md'), 'utf8')
+  const cells = line => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim().replace(/[`*]/g, ''))
+  const blocks = []
+  let block = []
+  for (const line of text.split('\n')) {
+    if (line.trim().startsWith('|')) block.push(line)
+    else if (block.length) { blocks.push(block); block = [] }
+  }
+  if (block.length) blocks.push(block)
+  for (const table of blocks) {
+    const column = cells(table[0]).indexOf('anchored')
+    if (column < 0) continue
+    const row = table.slice(1).map(cells).find(row => row.includes('intake'))
+    if (row) return row[column]
+  }
+  const inline = /\banchored\b\W{0,4}(true|false|null)\b/.exec(text)
+  return inline ? inline[1] : undefined
+}
+function anchoredChecks(name, run, expected) {
+  check(`${name}: intake emits anchored=${expected}`, () => {
+    const facts = run.stage('intake')?.facts
+    assert.ok(facts && Object.hasOwn(facts, 'anchored'), 'executed intake stage must emit anchored')
+    assert.equal(facts.anchored, expected)
+  })
+  check(`${name}: OPERATOR_TAKEAWAY.md shows anchored among intake gate flags`, () => {
+    assert.equal(takeawayAnchored(run.runRoot), String(expected))
+  })
 }
 
 function checkStatuses(name, run, stoppedAt) {
@@ -289,6 +330,38 @@ function checkStatuses(name, run, stoppedAt) {
     assert.equal(result.stopped_at, stoppedAt)
     assert.deepEqual(result.stages.map(({ stage, status }) => ({ stage, status })), expected)
   })
+}
+
+// Public recorded run (OpenMM). Its recorded intake must still fail the new gate, and
+// it is unanchored. Files are copied to a temporary directory; experiments/ is read only.
+const EXPERIMENTS = path.resolve(ROOT, '..', '..', 'experiments')
+function recordedRun(relative) {
+  const run = path.join(EXPERIMENTS, relative)
+  const pick = candidates => candidates.map(name => path.join(run, name)).find(file => fs.existsSync(file))
+  return {
+    run,
+    intake: pick(['agent/intake', 'A/intake']),
+    signatures: pick(['operator/signatures.jsonl', 'S/signatures.jsonl']),
+  }
+}
+async function recordedIntakeRegression() {
+  const name = 'recorded-blind-openmm-run1'
+  const source = recordedRun(path.join('blind-openmm', 'run1'))
+  let facts, recorded
+  check(`${name}: recorded intake files and intake facts available`, () => {
+    assert.ok(source.intake, `no recorded intake directory under ${source.run}`)
+    assert.ok(source.signatures, `no recorded signatures under ${source.run}`)
+    const rows = readRows(source.signatures).filter(row => (row.signature || row).stage === 'intake' && row.facts)
+    assert.ok(rows.length, 'no recorded intake facts')
+    const { tokens_known, gpu_busy_known, anchored, ...agentFacts } = rows.at(-1).facts
+    facts = agentFacts
+    recorded = path.join(parent, `${name}-fixture`)
+    fs.cpSync(source.intake, recorded, { recursive: true })
+  })
+  if (!facts) return
+  const run = await runCase(name, facts, { recorded })
+  checkStatuses(name, run, 'intake')
+  anchoredChecks(name, run, false)
 }
 
 async function main() {
@@ -382,11 +455,42 @@ async function main() {
       assert.equal(JSON.parse(firstBytes).sha256, predictionHash(happy.runRoot))
       assert.deepEqual(fs.readdirSync(path.dirname(firstFile)).filter(name => /^\d{4}\.json$/.test(name)).sort(), ['0001.json'])
     })
-    for (const [name, override, options] of [
-      ['not-found', { found: false }], ['no-anchors', { anchors_count: 0 }],
-      ['data-unavailable', { data: 'unavailable' }], ['licence-restricted', { licence: 'restricted' }],
-      ['stock-incompatible', { stock_environment: false }],
+    anchoredChecks('happy', happy, true)
+    // SCHEMAS.md A/intake/: "Missing executable inputs and unverified permissions block;
+    // missing published tolerances do not." An empty or reference-only anchors.json passes.
+    const reference = (id, extra = {}) => ({ id, quantity: 'sum', source: 'https://example.org/reference-1',
+      published_value: 499500, tolerance: null, ...extra })
+    const thresholdAnchor = { id: 'threshold', quantity: 'sum', source: 'https://example.org/reference-1',
+      published_value: 1000, comparison: '>=', tolerance: null }
+    for (const [name, anchors, expected] of [
+      ['empty-anchors', [], false],
+      ['reference-only', [reference('ref-default'), reference('ref-explicit', { comparison: '==',
+        uncertainty: { kind: 'standard_error', value: 12.5 } }), reference('ref-null-uncertainty', { uncertainty: null })], false],
+      ['inequality-null-tolerance-anchor', [thresholdAnchor, reference('ref')], true],
+    ]) {
+      const run = await runCase(name, { ...INTAKE, anchors_count: anchors.length }, { anchors })
+      checkStatuses(name, run, null)
+      anchoredChecks(name, run, expected)
+    }
+    // The pipeline computes `anchored`; an agent claim cannot override anchors.json.
+    const claimed = await runCase('claimed-anchored', { ...INTAKE, anchors_count: 0, anchored: true }, { anchors: [] })
+    checkStatuses('claimed-anchored', claimed, null)
+    anchoredChecks('claimed-anchored', claimed, false)
+    for (const [name, override, options, anchored] of [
+      ['not-found', { found: false }, {}, true],
+      ['data-unavailable', { data: 'unavailable' }, {}, true], ['licence-restricted', { licence: 'restricted' }, {}, true],
+      ['stock-incompatible', { stock_environment: false }, {}, true],
       ['incomplete-baseline', {}, { incompleteBaseline: true }],
+      // Unanchored intakes still fail on every other gate condition.
+      ['empty-not-found', { found: false, anchors_count: 0 }, { anchors: [] }, false],
+      ['empty-data-unavailable', { data: 'unavailable', anchors_count: 0 }, { anchors: [] }, false],
+      ['empty-licence-unknown', { licence: 'unknown', anchors_count: 0 }, { anchors: [] }, false],
+      ['empty-stock-incompatible', { stock_environment: false, anchors_count: 0 }, { anchors: [] }, false],
+      ['reference-licence-restricted', { licence: 'restricted', anchors_count: 1 }, { anchors: [reference('ref')] }, false],
+      // Invalid anchors.json: the files are incomplete, so the gate fails and anchored is null.
+      ['anchors-count-mismatch', { anchors_count: 2 }, { anchors: [reference('ref')] }, null],
+      ['invalid-uncertainty', { anchors_count: 1 }, { anchors: [reference('ref', { uncertainty: { kind: 'variance', value: 1 } })] }, null],
+      ['invalid-tolerance', { anchors_count: 1 }, { anchors: [reference('ref', { tolerance: { abs: -1 } })] }, null],
     ]) {
       const run = await runCase(name, { ...INTAKE, ...override }, options)
       checkStatuses(name, run, 'intake')
@@ -394,7 +498,12 @@ async function main() {
         assert.ok(run.calls.every(row => row.label === 'intake' || /takeaway/i.test(row.label)))
         assert.ok(!fs.existsSync(path.join(run.runRoot, 'control', 'seals', '0001.json')))
       })
+      if (anchored === null) check(`${name}: anchored is null when anchors.json is invalid`, () => {
+        assert.equal(run.stage('intake')?.facts?.anchored, null)
+      })
+      else if (anchored !== undefined) anchoredChecks(name, run, anchored)
     }
+    await recordedIntakeRegression()
     const invalidRoot = path.join(parent, 'invalid-predictions')
     writeJSON(path.join(invalidRoot, 'agent', 'PREDICTIONS.json'), { ...PREDICTIONS, repetitions: 3 })
     const invalid = await runCase('invalid-predictions', INTAKE, { runRoot: invalidRoot, preserve: true })

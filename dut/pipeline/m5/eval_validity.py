@@ -12,7 +12,8 @@ def evaluate(evaluation):
         evaluation.result("validity", "FAIL", validity_pass=False, reason_code="anchor_execution")
         return 4
     result = score(evaluation.manifest["anchors"], measured)
-    if any(row.get("reason") in ("missing", "non_numeric") for row in result["anchors"]):
+    if any(row["kind"] == "anchor" and row.get("reason") in ("missing", "non_numeric")
+           for row in result["anchors"]):
         evaluation.result("validity", "VOID", validity_pass=None, reason_code="missing_or_invalid_measurements", **result)
         return 2
     passed = result["all_passed"]

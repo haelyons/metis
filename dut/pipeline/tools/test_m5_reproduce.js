@@ -19,7 +19,10 @@ function writeJSON(file, value) {
   fs.mkdirSync(path.dirname(file), { recursive: true })
   fs.writeFileSync(file, JSON.stringify(value) + '\n')
 }
-const anchor = (id, published_value, tolerance) => ({ id, published_value, tolerance, quantity: 'fixture quantity', source: 'https://example.org/published' })
+const anchor = (id, published_value, tolerance, extra = {}) => ({ id, published_value, tolerance, quantity: 'fixture quantity', source: 'https://example.org/published', ...extra })
+// SCHEMAS.md A/intake/: a reference is an "==" item (explicit or default) with null tolerance.
+const reference = (id, published_value, extra = {}) => anchor(id, published_value, null, extra)
+const isReference = item => (item.comparison ?? '==') === '==' && item.tolerance === null
 const ANCHORS = [anchor('first', 100, { abs: 1 }), anchor('second', 0, 0)]
 const TIMINGS = [{ stage: 'cpu', kind: 'other', wall_s: 3, gpu_s: null, start_s: 0 },
   { stage: 'h2d', kind: 'transfer', wall_s: 2, gpu_s: null, start_s: 3 },
@@ -414,7 +417,23 @@ function reproduceFacts(name, run, passed, total, stock = true) {
     assert.deepEqual(row.facts, { anchors_passed: passed, anchors_total: total, stock_verified: stock,
       tuned_control_valid: null, tokens_known: true, gpu_busy_known: false })
     assert.equal(row.signature.gpu_s, 0)
-    if (total !== null) assert.equal(row.signature.run_valid, passed === total)
+    // run_valid: true/false with at least one anchor; null when there are no anchors.
+    if (total === 0) assert.equal(row.signature.run_valid ?? null, null, 'run_valid must be null without anchors')
+    else if (total !== null) assert.equal(row.signature.run_valid, passed === total)
+  })
+  check(`${name}: intake anchored fact`, () => {
+    const facts = run.stage('intake').facts
+    assert.ok(Object.hasOwn(facts, 'anchored'), 'executed intake stage must emit anchored')
+    assert.equal(facts.anchored, run.config.anchors.some(item => !isReference(item)))
+  })
+}
+function scoredFile(name, run, expectedRows) {
+  check(`${name}: anchors_scored.json rows, kinds and counts`, () => {
+    const score = readJSON(path.join(run.root, 'agent', 'results', 'reproduce', 'anchors_scored.json'))
+    const rows = expectedRows ?? run.config.anchors.map(item => expectedRow(item, run.config.measured))
+    const anchorRows = rows.filter(row => row.kind === 'anchor')
+    assert.deepEqual(score, { anchors: rows, anchors_passed: anchorRows.filter(row => row.passed).length,
+      anchors_total: anchorRows.length, all_passed: anchorRows.every(row => row.passed), references_total: rows.length - anchorRows.length })
   })
 }
 function profileFacts(name, run, fraction) {
@@ -527,6 +546,31 @@ async function probeScriptTests() {
   }
 }
 
+// Expected score row, derived from SCHEMAS.md "deterministic anchor scoring" only.
+const THRESHOLDS = { '>': (a, b) => a > b, '>=': (a, b) => a >= b, '<': (a, b) => a < b, '<=': (a, b) => a <= b }
+function expectedRow(entry, measured) {
+  const value = measured[entry.id]
+  const unmeasured = !Object.hasOwn(measured, entry.id) ? 'missing'
+    : typeof value !== 'number' || !Number.isFinite(value) ? 'non_numeric' : null
+  const row = { id: entry.id, kind: isReference(entry) ? 'reference' : 'anchor', published_value: entry.published_value,
+    measured_value: unmeasured ? null : value, tolerance: entry.tolerance,
+    ...(Object.hasOwn(entry, 'uncertainty') ? { uncertainty: entry.uncertainty } : {}) }
+  if (row.kind === 'reference') {
+    return { ...row, passed: null, difference: unmeasured ? null : value - entry.published_value, ...(unmeasured ? { reason: unmeasured } : {}) }
+  }
+  const comparison = entry.comparison ?? '=='
+  if (comparison !== '==' && !THRESHOLDS[comparison]) return { ...row, passed: false, reason: 'unknown_comparison' }
+  if (unmeasured) return { ...row, passed: false, reason: unmeasured }
+  if (comparison !== '==') {
+    const passed = THRESHOLDS[comparison](value, entry.published_value)
+    return { ...row, passed, ...(passed ? {} : { reason: 'threshold_not_met' }) }
+  }
+  const tolerance = typeof entry.tolerance === 'number' ? entry.tolerance
+    : entry.tolerance.abs ?? entry.tolerance.rel * Math.abs(entry.published_value)
+  const passed = Math.abs(value - entry.published_value) <= tolerance
+  return { ...row, passed, ...(passed ? {} : { reason: 'out_of_tolerance' }) }
+}
+
 async function cliTests() {
   const directory = path.join(scratch, 'cli')
   fs.mkdirSync(directory)
@@ -560,13 +604,12 @@ async function cliTests() {
         else if (!options.outputDirectory) assert.equal(fs.existsSync(output), false, 'invalid input created score')
       } else {
         const scored = readJSON(output)
-        const expected = options.expectedAnchors ?? anchors.map(entry => {
-          const tolerance = typeof entry.tolerance === 'number' ? entry.tolerance : entry.tolerance.abs ?? entry.tolerance.rel * Math.abs(entry.published_value)
-          const passed = Math.abs(measured[entry.id] - entry.published_value) <= tolerance
-          return { id: entry.id, published_value: entry.published_value, measured_value: measured[entry.id], tolerance: entry.tolerance,
-            passed, ...(!passed ? { reason: 'out_of_tolerance' } : {}) }
-        })
-        assert.deepEqual(scored, { anchors: expected, anchors_passed: expected.filter(row => row.passed).length, anchors_total: expected.length, all_passed: expected.every(row => row.passed) })
+        const expected = options.expectedAnchors ?? anchors.map(entry => expectedRow(entry, measured))
+        const anchorRows = expected.filter(row => row.kind === 'anchor')
+        assert.deepEqual(scored, { anchors: expected, anchors_passed: anchorRows.filter(row => row.passed).length,
+          anchors_total: anchorRows.length, all_passed: anchorRows.every(row => row.passed),
+          references_total: expected.length - anchorRows.length })
+        assert.equal(result.status, anchorRows.every(row => row.passed) ? 0 : 4, 'exit code disagrees with anchor rows')
         if (validate) validate(scored)
       }
       console.log(`ok CLI ${label}`)
@@ -589,7 +632,7 @@ async function cliTests() {
     ['non-numeric measured value fails', '>', 100, 0, '101', false, 'non_numeric'],
   ]) {
     await score(label, [{ ...anchor(SENTINEL, published, tolerance), comparison }], { [SENTINEL]: measured }, passed ? 0 : 4, null, {
-      expectedAnchors: [{ id: SENTINEL, published_value: published, measured_value: reason === 'non_numeric' ? null : measured,
+      expectedAnchors: [{ id: SENTINEL, kind: 'anchor', published_value: published, measured_value: reason === 'non_numeric' ? null : measured,
         tolerance, passed, ...(reason ? { reason } : {}) }],
     })
   }
@@ -600,11 +643,89 @@ async function cliTests() {
     ['null measured', { [SENTINEL]: null }, 'non_numeric'],
     ['nonfinite measured', {}, 'non_numeric', { rawMeasured: `{"${SENTINEL}":NaN}` }],
   ]) await score(label, [secret], measured, 4, null, {
-    expectedAnchors: [{ id: SENTINEL, published_value: 1, measured_value: null, tolerance: 0, passed: false, reason }],
+    expectedAnchors: [{ id: SENTINEL, kind: 'anchor', published_value: 1, measured_value: null, tolerance: 0, passed: false, reason }],
     ...options,
   })
+  // References: measured and reported, never passed or failed (passed null, difference).
+  const refs = [reference('ref-default', 10), reference('ref-explicit', -2.5, { comparison: '==' }),
+    reference('ref-zero', 0, { uncertainty: { kind: 'interval_halfwidth', value: 0 } })]
+  await score('references report difference with passed null; counts exclude references', refs,
+    { 'ref-default': 13, 'ref-explicit': 1e6, 'ref-zero': -0.25 }, 0)
+  for (const [label, measured, reason, options] of [
+    ['unmeasured reference missing', {}, 'missing'],
+    ['unmeasured reference boolean', { [SENTINEL]: true }, 'non_numeric'],
+    ['unmeasured reference string', { [SENTINEL]: '1' }, 'non_numeric'],
+    ['unmeasured reference nonfinite', {}, 'non_numeric', { rawMeasured: `{"${SENTINEL}":Infinity}` }],
+  ]) await score(`${label} has reason but never fails`, [reference(SENTINEL, 1)], measured, 0, null, {
+    expectedAnchors: [{ id: SENTINEL, kind: 'reference', published_value: 1, measured_value: null, tolerance: null,
+      passed: null, difference: null, reason }],
+    ...options,
+  })
+  await score('uncertainty preserved unchanged on anchor and reference rows', [
+    anchor('se', 5, { abs: 1 }, { uncertainty: { kind: 'standard_error', value: 0.5 } }),
+    anchor('sd', 5, 0.5, { uncertainty: { kind: 'standard_deviation', value: 2 } }),
+    anchor('none', 5, 1, { uncertainty: null }),
+    reference('ref', 5, { uncertainty: { kind: 'interval_halfwidth', value: 3 } })],
+  { se: 5.9, sd: 7, none: 5, ref: 100 }, 4, scored => {
+    // Uncertainty never affects scoring: sd fails despite a published spread of 2.
+    assert.deepEqual(scored.anchors.map(row => row.passed), [true, false, true, null])
+  })
+  await score('empty array is valid', [], {}, 0, scored => {
+    assert.deepEqual(scored, { anchors: [], anchors_passed: 0, anchors_total: 0, all_passed: true, references_total: 0 })
+  })
+  await score('reference-only: all_passed true with no anchors', [reference('a', 1), reference('b', 2)], { a: 99 }, 0, scored => {
+    assert.equal(scored.all_passed, true)
+    assert.equal(scored.anchors_total, 0)
+    assert.equal(scored.references_total, 2)
+  })
+  await score('mixed anchors and references, one failing anchor exits 4', [
+    anchor('ok', 1, 0), reference('ref', 1), anchor('bad', 1, { abs: 0.1 }), reference('ref2', 7)],
+  { ok: 1, ref: 500, bad: 2, ref2: 7 }, 4, scored => {
+    assert.equal(scored.anchors_passed, 1)
+    assert.equal(scored.anchors_total, 2)
+    assert.equal(scored.references_total, 2)
+    assert.equal(scored.all_passed, false)
+  })
+  await score('mixed anchors and references, every anchor passes despite far references', [
+    reference('ref', 1), anchor('ok', 1, { rel: 0 })], { ref: -1e9, ok: 1 }, 0)
+  for (const comparison of ['>', '>=', '<', '<=']) {
+    await score(`inequality ${comparison} with null tolerance is an anchor (passing)`,
+      [anchor('threshold', 10, null, { comparison })], { threshold: comparison.startsWith('>') ? 11 : 9 }, 0)
+    await score(`inequality ${comparison} with null tolerance is an anchor (failing)`,
+      [anchor('threshold', 10, null, { comparison })], { threshold: comparison.startsWith('>') ? 9 : 11 }, 4)
+  }
+  await score('inequality with null tolerance and missing measurement fails as anchor',
+    [anchor('threshold', 10, null, { comparison: '>=' })], {}, 4)
   for (const [label, anchors, measured, options] of [
-    ['empty anchors', [], {}], ['duplicate IDs', [secret, secret], { [SENTINEL]: 1 }],
+    ['duplicate IDs', [secret, secret], { [SENTINEL]: 1 }],
+    ['duplicate reference IDs', [reference(SENTINEL, 1), reference(SENTINEL, 2)], { [SENTINEL]: 1 }],
+    ['non-array anchors', { [SENTINEL]: 1 }, { [SENTINEL]: 1 }],
+    ['reference with boolean published value', [reference(SENTINEL, false)], { [SENTINEL]: 1 }],
+    ['reference with string published value', [reference(SENTINEL, '1')], { [SENTINEL]: 1 }],
+    ...[
+      ['unknown uncertainty kind', { kind: 'variance', value: 1 }],
+      ['negative uncertainty', { kind: 'standard_error', value: -0.1 }],
+      ['boolean uncertainty value', { kind: 'standard_deviation', value: true }],
+      ['string uncertainty value', { kind: 'standard_deviation', value: '1' }],
+      ['null uncertainty value', { kind: 'standard_error', value: null }],
+      ['uncertainty missing value', { kind: 'standard_error' }],
+      ['uncertainty missing kind', { value: 1 }],
+      ['uncertainty extra key', { kind: 'standard_error', value: 1, note: SENTINEL }],
+      ['numeric uncertainty', 1], ['string uncertainty', SENTINEL], ['array uncertainty', [1]],
+      ['boolean uncertainty', false],
+    ].flatMap(([label, uncertainty]) => [
+      [`${label} on anchor`, [{ ...secret, uncertainty }], { [SENTINEL]: 1 }],
+      [`${label} on reference`, [reference(SENTINEL, 1, { uncertainty })], { [SENTINEL]: 1 }],
+    ]),
+    ['nonfinite uncertainty', [], {}, { rawAnchors: `[{"id":"${SENTINEL}","quantity":"q","source":"s","published_value":1,"tolerance":0,"uncertainty":{"kind":"standard_error","value":Infinity}}]` }],
+    ['NaN uncertainty on reference', [], {}, { rawAnchors: `[{"id":"${SENTINEL}","quantity":"q","source":"s","published_value":1,"tolerance":null,"uncertainty":{"kind":"standard_error","value":NaN}}]` }],
+    ['null absolute tolerance', [{ ...secret, tolerance: { abs: null } }], { [SENTINEL]: 1 }],
+    ['string relative tolerance', [{ ...secret, tolerance: { rel: '0.1' } }], { [SENTINEL]: 1 }],
+    ['empty tolerance object', [{ ...secret, tolerance: {} }], { [SENTINEL]: 1 }],
+    ['string tolerance', [{ ...secret, tolerance: '1' }], { [SENTINEL]: 1 }],
+    ['array tolerance', [{ ...secret, tolerance: [1] }], { [SENTINEL]: 1 }],
+    ['nonfinite absolute tolerance', [], {}, { rawAnchors: `[{"id":"${SENTINEL}","quantity":"q","source":"s","published_value":1,"tolerance":{"abs":Infinity}}]` }],
+    ['invalid tolerance alongside valid reference', [reference('ref', 1), { ...secret, tolerance: { rel: -1 } }], { ref: 1, [SENTINEL]: 1 }],
     ['boolean reference', [{ ...secret, published_value: true }], { [SENTINEL]: 1 }],
     ['negative tolerance', [{ ...secret, tolerance: -1 }], { [SENTINEL]: 1 }],
     ['boolean tolerance', [{ ...secret, tolerance: false }], { [SENTINEL]: 1 }],
@@ -616,8 +737,48 @@ async function cliTests() {
     ['nonfinite reference', [], { [SENTINEL]: 1 }, { rawAnchors: `[{"id":"${SENTINEL}","published_value":Infinity,"tolerance":0}]` }],
     ['malformed JSON', [], {}, { rawAnchors: SENTINEL }], ['missing input', [], {}, { missingInput: true }],
   ]) await score(label, anchors, measured, 1, null, { oldOutput: true, ...options })
-  await score('invalid input creates no output', [], {}, 1)
+  await score('invalid uncertainty creates no output', [reference(SENTINEL, 1, { uncertainty: { kind: 'standard_error', value: -1 } })], { [SENTINEL]: 1 }, 1)
+  await score('invalid tolerance creates no output', [{ ...secret, tolerance: { abs: 1, rel: 0 } }], { [SENTINEL]: 1 }, 1)
   await score('output write failure', ANCHORS, { first: 100, second: 0 }, 1, null, { outputDirectory: true })
+  await recordedScoreRegression(directory)
+}
+// Public recorded run16: rescoring its recorded anchors.json against its recorded
+// measurements must reproduce the recorded per-anchor outcome and counts, with the new fields.
+const EXPERIMENTS = path.resolve(ROOT, '..', '..', 'experiments')
+async function recordedScoreRegression(directory) {
+  const label = 'recorded shakedown-m5/run16 rescoring'
+  checks++
+  try {
+    const run = path.join(EXPERIMENTS, 'shakedown-m5', 'run16')
+    const pick = relative => ['agent', 'A'].map(base => path.join(run, base, relative)).find(file => fs.existsSync(file))
+    const sources = { anchors: pick('intake/anchors.json'), measured: pick('results/reproduce/out/anchors_measured.json'),
+      scored: pick('results/reproduce/anchors_scored.json') }
+    for (const [key, file] of Object.entries(sources)) assert.ok(file, `recorded ${key} file missing under ${run}`)
+    // Copy fixtures first; nothing is written into experiments/.
+    const fixtures = path.join(directory, 'run16')
+    fs.mkdirSync(fixtures)
+    for (const [key, file] of Object.entries(sources)) fs.copyFileSync(file, path.join(fixtures, `${key}.json`))
+    const items = readJSON(path.join(fixtures, 'anchors.json'))
+    const measured = readJSON(path.join(fixtures, 'measured.json'))
+    const recorded = readJSON(path.join(fixtures, 'scored.json'))
+    const output = path.join(fixtures, 'rescored.json')
+    const result = spawnSync('python3', [path.join(ROOT, 'm5', 'score_anchors.py'), path.join(fixtures, 'anchors.json'),
+      path.join(fixtures, 'measured.json'), output], { encoding: 'utf8', timeout: 10000 })
+    assert.ifError(result.error)
+    assert.equal(result.status, recorded.all_passed ? 0 : 4, result.stderr)
+    const scored = readJSON(output)
+    assert.deepEqual(Object.keys(scored).sort(), ['all_passed', 'anchors', 'anchors_passed', 'anchors_total', 'references_total'])
+    const references = items.filter(isReference).length
+    assert.equal(scored.references_total, references)
+    for (const key of ['anchors_passed', 'anchors_total', 'all_passed']) assert.deepEqual(scored[key], recorded[key], key)
+    assert.equal(scored.anchors.length, recorded.anchors.length)
+    scored.anchors.forEach((row, i) => {
+      const item = items[i]
+      assert.deepEqual(row, { ...recorded.anchors[i], kind: isReference(item) ? 'reference' : 'anchor',
+        ...(Object.hasOwn(item, 'uncertainty') ? { uncertainty: item.uncertainty } : {}) }, `row ${row.id}`)
+    })
+    console.log(`ok CLI ${label}`)
+  } catch (error) { failures++; console.log(`FAIL CLI ${label}: ${error.message}`) }
 }
 function boundsCliTests() {
   const directory = path.join(scratch, 'bounds-cli')
@@ -775,8 +936,28 @@ async function main() {
         assert.equal(score.anchors_total, 2)
         assert.deepEqual(score.anchors.map(row => [row.id, row.measured_value, row.passed]), [['first', 100.5, true], ['second', 0, true]])
       })
+      scoredFile('happy', happy)
       const mismatch = await runCase('anchor-mismatch', { measured: { first: 102, second: 0 } }, 'reproduce', 'anchor')
       reproduceFacts('anchor-mismatch', mismatch, 1, 2)
+      // Unanchored runs: the intake gate passes and reproduce passes on stock verification.
+      const empty = await runCase('no-anchors', { anchors: [], measured: {} })
+      reproduceFacts('no-anchors', empty, 0, 0)
+      scoredFile('no-anchors', empty)
+      const refs = [reference('ref-a', 100, { uncertainty: { kind: 'standard_error', value: 2 } }), reference('ref-b', 0, { comparison: '==' })]
+      const refOnly = await runCase('reference-only', { anchors: refs, measured: { 'ref-a': 250, 'ref-b': -3 } })
+      reproduceFacts('reference-only', refOnly, 0, 0)
+      scoredFile('reference-only', refOnly)
+      const refUnmeasured = await runCase('reference-unmeasured', { anchors: refs, measured: { 'ref-b': 'n/a' } })
+      reproduceFacts('reference-unmeasured', refUnmeasured, 0, 0)
+      scoredFile('reference-unmeasured', refUnmeasured)
+      // With anchors present, run_valid behaves as before; references never decide it.
+      const mixed = [anchor('first', 100, { abs: 1 }), reference('ref', 5)]
+      const mixedPass = await runCase('mixed-pass', { anchors: mixed, measured: { first: 100.5, ref: 5000 } })
+      reproduceFacts('mixed-pass', mixedPass, 1, 1)
+      scoredFile('mixed-pass', mixedPass)
+      const mixedFail = await runCase('mixed-fail', { anchors: mixed, measured: { first: 102, ref: 5 } }, 'reproduce', 'anchor')
+      reproduceFacts('mixed-fail', mixedFail, 0, 1)
+      scoredFile('mixed-fail', mixedFail)
       for (const [name, value, stop] of [['relative-boundary', 101, null], ['relative-outside', 101.000001, 'reproduce']]) {
         const run = await runCase(name, { anchors: [anchor('relative', 100, { rel: 0.01 })], measured: { relative: value } }, stop, stop ? 'anchor' : null)
         reproduceFacts(name, run, stop ? 0 : 1, 1)
