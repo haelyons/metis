@@ -1,0 +1,138 @@
+{
+  "identity": {
+    "name": "OpenMM 7 DHFR explicit-solvent energy-drift experiment",
+    "citation": "https://doi.org/10.1371/journal.pcbi.1005659",
+    "status": "not qualified during bounded intake"
+  },
+  "found": false,
+  "outcome_definition": {
+    "quantity": "Mean regression slope of total energy against time across independent simulations",
+    "unit": "(kJ/mol)/ps",
+    "performance_score": null,
+    "performance_score_reason": "No published timing or aggregate throughput criterion was established for this energy-drift experiment."
+  },
+  "citations": [
+    {
+      "title": "Eastman et al. (2017), OpenMM 7: Rapid development of high performance algorithms for molecular dynamics",
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659"
+    },
+    {
+      "title": "S1 Supporting Information: scripts and data",
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659.s001"
+    },
+    {
+      "title": "S1 Source Code: OpenMM 7.0.1",
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659.s002"
+    }
+  ],
+  "source_licences": [
+    {
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659",
+      "licence": "CC0",
+      "intended_use": "scientific benchmarking and reproduction",
+      "permission": "permitted",
+      "evidence": "Article copyright statement permits lawful reuse."
+    },
+    {
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+      "licence": null,
+      "permission": "unknown",
+      "reason": "Archive unavailable for inspection; embedded or third-party notices unverified."
+    },
+    {
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659.s002",
+      "licence": null,
+      "permission": "unknown",
+      "reason": "Source archive and release licence were not accessible for inspection."
+    }
+  ],
+  "licence": "unknown",
+  "stock_cuda_image": {
+    "feasible": null,
+    "image": null,
+    "evidence": {
+      "published_gpu_runtime": "CUDA 7.5",
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659"
+    },
+    "reason": "Stock image specification unavailable; published runtime compatibility and installation remain unreproduced."
+  },
+  "size": {
+    "data_gib": null,
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "classification": "unknown",
+    "reason": "Required archive bytes and peak host/device memory were not established."
+  },
+  "scoring": {
+    "method": "Fit one total-energy slope per trajectory; aggregate mean and standard error.",
+    "acceptance_tolerance": null,
+    "reason": "Published standard errors are uncertainty estimates, not stated reproduction acceptance tolerances. No tolerance was invented.",
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659#sec013"
+  },
+  "repeatability": {
+    "replicates": 10,
+    "trajectory_ns": 1,
+    "precision": "mixed",
+    "random_seeds": null,
+    "reason": "Published independent simulations found; exact distinct seeds and initialization details unavailable without supporting scripts.",
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659"
+  },
+  "reference_observations": [
+    {
+      "quantity": "Mixed-precision mean energy drift",
+      "published_value": -0.0047,
+      "unit": "(kJ/mol)/ps",
+      "published_standard_error": 0.0008,
+      "acceptance_tolerance": null,
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659.t005",
+      "anchor_eligible": false,
+      "reason": "No published acceptance tolerance; standard error not silently converted into tolerance."
+    }
+  ],
+  "anchors_count": 0,
+  "gate": {
+    "passed": false,
+    "missing": [
+      "Eligible independent anchor with supported tolerance",
+      "Verified accessible required inputs",
+      "Verified source and input permissions"
+    ],
+    "stock_environment": null
+  },
+  "search": {
+    "search_calls": 2,
+    "candidate_inspections": 1,
+    "queries": [
+      "OpenMM DHFR explicit solvent benchmark independent simulations random seeds GPU benchmark",
+      "OpenMM 7 paper 2017 energy drift benchmark scripts github"
+    ],
+    "candidates": [
+      {
+        "name": "OpenMM 7 DHFR",
+        "url": "https://doi.org/10.1371/journal.pcbi.1005659",
+        "inspected": true,
+        "decision": "Not qualified: missing evidence recorded above."
+      }
+    ],
+    "limits": {
+      "search_calls": 2,
+      "inspected_candidates": 3
+    }
+  },
+  "access_failures": [
+    {
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+      "reason": "Web fetch failed following inaccessible storage redirect; shell download blocked by domain allowlist."
+    },
+    {
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659.s002",
+      "reason": "Web fetch cache miss."
+    },
+    {
+      "source": "https://raw.githubusercontent.com/openmm/openmm/7.0.1/LICENSE",
+      "reason": "Web fetch cache miss."
+    }
+  ],
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate script paths or commands supplied. No builds or workloads run."
+}

@@ -1,0 +1,46 @@
+{
+  "representative_scale": {
+    "fixed": true,
+    "system": "Published solvated DHFR",
+    "replicates": 10,
+    "ns_per_replicate": 1,
+    "precision": "mixed",
+    "gpu_count": 1,
+    "scheduling": "Sequential independent simulations on one GPU",
+    "step_fs": 2,
+    "steps_per_replicate": 500000,
+    "scale_source": "https://doi.org/10.1371/journal.pcbi.1005659",
+    "steps_reason": "Derived from published duration and step size.",
+    "scheduling_reason": "Intake workload selection; no claim that original paper used this scheduling.",
+    "scale_search": false
+  },
+  "inputs": {
+    "data_manifest": "data.json",
+    "seeds": null,
+    "reason": "Distinct fixed random seeds required by intake hint; published values unverified, none invented."
+  },
+  "outputs": {
+    "per_replicate": "Total energy versus simulation time, sampled every 1 ps; fitted slope in (kJ/mol)/ps",
+    "aggregate": "Mean and standard error of ten slopes",
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659"
+  },
+  "scoring_interface": {
+    "command": null,
+    "command_reason": "No verified executable scoring interface available.",
+    "quantity": "Mean total-energy drift in (kJ/mol)/ps",
+    "reference_file": "anchors.json",
+    "acceptance": null,
+    "acceptance_reason": "No eligible anchor tolerance established."
+  },
+  "timing_scope": {
+    "published": null,
+    "reason": "Energy-drift experiment supplies no verified timing boundary.",
+    "proposed": "Time all ten complete trajectories, including energy sampling; report setup separately.",
+    "proposed_status": "Intake definition, not published timing protocol."
+  },
+  "stage_budgets_s": {},
+  "budget_feasibility": null,
+  "budget_feasibility_reason": "No workload run; exact runtime on stock GPU unknown. Defaults retained without unsupported runtime claims.",
+  "execution_ready": false,
+  "reason": "Missing verified scripts, inputs, seeds, licences, and anchor acceptance rule."
+}

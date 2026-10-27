@@ -1,0 +1,44 @@
+{
+  "availability": "partial",
+  "required_inputs": [
+    {
+      "name": "Published solvated DHFR structure and complete simulation scripts",
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+      "availability": "unknown",
+      "access_instructions": "Follow S1 Supporting Information link from article; archive fetch failed in this intake.",
+      "licence": null,
+      "licence_reason": "Archive contents and notices unverified.",
+      "pin": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+      "sha256": null,
+      "hash_reason": "Archive not downloaded."
+    },
+    {
+      "name": "AMBER99SB-ILDN and water force-field definitions matching published configuration",
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659.s002",
+      "availability": "unknown",
+      "access_instructions": "Obtain published OpenMM source and supporting archive.",
+      "licence": null,
+      "licence_reason": "Source notices unverified.",
+      "pin": null,
+      "pin_reason": "Release version is identified, but immutable artifact digest was not established.",
+      "sha256": null
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Per-replicate initial velocities",
+      "generation": null,
+      "reason": "Must follow published initialization; exact procedure and seed values not verified."
+    }
+  ],
+  "missing_data": [
+    "Verified simulation input files",
+    "Exact initialization and seed specification"
+  ],
+  "splits": null,
+  "splits_reason": "No training or evaluation split specified for molecular dynamics experiment.",
+  "seeds": null,
+  "seeds_reason": "Independent runs reported; numeric random seeds not established.",
+  "required_data_accessible": false,
+  "reason": "Public archive is cited, but required contents could not be accessed or checked."
+}
