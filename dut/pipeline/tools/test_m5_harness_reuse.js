@@ -153,6 +153,11 @@ visit(process.env.BOX_ROOT)
       if (repairs.length) assert.match(repairs[0].name, /-retry1$/)
     }
   })
+  // SCHEMAS.md "The pipeline owns CUDA MPS": reused harnesses get the same rule in every repair prompt.
+  check(`${name}: harness and repair prompts state the pipeline-owned CUDA MPS rule`, () => {
+    for (const call of calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label)))
+      fixture.assertMpsRule(call.prompt, call.label)
+  })
   if (!config.generated && !config.missing) check(`${name}: exact copies and immutable source hashes`, () => {
     const manifest = read(path.join(root, 'control/harness_source.json'))
     const expected = Object.fromEntries(Object.entries(originals).filter(([file]) => file !== 'unrelated.txt')

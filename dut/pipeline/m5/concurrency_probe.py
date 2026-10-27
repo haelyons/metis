@@ -4,6 +4,7 @@ from contextlib import ExitStack
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import signal
 import statistics
@@ -28,6 +29,7 @@ def probe(command, output, budget):
     started = time.monotonic()
     active = []
     mps_environment = None
+    mps_client_count = 0
     mps_binary = shutil.which("nvidia-cuda-mps-control")
     result = measurements(False, False)
 
@@ -55,6 +57,7 @@ def probe(command, output, budget):
         raise InterruptedError("probe terminated")
 
     def run(labels, environment):
+        nonlocal mps_client_count
         with ExitStack() as files:
             directories = []
             for label in labels:
@@ -77,7 +80,14 @@ def probe(command, output, budget):
                 codes = [child.wait() for child in active]
                 wall = time.monotonic() - start
                 active.clear()
-                return wall, all(code == 0 for code in codes)
+                ok = all(code == 0 for code in codes)
+                if environment is not None:
+                    with (Path(environment["CUDA_MPS_LOG_DIRECTORY"]) / "control.log").open("rb") as control_log:
+                        count = sum(bool(re.search(rb"NEW CLIENT [0-9]+ from user ", line))
+                                    for line in control_log)
+                    ok = ok and count - mps_client_count >= len(labels)
+                    mps_client_count = count
+                return wall, ok
             except InterruptedError:
                 raise
             except OSError:

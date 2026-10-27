@@ -32,7 +32,7 @@ const median = values => [...values].sort((a, b) => a - b)[Math.floor(values.len
 const tools = path.join(scratch, 'tools')
 fs.mkdirSync(tools)
 for (const tool of ['bash', 'sh', 'env', 'python3', 'sleep', 'cat', 'ls', 'date', 'readlink', 'basename', 'dirname',
-  'mkdir', 'rm', 'rmdir', 'cp', 'mv', 'ln', 'touch', 'true', 'false', 'mktemp', 'uname', 'id', 'tee', 'head', 'tail', 'grep', 'sed', 'awk']) {
+  'mkdir', 'rm', 'rmdir', 'chmod', 'cp', 'mv', 'ln', 'touch', 'true', 'false', 'mktemp', 'uname', 'id', 'tee', 'head', 'tail', 'grep', 'sed', 'awk']) {
   const found = spawnSync('/bin/bash', ['-c', 'command -v "$1"', 'locate', tool], { encoding: 'utf8' })
   if (found.status === 0 && found.stdout.trim().startsWith('/')) fs.symlinkSync(found.stdout.trim(), path.join(tools, tool))
 }
@@ -67,18 +67,68 @@ for failing in \${FAIL_LABELS-}; do [ "$failing" = "$label" ] && rc=3; done
 if [ "\${FAIL_UNDER_MPS-}" = "$label" ] && [ -n "\${CUDA_MPS_PIPE_DIRECTORY-}" ]; then rc=4; fi
 printf 'end=%s\\nrc=%s\\n' "$(date +%s.%N)" "$rc" >> "$record"
 exit "$rc"`
+// Fake CUDA client, run at the start of every copy (after the record of inherited variables).
+// MPS_PIPE_OVERRIDE models harness commands that unset, override or clear CUDA_MPS_* variables.
+// A copy connects only through the daemon's pipe directory; a connection appends one
+// `NEW CLIENT <pid> from user <uid>` line (plus CLIENT_EXTRA lines) to the daemon's control.log.
+const CLIENT = `case "\${MPS_PIPE_OVERRIDE-}" in
+  unset) unset CUDA_MPS_PIPE_DIRECTORY ;;
+  other) mkdir -p out/other-pipe; export CUDA_MPS_PIPE_DIRECTORY="$PWD/out/other-pipe" ;;
+  clear-all) for name in $(compgen -e); do case "$name" in CUDA_MPS_*) unset "$name" ;; esac; done ;;
+esac
+connected=none
+if [ -n "\${CUDA_MPS_PIPE_DIRECTORY-}" ] && [ -f "$CUDA_MPS_PIPE_DIRECTORY/control" ]; then
+  daemon_log="$(cat "$CUDA_MPS_PIPE_DIRECTORY/control")/control.log"
+  skip=no
+  for skipped in \${CLIENT_SKIP-}; do [ "$skipped" = "$label" ] && skip=yes; done
+  if [ "$skip" = no ] && [ -f "$daemon_log" ] && [ -w "$daemon_log" ]; then
+    uid=$(id -u)
+    case "\${CLIENT_FORM-ok}" in
+      lower) line="new client $$ from user $uid" ;;
+      nopid) line="NEW CLIENT unknown from user $uid" ;;
+      nofrom) line="NEW CLIENT $$ by user $uid" ;;
+      *) line="NEW CLIENT $$ from user $uid" ;;
+    esac
+    extra=0
+    for item in \${CLIENT_EXTRA-}; do [ "\${item%%:*}" = "$label" ] && extra="\${item#*:}"; done
+    for ((i = 0; i <= extra; i++)); do
+      printf '[2026-10-27 12:00:00.000 Control 4242] %s: Server already exists %s\\n' "$line" "$LOG_MARKER" >> "$daemon_log"
+    done
+    connected=yes
+  fi
+fi
+printf 'client=%s\\n' "$connected" >> "$record"
+`
+const RUN_COMMAND_WITH_CLIENT = RUN_COMMAND.replace('echo "stdout $label"', match => CLIENT + match)
+// Fake daemon: -d writes control.log in CUDA_MPS_LOG_DIRECTORY and a control endpoint in
+// CUDA_MPS_PIPE_DIRECTORY naming that log directory; quit removes the endpoint.
+// Modes: ok, fail-start, no-log (control.log never written), unreadable-log.
 const MPS_CONTROL = `state="\${CUDA_MPS_PIPE_DIRECTORY-<unset>} \${CUDA_MPS_LOG_DIRECTORY-<unset>}"
 if [ "$#" -gt 0 ]; then
   printf 'start %s %s %s\\n' "$(date +%s.%N)" "$*" "$state" >> "$MPS_LOG"
   [ "$MPS_MODE" = fail-start ] && exit 1
+  if [ -n "\${CUDA_MPS_PIPE_DIRECTORY-}" ] && [ -n "\${CUDA_MPS_LOG_DIRECTORY-}" ]; then
+    mkdir -p "$CUDA_MPS_PIPE_DIRECTORY" "$CUDA_MPS_LOG_DIRECTORY"
+    case "$MPS_MODE" in
+      no-log) ;;
+      unreadable-log)
+        if [ "$(id -u)" = 0 ]; then mkdir -p "$CUDA_MPS_LOG_DIRECTORY/control.log"
+        else : > "$CUDA_MPS_LOG_DIRECTORY/control.log"; chmod 000 "$CUDA_MPS_LOG_DIRECTORY/control.log"; fi ;;
+      *) printf '[2026-10-27 12:00:00.000 Control 4242] Starting control daemon %s\\n' "$LOG_MARKER" >> "$CUDA_MPS_LOG_DIRECTORY/control.log" ;;
+    esac
+    printf '%s\\n' "$CUDA_MPS_LOG_DIRECTORY" > "$CUDA_MPS_PIPE_DIRECTORY/control"
+  fi
   exit 0
 fi
 input=$(cat)
-printf 'stdin %s %s %s\\n' "$(date +%s.%N)" "$input" "$state" >> "$MPS_LOG"`
+printf 'stdin %s %s %s\\n' "$(date +%s.%N)" "$input" "$state" >> "$MPS_LOG"
+if [ "$input" = quit ] && [ -n "\${CUDA_MPS_PIPE_DIRECTORY-}" ]; then rm -f "$CUDA_MPS_PIPE_DIRECTORY/control"; fi`
+// Distinctive text in every control.log line; it must never reach concurrency.json.
+const LOG_MARKER = 'MPS_LOG_PRIVATE_MARKER_550912'
 
 function setupRun(name) {
   const run = path.join(scratch, name)
-  script(path.join(run, 'harness', 'run_command.sh'), RUN_COMMAND)
+  script(path.join(run, 'harness', 'run_command.sh'), RUN_COMMAND_WITH_CLIENT)
   fs.mkdirSync(path.join(run, 'baseline-published'))
   fs.writeFileSync(path.join(run, 'baseline-published', 'pin'), 'pinned\n')
   fs.mkdirSync(path.join(run, 'data'))
@@ -120,7 +170,7 @@ async function probe(name, { budget = 100, env = {}, mps = null, outDir = 'out/c
     const child = spawn(path.join(tools, 'python3'), ['-I', 'profiler/concurrency_probe.py', 'harness/run_command.sh', outDir, String(budget)], {
       cwd: run, timeout: 60000, killSignal: 'SIGKILL',
       env: { PATH, HOME: scratch, TMPDIR: scratch, LANG: 'C.UTF-8', RECORDS: records, FIXTURE_ENV: 'preserved',
-        SINGLE_S: '0.4', MPS_LOG: mpsLog, MPS_MODE: mps || '', ...env },
+        SINGLE_S: '0.4', MPS_LOG: mpsLog, MPS_MODE: mps || '', LOG_MARKER, ...env },
     })
     let stdout = '', stderr = '', error
     child.stdout.on('data', data => { stdout += data })
@@ -146,6 +196,19 @@ async function probe(name, { budget = 100, env = {}, mps = null, outDir = 'out/c
     }) : [] }
 }
 const diagnostics = result => `exit ${result.status}/${result.signal}; ${result.stderr.slice(-800)}`
+// Fake daemon state left under concurrency-work/ (control.log contents), for failure messages.
+function daemonState(result) {
+  const found = []
+  const visit = directory => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const file = path.join(directory, entry.name)
+      if (entry.isDirectory() && !['out', 'baseline-published', 'data', 'harness'].includes(entry.name)) visit(file)
+      else if (entry.name === 'control.log' || entry.name === 'control') found.push(`${path.relative(result.run, file)}: ${fs.readFileSync(file, 'utf8').trim()}`)
+    }
+  }
+  try { visit(path.join(result.run, 'concurrency-work')) } catch (error) { found.push(error.message) }
+  return found.join(' | ') || 'no daemon files'
+}
 function written(result) {
   assert.equal(result.status, 0, diagnostics(result))
   assert.ok(result.value !== undefined, 'concurrency.json missing')
@@ -177,6 +240,65 @@ function workspace(result, invocations) {
     for (const entry of LINKED) assert.equal(row.links[entry], path.join(result.run, entry), `${row.label}: ${entry} target`)
     assert.equal(row.env, 'preserved', `${row.label}: environment not inherited`)
   }
+}
+// Unverified MPS: treated like an invocation failure under MPS. Every MPS-phase copy exited 0, so
+// the fallback can only come from verification. failsAt is the label (or batch) left unverified.
+function fellBack(result, failsAt) {
+  written(result)
+  assert.equal(result.value.mps, false, 'mps recorded true without verified connections')
+  assert.equal(result.value.mps_failed, true)
+  const starts = result.mpsLog.filter(row => row.kind === 'start')
+  const quits = result.mpsLog.filter(row => row.kind === 'stdin' && row.words[0] === 'quit')
+  assert.equal(starts.length, 1, 'one daemon start (the rerun runs without MPS)')
+  assert.ok(quits.length >= 1, 'daemon never stopped')
+  assert.ok(quits.at(-1).time >= starts[0].time, 'daemon left running')
+  const underMps = result.invocations.filter(row => row.pipe !== '<unset>')
+  const plain = result.invocations.filter(row => row.pipe === '<unset>')
+  const expected = BATCH_LABELS[{ n2: 2, n4: 4 }[failsAt]] ?? [failsAt]
+  for (const label of expected) assert.ok(underMps.some(row => row.label === label), `${label} did not run under MPS`)
+  assert.ok(underMps.every(row => row.rc === 0), 'an MPS-phase copy failed; fallback not due to verification')
+  assert.deepEqual([...labelsOf(plain)].sort(), [...LABELS].sort(), 'exactly one complete rerun without MPS')
+  assert.ok(plain.every(row => row.client === 'none' && row.log === '<unset>'), 'rerun copies saw MPS')
+  const quit = quits.find(row => row.time >= Math.max(...underMps.map(row => row.end)))
+  assert.ok(quit, 'daemon not stopped after the unverified run')
+  assert.ok(quit.time <= Math.min(...plain.map(row => row.start)), 'daemon stopped after the rerun began')
+  workspace(result, plain)
+  assert.ok(result.value.single_wall_s.every(wall => wall > 0))
+  assert.ok(result.value.batches.every(batch => batch.all_ok && !batch.skipped))
+  assert.ok(result.value.factor > 0)
+  arithmetic(result.value)
+}
+// No log content (pids, uids, paths, line text) enters concurrency.json; its key set is exact.
+function noLogContent(result) {
+  written(result)
+  const text = fs.readFileSync(result.output, 'utf8')
+  for (const fragment of [LOG_MARKER, 'NEW CLIENT', 'new client', 'from user', 'control', 'Control', 'Server', scratch, 'concurrency-work'])
+    assert.ok(!text.includes(fragment), `log content in concurrency.json: ${fragment}`)
+}
+
+// Regression with the recorded public run positive-openmm/run1: its run_command.sh clears
+// CUDA_MPS_* before running its command, yet its concurrency.json recorded mps true. The recorded
+// files are copied into scratch (never written in experiments/); the probe runs a command with the
+// same behaviour (all CUDA_MPS_* cleared) and a fake workload in place of the real one.
+const RECORDED = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run1', 'agent')
+async function recordedHarnessRegression() {
+  const copy = path.join(scratch, 'recorded-positive-openmm-run1')
+  fs.mkdirSync(copy)
+  let recorded
+  check('recorded positive-openmm run1: copied harness clears CUDA_MPS_*; recorded concurrency mps=true', () => {
+    fs.copyFileSync(path.join(RECORDED, 'harness', 'run_command.sh'), path.join(copy, 'run_command.sh'))
+    fs.copyFileSync(path.join(RECORDED, 'results', 'profile', 'out', 'concurrency', 'concurrency.json'), path.join(copy, 'concurrency.json'))
+    assert.match(fs.readFileSync(path.join(copy, 'run_command.sh'), 'utf8'), /CUDA_MPS_/, 'recorded harness does not touch CUDA_MPS_*')
+    recorded = JSON.parse(fs.readFileSync(path.join(copy, 'concurrency.json'), 'utf8'))
+    assertConcurrencyShape(recorded)
+    assert.equal(recorded.mps, true)
+  })
+  const result = await probe('recorded-harness-behaviour', { mps: 'ok', env: { MPS_PIPE_OVERRIDE: 'clear-all' } })
+  check('recorded harness behaviour: probe records mps=false, mps_failed=true (recorded run said mps=true)', () => {
+    fellBack(result, 'single-1')
+    assert.ok(recorded, 'recorded concurrency.json unavailable')
+    assert.notEqual(result.value.mps, recorded.mps)
+  })
 }
 
 async function main() {
@@ -288,8 +410,9 @@ async function main() {
   const mps = await probe('mps', { mps: 'ok' })
   check('mps: daemon started before, stopped after, variables passed to every invocation', () => {
     written(mps)
-    assert.equal(mps.value.mps, true)
+    assert.equal(mps.value.mps, true, `MPS not recorded although every copy connected; ${diagnostics(mps)}; ${daemonState(mps)}`)
     assert.equal(mps.value.mps_failed, false)
+    noLogContent(mps)
     const starts = mps.mpsLog.filter(row => row.kind === 'start'), quits = mps.mpsLog.filter(row => row.kind === 'stdin')
     assert.equal(starts.length, 1, 'one daemon start')
     const [flag, pipe, log] = starts[0].words
@@ -308,6 +431,49 @@ async function main() {
     workspace(mps, mps.invocations)
     arithmetic(mps.value)
   })
+  check('mps verified: every copy connected, no rerun, factor from the MPS measurements', () => {
+    written(mps)
+    assert.deepEqual(mps.invocations.map(row => [row.label, row.client]).sort(), LABELS.map(label => [label, 'yes']).sort())
+    assert.ok(mps.invocations.every(row => row.pipe !== '<unset>'), 'rerun without MPS after verified runs')
+    assert.ok(mps.value.single_wall_s.every(wall => wall > 0))
+    assert.ok(mps.value.batches.every(batch => batch.all_ok && !batch.skipped && batch.factor > 0))
+    assert.ok(mps.value.factor > 0)
+    arithmetic(mps.value)
+  })
+
+  // SCHEMAS.md "MPS use is verified, not assumed": each case below runs every copy successfully
+  // but leaves too few valid `NEW CLIENT <pid> from user <uid>` lines, so it must fall back.
+  for (const [name, options, failsAt] of [
+    ['unverified-command-unsets-pipe', { env: { MPS_PIPE_OVERRIDE: 'unset' } }, 'single-1'],
+    ['unverified-command-overrides-pipe', { env: { MPS_PIPE_OVERRIDE: 'other' } }, 'single-1'],
+    ['unverified-command-clears-all-mps', { env: { MPS_PIPE_OVERRIDE: 'clear-all' } }, 'single-1'],
+    ['unverified-single-short', { env: { CLIENT_SKIP: 'single-2' } }, 'single-2'],
+    // Growth is per run: earlier extra lines cannot cover a later copy that did not connect.
+    ['unverified-single-short-after-extra', { env: { CLIENT_EXTRA: 'single-1:3', CLIENT_SKIP: 'single-2' } }, 'single-2'],
+    ['unverified-n2-short', { env: { CLIENT_SKIP: 'n2-2' } }, 'n2'],
+    ['unverified-n4-short', { env: { CLIENT_SKIP: 'n4-3' } }, 'n4'],
+    ['unverified-log-missing', { mps: 'no-log' }, 'single-1'],
+    ['unverified-log-unreadable', { mps: 'unreadable-log' }, 'single-1'],
+    ['unverified-lowercase-lines', { env: { CLIENT_FORM: 'lower' } }, 'single-1'],
+    ['unverified-no-integer-pid', { env: { CLIENT_FORM: 'nopid' } }, 'single-1'],
+    ['unverified-no-from-user', { env: { CLIENT_FORM: 'nofrom' } }, 'single-1'],
+  ]) {
+    const result = await probe(name, { mps: 'ok', ...options })
+    check(`${name}: mps=false, mps_failed=true, daemon stopped, one complete rerun without MPS`, () => fellBack(result, failsAt))
+    check(`${name}: no log content in concurrency.json`, () => noLogContent(result))
+  }
+  const extra = await probe('verified-extra-lines', { mps: 'ok', env: { CLIENT_EXTRA: 'single-2:2 n2-1:1 n4-1:3 n4-4:1' } })
+  check('verified-extra-lines: more than n new lines still verifies; no rerun', () => {
+    written(extra)
+    assert.equal(extra.value.mps, true, diagnostics(extra))
+    assert.equal(extra.value.mps_failed, false)
+    assert.deepEqual([...labelsOf(extra.invocations)].sort(), [...LABELS].sort())
+    assert.ok(extra.invocations.every(row => row.pipe !== '<unset>' && row.client === 'yes'))
+    assert.ok(extra.value.factor > 0)
+    arithmetic(extra.value)
+  })
+  check('verified-extra-lines: no log content in concurrency.json', () => noLogContent(extra))
+  await recordedHarnessRegression()
   const startFails = await probe('mps-start-fails', { mps: 'fail-start' })
   check('mps-start-fails: daemon stopped, probe repeated once without MPS, mps_failed=true', () => {
     written(startFails)

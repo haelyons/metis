@@ -102,8 +102,10 @@ module.exports = {
           (config.missingMeasured ? 'rm -f out/anchors_measured.json\n' : emitJSON('out/anchors_measured.json', config.measured)) +
           `printf '%s\\n' '${SENTINEL}' > out/anchors-private.txt`)
       }
+      // clearMps models a harness that breaks the CUDA MPS rule (like positive-openmm run1's).
       if (title === 'harness') script(path.join(harness, 'run_command.sh'),
-        `test -f baseline-published/pin\ntest -f data/input\nprintf '%s\\n' '${SENTINEL}:command' >> out/command-calls.log`)
+        (config.clearMps ? 'unset CUDA_MPS_PIPE_DIRECTORY CUDA_MPS_LOG_DIRECTORY\n' : '') +
+        `test -f baseline-published/pin\ntest -f data/input\n! command -v fake-cuda-client > /dev/null || fake-cuda-client\nprintf '%s\\n' '${SENTINEL}:command' >> out/command-calls.log`)
     }
     if (title === 'seal') {
       const bounds = readJSON(path.join(agent, 'bounds.json'))
@@ -119,6 +121,20 @@ module.exports = {
       tokens: { input: 10, output: 5, reasoning: 0 }, cost: 0.001, tools: 0, ms: 5, errors: [], refusal: false }
   },
   async exportSession(id, file) { fs.writeFileSync(file, '{}') },
+  assertMpsRule,
+}
+// SCHEMAS.md "The pipeline owns CUDA MPS": harness and repair prompts state that harness scripts
+// must not set, unset or override CUDA_MPS_* variables, or start or stop an MPS daemon.
+// Checked by meaning near a mention of CUDA_MPS_, not by exact wording.
+function assertMpsRule(prompt, label) {
+  const meanings = [[/\b(must not|must never|never|do not|don't|may not|cannot|forbidden|prohibited)\b/i, 'a prohibition'],
+    [/\bset\b/i, 'set'], [/\bunset/i, 'unset'], [/\boverrid/i, 'override'],
+    [/\bdaemon/i, 'MPS daemon'], [/\bstart/i, 'start'], [/\bstop/i, 'stop']]
+  const windows = [...prompt.matchAll(/CUDA_MPS_/g)].map(match => prompt.slice(Math.max(0, match.index - 400), match.index + 600))
+  assert.ok(windows.length, `${label}: prompt never names CUDA_MPS_* variables`)
+  const missing = window => meanings.filter(([pattern]) => !pattern.test(window)).map(([, meaning]) => meaning)
+  const best = windows.map(missing).sort((a, b) => a.length - b.length)[0]
+  assert.deepEqual(best, [], `${label}: MPS rule lacks ${best.join(', ')}`)
 }
 if (require.main !== module) return
 
@@ -179,8 +195,27 @@ require(${JSON.stringify(path.join(ROOT, 'tools/m5_profile_fixture.js'))}).repla
   const boxBin = path.join(root, 'box-bin')
   // Keep receipt telemetry unavailable regardless of the host's GPU tools.
   script(path.join(boxBin, 'nvidia-smi'), 'exit 1')
-  // Never start a host MPS daemon: the real probe sees this no-op control binary.
-  script(path.join(boxBin, 'nvidia-cuda-mps-control'), 'if [[ $# -gt 0 ]]; then printf \'args %s\\n\' "$*"; else printf \'stdin %s\\n\' "$(cat)"; fi >> "$BOX_ROOT/../mps-calls.log"')
+  // Never start a host MPS daemon: the real probe sees this fake control binary. Like the real
+  // daemon it writes control.log in CUDA_MPS_LOG_DIRECTORY; its control endpoint in
+  // CUDA_MPS_PIPE_DIRECTORY lets fake-cuda-client connect until quit.
+  script(path.join(boxBin, 'nvidia-cuda-mps-control'), `calls="$BOX_ROOT/../mps-calls.log"
+if [[ $# -gt 0 ]]; then
+  printf 'args %s\\n' "$*" >> "$calls"
+  if [[ -n \${CUDA_MPS_PIPE_DIRECTORY-} && -n \${CUDA_MPS_LOG_DIRECTORY-} ]]; then
+    mkdir -p "$CUDA_MPS_PIPE_DIRECTORY" "$CUDA_MPS_LOG_DIRECTORY"
+    printf '[fixture Control 1] Starting control daemon\\n' >> "$CUDA_MPS_LOG_DIRECTORY/control.log"
+    printf '%s\\n' "$CUDA_MPS_LOG_DIRECTORY" > "$CUDA_MPS_PIPE_DIRECTORY/control"
+  fi
+else
+  input=$(cat)
+  printf 'stdin %s\\n' "$input" >> "$calls"
+  [[ $input != quit || -z \${CUDA_MPS_PIPE_DIRECTORY-} ]] || rm -f "$CUDA_MPS_PIPE_DIRECTORY/control"
+fi`)
+  // Fake CUDA program run by the stub harness command: connects only through the daemon's pipe directory.
+  script(path.join(boxBin, 'fake-cuda-client'), `if [[ -n \${CUDA_MPS_PIPE_DIRECTORY-} && -f $CUDA_MPS_PIPE_DIRECTORY/control ]]; then
+  log="$(cat "$CUDA_MPS_PIPE_DIRECTORY/control")/control.log"
+  [[ ! -f $log ]] || printf '[fixture Control 1] NEW CLIENT %s from user %s: Server already exists\\n' "$$" "$(id -u)" >> "$log"
+fi`)
   // The probe may be written by the same command that runs it, so substitute the fake
   // at the documented invocation `python3 -I profiler/concurrency_probe.py ...`.
   const realPython = spawnSync('/bin/bash', ['-c', 'command -v python3'], { encoding: 'utf8' }).stdout.trim()
@@ -241,6 +276,11 @@ exec '${realPython}' "$@"`)
         assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:1\n`), 'unbounded failure log')
       }
     }
+  })
+  check(`${name}: harness and repair prompts state the pipeline-owned CUDA MPS rule`, () => {
+    const prompts = calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label))
+    if (!config.probeFailure) assert.ok(prompts.length >= 1, 'no harness prompt')
+    for (const call of prompts) assertMpsRule(call.prompt, call.label)
   })
   check(`${name}: fixed profiler uses shared command without profile agent`, () => {
     assert.ok(!calls.some(call => /profile/.test(call.label)))
@@ -390,7 +430,14 @@ function concurrencyChecks(name, root, config, stage, stoppedAt) {
     } else if (mode === 'real') {
       fixture.assertConcurrencyShape(packet.concurrency)
       assert.deepEqual(packet.concurrency, readJSON(path.join(fetched, 'concurrency.json')))
-      assert.equal(packet.concurrency.mps, true, 'MPS control binary on PATH must be used')
+      // SCHEMAS.md "MPS use is verified, not assumed": mps is true only when every copy connected.
+      if (config.clearMps) {
+        assert.equal(packet.concurrency.mps, false, 'harness cleared CUDA_MPS_*, so MPS use cannot be verified')
+        assert.equal(packet.concurrency.mps_failed, true)
+      } else {
+        assert.equal(packet.concurrency.mps, true, 'MPS control binary on PATH must be used')
+        assert.equal(packet.concurrency.mps_failed, false)
+      }
       assert.equal(facts.headroom, packet.concurrency.factor)
       const mps = fs.readFileSync(path.join(root, 'mps-calls.log'), 'utf8').split('\n').filter(Boolean)
       assert.equal(mps[0], 'args -d')
@@ -1000,6 +1047,9 @@ async function main() {
     const emptyTelemetry = await runCase('empty-gpu-util', { gpuUtil: [] }, 'profile', 'numeric')
     profileFacts('empty-gpu-util', emptyTelemetry, 0.95)
     // Passing profile gate: the concurrency probe runs and can never fail the stage.
+    // The harness command unsets CUDA_MPS_*: the real probe must not record MPS.
+    const cleared = await runCase('concurrency-real-mps-cleared', { concurrency: 'real', clearMps: true })
+    profileFacts('concurrency-real-mps-cleared', cleared, 0.95)
     for (const [mode, extra] of [['real'], ['valid'], ['valid-null'], ['timeout', { profileBudget: 2 }], ['rc'], ['missing'],
       ['invalid-json'], ['invalid-extra-key'], ['invalid-batch-order'], ['invalid-nonfinite'], ['invalid-singles']]) {
       const name = `concurrency-${mode}`
