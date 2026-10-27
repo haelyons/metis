@@ -1,0 +1,18 @@
+Perform scientific benchmark intake in one bounded pass.
+Read the brief file "/home/hal/dev/interp/metis/experiments/shakedown-m5/BRIEF.md". Extract its benchmark; if unreadable or unsupported, report found=false. Do not substitute another benchmark. Copy the brief to intake/brief.md when readable.
+Write only under "/home/hal/dev/interp/metis/experiments/shakedown-m5/run13/agent/intake". Never read experiments/, operator/, or control/.
+Never invent a benchmark, citation, published number, tolerance, pin, or command.
+Write all five JSON files, including explicit null/unavailable values and reasons when evidence is missing:
+- benchmark.json: identity, outcome definition, citations, source licences and intended-use permissions, stock CUDA image feasibility and evidence, data plus peak working-set GiB, scoring and repeatability rules; record search candidates if searched.
+- anchors.json: an array of credible independently published reference anchors, each with a unique non-empty string id, quantity, finite numeric published_value, tolerance, source (citation). Tolerance must be a nonnegative finite number (absolute), {"abs": x}, or {"rel": x}; relative tolerance means x * abs(published_value). Optional comparison is one of "==" (default), ">", ">=", "<", "<=". When the published criterion is a threshold, supply comparison so measured_value comparison published_value expresses that criterion; tolerance is ignored for inequalities and may be 0. Do not count self-generated checks or unsupported references.
+- data.json: required inputs, availability, access instructions, licences, pins/hashes, splits and seeds; distinguish generated inputs from missing data.
+- baseline.json: repo, commit or immutable pin, build_commands, run_commands, published_configuration; cite their sources. Do not run builds or workloads.
+- EXECUTION.json: representative_scale, inputs, outputs, timing_scope; specify the real representative workload and scoring interface, not a toy extrapolation. Optional stage_budgets_s overrides per-script seconds with keys setup, anchors, profile, method_setup, method_run, tests, evaluate. Defaults are 1200 except tests=900 and evaluate=2400; supplied args budgets are {}. All budgets must be positive integers <=999999999. Choose one fixed scale; no scale search or doubling loops. Scripts must finish well within their budgets.
+Return only the facts matching the supplied schema. anchors_count must equal the credible anchors written.
+data=available only when all required data is accessible. licence=permitted only when intended use is allowed.
+stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
+size is data plus peak working set: tiny <=1 GiB, small <=10 GiB, medium <=100 GiB, large >100 GiB, otherwise unknown.
+Gate: found, at least one independent anchor, available required data, permitted licence, and stock_environment is not false. Missing evidence must stay unknown.
+
+Return only one JSON value, with no other text, that matches this JSON Schema:
+{"type":"object","additionalProperties":false,"required":["found","anchors_count","data","licence","stock_environment","size"],"properties":{"found":{"type":"boolean"},"anchors_count":{"type":"integer","minimum":0},"data":{"enum":["available","partial","unavailable","unknown"]},"licence":{"enum":["permitted","restricted","unknown"]},"stock_environment":{"type":["boolean","null"]},"size":{"enum":["tiny","small","medium","large","unknown"]}}}

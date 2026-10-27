@@ -1,0 +1,105 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "source": "brief.md, final Scale paragraph",
+    "policy": "One fixed scale; no scale search, doubling or toy extrapolation. Report timeout if budget exceeded."
+  },
+  "inputs": {
+    "generation": [
+      {
+        "name": "Synthetic European call option parameters",
+        "kind": "generated",
+        "availability": "available",
+        "access_instructions": "Generate with upstream host code srand(123), S in [5,50], X in [10,25], T in [1,5], R=0.06, V=0.10.",
+        "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L316-L327",
+        "licence": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+        "pin": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+        "hash": null,
+        "hash_reason": "Runtime-generated arrays; brief supplies no hashes."
+      },
+      {
+        "name": "GPU Monte Carlo random streams",
+        "kind": "generated",
+        "availability": "available",
+        "access_instructions": "Upstream cuRAND initialization; block/grid geometry and device id determine streams.",
+        "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L131-L138",
+        "licence": "CUDA toolkit terms apply to cuRAND; sample generator source uses repository licence.",
+        "pin": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+        "hash": null,
+        "hash_reason": "Runtime streams depend on GPU geometry."
+      }
+    ],
+    "configuration_change": {
+      "file": "Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "change": "Set host nOptions = 1024 * 1024; keep PATH_N = 262144; rebuild once using listed commands.",
+      "source": "brief.md, final Scale paragraph",
+      "status": "Specified only; no source modification or build executed."
+    },
+    "device_selection": "CUDA_VISIBLE_DEVICES=0",
+    "configuration_validation": "Check three printed configuration fields; reject tiny-GPU option reduction."
+  },
+  "outputs": {
+    "performance": "Streamed Total time (ms.)",
+    "correctness": [
+      "Average reserve",
+      "L1 norm",
+      "Test passed or Test failed!",
+      "Process exit status"
+    ],
+    "metadata": [
+      "Printed option count",
+      "Printed paths per option",
+      "Printed GPU count",
+      "GPU model",
+      "Grid size",
+      "Toolkit",
+      "libc",
+      "Driver"
+    ],
+    "scoring_interface": "Parse upstream stdout for timing and correctness, retain exit code. Apply anchors to published 8192-option case. Time only fixed 1048576-option representative case. No numeric L1 target or published speed target exists in brief."
+  },
+  "timing_scope": {
+    "included": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Waiting on completion events"
+    ],
+    "excluded": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ]
+  },
+  "anchor_validation_scale": {
+    "options": 8192,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "reason": "Brief explicitly assigns anchors to published configuration; distinct from fixed representative timing workload."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "runtime_feasibility": {
+    "measured_duration_s": null,
+    "reason": "No workloads run; representative runtime unverified. Enforce fixed budgets and report timeout."
+  }
+}

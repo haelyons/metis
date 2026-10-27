@@ -1,0 +1,44 @@
+{
+  "repo": "https://github.com/NVIDIA/cuda-samples",
+  "tag": "v12.8",
+  "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+  "pin_source": "https://api.github.com/repos/NVIDIA/cuda-samples/git/ref/tags/v12.8",
+  "build_commands": [
+    "python3 -m pip install --user cmake==3.31.6  # omit if suitable cmake is installed",
+    "export PATH=\"$HOME/.local/bin:$PATH\"",
+    "git clone --branch v12.8 --depth 1 https://github.com/NVIDIA/cuda-samples.git",
+    "cd cuda-samples",
+    "git checkout --detach db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample=Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "cmake -S \"$sample\" -B build-mc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc",
+    "cmake --build build-mc --target MonteCarloMultiGPU --parallel"
+  ],
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "commands_source": "brief.md, bash block; sample build sources: https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt and https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md#building-cuda-samples",
+  "published_configuration": {
+    "nOptions": 8192,
+    "PATH_N": 262144,
+    "scaling": "strong",
+    "scale": 1,
+    "gpus": 1,
+    "method": "streamed",
+    "THREAD_N": 256,
+    "MAX_OPTIONS_per_GPU": 1048576,
+    "grid_cap": "40 * multiProcessorCount",
+    "precision": "float; DOUBLE_PRECISION disabled",
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h#L31-L37"
+    ]
+  },
+  "representative_configuration_change": {
+    "file": "Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+    "change": "Set host nOptions = 1024 * 1024; keep PATH_N = 262144; rebuild once using listed commands.",
+    "source": "brief.md, final Scale paragraph",
+    "status": "Specified only; no source modification or build executed."
+  },
+  "execution_status": "No builds or workloads run."
+}
