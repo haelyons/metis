@@ -12,6 +12,8 @@ const { spawn } = require('node:child_process')
 const ROOT = path.resolve(__dirname, '..')
 // Recorded public runs used read-only as regression fixtures; files are copied into scratch.
 const RUNS = path.resolve(ROOT, '..', '..', 'experiments', 'shakedown-m5')
+const OPENMM_RUN1 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run1')
+const runDir = run => path.isAbsolute(run) ? run : path.join(RUNS, run)
 const SENTINEL = 'PRIVATE_PROPOSAL_SENTINEL_58321'
 const MENU = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
 const REASONS = ['exceeds_bound', 'not_parallelisable', 'changes_method', 'equivalence_risk',
@@ -91,10 +93,11 @@ function check(label, test) {
 }
 const recordedBallots = run => [1, 2, 3, 4, 5].map(i => readJSON(path.join(RUNS, run, 'agent', 'votes', `${i}.json`)))
 const recordedProposal = run => readJSON(path.join(RUNS, run, 'agent', 'proposal.json'))
-const recordedBox = run => readJSON(path.join(RUNS, run, 'control', 'box.json'))
+const recordedBox = run => readJSON(path.join(runDir(run), 'control', 'box.json'))
 // Replays propose on a recorded run's inputs under a fresh seal of the recorded prediction bytes.
-function replayFixture(root, run) {
-  const from = path.join(RUNS, run)
+// `concurrency`, when given, replaces only the copied profile packet's concurrency record.
+function replayFixture(root, run, concurrency) {
+  const from = runDir(run)
   const copy = relative => {
     fs.mkdirSync(path.dirname(path.join(root, relative)), { recursive: true })
     fs.copyFileSync(path.join(from, relative), path.join(root, relative))
@@ -110,6 +113,10 @@ function replayFixture(root, run) {
     writeJSON(path.join(root, 'agent', 'profile-packet.json'), { stages, total_wall_s: 100,
       timed_fraction: Math.min(1, stages.reduce((sum, row) => sum + row.wall_fraction, 0)), gpu_telemetry: true, concurrency: null })
   }
+  if (concurrency) {
+    const file = path.join(root, 'agent', 'profile-packet.json')
+    writeJSON(file, { ...readJSON(file), concurrency })
+  }
   const live = path.join(root, 'agent', 'PREDICTIONS.json')
   const bytes = fs.readFileSync(live)
   const frozen = path.join(root, 'control', 'seals', 'predictions-frozen.json')
@@ -121,7 +128,7 @@ function replayFixture(root, run) {
     profile: readJSON(path.join(root, 'agent', 'profile-packet.json')) }
 }
 function fixture(root, config) {
-  if (config.replay) return replayFixture(root, config.replay)
+  if (config.replay) return replayFixture(root, config.replay, config.replayConcurrency)
   const profile = {
     stages: [
       { stage: 'kernels', kind: 'compute', wall_s: 6, gpu_s: 6, wall_fraction: 0.6, start_s: 0, mean_gpu_util: 0.125 },
@@ -581,16 +588,21 @@ async function main() {
       assert.equal(row.bounds.k_derivation.gpu_count, 4)
     })
     // SCHEMAS.md propose: "The absence is a negative finding exactly when it rests on measurements: the profile
-    // packet's `concurrency.factor` is a finite number and both GPU inventories used by the resource guards (box
-    // and probe) are available. Then the stage PASSes with `outcome="no_feasible_method"`; implement and evaluate
-    // are SKIPPED with null facts, takeaways runs, and the run's stop point is propose."
-    // An empty inventory (zero GPUs) is available: "an empty inventory records 0".
+    // packet's `concurrency.factor` is a finite number; its MPS state is verified, meaning `concurrency.mps` is
+    // true, or `concurrency.mps` and `concurrency.mps_failed` are both false (MPS absent from the box); and both
+    // GPU inventories used by the resource guards (box and probe) are available with at least one GPU each. Then
+    // the stage PASSes with `outcome="no_feasible_method"`; implement and evaluate are SKIPPED with null facts,
+    // takeaways runs, and the run's stop point is propose."
+    // The base fixture records MPS absent (mps=false, mps_failed=false), one box GPU and one probe GPU.
+    const mpsState = (mps, mps_failed) => ({ profile }) => { profile.concurrency.mps = mps; profile.concurrency.mps_failed = mps_failed }
+    const compose = (...steps) => evidence => steps.forEach(step => step(evidence))
     const measured = [
+      ['measured-mps-verified', { mutate: compose(absence(), mpsState(true, false)) }],
+      ['measured-mps-absent', { mutate: compose(absence(), mpsState(false, false)) }],
       ['measured-zero-predictions', { mutate: absence() }],
       ['measured-multi-gpu-only-on-one-gpu', { mutate: absence(['multi-GPU']) }],
+      ['measured-mps-verified-multi-gpu-only-on-one-gpu', { mutate: compose(absence(['multi-GPU']), mpsState(true, false)) }],
       ['measured-factor-below-one', { mutate: absence([], 0.8) }],
-      ['measured-zero-probe', { probeCount: 0 }],
-      ['measured-zero-allocation', { box: { type: 'gpu_4x_a10', gpu_count: 0 } }],
       ['measured-zero-predictions-type-fallback', { mutate: absence(), box: { type: 'gpu_1x_a10' } }],
     ]
     let negative
@@ -609,12 +621,31 @@ async function main() {
     status('no-revote-after-negative-finding', afterNegative, 'other')
     uncounted('no-revote-after-negative-finding', afterNegative)
     check('no-revote-after-negative-finding: no model calls', () => assert.equal(afterNegative.calls.length, 0))
-    // "Otherwise (concurrency missing, null or not finite, or either GPU inventory unavailable) the absence
-    // reflects missing measurements: the stage FAILs with `numeric` (exit 2) as before and `outcome` stays null."
+    check('measured fixtures carry the intended MPS state, a finite factor below 1.05 and one GPU in each inventory', () => {
+      for (const [name, mps] of [['measured-mps-verified', true], ['measured-mps-absent', false]]) {
+        const { concurrency } = readJSON(path.join(scratch, name, 'agent', 'profile-packet.json'))
+        assert.deepEqual([concurrency.mps, concurrency.mps_failed], [mps, false], name)
+        assert.ok(Number.isFinite(concurrency.factor) && concurrency.factor < 1.05, name)
+        assert.equal(readJSON(path.join(scratch, name, 'control', 'box.json')).gpu_count, 1, name)
+        assert.equal(readJSON(path.join(scratch, name, 'agent', 'results', 'probe', 'probe.json')).nvidia.gpus.length, 1, name)
+      }
+    })
+    // "Otherwise (concurrency missing, null or not finite; `concurrency.mps_failed` true, meaning MPS exists on
+    // the box but the measurement could not use it; or either GPU inventory unavailable or reporting zero GPUs)
+    // the absence reflects missing measurements: the stage FAILs with `numeric` (exit 2) as before and `outcome`
+    // stays null."
     const withoutConcurrency = ({ profile }) => { delete profile.concurrency }
     const nullConcurrency = ({ profile }) => { profile.concurrency = null }
-    const compose = (...steps) => evidence => steps.forEach(step => step(evidence))
     for (const [name, config] of [
+      ['unmeasured-mps-failed', { mutate: compose(absence(), mpsState(false, true)) }],
+      ['unmeasured-mps-failed-multi-gpu-only', { mutate: compose(absence(['multi-GPU']), mpsState(false, true)) }],
+      ['unmeasured-zero-box-gpus', { mutate: absence(), box: { type: 'gpu_1x_a10', gpu_count: 0 } }],
+      ['unmeasured-zero-probe-gpus', { mutate: absence(), probeCount: 0 }],
+      ['unmeasured-mps-verified-zero-box-gpus', { mutate: compose(absence(), mpsState(true, false)), box: { type: 'gpu_1x_a10', gpu_count: 0 } }],
+      ['unmeasured-mps-verified-zero-probe-gpus', { mutate: compose(absence(), mpsState(true, false)), probeCount: 0 }],
+      // Formerly treated as measured: every predicted method feasible, but a zero-GPU inventory fails every guard.
+      ['unmeasured-zero-probe', { probeCount: 0 }],
+      ['unmeasured-zero-allocation', { box: { type: 'gpu_4x_a10', gpu_count: 0 } }],
       ['unmeasured-concurrency-missing', { mutate: compose(absence([], null), withoutConcurrency) }],
       ['unmeasured-concurrency-null', { mutate: compose(absence([], null), nullConcurrency) }],
       ['unmeasured-factor-null', { mutate: absence([], null) }],
@@ -633,6 +664,11 @@ async function main() {
       assert.equal(below.concurrency.factor, 0.8)
       const infinite = readJSON(path.join(scratch, 'unmeasured-factor-infinite', 'agent', 'profile-packet.json'))
       assert.equal(infinite.concurrency.factor, Infinity)
+      const failed = readJSON(path.join(scratch, 'unmeasured-mps-failed', 'agent', 'profile-packet.json')).concurrency
+      assert.deepEqual([failed.mps, failed.mps_failed], [false, true])
+      assert.ok(Number.isFinite(failed.factor) && failed.factor < 1.05)
+      assert.equal(readJSON(path.join(scratch, 'unmeasured-zero-box-gpus', 'control', 'box.json')).gpu_count, 0)
+      assert.equal(readJSON(path.join(scratch, 'unmeasured-zero-probe-gpus', 'agent', 'results', 'probe', 'probe.json')).nvidia.gpus.length, 0)
     })
     // Interval conditions fail the gate even when the ballot condition holds: outcome conditions_unmet.
     const worthwhile = await execute('below-worthwhile', { minimum: 1.85 })
@@ -738,6 +774,41 @@ async function main() {
       facts(name, run, counts, pass, proposal16.method)
     }
     check('recorded fixtures unchanged by the replays', () => assert.deepEqual(fixtureDigest(), fixtureBefore))
+
+    // Recorded public regression: positive-openmm run1's inputs. As recorded (concurrency mps=true) the
+    // absence is a measured negative finding; with only its concurrency record changed to mps=false,
+    // mps_failed=true (what the corrected probe records when copies never reach the daemon) it is unmeasured.
+    const RUN1_FILES = ['agent/profile-packet.json', 'agent/bounds.json', 'agent/PREDICTIONS.json',
+      'control/box.json', 'agent/results/probe/probe.json']
+    const run1Digest = () => RUN1_FILES.map(relative => createHash('sha256').update(fs.readFileSync(path.join(OPENMM_RUN1, relative))).digest('hex'))
+    const run1Before = run1Digest()
+    const run1Concurrency = readJSON(path.join(OPENMM_RUN1, 'agent', 'profile-packet.json')).concurrency
+    check('openmm-run1: recorded inputs rest on measurements (mps true, finite factor, a GPU in each inventory)', () => {
+      assert.equal(run1Concurrency?.mps, true)
+      assert.equal(run1Concurrency.mps_failed, false)
+      assert.ok(Number.isFinite(run1Concurrency.factor))
+      const box = recordedBox(OPENMM_RUN1)
+      const boxCount = Number.isInteger(box.gpu_count) && box.gpu_count >= 0 ? box.gpu_count
+        : Number(/^gpu_(\d+)x_/.exec(String(box.type))?.[1])
+      assert.ok(boxCount >= 1, 'box inventory')
+      assert.ok(readJSON(path.join(OPENMM_RUN1, 'agent', 'results', 'probe', 'probe.json')).nvidia.gpus.length >= 1, 'probe inventory')
+    })
+    const run1 = await execute('replay-openmm-run1', { replay: OPENMM_RUN1, box: recordedBox(OPENMM_RUN1) })
+    negativeFinding('replay-openmm-run1', run1)
+    const run1Failed = { ...run1Concurrency, mps: false, mps_failed: true }
+    const run1Unmeasured = await execute('replay-openmm-run1-mps-failed', { replay: OPENMM_RUN1,
+      box: recordedBox(OPENMM_RUN1), replayConcurrency: run1Failed })
+    unmeasured('replay-openmm-run1-mps-failed', run1Unmeasured)
+    check('replay-openmm-run1-mps-failed: only the concurrency record differs from the recorded inputs', () => {
+      const root = run1Unmeasured.root
+      const packet = readJSON(path.join(root, 'agent', 'profile-packet.json'))
+      const recorded = readJSON(path.join(OPENMM_RUN1, 'agent', 'profile-packet.json'))
+      assert.deepEqual(packet.concurrency, run1Failed)
+      assert.deepEqual({ ...packet, concurrency: null }, { ...recorded, concurrency: null })
+      for (const relative of RUN1_FILES.slice(1))
+        assert.deepEqual(fs.readFileSync(path.join(root, relative)), fs.readFileSync(path.join(OPENMM_RUN1, relative)), relative)
+    })
+    check('openmm-run1 fixtures unchanged by the replays', () => assert.deepEqual(run1Digest(), run1Before))
   } catch (error) {
     failures++
     console.log(`FAIL test harness: ${error.stack}`)

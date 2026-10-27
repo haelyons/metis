@@ -613,7 +613,10 @@ Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
       packet.sealed_equivalence_rule.confidence_rule = predictions.confidence_rule?.equivalence ?? predictions.confidence_rule
       writeFileSync(path.join(A, 'propose-packet.json'), JSON.stringify(packet, null, 2) + '\n')
       if (!methods.length) {
-        if (Number.isFinite(profile.concurrency?.factor) && allocationCount !== null && probeCount !== null) {
+        if (Number.isFinite(profile.concurrency?.factor)
+          && (profile.concurrency.mps === true
+            || (profile.concurrency.mps === false && profile.concurrency.mps_failed === false))
+          && available > 0) {
           facts.outcome = 'no_feasible_method'
         }
         return finish('numeric')
