@@ -6,6 +6,15 @@ const os = require('node:os')
 const path = require('node:path')
 const { parseReply } = require('./claude_cli.js')
 
+// Agents never inherit the operator's personal MCP servers, skills, apps or network-proxy allowlist; auth stays in CODEX_HOME.
+function isolation(env) {
+  const home = ({ ...process.env, ...env }).CODEX_HOME || path.join(os.homedir(), '.codex')
+  let servers = []
+  try { servers = [...fs.readFileSync(path.join(home, 'config.toml'), 'utf8').matchAll(/^\[mcp_servers\.([A-Za-z0-9_-]+)\]/gm)].map(match => match[1]) } catch {}
+  return ['--disable', 'network_proxy', '--disable', 'apps', '--disable', 'plugins', '-c', 'skills.include_instructions=false',
+    ...servers.flatMap(server => ['-c', `mcp_servers.${server}.enabled=false`])]
+}
+
 function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, name: chatName }) {
   return new Promise(resolve => {
     const t0 = Date.now(), limit = timeoutMs || 20 * 60000
@@ -56,7 +65,7 @@ function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, 
       const [name, effort] = String(model).replace(/^codex\//, '').split('@')
       const sandbox = /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(tools || '') ? 'workspace-write' : 'read-only'
       // sessions persist so they can be monitored (Codex remote control); writers get network (ssh to the dev box)
-      const args = ['exec', '--json', '--skip-git-repo-check', ...(sandbox === 'workspace-write' ? ['-c', 'sandbox_workspace_write.network_access=true'] : []), '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
+      const args = ['exec', ...isolation(env), '--json', '--skip-git-repo-check',...(sandbox === 'workspace-write' ? ['-c', 'sandbox_workspace_write.network_access=true'] : []), '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
       if (({ ...process.env, ...env }).CODEX_EPHEMERAL === '1') args.push('--ephemeral')
       if (name !== 'default') args.push('-m', name)
       if (effort) args.push('-c', `model_reasoning_effort=${effort}`)
@@ -172,7 +181,7 @@ function runAppServer({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPro
       } catch (error) { finish(error) }
     }
     try {
-      child = spawn('codex', ['app-server'], { cwd, env: { ...process.env, ...env }, stdio: ['pipe', 'pipe', 'pipe'] })
+      child = spawn('codex', ['app-server', ...isolation(env)], { cwd, env: { ...process.env, ...env }, stdio: ['pipe', 'pipe', 'pipe'] })
       child.stdout.setEncoding('utf8')
       child.stdout.on('data', data => {
         out += data; buffer += data

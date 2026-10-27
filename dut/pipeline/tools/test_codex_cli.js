@@ -222,6 +222,19 @@ async function main() {
     assert.equal(res.text, 'file reply\n', 'text must come from -o, preserving whitespace')
     assert.ok(res.errors.some(error => /app.?server|fallback/i.test(error)), JSON.stringify(res.errors))
   })
+  await check('both paths isolate agents from the personal Codex config', async () => {
+    const home = fs.mkdtempSync(path.join(root, 'codex-home-'))
+    fs.writeFileSync(path.join(home, 'config.toml'), 'model_reasoning_effort = "xhigh"\n[mcp_servers.mail]\ncommand = "x"\n[mcp_servers.bank-2]\nurl = "http://127.0.0.1:1/"\n[features]\nnetwork_proxy = true\n')
+    const { captures } = await invoke({}, { appFail: true, env: { CODEX_HOME: home } })
+    assert.deepEqual(captures.map(item => item.args[0]), ['app-server', 'exec'])
+    for (const { args } of captures) {
+      const configs = args.flatMap((arg, index) => arg === '-c' ? [args[index + 1]] : [])
+      const disabled = args.flatMap((arg, index) => arg === '--disable' ? [args[index + 1]] : [])
+      for (const feature of ['network_proxy', 'apps', 'plugins']) assert.ok(disabled.includes(feature), `${args[0]} must disable ${feature}`)
+      for (const value of ['skills.include_instructions=false', 'mcp_servers.mail.enabled=false', 'mcp_servers.bank-2.enabled=false'])
+        assert.ok(configs.includes(value), `${args[0]} missing -c ${value}`)
+    }
+  })
   for (const value of ['1', '0']) {
     await check(`ephemeral flag with CODEX_EPHEMERAL=${value}`, async () => {
       const { sent } = await invoke({}, { appFail: true, env: { CODEX_EPHEMERAL: value } })
