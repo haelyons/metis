@@ -1,0 +1,76 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "source": "intake/brief.md, final scale instruction",
+    "fixed": true
+  },
+  "inputs": {
+    "generation": "Pinned source generator; host srand(123); documented parameter ranges and GPU streams in data.json.",
+    "source_change": "Set host nOptions = 1024 * 1024; retain PATH_N = 262144; rebuild once.",
+    "external_dataset": null,
+    "external_dataset_reason": "Runtime-generated inputs."
+  },
+  "outputs": {
+    "timing": "Total time (ms.)",
+    "correctness": [
+      "Average reserve",
+      "L1 norm",
+      "Test passed or Test failed!",
+      "Process exit status"
+    ],
+    "configuration": [
+      "GPU count",
+      "Option count",
+      "Path count"
+    ]
+  },
+  "timing_scope": {
+    "include": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Completion-event waits"
+    ],
+    "exclude": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ]
+  },
+  "scoring_interface": {
+    "run_commands": [
+      "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+    ],
+    "performance": "Report streamed Total time (ms.) at fixed representative scale.",
+    "reference_correctness": "Run unmodified published 8192-option case for anchors; keep distinct from representative timing.",
+    "acceptance": "Average reserve > 1; verdict Test passed; retain successful process exit.",
+    "l1": "Record diagnostic; no invented threshold.",
+    "printed_boundary": "Use verdict or unrounded reserve when printed value rounds to 1.000000."
+  },
+  "scale_policy": "One fixed representative scale. No scale search, doubling or toy extrapolation. Timeout if budget exceeded.",
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "runtime_feasibility": null,
+  "runtime_feasibility_reason": "No measured representative runtime available; cannot establish completion within default budgets before reproduction.",
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate script names supplied; intake JSON checked locally without running builds or workloads."
+}

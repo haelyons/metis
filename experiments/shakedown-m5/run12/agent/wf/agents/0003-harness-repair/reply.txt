@@ -1,0 +1,9 @@
+Read intake and harness scripts; repair setup only. Local checks stay static; no workload or box access.
+
+Applying caveman skill. Failure points to CUDA passing `/usr/include` ahead of C++ headers; inspect intake before choosing build fix.
+
+Distro CUDA exposes `/usr/include` as explicit system include; this breaks `cmath`’s `include_next`. Repair CMake’s implicit include list, preserving toolkit selection and workload configuration.
+
+Repaired only `harness/setup.sh`: corrected distro CUDA include ordering; added baseline output checks through canonical command.
+
+`bash -n` passed. No local workloads or box access.
