@@ -86,13 +86,18 @@ if (process.env.M5_INTAKE_SEAL_FAULT === 'verification') {
   }
 }
 
-// The same module is loaded by WF_STUB. Only these two agents write content;
+// The same module is loaded by WF_STUB. Only intake and seal agents write content;
 // neither agent computes hashes or writes operator state. Fault injection below
 // simulates unavailable storage and failed verification without reading pipeline code.
 module.exports = {
   async run({ title, prompt }) {
     const runRoot = process.env.M5_INTAKE_SEAL_ROOT
-    fs.appendFileSync(process.env.M5_INTAKE_SEAL_CALLS, JSON.stringify({ label: title, prompt }) + '\n')
+    const seals = path.join(runRoot, 'control', 'seals')
+    const sealFiles = {}
+    if (['seal', 'seal-repair'].includes(title) && fs.existsSync(seals) && fs.statSync(seals).isDirectory()) {
+      for (const file of fs.readdirSync(seals)) sealFiles[file] = fs.readFileSync(path.join(seals, file)).toString('base64')
+    }
+    fs.appendFileSync(process.env.M5_INTAKE_SEAL_CALLS, JSON.stringify({ label: title, prompt, sealFiles }) + '\n')
     let facts = { v: `${title} stub` }
     if (title === 'intake') {
       facts = JSON.parse(process.env.M5_INTAKE_SEAL_FACTS)
@@ -142,6 +147,9 @@ module.exports = {
       if (!process.env.M5_INTAKE_SEAL_PRESERVE) writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), PREDICTIONS)
       // Deliberately claim verification: the deterministic step must verify it.
       facts = { seal_present: true, seal_verified: true, prediction_count: PREDICTIONS.predictions.length }
+    }
+    if (title === 'seal-repair' && process.env.M5_INTAKE_SEAL_REPAIR) {
+      writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), JSON.parse(process.env.M5_INTAKE_SEAL_REPAIR))
     }
     return {
       text: JSON.stringify(facts), json: facts, jsonError: null, sessionID: 'stub',
@@ -193,7 +201,7 @@ function noLeak(runRoot) {
   visit(operator)
 }
 
-async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '' } = {}) {
+async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions } = {}) {
   const control = path.join(runRoot, 'control')
   const brief = path.join(runRoot, 'brief.md')
   fs.mkdirSync(control, { recursive: true })
@@ -222,7 +230,8 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
           M5_RAIDS_LEDGER: path.join(parent, 'raids_used.jsonl'),
           M5_INTAKE_SEAL_FACTS: JSON.stringify(facts), M5_INTAKE_SEAL_BRIEF: brief,
           M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_FAULT: sealFault, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
-          M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '' },
+          M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '',
+          M5_INTAKE_SEAL_REPAIR: repairPredictions ? JSON.stringify(repairPredictions) : '' },
       })
       let error
       proc.on('error', value => { error = value })
@@ -316,6 +325,50 @@ async function main() {
       assert.ok(prompt.includes(boundsFile), 'bounds path missing from seal prompt')
       assert.ok(prompt.includes('multi-GPU') && prompt.includes('feasible'), 'bounds content missing from seal prompt')
     })
+    check('happy: seal prompt contains documented stochastic and deterministic skeletons', () => {
+      const prompt = happy.calls.find(row => row.label === 'seal').prompt
+      // Parse complete JSON objects from the public prompt, independently of the generator.
+      const examples = []
+      for (let start = 0; start < prompt.length; start++) {
+        if (prompt[start] !== '{') continue
+        for (let end = start + 1; end < prompt.length; end++) {
+          if (prompt[end] !== '}') continue
+          try {
+            const value = JSON.parse(prompt.slice(start, end + 1))
+            if (Object.hasOwn(value, 'outputs_stochastic')) examples.push(value)
+            start = end
+            break
+          } catch {}
+        }
+      }
+      for (const stochastic of [false, true]) {
+        const example = examples.find(value => value.outputs_stochastic === stochastic)
+        assert.ok(example, `missing ${stochastic ? 'stochastic' : 'deterministic'} JSON skeleton`)
+        assert.deepEqual(example.evaluation_inputs, { ids: ['held-out-1'] })
+        assert.deepEqual(example.sample_sizes, { inputs: 1, seeds: stochastic ? 6 : 1 })
+        if (stochastic) {
+          assert.deepEqual(example.paired_seed_tests, { kind: 'paired_median', seeds: [0, 1, 2, 3, 4, 5] })
+        } else {
+          assert.equal(example.paired_seed_tests.kind, 'deterministic')
+          assert.equal(typeof example.paired_seed_tests.justification, 'string')
+          assert.ok(example.paired_seed_tests.justification.trim())
+        }
+        for (const kind of ['performance', 'equivalence']) {
+          assert.deepEqual(example.confidence_rule[kind], { kind: 'paired_median', confidence: 0.95 })
+        }
+        assert.ok(example.equivalence_metrics.length > 0)
+        for (const metric of example.equivalence_metrics) {
+          assert.equal(typeof metric.name, 'string')
+          assert.ok(metric.name.trim())
+          assert.equal(typeof metric.source, 'string')
+          assert.ok(metric.source.trim())
+          assert.deepEqual(Object.keys(metric.tolerance), ['abs'])
+          assert.equal(typeof metric.tolerance.abs, 'number')
+          assert.ok(Number.isFinite(metric.tolerance.abs))
+          assert.ok(stochastic ? metric.tolerance.abs > 0 : metric.tolerance.abs === 0)
+        }
+      }
+    })
     const firstFile = path.join(happy.runRoot, 'control', 'seals', '0001.json')
     let firstBytes
     check('happy: 0001 contains independently recomputed canonical SHA-256', () => {
@@ -403,6 +456,67 @@ async function main() {
         assert.equal(fs.existsSync(receipt), statistical)
         if (statistical) assert.equal(readJSON(receipt).sha256, predictionHash(runRoot))
         else {
+          assert.equal(run.signature('seal').error_class, 'numeric')
+          assert.equal(run.signature('seal').exit_code, 2)
+        }
+      })
+    }
+
+    for (const repaired of [true, false]) {
+      const name = repaired ? 'repair-stochastic-valid' : 'repair-stochastic-invalid'
+      const runRoot = path.join(parent, name)
+      // Establish a real prior seal, then require repair without changing its files.
+      const prior = await runCase(`${name}-prior`, INTAKE, { runRoot })
+      checkStatuses(`${name}-prior`, prior, null)
+      const seals = path.join(runRoot, 'control', 'seals')
+      const snapshot = () => Object.fromEntries(fs.readdirSync(seals).sort()
+        .map(file => [file, fs.readFileSync(path.join(seals, file)).toString('base64')]))
+      const original = snapshot()
+      const invalid = JSON.parse(JSON.stringify(PREDICTIONS))
+      invalid.outputs_stochastic = true
+      invalid.paired_seed_tests = { kind: 'paired_median', seeds: [0, 1, 2, 3, 4, 5] }
+      invalid.evaluation_inputs = { ids: ['PRIVATE_INPUT_REPAIR_73'] }
+      invalid.sample_sizes = { inputs: 1, seeds: 6 }
+      invalid.confidence_rule = {
+        performance: { kind: 'paired_median', confidence: 0.95 },
+        equivalence: { kind: 'paired_median', confidence: 0.95 },
+      }
+      invalid.equivalence_metrics = [{ name: 'PRIVATE_METRIC_REPAIR_73',
+        source: 'PRIVATE_SOURCE_REPAIR_73', tolerance: { abs: 0 } }]
+      const replacement = JSON.parse(JSON.stringify(invalid))
+      if (repaired) replacement.equivalence_metrics[0].tolerance.abs = 0.1
+      else replacement.equivalence_metrics[0].tolerance = { rel: 0.1 }
+      writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), invalid)
+      const run = await runCase(name, INTAKE, { runRoot, preserve: true, repairPredictions: replacement })
+      checkStatuses(name, run, repaired ? null : 'seal')
+      check(`${name}: exactly one initial call and one repair, before seal allocation`, () => {
+        const calls = run.calls.filter(row => ['seal', 'seal-repair'].includes(row.label))
+        assert.deepEqual(calls.map(row => row.label), ['seal', 'seal-repair'])
+        for (const call of calls) assert.deepEqual(call.sealFiles, original)
+        assert.deepEqual(readJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json')), replacement)
+      })
+      check(`${name}: repair feedback includes reason and field path without file values`, () => {
+        const prompt = run.calls.find(row => row.label === 'seal-repair').prompt
+        assert.ok(prompt.includes('stochastic_equivalence_invalid'), 'missing reason code')
+        assert.match(prompt, /equivalence_metrics(?:\[0\]|\.0).*tolerance/, 'missing failing field path')
+        for (const value of [SENTINEL, 'PRIVATE_INPUT_REPAIR_73', 'PRIVATE_METRIC_REPAIR_73',
+          'PRIVATE_SOURCE_REPAIR_73', '499500', PREDICTIONS.infeasible_methods[0].reason]) {
+          assert.ok(!prompt.includes(value), `file value leaked: ${value}`)
+        }
+        assert.ok(!prompt.includes(JSON.stringify(PROFILE)), 'profile evidence leaked')
+        assert.ok(!prompt.includes('k_derivation'), 'bounds leaked')
+      })
+      check(`${name}: immutable numbering; only successful repair creates 0002`, () => {
+        const current = snapshot()
+        for (const [file, bytes] of Object.entries(original)) assert.equal(current[file], bytes, file)
+        assert.deepEqual(Object.keys(current).filter(file => /^\d{4}\.json$/.test(file)),
+          repaired ? ['0001.json', '0002.json'] : ['0001.json'])
+        assert.equal(run.stage('seal').facts.seal_verified, repaired)
+        assert.deepEqual(readJSON(path.join(runRoot, 'control', 'stages', 'seal.json')).reason_codes,
+          repaired ? [] : ['stochastic_equivalence_invalid'])
+        if (repaired) assert.equal(readJSON(path.join(seals, '0002.json')).sha256, predictionHash(runRoot))
+        else {
+          assert.deepEqual(current, original)
           assert.equal(run.signature('seal').error_class, 'numeric')
           assert.equal(run.signature('seal').exit_code, 2)
         }

@@ -400,6 +400,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       await exec('python3', ['m5/bounds.py', profilePath, boundsPath])
       bounds = readJSON(boundsPath)
     } catch { return reject(check) }
+    const { default: sealProtocol } = await import(path.resolve('m5/seal_protocol.js'))
     const prompt = `Seal a prospective scientific evaluation protocol in one narrow pass.
 Read ${JSON.stringify(path.join(A, 'intake'))}/*, ${JSON.stringify(profilePath)}, and ${JSON.stringify(boundsPath)} only.
 Never read experiments/, operator/, or control/. Do not search, build, run workloads, or write method code.
@@ -419,76 +420,34 @@ For stochastic outputs, equivalence_metrics must be statistical: use paired seed
 - evaluation_inputs and splits: fixed input identities/pins, held-out splits and seeds, or explicit generated-input specifications.
 - compute_budgets: at least three distinct positive numeric budgets, with units in hardware_cost_basis.
 - repetitions: integer >=5 timing pairs; warmup: fixed warmup protocol; scheduling_order: paired randomisation protocol; equal_outcome_target: the fixed scientific target.
-Use executable v1 evaluation fields: evaluation_inputs={ids:[unique string IDs], ...input pins/specification}; sample_sizes={inputs:IDs.length,seeds:seed count}; equivalence_metrics=[{name,tolerance,source}], tolerance a nonnegative absolute number, {abs:number}, or {rel:number}. paired_seed_tests={kind:"deterministic",justification:"scientific reason"} or {kind:"paired_median",seeds:[unique integers]}; stochastic metrics require absolute margins. confidence_rule={performance:{kind:"paired_median",confidence:0.95},equivalence:{kind:"paired_median",confidence:0.95}} uses exact binomial order-statistic bounds (one-sided performance, two-sided equivalence with Bonferroni across metrics). Choose enough repetitions/seeds for finite bounds; 95% needs at least 5 timing pairs and 6 seed pairs for one metric. warmup is a nonnegative integer per arm. scheduling_order={kind:"randomized_pairs",seed:integer}. timing_scope={kind:"process_wall" or "reported_wall",gpu_synchronization:"adapter",description:"scope including launch/transfer/merge"}. hardware_cost_basis={baseline_gpus:positive integer,method_gpus:positive integer,budget_unit:"gpu_s"}. equal_outcome_target={metric:"outcome metric name",comparison:">=",target:finite number} or {not_applicable:true,reason:"why benchmark has no outcome curve"}. Unsupported prose-only protocols produce VOID at evaluation.
+Executable v1 evaluation uses exact binomial order-statistic bounds (one-sided performance, two-sided equivalence with Bonferroni across metrics). warmup is a nonnegative integer per arm. scheduling_order={kind:"randomized_pairs",seed:integer}. timing_scope={kind:"process_wall" or "reported_wall",gpu_synchronization:"adapter",description:"scope including launch/transfer/merge"}. hardware_cost_basis={baseline_gpus:positive integer,method_gpus:positive integer,budget_unit:"gpu_s"}. equal_outcome_target={metric:"outcome metric name",comparison:">=",target:finite number} or {not_applicable:true,reason:"why benchmark has no outcome curve"}. Unsupported prose-only protocols produce VOID at evaluation.
+Exact JSON skeletons, generated from the deterministic seal check's constants. Choose the matching output type; expand to your fixed inputs, metrics and seeds. Keep these field types and nesting, especially name/source as nonempty STRINGS, never objects. Example tolerances and citations are placeholders: replace them with justified scientific choices. sample_sizes.inputs must equal evaluation_inputs.ids.length; sample_sizes.seeds must equal paired seed count (1 for deterministic, whose execution seed is null). More metrics or higher confidence can require more seeds for finite Bonferroni bounds.
+Stochastic: ${JSON.stringify(sealProtocol.skeleton(true))}
+Deterministic: ${JSON.stringify(sealProtocol.skeleton(false))}
 Define the complete protocol now, before method code exists. Scope/tolerance changes require a new sealed run.
 Return a short completion acknowledgement; the script reads and seals the file itself.`
     try {
       check = 'agent_failed'
-      const reply = await agent(prompt, { label: 'seal', agentType: 'ls-writer', model: 'sonnet' })
+      const reply = await agent(prompt, { label: 'seal', agentType: 'ls-writer', model: 'sonnet', repairable: false, fresh: true })
       if (reply == null) return reject(check)
-      check = 'predictions_read_failed'
-      const predictions = readJSON(predictionPath)
-      if (!predictions || !Array.isArray(predictions.predictions)) return reject('predictions_invalid')
-      facts.prediction_count = predictions.predictions.length
-      check = 'protocol_incomplete'
-      const required = ['equivalence_metrics', 'paired_seed_tests', 'sample_sizes', 'confidence_rule',
-        'hardware_cost_basis', 'timing_scope', 'minimum_worthwhile_gain', 'evaluation_inputs', 'splits',
-        'compute_budgets', 'repetitions', 'warmup', 'scheduling_order', 'equal_outcome_target']
-      const complete = typeof predictions.outputs_stochastic === 'boolean'
-        && required.every(key => hasValue(predictions[key]))
-        && Array.isArray(predictions.compute_budgets) && new Set(predictions.compute_budgets).size >= 3
-        && predictions.compute_budgets.every(value => Number.isFinite(value) && value > 0)
-        && Number.isInteger(predictions.repetitions) && predictions.repetitions >= 5
-        && Number.isFinite(predictions.minimum_worthwhile_gain) && predictions.minimum_worthwhile_gain > 1
-        && new Set(predictions.predictions.map(item => item?.method)).size === facts.prediction_count
-        && predictions.predictions.every(item => item && menu.includes(item.method)
-          && Number.isFinite(item.expected_speedup_interval?.low) && item.expected_speedup_interval.low > 0
-          && Number.isFinite(item.expected_speedup_interval?.high)
-          && item.expected_speedup_interval.high >= item.expected_speedup_interval.low)
-      if (!complete) return reject(check)
-      check = 'compute_points_incomplete'
-      const completePoints = predictions.predictions.every(item => Array.isArray(item.outcome_vs_compute_points)
-        && predictions.compute_budgets.every(budget => item.outcome_vs_compute_points.some(point => point
-          && point.compute_budget === budget && hasValue(point.predicted_outcome) && hasValue(point.uncertainty))))
-      if (!completePoints) return reject(check)
-      if (predictions.outputs_stochastic) {
-        check = 'stochastic_equivalence_invalid'
-        const seeds = predictions.paired_seed_tests
-        const rule = predictions.confidence_rule?.equivalence
-        const metrics = predictions.equivalence_metrics
-        if (seeds?.kind !== 'paired_median' || !Array.isArray(seeds.seeds) || seeds.seeds.length < 2
-          || !seeds.seeds.every(Number.isInteger) || new Set(seeds.seeds).size !== seeds.seeds.length
-          || rule?.kind !== 'paired_median' || !Number.isFinite(rule.confidence) || rule.confidence < 0.5 || rule.confidence >= 1
-          || !Array.isArray(metrics) || !metrics.length || !metrics.every(metric => {
-            const tolerance = typeof metric?.tolerance === 'number' ? metric.tolerance : metric?.tolerance?.abs
-            return typeof metric?.name === 'string' && metric.name.trim()
-              && typeof metric.source === 'string' && metric.source.trim()
-              && Number.isFinite(tolerance) && tolerance > 0
-              && (typeof metric.tolerance === 'number' || Object.keys(metric.tolerance).length === 1)
-              && !/\b(?:exact|bitwise)\b/i.test(JSON.stringify({ name: metric.name, kind: metric.kind,
-                rule: metric.rule, comparison: metric.comparison }))
-          })) return reject(check)
+      let predictions, invalid
+      for (let attempt = 0; attempt < 2; attempt++) {
+        check = 'predictions_read_failed'
+        try {
+          predictions = readJSON(predictionPath)
+          facts.prediction_count = Array.isArray(predictions?.predictions) ? predictions.predictions.length : 0
+          invalid = sealProtocol.validate(predictions, bounds, menu)
+        } catch {
+          invalid = { reason_codes: ['predictions_read_failed'], field_paths: ['$'] }
+        }
+        if (!invalid) break
+        if (attempt === 1) return reject(invalid.reason_codes[0])
+        check = 'agent_failed'
+        const repaired = await agent(`Rewrite only ${JSON.stringify(predictionPath)} to repair the failed seal. Read only that file; do not read any other files, search, build, run workloads, or write method code. Preserve scientific intent; never invent evidence or loosen tolerances to obtain a pass. Return a short acknowledgement. This is the only repair attempt.
+Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
+          { label: 'seal-repair', agentType: 'ls-writer', model: 'sonnet', repairable: false, fresh: true })
+        if (repaired == null) return reject(check)
       }
-      check = 'bounds_coverage_invalid'
-      const feasible = menu.filter(method => bounds[method].feasible)
-      const infeasible = menu.filter(method => !bounds[method].feasible)
-      const excluded = predictions.infeasible_methods
-      const validCoverage = facts.prediction_count === feasible.length
-        && feasible.every(method => predictions.predictions.some(item => item?.method === method))
-        && Array.isArray(excluded) && excluded.length === infeasible.length
-        && new Set(excluded.map(item => item?.method)).size === excluded.length
-        && excluded.every(item => item && infeasible.includes(item.method)
-          && typeof item.reason === 'string' && item.reason.trim())
-      if (!validCoverage) return reject(check)
-      check = 'interval_bounds_invalid'
-      const validIntervals = predictions.predictions.every(item => {
-        const { low, high } = item.expected_speedup_interval
-        const bound = bounds[item.method].bound
-        return high <= bound && high - low <= bound - 1
-      })
-      if (!validIntervals) return reject(check)
-      if (!(feasible.length < 2 || new Set(predictions.predictions.map(item =>
-          JSON.stringify([item.expected_speedup_interval.low, item.expected_speedup_interval.high]))).size > 1)) return reject('intervals_identical')
 
       check = 'seal_write_failed'
       // Sort recursively, preserving array order. Hash the exact UTF-8 bytes, with no spaces/newline.
