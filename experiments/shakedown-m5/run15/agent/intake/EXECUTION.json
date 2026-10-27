@@ -1,0 +1,79 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "visible_GPU_count": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "fixed_scale": true,
+    "source": "intake/brief.md, representative scale revision"
+  },
+  "inputs": {
+    "generation": "Use pinned sample generators described in data.json.",
+    "source_change": "Set host nOptions = 1024 * 1024; rebuild once.",
+    "run_commands": [
+      "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+    ]
+  },
+  "anchor_workload": {
+    "options": 8192,
+    "paths_per_option": 262144,
+    "visible_GPU_count": 1,
+    "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L269-L314",
+    "rule": "Run published baseline configuration for anchors; use separate fixed representative configuration for timing."
+  },
+  "outputs": [
+    "Printed configuration: GPU count, option count, path count",
+    "Streamed Total time (ms.)",
+    "L1 norm",
+    "Average reserve",
+    "Final Test passed / Test failed! verdict",
+    "Process exit status"
+  ],
+  "scoring_interface": {
+    "timing": "Report streamed Total time (ms.) for fixed representative workload.",
+    "accuracy": "Check anchors.json on published 8192-option case; retain exit status.",
+    "reserve": "Sum Confidence / abs(MC-BS) only when error > 1e-6; divide by full option count. Confidence is discounted 1.96-standard-error width.",
+    "L1": "sum(abs(BS-MC))/sum(abs(BS)); record only, no published numeric acceptance target.",
+    "rounding": "Strict reserve > 1; at six-decimal printed boundary use verdict or recompute unrounded statistic.",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L426-L486",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L167-L179"
+    ]
+  },
+  "timing_scope": {
+    "includes": [
+      "Option preprocessing",
+      "H2D input transfer",
+      "GPU pricing",
+      "D2H result transfer",
+      "Waiting for completion events"
+    ],
+    "excludes": [
+      "Compilation",
+      "Allocation",
+      "RNG initialization",
+      "CPU result finalization",
+      "Black\u2013Scholes validation"
+    ],
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223"
+    ]
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "timeout_policy": "One fixed representative scale; no scale search or doubling PATH_N. Report timeout if budget exceeded.",
+  "runtime_estimate_s": null,
+  "runtime_estimate_reason": "No published runtime for this representative scale or verified stock GPU. Completion within default budgets remains unverified.",
+  "repeat_count": null,
+  "repeat_count_reason": "No repeat count specified by supplied source; record individual timings and environment, do not invent a published repetition rule."
+}

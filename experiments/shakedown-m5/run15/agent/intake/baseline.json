@@ -1,0 +1,57 @@
+{
+  "repo": "https://github.com/NVIDIA/cuda-samples",
+  "tag": "v12.8",
+  "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+  "pin_source": "https://api.github.com/repos/NVIDIA/cuda-samples/git/ref/tags/v12.8",
+  "build_commands": [
+    "python3 -m pip install --user cmake==3.31.6  # omit if suitable cmake is installed",
+    "export PATH=\"$HOME/.local/bin:$PATH\"",
+    "git clone --branch v12.8 --depth 1 https://github.com/NVIDIA/cuda-samples.git",
+    "cd cuda-samples",
+    "git checkout --detach db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample=Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "cmake -S \"$sample\" -B build-mc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc",
+    "cmake --build build-mc --target MonteCarloMultiGPU --parallel"
+  ],
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "command_source": "intake/brief.md, build/run command block",
+  "published_configuration": {
+    "nOptions": 8192,
+    "PATH_N": 262144,
+    "GPU_N": "cudaGetDeviceCount; brief fixes visible count to 1",
+    "scaling": "strong",
+    "method": "streamed",
+    "real": "float",
+    "DOUBLE_PRECISION": false,
+    "THREAD_N": 256,
+    "MAX_OPTIONS_per_GPU": 1048576,
+    "grid_cap": "40 * multiProcessorCount",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L269-L314",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h"
+    ]
+  },
+  "representative_configuration_change": {
+    "source": "intake/brief.md, Scale (operator revision after raid jackhammer)",
+    "change": "Set host nOptions = 1024 * 1024, rebuild once with listed commands; preserve PATH_N = 262144 and one GPU.",
+    "patch_command": null,
+    "patch_command_reason": "Brief specifies source edit but supplies no patch command."
+  },
+  "dependencies": {
+    "toolkit": "CUDA Toolkit 12.8 including cuRAND development files",
+    "host_toolchain": "C/C++ compiler",
+    "cmake_minimum": "3.20",
+    "architecture_override": null,
+    "architecture_override_reason": "Pinned sample CMake hardcodes architecture list."
+  },
+  "sources": [
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md#building-cuda-samples",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/README.md"
+  ],
+  "build_executed": false,
+  "workload_executed": false
+}

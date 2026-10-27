@@ -1,0 +1,26 @@
+{
+  "method": "multi-GPU",
+  "rationale": "Only ranked feasible method is multi-GPU, with two GPUs already passing deterministic resource guards. Kernels account for p=0.41862112093703463 of wall time; supplied k=2 gives sealed Amdahl bound 1/(1-p+p/2)=1.2647190540353526. This is an ideal ceiling, not a measured speedup. CUDA API host time is 43.7215% and other host time 14.3760%, limiting gains; H2D and D2H together are only 0.0404%. GPU utilization is unavailable, so no utilization or scaling claim is justified. Device setup, duplicated state, host dispatch, synchronization, result gathering, and load imbalance can erase gains. Keep method and all sealed scientific and timing rules unchanged.",
+  "plan_steps": [
+    "In a later authorized implementation phase, locate the pinned MonteCarloMultiGPU.cpp and MonteCarlo_kernel.cu and their evaluation adapter. Establish baseline device assignment and logical option/block/thread/path mapping before editing. Do not assume the baseline currently uses only one GPU.",
+    "Require adapter support for explicit seeds 0 through 63 and canonical streams keyed by sealed seed, canonical baseline logical block/thread identity, and path index, independent of physical device assignment. Preserve generated options between arms; seeds change Monte Carlo streams only. If paired seed injection or canonical mapping cannot be supported, mark evaluation invalid.",
+    "Partition existing options across exactly two GPUs with balanced work, preserving option identities, float precision, 262144 paths per option, pricing equations, discounting, confidence calculation, and logical random streams. Initialize each device's required state, dispatch both partitions concurrently, synchronize completion, and gather outputs into original option order without changing per-option accumulation order.",
+    "Expose unrounded per-option Monte Carlo prices, discounted confidences, and analytic Black-Scholes prices in both arms. For each seed and input, calculate baseline_SE_i from baseline discounted Confidence_i/1.96 only. Missing unrounded values, nonfinite values, or nonpositive baseline SE invalidate the metric; never substitute method variance or zero tolerance.",
+    "For each arm calculate mean_i((MC_price_i-BS_price_i)/baseline_SE_i). Form method-minus-baseline differences paired by seed for each of the two inputs. Use exactly 64 scientific observations per input, one per seed; five timing pairs per input and seed are timing repetitions, never independent scientific observations.",
+    "Apply the sealed paired-median 95% confidence rule with finite exact binomial median bounds and Bonferroni correction over both input-specific metric tests. Require both interval endpoints to lie within fixed margins -1 and +1. Retain 64 seeds, two inputs, and five timing pairs per input and seed regardless of results. Conditional prospective power target is 0.90 under the supplied tail-probability alternative; actual power remains unknown.",
+    "Measure end-to-end paired timings under the unchanged protocol, including applicable setup, dispatch, transfer, synchronization, and gathering costs. Report realized speedup against the supplied 1.2647190540353526 ceiling, together with scientific validity and equivalence results; do not claim success from kernel timing alone."
+  ],
+  "files_expected": [
+    "MonteCarloMultiGPU.cpp (pinned source; exact directory unavailable in packet)",
+    "MonteCarlo_kernel.cu (pinned source; exact directory unavailable in packet)",
+    "Existing evaluation adapter for paired seed injection, canonical stream mapping, unrounded output capture, timing, and sealed equivalence evaluation (path unavailable in packet)"
+  ],
+  "risks": [
+    "Required paired seed injection and canonical stream mapping have unavailable evidence in the pinned sample, which lacks a seed CLI and uses device-derived streams. Unsupported adapter capabilities make evaluation invalid; identical stock runs cannot count as independent seeds.",
+    "Changing physical device assignment can change cuRAND streams unless canonical logical identities and path indices are preserved. Repartitioning can also alter floating-point reduction order, precision, or option ordering and thereby change scientific results.",
+    "The metric establishes only a median paired shift in mean standardized pricing error. It does not establish per-option equivalence or equivalence of error tails; aggregate cancellation can conceal option-specific changes.",
+    "The fixed margin is prospectively one baseline Monte Carlo standard error in normalized coordinates, not a published L1 tolerance. No empirical baseline paired variability is supplied, so the conditional power design provides no empirical power guarantee.",
+    "Host costs dominate much of the profile. Additional device initialization, duplicated state, dispatch, synchronization, gathering, or uneven option partitions may yield little speedup or a slowdown despite resource feasibility.",
+    "Packet does not establish existing baseline device usage or exact adapter paths. Already parallel baseline execution could leave less incremental benefit than the ideal sealed bound suggests; validate this later without changing the chosen method or protocol."
+  ]
+}

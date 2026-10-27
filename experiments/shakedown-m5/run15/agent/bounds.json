@@ -1,0 +1,143 @@
+{
+  "data-parallel over inputs": {
+    "p": 0.41862112093703463,
+    "k": 1,
+    "bound": 1.0,
+    "feasible": false,
+    "k_derivation": {
+      "rule": "min(fixed_cap, 1 / max(mean_util, 0.05))",
+      "fixed_cap": 8,
+      "mean_util": null,
+      "missing_util_k": 1
+    },
+    "stages": [
+      {
+        "stage": "kernels",
+        "kind": "compute",
+        "wall_fraction": 0.41862112093703463,
+        "mean_gpu_util": null,
+        "methods": [
+          "data-parallel over inputs",
+          "multi-GPU",
+          "ensembles"
+        ]
+      }
+    ]
+  },
+  "batching": {
+    "p": 0.0004039857756000225,
+    "k": 1,
+    "bound": 1.0,
+    "feasible": false,
+    "k_derivation": {
+      "rule": "min(fixed_cap, 1 / max(mean_util, 0.05))",
+      "fixed_cap": 4,
+      "mean_util": null,
+      "missing_util_k": 1
+    },
+    "stages": [
+      {
+        "stage": "memcpy H2D",
+        "kind": "transfer",
+        "wall_fraction": 0.0002704081726034764,
+        "mean_gpu_util": null,
+        "methods": [
+          "batching",
+          "pipelining"
+        ]
+      },
+      {
+        "stage": "memcpy D2H",
+        "kind": "transfer",
+        "wall_fraction": 0.00013357760299654607,
+        "mean_gpu_util": null,
+        "methods": [
+          "batching",
+          "pipelining"
+        ]
+      }
+    ]
+  },
+  "multi-GPU": {
+    "p": 0.41862112093703463,
+    "k": 2,
+    "bound": 1.2647190540353526,
+    "feasible": true,
+    "k_derivation": {
+      "rule": "max(1, gpu_count)",
+      "gpu_count": 2
+    },
+    "stages": [
+      {
+        "stage": "kernels",
+        "kind": "compute",
+        "wall_fraction": 0.41862112093703463,
+        "mean_gpu_util": null,
+        "methods": [
+          "data-parallel over inputs",
+          "multi-GPU",
+          "ensembles"
+        ]
+      }
+    ]
+  },
+  "ensembles": {
+    "p": 0.41862112093703463,
+    "k": 1,
+    "bound": 1.0,
+    "feasible": false,
+    "k_derivation": {
+      "rule": "min(fixed_cap, 1 / max(mean_util, 0.05))",
+      "fixed_cap": 8,
+      "mean_util": null,
+      "missing_util_k": 1
+    },
+    "stages": [
+      {
+        "stage": "kernels",
+        "kind": "compute",
+        "wall_fraction": 0.41862112093703463,
+        "mean_gpu_util": null,
+        "methods": [
+          "data-parallel over inputs",
+          "multi-GPU",
+          "ensembles"
+        ]
+      }
+    ]
+  },
+  "pipelining": {
+    "p": 0.0004039857756000225,
+    "k": 1,
+    "bound": 1.0,
+    "feasible": false,
+    "k_derivation": {
+      "rule": "min(fixed_cap, 1 / max(mean_util, 0.05))",
+      "fixed_cap": 2,
+      "mean_util": null,
+      "missing_util_k": 1
+    },
+    "stages": [
+      {
+        "stage": "memcpy H2D",
+        "kind": "transfer",
+        "wall_fraction": 0.0002704081726034764,
+        "mean_gpu_util": null,
+        "methods": [
+          "batching",
+          "pipelining"
+        ]
+      },
+      {
+        "stage": "memcpy D2H",
+        "kind": "transfer",
+        "wall_fraction": 0.00013357760299654607,
+        "mean_gpu_util": null,
+        "methods": [
+          "batching",
+          "pipelining"
+        ]
+      }
+    ]
+  }
+}

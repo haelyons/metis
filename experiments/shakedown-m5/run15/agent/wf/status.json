@@ -1,0 +1,196 @@
+{
+ "card": "args",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/shakedown-m5/run15/agent/wf",
+ "stage": "done",
+ "started": "2026-10-27T03:43:23.220Z",
+ "calls": [
+  {
+   "id": "0001 intake",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 86340,
+   "cost_usd": 0,
+   "tokens": 100893,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0002 seal",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 115078,
+   "cost_usd": 0,
+   "tokens": 79965,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0003 propose",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 35064,
+   "cost_usd": 0,
+   "tokens": 37892,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0004 skeptic",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 5288,
+   "cost_usd": 0,
+   "tokens": 18361,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  },
+  {
+   "id": "0005 skeptic",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 9246,
+   "cost_usd": 0,
+   "tokens": 18526,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  },
+  {
+   "id": "0006 skeptic",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 9297,
+   "cost_usd": 0,
+   "tokens": 18495,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  },
+  {
+   "id": "0007 skeptic",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 8171,
+   "cost_usd": 0,
+   "tokens": 18477,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  },
+  {
+   "id": "0008 skeptic",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "cursor/default",
+   "chain": [
+    "cursor/default",
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 6626,
+   "cost_usd": 0,
+   "tokens": 18459,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0,
+ "tokens": 311068,
+ "by_model": {
+  "codex/default@medium": {
+   "calls": 3,
+   "cost_usd": 0,
+   "tokens": 218750,
+   "failed": 0,
+   "refusals": 0
+  },
+  "codex/default@low": {
+   "calls": 5,
+   "cost_usd": 0,
+   "tokens": 92318,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "codex": {
+   "calls": 8,
+   "cost_usd": 0,
+   "tokens": 311068,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-10-27T03:50:14.184Z",
+ "go": [
+  "codex/default@medium: $0.000 over 3 calls",
+  "codex/default@low: $0.000 over 5 calls"
+ ]
+}
