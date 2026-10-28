@@ -240,7 +240,7 @@ Every invocation runs in a fresh `evaluation-work/<phase>/<index>/<arm>/` with e
 
 - `BASELINE_DIR`, `METHOD_DIR`, `BASELINE_OUT`: absolute fixed source/output paths; `METHOD_OUT` and `EVAL_OUT`: this invocation's absolute empty output directory.
 - `EVAL_ARM`: `baseline` or `method`; `EVAL_MODE`: `anchors`, `equivalence`, `warmup`, `performance`, or `curve`.
-- `EVAL_PROTOCOL`: absolute path to the complete immutable sealed predictions JSON, including splits, input pins and seeds. `EVAL_INPUTS` and `EVAL_SEEDS` are JSON encodings of `evaluation_inputs` and `paired_seed_tests`.
+- `EVAL_PROTOCOL`: absolute path to the complete immutable sealed predictions JSON, including splits, input pins and seeds. `EVAL_INPUTS` and `EVAL_SEEDS` are JSON encodings of `evaluation_inputs` and `paired_seed_tests`. `EVAL_INPUTS` is an object whose `ids` array lists the sealed input identities in order; each record's `input_id` is one of those strings, and every other key (pins, configuration, generated-input descriptions) describes inputs and is never itself an input. `EVAL_SEEDS` is either `{kind:"paired_median",seeds:[integer,...]}`, whose seeds are the execution seeds in order, or `{kind:"deterministic",...}`, whose single execution seed is null; other keys are descriptive. The harness prompt (which writes `run_evaluation.sh` before the seal exists) and the method author prompt both state these two shapes.
 - `EVAL_COMPUTE_BUDGET`: empty outside curves; numeric budget string for curve runs.
 
 Non-anchor adapters write `EVAL_OUT/evaluation.json`:
