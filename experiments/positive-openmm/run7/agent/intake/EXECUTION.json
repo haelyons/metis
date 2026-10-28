@@ -1,0 +1,115 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "gpu_class": "One H100, A100 or A10 class NVIDIA GPU; use same device for baseline and candidate. Exact available model unknown.",
+    "atoms_per_replica": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "total_steps": 200000,
+    "timestep_fs": 4,
+    "ps_per_replica": 100,
+    "aggregate_simulated_ns": 0.8,
+    "scale_policy": "One fixed scale, no search, doubling loops or toy extrapolation.",
+    "baseline_schedule": "Eight replicas sequentially in one process.",
+    "candidate_schedule": "Eight independent replicas concurrently on the same GPU under MPS, preserving each seed and scientific configuration.",
+    "mps_thread_percentage": 25,
+    "mps_thread_percentage_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/"
+  },
+  "inputs": {
+    "coordinates": "5dfr_solv-cube_equil.pdb as pinned in data.json",
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "configuration": {
+      "system": "DHFR explicit water",
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "precision": "single",
+      "DeterministicForces": true,
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "energy_sampling_interval_steps": 250
+    },
+    "driver_source": "baseline.json driver.code, copied verbatim from intake/brief.md"
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "json_fields": {
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "simulated_ns": 0.8,
+      "total_wall_s": "Finite positive measured elapsed seconds.",
+      "replicas": "Eight objects, each with replica, seed, steps, wall_s, final_potential_kj_mol, mean_potential_kj_mol."
+    },
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_sampling": "100 potential energies per replica, at steps 250, 500, ..., 25000; mean and final written, samples not written.",
+    "scientific_comparison_interface": "Compare eight per-seed final and mean energies across sequential and concurrent results; full series requires extra recording. No published numeric acceptance tolerance.",
+    "candidate_output_aggregation": "Must retain per-replica fields and enclosing ensemble wall time; candidate launcher/aggregator not supplied in published brief."
+  },
+  "timing_scope": {
+    "ensemble": "time.perf_counter starts after PDB loading, force-field/System construction and platform selection, immediately before replica loop; stops after last context and integrator deletion. Includes context creation, kernel compilation/initialization, velocity generation, integration, synchronized energy queries, summary construction and teardown. Excludes Python startup/imports, input parsing, force-field/System construction, output JSON writing and final printing.",
+    "replica": "Starts after positions and velocities assigned; ends after integration and energy queries, before recording summary and context teardown.",
+    "candidate": "One enclosing elapsed interval covering completion of all eight replicas and their context creation/initialization and teardown. Document additional process/MPS startup separately; do not sum individual replica times.",
+    "scoring_interface": {
+      "primary": "total_wall_s, lower is better",
+      "aggregate_throughput": "simulated_ns / total_wall_s * 86400 ns/day",
+      "speedup": "baseline total_wall_s / candidate total_wall_s",
+      "correctness": "Fixed seeds, work, model, device count and scientific outputs; no independent published tolerance available."
+    }
+  },
+  "run_command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+  "run_command_source": "intake/brief.md",
+  "stage_budgets_s": {},
+  "effective_default_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "runtime_evidence": {
+    "source": "intake/brief.md",
+    "claim": "About one minute on H100; a few minutes on slower GPUs.",
+    "status": "Author estimate, CUDA unverified; compilation and setup time unmeasured.",
+    "measured_runtime_s": null,
+    "budget_assessment": "Expected representative workload below default run budget according to brief estimate; no measured guarantee. No workload executed at intake."
+  },
+  "unavailable": {
+    "published_mps_fixed_work_launch_command": null,
+    "reason": "Brief supplies hypothesis and public fixed-time MPS study, but no fixed-work concurrent launcher; do not invent a published command."
+  }
+}

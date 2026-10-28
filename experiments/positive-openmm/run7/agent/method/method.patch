@@ -1,0 +1,296 @@
+diff --git a/method_driver.py b/method_driver.py
+new file mode 100644
+--- /dev/null
++++ b/method_driver.py
+@@ -0,0 +1,104 @@
++#!/usr/bin/env python3
++"""Bounded input/seed dispatch; each child executes the unmodified driver."""
++import argparse
++import json
++import os
++import pathlib
++import signal
++import subprocess
++import sys
++import tempfile
++import time
++
++
++def interrupted(signum, frame):
++    raise SystemExit(128 + signum)
++
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument('--replicas', type=int, default=8)
++    parser.add_argument('--steps', type=int, default=25000)
++    parser.add_argument('--seed0', type=int, default=1000)
++    parser.add_argument('--platform', default='CUDA')
++    parser.add_argument('--out', default='ensemble.json')
++    args = parser.parse_args()
++    assert args.replicas == 8 and args.steps == 25000 and args.platform == 'CUDA'
++    signal.signal(signal.SIGTERM, interrupted)
++    signal.signal(signal.SIGINT, interrupted)
++    began = time.perf_counter()
++    children = []
++    handles = []
++    mps = False
++    with tempfile.TemporaryDirectory(prefix='mps-', dir=pathlib.Path(__file__).resolve().parent) as control, tempfile.TemporaryDirectory(prefix='dispatch-', dir=pathlib.Path(args.out).resolve().parent) as temporary:
++        work = pathlib.Path(temporary)
++        env = os.environ.copy()
++        env['CUDA_MPS_PIPE_DIRECTORY'] = str(pathlib.Path(control)/'p')
++        env['CUDA_MPS_LOG_DIRECTORY'] = str(pathlib.Path(control)/'l')
++        # Match the baseline CUDA multiprocessor count. A 25% MPS quota
++        # can change the CUDA RNG thread layout even with identical seeds.
++        # Keep input/seed concurrency, but give each context full visibility.
++        env['CUDA_MPS_ACTIVE_THREAD_PERCENTAGE'] = '100'
++        pathlib.Path(env['CUDA_MPS_PIPE_DIRECTORY']).mkdir()
++        pathlib.Path(env['CUDA_MPS_LOG_DIRECTORY']).mkdir()
++        pending = list(range(args.replicas))
++        active = {}
++        rows = [None] * args.replicas
++        try:
++            subprocess.run(['nvidia-cuda-mps-control', '-d'], env=env, check=True, timeout=15)
++            mps = True
++            while pending or active:
++                while pending and len(active) < 2:
++                    index = pending.pop(0)
++                    job = work/str(index)
++                    job.mkdir()
++                    (job/'5dfr_solv-cube_equil.pdb').symlink_to(pathlib.Path('5dfr_solv-cube_equil.pdb').resolve())
++                    log = (job/'command.log').open('w')
++                    handles.append(log)
++                    command = [sys.executable, str(pathlib.Path(__file__).with_name('dhfr_ensemble.py')),
++                               '--replicas', '1', '--steps', str(args.steps), '--seed0', str(args.seed0+index),
++                               '--platform', args.platform, '--out', 'ensemble.json']
++                    child = subprocess.Popen(command, cwd=job, env=env, stdout=log, stderr=subprocess.STDOUT)
++                    children.append(child)
++                    active[index] = (child, job)
++                for index, (child, job) in list(active.items()):
++                    status = child.poll()
++                    if status is None:
++                        continue
++                    if status:
++                        raise RuntimeError('Replica %d failed: %s' % (index, (job/'command.log').read_text()))
++                    result = json.loads((job/'ensemble.json').read_text())
++                    row = result['replicas'][0]
++                    assert (row['replica'], row['seed'], row['steps']) == (0, args.seed0+index, args.steps)
++                    row['replica'] = index
++                    rows[index] = row
++                    del active[index]
++                if active:
++                    time.sleep(0.005)
++        finally:
++            for child in children:
++                if child.poll() is None:
++                    child.terminate()
++            for child in children:
++                try:
++                    child.wait(timeout=5)
++                except subprocess.TimeoutExpired:
++                    child.kill()
++                    child.wait()
++            for handle in handles:
++                handle.close()
++            if mps:
++                subprocess.run(['nvidia-cuda-mps-control'], input='quit\n', text=True,
++                               env=env, check=True, timeout=15)
++        assert all(row is not None for row in rows)
++        total = time.perf_counter()-began
++        simulated_ns = args.replicas*args.steps*0.004/1000
++        pathlib.Path(args.out).write_text(json.dumps(dict(platform=args.platform,
++            properties={'Precision':'single', 'DeterministicForces':'true'},
++            simulated_ns=simulated_ns, total_wall_s=total, replicas=rows), allow_nan=False, indent=1))
++        print(f'total_wall_s: {total:.3f}')
++        print(f'aggregate_ns_per_day: {simulated_ns/total*86400:.1f}')
++
++
++if __name__ == '__main__':
++    main()
+diff --git a/method_adapter.py b/method_adapter.py
+new file mode 100644
+--- /dev/null
++++ b/method_adapter.py
+@@ -0,0 +1,182 @@
++import os
++if os.environ.get('EVAL_MODE', 'anchors') == 'anchors':
++    import json, os, pathlib, subprocess
++    root = pathlib.Path.cwd()
++    method = pathlib.Path(os.environ['METHOD_DIR'])
++    out = pathlib.Path(os.environ.get('METHOD_OUT', root/'out'))
++    (out/'run').mkdir(parents=True, exist_ok=True)
++    for name in ('anchors_measured.json', 'run/ensemble.json'):
++        (out/name).unlink(missing_ok=True)
++    link = out/'run/5dfr_solv-cube_equil.pdb'
++    link.unlink(missing_ok=True)
++    link.symlink_to(root/'data/5dfr_solv-cube_equil.pdb')
++    with (out/'run/command.log').open('w') as log:
++        subprocess.run([str(method/'venv/bin/python3'), str(method/'method_driver.py'),
++                        '--replicas','8','--steps','25000','--seed0','1000',
++                        '--platform','CUDA','--out','ensemble.json'], cwd=out/'run',
++                       stdout=log, stderr=subprocess.STDOUT, check=True, timeout=1150)
++    import json, math, pathlib, re
++    items = ['nvidia2025_dhfr_8_mps_approx_throughput']
++    p = json.loads((out/'run/ensemble.json').read_text())
++    def finite(x, positive=False):
++        if isinstance(x, bool) or not isinstance(x, (int,float)) or not math.isfinite(x) or (positive and x <= 0):
++            raise ValueError('Invalid measurement: ' + repr(x))
++        return x
++    assert p['platform'] == 'CUDA'
++    assert p['properties'] == {'Precision':'single', 'DeterministicForces':'true'}
++    assert p['simulated_ns'] == 0.8
++    assert len(p['replicas']) == 8
++    for i, r in enumerate(p['replicas']):
++        assert (r['replica'],r['seed'],r['steps']) == (i,1000+i,25000)
++        finite(r['wall_s'], True)
++        finite(r['final_potential_kj_mol']); finite(r['mean_potential_kj_mol'])
++    wall = finite(p['total_wall_s'], True)
++    log = (out/'run/command.log').read_text()
++    times = re.findall(r'^total_wall_s: ([0-9.]+)$', log, re.M)
++    rates = re.findall(r'^aggregate_ns_per_day: ([0-9.]+)$', log, re.M)
++    if not times or not rates:
++        raise ValueError('Missing printed measurements')
++    assert abs(float(times[-1])-wall) <= 0.00051
++    throughput = finite(p['simulated_ns']/wall*86400, True)
++    assert abs(float(rates[-1])-throughput) <= 0.051
++    (out/'anchors_measured.json').write_text(json.dumps({i:throughput for i in items}, allow_nan=False, indent=2)+'\n')
++else:
++    import ctypes, json, math, os, pathlib, signal, subprocess, time
++    root = pathlib.Path.cwd()
++    baseline = pathlib.Path(os.environ.get('METHOD_DIR', root/'method'))
++    out = pathlib.Path(os.environ['EVAL_OUT'])
++    out.mkdir(parents=True, exist_ok=True)
++    result = out/'evaluation.json'
++    result.unlink(missing_ok=True)
++    protocol = json.loads(pathlib.Path(os.environ['EVAL_PROTOCOL']).read_text())
++    mode = os.environ.get('EVAL_MODE', 'equivalence')
++    if mode not in ('equivalence', 'warmup', 'performance', 'curve'):
++        raise ValueError('Unsupported EVAL_MODE')
++    scope = protocol['timing_scope']
++    def spec(name, fallback):
++        raw = os.environ.get(name, '')
++        return json.loads(raw) if raw else fallback
++    inputs = spec('EVAL_INPUTS', protocol.get('inputs', [{'input_id':'dhfr'}]))
++    seeds = spec('EVAL_SEEDS', protocol.get('seeds', [None]))
++    if isinstance(inputs, dict):
++        if 'inputs' in inputs:
++            inputs = inputs['inputs']
++        elif 'input_id' in inputs or 'id' in inputs:
++            inputs = [inputs]
++        else:
++            inputs = [dict(v, input_id=k) if isinstance(v,dict) else {'input_id':k, 'path':v} for k,v in inputs.items()]
++    if isinstance(seeds, dict):
++        seeds = seeds.get('seeds', seeds.get('values'))
++    if seeds is None:
++        seeds = [None]
++    if not isinstance(seeds,list):
++        seeds = [seeds]
++    if not inputs or not seeds:
++        raise ValueError('Empty sealed input or seed specification')
++    budget = spec('EVAL_COMPUTE_BUDGET', None)
++    limit = None
++    if mode == 'curve':
++        limit = budget.get('gpu_seconds', budget.get('gpu_s')) if isinstance(budget,dict) else budget
++        if isinstance(limit,bool) or not isinstance(limit,(int,float)) or not math.isfinite(limit) or limit <= 0:
++            raise ValueError('Curve requires positive GPU-second budget')
++    # Explicitly synchronize the single visible GPU. Completed child processes also
++    # destroy their CUDA contexts before returning, including all queued work.
++    cuda = ctypes.CDLL('libcuda.so.1')
++    def checked(code):
++        if code != 0:
++            raise RuntimeError('CUDA synchronization failed: '+str(code))
++    checked(cuda.cuInit(0))
++    count = ctypes.c_int()
++    checked(cuda.cuDeviceGetCount(ctypes.byref(count)))
++    if count.value != 1:
++        raise RuntimeError('Expected exactly one visible GPU')
++    def sync():
++        context = ctypes.c_void_p()
++        checked(cuda.cuDevicePrimaryCtxRetain(ctypes.byref(context), 0))
++        try:
++            checked(cuda.cuCtxSetCurrent(context))
++            checked(cuda.cuCtxSynchronize())
++        finally:
++            checked(cuda.cuDevicePrimaryCtxRelease(0))
++    def finite(x, positive=False):
++        if isinstance(x,bool) or not isinstance(x,(float,int)) or not math.isfinite(x) or (positive and x <= 0):
++            raise ValueError('Invalid output measurement: '+repr(x))
++        return x
++    records = []
++    started = time.perf_counter()
++    for seed in seeds:
++        if isinstance(seed,dict):
++            seed = seed.get('seed',seed.get('value'))
++        if seed is not None and (isinstance(seed,bool) or not isinstance(seed,int) or seed <= 0):
++            raise ValueError('Invalid sealed seed')
++        seed0 = 1000 if seed is None else seed
++        for item in inputs:
++            if not isinstance(item,dict):
++                item = {'input_id':str(item)}
++            input_id = item.get('input_id',item.get('id',item.get('name')))
++            if input_id is None:
++                raise ValueError('Missing input ID')
++            coordinates = item.get('path',item.get('pdb',item.get('coordinates', root/'data/5dfr_solv-cube_equil.pdb')))
++            if isinstance(coordinates,dict):
++                coordinates = coordinates['path']
++            coordinates = pathlib.Path(coordinates)
++            if not coordinates.is_absolute():
++                coordinates = root/coordinates
++            if not coordinates.is_file():
++                raise FileNotFoundError(coordinates)
++            work = out/('run-%04d'%len(records))
++            work.mkdir(exist_ok=True)
++            link = work/'5dfr_solv-cube_equil.pdb'
++            link.unlink(missing_ok=True)
++            link.symlink_to(coordinates)
++            output = work/'ensemble.json'
++            output.unlink(missing_ok=True)
++            command = [str(baseline/'venv/bin/python3'),str(baseline/'method_driver.py'),
++                       '--replicas','8','--steps','25000','--seed0',str(seed0),
++                       '--platform','CUDA','--out','ensemble.json']
++            sync()
++            began = time.perf_counter()
++            remaining = 1150-(began-started)
++            if limit is not None:
++                remaining = min(remaining,limit-(began-started))
++            if remaining <= 0:
++                raise RuntimeError('Evaluation compute budget exhausted')
++            with (work/'command.log').open('a') as log:
++                child = subprocess.Popen(command, cwd=work, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
++                try:
++                    child.wait(timeout=max(0.001, remaining-1))
++                    if child.returncode:
++                        raise subprocess.CalledProcessError(child.returncode, command)
++                except BaseException:
++                    os.killpg(child.pid, signal.SIGTERM) if child.poll() is None else None
++                    try:
++                        child.wait(timeout=0.5)
++                    except subprocess.TimeoutExpired:
++                        os.killpg(child.pid, signal.SIGKILL)
++                        child.wait()
++                    sync()
++                    raise
++            sync()
++            elapsed = time.perf_counter()-began
++            p = json.loads(output.read_text())
++            assert p['platform'] == 'CUDA' and p['properties'] == {'Precision':'single','DeterministicForces':'true'}
++            assert p['simulated_ns'] == 0.8 and len(p['replicas']) == 8
++            wall = finite(p['total_wall_s'],True)
++            metrics = {'total_wall_s':wall, 'aggregate_ns_per_day':0.8/wall*86400, 'simulated_ns':0.8}
++            finals=[]; means=[]
++            for i,r in enumerate(p['replicas']):
++                assert (r['replica'],r['seed'],r['steps']) == (i,seed0+i,25000)
++                finite(r['wall_s'], True)
++                for key in ('final_potential_kj_mol','mean_potential_kj_mol'):
++                    metrics['replica_'+str(i)+'_'+key] = finite(r[key])
++                finals.append(r['final_potential_kj_mol']); means.append(r['mean_potential_kj_mol'])
++            metrics['final_potential_kj_mol'] = sum(finals)/8
++            metrics['mean_potential_kj_mol'] = sum(means)/8
++            metrics['reported_wall_s'] = time.perf_counter()-began
++            records.append({'input_id':input_id,'seed':seed,'metrics':metrics})
++    sync()
++    wall_s = time.perf_counter()-started
++    if limit is not None and wall_s > limit:
++        raise RuntimeError('Curve GPU-second budget exceeded')
++    result.write_text(json.dumps({'records':records,'timing_scope':scope,'gpu_count':1,
++                                  'wall_s':wall_s,'compute_budget':budget},allow_nan=False,indent=2)+'\n')

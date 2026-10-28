@@ -1,0 +1,99 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "kind": "published_coordinates_and_topology",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "availability": "available",
+      "access": "Public HTTPS GET, no authentication; place in driver working directory.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "bytes": 1814203,
+      "atoms": 23558,
+      "verification": "Retrieved bytes hash matches brief.",
+      "licence": "Distributed in OpenMM repository; local running permitted according to brief; separate file licence not established."
+    },
+    {
+      "name": "amber99sb.xml",
+      "kind": "published_force_field",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "availability": "available",
+      "access": "Ships in openmm 8.2.0 package; pinned source also publicly retrieved.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "bytes": 467697,
+      "licence": "Distributed in OpenMM; see repository licences and brief."
+    },
+    {
+      "name": "tip3p.xml",
+      "kind": "published_force_field",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "availability": "available",
+      "access": "Ships in openmm 8.2.0 package; pinned source also publicly retrieved.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "bytes": 891,
+      "licence": "Distributed in OpenMM; see repository licences and brief."
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "initial velocities",
+      "generation": "context.setVelocitiesToTemperature(300 * unit.kelvin, 1000+i)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "intake/brief.md"
+    },
+    {
+      "name": "integrator stochastic stream",
+      "generation": "integrator.setRandomNumberSeed(1000+i)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "intake/brief.md"
+    }
+  ],
+  "missing_required_data": [],
+  "splits": null,
+  "splits_reason": "No train/test split; same published equilibrated coordinates for every replica.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "pins": {
+    "openmm": "8.2.0",
+    "OpenMM-CUDA-12": "8.2.0",
+    "repo_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "transitive_dependencies": null,
+    "transitive_dependencies_reason": "Published install command leaves dependencies unpinned."
+  },
+  "licence_sources": [
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+    "intake/brief.md"
+  ],
+  "data_GiB": 0.002126014791429043,
+  "peak_working_set_GiB": null,
+  "peak_working_set_reason": "No published or measured peak memory evidence."
+}

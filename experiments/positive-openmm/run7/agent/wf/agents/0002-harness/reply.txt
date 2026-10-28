@@ -1,0 +1,4 @@
+Read intake; write harness scripts for pinned build, measured command, anchors, evaluation. No local builds or workloads.
+Intake pins OpenMM 8.2.0; eight sequential replicas × 25,000 steps, one GPU. Anchors empty; one throughput reference needs measured output. Scripts will preserve driver verbatim and validate saved results.
+Scripts written. Checking shell syntax only; builds and workloads left to pipeline. Evaluation uses fresh outputs and logs, sealed seed/input order, one GPU, explicit synchronization.
+Created four harness scripts. Shell syntax checks pass. No local builds or workloads run.
