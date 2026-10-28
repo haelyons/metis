@@ -1,0 +1,4 @@
+Read intake, then write harness scripts. Local checks only; pipeline runs builds and workloads.
+Intake fixes eight replicas × 25,000 steps, one GPU, OpenMM 8.2.0. Only reference measures µs/day; harness will derive it from actual ensemble output. Driver stays verbatim; sealed evaluation inputs and seeds get fresh runs.
+Four scripts written; Bash and embedded Python syntax checks pass. Measurement checks validate output, configuration and replica seeds. Evaluation keeps logs and uses fresh runs for every sealed input/seed. No builds or workloads run locally.
+Created four harness scripts. Syntax checks pass. No builds or workloads run locally.

@@ -18,3 +18,6 @@ experiments/blind-01/*/out/wf-*/
 *.nsys-rep
 # Nsight SQLite exports are derived from the report and can exceed GitHub limits; stats CSVs carry the summary
 **/results/profile/out/profile/*.sqlite
+# Shared libraries a harness installs into fetched results are binaries, not evidence, and can exceed GitHub limits
+**/results/**/*.so
+**/results/**/*.so.*

@@ -1,0 +1,59 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "type": "published equilibrated coordinates",
+      "availability": "available",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "download_url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "access_instructions": "Public HTTPS download; place alongside dhfr_ensemble.py in execution working directory.",
+      "authentication": null,
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "bytes": 1814203,
+      "atoms": 23558,
+      "verification": "Fetched and hash/atom count verified in memory.",
+      "licence": "Repository distribution; local running/modification explicitly permitted by brief.",
+      "licence_source": [
+        "brief.md#licence",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      ]
+    },
+    {
+      "name": "amber99sb.xml and tip3p.xml",
+      "type": "published force-field inputs",
+      "availability": "available",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "access_instructions": "Bundled with pinned openmm==8.2.0 package; loaded by app.ForceField.",
+      "pin": "openmm==8.2.0",
+      "sha256": null,
+      "hash_reason": "No separate force-field hashes supplied; package/source version pinned.",
+      "licence": "OpenMM distribution licences",
+      "licence_source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities and Langevin random streams",
+      "generation": "setVelocitiesToTemperature(300 K, seed) and integrator.setRandomNumberSeed(seed), independently for replica i.",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md Python driver",
+      "availability": "Generated at execution, not missing data."
+    }
+  ],
+  "splits": null,
+  "splits_reason": "Simulation ensemble has no training/validation/test dataset split.",
+  "missing_required_data": [],
+  "total_required_data_GiB": null,
+  "size_reason": "PDB size known; bundled force-field aggregate size not measured."
+}

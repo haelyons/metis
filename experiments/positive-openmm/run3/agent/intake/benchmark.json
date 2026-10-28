@@ -1,0 +1,156 @@
+{
+  "identity": {
+    "name": "DHFR replica ensembles on one GPU: one after another, or concurrently?",
+    "software": "OpenMM 8.2.0",
+    "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "public_benchmark": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "fixed_work_driver": "Python code block in brief.md",
+    "found": true,
+    "reason": "Public pinned executable PME benchmark, published invocation and publicly accessible inputs; supplied brief provides fixed-work ensemble driver. No benchmark substitution."
+  },
+  "outcome_definition": {
+    "primary": "Finish eight independent 25,000-step DHFR replicas sooner on one GPU while preserving each replica scientific outcome.",
+    "performance_metrics": [
+      "total_wall_s",
+      "aggregate_ns_per_day",
+      "sequential_total_wall_s / candidate_total_wall_s"
+    ],
+    "scientific_metrics": [
+      "per-replica final_potential_kj_mol",
+      "per-replica mean_potential_kj_mol"
+    ],
+    "scientific_output_limitation": "Driver samples 100 potential energies per replica but persists only mean and final values; full series equality cannot be checked from its JSON alone."
+  },
+  "citations": [
+    {
+      "citation": "Supplied benchmark brief",
+      "source": "brief.md"
+    },
+    {
+      "citation": "OpenMM 8.2.0 pinned benchmark source",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    },
+    {
+      "citation": "Hsu, Clark and Paulsen (2025-06-04), NVIDIA Technical Blog",
+      "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/"
+    },
+    {
+      "citation": "OpenMM 8.2.0 CUDA platform properties",
+      "source": "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+    }
+  ],
+  "source_licences_and_intended_use_permissions": [
+    {
+      "component": "OpenMM API, Reference and CPU platforms",
+      "licence": "MIT",
+      "intended_use": "Local benchmarking and modification",
+      "permission": "permitted",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    {
+      "component": "OpenMM CUDA and OpenCL platforms",
+      "licence": "GNU LGPL",
+      "intended_use": "Local benchmarking and modification",
+      "permission": "permitted",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    {
+      "component": "Equilibrated PDB and bundled force fields",
+      "licence": "Distributed with OpenMM; no separate file-specific licence verified during intake",
+      "intended_use": "Local running and modification",
+      "permission": "permitted",
+      "source": [
+        "brief.md#licence",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb"
+      ],
+      "reason": "Brief explicitly states local running and modification are permitted; repository licence checked. Separate file-level grant not independently established."
+    },
+    {
+      "component": "Brief ensemble driver",
+      "licence": null,
+      "intended_use": "Execute supplied baseline locally",
+      "permission": "permitted",
+      "source": "brief.md",
+      "reason": "Driver supplied for this benchmark and brief explicitly permits local running and modification; no separate driver licence specified."
+    }
+  ],
+  "licence": "permitted",
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "reason": "CUDA 12 wheels exist, but stock image identity, Python/glibc versions, GPU/driver compatibility and container MPS access are unspecified and untested.",
+    "provisional_feasibility": "Published installation route supports Linux x86_64, Python 3.10\u20133.13, CUDA-12-capable NVIDIA driver; no build or workload run.",
+    "evidence": [
+      "https://pypi.org/pypi/openmm/8.2.0/json",
+      "https://pypi.org/pypi/OpenMM-CUDA-12/8.2.0/json",
+      "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+    ],
+    "mps": "Published optimization requires CUDA MPS; availability/permissions unknown. Sequential baseline does not require MPS."
+  },
+  "data_plus_peak_working_set": {
+    "pdb_bytes": 1814203,
+    "pdb_GiB": 0.001689608208835125,
+    "total_required_data_GiB": null,
+    "peak_working_set_GiB": null,
+    "combined_GiB": null,
+    "size": "unknown",
+    "reason": "PDB verified in memory; force-field total size and peak host/device memory, especially eight concurrent contexts, not published or measured. Atom count alone insufficient."
+  },
+  "scoring": {
+    "performance": "0.8 simulated ns / total_wall_s * 86400 yields aggregate ns/day; speedup is sequential total_wall_s divided by candidate total_wall_s at identical fixed work.",
+    "published_acceptance_tolerance": null,
+    "published_scientific_target_values": null,
+    "reason": "Brief predictions are hypotheses, not independently published acceptance criteria. No numeric energy targets or allowable differences established.",
+    "anchor_policy": "Only independently published observation stored as reference with null tolerance; no reference-based pass/fail criterion.",
+    "scientific_comparison": "Brief proposes exact same-seed energy equality; fallback compares deviation against measured sequential same-seed run-to-run variation, which has not been measured. No numeric fallback tolerance available."
+  },
+  "repeatability": {
+    "fixed_configuration": {
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "energy_interval_steps": 250
+    },
+    "repeat_count": null,
+    "reason": "Brief specifies seeds, deterministic CUDA force property and same GPU/software comparisons, but no repeat count or statistical scoring rule. Deterministic forces do not independently establish trajectory equality across concurrent execution. CPU smoke-test mentioned in brief is not a published anchor."
+  },
+  "search_candidates": [],
+  "search_reason": "No benchmark search performed; checked only sources named in supplied brief.",
+  "evidence_verification": {
+    "pdb": "HTTP retrieval succeeded; SHA-256 and 23,558 atom records independently verified without writing input file.",
+    "script": "Pinned source fetched and PME model/integrator inspected.",
+    "post": "Web fetch timed out; direct HTTPS retrieval succeeded and published command plus approximate throughput verified.",
+    "licences": "Pinned licence file fetched.",
+    "wheels": "PyPI metadata verified.",
+    "reproduction": "Not performed; intake only."
+  }
+}

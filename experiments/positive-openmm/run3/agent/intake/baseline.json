@@ -1,0 +1,89 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "immutable_pin": {
+    "openmm": "8.2.0",
+    "OpenMM-CUDA-12": "8.2.0",
+    "source_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868"
+  },
+  "pin_source": [
+    "brief.md#setup",
+    "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0"
+  ],
+  "build_commands": [
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0"
+  ],
+  "build_command_sources": {
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0": [
+      "brief.md#setup",
+      "https://pypi.org/project/openmm/8.2.0/",
+      "https://pypi.org/project/OpenMM-CUDA-12/8.2.0/"
+    ]
+  },
+  "validation_commands": [
+    "python3 -m openmm.testInstallation"
+  ],
+  "validation_command_source": "brief.md#setup",
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "run_command_sources": {
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000": "brief.md#setup"
+  },
+  "working_directory_requirement": "Directory holding supplied driver as dhfr_ensemble.py and pinned 5dfr_solv-cube_equil.pdb.",
+  "driver_source": "brief.md Python code block",
+  "driver_code": "#!/usr/bin/env python3\n\"\"\"Fixed-work DHFR ensemble: independent replicas of the OpenMM 8.2.0 examples/benchmark.py `pme` system, run one after another.\"\"\"\nimport argparse\nimport json\nimport time\n\nimport openmm as mm\nfrom openmm import app, unit\n\nparser = argparse.ArgumentParser()\nparser.add_argument('--replicas', type=int, default=8)\nparser.add_argument('--steps', type=int, default=25000)\nparser.add_argument('--seed0', type=int, default=1000)\nparser.add_argument('--platform', default='CUDA')\nparser.add_argument('--out', default='ensemble.json')\nargs = parser.parse_args()\nassert args.replicas > 0 and args.steps > 0 and args.steps % 250 == 0\n\n# System exactly as benchmark.py builds `--test pme` with default options (hbonds, cutoff 0.9 nm).\npdb = app.PDBFile('5dfr_solv-cube_equil.pdb')\nforcefield = app.ForceField('amber99sb.xml', 'tip3p.xml')\nsystem = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME, nonbondedCutoff=0.9,\n                                 constraints=app.HBonds, hydrogenMass=1.5 * unit.amu)\nplatform = mm.Platform.getPlatformByName(args.platform)\nproperties = {'Precision': 'single', 'DeterministicForces': 'true'} if args.platform == 'CUDA' else {}\n\nreplicas = []\nstart = time.perf_counter()\nfor index in range(args.replicas):\n    seed = args.seed0 + index\n    integrator = mm.LangevinMiddleIntegrator(300 * unit.kelvin, 1 / unit.picosecond, 0.004 * unit.picoseconds)\n    integrator.setConstraintTolerance(1e-5)\n    integrator.setRandomNumberSeed(seed)\n    context = mm.Context(system, integrator, platform, properties)\n    context.setPositions(pdb.positions)\n    context.setVelocitiesToTemperature(300 * unit.kelvin, seed)\n    began = time.perf_counter()\n    energies = []\n    for _ in range(args.steps // 250):\n        integrator.step(250)\n        energies.append(context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole))\n    replicas.append(dict(replica=index, seed=seed, steps=args.steps, wall_s=time.perf_counter() - began,\n                         final_potential_kj_mol=energies[-1], mean_potential_kj_mol=sum(energies) / len(energies)))\n    del context, integrator\ntotal = time.perf_counter() - start\n\nsimulated_ns = args.replicas * args.steps * 0.004 / 1000\nwith open(args.out, 'w') as handle:\n    json.dump(dict(platform=args.platform, properties=properties, simulated_ns=simulated_ns,\n                   total_wall_s=total, replicas=replicas), handle, indent=1)\nprint(f'total_wall_s: {total:.3f}')\nprint(f'aggregate_ns_per_day: {simulated_ns / total * 86400:.1f}')\n",
+  "driver_pin": null,
+  "driver_pin_reason": "Driver supplied verbatim in brief; no public repository commit for ensemble wrapper specified. Underlying OpenMM code and data pinned.",
+  "published_configuration": {
+    "atoms": 23558,
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "step_fs": 4,
+    "constraint_tolerance": 1e-05,
+    "platform": "CUDA",
+    "properties": {
+      "Precision": "single",
+      "DeterministicForces": "true"
+    },
+    "gpu_count": 1,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "energy_interval_steps": 250
+  },
+  "published_configuration_sources": [
+    "brief.md#setup",
+    "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+  ],
+  "published_prior_work": {
+    "run_command": "python benchmark.py --platform=CUDA --test=pme --seconds=60",
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "relation": "Published fixed-time benchmark provenance only; not execution workload.",
+    "exact_environment_pin": null,
+    "reason": "Post names OpenMM 8.2.0; exact complete dependency versions and per-GPU figure values not transcribed."
+  },
+  "transitive_dependency_pins": null,
+  "transitive_dependency_pin_reason": "Published pip command pins OpenMM and CUDA plugin only; numpy/NVIDIA runtime dependency resolutions not immutable.",
+  "executed_builds": false,
+  "executed_workloads": false
+}

@@ -1,0 +1,374 @@
+{
+  "protocol_status": "blocked_missing_scientific_evidence",
+  "blocking_evidence": {
+    "reason": "Supplied evidence cannot support required positive numeric statistical equivalence margins or a powered sample-size calculation. Fabricating either would violate the evidence constraint. This file is not an executable v1 seal and must not authorize a scientific PASS.",
+    "required_before_new_seal": "Independent baseline-only variability measurements or cited positive scientific margins for both energy summaries, plus power justification. Do not calibrate margins from method outputs. Scope or tolerance changes require a new sealed run.",
+    "gate_scripts": "None named: intake/EXECUTION.json gate_scripts is null. No unnamed gate script read or run.",
+    "seal_repair": {
+      "status": "unrepairable_from_authorized_evidence",
+      "reason_codes": [
+        "stochastic_equivalence_invalid"
+      ],
+      "field_paths": [
+        "equivalence_metrics[0].tolerance",
+        "equivalence_metrics[0]",
+        "equivalence_metrics[1].tolerance",
+        "equivalence_metrics[1]"
+      ],
+      "reason": "The only authorized source explicitly lacks justified positive scientific margins for both stochastic energy summaries. No valid numeric tolerance can be supplied without inventing evidence. Existing unavailable tolerances remain unchanged; the seal remains blocked and cannot authorize execution or scientific PASS."
+    }
+  },
+  "outputs_stochastic": true,
+  "stochastic_reason": "Langevin thermal noise and seeded random initial velocities affect outputs. Fixed seeds and DeterministicForces=true do not change stochastic classification.",
+  "predictions": [
+    {
+      "method": "data-parallel over inputs",
+      "expected_speedup_interval": {
+        "low": 1.35,
+        "high": 1.68
+      },
+      "profile_basis": {
+        "source": "profile-packet.json; bounds.json",
+        "measured_concurrent_throughput_factor": 1.7906031801173394,
+        "kernels_wall_fraction": 0.6028054490973249,
+        "cuda_api_host_wall_fraction": 0.3930051313875416,
+        "transfer_wall_fraction": 0.004189419515133618,
+        "interpretation": "Concurrent throughput measurements are ceilings, not method-specific fixed-ensemble gains; GPU utilization and method measurements unavailable."
+      },
+      "prospective_assumptions": {
+        "fixed_plan": "Partition exactly eight existing replica inputs into two fixed waves of four independent MPS workers; preserve seed-to-replica mapping and restore replica order at merge.",
+        "model": "speedup = 1 / (1 / measured_concurrency_factor + incremental_overhead_fraction_of_baseline_wall). Overhead ranges are prospective assumptions, not measurements. Existing profile overhead must not be double-counted.",
+        "incremental_overhead_fraction_range": [
+          0.03676706653453332,
+          0.1822697120371788
+        ],
+        "overhead_scope": "Worker/context launch and initialization, CUDA API serialization, host scheduling, H2D/D2H transfers, final synchronization, join and output merge. Batching reserves extra scheduling/state-management overhead; ensemble pool reserves seed bookkeeping overhead. No search over concurrency or thread percentages.",
+        "mps_configuration": "Four concurrent workers, CUDA_MPS_ACTIVE_THREAD_PERCENTAGE=50; tuning fixed prospectively from intake brief rule 200/n. No eight-worker headroom assumed."
+      },
+      "outcome_vs_compute_points": [
+        {
+          "compute_budget": 60,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        },
+        {
+          "compute_budget": 120,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        },
+        {
+          "compute_budget": 240,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        }
+      ]
+    },
+    {
+      "method": "batching",
+      "expected_speedup_interval": {
+        "low": 1.18,
+        "high": 1.55
+      },
+      "profile_basis": {
+        "source": "profile-packet.json; bounds.json",
+        "measured_concurrent_throughput_factor": 1.7906031801173394,
+        "kernels_wall_fraction": 0.6028054490973249,
+        "cuda_api_host_wall_fraction": 0.3930051313875416,
+        "transfer_wall_fraction": 0.004189419515133618,
+        "interpretation": "Concurrent throughput measurements are ceilings, not method-specific fixed-ensemble gains; GPU utilization and method measurements unavailable."
+      },
+      "prospective_assumptions": {
+        "fixed_plan": "Two fixed batches of four independent replica contexts; preserve separate integrator states and random streams. No replacement by a combined interacting molecular system.",
+        "model": "speedup = 1 / (1 / measured_concurrency_factor + incremental_overhead_fraction_of_baseline_wall). Overhead ranges are prospective assumptions, not measurements. Existing profile overhead must not be double-counted.",
+        "incremental_overhead_fraction_range": [
+          0.08669026161901872,
+          0.28898659841508223
+        ],
+        "overhead_scope": "Worker/context launch and initialization, CUDA API serialization, host scheduling, H2D/D2H transfers, final synchronization, join and output merge. Batching reserves extra scheduling/state-management overhead; ensemble pool reserves seed bookkeeping overhead. No search over concurrency or thread percentages.",
+        "mps_configuration": "Four concurrent workers, CUDA_MPS_ACTIVE_THREAD_PERCENTAGE=50; tuning fixed prospectively from intake brief rule 200/n. No eight-worker headroom assumed."
+      },
+      "outcome_vs_compute_points": [
+        {
+          "compute_budget": 60,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        },
+        {
+          "compute_budget": 120,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        },
+        {
+          "compute_budget": 240,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        }
+      ]
+    },
+    {
+      "method": "ensembles",
+      "expected_speedup_interval": {
+        "low": 1.3,
+        "high": 1.65
+      },
+      "profile_basis": {
+        "source": "profile-packet.json; bounds.json",
+        "measured_concurrent_throughput_factor": 1.7906031801173394,
+        "kernels_wall_fraction": 0.6028054490973249,
+        "cuda_api_host_wall_fraction": 0.3930051313875416,
+        "transfer_wall_fraction": 0.004189419515133618,
+        "interpretation": "Concurrent throughput measurements are ceilings, not method-specific fixed-ensemble gains; GPU utilization and method measurements unavailable."
+      },
+      "prospective_assumptions": {
+        "fixed_plan": "Schedule the same eight independent replicas through a fixed four-worker MPS pool; no added replicas, samples or work.",
+        "model": "speedup = 1 / (1 / measured_concurrency_factor + incremental_overhead_fraction_of_baseline_wall). Overhead ranges are prospective assumptions, not measurements. Existing profile overhead must not be double-counted.",
+        "incremental_overhead_fraction_range": [
+          0.047589577357044166,
+          0.21075974052720725
+        ],
+        "overhead_scope": "Worker/context launch and initialization, CUDA API serialization, host scheduling, H2D/D2H transfers, final synchronization, join and output merge. Batching reserves extra scheduling/state-management overhead; ensemble pool reserves seed bookkeeping overhead. No search over concurrency or thread percentages.",
+        "mps_configuration": "Four concurrent workers, CUDA_MPS_ACTIVE_THREAD_PERCENTAGE=50; tuning fixed prospectively from intake brief rule 200/n. No eight-worker headroom assumed."
+      },
+      "outcome_vs_compute_points": [
+        {
+          "compute_budget": 60,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        },
+        {
+          "compute_budget": 120,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        },
+        {
+          "compute_budget": 240,
+          "predicted_outcome": {
+            "not_applicable": true,
+            "reason": "Fixed-work benchmark; no calibrated scientific outcome-versus-compute curve. Exactly eight 25000-step replicas; no numeric energy or completion forecast supported."
+          },
+          "uncertainty": {
+            "kind": "unavailable_evidence",
+            "description": "No baseline energy variability, numerical scientific margins or method-specific timing distribution supplied. Budget is per-arm GPU-second cap; unfinished fixed work is censored and cannot count as equivalent completion. Speedup interval is an assumption, not a confidence interval."
+          }
+        }
+      ]
+    }
+  ],
+  "infeasible_methods": [
+    {
+      "method": "multi-GPU",
+      "reason": "Only one GPU; equal-GPU-second Amdahl/k bound is 1, below 1.05."
+    },
+    {
+      "method": "pipelining",
+      "reason": "Transfers occupy 0.004189419515133618 of wall time; k=2 Amdahl ceiling 1.0020991067770149, below 1.05."
+    }
+  ],
+  "equivalence_metrics": [
+    {
+      "name": "mean_potential_kj_mol",
+      "source": "intake/benchmark.json scoring.scientific_comparison and repeatability; intake/EXECUTION.json scoring_interface.scientific_outcome: baseline variation and numeric scientific tolerances explicitly unavailable. intake/brief.md Predictions item 2 proposes baseline repeat variability, without measuring it.",
+      "tolerance": {
+        "abs": null
+      },
+      "unavailable_reason": "No positive absolute margin can be derived from supplied evidence. Null records unavailable evidence, never zero tolerance or permission to accept. This metric blocks executable sealing.",
+      "comparison": "Candidate minus baseline summary for corresponding replica and identical seed, units kJ/mol. Require exact two-sided binomial confidence interval for median paired difference to lie strictly inside a justified positive absolute margin; never use nonsignificance as equivalence.",
+      "status": "blocked_missing_scientific_margin"
+    },
+    {
+      "name": "final_potential_kj_mol",
+      "source": "intake/benchmark.json scoring.scientific_comparison and repeatability; intake/EXECUTION.json scoring_interface.scientific_outcome: baseline variation and numeric scientific tolerances explicitly unavailable. intake/brief.md Predictions item 2 proposes baseline repeat variability, without measuring it.",
+      "tolerance": {
+        "abs": null
+      },
+      "unavailable_reason": "No positive absolute margin can be derived from supplied evidence. Null records unavailable evidence, never zero tolerance or permission to accept. This metric blocks executable sealing.",
+      "comparison": "Candidate minus baseline summary for corresponding replica and identical seed, units kJ/mol. Require exact two-sided binomial confidence interval for median paired difference to lie strictly inside a justified positive absolute margin; never use nonsignificance as equivalence.",
+      "status": "blocked_missing_scientific_margin"
+    }
+  ],
+  "paired_seed_tests": {
+    "kind": "paired_median",
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "pairing": "Compare each replica seed with identical baseline seed on identical input, GPU, precision and software. Eight seeds are eight scientific pairs, never 100 correlated energy samples or timing repetitions as extra independent seeds.",
+    "family": "Two seed-wise energy-summary metrics. Median equivalence does not establish unchanged full trajectories or equality for every replica."
+  },
+  "sample_sizes": {
+    "inputs": 1,
+    "seeds": 8,
+    "power_status": "Unavailable: no calibrated margins or baseline paired-difference distribution. Eight seeds permit finite exact Bonferroni confidence bounds but are not asserted to achieve scientific power.",
+    "prospective_power_target": 0.8,
+    "power_assumption": "80% is a design target, not a measured result. A baseline-only power study and new seal are required before claiming powered equivalence."
+  },
+  "confidence_rule": {
+    "performance": {
+      "kind": "paired_median",
+      "confidence": 0.95
+    },
+    "equivalence": {
+      "kind": "paired_median",
+      "confidence": 0.95
+    },
+    "alpha": 0.05,
+    "performance_decision": "Exact one-sided binomial order-statistic lower confidence bound of paired baseline/method elapsed-time ratios must exceed minimum_worthwhile_gain. Missing, failed or censored pairs cannot be dropped to claim PASS.",
+    "equivalence_decision": "Two-sided exact binomial order-statistic confidence bounds; Bonferroni over two metrics gives alpha/2 per metric and alpha/4 per tail. For eight independent seed pairs, min/max endpoints have tail probability 1/256 <= 0.0125. Require both intervals inside their separately justified positive absolute margins. Missing margins force VOID. No normal approximation or bootstrap.",
+    "multiplicity": "Decisions are per method and compute budget; no pooled claim selected across methods or budgets. Any future simultaneous family claim requires new multiplicity plan and seal."
+  },
+  "hardware_cost_basis": {
+    "baseline_gpus": 1,
+    "method_gpus": 1,
+    "budget_unit": "gpu_s"
+  },
+  "hardware_controls": "Same physical GPU, driver and dependency environment for paired arms; no competing workloads; one GPU including all MPS workers. GPU model, driver and transitive dependency lock unavailable in supplied evidence; record before execution and invalidate cross-device pairs. GPU-seconds mean allocated GPU count times elapsed scoped wall seconds, not sum of overlapping kernel durations.",
+  "timing_scope": {
+    "kind": "reported_wall",
+    "gpu_synchronization": "adapter",
+    "description": "Matched ensemble scope from immediately before first replica/context or worker launch through final GPU synchronization, worker join, context/integrator teardown and ordered summary merge. Includes launch, compilation, initialization, transfer, integration, energy reads and merge overhead. Baseline supplied total_wall_s is comparable only when adapter enforces this matched boundary. Excludes common process startup, imports, PDB loading, force-field setup, JSON serialization and printing; never sum worker wall times."
+  },
+  "minimum_worthwhile_gain": 1.05,
+  "evaluation_inputs": {
+    "ids": [
+      "dhfr-5dfr-eight-replica-fixed-work"
+    ],
+    "coordinates": {
+      "file": "5dfr_solv-cube_equil.pdb",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf"
+    },
+    "software_pins": {
+      "openmm": "8.2.0",
+      "OpenMM-CUDA-12": "8.2.0",
+      "source_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868"
+    },
+    "configuration": {
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "energy_interval_steps": 250
+    },
+    "generated_inputs": "For replica i=0..7, initialize velocities at 300 K and Langevin integrator stream using seed 1000+i; no adaptive stopping, added replicas or scale search.",
+    "driver_identity": "Verbatim driver_code in intake/baseline.json; no public wrapper commit or hash available."
+  },
+  "splits": {
+    "evaluation_ids": [
+      "dhfr-5dfr-eight-replica-fixed-work"
+    ],
+    "evaluation_seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "training_ids": [],
+    "tuning_ids": [],
+    "reason": "Fixed simulation benchmark has no dataset train/test split. All eight declared seeds reserved for paired evaluation; no method tuning on evaluation energy outputs. Baseline-only calibration data unavailable and cannot be silently substituted."
+  },
+  "compute_budgets": [
+    60,
+    120,
+    240
+  ],
+  "budget_policy": "Each budget is a separate per-arm GPU-second limit for identical complete fixed work; no shortened trajectories or partial scientific outputs. Scientific equivalence remains blocked at every budget. Timing repetitions and warmups consume additional allocated GPU-seconds and are not amortized away; stage-cap exhaustion yields incomplete/VOID, never fewer selected repetitions.",
+  "repetitions": 8,
+  "warmup": 1,
+  "warmup_protocol": "One full eight-replica untimed warmup per arm and method, same fixed work/configuration; discard its timing and energies. Each timed arm starts fresh contexts. Preserve identical compilation-cache policy across paired arms. Warmup counts toward total resource use.",
+  "scheduling_order": {
+    "kind": "randomized_pairs",
+    "seed": 20261028
+  },
+  "scheduling_protocol": "For each method and budget in listed order, create eight baseline/candidate timing pairs; seeded independent fair coin determines arm order within each pair. No concurrent baseline/candidate arms. Each full timing arm contains all eight fixed scientific seeds. Treat repeated observations of the same seed as correlated, not additional independent scientific pairs.",
+  "equal_outcome_target": {
+    "not_applicable": true,
+    "reason": "Fixed-work benchmark has no calibrated outcome curve or numerical target. Complete eight 25000-step replicas (0.8 ns total), preserve configuration and finite energy summaries, then require statistical energy equivalence. Missing scientific margins block acceptance; this declaration does not waive scientific checks."
+  },
+  "structural_checks": "Replica ids exactly 0..7, seeds exactly 1000..1007, steps exactly 25000 each, simulated_ns exactly 0.8, correct pinned configuration, finite mean/final energies. Structural integrity checks are not exact stochastic-output equivalence. Full energy series absent; no trajectory-equivalence claim."
+}

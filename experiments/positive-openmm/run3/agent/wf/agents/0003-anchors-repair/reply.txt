@@ -1,0 +1,8 @@
+I’ll read intake evidence and harness scripts, repair only run_anchors.sh, then run available static checks. No local workload or box access.
+Setup log shows CUDA 12.9 NVRTC wheel with driver 570/CUDA 12.8. Installation check reported same PTX error but exited successfully.
+
+Repair will constrain unpinned NVRTC dependency in isolated baseline to CUDA 12.8, preserve replaced files and caches under out/, then invoke canonical command unchanged. OpenMM pins and scientific configuration stay fixed.
+Fixture checks passed: reference measured, empty anchor list writes `{}`, NaN rejected, command failure propagated. Dependency repair preserves unrelated NVIDIA packages and runs once. Bash syntax passed. No workload executed.
+Repaired only `harness/run_anchors.sh`: NVRTC compatibility fix, canonical command unchanged, logs preserved.
+
+Syntax and fixture checks passed. No local workload or box access.
