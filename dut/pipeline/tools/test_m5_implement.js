@@ -13,6 +13,7 @@ const assert = require('node:assert/strict')
 const { spawn } = require('node:child_process')
 const { createHash, randomUUID } = require('node:crypto')
 const ROOT = path.resolve(__dirname, '..')
+const { assertEvalShapes } = require('./test_m5_reproduce.js')
 const PRIVATE = 'IMPLEMENT_PRIVATE_SENTINEL_593771'
 const TEST_SECRET = 'TEST_SOURCE_SENTINEL_174839'
 const METHOD_SECRET = 'METHOD_SOURCE_SENTINEL_284950'
@@ -495,6 +496,12 @@ async function main() {
     verdict('happy', happy, null, { patch_applies: true, tests_pass: true, blind_tests: true, launch_review_pass: true })
     authorChecks(happy)
     receiptChecks(happy)
+    // SCHEMAS.md EVAL_PROTOCOL bullet: "The harness prompt ... and the method author prompt both state these two shapes."
+    check('method author prompt states the EVAL_INPUTS and EVAL_SEEDS shapes', () => {
+      const author = happy.calls.find(call => call.title === 'implement')
+      assert.ok(author, 'missing method author call')
+      assertEvalShapes(author.prompt, 'implement')
+    })
     for (const role of ['tests', 'implement']) check(`${role}: opposing sentinel unreadable [requires bubblewrap]`, () => {
       const call = happy.calls.find(call => call.title === role)
       assert.ok(call, 'missing author call')

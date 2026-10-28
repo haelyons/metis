@@ -40,7 +40,12 @@ const anchors = [{ id: 'first', quantity: 'fixture', source: 'published fixture'
 const references = anchors.map(item => ({ ...item, tolerance: null }))
 const ANCHOR_SETS = { anchors, references, empty: [], mixed: [anchors[1], references[0]] }
 const anchorsFor = config => ANCHOR_SETS[config.anchorSet || 'anchors']
+// Public evidence from positive-openmm run7: its harness run_evaluation.sh treated every key of the sealed
+// evaluation_inputs as an input and crashed, so evaluate was VOID after implement passed.
+const RUN7 = path.resolve(__dirname, '../../../experiments/positive-openmm/run7')
+const run7Protocol = () => readJSON(path.join(RUN7, 'agent/PREDICTIONS.json'))
 function protocol(config = {}) {
+  if (config.run7) return run7Protocol()
   const budgets = [2, 4, 8]
   return {
     predictions: [{ method: 'batching', expected_speedup_interval: { low: 1.5, high: 2.5 },
@@ -62,6 +67,7 @@ function protocol(config = {}) {
 // Synthetic adapter reports exercise the scorer; no real GPU, model or network.
 // Different times by repetition distinguish median(pair ratios) from ratio(medians).
 function adapter(config = {}, baseline = false) {
+  if (config.run7) return run7Adapter(config, baseline)
   return `printf '%s\\n' '${SECRET}:adapter'
 python3 - <<'FIXTURE_PY'
 import json, os, pathlib
@@ -105,6 +111,41 @@ else:
     if not (c.get('missingOutput') or (mode == 'curve' and c.get('missingCurve'))):
         (out / 'evaluation.json').write_text(json.dumps(report))
 FIXTURE_PY`
+}
+// SCHEMAS.md EVAL_PROTOCOL bullet. `contract` reads only EVAL_INPUTS.ids and the EVAL_SEEDS seeds (or one
+// null seed) and emits seed-major records. `every-key` reproduces run7's harness: each key of EVAL_INPUTS
+// becomes an input. Every invocation's environment and emitted (input_id, seed) pairs go to the capture file.
+function run7Adapter(config, baseline) {
+  return `printf '%s\\n' '${SECRET}:adapter'
+python3 - <<'RUN7_FIXTURE_PY'
+import json, os, pathlib
+c = json.loads(${JSON.stringify(JSON.stringify(config))})['run7']
+arm = os.environ.get('EVAL_ARM', '${baseline ? 'baseline' : 'method'}')
+mode = os.environ.get('EVAL_MODE', 'implement')
+out = pathlib.Path(os.environ.get('EVAL_OUT', 'out'))
+out.mkdir(parents=True, exist_ok=True)
+row = dict(arm=arm, mode=mode, inputs=os.environ.get('EVAL_INPUTS'), seeds=os.environ.get('EVAL_SEEDS'),
+           protocol=pathlib.Path(os.environ['EVAL_PROTOCOL']).read_text() if os.environ.get('EVAL_PROTOCOL') else None)
+def capture():
+    with open(c['capture'], 'a') as f: f.write(json.dumps(row) + '\\n')
+if mode in ('implement', 'anchors'):
+    capture()
+    (out / 'anchors_measured.json').write_text(json.dumps({'first': 1, 'zero': 0}))
+    (out / 'values.json').write_text('[0,1,2]')
+else:
+    capture()
+    inputs, spec = json.loads(row['inputs']), json.loads(row['seeds'])
+    seeds = spec['seeds'] if spec['kind'] == 'paired_median' else [None]
+    ids = inputs['ids'] if c[arm] == 'contract' else list(inputs)
+    records = [dict(input_id=i, seed=s, metrics={'final_potential_kj_mol': -30000.0 - (s or 0), 'mean_potential_kj_mol': -31000.0 + (s or 0) / 2})
+               for s in seeds for i in ids]
+    p = json.loads(row['protocol'])
+    report = dict(records=records, timing_scope=p['timing_scope'], gpu_count=p['hardware_cost_basis'][arm + '_gpus'])
+    if mode == 'curve': report['compute_budget'] = float(os.environ['EVAL_COMPUTE_BUDGET'])
+    (out / 'evaluation.json').write_text(json.dumps(report))
+    row['records'] = [[r['input_id'], r['seed']] for r in records]
+    capture()
+RUN7_FIXTURE_PY`
 }
 module.exports = {
   async run(options) {
@@ -297,8 +338,78 @@ fi`)
   })
   return { root, record, records, results: path.join(agent, 'results/evaluate') }
 }
+// SCHEMAS.md EVAL_PROTOCOL bullet: "`EVAL_INPUTS` and `EVAL_SEEDS` are JSON encodings of `evaluation_inputs`
+// and `paired_seed_tests`." Each adapter invocation in an evaluate mode must receive run7's sealed objects.
+function run7Env(name, captureFile, arms) {
+  const sealed = run7Protocol(), captured = rows(captureFile).filter(row => row.mode !== 'implement')
+  check(`${name}: every adapter receives run7's sealed evaluation_inputs and paired_seed_tests`, () => {
+    for (const arm of arms) assert.ok(captured.some(row => row.arm === arm && row.mode === 'equivalence'), `${arm} adapter never ran equivalence`)
+    for (const row of captured) {
+      const where = `${row.arm}/${row.mode}`
+      assert.equal(typeof row.inputs, 'string', `${where}: EVAL_INPUTS missing`)
+      assert.equal(typeof row.seeds, 'string', `${where}: EVAL_SEEDS missing`)
+      assert.deepEqual(JSON.parse(row.inputs), sealed.evaluation_inputs, `${where}: EVAL_INPUTS`)
+      assert.deepEqual(JSON.parse(row.seeds), sealed.paired_seed_tests, `${where}: EVAL_SEEDS`)
+      assert.deepEqual(JSON.parse(row.protocol), sealed, `${where}: EVAL_PROTOCOL`)
+    }
+  })
+  return captured
+}
+// "Records must cover exactly the Cartesian product, in seed-major then input-ID order."
+function run7Pairs(name, captured) {
+  const sealed = run7Protocol()
+  const expected = sealed.paired_seed_tests.seeds.flatMap(seed => sealed.evaluation_inputs.ids.map(id => [id, seed]))
+  check(`${name}: contract adapters emit exactly ids x seeds in seed-major order`, () => {
+    assert.deepEqual(expected.length, 8)
+    const emitted = captured.filter(row => row.records)
+    assert.ok(emitted.length >= 2, 'no adapter records captured')
+    for (const row of emitted) assert.deepEqual(row.records, expected, `${row.arm}/${row.mode}`)
+  })
+}
+async function run7Cases() {
+  check('run7 fixture: recorded PREDICTIONS.json bytes match the run7 seal receipt', () => {
+    const receipt = readJSON(path.join(RUN7, 'control/seals/0001.json'))
+    assert.equal(sha(fs.readFileSync(path.join(RUN7, 'agent/PREDICTIONS.json'))), receipt.sha256)
+    const sealed = run7Protocol()
+    assert.ok(Object.keys(sealed.evaluation_inputs).length > 1, 'run7 evaluation_inputs has no non-ids keys')
+    assert.equal(sealed.paired_seed_tests.kind, 'paired_median')
+  })
+  const capture = name => path.join(scratch, name + '.capture.jsonl')
+  const accepted = await cli('run7-contract', 'equivalence', { run7: { baseline: 'contract', method: 'contract', capture: capture('cli-contract') } })
+  verdict('run7 equivalence CLI: contract adapters accepted as valid measurements', accepted, 'equivalence', 'PASS', 0)
+  run7Pairs('run7 equivalence CLI', run7Env('run7 equivalence CLI', capture('cli-contract'), ['baseline', 'method']))
+  for (const [name, baseline, method] of [['every-key-both', 'every-key', 'every-key'], ['every-key-baseline', 'every-key', 'contract']]) {
+    const r = await cli('run7-' + name, 'equivalence', { run7: { baseline, method, capture: capture('cli-' + name) } })
+    run7Env(`run7 equivalence CLI ${name}`, capture('cli-' + name), ['baseline', 'method'])
+    check(`run7 equivalence CLI ${name}: adapter treating every EVAL_INPUTS key as an input is not accepted`, () => {
+      assert.ifError(r.child.error)
+      const emitted = rows(capture('cli-' + name)).filter(row => row.arm === 'baseline' && row.records)
+      assert.ok(emitted.some(row => row.records.some(([id]) => id === 'pins')), 'fixture did not emit every-key records')
+      assert.notEqual(r.child.status, 0)
+      assert.notEqual(r.verdict?.status, 'PASS')
+      assert.notEqual(r.verdict?.equivalence_pass, true)
+    })
+  }
+  // Through the real stages, as in run7: sealed PREDICTIONS.json, harness run_evaluation.sh, method run_method.sh.
+  const good = await pipeline('run7-contract', { run7: { baseline: 'contract', method: 'contract', capture: capture('pipeline-contract') } })
+  run7Pairs('run7 pipeline', run7Env('run7 pipeline', capture('pipeline-contract'), ['baseline', 'method']))
+  check('run7 pipeline: contract adapters accepted as valid equivalence measurements', () => {
+    const value = readJSON(path.join(good.results, 'equivalence.json'))
+    assert.equal(value.status, 'PASS')
+    assert.equal(good.record.facts.equivalence_pass, true)
+  })
+  const bad = await pipeline('run7-every-key', { run7: { baseline: 'every-key', method: 'contract', capture: capture('pipeline-every-key') } })
+  run7Env('run7 pipeline every-key harness', capture('pipeline-every-key'), ['baseline', 'method'])
+  check('run7 pipeline: harness treating every EVAL_INPUTS key as an input is not accepted', () => {
+    const value = fs.existsSync(path.join(bad.results, 'equivalence.json')) ? readJSON(path.join(bad.results, 'equivalence.json')) : null
+    assert.notEqual(value?.status, 'PASS')
+    assert.notEqual(bad.record.facts.equivalence_pass, true)
+    assert.notEqual(bad.record.signature.status, 'PASS')
+  })
+}
 async function main() {
   try {
+    await run7Cases()
     const valid = await cli('anchors-pass', 'validity', {}, false)
     verdict('validity CLI: every anchor passes; --stage optional', valid, 'validity', 'PASS', 0)
     check('validity preserves exact anchor score', () => {

@@ -155,6 +155,31 @@ module.exports = {
   async exportSession(id, file) { fs.writeFileSync(file, '{}') },
   assertMpsRule,
   assertRunCommandRules,
+  assertEvalShapes,
+}
+// SCHEMAS.md evaluation adapter environment: "`EVAL_INPUTS` is an object whose `ids` array lists the
+// sealed input identities in order; each record's `input_id` is one of those strings, and every other key
+// ... is never itself an input. `EVAL_SEEDS` is either `{kind:"paired_median",seeds:[integer,...]}`, whose
+// seeds are the execution seeds in order, or `{kind:"deterministic",...}`, whose single execution seed is
+// null ... The harness prompt ... and the method author prompt both state these two shapes."
+// Checked by meaning in a window after each mention of the variable, not by exact wording.
+function assertEvalShapes(prompt, label) {
+  const shape = (variable, meanings) => {
+    const windows = [...prompt.matchAll(new RegExp(variable, 'g'))].map(match => prompt.slice(Math.max(0, match.index - 150), match.index + 900))
+    assert.ok(windows.length, `${label}: prompt never names ${variable}`)
+    const missing = window => meanings.filter(([pattern]) => !pattern.test(window)).map(([, meaning]) => meaning)
+    const best = windows.map(missing).sort((a, b) => a.length - b.length)[0]
+    assert.deepEqual(best, [], `${label}: ${variable} shape lacks ${best.join(', ')}`)
+  }
+  shape('EVAL_INPUTS', [[/\bobject\b/i, 'an object'], [/\bids\b/, 'the ids key'], [/\b(array|list)/i, 'ids is an array'],
+    [/\border/i, 'ids are in order'], [/\binput_id\b/, 'record input_id values'],
+    [/\binput_id\b[^.\n]{0,160}\b(one of|from|in|among|is|are|equals?|match\w*)\b[^.\n]{0,80}\b(ids|those|these|the) (strings|identit|IDs?)|\binput_id\b[^.\n]{0,120}\bids\b|\bids\b[^.\n]{0,160}\binput_id\b/i,
+      'input_id values are the ids strings'],
+    [/\b(other|every other|all other|remaining|additional|extra|any other)\b[^.\n]{0,30}\bkeys?\b[^.\n]{0,250}\b(never|not|aren't|isn't)\b[^.\n]{0,80}\binputs?\b|\b(never|not|do not|don't)\b[^.\n]{0,40}\b(treat|iterate|use|interpret|loop)\w*\b[^.\n]{0,80}\b(other|any|every|non-ids?)\b[^.\n]{0,30}\bkeys?\b[^.\n]{0,80}\binputs?\b/i,
+      'other keys are never inputs']])
+  shape('EVAL_SEEDS', [[/paired_median/, 'paired_median'], [/\bseeds\b/, 'the seeds key'], [/\bintegers?\b/i, 'integer seeds'],
+    [/\border/i, 'seeds are in order'], [/\bdeterministic\b/, 'deterministic'],
+    [/\b(single|one|exactly one|only)\b[^.\n]{0,60}\bnull\b|\bnull\b[^.\n]{0,60}\b(single|one|only)\b|\[\s*null\s*\]/i, 'a single null seed']])
 }
 // SCHEMAS.md "The pipeline owns CUDA MPS": harness and repair prompts state that harness scripts
 // must not set, unset or override CUDA_MPS_* variables, or start or stop an MPS daemon.
@@ -316,6 +341,14 @@ exec '${realPython}' "$@"`)
     const prompts = calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label))
     if (!config.probeFailure) assert.ok(prompts.length >= 1, 'no harness prompt')
     for (const call of prompts) assertMpsRule(call.prompt, call.label)
+  })
+  if (!config.probeFailure) check(`${name}: harness prompt asks for run_evaluation.sh and states the EVAL_INPUTS and EVAL_SEEDS shapes`, () => {
+    const harness = calls.filter(call => call.label === 'harness')
+    assert.ok(harness.length >= 1, 'no harness prompt')
+    for (const call of harness) {
+      assert.match(call.prompt, /run_evaluation\.sh/, 'harness prompt never asks for run_evaluation.sh')
+      assertEvalShapes(call.prompt, call.label)
+    }
   })
   if (calls.some(call => call.label === 'anchors-repair')) check(`${name}: anchors repair prompt states that a rewritten run_command.sh obeys every run_command.sh rule`, () => {
     for (const call of calls.filter(call => call.label === 'anchors-repair')) assertRunCommandRules(call.prompt, call.label)
