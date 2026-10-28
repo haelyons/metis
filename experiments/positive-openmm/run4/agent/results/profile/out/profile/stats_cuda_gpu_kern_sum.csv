@@ -1,0 +1,38 @@
+Time (%),Total Time (ns),Instances,Avg (ns),Med (ns),Min (ns),Max (ns),StdDev (ns),Name
+19.2,14617944783,200816,72792.7,71200.0,55584,113856,4923.0,computeNonbonded
+18.6,14143250293,200816,70428.9,125456.0,2176,189120,67977.4,findBlocksWithInteractions
+9.2,6998856815,200816,34852.1,35040.0,28864,49888,1641.3,gridSpreadCharge
+6.0,4589528736,803264,5713.6,4704.0,3936,57632,5608.6,"void regular_fft<(unsigned int)56, EPT<(unsigned int)7, (unsigned int)8>, (unsigned int)16, (unsigned int)12, (padding_t)6, (twiddle_t)0, (loadstore_modifier_t)2, (layout_t)1, unsigned int, float, HostConfigPlaceholder>(kernel_arguments_t<T9>)"
+5.5,4178565374,200816,20807.9,12640.0,10624,46880,9874.8,gridInterpolateForce
+5.0,3840219572,200816,19123.1,19136.0,16160,25600,493.1,sortShortList2
+4.7,3608535893,200816,17969.4,5056.0,3840,64480,18121.8,"void regular_fft_r2c<(unsigned int)56, EPT<(unsigned int)7, (unsigned int)8>, (unsigned int)8, (unsigned int)32, (padding_t)14, (twiddle_t)0, (loadstore_modifier_t)2, (layout_t)0, unsigned int, float, HostConfigPlaceholder>(kernel_arguments_t<T9>)"
+4.7,3538768914,200816,17621.9,12544.0,9248,52672,8039.8,computeBondedForces
+3.3,2500837152,200816,12453.4,12353.0,12224,26016,574.3,sortBuckets
+3.1,2377809598,200816,11840.7,11840.0,10560,15936,199.1,computeRange
+2.8,2124944023,200816,10581.5,10624.0,9280,14208,272.1,findBlockBounds
+1.7,1313204369,200816,6539.3,6528.0,5920,8672,105.7,assignElementsToBuckets
+1.6,1209132625,200816,6021.1,3072.0,2624,64864,10282.0,finishSpreadCharge
+1.1,864398489,200000,4322.0,4320.0,4224,5632,62.8,removeCenterOfMassMomentum
+1.1,862506994,200816,4295.0,3744.0,2688,48640,2181.9,reciprocalConvolution
+1.1,853901334,200816,4252.2,4320.0,3744,48800,352.5,"void regular_fft_c2r<(unsigned int)56, EPT<(unsigned int)7, (unsigned int)8>, (unsigned int)8, (unsigned int)32, (padding_t)14, (twiddle_t)0, (loadstore_modifier_t)2, (layout_t)0, unsigned int, float, HostConfigPlaceholder>(kernel_arguments_t<T9>)"
+0.9,703044566,200000,3515.2,3520.0,3104,4736,66.4,applyShakeToPositions
+0.9,650653815,200000,3253.3,3264.0,3136,4256,51.9,integrateLangevinMiddlePart3
+0.9,647019206,200008,3235.0,3232.0,3168,4352,50.2,applyShakeToVelocities
+0.8,635477579,200000,3177.4,3168.0,2944,4288,90.4,integrateLangevinMiddlePart2
+0.8,613694178,200000,3068.5,3072.0,2848,4160,73.9,applySettleToPositions
+0.8,596847482,200000,2984.2,2976.0,2912,4000,49.0,integrateLangevinMiddlePart1
+0.8,591410252,200816,2945.0,2944.0,2464,6880,70.7,sortBoxData
+0.8,588183304,200816,2929.0,2912.0,2880,4096,43.6,computeSortKeys
+0.7,557272097,200816,2775.0,2784.0,2656,3904,50.7,copyDataToBuckets
+0.7,552562489,200816,2751.6,2752.0,2656,3872,42.5,clearThreeBuffers
+0.7,547389052,200008,2736.8,2752.0,2592,3712,55.8,applySettleToVelocities
+0.7,544555518,200000,2722.8,2720.0,2656,3648,42.1,calcCenterOfMassMomentum
+0.7,532014515,200816,2649.3,2656.0,2368,8288,57.6,findAtomGridIndex
+0.7,508097974,200816,2530.2,2528.0,2432,5184,42.7,computeBucketPositions
+0.2,162063268,50000,3241.3,3232.0,3104,4416,74.5,generateRandomNumbers
+0.0,4359532,800,5449.4,5408.0,4064,15296,1312.3,gridEvaluateEnergy
+0.0,3707924,800,4634.9,4640.0,4576,5952,50.5,reduceEnergy
+0.0,2010277,800,2512.8,2528.0,2464,3200,30.4,addEnergy
+0.0,23872,8,2984.0,2880.0,2848,3712,295.6,computeExclusionParameters
+0.0,23616,8,2952.0,2848.0,2848,3680,294.2,computeParameters
+0.0,18017,8,2252.1,2160.5,2144,2720,197.1,clearBuffer

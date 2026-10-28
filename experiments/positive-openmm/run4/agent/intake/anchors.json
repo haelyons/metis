@@ -1,0 +1,23 @@
+[
+  {
+    "id": "nvidia-2025-dhfr-eight-replicas-throughput-reference",
+    "quantity": "Aggregate DHFR pme throughput, eight concurrent MPS simulations, microseconds/day",
+    "source": "Hsu, Clark and Paulsen, NVIDIA Technical Blog, 2025-06-04, https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "published_value": 5.0,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "kind": "reference",
+    "is_anchor": false,
+    "configuration": {
+      "openmm_version": "8.2.0",
+      "gpu_count": 1,
+      "gpu_models": "L40S or H100",
+      "concurrent_simulations": 8,
+      "CUDA_MPS_ACTIVE_THREAD_PERCENTAGE": 25,
+      "command": "python benchmark.py --platform=CUDA --test=pme --seconds=60"
+    },
+    "qualifier": "Approximate: approaches 5 microseconds/day; not an exact measurement or acceptance criterion.",
+    "applicability": "Independent fixed-time throughput reference only. Does not publish fixed-work 8 x 25000-step timing, deterministic-force overhead, energy values or tolerances."
+  }
+]

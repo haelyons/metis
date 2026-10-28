@@ -1,0 +1,151 @@
+{
+  "representative_scale": {
+    "atoms": 23558,
+    "replicas": 8,
+    "gpu_count": 1,
+    "steps_per_replica": 25000,
+    "total_steps": 200000,
+    "step_ps": 0.004,
+    "ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "seed0": 1000,
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "energy_interval_steps": 250,
+    "energy_samples_per_replica": 100,
+    "platform": "CUDA",
+    "properties": {
+      "Precision": "single",
+      "DeterministicForces": "true"
+    },
+    "forcefield_files": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "constraint_tolerance": 1e-05,
+    "source": "brief.md; https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+  },
+  "inputs": {
+    "required_files": [
+      "5dfr_solv-cube_equil.pdb"
+    ],
+    "packaged_files": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "driver": "Python code block in brief.md",
+    "command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+    "working_directory": "Directory holding driver and pinned PDB.",
+    "generated": "Seeds 1000..1007 for velocities and integrator RNG.",
+    "scale_selection": "Single fixed scale from brief; no scale search, adaptive step count or doubling loops."
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "json_fields": {
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "simulated_ns": 0.8,
+      "total_wall_s": "Positive finite seconds",
+      "replicas": "Eight records with replica, seed, steps, wall_s, final_potential_kj_mol, mean_potential_kj_mol"
+    },
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_unit": "kJ/mol",
+    "full_energy_series": null,
+    "full_energy_series_reason": "Sampled every 250 steps but not saved by published inline driver."
+  },
+  "timing_scope": {
+    "ensemble_start": "Immediately before replica loop, after PDB parse, force-field/system creation and platform selection.",
+    "ensemble_end": "After all replicas finish and each context/integrator is deleted; before JSON serialization and stdout.",
+    "included": [
+      "Context creation and lazy CUDA compilation",
+      "Position and seeded velocity initialization",
+      "All 200000 integration steps",
+      "100 synchronous energy queries per replica",
+      "Per-replica result construction",
+      "Context/integrator destruction"
+    ],
+    "excluded": [
+      "Package installation",
+      "Input downloads",
+      "PDB parsing",
+      "Force-field/system construction",
+      "Final JSON write",
+      "Python interpreter startup"
+    ],
+    "per_replica": "Starts after context and velocity initialization; includes integration, energy queries and per-replica result preparation; excludes context destruction.",
+    "concurrent_comparison": "Time entire ensemble completion on one GPU, including creation and cleanup of every replica context; preserve work, seeds and 100 energy queries per replica. Include candidate orchestration overhead; no warm-up exclusion absent from sequential baseline.",
+    "source": "brief.md inline driver"
+  },
+  "scoring_interface": {
+    "primary": "Minimize total wall seconds for complete fixed ensemble; speedup = sequential_total_wall_s / candidate_total_wall_s.",
+    "throughput": "aggregate_ns_per_day = 0.8 / total_wall_s * 86400",
+    "scientific_outputs": [
+      "Each replica final_potential_kj_mol",
+      "Each replica mean_potential_kj_mol"
+    ],
+    "scientific_acceptance": "Brief predicts identical per-seed energy series on same hardware/software with deterministic forces. Fallback refers to measured sequential run-to-run variation, which is unavailable. No independent published energy acceptance tolerance exists.",
+    "energy_tolerance": null,
+    "energy_tolerance_reason": "No published numeric acceptance criterion; do not use integrator constraint tolerance as outcome tolerance.",
+    "published_performance_acceptance": null,
+    "published_performance_acceptance_reason": "NVIDIA observations are fixed-time reference throughput, not acceptance thresholds for fixed-work ensemble. Brief speedup ranges are predictions.",
+    "reference_comparison": "Report context and units; do not score fixed-work runtime against approximate fixed-time throughput reference.",
+    "repeatability": {
+      "fixed_seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "requirements": "Same GPU model, OpenMM pin, force fields, initial positions, precision and deterministic-force setting for comparisons.",
+      "published_repeat_count": null,
+      "reason": "No repeat count or statistical aggregation rule published for supplied fixed-work driver.",
+      "determinism_status": "Unverified on CUDA. Documentation describes deterministic forces but also cautions single-precision PME simulation determinism depends on settings; trajectory identity requires reproduction.",
+      "source": "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+    },
+    "interface_limitation": "Inline driver samples energies internally but serializes only mean and final value; complete time-series equality cannot be audited from ensemble.json alone."
+  },
+  "expected_duration": {
+    "source": "brief.md",
+    "claim": "About one minute on H100; a few minutes on slower GPUs.",
+    "verified": false,
+    "reason": "No CUDA run or compilation-overhead measurement supplied."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "stage_budgets_source": "User-supplied defaults; no overrides.",
+  "budget_feasibility": "Fixed-scale duration claim is below default budgets; actual duration remains unverified. No workloads run during intake.",
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate script path or command supplied; only JSON and evidence consistency validated locally."
+}
