@@ -15,7 +15,7 @@ function isolation(env) {
     ...servers.flatMap(server => ['-c', `mcp_servers.${server}.enabled=false`])]
 }
 
-function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, name: chatName }) {
+function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, env, addDirs, isolated, name: chatName }) {
   return new Promise(resolve => {
     const t0 = Date.now(), limit = timeoutMs || 20 * 60000
     const tokens = { input: 0, output: 0, reasoning: 0, cache_read: 0, cache_write: 0 }
@@ -63,10 +63,12 @@ function runExec({ model, prompt, cwd, timeoutMs, rawPath, tools, systemPrompt, 
     try {
       tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wf-codex-'))
       const [name, effort] = String(model).replace(/^codex\//, '').split('@')
-      const sandbox = /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(tools || '') ? 'workspace-write' : 'read-only'
+      const ephemeral = ({ ...process.env, ...env }).CODEX_EPHEMERAL === '1'
+      // The isolated worker relies on bubblewrap; a nested Codex sandbox cannot create namespaces.
+      const sandbox = isolated ? 'danger-full-access' : /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(tools || '') ? 'workspace-write' : 'read-only'
       // sessions persist so they can be monitored (Codex remote control); writers get network (ssh to the dev box)
       const args = ['exec', ...isolation(env), '--json', '--skip-git-repo-check',...(sandbox === 'workspace-write' ? ['-c', 'sandbox_workspace_write.network_access=true'] : []), '-C', cwd, '-s', sandbox, '-o', path.join(tmp, 'last.txt')]
-      if (({ ...process.env, ...env }).CODEX_EPHEMERAL === '1') args.push('--ephemeral')
+      if (ephemeral) args.push('--ephemeral')
       if (name !== 'default') args.push('-m', name)
       if (effort) args.push('-c', `model_reasoning_effort=${effort}`)
       for (const d of addDirs || []) args.push('--add-dir', d)

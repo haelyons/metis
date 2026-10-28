@@ -35,13 +35,15 @@ async function run(options) {
   }
   const code = path.dirname(__dirname)
   if (hidden.some(file => code.startsWith(file + path.sep))) args.push('--ro-bind', code, code)
-  args.push('--bind', directory, directory)
+  const writer = /(?:^|,)\s*(?:Write|Edit|Bash)(?:\([^)]*\))?\s*(?:,|$)/.test(options.tools || '')
+  args.push(writer ? '--bind' : '--ro-bind', directory, directory)
+  if (!writer) args.push('--bind', runtime, runtime)
   if (options.isolation.box_access) {
     const cache = path.join(os.homedir(), '.cache/metis-serve')
     if (fs.existsSync(cache)) args.push('--ro-bind', cache, cache)
   }
   args.push('--chdir', directory, '--', process.execPath, __filename, '--worker')
-  const worker = { ...options, isolation: undefined, cwd: directory, session: null, addDirs: [directory],
+  const worker = { ...options, isolation: undefined, isolated: true, cwd: directory, session: null, addDirs: [directory],
     rawPath: path.join(runtime, 'events'), httpLogDir: path.join(runtime, 'http'),
     env: { ...options.env, HOME: home, CODEX_HOME: path.join(home, '.codex'), CODEX_EPHEMERAL: '1', SSH_AUTH_SOCK: '',
       XDG_DATA_HOME: path.join(home, '.local/share'), XDG_STATE_HOME: path.join(home, '.local/state'),

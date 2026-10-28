@@ -153,7 +153,7 @@ async function invoke(options = {}, fake = {}) {
     const captures = fs.readFileSync(capture, 'utf8').trim().split('\n').map(line => JSON.parse(line))
     for (const item of captures) pids.add(item.pid)
     const sent = captures[captures.length - 1]
-    if (!fake.appFail && !fake.sleep) {
+    if (!fake.appFail && !fake.sleep && !fake.anyTransport) {
       assert.equal(sent.args[0], 'app-server', `unexpected fallback: ${JSON.stringify(res.errors)}`)
       assert.ok(sent.requests.some(request => request.method === 'turn/start'), 'app-server never received turn/start')
     }
@@ -181,6 +181,27 @@ function flag(args, name) {
   assert.ok(index >= 0, `missing ${name}`)
   assert.ok(index + 1 < args.length, `missing value for ${name}`)
   return args[index + 1]
+}
+
+// Every sandbox mode a capture requests: CLI flags/config, app-server thread and turn params.
+const POLICY = { dangerFullAccess: 'danger-full-access', workspaceWrite: 'workspace-write', readOnly: 'read-only' }
+function sandboxModes(capture) {
+  const modes = [], args = capture.args
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]
+    if (arg === '-s' || arg === '--sandbox') modes.push(args[++i])
+    else if (arg.startsWith('--sandbox=')) modes.push(arg.slice('--sandbox='.length))
+    else if (arg === '--dangerously-bypass-approvals-and-sandbox' || arg === '--yolo') modes.push('danger-full-access')
+    else if (arg === '--full-auto') modes.push('workspace-write')
+    else if ((arg === '-c' || arg === '--config') && /^sandbox_mode\s*=/.test(args[i + 1] || ''))
+      modes.push(args[++i].replace(/^sandbox_mode\s*=/, '').trim().replace(/^["']|["']$/g, ''))
+  }
+  for (const request of capture.requests) {
+    const params = request.params || {}
+    if (params.sandbox) modes.push(params.sandbox)
+    if (params.sandboxPolicy?.type) modes.push(POLICY[params.sandboxPolicy.type] || params.sandboxPolicy.type)
+  }
+  return modes
 }
 
 async function main() {
@@ -247,6 +268,28 @@ async function main() {
       assert.equal(flag(sent.args, '-s'), /Bash|Write|Edit/.test(tools) ? 'workspace-write' : 'read-only')
       assert.equal(sent.args.some((arg, index) => arg === '-c' && sent.args[index + 1] === 'sandbox_workspace_write.network_access=true'), /Bash|Write|Edit/.test(tools), 'network access config must appear only for workspace-write')
     })
+  }
+  // m5/SCHEMAS.md isolation: outside isolation CODEX_EPHEMERAL=1 never yields danger-full-access.
+  // `chosen`: whichever transport the runner picks (with CODEX_EPHEMERAL=1 it may skip app-server);
+  // `app-server failing`: app-server unavailable, so the call ends in exec.
+  for (const transport of ['chosen', 'app-server failing']) {
+    for (const tools of ['', 'Read,Glob,Grep', 'Bash', 'Read,Write', 'Read,Edit']) {
+      const expected = /Bash|Write|Edit/.test(tools) ? 'workspace-write' : 'read-only'
+      await check(`1 ${transport} transport: sandbox ${expected} for ${tools || 'no tools'} with CODEX_EPHEMERAL=1`, async () => {
+        const { res, sent, captures } = await invoke({ tools },
+          { appFail: transport !== 'chosen', anyTransport: true, env: { CODEX_EPHEMERAL: '1' } })
+        assert.equal(res.text, 'file reply\n', `call did not complete: ${JSON.stringify(res.errors)}`)
+        if (sent.args[0] === 'exec') assert.ok(sent.args.includes('--ephemeral'), 'fixture: CODEX_EPHEMERAL=1 not seen by exec')
+        // The final invocation carries the turn; every invocation, including a failed app-server, must avoid danger-full-access.
+        for (const capture of captures) {
+          const modes = sandboxModes(capture)
+          assert.ok(!modes.includes('danger-full-access'), `${capture.args[0]} requested danger-full-access: ${JSON.stringify(modes)}`)
+        }
+        const modes = sandboxModes(sent)
+        assert.ok(modes.length > 0, `${sent.args[0]} requested no sandbox mode: ${JSON.stringify(sent.args)}`)
+        assert.deepEqual([...new Set(modes)], [expected], `${sent.args[0]} sandbox modes`)
+      })
+    }
   }
   for (const [model, name, effort] of [['codex/default@low', null, 'low'], ['codex/gpt-x@high', 'gpt-x', 'high']]) {
     await check(`2 model and effort for ${model}`, async () => {

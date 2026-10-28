@@ -107,7 +107,7 @@ for (const event of [{type:'thread.started',thread_id:'isolated-stub'}, {type:'t
   fs.mkdirSync(work)
   const workflow = path.join(work, 'main.js'), argsFile = path.join(work, 'args.json')
   fs.writeFileSync(workflow, `export const meta = {name:'isolation-probe',description:'Hermetic sandbox probe'}
-return await agent('Run the local isolation probe.', {label:'probe', role:'ls-writer', model:'sonnet',
+return await agent('Run the local isolation probe.', {label:'probe', agentType:'ls-writer', model:'sonnet',
   fresh:true, repairable:false, isolation:${JSON.stringify(isolation)}, schema:{type:'object',required:['v'],properties:{v:{type:'string'}}}})
 `)
   writeJSON(argsFile, {})
