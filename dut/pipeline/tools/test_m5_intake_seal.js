@@ -135,6 +135,7 @@ module.exports = {
         },
       }
       if (process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE) delete fixtures.baseline.published_configuration
+      if (process.env.M5_INTAKE_SEAL_BUILD) fixtures.baseline.build_commands = JSON.parse(process.env.M5_INTAKE_SEAL_BUILD)
       for (const name of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
         const custom = process.env.M5_INTAKE_SEAL_ANCHORS
         const content = name === 'anchors' && custom
@@ -212,13 +213,13 @@ function noLeak(runRoot) {
   visit(operator)
 }
 
-async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded } = {}) {
+async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands } = {}) {
   const control = path.join(runRoot, 'control')
   const brief = path.join(runRoot, 'brief.md')
   fs.mkdirSync(control, { recursive: true })
   fs.writeFileSync(brief, `# Intake fixture\n${SENTINEL}\n`)
   const argsFile = path.join(control, 'args.json')
-  writeJSON(argsFile, { run_root: runRoot, brief, tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } })
+  writeJSON(argsFile, { run_root: runRoot, ...(noBrief ? {} : { brief }), tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } })
   // The profile stage is stubbed, so provide its documented output directly.
   writeJSON(path.join(runRoot, 'agent', 'profile-packet.json'), profile)
   // Separate workflow directories prevent WF resume caches from hiding calls.
@@ -242,6 +243,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
           M5_INTAKE_SEAL_FACTS: JSON.stringify(facts), M5_INTAKE_SEAL_BRIEF: brief,
           M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_FAULT: sealFault, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
           M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '',
+          M5_INTAKE_SEAL_BUILD: buildCommands ? JSON.stringify(buildCommands) : '',
           M5_INTAKE_SEAL_REPAIR: repairPredictions ? JSON.stringify(repairPredictions) : '',
           M5_INTAKE_SEAL_ANCHORS: anchors ? JSON.stringify(anchors) : '', M5_INTAKE_SEAL_RECORDED: recorded || '' },
       })
@@ -278,7 +280,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
         assert.equal(entry.brief, fs.readFileSync(brief, 'utf8'))
       }
     }
-    assert.ok(calls.find(row => row.label === 'intake')?.prompt.includes(brief), 'args.brief path not passed to intake')
+    if (!noBrief) assert.ok(calls.find(row => row.label === 'intake')?.prompt.includes(brief), 'args.brief path not passed to intake')
   })
   check(`${name}: sentinel and seal reason codes absent throughout R/operator`, () => noLeak(runRoot))
   return { runRoot, out, stages, signature, stage, calls }
@@ -362,6 +364,68 @@ async function recordedIntakeRegression() {
   const run = await runCase(name, facts, { recorded })
   checkStatuses(name, run, 'intake')
   anchoredChecks(name, run, false)
+}
+
+// SCHEMAS.md A/intake/ baseline.json: "`build_commands` lists every command that builds or installs the
+// baseline, including package-manager installs of released binaries, and is never empty. The intake
+// prompt states both." Both statements must sit near a mention of build_commands.
+function buildCommandsPromptChecks(name, run) {
+  check(`${name}: intake prompt states build_commands includes package-manager installs of released binaries and is never empty`, () => {
+    const prompt = run.calls.find(row => row.label === 'intake')?.prompt
+    assert.ok(prompt, 'no intake prompt recorded')
+    const windows = [...prompt.matchAll(/build_commands/g)].map(match => prompt.slice(Math.max(0, match.index - 400), match.index + 600))
+    assert.ok(windows.length, 'prompt never mentions build_commands')
+    const installs = text => /package[- ]manager/i.test(text) && /released\s+binar/i.test(text)
+    const nonEmpty = text => /never\s+(?:be\s+)?empty|non-?empty|must\s+not\s+be\s+empty|cannot\s+be\s+empty|may\s+not\s+be\s+empty|at\s+least\s+one/i.test(text)
+    assert.ok(windows.some(installs), 'prompt does not state that build_commands includes package-manager installs of released binaries')
+    assert.ok(windows.some(nonEmpty), 'prompt does not state that build_commands is never empty')
+  })
+}
+
+// Public recorded runs positive-openmm run1 and run2, gated on their intake files alone. The agent facts
+// are set to gate-passing values (anchors_count from the recorded anchors.json), so the verdict rests on
+// file completeness. Files are copied to a temporary directory; experiments/ is read only.
+async function positiveOpenmmRegression(runName, expectPass) {
+  const name = `recorded-positive-openmm-${runName}`
+  const source = recordedRun(path.join('positive-openmm', runName))
+  let recorded, facts
+  check(`${name}: recorded intake files available and copied`, () => {
+    assert.ok(source.intake, `no recorded intake directory under ${source.run}`)
+    recorded = path.join(parent, `${name}-fixture`)
+    fs.cpSync(source.intake, recorded, { recursive: true })
+    const anchors = readJSON(path.join(recorded, 'anchors.json'))
+    assert.ok(Array.isArray(anchors), 'anchors.json is not an array')
+    // Every DESIGN.md intake fact (found, anchors_count, data, licence, stock_environment, size).
+    facts = { ...INTAKE, anchors_count: anchors.length }
+  })
+  if (!recorded || !facts) return
+  check(`${name}: fixture build_commands is ${expectPass ? 'a non-empty list' : 'empty, with an install command under another key'}`, () => {
+    const baseline = readJSON(path.join(recorded, 'baseline.json'))
+    assert.ok(Array.isArray(baseline.build_commands), 'build_commands is not a list')
+    if (expectPass) assert.ok(baseline.build_commands.length > 0)
+    else {
+      assert.deepEqual(baseline.build_commands, [])
+      const elsewhere = Object.entries(baseline).filter(([key]) => key !== 'build_commands')
+      assert.ok(/\binstall\b/i.test(JSON.stringify(elsewhere)), 'no install command under another key')
+    }
+  })
+  const run = await runCase(name, facts, { recorded })
+  if (expectPass) {
+    check(`${name}: intake gate PASSes`, () => {
+      const stderr = fs.readFileSync(path.join(run.runRoot, `stderr-${name}.log`), 'utf8')
+      assert.equal(run.signature('intake').status, 'PASS',
+        `${JSON.stringify(run.signature('intake'))}; stderr: ${stderr.slice(-1500)}`)
+    })
+    check(`${name}: run does not stop at intake`, () => {
+      assert.notEqual(readJSON(path.join(run.out, 'result.json')).stopped_at, 'intake')
+    })
+  } else {
+    checkStatuses(name, run, 'intake')
+    check(`${name}: no downstream scientific agent calls or seal`, () => {
+      assert.ok(run.calls.every(row => row.label === 'intake' || /takeaway/i.test(row.label)))
+      assert.ok(!fs.existsSync(path.join(run.runRoot, 'control', 'seals', '0001.json')))
+    })
+  }
 }
 
 async function main() {
@@ -456,6 +520,24 @@ async function main() {
       assert.deepEqual(fs.readdirSync(path.dirname(firstFile)).filter(name => /^\d{4}\.json$/.test(name)).sort(), ['0001.json'])
     })
     anchoredChecks('happy', happy, true)
+    buildCommandsPromptChecks('happy (brief)', happy)
+    // No brief: the intake agent runs the bounded public benchmark search (DESIGN.md stage 1 "In").
+    const search = await runCase('search-no-brief', INTAKE, { noBrief: true })
+    check('search-no-brief: args carry no brief', () => {
+      assert.ok(!Object.hasOwn(readJSON(path.join(search.runRoot, 'control', 'args.json')), 'brief'))
+    })
+    buildCommandsPromptChecks('search-no-brief', search)
+    // Gate: build_commands must be non-empty; a single package-manager install suffices.
+    const emptyBuild = await runCase('empty-build-commands', INTAKE, { buildCommands: [] })
+    checkStatuses('empty-build-commands', emptyBuild, 'intake')
+    check('empty-build-commands: no downstream scientific agent calls or seal', () => {
+      assert.ok(emptyBuild.calls.every(row => row.label === 'intake' || /takeaway/i.test(row.label)))
+      assert.ok(!fs.existsSync(path.join(emptyBuild.runRoot, 'control', 'seals', '0001.json')))
+    })
+    const pipBuild = await runCase('pip-install-build-commands', INTAKE, { buildCommands: ['python3 -m pip install openmm==8.1.1'] })
+    checkStatuses('pip-install-build-commands', pipBuild, null)
+    await positiveOpenmmRegression('run1', true)
+    await positiveOpenmmRegression('run2', false)
     // SCHEMAS.md A/intake/: "Missing executable inputs and unverified permissions block;
     // missing published tolerances do not." An empty or reference-only anchors.json passes.
     const reference = (id, extra = {}) => ({ id, quantity: 'sum', source: 'https://example.org/reference-1',
