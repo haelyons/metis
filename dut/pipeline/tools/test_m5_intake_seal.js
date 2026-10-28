@@ -428,6 +428,150 @@ async function positiveOpenmmRegression(runName, expectPass) {
   }
 }
 
+// SCHEMAS.md A/PREDICTIONS.json: "The seal agent reads `A/intake/`, `A/profile-packet.json`, `A/bounds.json`
+// and the baseline's measured outputs under `A/results/reproduce/` ... A margin derived from baseline variability
+// names, in its `source`, the measured file and the statistic used ... When neither a scientific requirement nor
+// measured baseline variability supports a positive margin, the seal agent never invents one ... The seal prompt
+// states all three."
+const windowsAround = (text, pattern, before = 500, after = 500) =>
+  [...text.matchAll(new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : pattern.flags + 'g'))]
+    .map(match => text.slice(Math.max(0, match.index - before), match.index + match[0].length + after))
+function sealReadableInputChecks(name, run) {
+  const prompt = () => {
+    const value = run.calls.find(row => row.label === 'seal')?.prompt
+    assert.ok(value, 'no seal prompt recorded')
+    return value
+  }
+  check(`${name}: seal prompt names A/results/reproduce/ among the readable inputs`, () => {
+    const text = prompt()
+    const reproduce = /(?:\bA|agent)\/results\/reproduce\b/
+    assert.match(text, reproduce, 'seal prompt does not name the A/results/reproduce/ path')
+    // Listed together with the other readable inputs.
+    assert.ok(windowsAround(text, reproduce, 600, 600).some(window =>
+      /intake/.test(window) && /profile-packet\.json/.test(window) && /bounds\.json/.test(window)),
+    'A/results/reproduce/ is not listed alongside intake/, profile-packet.json and bounds.json')
+  })
+  check(`${name}: seal prompt states a variability-derived margin cites the measured file and statistic in its source`, () => {
+    const windows = windowsAround(prompt(), /variabilit/i, 400, 400)
+    assert.ok(windows.length, 'seal prompt never mentions baseline variability')
+    assert.ok(windows.some(window => /\bsource\b/.test(window) && /\bfile\b/i.test(window) && /statistic/i.test(window)),
+      'no statement that the margin source names the measured file and the statistic')
+  })
+  check(`${name}: seal prompt states no margin is invented without a requirement or measured variability`, () => {
+    const windows = windowsAround(prompt(), /invent/i, 400, 400)
+    assert.ok(windows.some(window => /margin/i.test(window) && /requirement/i.test(window) && /variabilit/i.test(window)),
+      'no statement that a margin is never invented without a scientific requirement or measured variability')
+  })
+}
+
+// SCHEMAS.md repair bullet: "The agent may read and rewrite only `A/PREDICTIONS.json`". The new readable
+// inputs of the initial seal call do not extend to repair.
+function repairScopeChecks(name, run) {
+  check(`${name}: repair prompt allows reading and rewriting only A/PREDICTIONS.json`, () => {
+    const prompt = run.calls.find(row => row.label === 'seal-repair')?.prompt
+    assert.ok(prompt, 'no repair prompt recorded')
+    assert.ok(windowsAround(prompt, /PREDICTIONS\.json/, 300, 300).some(window => /\bonly\b/i.test(window)),
+      'repair prompt does not restrict the agent to PREDICTIONS.json')
+    // Any mention of another seal input must be a prohibition, never a grant.
+    for (const other of [/results\/reproduce/, /profile-packet\.json/, /bounds\.json/, /\bintake\//]) {
+      for (const window of windowsAround(prompt, other, 120, 40)) {
+        assert.match(window, /\b(?:not|never|no|nothing)\b/i, `repair prompt offers ${other.source} as readable`)
+      }
+    }
+  })
+}
+
+// Public recorded run positive-openmm run3: its PREDICTIONS.json is stochastic with null margins. Replayed
+// through seal it must fail (numeric, no verified seal) before and after a repair that leaves it unchanged.
+// A copy with positive absolute margins whose sources name a reproduce output file must not be rejected for
+// stochastic_equivalence_invalid. Fixtures are copied to temporary directories; experiments/ is read only.
+async function recordedSealRegression() {
+  const label = 'recorded-positive-openmm-run3-seal'
+  const source = path.join(EXPERIMENTS, 'positive-openmm', 'run3', 'agent')
+  let recorded, profile, facts
+  check(`${label}: recorded fixture available; predictions stochastic with null margins`, () => {
+    for (const file of ['PREDICTIONS.json', 'profile-packet.json', 'intake', path.join('results', 'reproduce', 'anchors_scored.json')]) {
+      assert.ok(fs.existsSync(path.join(source, file)), `missing ${file} under ${source}`)
+    }
+    const fixture = path.join(parent, `${label}-fixture`)
+    for (const item of ['PREDICTIONS.json', 'profile-packet.json', 'intake', path.join('results', 'reproduce')]) {
+      fs.cpSync(path.join(source, item), path.join(fixture, item), { recursive: true })
+    }
+    recorded = readJSON(path.join(fixture, 'PREDICTIONS.json'))
+    profile = readJSON(path.join(fixture, 'profile-packet.json'))
+    assert.equal(recorded.outputs_stochastic, true)
+    assert.ok(Array.isArray(recorded.equivalence_metrics) && recorded.equivalence_metrics.length)
+    for (const metric of recorded.equivalence_metrics) {
+      const abs = metric?.tolerance && typeof metric.tolerance === 'object' ? metric.tolerance.abs : metric?.tolerance
+      assert.ok(abs === null || abs === undefined, `recorded margin is not null: ${JSON.stringify(metric?.tolerance)}`)
+    }
+    facts = { ...INTAKE, anchors_count: readJSON(path.join(fixture, 'intake', 'anchors.json')).length }
+  })
+  if (!recorded || !profile || !facts) return
+  const fixture = path.join(parent, `${label}-fixture`)
+  const prepare = (name, predictions) => {
+    const runRoot = path.join(parent, name)
+    const intake = path.join(parent, `${name}-intake`)
+    fs.cpSync(path.join(fixture, 'intake'), intake, { recursive: true })
+    fs.cpSync(path.join(fixture, 'results', 'reproduce'), path.join(runRoot, 'agent', 'results', 'reproduce'), { recursive: true })
+    writeJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json'), predictions)
+    return { runRoot, intake }
+  }
+
+  // Recorded predictions, unchanged; the repair stub rewrites nothing.
+  {
+    const name = `${label}-null-margins`
+    const { runRoot, intake } = prepare(name, recorded)
+    const predictionsFile = path.join(runRoot, 'agent', 'PREDICTIONS.json')
+    const before = fs.readFileSync(predictionsFile)
+    const run = await runCase(name, facts, { runRoot, preserve: true, recorded: intake, profile })
+    checkStatuses(name, run, 'seal')
+    check(`${name}: first attempt fails stochastic_equivalence_invalid and triggers one repair`, () => {
+      assert.deepEqual(run.calls.filter(row => ['seal', 'seal-repair'].includes(row.label)).map(row => row.label), ['seal', 'seal-repair'])
+      assert.ok(run.calls.find(row => row.label === 'seal-repair').prompt.includes('stochastic_equivalence_invalid'))
+    })
+    check(`${name}: after an unchanged repair, numeric FAIL with no verified seal`, () => {
+      assert.deepEqual(fs.readFileSync(predictionsFile), before)
+      const signature = run.signature('seal')
+      assert.equal(signature.status, 'FAIL')
+      assert.equal(signature.error_class, 'numeric')
+      assert.equal(signature.exit_code, 2)
+      assert.equal(run.stage('seal').facts.seal_verified, false)
+      assert.equal(run.stage('seal').facts.prediction_count, recorded.predictions.length)
+      assert.deepEqual(readJSON(path.join(runRoot, 'control', 'stages', 'seal.json')).reason_codes, ['stochastic_equivalence_invalid'])
+      const seals = path.join(runRoot, 'control', 'seals')
+      assert.deepEqual(fs.existsSync(seals) ? fs.readdirSync(seals) : [], [])
+    })
+    sealReadableInputChecks(name, run)
+    repairScopeChecks(name, run)
+  }
+
+  // Same predictions with positive absolute margins whose sources cite a measured reproduce file and statistic.
+  {
+    const name = `${label}-measured-margins`
+    const value = JSON.parse(JSON.stringify(recorded))
+    // The documented metric shape {name, source, tolerance:{abs}}; the recorded "unavailable" markers
+    // (status, unavailable_reason, comparison) would contradict a supplied margin, so they are not kept.
+    value.equivalence_metrics = value.equivalence_metrics.map((metric, i) => ({
+      name: typeof metric?.name === 'string' && metric.name.trim() ? metric.name : `metric-${i + 1}`,
+      source: 'A/results/reproduce/anchors_scored.json: standard deviation of the per-seed outcome across the baseline seeds',
+      tolerance: { abs: 0.5 },
+    }))
+    const { runRoot, intake } = prepare(name, value)
+    const run = await runCase(name, facts, { runRoot, preserve: true, recorded: intake, profile })
+    check(`${name}: not rejected for stochastic_equivalence_invalid`, () => {
+      const receipt = readJSON(path.join(runRoot, 'control', 'stages', 'seal.json'))
+      assert.ok(Array.isArray(receipt.reason_codes), 'seal receipt lacks reason_codes')
+      const repair = run.calls.find(row => row.label === 'seal-repair')
+      // Script-owned field paths from the repair feedback make a rejection diagnosable.
+      const paths = repair ? [...new Set(repair.prompt.match(/\b(?:equivalence_metrics|paired_seed_tests|confidence_rule|sample_sizes|outputs_stochastic)[\w.\[\]]*/g) || [])] : []
+      assert.ok(!receipt.reason_codes.includes('stochastic_equivalence_invalid'),
+        `rejected: ${JSON.stringify(receipt.reason_codes)}; repair feedback field paths: ${JSON.stringify(paths)}; metric keys: ${JSON.stringify(value.equivalence_metrics.map(Object.keys))}`)
+      assert.ok(!repair || !repair.prompt.includes('stochastic_equivalence_invalid'), 'first attempt rejected for stochastic_equivalence_invalid')
+    })
+  }
+}
+
 async function main() {
   try {
     const happy = await runCase('happy')
@@ -520,6 +664,7 @@ async function main() {
       assert.deepEqual(fs.readdirSync(path.dirname(firstFile)).filter(name => /^\d{4}\.json$/.test(name)).sort(), ['0001.json'])
     })
     anchoredChecks('happy', happy, true)
+    sealReadableInputChecks('happy', happy)
     buildCommandsPromptChecks('happy (brief)', happy)
     // No brief: the intake agent runs the bounded public benchmark search (DESIGN.md stage 1 "In").
     const search = await runCase('search-no-brief', INTAKE, { noBrief: true })
@@ -702,6 +847,7 @@ async function main() {
         assert.ok(!prompt.includes(JSON.stringify(PROFILE)), 'profile evidence leaked')
         assert.ok(!prompt.includes('k_derivation'), 'bounds leaked')
       })
+      repairScopeChecks(name, run)
       check(`${name}: immutable numbering; only successful repair creates 0002`, () => {
         const current = snapshot()
         for (const [file, bytes] of Object.entries(original)) assert.equal(current[file], bytes, file)
@@ -718,6 +864,7 @@ async function main() {
         }
       })
     }
+    await recordedSealRegression()
 
     // Without a concurrency calibration, whole-workload bounds are 1, and multi-GPU
     // per GPU-second never exceeds 1: only pipelining (bound 1/0.85) remains feasible.
