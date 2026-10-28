@@ -1,0 +1,13 @@
+[
+  {
+    "id": "nvidia2025-dhfr-eight-tuned-throughput-reference",
+    "quantity": "Approximate aggregate DHFR throughput for eight concurrent MPS simulations with tuned active thread percentage, single H100 or L40S GPU (ns/day)",
+    "source": "Hsu, Clark and Paulsen, NVIDIA Technical Blog, 2025-06-04, https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/ ; tuned DHFR discussion and Figure 4; also quoted in brief.md.",
+    "published_value": 5000.0,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "role": "reference",
+    "notes": "Approximate observation: approaches 5 microseconds/day, converted to ns/day. No published acceptance tolerance. Fixed-time upstream benchmark; not an absolute target for the fixed-work ensemble. No energy acceptance criterion published."
+  }
+]

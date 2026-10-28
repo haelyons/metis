@@ -1,0 +1,98 @@
+{
+  "availability": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "availability": "available",
+      "evidence": "HTTPS retrieval succeeded; byte count and SHA-256 computed during intake.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "access": "Public; no login required."
+    },
+    {
+      "name": "amber99sb.xml",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "availability": "available",
+      "evidence": "HTTPS retrieval succeeded; byte count and SHA-256 computed during intake.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "access": "Public; no login required."
+    },
+    {
+      "name": "tip3p.xml",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "availability": "available",
+      "evidence": "HTTPS retrieval succeeded; byte count and SHA-256 computed during intake.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "access": "Public; no login required."
+    }
+  ],
+  "access_instructions": "Public HTTPS retrieval, without authentication. Place pinned PDB beside brief-extracted dhfr_ensemble.py. Force-field XML files ship in pinned OpenMM package.",
+  "licences": {
+    "status": "permitted",
+    "intended_use": "Local scientific benchmarking and modification.",
+    "sources": [
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "brief.md (copied verbatim from supplied BRIEF.md)"
+    ],
+    "components": [
+      {
+        "component": "OpenMM API, Reference and CPU platforms",
+        "licence": "MIT"
+      },
+      {
+        "component": "CUDA and OpenCL platforms",
+        "licence": "GNU LGPL; see accompanying LGPL.txt and GPL.txt",
+        "version": null
+      },
+      {
+        "component": "PDB and force-field inputs",
+        "licence": "Distributed with OpenMM; no separate data-specific licence identified in this pass.",
+        "intended_use_permission": "Supplied brief explicitly permits local running and modification."
+      },
+      {
+        "component": "Brief-provided ensemble driver",
+        "licence": null,
+        "reason": "No standalone licence stated; supplied for this benchmark use."
+      }
+    ],
+    "redistribution_permission": null,
+    "redistribution_reason": "Intake assesses local execution; separate redistribution terms not audited."
+  },
+  "splits": null,
+  "splits_reason": "Molecular dynamics ensemble has no train/validation/test split.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "seed_source": "brief.md (copied verbatim from supplied BRIEF.md)",
+  "generated_inputs": [
+    {
+      "name": "Initial velocities",
+      "generation": "setVelocitiesToTemperature(300 K, 1000+i)",
+      "source": "brief.md (copied verbatim from supplied BRIEF.md)"
+    },
+    {
+      "name": "Integrator random stream",
+      "generation": "setRandomNumberSeed(1000+i)",
+      "source": "brief.md (copied verbatim from supplied BRIEF.md)"
+    }
+  ],
+  "missing_required_data": [],
+  "external_experimental_labels": null,
+  "external_experimental_labels_reason": "Not required by this benchmark."
+}

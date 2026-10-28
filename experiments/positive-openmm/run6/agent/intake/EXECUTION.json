@@ -1,0 +1,108 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "replicas": 8,
+    "atoms_per_replica": 23558,
+    "steps_per_replica": 25000,
+    "timestep_fs": 4,
+    "simulated_ns_per_replica": 0.1,
+    "total_simulated_ns": 0.8,
+    "energy_samples_per_replica": 100,
+    "scale_policy": "One fixed scale from brief. No search, step doubling or toy extrapolation.",
+    "source": "brief.md (copied verbatim from supplied BRIEF.md)"
+  },
+  "inputs": {
+    "pdb": "5dfr_solv-cube_equil.pdb",
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "configuration": {
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "precision": "single",
+      "DeterministicForces": true,
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "energy_interval_steps": 250
+    },
+    "baseline_command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+    "source": "brief.md (copied verbatim from supplied BRIEF.md)"
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "format": "JSON",
+    "ensemble_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout_fields": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_series": null,
+    "energy_series_reason": "Full series sampled internally, not saved by provided driver."
+  },
+  "timing_scope": {
+    "ensemble": "time.perf_counter around entire sequential replica loop; includes context creation, initial positions/velocities, integration, energy sampling, Python overhead and context destruction.",
+    "excluded": "Imports, argument parsing, input loading and system construction before timer; final JSON writing and stdout after timer.",
+    "per_replica": "Starts after context initialization and velocity assignment; includes stepping and energy retrieval, excludes context destruction.",
+    "concurrent_comparison": "Same eight replicas and all work completed on same one GPU. End-to-end time must include corresponding initialization and completion costs; separate-process orchestration is not supplied in brief.",
+    "kernel_compilation": "Not explicitly warmed outside ensemble timer; includes any context/first-step compilation occurring inside loop.",
+    "upstream_difference": "Published benchmark.py adaptively chooses step counts for fixed-time throughput, warming kernels first. Do not invoke its adaptive workload as representative fixed-work run."
+  },
+  "scoring_interface": {
+    "primary": "Read ensemble.json total_wall_s, require all eight replica records with 25000 steps and seeds 1000-1007.",
+    "aggregate_ns_per_day": "86400 * simulated_ns / total_wall_s",
+    "speedup": "baseline total_wall_s / candidate total_wall_s",
+    "scientific_comparison": "Compare per-replica final and mean potential energies under matched configuration; full-series criterion requires additional output.",
+    "acceptance_tolerance": null,
+    "acceptance_tolerance_reason": "No published numerical energy tolerance; documented force determinism is not a verified full-trajectory acceptance bound.",
+    "independent_reference_file": "anchors.json",
+    "reference_scope": "Published throughput observation is fixed-time context only; cannot validate fixed-work energy outcomes."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "budget_evidence": {
+    "source": "brief.md (copied verbatim from supplied BRIEF.md)",
+    "runtime_expectation": "Brief estimates about one minute for H100 ensemble and a few minutes for slower GPUs, unverified.",
+    "guarantee": null,
+    "reason": "No CUDA reproduction, context-compilation measurement or installation timing. Fixed scale retained; no guaranteed completion time claimed."
+  },
+  "method_command": null,
+  "method_command_reason": "Concurrent fixed-work driver and command are not supplied; no command invented. MPS hypothesis is study method, not completed implementation."
+}

@@ -1,0 +1,4 @@
+I’ll read intake files, write harness scripts, then check syntax locally. Pipeline runs builds and workloads.
+Intake fixes workload: OpenMM 8.2.0, eight sequential replicas, 25,000 steps each, one GPU. Published 5,000 ns/day figure is reference only; harness will report measured throughput and validate saved results.
+Four scripts written. Setup stages pinned source and inputs without changing stock packages. Anchors call canonical command and parse saved output. Evaluation records scientific results, synchronizes GPU, and enforces elapsed GPU-second budget. Local syntax checks remain; no builds or workloads run locally.
+Created four scripts under harness/. Shell syntax checks pass. No local builds or workloads run.
