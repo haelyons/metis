@@ -58,6 +58,19 @@ ${failureLog('setup', failures)}
 printf '%s\\n' pinned > baseline-published/pin
 printf '%s\\n' representative > data/input`)
 }
+// SCHEMAS.md "A/harness/": the anchors repair may rewrite run_anchors.sh, run_command.sh, or both.
+// `anchorsRepairTarget` chooses which scripts fail initially and which the fake repair rewrites.
+const ANCHORS_REPAIR_SCRIPTS = { 'run_anchors.sh': ['run_anchors.sh'], 'run_command.sh': ['run_command.sh'],
+  both: ['run_anchors.sh', 'run_command.sh'] }
+const anchorsRepairScripts = config => ANCHORS_REPAIR_SCRIPTS[config.anchorsRepairTarget ?? 'run_anchors.sh']
+// The script whose failure log reaches the anchors repair prompt (run_anchors.sh fails first when both fail).
+const anchorsFailureName = config => anchorsRepairScripts(config)[0] === 'run_command.sh' ? 'command' : 'anchors'
+// Files a repair may not change; written by the fake agent to prove they are never uploaded or run.
+const STRAY = name => `printf '%s\\n' stray > out/stray-${name}\nexit 9`
+function snapshot(directory, destination) {
+  fs.mkdirSync(destination, { recursive: true })
+  for (const name of fs.readdirSync(directory)) fs.copyFileSync(path.join(directory, name), path.join(destination, name))
+}
 function failureLog(name, failures) {
   return `if (( n <= ${failures} )); then
   for ((i=1; i<=240; i++)); do printf '%s:%s:%s\\n' '${SENTINEL}' '${name}' "$i"; done
@@ -96,16 +109,35 @@ module.exports = {
       const harness = path.join(agent, 'harness')
       // A successful repair must replace the script; rerunning the original cannot pass.
       const failuresFor = field => config[field] && (title === 'harness' || config[field] >= 2) ? 999 : 0
+      const targets = anchorsRepairScripts(config)
+      const writes = file => title === 'harness' || (title === 'anchors-repair' && targets.includes(file))
+      const anchorsFailures = file => targets.includes(file) ? failuresFor('anchorsFailures') : 0
+      // Rewritten scripts carry a marker so their remote bytes can be identified.
+      const marker = title === 'anchors-repair' ? '# rewritten by anchors-repair\n' : ''
+      if (title === 'harness-repair' || title === 'anchors-repair') snapshot(harness, path.join(root, `pre-${title}`))
       if (title === 'harness' || title === 'harness-repair') setupScript(harness, failuresFor('setupFailures'))
-      if (title === 'harness' || title === 'anchors-repair') {
-        script(path.join(harness, 'run_anchors.sh'), failureScript('anchors', failuresFor('anchorsFailures')) + `bash harness/run_command.sh\ntest -f baseline-published/pin\ntest -f data/input\nmkdir -p out\nprintf '%s\\n' '${SENTINEL}:anchors'\n` +
+      if (writes('run_anchors.sh')) {
+        script(path.join(harness, 'run_anchors.sh'), marker + failureScript('anchors', anchorsFailures('run_anchors.sh')) + `bash harness/run_command.sh\ntest -f baseline-published/pin\ntest -f data/input\nmkdir -p out\nprintf '%s\\n' '${SENTINEL}:anchors'\n` +
           (config.missingMeasured ? 'rm -f out/anchors_measured.json\n' : emitJSON('out/anchors_measured.json', config.measured)) +
           `printf '%s\\n' '${SENTINEL}' > out/anchors-private.txt`)
       }
       // clearMps models a harness that breaks the CUDA MPS rule (like positive-openmm run1's).
-      if (title === 'harness') script(path.join(harness, 'run_command.sh'),
+      if (writes('run_command.sh')) script(path.join(harness, 'run_command.sh'), marker +
         (config.clearMps ? 'unset CUDA_MPS_PIPE_DIRECTORY CUDA_MPS_LOG_DIRECTORY\n' : '') +
-        `test -f baseline-published/pin\ntest -f data/input\n! command -v fake-cuda-client > /dev/null || fake-cuda-client\nprintf '%s\\n' '${SENTINEL}:command' >> out/command-calls.log`)
+        (anchorsFailures('run_command.sh') ? failureScript('command', anchorsFailures('run_command.sh')) : '') +
+        `test -f baseline-published/pin\ntest -f data/input\n! command -v fake-cuda-client > /dev/null || fake-cuda-client\nprintf '%s\\n' '${SENTINEL}:command' >> out/command-calls.log` +
+        (title === 'anchors-repair' ? `\nmkdir -p out\nprintf '%s\\n' rerun > out/rewritten-command.txt` : ''))
+      // An anchors repair that also edits setup.sh/run_evaluation.sh; a setup repair that also edits the anchor scripts.
+      if (title === 'anchors-repair' && config.anchorsRepairStray) {
+        script(path.join(harness, 'setup.sh'), STRAY('setup'))
+        script(path.join(harness, 'run_evaluation.sh'), STRAY('evaluation'))
+      }
+      if (title === 'harness-repair' && config.setupRepairStray) {
+        script(path.join(harness, 'run_anchors.sh'), STRAY('anchors'))
+        script(path.join(harness, 'run_command.sh'), STRAY('command'))
+      }
+      // What the repair left behind, before the pipeline may revert files outside the repair's scope.
+      if (title === 'harness-repair' || title === 'anchors-repair') snapshot(harness, path.join(root, `post-${title}`))
     }
     if (title === 'seal') {
       const bounds = readJSON(path.join(agent, 'bounds.json'))
@@ -122,6 +154,7 @@ module.exports = {
   },
   async exportSession(id, file) { fs.writeFileSync(file, '{}') },
   assertMpsRule,
+  assertRunCommandRules,
 }
 // SCHEMAS.md "The pipeline owns CUDA MPS": harness and repair prompts state that harness scripts
 // must not set, unset or override CUDA_MPS_* variables, or start or stop an MPS daemon.
@@ -168,7 +201,9 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, gpuUtil: GPU_UTIL, setupFailures: 0, anchorsFailures: 0, profileFailures: 0, ...overrides }
   const args = path.join(root, 'control', 'args.json')
   writeJSON(args, { run_root: root, tag: 'reproduce-test', stub: { propose: 'PASS', implement: 'PASS', evaluate: 'PASS' },
-    ...(config.profileBudget ? { stage_budgets_s: { profile: config.profileBudget } } : {}) })
+    ...(config.profileBudget || config.anchorsBudget ? { stage_budgets_s: {
+      ...(config.profileBudget ? { profile: config.profileBudget } : {}),
+      ...(config.anchorsBudget ? { anchors: config.anchorsBudget } : {}) } } : {}) })
   const box = path.join(root, 'box')
   fs.mkdirSync(box, { recursive: true })
   const fakeProbe = `mkdir -p out
@@ -271,7 +306,7 @@ exec '${realPython}' "$@"`)
       assert.equal(calls.filter(call => call.label === label).length, needed ? 1 : 0, label)
       for (const call of calls.filter(call => call.label === label)) {
         assert.match(call.name, /-retry1$/, label)
-        const script = label === 'harness-repair' ? 'setup' : 'anchors'
+        const script = label === 'harness-repair' ? 'setup' : anchorsFailureName(config)
         assert.ok(call.prompt.includes(`${SENTINEL}:${script}:240`), 'last failure log line missing')
         assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:1\n`), 'unbounded failure log')
       }
@@ -281,6 +316,9 @@ exec '${realPython}' "$@"`)
     const prompts = calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label))
     if (!config.probeFailure) assert.ok(prompts.length >= 1, 'no harness prompt')
     for (const call of prompts) assertMpsRule(call.prompt, call.label)
+  })
+  if (calls.some(call => call.label === 'anchors-repair')) check(`${name}: anchors repair prompt states that a rewritten run_command.sh obeys every run_command.sh rule`, () => {
+    for (const call of calls.filter(call => call.label === 'anchors-repair')) assertRunCommandRules(call.prompt, call.label)
   })
   check(`${name}: fixed profiler uses shared command without profile agent`, () => {
     assert.ok(!calls.some(call => /profile/.test(call.label)))
@@ -347,7 +385,17 @@ exec '${realPython}' "$@"`)
     const firstSetup = receipts.findIndex(receipt => receipt.operation === 'setup')
     assert.ok(firstSetup >= 1, 'no harness upload before setup')
     assert.ok(receipts.slice(0, firstSetup).every(receipt => receipt.operation === 'upload'))
-    assert.equal(count('upload'), firstSetup + (config.setupFailures ? 1 : 0) + (config.setupFailures < 2 && config.anchorsFailures ? 1 : 0) + (stoppedAt === 'reproduce' ? 0 : 1))
+    // A repair rewriting two scripts may upload them in one or more receipts; only uploads separate the attempts.
+    const anchorAttempts = receipts.flatMap((receipt, i) => receipt.operation === 'anchors' ? [i] : [])
+    const anchorsRepairUploads = anchorAttempts.length === 2 ? anchorAttempts[1] - anchorAttempts[0] - 1 : 0
+    if (anchorAttempts.length === 2) {
+      assert.ok(anchorsRepairUploads >= 1, 'no upload between the anchor run and its rerun')
+      assert.ok(anchorsRepairUploads <= anchorsRepairScripts(config).length, 'more anchors-repair uploads than rewritten scripts')
+      // SCHEMAS.md: "the step reruns once with its original budget".
+      assert.equal(receipts[anchorAttempts[1]].budget_s, receipts[anchorAttempts[0]].budget_s, 'rerun changed the anchors budget')
+    }
+    for (const i of anchorAttempts) assert.equal(receipts[i].budget_s, config.anchorsBudget ?? 1200, 'anchors budget')
+    assert.equal(count('upload'), firstSetup + (config.setupFailures ? 1 : 0) + anchorsRepairUploads + (stoppedAt === 'reproduce' ? 0 : 1))
     if (config.setupFailures) assert.equal(receipts[firstSetup + 1].operation, 'upload')
     assert.equal(count('setup'), config.setupFailures ? 2 : 1)
     assert.equal(count('anchors'), config.setupFailures >= 2 ? 0 : config.anchorsFailures ? 2 : 1)
@@ -382,7 +430,9 @@ exec '${realPython}' "$@"`)
     }
   })
   if (!config.probeFailure && stoppedAt !== 'reproduce') concurrencyChecks(name, root, config, stage, stoppedAt)
-  return { root, config, stage }
+  const run = { root, config, stage }
+  if (!config.probeFailure && stoppedAt !== 'reproduce') repairUploadChecks(name, run)
+  return run
 }
 // SCHEMAS.md "Concurrency probe" and the profile packet `concurrency` bullet.
 const VALID_PROBE_MODES = { valid: fixture.VALID_CONCURRENCY, 'valid-null': fixture.NULL_CONCURRENCY }
@@ -473,6 +523,72 @@ function reproduceFacts(name, run, passed, total, stock = true) {
     assert.ok(Object.hasOwn(facts, 'anchored'), 'executed intake stage must emit anchored')
     assert.equal(facts.anchored, run.config.anchors.some(item => !isReference(item)))
   })
+}
+// The single remote /tmp/m5-<uuid> directory, mapped into the case's fake box.
+function remoteHarness(root) {
+  const box = path.join(root, 'box')
+  const directories = fs.readdirSync(box).filter(entry => entry.startsWith('m5-') && fs.existsSync(path.join(box, entry, 'harness')))
+  assert.equal(directories.length, 1, `expected one remote run directory: ${directories}`)
+  return path.join(box, directories[0])
+}
+const bytesOf = file => fs.existsSync(file) ? fs.readFileSync(file) : null
+// SCHEMAS.md "A/harness/": "The setup repair may rewrite only `setup.sh`. The anchors step executes
+// `run_anchors.sh` and the `run_command.sh` it invokes, so the anchors repair may rewrite either or both
+// and nothing else ... Every rewritten script is recopied, then the step reruns once with its original budget."
+function repairUploadChecks(name, run) {
+  const { root, config } = run
+  const local = path.join(root, 'agent', 'harness')
+  if (config.anchorsFailures) check(`${name}: rewritten ${anchorsRepairScripts(config).join(' and ')} uploaded before the rerun`, () => {
+    const remote = remoteHarness(root)
+    const before = path.join(root, 'pre-anchors-repair')
+    for (const file of anchorsRepairScripts(config)) {
+      const rewritten = bytesOf(path.join(local, file))
+      assert.ok(rewritten && rewritten.includes('# rewritten by anchors-repair'), `${file}: fake repair did not rewrite the local copy`)
+      assert.deepEqual(bytesOf(path.join(remote, 'harness', file)), rewritten, `${file}: rewritten bytes not on the box`)
+    }
+    for (const file of ['run_anchors.sh', 'run_command.sh'].filter(file => !anchorsRepairScripts(config).includes(file)))
+      assert.deepEqual(bytesOf(path.join(remote, 'harness', file)), bytesOf(path.join(before, file)), `${file}: unchanged script differs on the box`)
+    // The rerun's measurements are the scored ones: the first attempt failed before writing any.
+    const results = path.join(root, 'agent', 'results', 'reproduce')
+    const score = readJSON(path.join(results, 'anchors_scored.json'))
+    assert.deepEqual(score.anchors.map(row => row.measured_value), config.anchors.map(item => config.measured[item.id] ?? null))
+    if (anchorsRepairScripts(config).includes('run_command.sh'))
+      assert.ok(fs.existsSync(path.join(results, 'out', 'rewritten-command.txt')), 'fetched anchor outputs did not come from the rewritten run_command.sh')
+  })
+  if (config.anchorsRepairStray) check(`${name}: anchors repair never uploads or runs setup.sh or run_evaluation.sh`, () => {
+    const remote = remoteHarness(root)
+    const before = path.join(root, 'pre-anchors-repair')
+    const after = path.join(root, 'post-anchors-repair')
+    for (const file of ['setup.sh', 'run_evaluation.sh'])
+      assert.ok(bytesOf(path.join(after, file))?.includes('stray'), `fixture did not edit ${file} during the anchors repair`)
+    assert.deepEqual(bytesOf(path.join(remote, 'harness', 'setup.sh')), bytesOf(path.join(before, 'setup.sh')), 'setup.sh changed on the box')
+    assert.deepEqual(bytesOf(path.join(remote, 'harness', 'run_evaluation.sh')), bytesOf(path.join(before, 'run_evaluation.sh')), 'run_evaluation.sh changed on the box')
+    for (const file of ['stray-setup', 'stray-evaluation']) assert.ok(!fs.existsSync(path.join(remote, 'out', file)), `${file}: stray script ran`)
+  })
+  if (config.setupRepairStray) check(`${name}: setup repair uploads only setup.sh`, () => {
+    const remote = remoteHarness(root)
+    const before = path.join(root, 'pre-harness-repair')
+    assert.deepEqual(bytesOf(path.join(remote, 'harness', 'setup.sh')), bytesOf(path.join(local, 'setup.sh')), 'repaired setup.sh not on the box')
+    for (const file of ['run_anchors.sh', 'run_command.sh']) {
+      assert.ok(bytesOf(path.join(root, 'post-harness-repair', file))?.includes('stray'), `fixture did not edit ${file} during the setup repair`)
+      assert.deepEqual(bytesOf(path.join(remote, 'harness', file)), bytesOf(path.join(before, file)), `${file} changed on the box`)
+    }
+    for (const file of ['stray-anchors', 'stray-command']) assert.ok(!fs.existsSync(path.join(remote, 'out', file)), `${file}: stray script ran`)
+  })
+}
+// SCHEMAS.md: "a rewritten `run_command.sh` still obeys every `run_command.sh` rule above, and the anchors
+// repair prompt states this." Checked by meaning, not wording: the prompt names run_command.sh and states
+// the measured-command/complete-environment rule, the relative-path rule and the CUDA MPS rule.
+function assertRunCommandRules(prompt, label) {
+  assert.match(prompt, /run_command\.sh/, `${label}: prompt never names run_command.sh`)
+  assert.match(prompt, /run_command\.sh[^\n]*\b(rewrite|rewritten|edit|modif|change|fix)|\b(rewrite|rewritten|edit|modif|change|fix)\w*[^\n]*run_command\.sh/i,
+    `${label}: prompt does not allow rewriting run_command.sh`)
+  assert.match(prompt, /\b(only|exact)\b[^.\n]*\bmeasured\b[^.\n]*\bcommand\b|\bmeasured\b[^.\n]*\bcommand\b[^.\n]*\bonly\b/i,
+    `${label}: prompt lacks the only-the-measured-command rule`)
+  assert.match(prompt, /complete environment|environment[^.\n]*complete/i, `${label}: prompt lacks the complete-environment rule`)
+  assert.match(prompt, /relative[^.\n]*path|path[^.\n]*relative/i, `${label}: prompt lacks the relative-path rule`)
+  assert.match(prompt, /absolute path/i, `${label}: prompt does not forbid absolute paths`)
+  assertMpsRule(prompt, label)
 }
 function scoredFile(name, run, expectedRows) {
   check(`${name}: anchors_scored.json rows, kinds and counts`, () => {
@@ -1017,6 +1133,20 @@ async function main() {
       reproduceFacts('anchors-repaired', anchorsRepaired, 2, 2)
       const anchorsFailed = await runCase('anchors-twice-failed', { anchorsFailures: 2, agentDelayMs: 1100 }, 'reproduce', 'anchor')
       reproduceFacts('anchors-twice-failed', anchorsFailed, null, null)
+      // The anchors repair may rewrite run_command.sh, run_anchors.sh or both; the rerun uses the original budget.
+      for (const [label, target] of [['command', 'run_command.sh'], ['both', 'both'], ['anchors-only', 'run_anchors.sh']]) {
+        const name = `anchors-repair-${label}`
+        const run = await runCase(name, { anchorsFailures: 1, anchorsRepairTarget: target, anchorsBudget: 777 })
+        reproduceFacts(name, run, 2, 2)
+        scoredFile(name, run)
+        profileFacts(name, run, 0.95)
+      }
+      const commandExhausted = await runCase('anchors-repair-command-twice-failed', { anchorsFailures: 2, anchorsRepairTarget: 'run_command.sh' }, 'reproduce', 'anchor')
+      reproduceFacts('anchors-repair-command-twice-failed', commandExhausted, null, null)
+      const anchorsStray = await runCase('anchors-repair-stray', { anchorsFailures: 1, anchorsRepairTarget: 'both', anchorsRepairStray: true })
+      reproduceFacts('anchors-repair-stray', anchorsStray, 2, 2)
+      const setupStray = await runCase('setup-repair-stray', { setupFailures: 1, setupRepairStray: true })
+      reproduceFacts('setup-repair-stray', setupStray, 2, 2)
       const profileFailed = await runCase('profile-infra', { profileFailures: 1 }, 'profile', 'infra')
       check('profile-infra: incomplete facts without agent repair', () => {
         assert.equal(profileFailed.stage('profile').facts.profile_complete, false)
