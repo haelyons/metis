@@ -1,0 +1,79 @@
+{
+  "stages": [
+    {
+      "stage": "kernels",
+      "kind": "compute",
+      "wall_s": 38.90091096399115,
+      "gpu_s": 88.230277165,
+      "start_s": null,
+      "wall_fraction": 0.6019299645354131,
+      "mean_gpu_util": null
+    },
+    {
+      "stage": "memcpy H2D",
+      "kind": "transfer",
+      "wall_s": 0.01646442045091944,
+      "gpu_s": 0.03734258,
+      "start_s": null,
+      "wall_fraction": 0.00025476082108441404,
+      "mean_gpu_util": null
+    },
+    {
+      "stage": "memcpy D2H",
+      "kind": "transfer",
+      "wall_s": 0.11832793514387836,
+      "gpu_s": 0.268376916,
+      "start_s": null,
+      "wall_fraction": 0.0018309373235663635,
+      "mean_gpu_util": null
+    },
+    {
+      "stage": "CUDA API host time",
+      "kind": "other",
+      "wall_s": 25.59126868041408,
+      "gpu_s": null,
+      "start_s": null,
+      "wall_fraction": 0.39598433731993615,
+      "mean_gpu_util": null
+    },
+    {
+      "stage": "other host time",
+      "kind": "other",
+      "wall_s": 0,
+      "gpu_s": null,
+      "start_s": null,
+      "wall_fraction": 0,
+      "mean_gpu_util": null
+    }
+  ],
+  "total_wall_s": 64.62697200000002,
+  "concurrency": {
+    "mps": true,
+    "mps_failed": false,
+    "single_wall_s": [
+      62.35605060600005,
+      63.09867391299986,
+      63.866559771000084
+    ],
+    "batches": [
+      {
+        "n": 2,
+        "wall_s": 106.74901939899996,
+        "all_ok": true,
+        "skipped": false,
+        "factor": 1.1821874199547162
+      },
+      {
+        "n": 4,
+        "wall_s": 193.80990220800004,
+        "all_ok": true,
+        "skipped": false,
+        "factor": 1.3022796708350082
+      }
+    ],
+    "factor": 1.3022796708350082
+  },
+  "timed_fraction": 1,
+  "gpu_telemetry": true,
+  "gpu_count": 1
+}

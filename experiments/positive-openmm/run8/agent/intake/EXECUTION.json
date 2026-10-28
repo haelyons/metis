@@ -1,0 +1,142 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "gpu_model": null,
+    "gpu_model_reason": "Brief allows H100, A100 or A10 class; actual stock GPU unknown. Record and hold actual GPU fixed.",
+    "atoms_per_replica": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "step_fs": 4,
+    "ps_per_replica": 100,
+    "total_steps": 200000,
+    "total_simulated_ns": 0.8,
+    "energy_samples_per_replica": 100,
+    "scale_search": false,
+    "source": "intake/brief.md"
+  },
+  "inputs": {
+    "published_files": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "generated_seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "configuration": {
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "force_field": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "precision": "single",
+      "DeterministicForces": true,
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "energy_sample_interval_steps": 250,
+      "source": "intake/brief.md",
+      "upstream_model_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    },
+    "driver_source": "intake/brief.md"
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "format": "JSON",
+    "top_level_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout_fields": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_series": {
+      "available_in_memory": true,
+      "persisted_by_supplied_driver": false,
+      "reason": "Driver collects 100 energies per replica but serializes only mean and final. Full trajectory identity cannot be established from supplied JSON alone."
+    },
+    "scoring_interface": {
+      "primary": "Read ensemble.json total_wall_s; minimize for fixed work.",
+      "aggregate_ns_per_day": "ensemble.json simulated_ns / total_wall_s * 86400",
+      "speedup": "Baseline total_wall_s / candidate total_wall_s on same GPU.",
+      "scientific_comparison": "Match replica and seed, compare final_potential_kj_mol and mean_potential_kj_mol; this cannot establish full series identity.",
+      "published_energy_tolerance": null,
+      "published_fixed_work_performance_threshold": null,
+      "missing_evidence_reason": "Brief predictions supply no independent fixed-work measurements or numerical energy acceptance criterion; reference throughput has null tolerance."
+    }
+  },
+  "timing_scope": {
+    "ensemble_start": "After PDB parsing, force-field/system creation and platform lookup; before first integrator/context creation.",
+    "ensemble_end": "After final context/integrator destruction; before JSON serialization.",
+    "includes": [
+      "Integrator and context creation, including kernel compilation inside this interval",
+      "Position and velocity initialization",
+      "All integration steps",
+      "Potential-energy queries every 250 steps",
+      "Per-replica summary construction",
+      "Context and integrator destruction"
+    ],
+    "excludes": [
+      "Package installation and downloads",
+      "PDB parsing and force-field/system creation",
+      "JSON writing and stdout printing"
+    ],
+    "per_replica": "Starts after context/positions/velocity setup; includes integration and energy queries, excludes context setup and teardown.",
+    "concurrent_candidate": "Measure complete same-work ensemble makespan, including analogous replica setup and teardown; no published candidate driver or timing implementation supplied.",
+    "source": "intake/brief.md"
+  },
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "stage_budgets_s": {},
+  "budget_assessment": {
+    "source": "intake/brief.md",
+    "published_estimate": "Brief estimates about one minute on H100 and a few minutes on slower GPUs; estimate is unverified.",
+    "verified_runtime_s": null,
+    "reason": "No workload run. Fixed 200000-step total workload selected; no scale search, doubling loop, or toy extrapolation.",
+    "defaults_s": {
+      "setup": 1200,
+      "anchors": 1200,
+      "profile": 1200,
+      "method_setup": 1200,
+      "method_run": 1200,
+      "tests": 900,
+      "evaluate": 2400
+    }
+  },
+  "unavailable_commands": {
+    "concurrent_MPS_driver": null,
+    "reason": "Brief supplies hypothesis and thread-percentage rule but no fixed-work concurrent driver command; none invented."
+  }
+}

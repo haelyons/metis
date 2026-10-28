@@ -1,0 +1,107 @@
+{
+  "availability": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "required": true,
+      "kind": "published input",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "bytes": 1814203,
+      "verification": "Fetched successfully and hashed during intake; not persisted as workload input.",
+      "access_instructions": "Download pinned raw URL; place PDB beside driver. Force-field XML files ship inside the pinned OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "separate_input_licence": null,
+      "separate_input_licence_reason": "No separate input-specific licence verified; supplied brief permits local running and modification."
+    },
+    {
+      "name": "amber99sb.xml",
+      "required": true,
+      "kind": "published input",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "bytes": 467697,
+      "verification": "Fetched successfully and hashed during intake; not persisted as workload input.",
+      "access_instructions": "Download pinned raw URL; place PDB beside driver. Force-field XML files ship inside the pinned OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "separate_input_licence": null,
+      "separate_input_licence_reason": "No separate input-specific licence verified; supplied brief permits local running and modification."
+    },
+    {
+      "name": "tip3p.xml",
+      "required": true,
+      "kind": "published input",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "bytes": 891,
+      "verification": "Fetched successfully and hashed during intake; not persisted as workload input.",
+      "access_instructions": "Download pinned raw URL; place PDB beside driver. Force-field XML files ship inside the pinned OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "separate_input_licence": null,
+      "separate_input_licence_reason": "No separate input-specific licence verified; supplied brief permits local running and modification."
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities",
+      "generation": "context.setVelocitiesToTemperature(300 * unit.kelvin, seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "intake/brief.md"
+    },
+    {
+      "name": "Integrator random streams",
+      "generation": "integrator.setRandomNumberSeed(seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "intake/brief.md"
+    }
+  ],
+  "missing_required_data": [],
+  "access": "All required molecular inputs publicly accessible without authentication.",
+  "splits": null,
+  "splits_reason": "Simulation benchmark has no training, validation or test split.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "pins": {
+    "openmm": "8.2.0",
+    "OpenMM-CUDA-12": "8.2.0",
+    "repository_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "transitive_dependency_lock": null,
+    "transitive_dependency_lock_reason": "Published pip command does not pin NVIDIA dependency versions."
+  },
+  "data_bytes": 2282791,
+  "data_GiB": 0.002126014791429043,
+  "peak_working_set_GiB": null,
+  "peak_working_set_reason": "Not published for this fixed ensemble; no workload run."
+}

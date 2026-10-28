@@ -1,0 +1,4 @@
+Read intake, write harness scripts, check syntax locally. Pipeline runs build and workloads.
+Intake pins OpenMM 8.2.0; workload: eight sequential replicas, 25,000 steps each. Reference uses µs/day; harness will derive measured throughput from ensemble output. Driver stays verbatim. CUDA selection and logs persist for later runs.
+Four scripts written; bash syntax check passes. Evaluation runs every sealed input/seed, preserves logs, emits measured timings and energies. No local builds, workloads, or dev-box access.
+Created four harness scripts. Syntax checks pass. No local builds or workloads run.

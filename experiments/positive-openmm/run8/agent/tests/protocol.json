@@ -1,0 +1,117 @@
+{
+  "equivalence_metrics": [
+    {
+      "name": "final_potential_kj_mol",
+      "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of final_potential_kj_mol across eight baseline replica seeds 1000 through 1007; absolute margin is one such measured standard deviation, in kJ/mol. Baseline variability scale, not a published scientific acceptance tolerance or same-seed repeatability estimate.",
+      "tolerance": {
+        "abs": 543.7656558388605
+      }
+    },
+    {
+      "name": "mean_potential_kj_mol",
+      "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of mean_potential_kj_mol across eight baseline replica seeds 1000 through 1007; absolute margin is one such measured standard deviation, in kJ/mol. Baseline variability scale, not a published scientific acceptance tolerance or same-seed repeatability estimate.",
+      "tolerance": {
+        "abs": 123.19561498218226
+      }
+    }
+  ],
+  "compute_budgets": [
+    120,
+    240,
+    480
+  ],
+  "repetitions": 32,
+  "evaluation_inputs": {
+    "configuration": {
+      "DeterministicForces": true,
+      "atoms": 23558,
+      "constraint_tolerance": 1e-05,
+      "constraints": "HBonds",
+      "cutoff_nm": 0.9,
+      "energy_sample_interval_steps": 250,
+      "friction_per_ps": 1,
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "nonbonded_method": "PME",
+      "platform": "CUDA",
+      "precision": "single",
+      "replicas": 8,
+      "step_fs": 4,
+      "steps_per_replica": 25000,
+      "temperature_K": 300
+    },
+    "generated_inputs": "For each seed use published equilibrated coordinates; setVelocitiesToTemperature(300 K,seed) and integrator.setRandomNumberSeed(seed). Groups 2000..2007, 2008..2015, 2016..2023, 2024..2031 each define one eight-replica ensemble. Same fixed input geometry for all groups.",
+    "ids": [
+      "dhfr-pme-23558-fixed-8x25000"
+    ],
+    "pins": {
+      "5dfr_solv-cube_equil.pdb_sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "OpenMM-CUDA-12": "8.2.0",
+      "amber99sb.xml_sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "openmm": "8.2.0",
+      "repository_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "tip3p.xml_sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c"
+    },
+    "unavailable_evidence": "Full energy series not persisted; equivalence claims restricted to final and mean energies. Transitive package lock unavailable; hold baseline installed dependencies fixed."
+  },
+  "confidence_rule": {
+    "decision": "Executable v1 exact binomial order-statistic inference. Performance: one-sided 95% lower confidence bound of paired baseline/method wall-time ratios must exceed 1.05. Equivalence: alpha=0.05; two-sided intervals with Bonferroni across two metrics, each tail <=0.0125; require entire interval strictly inside corresponding +/- absolute margin. All metrics and all budgets must pass for method acceptance; no selection of favorable budgets. Lack of significance is not equivalence. Failed or censored runs cannot establish acceptance.",
+    "equivalence": {
+      "confidence": 0.95,
+      "kind": "paired_median"
+    },
+    "equivalence_alpha": 0.05,
+    "equivalence_order_statistic_ranks": [
+      10,
+      23
+    ],
+    "performance": {
+      "confidence": 0.95,
+      "kind": "paired_median"
+    }
+  },
+  "paired_seed_tests": {
+    "description": "Pair baseline and method by identical held-out seed and input. Langevin thermostat and velocity initialization are stochastic despite fixed seeds and DeterministicForces. Compare method-minus-baseline per-replica energy summaries. Eight replicas per ensemble; four fixed ensembles cover 32 seeds. Timing repetitions do not count as independent scientific seeds. At each budget, aggregate repeated same-seed summaries by median before paired-seed inference; do not pool seeds across budgets.",
+    "kind": "paired_median",
+    "seeds": [
+      2000,
+      2001,
+      2002,
+      2003,
+      2004,
+      2005,
+      2006,
+      2007,
+      2008,
+      2009,
+      2010,
+      2011,
+      2012,
+      2013,
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026,
+      2027,
+      2028,
+      2029,
+      2030,
+      2031
+    ]
+  },
+  "timing_scope": {
+    "description": "Complete fixed-work ensemble makespan: before first integrator/context or worker launch through completion, synchronization, merge of eight summaries and teardown of all contexts/workers. Include launch, initialization, compilation within scope, H2D/D2H transfers, energy queries and merge overhead. Both arms use same boundaries, matching intake/EXECUTION.json except candidate worker launch and merge explicitly included. PDB parsing/system creation before scope; JSON serialization after scope. Never sum overlapping per-replica wall times.",
+    "gpu_synchronization": "adapter",
+    "kind": "reported_wall"
+  },
+  "outputs_stochastic": true
+}

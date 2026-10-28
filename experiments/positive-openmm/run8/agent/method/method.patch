@@ -1,0 +1,249 @@
+diff --git a/dhfr_ensemble.py b/dhfr_ensemble.py
+--- a/dhfr_ensemble.py
++++ b/dhfr_ensemble.py
+@@ -3,6 +3,14 @@
+ import argparse
+ import json
+ import time
++import ctypes
++import os
++import pathlib
++import shutil
++import signal
++import subprocess
++import sys
++import tempfile
+ 
+ import openmm as mm
+ from openmm import app, unit
+@@ -13,6 +21,7 @@
+ parser.add_argument('--seed0', type=int, default=1000)
+ parser.add_argument('--platform', default='CUDA')
+ parser.add_argument('--out', default='ensemble.json')
++parser.add_argument('--worker-indices')
+ args = parser.parse_args()
+ assert args.replicas > 0 and args.steps > 0 and args.steps % 250 == 0
+ 
+@@ -24,9 +33,14 @@
+ platform = mm.Platform.getPlatformByName(args.platform)
+ properties = {'Precision': 'single', 'DeterministicForces': 'true'} if args.platform == 'CUDA' else {}
+ 
+-replicas = []
+-start = time.perf_counter()
+-for index in range(args.replicas):
++def synchronize():
++    runtime = ctypes.CDLL(os.environ['CUDA_LIBRARY'])
++    for status in (runtime.cudaSetDevice(0), runtime.cudaDeviceSynchronize()):
++        if status:
++            raise RuntimeError('CUDA synchronization failed: ' + str(status))
++
++
++def simulate(index):
+     seed = args.seed0 + index
+     integrator = mm.LangevinMiddleIntegrator(300 * unit.kelvin, 1 / unit.picosecond, 0.004 * unit.picoseconds)
+     integrator.setConstraintTolerance(1e-5)
+@@ -39,9 +53,73 @@
+     for _ in range(args.steps // 250):
+         integrator.step(250)
+         energies.append(context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole))
+-    replicas.append(dict(replica=index, seed=seed, steps=args.steps, wall_s=time.perf_counter() - began,
+-                         final_potential_kj_mol=energies[-1], mean_potential_kj_mol=sum(energies) / len(energies)))
++    synchronize()
++    result = dict(replica=index, seed=seed, steps=args.steps, wall_s=time.perf_counter() - began,
++                  final_potential_kj_mol=energies[-1], mean_potential_kj_mol=sum(energies) / len(energies))
+     del context, integrator
++    synchronize()
++    return result
++
++
++if args.worker_indices is not None:
++    rows = [simulate(index) for index in json.loads(args.worker_indices)]
++    pathlib.Path(args.out).write_text(json.dumps(rows, allow_nan=False))
++    sys.exit(0)
++
++
++def interrupted(signum, frame):
++    raise RuntimeError('Ensemble interrupted: ' + str(signum))
++
++
++signal.signal(signal.SIGTERM, interrupted)
++workers = []
++replicas = []
++scratch = pathlib.Path(tempfile.mkdtemp(prefix='ensemble.', dir=os.environ['METHOD_MPS_ROOT'])).resolve()
++env = os.environ.copy()
++env['CUDA_MPS_PIPE_DIRECTORY'] = str(scratch / 'pipe')
++env['CUDA_MPS_LOG_DIRECTORY'] = str(scratch / 'log')
++env['CUDA_MPS_ACTIVE_THREAD_PERCENTAGE'] = '50'
++(scratch / 'pipe').mkdir()
++(scratch / 'log').mkdir()
++started_mps = False
++mps_control = shutil.which('nvidia-cuda-mps-control')
++start = time.perf_counter()
++try:
++    if mps_control:
++        result = subprocess.run([mps_control, '-d'], env=env, timeout=15)
++        started_mps = result.returncode == 0
++    if not started_mps:
++        env = os.environ.copy()
++    # Four independent processes, each running two unchanged trajectories.
++    # A fresh interpreter avoids inheriting OpenMM's native thread state.
++    for slot in range(min(4, args.replicas)):
++        output = scratch / ('worker_%d.json' % slot)
++        command = [sys.executable, str(pathlib.Path(__file__).resolve()),
++                   '--replicas', str(args.replicas), '--steps', str(args.steps),
++                   '--seed0', str(args.seed0), '--platform', args.platform,
++                   '--worker-indices', json.dumps(list(range(slot, args.replicas, 4))),
++                   '--out', str(output)]
++        workers.append((subprocess.Popen(command, env=env), output))
++    for process, output in workers:
++        if process.wait() != 0:
++            raise RuntimeError('Replica worker failed: ' + str(process.returncode))
++        replicas.extend(json.loads(output.read_text()))
++    replicas.sort(key=lambda row: row['replica'])
++    if [row['replica'] for row in replicas] != list(range(args.replicas)):
++        raise RuntimeError('Incomplete ensemble')
++finally:
++    for process, _ in workers:
++        if process.poll() is None:
++            process.terminate()
++    for process, _ in workers:
++        try:
++            process.wait(timeout=10)
++        except subprocess.TimeoutExpired:
++            process.kill()
++            process.wait()
++    if started_mps:
++        subprocess.run([mps_control], input='quit\n', text=True,
++                       env=env, check=True, timeout=15)
+ total = time.perf_counter() - start
+ 
+ simulated_ns = args.replicas * args.steps * 0.004 / 1000
+diff --git a/method_evaluate.py b/method_evaluate.py
+new file mode 100644
+--- /dev/null
++++ b/method_evaluate.py
+@@ -0,0 +1,124 @@
++import ctypes, json, math, os, pathlib, re, subprocess, sys, tempfile, time
++root=pathlib.Path.cwd()
++data=pathlib.Path(os.environ['METHOD_INPUT_PDB'])
++method=pathlib.Path(os.environ['METHOD_DIR'])
++mode=os.environ['EVAL_MODE']
++if mode not in ('equivalence','warmup','performance','curve'):
++    raise RuntimeError('Unsupported EVAL_MODE: '+mode)
++seal=json.loads(pathlib.Path(os.environ['EVAL_PROTOCOL']).read_text())
++inputs=json.loads(os.environ['EVAL_INPUTS'])
++seedspec=json.loads(os.environ['EVAL_SEEDS'])
++ids=inputs['ids']
++if not isinstance(ids,list) or not ids or any(not isinstance(x,str) for x in ids):
++    raise RuntimeError('EVAL_INPUTS.ids must be nonempty list of identities')
++if seedspec['kind']=='paired_median':
++    seeds=seedspec['seeds']
++    if not seeds or any(type(s) is not int for s in seeds):
++        raise RuntimeError('Invalid paired seeds')
++elif seedspec['kind']=='deterministic':
++    seeds=[None]
++else:
++    raise RuntimeError('Unsupported execution seed protocol')
++timing_scope=seal.get('timing_scope')
++if timing_scope is None:
++    raise RuntimeError('Seal missing timing_scope')
++out=pathlib.Path(os.environ.get('EVAL_OUT', os.environ['METHOD_RESULT_ROOT']))
++out.mkdir(parents=True,exist_ok=True)
++# Execution writes only out/; final interface is written at EVAL_OUT as required.
++session=pathlib.Path(tempfile.mkdtemp(prefix='evaluation.',dir=os.environ['METHOD_RESULT_ROOT']))
++budget_raw=os.environ.get('EVAL_COMPUTE_BUDGET','')
++compute_budget=None
++budget_seconds=None
++if mode=='curve' and not budget_raw:
++    raise RuntimeError('Curve requires GPU-second compute budget')
++if budget_raw:
++    compute_budget=json.loads(budget_raw)
++    if isinstance(compute_budget,(int,float)):
++        budget_seconds=float(compute_budget)
++    elif isinstance(compute_budget,dict):
++        for key in ('gpu_seconds','gpu_s','seconds','value'):
++            if key in compute_budget:
++                budget_seconds=float(compute_budget[key]); break
++    if budget_seconds is None or not math.isfinite(budget_seconds) or budget_seconds<=0:
++        raise RuntimeError('Invalid GPU-second budget')
++# Published getState(getEnergy=True) blocks for each energy sample. All OpenMM
++# contexts are destroyed before driver returns. Explicit CUDA synchronization
++# additionally completes this process's runtime work on the one visible GPU.
++def finite(value, positive=False):
++    if isinstance(value,bool) or not isinstance(value,(float,int)) or not math.isfinite(value) or (positive and value<=0):
++        raise RuntimeError('Missing or invalid measured output')
++    return value
++def run_checked(command, work, log, timeout):
++    process=subprocess.Popen(command,cwd=work,stdout=log,stderr=subprocess.STDOUT)
++    try:
++        code=process.wait(timeout=timeout)
++    except subprocess.TimeoutExpired:
++        process.terminate()
++        try:
++            process.wait(timeout=20)
++        except subprocess.TimeoutExpired:
++            process.kill()
++            process.wait()
++        raise
++    if code:
++        raise subprocess.CalledProcessError(code,command)
++
++records=[]
++wall_total=0.0
++started=time.perf_counter()
++for seed in seeds:
++    for identity in ids:
++        work=session/('run_%04d'%len(records))
++        work.mkdir()
++        (work/'5dfr_solv-cube_equil.pdb').symlink_to(data)
++        actual_seed=1000 if seed is None else seed
++        command=[sys.executable,str(method/'dhfr_ensemble.py'),
++                 '--replicas','8','--steps','25000','--seed0',str(actual_seed)]
++        remaining=1150-(time.perf_counter()-started)
++        if budget_seconds is not None:
++            # One GPU: elapsed wall seconds equal charged GPU seconds, including
++            # process launch, transfers, context setup, synchronization and merge.
++            remaining=min(remaining,budget_seconds-(time.perf_counter()-started))
++        if remaining<=0:
++            raise RuntimeError('Evaluation compute budget exhausted')
++        began=time.perf_counter()
++        with (work/'command.log').open('w') as log:
++            log.write(json.dumps({'command':command, 'CUDA_VISIBLE_DEVICES':'0',
++                                  'gpu_count':1,'seed0':actual_seed})+'\n')
++            log.flush()
++            try:
++                run_checked(command, work, log, remaining)
++            except subprocess.TimeoutExpired as exc:
++                raise RuntimeError('Evaluation GPU-second/time budget exhausted') from exc
++        elapsed=time.perf_counter()-began
++        r=json.loads((work/'ensemble.json').read_text())
++        if r['platform']!='CUDA' or r['properties']!={'Precision':'single','DeterministicForces':'true'}:
++            raise RuntimeError('Unexpected printed platform configuration')
++        if len(r['replicas'])!=8 or not math.isclose(finite(r['simulated_ns']),0.8):
++            raise RuntimeError('Unexpected fixed work')
++        wall=finite(r['total_wall_s'],True)
++        metrics={'total_wall_s':wall,'aggregate_ns_per_day':0.8/wall*86400,
++                 'aggregate_us_per_day':0.8/wall*86.4,'simulated_ns':0.8}
++        for index,replica in enumerate(r['replicas']):
++            if (replica['replica'],replica['seed'],replica['steps'])!=(index,actual_seed+index,25000):
++                raise RuntimeError('Unexpected replica configuration')
++            for key in ('wall_s','final_potential_kj_mol','mean_potential_kj_mol'):
++                value=finite(replica[key],key=='wall_s')
++                metrics['replica_'+str(index)+'_'+key]=value
++        for key in ('final_potential_kj_mol','mean_potential_kj_mol'):
++            metrics[key]=sum(finite(x[key]) for x in r['replicas'])/8
++        text=(work/'command.log').read_text()
++        for name,expected,tolerance in [('total_wall_s',wall,0.001),
++                ('aggregate_ns_per_day',metrics['aggregate_ns_per_day'],0.051)]:
++            match=re.search(r'^'+name+r': ([0-9.eE+-]+)$',text,re.M)
++            if not match or not math.isclose(finite(float(match[1]),True),expected,rel_tol=1e-8,abs_tol=tolerance):
++                raise RuntimeError('Missing or inconsistent printed metric: '+name)
++        records.append({'input_id':identity,'seed':seed,'metrics':metrics})
++        wall_total+=elapsed
++result={'records':records,'timing_scope':timing_scope,'gpu_count':1,
++        'wall_s':time.perf_counter()-started,'compute_budget':compute_budget}
++if budget_seconds is not None and result['wall_s']>budget_seconds:
++    raise RuntimeError('Curve exceeded GPU-second budget')
++encoded=json.dumps(result,indent=2,allow_nan=False)+'\n'
++(out/'evaluation.json').write_text(encoded)
++(session/'evaluation.json').write_text(encoded)

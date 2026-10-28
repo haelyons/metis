@@ -1,0 +1,24 @@
+{
+  "method": "ensembles",
+  "rationale": "Ensembles is the first ranked feasible method and has passed the supplied deterministic GPU resource guards. The measured whole-workload concurrency factor on one GPU with MPS caps predicted throughput speedup at 1.3022796708350082x (p=1; fixed cap 8), not an eightfold gain. Kernels account for 60.1930% of wall time and CUDA API host time for 39.5984%; concurrent independent replicas can overlap workload activity, although mean GPU utilization is unavailable. Transfers total only 0.20857%, consistent with the supplied pipelining bound of 1.001043937741831x. One GPU makes multi-GPU infeasible. Preserve the sealed method and scientific protocol unchanged.",
+  "plan_steps": [
+    "In a later implementation phase, locate the existing replica launcher and result aggregation code; packet supplies no implementation source paths. Keep each replica's input, force model, integrator, thermostat, velocity initialization, precision, DeterministicForces settings, step count, reporting schedule, and energy summaries unchanged.",
+    "Schedule the existing eight independent replicas per ensemble through a bounded worker pool on the same GPU under MPS, with isolated simulation contexts, original seed assignments, and distinct output destinations. Bound concurrent replicas by eight and available resources; never split or shorten trajectories, share random streams, or add replicas to inflate completed work.",
+    "Collect results by stable input and seed identifiers, wait for every required replica, propagate failures, and preserve existing ensemble aggregation and output schema. Include process/context initialization, scheduling, synchronization, result collection, and teardown in whole-workload timing under identical baseline and method timing boundaries.",
+    "Validate baseline and method using identical held-out input and seeds 2000 through 2031, arranged as four fixed ensembles of eight replicas. At each budget separately, reduce repeated same-seed summaries by median before computing paired method-minus-baseline differences; timing repetitions are not independent scientific seeds, and seeds must not be pooled across budgets.",
+    "Apply the sealed 95% paired-median confidence rule with n=32 and order ranks 10 and 23 for both metrics. Require the resulting intervals to lie within the sealed absolute margins: final_potential_kj_mol +/-543.7656558388605 and mean_potential_kj_mol +/-123.19561498218226. Preserve all supplied budgets and protocol choices.",
+    "Measure completed whole-workload throughput on one GPU at equal cost, including concurrency overheads, and report observed speedup against the supplied 1.3022796708350082x bound. Accept only if scientific equivalence passes and measured throughput improves; do not alter sealed margins or protocol to obtain acceptance."
+  ],
+  "files_expected": [
+    "Existing replica orchestration source, path unspecified in packet; expected later change for bounded concurrent ensemble execution.",
+    "Existing ensemble result aggregation source, path unspecified in packet; expected later change only if stable seed-indexed collection requires it.",
+    "Existing validation and timing harness, path unspecified in packet; expected later change for paired-seed evaluation and whole-workload throughput reporting."
+  ],
+  "risks": [
+    "MPS contention, duplicated contexts and memory, CPU launch contention, process startup, synchronization, output I/O, and slowest-replica tails can consume the modest 30.23% throughput headroom. Resource guards establish supplied feasibility, not guaranteed speedup.",
+    "Langevin thermostat and velocity initialization remain stochastic despite fixed seeds and DeterministicForces. Concurrent execution can alter numerical behavior; identical seeds do not establish identical trajectories or scientific equivalence. Preserve independent random streams and every simulation parameter.",
+    "Sealed margins are sample standard deviations across only eight baseline seeds 1000 through 1007, not published scientific acceptance tolerances or same-seed repeatability estimates. Their uncertainty and same-seed baseline variability are unavailable.",
+    "The stated joint equivalence power lower bound 0.9967622677744037 is conditional on the prospective, unvalidated assumption that independent held-out seed differences have at most 0.1 probability in each tail beyond each margin for both metrics. No paired method differences have been measured, so no unconditional power guarantee exists.",
+    "Only one input is represented. Passing the sealed paired-seed test supports the specified energy summaries and input; it does not establish general equivalence for other inputs or unmeasured observables. Implementation paths and runnable gate scripts are absent from the packet."
+  ]
+}

@@ -1,0 +1,13 @@
+[
+  {
+    "id": "nvidia_2025_dhfr_eight_process_throughput",
+    "kind": "reference",
+    "quantity": "Aggregate throughput of 8 concurrent DHFR PME simulations with MPS on one NVIDIA L40S or H100 GPU (microseconds/day)",
+    "source": "Hsu, Clark and Paulsen (2025-06-04), Maximizing OpenMM Molecular Dynamics Throughput with NVIDIA Multi-Process Service. https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "published_value": 5.0,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "qualification": "Approximate reference: prose says throughput approaches this value. No per-GPU exact value, uncertainty or acceptance tolerance supplied. Applies to benchmark.py fixed-time runs with --seconds=60 and CUDA_MPS_ACTIVE_THREAD_PERCENTAGE=25; not an acceptance test for the supplied fixed-work ensemble."
+  }
+]
