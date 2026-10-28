@@ -33,8 +33,6 @@ function stochasticFailures(predictions) {
     if (!Number.isFinite(tolerance) || tolerance <= 0
       || (typeof metric.tolerance !== 'number' && Object.keys(metric.tolerance).length !== 1))
       paths.push(`${prefix}.tolerance`)
-    if (/\b(?:exact|bitwise)\b/i.test(JSON.stringify({ name: metric?.name, kind: metric?.kind,
-      rule: metric?.rule, comparison: metric?.comparison }))) paths.push(prefix)
   })
   return paths
 }

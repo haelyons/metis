@@ -483,8 +483,10 @@ function repairScopeChecks(name, run) {
 
 // Public recorded run positive-openmm run3: its PREDICTIONS.json is stochastic with null margins. Replayed
 // through seal it must fail (numeric, no verified seal) before and after a repair that leaves it unchanged.
-// A copy with positive absolute margins whose sources name a reproduce output file must not be rejected for
-// stochastic_equivalence_invalid. Fixtures are copied to temporary directories; experiments/ is read only.
+// A copy that changes only each metric's tolerance to {"abs": 100}, keeping the recorded free text
+// (including "exact two-sided binomial" in `comparison`), must PASS with a verified seal: SCHEMAS.md
+// "The check reads executable fields only ... Free-text metric fields (`comparison`, `kind`, `rule` and any
+// others) are never scanned for words". Fixtures are copied to temporary directories; experiments/ is read only.
 async function recordedSealRegression() {
   const label = 'recorded-positive-openmm-run3-seal'
   const source = path.join(EXPERIMENTS, 'positive-openmm', 'run3', 'agent')
@@ -546,28 +548,161 @@ async function recordedSealRegression() {
     repairScopeChecks(name, run)
   }
 
-  // Same predictions with positive absolute margins whose sources cite a measured reproduce file and statistic.
+  // The recorded predictions with only each metric's tolerance changed to {"abs": 100}; every other field,
+  // including the recorded comparison text, stays exactly as recorded.
   {
-    const name = `${label}-measured-margins`
+    const name = `${label}-abs-100`
     const value = JSON.parse(JSON.stringify(recorded))
-    // The documented metric shape {name, source, tolerance:{abs}}; the recorded "unavailable" markers
-    // (status, unavailable_reason, comparison) would contradict a supplied margin, so they are not kept.
-    value.equivalence_metrics = value.equivalence_metrics.map((metric, i) => ({
-      name: typeof metric?.name === 'string' && metric.name.trim() ? metric.name : `metric-${i + 1}`,
-      source: 'A/results/reproduce/anchors_scored.json: standard deviation of the per-seed outcome across the baseline seeds',
-      tolerance: { abs: 0.5 },
-    }))
+    for (const metric of value.equivalence_metrics) metric.tolerance = { abs: 100 }
+    check(`${name}: copy differs from the recorded file only in equivalence_metrics tolerances`, () => {
+      const strip = predictions => ({ ...predictions, equivalence_metrics: predictions.equivalence_metrics.map(metric => {
+        const { tolerance, ...rest } = metric
+        return rest
+      }) })
+      assert.deepEqual(strip(value), strip(recorded))
+      assert.ok(recorded.equivalence_metrics.some(metric => /exact two-sided binomial/.test(JSON.stringify(metric?.comparison))),
+        'recorded comparison text with "exact two-sided binomial" not found; fixture changed')
+    })
     const { runRoot, intake } = prepare(name, value)
     const run = await runCase(name, facts, { runRoot, preserve: true, recorded: intake, profile })
-    check(`${name}: not rejected for stochastic_equivalence_invalid`, () => {
+    const diagnose = () => {
       const receipt = readJSON(path.join(runRoot, 'control', 'stages', 'seal.json'))
-      assert.ok(Array.isArray(receipt.reason_codes), 'seal receipt lacks reason_codes')
       const repair = run.calls.find(row => row.label === 'seal-repair')
       // Script-owned field paths from the repair feedback make a rejection diagnosable.
-      const paths = repair ? [...new Set(repair.prompt.match(/\b(?:equivalence_metrics|paired_seed_tests|confidence_rule|sample_sizes|outputs_stochastic)[\w.\[\]]*/g) || [])] : []
-      assert.ok(!receipt.reason_codes.includes('stochastic_equivalence_invalid'),
-        `rejected: ${JSON.stringify(receipt.reason_codes)}; repair feedback field paths: ${JSON.stringify(paths)}; metric keys: ${JSON.stringify(value.equivalence_metrics.map(Object.keys))}`)
+      const paths = repair ? [...new Set(repair.prompt.match(/\b(?:equivalence_metrics|paired_seed_tests|confidence_rule|sample_sizes|outputs_stochastic|predictions|infeasible_methods)[\w.\[\]]*/g) || [])] : []
+      return { receipt, repair, detail: `reason_codes ${JSON.stringify(receipt.reason_codes)}; repair feedback field paths ${JSON.stringify(paths)}` }
+    }
+    check(`${name}: not rejected for stochastic_equivalence_invalid (free text is never scanned)`, () => {
+      const { receipt, repair, detail } = diagnose()
+      assert.ok(Array.isArray(receipt.reason_codes), 'seal receipt lacks reason_codes')
+      assert.ok(!receipt.reason_codes.includes('stochastic_equivalence_invalid'), detail)
+      assert.ok(!repair || !repair.prompt.includes('stochastic_equivalence_invalid'), `first attempt rejected for stochastic_equivalence_invalid; ${detail}`)
+    })
+    check(`${name}: seal PASSes with a verified seal on the first attempt`, () => {
+      const { receipt, detail } = diagnose()
+      const signature = run.signature('seal')
+      assert.equal(signature.status, 'PASS', detail)
+      assert.equal(signature.exit_code, 0)
+      assert.equal(run.stage('seal').facts.seal_present, true)
+      assert.equal(run.stage('seal').facts.seal_verified, true)
+      assert.equal(run.stage('seal').facts.prediction_count, recorded.predictions.length)
+      assert.deepEqual(receipt.reason_codes, [])
+      assert.deepEqual(run.calls.filter(row => ['seal', 'seal-repair'].includes(row.label)).map(row => row.label), ['seal'])
+      assert.deepEqual(readJSON(path.join(runRoot, 'agent', 'PREDICTIONS.json')), value)
+      assert.equal(readJSON(path.join(runRoot, 'control', 'seals', '0001.json')).sha256, predictionHash(runRoot))
+    })
+  }
+}
+
+// SCHEMAS.md A/PREDICTIONS.json: "Stochastic seals require statistical `equivalence_metrics` with positive
+// absolute margins ... The check reads executable fields only: evaluation applies each metric's `name` and
+// numeric `tolerance`, so an exact or bitwise rule is a zero or missing absolute margin. Free-text metric fields
+// (`comparison`, `kind`, `rule` and any others) are never scanned for words; statistical terms such as
+// "exact binomial bound" are allowed."
+function stochasticValid() {
+  const value = JSON.parse(JSON.stringify(PREDICTIONS))
+  value.outputs_stochastic = true
+  value.paired_seed_tests = { kind: 'paired_median', seeds: [0, 1, 2, 3, 4, 5] }
+  value.sample_sizes = { inputs: 1, seeds: 6 }
+  value.confidence_rule = {
+    performance: { kind: 'paired_median', confidence: 0.95 },
+    equivalence: { kind: 'paired_median', confidence: 0.95 },
+  }
+  value.equivalence_metrics = [{ name: 'sum', source: 'baseline per-seed standard deviation of sum', tolerance: { abs: 0.1 } }]
+  return value
+}
+async function stochasticCase(name, mutate, { raw } = {}) {
+  const runRoot = path.join(parent, name)
+  const value = stochasticValid()
+  mutate(value)
+  const predictionsFile = path.join(runRoot, 'agent', 'PREDICTIONS.json')
+  writeJSON(predictionsFile, value)
+  if (raw) fs.writeFileSync(predictionsFile, raw(value))
+  const run = await runCase(name, INTAKE, { runRoot, preserve: true })
+  const receipt = () => readJSON(path.join(runRoot, 'control', 'stages', 'seal.json'))
+  return { run, runRoot, value, receipt }
+}
+async function stochasticFreeTextChecks() {
+  const texts = ['exact binomial', 'exact', 'bitwise']
+  const cases = []
+  for (const field of ['comparison', 'kind', 'rule']) {
+    for (const text of texts) cases.push([`${field}-${text.replace(/\W+/g, '-')}`, { [field]: text }])
+  }
+  cases.push(['all-fields', { comparison: 'exact two-sided binomial bound', kind: 'exact', rule: 'bitwise identical outputs' }])
+  cases.push(['other-field', { notes: 'Bitwise EXACT agreement expected; exact binomial bound on sign test' }])
+  for (const [label, extra] of cases) {
+    const name = `stochastic-free-text-${label}`
+    const { run, runRoot, receipt } = await stochasticCase(name, value => {
+      Object.assign(value.equivalence_metrics[0], extra)
+    })
+    check(`${name}: positive absolute margin with free text ${JSON.stringify(extra)} not rejected for stochastic_equivalence_invalid`, () => {
+      assert.ok(!receipt().reason_codes.includes('stochastic_equivalence_invalid'), JSON.stringify(receipt().reason_codes))
+      const repair = run.calls.find(row => row.label === 'seal-repair')
       assert.ok(!repair || !repair.prompt.includes('stochastic_equivalence_invalid'), 'first attempt rejected for stochastic_equivalence_invalid')
+    })
+    // The base protocol is otherwise valid (it seals without the free text), so the seal must PASS.
+    checkStatuses(name, run, null)
+    check(`${name}: verified seal with no reason codes`, () => {
+      assert.equal(run.stage('seal').facts.seal_verified, true)
+      assert.deepEqual(receipt().reason_codes, [])
+      assert.equal(readJSON(path.join(runRoot, 'control', 'seals', '0001.json')).sha256, predictionHash(runRoot))
+    })
+  }
+}
+async function stochasticRejectionChecks() {
+  const metric = tolerance => value => {
+    if (tolerance === undefined) delete value.equivalence_metrics[0].tolerance
+    else value.equivalence_metrics[0].tolerance = tolerance
+  }
+  // JSON cannot spell non-finite numbers; 1e999 parses to Infinity.
+  const nonFinite = form => value => JSON.stringify(value, null, 2).replace('"tolerance": "__INF__"', `"tolerance": ${form}`)
+  const cases = [
+    // Margins: zero, missing, null, negative, non-finite, relative.
+    ['tolerance-zero', metric(0)],
+    ['tolerance-abs-zero', metric({ abs: 0 })],
+    ['tolerance-missing', metric(undefined)],
+    ['tolerance-null', metric(null)],
+    ['tolerance-abs-null', metric({ abs: null })],
+    ['tolerance-negative', metric(-0.1)],
+    ['tolerance-abs-negative', metric({ abs: -0.1 })],
+    ['tolerance-infinite', metric('__INF__'), nonFinite('1e999')],
+    ['tolerance-abs-infinite', metric('__INF__'), nonFinite('{"abs": 1e999}')],
+    ['tolerance-rel', metric({ rel: 0.1 })],
+    ['tolerance-rel-zero', metric({ rel: 0 })],
+    // An exact rule is a zero absolute margin, whatever the free text says.
+    ['tolerance-abs-zero-statistical-text', value => {
+      Object.assign(value.equivalence_metrics[0], { tolerance: { abs: 0 }, comparison: 'paired-median confidence interval within margin' })
+    }],
+    // Prose-only rules and missing names/sources.
+    ['metric-prose-only', value => { value.equivalence_metrics = ['paired difference within Monte Carlo error'] }],
+    ['metric-empty-name', value => { value.equivalence_metrics[0].name = '' }],
+    ['metric-empty-source', value => { value.equivalence_metrics[0].source = ' ' }],
+    // Seeds.
+    ['seeds-deterministic', value => {
+      value.paired_seed_tests = { kind: 'deterministic', justification: 'fixed seed reproduces outputs' }
+    }],
+    ['seeds-wrong-kind', value => { value.paired_seed_tests.kind = 'paired_mean' }],
+    ['seeds-duplicate', value => { value.paired_seed_tests.seeds = [0, 1, 2, 3, 4, 4] }],
+    ['seeds-non-integer', value => { value.paired_seed_tests.seeds = [0, 1, 2, 3, 4, 5.5] }],
+    ['seeds-prose', value => { value.paired_seed_tests = 'paired medians over six seeds' }],
+    // Confidence rule.
+    ['confidence-one', value => { value.confidence_rule.equivalence.confidence = 1 }],
+    ['confidence-below-half', value => { value.confidence_rule.equivalence.confidence = 0.4 }],
+    ['confidence-missing', value => { delete value.confidence_rule.equivalence.confidence }],
+    ['confidence-wrong-kind', value => { value.confidence_rule.equivalence.kind = 'exact' }],
+    ['confidence-prose', value => { value.confidence_rule = '95% paired confidence interval' }],
+  ]
+  for (const [label, mutate, raw] of cases) {
+    const name = `stochastic-reject-${label}`
+    const { run, receipt } = await stochasticCase(name, mutate, { raw })
+    checkStatuses(name, run, 'seal')
+    check(`${name}: rejected for stochastic_equivalence_invalid; numeric, no seal`, () => {
+      assert.deepEqual(receipt().reason_codes, ['stochastic_equivalence_invalid'])
+      assert.equal(run.signature('seal').error_class, 'numeric')
+      assert.equal(run.signature('seal').exit_code, 2)
+      assert.equal(run.stage('seal').facts.seal_verified, false)
+      const seals = path.join(parent, name, 'control', 'seals')
+      assert.deepEqual(fs.existsSync(seals) ? fs.readdirSync(seals) : [], [])
     })
   }
 }
@@ -774,6 +909,7 @@ async function main() {
       })
     }
 
+    // An exact rule for stochastic outputs is a zero absolute margin; a positive one is statistical.
     for (const statistical of [false, true]) {
       const name = statistical ? 'stochastic-statistical' : 'stochastic-exact'
       const runRoot = path.join(parent, name)
@@ -865,6 +1001,8 @@ async function main() {
       })
     }
     await recordedSealRegression()
+    await stochasticFreeTextChecks()
+    await stochasticRejectionChecks()
 
     // Without a concurrency calibration, whole-workload bounds are 1, and multi-GPU
     // per GPU-second never exceeds 1: only pipelining (bound 1/0.85) remains feasible.
