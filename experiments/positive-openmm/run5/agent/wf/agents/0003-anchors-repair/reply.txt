@@ -1,0 +1,7 @@
+Read intake and harness scripts; repair only run_anchors.sh. No workload run locally.
+Failure occurs inside run_command.sh: version check requires `8.2.0`; setup output confirms pinned package reports `8.2`. Allowed edit cannot fix that check without changing canonical command or environment. Updating anchor parser within scope; canonical failure will remain explicit.
+Updated only `harness/run_anchors.sh`: dynamic intake IDs, output/configuration validation, log preservation.
+
+Syntax check passed. No workload run locally.
+
+Repair remains blocked: canonical `run_command.sh` requires version `8.2.0`; pinned package reports `8.2`. Fix requires editing that script, outside authorized scope.

@@ -1,0 +1,25 @@
+[
+  {
+    "id": "nvidia-2025-dhfr-eight-replica-throughput-reference",
+    "quantity": "Approximate aggregate DHFR throughput, ns/day, with eight concurrent MPS processes and tuned thread percentage on one H100 or L40S",
+    "source": {
+      "citation": "Darren Hsu, David Clark and Janet Paulsen, Maximizing OpenMM Molecular Dynamics Throughput with NVIDIA Multi-Process Service, 4 June 2025, Figure 4 discussion",
+      "url": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/"
+    },
+    "published_value": 5000,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "kind": "reference",
+    "conditions": {
+      "openmm": "8.2.0",
+      "cuda": "12",
+      "python": "3.12",
+      "test": "pme",
+      "seconds": 60,
+      "concurrent_processes": 8,
+      "CUDA_MPS_ACTIVE_THREAD_PERCENTAGE": 25
+    },
+    "notes": "Source says approaches 5 microseconds/day; converted to 5000 ns/day. Approximate contextual reference, not an exact result or acceptance criterion. Published workload is fixed-time throughput; supplied ensemble is fixed-work and includes context creation. No uncertainty or acceptance tolerance published."
+  }
+]

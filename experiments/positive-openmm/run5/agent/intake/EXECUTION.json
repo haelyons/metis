@@ -1,0 +1,141 @@
+{
+  "representative_scale": {
+    "fixed": true,
+    "gpu_count": 1,
+    "system": "DHFR in explicit water",
+    "atoms_per_replica": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "total_steps": 200000,
+    "step_ps": 0.004,
+    "simulated_ns_per_replica": 0.1,
+    "total_simulated_ns": 0.8,
+    "energy_samples_per_replica": 100,
+    "seed0": 1000,
+    "scale_search": false,
+    "source": "brief.md (copied supplied BRIEF.md)"
+  },
+  "inputs": {
+    "files": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "driver": "Python code block in brief.md, extracted as dhfr_ensemble.py",
+    "configuration": {
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_ps": 0.004,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "energy_interval_steps": 250,
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ]
+    },
+    "baseline_command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+    "concurrent_method_command": null,
+    "concurrent_method_command_reason": "No executable concurrent fixed-work driver is supplied; NVIDIA commands are fixed-time benchmark.py examples."
+  },
+  "outputs": {
+    "baseline_file": "ensemble.json",
+    "json_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout_fields": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_series": null,
+    "energy_series_reason": "Supplied driver collects 100 samples internally but serializes only mean and final energy. Full-series equality cannot be verified from existing output."
+  },
+  "timing_scope": {
+    "ensemble": "time.perf_counter immediately before replica loop until after final context/integrator deletion. Includes per-replica integrator/context creation, compilation when triggered, position and velocity initialization, integration, energy queries and teardown.",
+    "excluded": [
+      "Package installation",
+      "PDB parsing",
+      "Force-field loading",
+      "System construction",
+      "Final JSON serialization and stdout printing"
+    ],
+    "per_replica": "After velocity initialization through integration, energy queries and replica summary construction; excludes context initialization and teardown.",
+    "concurrent_method": "Measure completion of all eight replicas on the same one GPU; preserve ensemble initialization and completion scope when reporting speedup.",
+    "cold_warm_policy": null,
+    "cold_warm_policy_reason": "Brief does not specify cache warmup or repeated cold/warm trials.",
+    "source": "brief.md (copied supplied BRIEF.md)"
+  },
+  "scoring_interface": {
+    "performance": {
+      "from": "ensemble.json",
+      "wall_s_field": "total_wall_s",
+      "simulated_ns_field": "simulated_ns",
+      "aggregate_ns_per_day_formula": "simulated_ns / total_wall_s * 86400",
+      "speedup_formula": "baseline.total_wall_s / method.total_wall_s"
+    },
+    "scientific": {
+      "join_key": "replica",
+      "check_fields": [
+        "seed",
+        "steps",
+        "mean_potential_kj_mol",
+        "final_potential_kj_mol"
+      ],
+      "full_series_requirement": "Requires additional per-sample output; not present in supplied interface.",
+      "numeric_acceptance_tolerance": null,
+      "reason": "No published fixed-work energy acceptance tolerance or reference values. No tolerance invented."
+    },
+    "independent_references": "anchors.json; contextual only, no acceptance anchors."
+  },
+  "budget_assessment": {
+    "source": "brief.md (copied supplied BRIEF.md)",
+    "expected_runtime": "Brief estimates about one minute on H100, a few minutes on slower GPUs; unverified prediction.",
+    "within_default_budgets": null,
+    "reason": "No CUDA reproduction performed. Keep fixed workload; no scale search.",
+    "defaults_s": {
+      "setup": 1200,
+      "anchors": 1200,
+      "profile": 1200,
+      "method_setup": 1200,
+      "method_run": 1200,
+      "tests": 900,
+      "evaluate": 2400
+    }
+  },
+  "stage_budgets_s": {}
+}

@@ -1,0 +1,90 @@
+{
+ "card": "args",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/positive-openmm/run5/agent/wf",
+ "stage": "done",
+ "started": "2026-10-28T12:43:08.005Z",
+ "calls": [
+  {
+   "id": "0001 intake",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 154322,
+   "cost_usd": 0,
+   "tokens": 203099,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0002 harness",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 199328,
+   "cost_usd": 0,
+   "tokens": 157758,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0003 anchors-repair",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 67557,
+   "cost_usd": 0,
+   "tokens": 184636,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0,
+ "tokens": 545493,
+ "by_model": {
+  "codex/default@medium": {
+   "calls": 3,
+   "cost_usd": 0,
+   "tokens": 545493,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "codex": {
+   "calls": 3,
+   "cost_usd": 0,
+   "tokens": 545493,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-10-28T12:52:21.873Z",
+ "go": [
+  "codex/default@medium: $0.000 over 3 calls"
+ ]
+}

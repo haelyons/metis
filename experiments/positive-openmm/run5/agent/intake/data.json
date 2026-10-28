@@ -1,0 +1,118 @@
+{
+  "availability": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "kind": "published",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "access_instructions": "Download pinned raw file and place next to extracted dhfr_ensemble.py. No authentication required; HTTP retrieval verified.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "sha256_verified": true,
+      "bytes": 1814203,
+      "atoms": 23558,
+      "licence": "OpenMM-distributed example input; separate file-specific licence unavailable. Brief permits local use."
+    },
+    {
+      "name": "amber99sb.xml",
+      "kind": "published",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "access_instructions": "Bundled with pinned OpenMM 8.2.0 package; pinned repository file retrieval verified.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": null,
+      "hash_reason": "Not computed during bounded intake.",
+      "bytes": 467697,
+      "licence": "Distributed with OpenMM; separate XML-specific notice unavailable."
+    },
+    {
+      "name": "tip3p.xml",
+      "kind": "published",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "access_instructions": "Bundled with pinned OpenMM 8.2.0 package; pinned repository file retrieval verified.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": null,
+      "hash_reason": "Not computed during bounded intake.",
+      "bytes": 891,
+      "licence": "Distributed with OpenMM; separate XML-specific notice unavailable."
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities",
+      "generation": "context.setVelocitiesToTemperature(300 * unit.kelvin, seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md (copied supplied BRIEF.md)"
+    },
+    {
+      "name": "Langevin random streams",
+      "generation": "integrator.setRandomNumberSeed(seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md (copied supplied BRIEF.md)"
+    }
+  ],
+  "missing_data": [],
+  "splits": null,
+  "splits_reason": "Simulation workload; no training, validation or test dataset split.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "licences_and_permissions": {
+    "status": "permitted",
+    "intended_use": "Local execution, benchmarking and modification; no redistribution planned.",
+    "components": [
+      {
+        "component": "OpenMM API, Reference and CPU platforms",
+        "licence": "MIT",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "OpenMM CUDA platform",
+        "licence": "GNU LGPL; version not specified in Licenses.txt",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "DHFR PDB and force-field XML files",
+        "licence": "Distributed in OpenMM repository; separate file-specific licence unavailable in inspected files.",
+        "intended_use_permission": "Supplied brief explicitly permits local running and modification.",
+        "source": "brief.md (copied supplied BRIEF.md)"
+      },
+      {
+        "component": "Embedded fixed-work driver",
+        "licence": null,
+        "reason": "No separate licence declared in supplied brief. Local execution is the requested intended use.",
+        "source": "brief.md (copied supplied BRIEF.md)"
+      }
+    ],
+    "metadata_note": "PyPI openmm metadata reports Python Software Foundation License (BSD-like); upstream component-specific Licenses.txt is used for OpenMM licensing."
+  },
+  "reference_trajectories": null,
+  "reference_trajectories_reason": "No independently published trajectories or energy tables supplied for the fixed-work ensemble."
+}

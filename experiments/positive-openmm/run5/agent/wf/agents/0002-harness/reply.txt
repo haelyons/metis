@@ -1,0 +1,4 @@
+Read intake, then write harness scripts matching published build, scale, evaluation protocol. No local builds or workloads.
+Intake fixes 8 replicas × 25,000 steps, seeds 1000–1007, one GPU. Reference maps to measured aggregate ns/day. Preserve supplied driver verbatim; validate emitted results, leave MPS untouched.
+Scripts written. Baseline uses pinned OpenMM wheels and verbatim driver; runs preserve logs and parse measured output. Checking shell syntax and relocation constraints only—no box access, builds, or workloads.
+Created four scripts under `harness/`. Shell syntax checks pass. No builds, workloads, or dev-box access performed.
