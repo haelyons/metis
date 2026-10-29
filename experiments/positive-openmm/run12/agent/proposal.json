@@ -1,0 +1,24 @@
+{
+  "method": "ensembles",
+  "rationale": "Ensembles is the first ranked feasible method and has passed the supplied deterministic GPU resource guards. Its sealed whole-workload concurrent-throughput bound on one GPU is 1.8111900135499828x (p=1; k=min(8, measured concurrency factor 1.8111900135499828), with MPS). Kernels account for 58.1724% of wall time and CUDA API host time for 41.4276%; independent replica execution can overlap work across these stages. GPU utilization is unavailable, so no occupancy claim is inferred. H2D and D2H together account for only 0.39994%, consistent with the supplied pipelining bound of 1.0020037002263715x. The concurrency factor is a throughput bound, not a worker count or guaranteed realized speedup. Preserve the sealed method and scientific protocol unchanged.",
+  "plan_steps": [
+    "Locate the existing ensemble driver and replica execution entry point during implementation; retain the existing single input, eight replicas/seeds 1000-1007, simulation settings, precision, step counts, reporting schedule and output definitions.",
+    "Schedule existing independent replicas in bounded worker processes on the same GPU with MPS, each owning its simulation context, RNG state and output path. Start with two concurrent workers and evaluate higher integer concurrency only within the supplied cap of eight and resource guards; never add replicas or change per-replica work.",
+    "Use each replica's existing seed for both initial velocities and the Langevin integrator. Preserve input/replica/seed identity, checkpoint ownership and deterministic result ordering when collecting outputs; avoid shared mutable simulation state.",
+    "Measure completed fixed-ensemble work per wall second against serial execution on one GPU, using identical workloads and timing boundaries. Include process/context startup, scheduling, MPS, synchronization and output collection overheads; select concurrency by measured throughput while retaining the sealed 1.8111900135499828x bound.",
+    "Apply the sealed paired_median equivalence protocol unchanged: pair candidate and baseline by input, replica and seed for seeds 1000-1007; reduce repeated observations within seed by median before inference, and never count repeated timings as independent seeds.",
+    "For final_potential_kj_mol and mean_potential_kj_mol, form eight candidate-minus-baseline seed differences and apply the sealed exact paired-median confidence rule at family confidence 0.95 with two-metric Bonferroni control. Use the extreme order-statistic interval [minimum, maximum] for each metric (coverage 0.9921875, exceeding 0.975) and require containment within the respective absolute equivalence margins of 103.46196222857994 and 38.646252910999976 kJ/mol. Keep margins, seeds and inference unchanged; report a failed check without relaxing criteria."
+  ],
+  "files_expected": [
+    "Existing ensemble orchestration source; exact path unavailable in the supplied packet.",
+    "Existing replica launch/MPS configuration, if separate; exact path unavailable in the supplied packet.",
+    "Existing timing and paired-seed equivalence reporting source; exact path unavailable in the supplied packet."
+  ],
+  "risks": [
+    "Worker startup, CUDA context initialization, MPS scheduling, CPU contention, GPU contention and output I/O can reduce realized throughput below the supplied bound; higher concurrency can hurt performance despite passing resource guards.",
+    "Langevin outputs remain stochastic with fixed seeds. Scheduling or floating-point execution differences can alter trajectories; shared RNG state, seed misassignment or result mispairing would invalidate comparison.",
+    "The sealed margins are baseline cross-seed standard deviations divided by sqrt(8), not same-seed run-to-run variability or published scientific tolerances. Passing these two energy metrics does not establish equivalence of every scientific observable.",
+    "The stated joint equivalence power of at least 0.99898 is conditional on an unverified zero-median normal paired-error model with standard deviation at most one quarter of each margin. Empirical power is unavailable; without that assumption power is unknown.",
+    "Actual source paths and existing orchestration structure are absent from the packet. Implementation must identify them later without changing the selected method or sealed protocol."
+  ]
+}

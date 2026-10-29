@@ -1,0 +1,104 @@
+--- a/dhfr_ensemble.py
++++ b/dhfr_ensemble.py
+@@ -1,33 +1,26 @@
+ #!/usr/bin/env python3
+-"""Fixed-work DHFR ensemble: independent replicas of the OpenMM 8.2.0 examples/benchmark.py `pme` system, run one after another."""
++"""Fixed-work DHFR ensemble with four independent MPS worker processes."""
+ import argparse
++import concurrent.futures
+ import json
++import multiprocessing
+ import time
+-
+ import openmm as mm
+ from openmm import app, unit
+ 
+-parser = argparse.ArgumentParser()
+-parser.add_argument('--replicas', type=int, default=8)
+-parser.add_argument('--steps', type=int, default=25000)
+-parser.add_argument('--seed0', type=int, default=1000)
+-parser.add_argument('--platform', default='CUDA')
+-parser.add_argument('--out', default='ensemble.json')
+-args = parser.parse_args()
+-assert args.replicas > 0 and args.steps > 0 and args.steps % 250 == 0
+ 
+-# System exactly as benchmark.py builds `--test pme` with default options (hbonds, cutoff 0.9 nm).
+-pdb = app.PDBFile('5dfr_solv-cube_equil.pdb')
+-forcefield = app.ForceField('amber99sb.xml', 'tip3p.xml')
+-system = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME, nonbondedCutoff=0.9,
+-                                 constraints=app.HBonds, hydrogenMass=1.5 * unit.amu)
+-platform = mm.Platform.getPlatformByName(args.platform)
+-properties = {'Precision': 'single', 'DeterministicForces': 'true'} if args.platform == 'CUDA' else {}
++def initialize(platform_name):
++    global pdb, system, platform, properties
++    pdb = app.PDBFile('5dfr_solv-cube_equil.pdb')
++    forcefield = app.ForceField('amber99sb.xml', 'tip3p.xml')
++    system = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME, nonbondedCutoff=0.9,
++                                     constraints=app.HBonds, hydrogenMass=1.5 * unit.amu)
++    platform = mm.Platform.getPlatformByName(platform_name)
++    properties = {'Precision': 'single', 'DeterministicForces': 'true'} if platform_name == 'CUDA' else {}
+ 
+-replicas = []
+-start = time.perf_counter()
+-for index in range(args.replicas):
+-    seed = args.seed0 + index
++
++def run_replica(index, seed0, steps):
++    seed = seed0 + index
+     integrator = mm.LangevinMiddleIntegrator(300 * unit.kelvin, 1 / unit.picosecond, 0.004 * unit.picoseconds)
+     integrator.setConstraintTolerance(1e-5)
+     integrator.setRandomNumberSeed(seed)
+@@ -36,17 +29,43 @@
+     context.setVelocitiesToTemperature(300 * unit.kelvin, seed)
+     began = time.perf_counter()
+     energies = []
+-    for _ in range(args.steps // 250):
++    for _ in range(steps // 250):
+         integrator.step(250)
+         energies.append(context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole))
+-    replicas.append(dict(replica=index, seed=seed, steps=args.steps, wall_s=time.perf_counter() - began,
+-                         final_potential_kj_mol=energies[-1], mean_potential_kj_mol=sum(energies) / len(energies)))
++    record = dict(replica=index, seed=seed, steps=steps, wall_s=time.perf_counter() - began,
++                         final_potential_kj_mol=energies[-1], mean_potential_kj_mol=sum(energies) / len(energies))
+     del context, integrator
+-total = time.perf_counter() - start
++    return record
+ 
+-simulated_ns = args.replicas * args.steps * 0.004 / 1000
+-with open(args.out, 'w') as handle:
+-    json.dump(dict(platform=args.platform, properties=properties, simulated_ns=simulated_ns,
+-                   total_wall_s=total, replicas=replicas), handle, indent=1)
+-print(f'total_wall_s: {total:.3f}')
+-print(f'aggregate_ns_per_day: {simulated_ns / total * 86400:.1f}')
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument('--replicas', type=int, default=8)
++    parser.add_argument('--steps', type=int, default=25000)
++    parser.add_argument('--seed0', type=int, default=1000)
++    parser.add_argument('--platform', default='CUDA')
++    parser.add_argument('--out', default='ensemble.json')
++    args = parser.parse_args()
++    assert args.replicas == 8 and args.steps == 25000
++    start = time.perf_counter()
++    # Spawn owns all mutable simulation/RNG state in each worker. Ordered futures
++    # preserve replica identity independently of completion order.
++    with concurrent.futures.ProcessPoolExecutor(
++            max_workers=4, mp_context=multiprocessing.get_context('spawn'),
++            initializer=initialize, initargs=(args.platform,)) as pool:
++        futures = [pool.submit(run_replica, i, args.seed0, args.steps) for i in range(args.replicas)]
++        replicas = [future.result() for future in futures]
++    # Every final energy query blocks on GPU completion, every Context is
++    # destroyed and every worker has exited before collecting ensemble time.
++    total = time.perf_counter() - start
++    simulated_ns = args.replicas * args.steps * 0.004 / 1000
++    properties = {'Precision': 'single', 'DeterministicForces': 'true'} if args.platform == 'CUDA' else {}
++    with open(args.out, 'w') as handle:
++        json.dump(dict(platform=args.platform, properties=properties, simulated_ns=simulated_ns,
++                       total_wall_s=total, replicas=replicas), handle, indent=1, allow_nan=False)
++    print(f'total_wall_s: {total:.3f}')
++    print(f'aggregate_ns_per_day: {simulated_ns / total * 86400:.1f}')
++
++
++if __name__ == '__main__':
++    main()

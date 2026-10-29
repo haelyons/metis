@@ -1,0 +1,137 @@
+{
+  "found": true,
+  "identity": {
+    "name": "DHFR replica ensembles on one GPU: sequential versus concurrent execution",
+    "software": "OpenMM 8.2.0",
+    "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "public_benchmark": "OpenMM examples/benchmark.py pme test",
+    "brief_adaptation": "Eight independent fixed-work replicas of published pme system, using driver embedded in brief.",
+    "substituted": false
+  },
+  "outcome_definition": {
+    "primary": "Elapsed wall time to finish all eight replicas on one GPU.",
+    "throughput": "0.8 ns / total_wall_s * 86400, in ns/day.",
+    "speedup": "sequential total_wall_s / candidate total_wall_s",
+    "scientific_outputs": "Per-replica final and mean potential energy (kJ/mol), sampled every 250 steps; brief also requests full energy series but supplied driver does not serialize series."
+  },
+  "citations": {
+    "brief": {
+      "source": "/home/hal/dev/interp/metis/experiments/positive-openmm/BRIEF.md",
+      "copy": "brief.md",
+      "sha256": "dbea3e3b0c667852ae64399f0bbee17b472635a46d65c7825dae4f9e1276d031"
+    },
+    "openmm_benchmark": {
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "sha256": "942d21b57d50000499bda4df222cfbd146d32b5da7a5356311f0da3fda4ce25a"
+    },
+    "nvidia_study": {
+      "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+      "title": "Maximizing OpenMM Molecular Dynamics Throughput with NVIDIA Multi-Process Service",
+      "authors": [
+        "Darren Hsu",
+        "David Clark",
+        "Janet Paulsen"
+      ],
+      "date": "2025-06-04"
+    },
+    "licence": {
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    "tag": {
+      "source": "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0",
+      "resolved_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868"
+    },
+    "openmm_distribution": {
+      "source": "https://pypi.org/pypi/openmm/8.2.0/json"
+    },
+    "cuda_distribution": {
+      "source": "https://pypi.org/pypi/OpenMM-CUDA-12/8.2.0/json"
+    },
+    "platform_documentation": {
+      "source": "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html",
+      "verification": "Cited by brief; web retrieval failed during intake."
+    }
+  },
+  "source_licences_and_intended_use": {
+    "status": "permitted",
+    "intended_use": "Local scientific benchmarking, execution and modification.",
+    "components": [
+      {
+        "component": "OpenMM API, Reference and CPU platforms",
+        "licence": "MIT",
+        "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "CUDA and OpenCL platforms",
+        "licence": "GNU LGPL",
+        "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "PDB and force-field inputs",
+        "licence": "Distributed in OpenMM repository; brief states local running and modification permitted. No separate input-specific licence verified.",
+        "source": [
+          "brief.md",
+          "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+        ]
+      }
+    ],
+    "brief_driver_licence": null,
+    "brief_driver_licence_reason": "No separate licence for embedded driver stated; brief supplies it for this benchmark.",
+    "redistribution_review": null,
+    "redistribution_review_reason": "Intended use is local execution and modification; no redistribution determination made."
+  },
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "reason": "Stock image manifest, GPU model, host driver and MPS service availability not supplied or checked; no reproduction performed.",
+    "provisional_route": "Published Linux x86_64 wheels support CPython 3.10\u20133.13 and manylinux glibc 2.27/2.28. CUDA plugin depends on NVIDIA CUDA-12 runtime, NVCC, NVRTC, CUPTI and cuFFT wheels. CUDA-12-capable NVIDIA host driver required.",
+    "evidence": [
+      "https://pypi.org/pypi/openmm/8.2.0/json",
+      "https://pypi.org/pypi/OpenMM-CUDA-12/8.2.0/json",
+      "brief.md"
+    ],
+    "mps": "Candidate needs MPS control executable and service access; not established by package installation."
+  },
+  "resources": {
+    "required_input_bytes": 2282791,
+    "required_input_gib": 0.002126014791429043,
+    "peak_working_set_gib": null,
+    "data_plus_peak_working_set_gib": null,
+    "size": "unknown",
+    "reason": "Input byte counts verified; no published peak host/device working-set bound for eight replicas. Package/runtime/cache storage also not measured."
+  },
+  "scoring": {
+    "performance": "Minimize ensemble total_wall_s; report aggregate_ns_per_day and speedup relative to sequential baseline at identical fixed work.",
+    "correctness": "Brief predicts bit-identical per-replica energy series under identical seeds, GPU model, software and deterministic forces. Otherwise compare changes against measured sequential run-to-run variation.",
+    "published_correctness_tolerance": null,
+    "reason": "No published numerical acceptance tolerance or quantitative variation supplied. Brief predictions are hypotheses, not independently published acceptance criteria.",
+    "published_reference_ids": [
+      "nvidia_2025_dhfr_eight_mps_approx_throughput"
+    ],
+    "published_reference_scoring": "Reference only; null tolerance means no anchor acceptance test."
+  },
+  "repeatability": {
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "seed_usage": "Same replica seed sets initial velocities and integrator random stream.",
+    "fixed_scale": true,
+    "same_gpu_and_software_required": true,
+    "published_repeat_count": null,
+    "published_uncertainty": null,
+    "reason": "Brief reports only a CPU smoke run; no CUDA ensemble repetition count, measured variation or validated deterministic result. No repeat count invented."
+  },
+  "search_candidates": [],
+  "search_note": "No search performed; fetched only brief-named public sources and their pinned raw/distribution endpoints.",
+  "limitations": [
+    "No CUDA workloads or installs run.",
+    "NVIDIA fixed-time throughput observations cannot establish fixed-work speedup.",
+    "No citable absolute single-replica throughput supplied by brief."
+  ]
+}

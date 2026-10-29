@@ -1,0 +1,156 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "gpu_class": "One NVIDIA H100, A100 or A10 class GPU, same physical GPU for baseline and candidate; actual model pending environment evidence.",
+    "atoms_per_replica": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "total_steps": 200000,
+    "time_per_replica_ps": 100,
+    "simulated_ns": 0.8,
+    "fixed_scale": true,
+    "scale_search": false
+  },
+  "inputs": {
+    "data_manifest": "data.json",
+    "configuration": {
+      "system": "DHFR in explicit TIP3P water",
+      "atoms": 23558,
+      "forcefield": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "nonbonded_cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_ps": 0.004,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "potential_energy_interval_steps": 250,
+      "source": "brief.md; https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "difference_from_published_throughput_test": "Brief fixes work and seeds and requests deterministic forces; published benchmark.py runs a fixed-time throughput test. Published NVIDIA numbers are not fixed-work ensemble measurements."
+    },
+    "driver": "baseline.json driver.code",
+    "run_command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "format": "JSON",
+    "ensemble_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout_fields": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_unit": "kJ/mol",
+    "samples_per_replica": 100,
+    "full_energy_series_serialized": false,
+    "full_energy_series_reason": "Driver samples energies internally but writes only final and mean. Full-series comparison requires recording samples in a later implementation; no invented existing output."
+  },
+  "timing_scope": {
+    "ensemble": "perf_counter starts after PDB loading, force-field/system creation and platform selection; includes all eight sequential context/integrator creations, initializations, kernel compilation, stepping, energy queries and context teardown; stops before JSON output and printing.",
+    "replica": "Starts after context creation and positions/velocities initialization; includes steps and energy queries; stops before context/integrator destruction.",
+    "candidate": "For comparable ensemble timing include candidate replica setup, stepping, sampling and teardown plus orchestration within ensemble wall interval; report any differing boundary.",
+    "installation_included": false,
+    "pdb_parsing_and_system_construction_included": false,
+    "mps_service_startup_in_baseline": false
+  },
+  "scoring_interface": {
+    "performance": {
+      "input": "ensemble.json",
+      "objective": "minimize total_wall_s",
+      "aggregate_ns_per_day": "simulated_ns / total_wall_s * 86400",
+      "speedup": "baseline.total_wall_s / candidate.total_wall_s"
+    },
+    "science": {
+      "pair_by": [
+        "replica",
+        "seed"
+      ],
+      "required_work": "Exactly eight replicas, seeds 1000\u20131007, 25000 steps each, 100 energy samples each, unchanged physical model.",
+      "available_comparisons": [
+        "final_potential_kj_mol",
+        "mean_potential_kj_mol"
+      ],
+      "full_series_requirement": "Brief requests identical per-replica energy series; existing JSON cannot prove full-series identity.",
+      "numerical_tolerance": null,
+      "reason": "No published tolerance; no run-to-run variation measurements supplied.",
+      "published_references": "anchors.json; reference observations only, not acceptance thresholds."
+    }
+  },
+  "repeatability": {
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "seed_usage": "Same replica seed sets initial velocities and integrator random stream.",
+    "fixed_scale": true,
+    "same_gpu_and_software_required": true,
+    "published_repeat_count": null,
+    "published_uncertainty": null,
+    "reason": "Brief reports only a CPU smoke run; no CUDA ensemble repetition count, measured variation or validated deterministic result. No repeat count invented."
+  },
+  "runtime_evidence": {
+    "source": "brief.md",
+    "status": "Unverified estimate: about one minute on H100; a few minutes on slower GPUs. Context creation unmeasured; no CUDA reproduction performed.",
+    "budget_fit_verified": false,
+    "reason": "No execution permitted; budget fit pending reproduction."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "stage_budget_source": "Prompt defaults; no override.",
+  "published_candidate_context": {
+    "strategy": "Concurrent independent replica processes sharing one GPU through CUDA MPS.",
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "active_thread_percentage_for_eight": 25,
+    "availability": null,
+    "availability_reason": "MPS executable/service access not verified."
+  }
+}
