@@ -152,6 +152,7 @@ function fixture(root, config) {
     timing_scope: 'whole run', minimum_worthwhile_gain: config.minimum || 1.1,
     evaluation_inputs: ['generated integers'], splits: { evaluation: [0, 1000] }, compute_budgets: [1, 2, 4],
     repetitions: 5, warmup: 'one run', scheduling_order: 'alternate', equal_outcome_target: 1,
+    baseline_invocation_s: { seconds: 0.01, source: 'fixture: one baseline equivalence invocation, 0.01 s' },
   }
   const bounds = Object.fromEntries(MENU.map((method, i) => {
     // Whole-workload methods: p = 1, k = min(cap, concurrency factor 8). The multi-GPU row is a

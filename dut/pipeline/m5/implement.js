@@ -4,6 +4,7 @@ const os = require('node:os')
 const fs = require('node:fs')
 const { isDeepStrictEqual } = require('node:util')
 const { createHash } = require('node:crypto')
+const { projectPerformanceSeconds } = require('./seal_protocol.js')
 const hash = bytes => createHash('sha256').update(bytes).digest('hex')
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
 const writeJSON = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n')
@@ -169,11 +170,8 @@ The pipeline invokes bash payload/method/setup_method.sh, then bash payload/meth
         if (!smoke || Array.isArray(smoke) || Object.keys(smoke).length !== 1
           || !Number.isFinite(smoke.process_wall_s) || smoke.process_wall_s < 0) category = 'missing_output'
         else {
-          const { warmup, repetitions, hardware_cost_basis: basis } = predictions
-          let projected_s = (warmup + repetitions) * 2 * smoke.process_wall_s
-          if (predictions.equal_outcome_target.not_applicable !== true) {
-            for (const b of predictions.compute_budgets) projected_s += b / basis.baseline_gpus + b / basis.method_gpus
-          }
+          const { warmup, repetitions } = predictions
+          const projected_s = projectPerformanceSeconds(predictions, smoke.process_wall_s)
           const evaluate_budget_s = executionTimeout('evaluate')
           if (projected_s > 0.9 * evaluate_budget_s) {
             category = 'cost'

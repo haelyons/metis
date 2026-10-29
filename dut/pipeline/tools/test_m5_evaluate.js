@@ -65,6 +65,7 @@ function protocol(config = {}) {
     minimum_worthwhile_gain: 1.1, compute_budgets: budgets, splits: { evaluation: ['first', 'middle', 'tail'] },
     equal_outcome_target: config.curves ? { metric: 'accuracy', target: config.unachieved ? 2 : 0.9, comparison: '>=' }
       : { not_applicable: true, reason: 'Fixture has no scientific outcome curve.' },
+    baseline_invocation_s: { seconds: 0.01, source: 'fixture: one baseline equivalence invocation, 0.01 s' },
   }
 }
 // Synthetic adapter reports exercise the scorer; no real GPU, model or network.

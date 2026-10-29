@@ -473,6 +473,8 @@ python3 -I profiler/concurrency_probe.py harness/run_command.sh out/concurrency 
       bounds = readJSON(boundsPath)
     } catch { return reject(check) }
     const { default: sealProtocol } = await import(path.resolve('m5/seal_protocol.js'))
+    const evaluate_budget_s = executionTimeout('evaluate')
+    const costPrompt = `Resolved evaluate budget: ${evaluate_budget_s} seconds. Project one complete performance scorer: projected_s = (warmup + repetitions) * 2 * baseline_invocation_s.seconds, plus b / baseline_gpus + b / method_gpus for each compute budget b unless equal_outcome_target.not_applicable is true; GPU counts come from hardware_cost_basis. With at least one feasible method, projected_s must not exceed 0.9 * the resolved evaluate budget; otherwise the seal fails protocol_cost. With no feasible method this cost check is skipped. baseline_invocation_s.seconds comes from the measurements and is never lowered to fit; fit the protocol through seeds, inputs, warmup, repetitions and compute budgets. The adapter smoke still measures the real cost.`
     const prompt = `Seal a prospective scientific evaluation protocol in one narrow pass.
 Read ${JSON.stringify(path.join(A, 'intake'))}/*, ${JSON.stringify(profilePath)}, ${JSON.stringify(boundsPath)}, and the baseline's measured outputs under ${JSON.stringify(path.join(A, 'results', 'reproduce'))}/ (the fetched out/, logs and anchors_scored.json) only.
 Never read experiments/, operator/, or control/. Do not search, build, run workloads, or write method code.
@@ -492,8 +494,10 @@ For stochastic outputs, equivalence_metrics must be statistical: use paired seed
 - evaluation_inputs and splits: fixed input identities/pins, held-out splits and seeds, or explicit generated-input specifications.
 - compute_budgets: at least three distinct positive numeric budgets, with units in hardware_cost_basis.
 - repetitions: integer >=5 timing pairs; warmup: fixed warmup protocol; scheduling_order: paired randomisation protocol; equal_outcome_target: the fixed scientific target.
+- baseline_invocation_s: {seconds, source}; seconds is a finite positive number estimating process wall from launch to exit of one complete baseline equivalence invocation over all sealed seeds and inputs, derived from reproduce measurements. source is a nonempty string naming the measured file, measured value and arithmetic.
+${costPrompt}
 Executable v1 evaluation uses exact binomial order-statistic bounds (one-sided performance, two-sided equivalence with Bonferroni across metrics). warmup is a nonnegative integer per arm. scheduling_order={kind:"randomized_pairs",seed:integer}. timing_scope={kind:"process_wall" or "reported_wall",gpu_synchronization:"adapter",description:"scope including launch/transfer/merge"}. hardware_cost_basis={baseline_gpus:positive integer,method_gpus:positive integer,budget_unit:"gpu_s"}. equal_outcome_target={metric:"outcome metric name",comparison:">=",target:finite number} or {not_applicable:true,reason:"why benchmark has no outcome curve"}. Unsupported prose-only protocols produce VOID at evaluation.
-Exact JSON skeletons, generated from the deterministic seal check's constants. Choose the matching output type; expand to your fixed inputs, metrics and seeds. Keep these field types and nesting, especially name/source as nonempty STRINGS, never objects. Example tolerances and citations are placeholders: replace them with justified scientific choices. sample_sizes.inputs must equal evaluation_inputs.ids.length; sample_sizes.seeds must equal paired seed count (1 for deterministic, whose execution seed is null). More metrics or higher confidence can require more seeds for finite Bonferroni bounds.
+Exact JSON skeletons, generated from the deterministic seal check's constants. Choose the matching output type; expand to your fixed inputs, metrics and seeds. Keep these field types and nesting, especially name/source as nonempty STRINGS, never objects. Example tolerances, invocation seconds and citations are placeholders: replace them with justified scientific choices. sample_sizes.inputs must equal evaluation_inputs.ids.length; sample_sizes.seeds must equal paired seed count (1 for deterministic, whose execution seed is null). More metrics or higher confidence can require more seeds for finite Bonferroni bounds.
 Stochastic: ${JSON.stringify(sealProtocol.skeleton(true))}
 Deterministic: ${JSON.stringify(sealProtocol.skeleton(false))}
 Define the complete protocol now, before method code exists. Scope/tolerance changes require a new sealed run.
@@ -508,7 +512,7 @@ Return a short completion acknowledgement; the script reads and seals the file i
         try {
           predictions = readJSON(predictionPath)
           facts.prediction_count = Array.isArray(predictions?.predictions) ? predictions.predictions.length : 0
-          invalid = sealProtocol.validate(predictions, bounds, menu)
+          invalid = sealProtocol.validate(predictions, bounds, menu, evaluate_budget_s)
         } catch {
           invalid = { reason_codes: ['predictions_read_failed'], field_paths: ['$'] }
         }
@@ -516,7 +520,7 @@ Return a short completion acknowledgement; the script reads and seals the file i
         if (attempt === 1) return reject(invalid.reason_codes[0])
         check = 'agent_failed'
         const repaired = await agent(`Rewrite only ${JSON.stringify(predictionPath)} to repair the failed seal. Read only that file; do not read any other files, search, build, run workloads, or write method code. Preserve scientific intent; never invent evidence or loosen tolerances to obtain a pass. Return a short acknowledgement. This is the only repair attempt.
-Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}`,
+Validation feedback (codes and field paths only): ${JSON.stringify(invalid)}${invalid.reason_codes.includes('protocol_cost') ? `\n${costPrompt}` : ''}`,
           { label: 'seal-repair', agentType: 'ls-writer', model: 'sonnet', repairable: false, fresh: true })
         if (repaired == null) return reject(check)
       }

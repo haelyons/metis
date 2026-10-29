@@ -67,7 +67,9 @@ module.exports = {
         confidence_rule: { equivalence: { kind: 'exact' } }, hardware_cost_basis: 'same box', timing_scope: 'whole run',
         minimum_worthwhile_gain: 1.05, evaluation_inputs: ['integers'], splits: { evaluation: [0, 1000] },
         compute_budgets: [1, 2, 4], repetitions: 5, warmup: 'one run', scheduling_order: 'alternate',
-        equal_outcome_target: 499500, private_content: SENTINEL })
+        equal_outcome_target: 499500,
+        baseline_invocation_s: { seconds: 0.01, source: 'fixture: one baseline equivalence invocation, 0.01 s' },
+        private_content: SENTINEL })
       json = { seal_present: true, seal_verified: true, prediction_count: predictions.length }
     }
     if (title === 'harness' || title === 'harness-repair') {

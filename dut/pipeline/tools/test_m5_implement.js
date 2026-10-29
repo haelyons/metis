@@ -635,7 +635,8 @@ function fixture(root, config) {
     timing_scope: { kind: 'reported_wall', gpu_synchronization: 'adapter', description: 'whole run' },
     minimum_worthwhile_gain: 1.1, evaluation_inputs: { ids: ['input-b', 'input-a'], pin: 'fixture inputs' },
     splits: { evaluation: [0, 5] }, compute_budgets: [1, 2, 4], repetitions: 5, warmup: 1,
-    scheduling_order: { kind: 'randomized_pairs', seed: 42 }, equal_outcome_target: { not_applicable: true, reason: 'fixed-work fixture' } }
+    scheduling_order: { kind: 'randomized_pairs', seed: 42 }, equal_outcome_target: { not_applicable: true, reason: 'fixed-work fixture' },
+    baseline_invocation_s: { seconds: 0.01, source: 'fixture: one baseline equivalence invocation, 0.01 s' } }
   if (config.run8) Object.assign(predictions, readJSON(path.join(RUN8, 'PREDICTIONS.json')))
   if (config.run9 || config.run9Script) Object.assign(predictions, readJSON(path.join(RUN9, 'PREDICTIONS.json')))
   if (config.run10Script) Object.assign(predictions, readJSON(path.join(RUN10, 'PREDICTIONS.json')))

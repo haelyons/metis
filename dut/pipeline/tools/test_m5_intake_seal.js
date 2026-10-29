@@ -53,12 +53,14 @@ const PREDICTIONS = {
   warmup: 'one untimed run',
   scheduling_order: 'alternate baseline and candidate for each seed',
   equal_outcome_target: 499500,
+  // Small enough that the protocol fits any evaluate budget used here with a wide margin.
+  baseline_invocation_s: { seconds: 0.01, source: 'fixture: one baseline equivalence invocation, 0.01 s' },
   content: SENTINEL,
 }
 const SEAL_REASON_CODES = [
   'bounds_generation_failed', 'agent_failed', 'predictions_read_failed',
   'predictions_invalid', 'protocol_incomplete', 'compute_points_incomplete',
-  'stochastic_equivalence_invalid', 'bounds_coverage_invalid', 'interval_bounds_invalid',
+  'stochastic_equivalence_invalid', 'protocol_cost', 'bounds_coverage_invalid', 'interval_bounds_invalid',
   'intervals_identical', 'seal_write_failed', 'seal_verification_failed',
 ]
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -136,6 +138,7 @@ module.exports = {
       }
       if (process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE) delete fixtures.baseline.published_configuration
       if (process.env.M5_INTAKE_SEAL_BUILD) fixtures.baseline.build_commands = JSON.parse(process.env.M5_INTAKE_SEAL_BUILD)
+      if (process.env.M5_INTAKE_SEAL_EXEC_BUDGETS) fixtures.EXECUTION.stage_budgets_s = JSON.parse(process.env.M5_INTAKE_SEAL_EXEC_BUDGETS)
       for (const name of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
         const custom = process.env.M5_INTAKE_SEAL_ANCHORS
         const content = name === 'anchors' && custom
@@ -213,13 +216,14 @@ function noLeak(runRoot) {
   visit(operator)
 }
 
-async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands } = {}) {
+async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands, argsBudgets, executionBudgets } = {}) {
   const control = path.join(runRoot, 'control')
   const brief = path.join(runRoot, 'brief.md')
   fs.mkdirSync(control, { recursive: true })
   fs.writeFileSync(brief, `# Intake fixture\n${SENTINEL}\n`)
   const argsFile = path.join(control, 'args.json')
-  writeJSON(argsFile, { run_root: runRoot, ...(noBrief ? {} : { brief }), tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } })
+  writeJSON(argsFile, { run_root: runRoot, ...(noBrief ? {} : { brief }), tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' },
+    ...(argsBudgets ? { stage_budgets_s: argsBudgets } : {}) })
   // The profile stage is stubbed, so provide its documented output directly.
   writeJSON(path.join(runRoot, 'agent', 'profile-packet.json'), profile)
   // Separate workflow directories prevent WF resume caches from hiding calls.
@@ -244,6 +248,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
           M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_FAULT: sealFault, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
           M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '',
           M5_INTAKE_SEAL_BUILD: buildCommands ? JSON.stringify(buildCommands) : '',
+          M5_INTAKE_SEAL_EXEC_BUDGETS: executionBudgets ? JSON.stringify(executionBudgets) : '',
           M5_INTAKE_SEAL_REPAIR: repairPredictions ? JSON.stringify(repairPredictions) : '',
           M5_INTAKE_SEAL_ANCHORS: anchors ? JSON.stringify(anchors) : '', M5_INTAKE_SEAL_RECORDED: recorded || '' },
       })
@@ -508,6 +513,8 @@ async function recordedSealRegression() {
       assert.ok(abs === null || abs === undefined, `recorded margin is not null: ${JSON.stringify(metric?.tolerance)}`)
     }
     facts = { ...INTAKE, anchors_count: readJSON(path.join(fixture, 'intake', 'anchors.json')).length }
+    // Run3 predates the required `baseline_invocation_s`; supply one small enough that the cost check never decides.
+    recorded.baseline_invocation_s = { seconds: 0.01, source: 'fixture: one baseline equivalence invocation, 0.01 s' }
   })
   if (!recorded || !profile || !facts) return
   const fixture = path.join(parent, `${label}-fixture`)
@@ -704,6 +711,356 @@ async function stochasticRejectionChecks() {
       const seals = path.join(parent, name, 'control', 'seals')
       assert.deepEqual(fs.existsSync(seals) ? fs.readdirSync(seals) : [], [])
     })
+  }
+}
+
+// SCHEMAS.md A/PREDICTIONS.json: "`baseline_invocation_s` is `{seconds, source}`. `seconds` is a finite positive
+// number ... `source` is a non-empty string ... Any other shape is `protocol_incomplete`. The seal check projects one
+// complete performance scorer at that estimate, with the adapter smoke's rule: `projected_s` = (`warmup` +
+// `repetitions`) × 2 × `seconds`, plus, unless `equal_outcome_target.not_applicable` is true, `b / baseline_gpus +
+// b / method_gpus` for each compute budget `b` ... When at least one method is feasible and `projected_s` exceeds
+// 0.9 × the resolved `evaluate` budget, the seal fails `protocol_cost`; a seal with no feasible method skips this check."
+// Resolution (EXECUTION.json bullet): EXECUTION.json.stage_budgets_s, then args.stage_budgets_s, then evaluate=2400.
+const DEFAULT_EVALUATE = 2400
+const COST_SOURCE = 'PRIVATE_COST_SOURCE_36: reproduce ensemble wall times two blocks plus start-up'
+const COST_FIELD_PATHS = ['warmup', 'repetitions', 'paired_seed_tests.seeds', 'evaluation_inputs.ids', 'compute_budgets', 'baseline_invocation_s']
+function projectedSeconds(seal) {
+  const curve = seal.equal_outcome_target?.not_applicable === true ? 0
+    : seal.compute_budgets.reduce((sum, b) => sum + b / seal.hardware_cost_basis.baseline_gpus + b / seal.hardware_cost_basis.method_gpus, 0)
+  return (seal.warmup + seal.repetitions) * 2 * seal.baseline_invocation_s.seconds + curve
+}
+// An executable cost protocol on the base fixture: integer warmup, GPU counts per arm, no outcome curve.
+function costValid(seconds = 1, extra = {}) {
+  const value = JSON.parse(JSON.stringify(PREDICTIONS))
+  Object.assign(value, { warmup: 1, repetitions: 5,
+    hardware_cost_basis: { baseline_gpus: 1, method_gpus: 1, budget_unit: 'gpu_s' },
+    equal_outcome_target: { not_applicable: true, reason: 'fixed-work fixture; no outcome curve' },
+    baseline_invocation_s: { seconds, source: COST_SOURCE } }, extra)
+  return value
+}
+// The outcome curve applies: budgets 8, 16, 40 at 2 baseline and 4 method GPUs add 0.75 × 64 = 48 s.
+function withCurve(value, applies) {
+  value.compute_budgets = [8, 16, 40]
+  value.hardware_cost_basis = { baseline_gpus: 2, method_gpus: 4, budget_unit: 'gpu_s' }
+  value.equal_outcome_target = applies ? { metric: 'sum', comparison: '>=', target: 499500 }
+    : { not_applicable: true, reason: 'fixed-work fixture; no outcome curve' }
+  for (const row of value.predictions) {
+    row.outcome_vs_compute_points = value.compute_budgets.map(compute_budget => ({
+      compute_budget, predicted_outcome: 499500, uncertainty: 'exact integer equality' }))
+  }
+  return value
+}
+// Profile with no calibration and no transfer time: no method is feasible.
+function noFeasibleProfile() {
+  const value = JSON.parse(JSON.stringify(PROFILE))
+  delete value.concurrency
+  value.gpu_count = 1
+  value.stages[1].wall_s = 0
+  value.stages[2].wall_s = 4
+  return value
+}
+async function sealCase(name, value, options = {}, raw) {
+  const runRoot = path.join(parent, name)
+  const predictionsFile = path.join(runRoot, 'agent', 'PREDICTIONS.json')
+  writeJSON(predictionsFile, value)
+  if (raw) fs.writeFileSync(predictionsFile, raw)
+  const run = await runCase(name, INTAKE, { ...options, runRoot, preserve: true })
+  const receipt = () => readJSON(path.join(runRoot, 'control', 'stages', 'seal.json'))
+  const seals = () => {
+    const dir = path.join(runRoot, 'control', 'seals')
+    return fs.existsSync(dir) ? fs.readdirSync(dir).filter(file => /^\d{4}\.json$/.test(file)) : []
+  }
+  const sealCalls = () => run.calls.filter(row => ['seal', 'seal-repair'].includes(row.label)).map(row => row.label)
+  return { run, runRoot, value, receipt, seals, sealCalls }
+}
+function expectSealPass(name, result, detail = '') {
+  checkStatuses(name, result.run, null)
+  check(`${name}: verified seal 0001, no reason codes, no repair`, () => {
+    assert.deepEqual(result.receipt().reason_codes, [], detail)
+    assert.equal(result.run.stage('seal').facts.seal_verified, true)
+    assert.deepEqual(result.seals(), ['0001.json'])
+    assert.equal(readJSON(path.join(result.runRoot, 'control', 'seals', '0001.json')).sha256, predictionHash(result.runRoot))
+    assert.deepEqual(result.sealCalls(), ['seal'])
+  })
+}
+function expectSealFail(name, result, code, detail = '') {
+  checkStatuses(name, result.run, 'seal')
+  check(`${name}: FAIL numeric with reason code ${code}; no seal number allocated`, () => {
+    assert.deepEqual(result.receipt().reason_codes, [code], detail)
+    assert.equal(result.run.signature('seal').error_class, 'numeric')
+    assert.equal(result.run.signature('seal').exit_code, 2)
+    assert.equal(result.run.stage('seal').facts.seal_verified, false)
+    assert.deepEqual(result.seals(), [])
+  })
+}
+const sealPrompt = run => {
+  const value = run.calls.find(row => row.label === 'seal')?.prompt
+  assert.ok(value, 'no seal prompt recorded')
+  return value
+}
+// The budget in seconds, next to a mention of evaluate.
+function statesBudget(text, budget) {
+  return windowsAround(text, new RegExp(`(?<![\\d.])${budget}(?![\\d.])`), 300, 300)
+    .some(window => /evaluate/.test(window) && /second|\d\s*s\b/i.test(window))
+}
+// The projection rule: warmup + repetitions, × 2, the invocation estimate and the 0.9 factor of the evaluate budget.
+function statesProjection(text) {
+  return windowsAround(text, /0\.9(?!\d)/, 600, 600).some(window => /warmup/.test(window) && /repetitions/.test(window) &&
+    /(?:×|\*|\bx)\s*2\b|\b2\s*(?:×|\*|x\b)|twice/.test(window) && /baseline_invocation_s|seconds/.test(window) && /evaluate/.test(window))
+}
+
+async function costChecks() {
+  // 1. Shape. JSON cannot spell non-finite numbers; 1e999 parses to Infinity.
+  const shape = [
+    ['missing', value => { delete value.baseline_invocation_s }],
+    ['null', value => { value.baseline_invocation_s = null }],
+    ['number', value => { value.baseline_invocation_s = 10 }],
+    ['string', value => { value.baseline_invocation_s = '10 seconds' }],
+    ['array', value => { value.baseline_invocation_s = [10, COST_SOURCE] }],
+    ['seconds-missing', value => { delete value.baseline_invocation_s.seconds }],
+    ['seconds-null', value => { value.baseline_invocation_s.seconds = null }],
+    ['seconds-zero', value => { value.baseline_invocation_s.seconds = 0 }],
+    ['seconds-negative', value => { value.baseline_invocation_s.seconds = -1 }],
+    ['seconds-string', value => { value.baseline_invocation_s.seconds = '1' }],
+    ['seconds-boolean', value => { value.baseline_invocation_s.seconds = true }],
+    ['seconds-infinite', value => { value.baseline_invocation_s.seconds = '__INF__' },
+      value => JSON.stringify(value, null, 2).replace('"seconds": "__INF__"', '"seconds": 1e999')],
+    ['source-missing', value => { delete value.baseline_invocation_s.source }],
+    ['source-empty', value => { value.baseline_invocation_s.source = '' }],
+    ['source-null', value => { value.baseline_invocation_s.source = null }],
+    ['source-number', value => { value.baseline_invocation_s.source = 118.6 }],
+    ['source-object', value => { value.baseline_invocation_s.source = { file: 'smoke.json' } }],
+  ]
+  for (const [label, mutate, raw] of shape) {
+    const name = `invocation-shape-${label}`
+    const value = costValid(0.01)
+    mutate(value)
+    const result = await sealCase(name, value, {}, raw ? raw(value) : undefined)
+    expectSealFail(name, result, 'protocol_incomplete')
+  }
+  // The key is required whatever the menu: a zero-prediction seal without it is incomplete too.
+  {
+    const name = 'invocation-shape-missing-no-feasible'
+    const value = costValid(0.01)
+    delete value.baseline_invocation_s
+    value.predictions = []
+    value.infeasible_methods = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
+      .map(method => ({ method, reason: 'Bound is below 1.05.' }))
+    expectSealFail(name, await sealCase(name, value, { profile: noFeasibleProfile() }), 'protocol_incomplete')
+  }
+
+  // 2. Projection at the default evaluate budget: 0.9 × 2400 = 2160 s; warmup 1 + repetitions 5 gives 12 × seconds.
+  const limit = 0.9 * DEFAULT_EVALUATE
+  const cases = [
+    ['default-at-limit', costValid(180), true],
+    ['default-over-limit', costValid(180.0625), false],
+    // Curve applies: 12 × 176 + 48 = 2160 passes; 12 × 177 + 48 = 2172 fails, though 12 × 177 = 2124 alone fits.
+    ['curve-at-limit', withCurve(costValid(176), true), true],
+    ['curve-over-limit', withCurve(costValid(177), true), false],
+    ['curve-not-applicable', withCurve(costValid(177), false), true],
+  ]
+  check('reference projections straddle 0.9 × the default evaluate budget', () => {
+    assert.deepEqual(cases.map(([, value]) => projectedSeconds(value)), [2160, 2160.75, 2160, 2172, 2124])
+    for (const [, value, fits] of cases) assert.equal(projectedSeconds(value) <= limit, fits)
+  })
+  const results = {}
+  for (const [label, value, fits] of cases) {
+    const name = `cost-${label}`
+    const result = await sealCase(name, value)
+    results[label] = result
+    const detail = `projected ${projectedSeconds(value)} s against ${limit} s`
+    if (fits) expectSealPass(name, result, detail)
+    else {
+      expectSealFail(name, result, 'protocol_cost', detail)
+      check(`${name}: exactly one seal call and one repair`, () => assert.deepEqual(result.sealCalls(), ['seal', 'seal-repair']))
+    }
+  }
+
+  // 3. Seal prompt: resolved budget, projection, 0.9 factor, measured seconds never lowered; skeletons.
+  const promptRun = results['default-at-limit'].run
+  check('cost prompt: seal prompt states the default evaluate budget, 2400 seconds', () => {
+    assert.ok(statesBudget(sealPrompt(promptRun), DEFAULT_EVALUATE), 'resolved evaluate budget 2400 s not stated')
+  })
+  check('cost prompt: seal prompt states the projection (warmup + repetitions) × 2 × seconds and the 0.9 factor', () => {
+    assert.ok(statesProjection(sealPrompt(promptRun)), 'projection with the 0.9 factor not stated')
+  })
+  check('cost prompt: seal prompt states the outcome-curve term with GPU counts unless not_applicable', () => {
+    assert.ok(windowsAround(sealPrompt(promptRun), /0\.9(?!\d)/, 900, 900).some(window =>
+      /not_applicable/.test(window) && /baseline_gpus/.test(window) && /method_gpus/.test(window)), 'curve term not stated')
+  })
+  check('cost prompt: seal prompt says seconds comes from the measurements and is never lowered to fit', () => {
+    assert.ok(windowsAround(sealPrompt(promptRun), /\blower/i, 400, 400).some(window =>
+      /\b(?:never|not|no)\b/i.test(window) && /measure/i.test(window) && /seconds|baseline_invocation_s/.test(window)),
+    'no statement that seconds is measured and never lowered')
+  })
+  check('cost prompt: both skeletons include baseline_invocation_s {seconds: number, source: string}', () => {
+    const prompt = sealPrompt(promptRun)
+    const examples = []
+    for (let start = 0; start < prompt.length; start++) {
+      if (prompt[start] !== '{') continue
+      for (let end = start + 1; end < prompt.length; end++) {
+        if (prompt[end] !== '}') continue
+        try {
+          const value = JSON.parse(prompt.slice(start, end + 1))
+          if (Object.hasOwn(value, 'outputs_stochastic')) examples.push(value)
+          start = end
+          break
+        } catch {}
+      }
+    }
+    for (const stochastic of [false, true]) {
+      const example = examples.find(value => value.outputs_stochastic === stochastic)
+      assert.ok(example, `missing ${stochastic ? 'stochastic' : 'deterministic'} JSON skeleton`)
+      const invocation = example.baseline_invocation_s
+      assert.ok(invocation && typeof invocation === 'object' && !Array.isArray(invocation), 'skeleton lacks baseline_invocation_s object')
+      assert.deepEqual(Object.keys(invocation).sort(), ['seconds', 'source'])
+      assert.equal(typeof invocation.seconds, 'number')
+      assert.equal(typeof invocation.source, 'string')
+    }
+  })
+
+  // Evaluate budget from args.stage_budgets_s (1000 → 900 s) and from EXECUTION.json, which takes precedence.
+  for (const [label, options, seconds, fits, budget] of [
+    // 12 × 75 = 900 fits; 12 × 75.0625 = 900.75 does not, though it fits the 2160 s default.
+    ['args-at-limit', { argsBudgets: { evaluate: 1000 } }, 75, true, 1000],
+    ['args-over-limit', { argsBudgets: { evaluate: 1000 } }, 75.0625, false, 1000],
+    ['execution-at-limit', { executionBudgets: { evaluate: 1000 } }, 75, true, 1000],
+    ['execution-over-limit', { executionBudgets: { evaluate: 1000 } }, 75.0625, false, 1000],
+    // EXECUTION.json 1000 wins over args 5000 (limit 4500); EXECUTION.json 5000 wins over args 1000.
+    ['execution-over-args', { executionBudgets: { evaluate: 1000 }, argsBudgets: { evaluate: 5000 } }, 75.0625, false, 1000],
+    ['execution-over-args-fits', { executionBudgets: { evaluate: 5000 }, argsBudgets: { evaluate: 1000 } }, 100, true, 5000],
+  ]) {
+    const name = `cost-${label}`
+    const value = costValid(seconds)
+    const result = await sealCase(name, value, options)
+    const detail = `projected ${projectedSeconds(value)} s against ${0.9 * budget} s`
+    if (fits) expectSealPass(name, result, detail)
+    else expectSealFail(name, result, 'protocol_cost', detail)
+    check(`${name}: seal prompt states the resolved evaluate budget, ${budget} seconds`, () => {
+      assert.ok(statesBudget(sealPrompt(result.run), budget), `resolved evaluate budget ${budget} s not stated`)
+    })
+  }
+
+  // No feasible method: the check is skipped; a verified negative result passes even at an absurd estimate.
+  for (const [label, applies] of [['no-curve', false], ['curve', true]]) {
+    const name = `cost-skipped-no-feasible-${label}`
+    const value = withCurve(costValid(1e6), applies)
+    value.predictions = []
+    value.infeasible_methods = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
+      .map(method => ({ method, reason: 'Bound is below 1.05.' }))
+    const result = await sealCase(name, value, { profile: noFeasibleProfile() })
+    expectSealPass(name, result, `projected ${projectedSeconds(value)} s`)
+    check(`${name}: prediction_count 0`, () => assert.equal(result.run.stage('seal').facts.prediction_count, 0))
+  }
+
+  // Order: stochastic_equivalence_invalid precedes protocol_cost, which precedes bounds_coverage_invalid.
+  {
+    const name = 'cost-order-stochastic-first'
+    const value = costValid(1e4, { outputs_stochastic: true })
+    expectSealFail(name, await sealCase(name, value), 'stochastic_equivalence_invalid')
+  }
+  {
+    const name = 'cost-order-before-coverage'
+    const value = costValid(1e4, { infeasible_methods: [] })
+    expectSealFail(name, await sealCase(name, value), 'protocol_cost')
+  }
+
+  // Repair: one call; prompt carries the code, six field paths and the resolved budget, and no measured value.
+  // Budget 1000 (limit 900): warmup 1 + repetitions 12 at 40.0625 s projects 1041.625 s; repetitions 8 gives
+  // 721.125 s and fits; repetitions 11 gives 961.5 s and still does not.
+  for (const [label, repetitions, fits] of [['fits', 8, true], ['still-over', 11, false]]) {
+    const name = `cost-repair-${label}`
+    const value = costValid(40.0625, { repetitions: 12 })
+    const replacement = { ...JSON.parse(JSON.stringify(value)), repetitions }
+    check(`${name}: reference projections`, () => {
+      assert.equal(projectedSeconds(value), 1041.625)
+      assert.equal(projectedSeconds(replacement), fits ? 721.125 : 961.5)
+    })
+    const result = await sealCase(name, value, { argsBudgets: { evaluate: 1000 }, repairPredictions: replacement })
+    check(`${name}: exactly one initial seal call and one repair`, () => assert.deepEqual(result.sealCalls(), ['seal', 'seal-repair']))
+    const repairPrompt = () => {
+      const prompt = result.run.calls.find(row => row.label === 'seal-repair')?.prompt
+      assert.ok(prompt, 'no repair prompt recorded')
+      return prompt
+    }
+    check(`${name}: repair prompt carries protocol_cost and the six field paths`, () => {
+      const prompt = repairPrompt()
+      assert.ok(prompt.includes('protocol_cost'), 'missing reason code')
+      for (const field of COST_FIELD_PATHS) assert.match(prompt, new RegExp(`(?<![\\w.])${field.replace('.', '\\.')}(?![\\w])`), `missing field path ${field}`)
+    })
+    check(`${name}: repair prompt restates the resolved evaluate budget (1000 s) and the projection rule`, () => {
+      const prompt = repairPrompt()
+      assert.ok(statesBudget(prompt, 1000), 'resolved evaluate budget 1000 s not restated')
+      assert.ok(statesProjection(prompt), 'projection rule with the 0.9 factor not restated')
+    })
+    check(`${name}: repair prompt holds no value from the predictions`, () => {
+      const prompt = repairPrompt()
+      for (const leaked of ['40.0625', '1041.625', COST_SOURCE, 'PRIVATE_COST_SOURCE_36', SENTINEL,
+        PREDICTIONS.infeasible_methods[0].reason, '499500']) {
+        assert.ok(!prompt.includes(leaked), `value leaked: ${leaked}`)
+      }
+      assert.ok(!prompt.includes(JSON.stringify(PROFILE)), 'profile evidence leaked')
+      assert.ok(!prompt.includes('k_derivation'), 'bounds leaked')
+    })
+    repairScopeChecks(name, result.run)
+    if (fits) {
+      checkStatuses(name, result.run, null)
+      check(`${name}: repaired protocol seals as 0001 with no reason codes`, () => {
+        assert.deepEqual(readJSON(path.join(result.runRoot, 'agent', 'PREDICTIONS.json')), replacement)
+        assert.deepEqual(result.receipt().reason_codes, [])
+        assert.equal(result.run.stage('seal').facts.seal_verified, true)
+        assert.deepEqual(result.seals(), ['0001.json'])
+        assert.equal(readJSON(path.join(result.runRoot, 'control', 'seals', '0001.json')).sha256, predictionHash(result.runRoot))
+      })
+    } else {
+      expectSealFail(name, result, 'protocol_cost')
+      check(`${name}: initial seal call saw no seal files`, () => {
+        for (const call of result.run.calls.filter(row => ['seal', 'seal-repair'].includes(row.label))) assert.deepEqual(call.sealFiles, {})
+      })
+    }
+  }
+}
+
+// Public recorded run positive-openmm run14: sealed with 16 seeds, warmup 0, repetitions 12 and no outcome curve.
+// Its adapter smoke measured 118.6 s: 12 × 2 × 118.6 = 2846.4 s against 0.9 × 2400 = 2160 s. With that estimate
+// sealed, the seal itself fails protocol_cost; repetitions 8 projects 1897.6 s and passes. experiments/ is read only.
+async function run14CostRegression() {
+  const label = 'recorded-positive-openmm-run14-cost'
+  const source = path.join(EXPERIMENTS, 'positive-openmm', 'run14')
+  let sealed, profile
+  check(`${label}: recorded seal matches the documented protocol`, () => {
+    sealed = readJSON(path.join(source, 'control', 'seals', '0001.predictions.json'))
+    profile = readJSON(path.join(source, 'agent', 'profile-packet.json'))
+    assert.equal(sealed.paired_seed_tests.seeds.length, 16)
+    assert.equal(sealed.warmup, 0)
+    assert.equal(sealed.repetitions, 12)
+    assert.equal(sealed.equal_outcome_target.not_applicable, true)
+    assert.deepEqual(sealed.compute_budgets, [240, 480, 960])
+    const smoke = readJSON(path.join(source, 'agent', 'results', 'implement', 'adapter', '2', 'out', 'smoke.json'))
+    assert.ok(Math.abs(smoke.process_wall_s - 118.6) < 0.05, `smoke measured ${smoke.process_wall_s}`)
+  })
+  if (!sealed || !profile) return
+  const invocation = { seconds: 118.6, source: 'agent/results/implement/adapter/2/out/smoke.json process_wall_s 118.6: two sequential eight-replica blocks' }
+  for (const [suffix, repetitions, fits] of [['as-sealed', 12, false], ['repetitions-8', 8, true]]) {
+    const name = `${label}-${suffix}`
+    const value = { ...JSON.parse(JSON.stringify(sealed)), repetitions, baseline_invocation_s: invocation }
+    const projected = projectedSeconds(value)
+    check(`${name}: reference projection ${fits ? 'fits' : 'exceeds'} 2160 s`, () => {
+      assert.ok(Math.abs(projected - (fits ? 1897.6 : 2846.4)) < 1e-9, String(projected))
+      assert.equal(projected <= 0.9 * DEFAULT_EVALUATE, fits)
+    })
+    const runRoot = path.join(parent, name)
+    fs.cpSync(path.join(source, 'agent', 'results', 'reproduce'), path.join(runRoot, 'agent', 'results', 'reproduce'), { recursive: true })
+    const result = await sealCase(name, value, { profile })
+    const detail = `projected ${projected} s; reason_codes ${JSON.stringify(result.receipt().reason_codes)}`
+    if (fits) {
+      check(`${name}: does not fail protocol_cost`, () => {
+        assert.ok(!result.receipt().reason_codes.includes('protocol_cost'), detail)
+        const repair = result.run.calls.find(row => row.label === 'seal-repair')
+        assert.ok(!repair || !repair.prompt.includes('protocol_cost'), 'first attempt rejected for protocol_cost')
+      })
+      expectSealPass(name, result, detail)
+    } else expectSealFail(name, result, 'protocol_cost', detail)
   }
 }
 
@@ -1003,6 +1360,8 @@ async function main() {
     await recordedSealRegression()
     await stochasticFreeTextChecks()
     await stochasticRejectionChecks()
+    await costChecks()
+    await run14CostRegression()
 
     // Without a concurrency calibration, whole-workload bounds are 1, and multi-GPU
     // per GPU-second never exceeds 1: only pipelining (bound 1/0.85) remains feasible.
@@ -1084,6 +1443,7 @@ async function main() {
       ['protocol_incomplete', value => { value.repetitions = 3 }],
       ['compute_points_incomplete', value => { value.predictions[0].outcome_vs_compute_points.pop() }],
       ['stochastic_equivalence_invalid', value => { value.outputs_stochastic = true }],
+      ['protocol_cost', value => { Object.assign(value, costValid(1e4)) }],
       ['bounds_coverage_invalid', value => { value.infeasible_methods = [] }],
       ['interval_bounds_invalid', value => {
         value.predictions[0].expected_speedup_interval = { low: 100, high: 100 }

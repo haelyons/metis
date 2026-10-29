@@ -100,6 +100,8 @@ function protocol() {
     warmup: 1, repetitions: 5, scheduling_order: { kind: 'randomized_pairs', seed: 42 },
     minimum_worthwhile_gain: 1.1, compute_budgets: [2, 4, 8], splits: { evaluation: ['first', 'middle', 'tail'] },
     equal_outcome_target: { not_applicable: true, reason: 'No outcome curve.' },
+    // (1 + 5) x 2 x 0.01 s = 0.12 s, far inside 0.9 x the smallest evaluate budget used here.
+    baseline_invocation_s: { seconds: 0.01, source: 'fixture: one baseline equivalence invocation, 0.01 s' },
   }
 }
 function budgetKey(operation) {

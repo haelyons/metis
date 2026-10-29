@@ -9,7 +9,16 @@ const CONTRACT = Object.freeze({
 })
 const required = ['equivalence_metrics', 'paired_seed_tests', 'sample_sizes', 'confidence_rule',
   'hardware_cost_basis', 'timing_scope', 'minimum_worthwhile_gain', 'evaluation_inputs', 'splits',
-  'compute_budgets', 'repetitions', 'warmup', 'scheduling_order', 'equal_outcome_target']
+  'compute_budgets', 'repetitions', 'warmup', 'scheduling_order', 'equal_outcome_target', 'baseline_invocation_s']
+
+function projectPerformanceSeconds(predictions, seconds) {
+  const { warmup, repetitions, hardware_cost_basis: basis } = predictions
+  let projected_s = (warmup + repetitions) * 2 * seconds
+  if (predictions.equal_outcome_target.not_applicable !== true) {
+    for (const b of predictions.compute_budgets) projected_s += b / basis.baseline_gpus + b / basis.method_gpus
+  }
+  return projected_s
+}
 
 function stochasticFailures(predictions) {
   const paths = []
@@ -55,15 +64,18 @@ function skeleton(stochastic) {
     confidence_rule: Object.fromEntries(['performance', 'equivalence'].map(key =>
       [key, { kind: CONTRACT.pairedKind, confidence }])),
     repetitions: CONTRACT.minimumRepetitions,
+    baseline_invocation_s: { seconds: 1, source: 'REPLACE with measured file, measured value and arithmetic for one complete baseline equivalence invocation' },
   }
 }
 
-function validate(predictions, bounds, menu) {
+function validate(predictions, bounds, menu, evaluate_budget_s) {
   let check = 'predictions_invalid'
   const hasValue = value => value != null && (typeof value !== 'string' || value.trim() !== '')
     && (typeof value !== 'object' || Object.keys(value).length > 0)
   const paths = {
     predictions_invalid: ['predictions'],
+    protocol_cost: ['warmup', 'repetitions', 'paired_seed_tests.seeds', 'evaluation_inputs.ids',
+      'compute_budgets', 'baseline_invocation_s'],
     bounds_coverage_invalid: ['predictions[].method', 'infeasible_methods'],
     interval_bounds_invalid: ['predictions[].expected_speedup_interval'],
     intervals_identical: ['predictions[].expected_speedup_interval'],
@@ -73,6 +85,10 @@ function validate(predictions, bounds, menu) {
   const predictionCount = predictions.predictions.length
   check = 'protocol_incomplete'
   const incomplete = required.filter(key => !hasValue(predictions[key]))
+  const invocation = predictions.baseline_invocation_s
+  if (!invocation || typeof invocation !== 'object' || Array.isArray(invocation)
+    || !Number.isFinite(invocation.seconds) || invocation.seconds <= 0
+    || typeof invocation.source !== 'string' || !invocation.source.trim()) incomplete.push('baseline_invocation_s')
   if (typeof predictions.outputs_stochastic !== 'boolean') incomplete.push('outputs_stochastic')
   if (!Array.isArray(predictions.compute_budgets) || new Set(predictions.compute_budgets).size < 3
     || !predictions.compute_budgets.every(value => Number.isFinite(value) && value > 0)) incomplete.push('compute_budgets')
@@ -103,8 +119,11 @@ function validate(predictions, bounds, menu) {
     const paths = stochasticFailures(predictions)
     if (paths.length) return reject(check, paths)
   }
-  check = 'bounds_coverage_invalid'
   const feasible = menu.filter(method => bounds[method].feasible)
+  check = 'protocol_cost'
+  if (feasible.length && projectPerformanceSeconds(predictions, invocation.seconds) > 0.9 * evaluate_budget_s)
+    return reject(check)
+  check = 'bounds_coverage_invalid'
   const infeasible = menu.filter(method => !bounds[method].feasible)
   const excluded = predictions.infeasible_methods
   const validCoverage = predictionCount === feasible.length
@@ -127,4 +146,4 @@ function validate(predictions, bounds, menu) {
   return null
 }
 
-module.exports = { validate, skeleton }
+module.exports = { validate, skeleton, projectPerformanceSeconds }
