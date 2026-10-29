@@ -266,8 +266,14 @@ if [[ "$*" == *--query-gpu=name* ]]; then printf '%s\\n' 'Fixture GPU'; fi`)
       }
     })
     for (const stage of ['reproduce', 'profile']) check(`${name}: ${stage} USD and GPU sum all command receipts`, () => {
-      // Profile has its own operation; all preceding uploads/probe/setup/anchors belong to reproduce.
-      const boundary = receipts.findLastIndex(receipt => receipt.operation === 'anchors')
+      // Profile has its own operation; all preceding uploads/probe/setup/anchors/reproduce-freeze belong to reproduce.
+      // When reproduce passes, reproduce-freeze is the last reproduce command: after anchors, before profile.
+      const freezes = receipts.flatMap((receipt, index) => receipt.operation === 'reproduce-freeze' ? [index] : [])
+      assert.equal(freezes.length, 1, 'exactly one reproduce-freeze receipt')
+      const boundary = freezes[0]
+      assert.ok(boundary > receipts.findLastIndex(receipt => receipt.operation === 'anchors'), 'reproduce-freeze after last anchors')
+      const firstProfile = receipts.findIndex(receipt => receipt.operation === 'profile')
+      assert.ok(firstProfile >= 0 && boundary < firstProfile, 'reproduce-freeze before first profile')
       const assigned = receipts.filter((receipt, index) => (index > boundary) === (stage === 'profile'))
       assert.ok(assigned.length > 0)
       const row = records.find(row => row.signature.stage === stage)

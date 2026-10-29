@@ -76,6 +76,47 @@ async function run5Agent(options) {
 }
 if (require.main !== module) return
 
+// Relative path -> base64 contents for every regular file under a directory.
+function contents(directory) {
+  const result = {}
+  const visit = (parent, prefix) => {
+    for (const entry of fs.readdirSync(parent, { withFileTypes: true })) {
+      const file = path.join(parent, entry.name)
+      if (entry.isDirectory()) visit(file, prefix + entry.name + '/')
+      else if (entry.isFile()) result[prefix + entry.name] = fs.readFileSync(file).toString('base64')
+    }
+  }
+  visit(directory, '')
+  return result
+}
+// SCHEMAS.md reproduce bullet: when reproduce passes, one `reproduce-freeze` under the setup budget
+// copies the anchor run's out/ to remote reproduce-out/, and its fetch replaces A/results/reproduce/out/.
+// The reused-harness path freezes too; a failed reproduce never does.
+function assertFreeze(root, passed, measured, budget = 1200) {
+  const operations = fs.readdirSync(path.join(root, 'control/receipts')).sort().filter(file => file.endsWith('.json')).map(file => file.slice(5, -5))
+  const freezes = operations.flatMap((operation, i) => operation === 'reproduce-freeze' ? [i] : [])
+  const box = path.join(root, 'box')
+  const remote = fs.readdirSync(box).filter(entry => entry.startsWith('m5-')).map(entry => path.join(box, entry))
+    .filter(directory => fs.existsSync(path.join(directory, 'harness')))
+  if (!passed) {
+    assert.deepEqual(freezes, [], 'freeze after a failed reproduce')
+    for (const directory of remote) assert.equal(fs.existsSync(path.join(directory, 'reproduce-out')), false)
+    return
+  }
+  assert.equal(freezes.length, 1, operations.join(','))
+  const anchors = operations.lastIndexOf('anchors')
+  assert.ok(anchors >= 0 && anchors < freezes[0], 'freeze must follow the anchor run')
+  assert.ok(operations.slice(anchors + 1, freezes[0]).every(operation => operation === 'upload'), operations.join(','))
+  const receipt = read(path.join(root, 'control/receipts', fs.readdirSync(path.join(root, 'control/receipts')).sort()
+    .filter(file => file.endsWith('.json'))[freezes[0]]))
+  assert.deepEqual([receipt.rc, receipt.fetched, receipt.budget_s], [0, true, budget])
+  assert.equal(remote.length, 1, 'expected one remote run directory')
+  const frozen = path.join(remote[0], 'reproduce-out')
+  assert.ok(fs.existsSync(frozen) && !fs.lstatSync(frozen).isSymbolicLink(), 'remote reproduce-out missing or a symlink')
+  assert.deepEqual(contents(frozen), contents(path.join(root, 'agent/results/reproduce/out')), 'local reproduce out/ differs from reproduce-out')
+  assert.deepEqual(read(path.join(frozen, 'anchors_measured.json')), measured)
+}
+
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_harness_reuse_'))
 const pipeline = path.join(scratch, 'pipeline')
 let checks = 0, failures = 0
@@ -255,6 +296,9 @@ visit(process.env.BOX_ROOT)
       assert.match(fs.readFileSync(path.join(agent, 'results/reproduce/out/command-calls.log'), 'utf8'), /command/)
     }
   })
+  check(`${name}: ${failed ? 'no freeze after a failed reproduce' : 'reproduce-freeze copies the anchor outputs to reproduce-out'}`, () => {
+    assertFreeze(root, !failed, fixtureConfig.measured)
+  })
 }
 
 // Recorded public regression: positive-openmm run5's harness asserts openmm.__version__ == '8.2.0' in
@@ -379,6 +423,9 @@ exec /bin/bash "$@"
     assert.equal(reproduce?.facts.anchors_passed, anchorTotal)
     assert.equal(reproduce?.facts.stock_verified, true)
     assert.equal(reproduce?.signature.status, 'PASS')
+  })
+  check(`${name}: reproduce-freeze copies the repaired anchor run's outputs to reproduce-out`, () => {
+    assertFreeze(root, true, read(path.join(root, 'measured.json')), execution.stage_budgets_s?.setup ?? 1200)
   })
   check(`${name}: provenance marks only run_command.sh modified, source hashes unchanged`, () => {
     const manifest = read(path.join(root, 'control/harness_source.json'))

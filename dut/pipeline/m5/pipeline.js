@@ -329,6 +329,12 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       facts.anchors_total = score.anchors_total
       const passed = score.all_passed && facts.stock_verified
       const run_valid = score.anchors_total === 0 ? null : score.all_passed
+      if (passed) {
+        // A timeout may leave a partial snapshot; fail without retrying the freeze.
+        const frozen = await boxCommand('reproduce-freeze', 'set -e\ntest ! -e reproduce-out\ncp -a out reproduce-out',
+          destination, setupTimeout, true)
+        if (frozen.error || frozen.rc !== 0) return failure(facts, frozen.error || 'infra')
+      }
       return passed ? { status: 'PASS', facts, v1: { run_valid } }
         : { ...failure(facts, 'anchor'), v1: { error_class: 'anchor', exit_code: 4, run_valid } }
     } catch {

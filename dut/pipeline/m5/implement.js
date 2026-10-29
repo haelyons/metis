@@ -323,7 +323,7 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
     if (!predictions.predictions?.some(row => row.method === proposal.method)
       || !predictions.equivalence_metrics || !predictions.paired_seed_tests) return failure(facts, 'parse')
     for (const name of ['setup_method', 'run_method', 'run_tests']) executionTimeout(name)
-    const initial = await command('implement-baseline', `test -d baseline-published\ntest ! -L baseline-published\ntest ! -L data\ntest ! -L out\nmkdir -p data out\ntest ! -e baseline-out\ncp -a out baseline-out\n${stateCommand(false)}`,
+    const initial = await command('implement-baseline', `test -d baseline-published\ntest ! -L baseline-published\ntest ! -L data\ntest ! -L out\ntest -d reproduce-out\ntest ! -L reproduce-out\nmkdir -p data out\ntest ! -e baseline-out\ncp -a reproduce-out baseline-out\n${stateCommand(false)}`,
       path.join(destination, 'baseline'), executionTimeout('setup_method'))
     if (initial.error || initial.rc !== 0) return failure(facts, initial.error || 'infra')
     baselineState = readJSON(path.join(destination, 'baseline', 'out', 'implement-state.json'))

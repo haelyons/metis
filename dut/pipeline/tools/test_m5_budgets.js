@@ -103,7 +103,8 @@ function protocol() {
   }
 }
 function budgetKey(operation) {
-  if (['upload', 'probe', 'setup'].includes(operation)) return 'setup'
+  // SCHEMAS.md reproduce bullet: operation `reproduce-freeze` runs under the `setup` budget.
+  if (['upload', 'probe', 'setup', 'reproduce-freeze'].includes(operation)) return 'setup'
   if (['anchors', 'profile'].includes(operation)) return operation
   // The concurrency probe runs with the resolved profile budget.
   if (operation === 'concurrency') return 'profile'
@@ -224,10 +225,13 @@ fi`)
   check(`${name}: every boxrun receipt has resolved budget_s and overrun`, () => {
     assert.ok(receipts.length > 0, 'no box receipts')
     const profileIndex = receipts.findIndex(receipt => receipt.operation === 'profile')
-    const anchorsIndex = receipts.findLastIndex(receipt => receipt.operation === 'anchors')
+    // SCHEMAS.md reproduce bullet: reproduce-freeze is the last reproduce command once reproduce passes,
+    // so uploads after it and before the profile run are profile uploads.
+    const freezeIndex = receipts.findIndex(receipt => receipt.operation === 'reproduce-freeze')
+    const reproduceEnd = freezeIndex >= 0 ? freezeIndex : receipts.findLastIndex(receipt => receipt.operation === 'anchors')
     const concurrencyIndex = receipts.findIndex(receipt => receipt.operation === 'concurrency')
     for (const [index, receipt] of receipts.entries()) {
-      const key = receipt.operation === 'upload' && index > anchorsIndex && index < profileIndex ? 'profile' : budgetKey(receipt.operation)
+      const key = receipt.operation === 'upload' && index > reproduceEnd && index < profileIndex ? 'profile' : budgetKey(receipt.operation)
       // SCHEMAS.md fixes the probe run's budget, not its upload's: accept profile or setup there.
       if (receipt.operation === 'upload' && index > profileIndex && index < concurrencyIndex) {
         assert.ok([expected.profile, expected.setup].includes(receipt.budget_s), receipt.name)
@@ -259,6 +263,7 @@ fi`)
     check(`${name}: all seven budgets exercised through real stages`, () => {
       assert.deepEqual(new Set(receipts.map(receipt => budgetKey(receipt.operation))), new Set(Object.keys(DEFAULTS)))
       assert.equal(receipts.filter(receipt => receipt.operation === 'concurrency').length, 1, 'probe after passing profile gate')
+      assert.equal(receipts.filter(receipt => receipt.operation === 'reproduce-freeze').length, 1, 'one freeze after reproduce passes')
       assert.deepEqual(records.map(row => [row.signature.stage, row.signature.status]), STAGES.map(stage => [stage, 'PASS']))
       assert.ok(receipts.every(receipt => !receipt.timed_out && receipt.rc === 0), 'unexpected timeout or command failure')
     })

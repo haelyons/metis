@@ -136,6 +136,25 @@ const RUN10_ENSEMBLE = path.join(RUN10, 'results', 'implement', 'baseline', 'out
 // Recorded public evidence: positive-openmm run12 (sealed warmup 1, repetitions 8, no outcome
 // curve, one GPU per arm; its baseline adapter measured about 488 s per invocation in evaluate).
 const RUN12 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run12', 'agent')
+// Recorded public evidence: positive-openmm run13. The test author's view held one baseline run
+// (results/reproduce/out/). BASELINE_OUT was copied from remote out/ at the start of implement, after
+// profiling (results/implement/baseline/out/: a second baseline.* run, profile/ and concurrency/ outputs,
+// latest-baseline-run.txt rewritten), and the frozen tests reject more than one ensemble.json.
+const RUN13 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run13', 'agent')
+const RUN13_IDS = ['dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_handling', 'seeds', 'equivalence',
+  'output_schema', 'fixed_work', 'upstream_output']
+const RUN13_RUN = 'baseline.wdnWYQIH'
+// Written into the fixture's frozen run_tests.sh: records what the tests see as BASELINE_OUT
+// (relative path -> SHA-256 of contents), one JSON line per test run.
+const BASELINE_SEEN_PY = String.raw`import hashlib, json, os, sys
+root, log = sys.argv[1:3]
+seen = {}
+for directory, _, names in os.walk(root):
+    for name in names:
+        file = os.path.join(directory, name)
+        with open(file, 'rb') as f: seen[os.path.relpath(file, root)] = hashlib.sha256(f.read()).hexdigest()
+with open(log, 'a') as f: f.write(json.dumps(seen) + '\n')
+`
 // Fetch-side stand-in for the smoke's measurement: after a fetch, rewrites a fetched smoke.json
 // according to the plan for the most recently started smoke adapter label (sequence.log). A number
 // becomes {"process_wall_s": n}; 'missing' deletes the file; any other string is written verbatim.
@@ -318,6 +337,11 @@ function treeHash(directory) {
   visit(directory, '')
   return sha(JSON.stringify(result).replace(/[\u007f-\uffff]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')))
 }
+// Relative path -> SHA-256 of contents for every regular file under a directory; null when absent.
+function manifest(directory) {
+  if (!fs.existsSync(directory)) return null
+  return Object.fromEntries(files(directory).map(file => [path.relative(directory, file).split(path.sep).join('/'), sha(fs.readFileSync(file))]))
+}
 function credentialsGone(root) {
   // The original fixture credentials remain; no copied credentials may survive.
   return files(root).filter(file => !file.startsWith(path.join(root, 'fixture-home') + path.sep))
@@ -433,7 +457,9 @@ exit 0
 fi
 ` + emit('out/anchors_measured.json', { anchor: 1 }) +
         emit('out/values.json', [0, 1, 2, 3, 4]) + emit('out/seeds.json', [0, 1, 2, 3, 4]) +
-        (config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.baseline)) : ''))
+        (config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.baseline)) : '') +
+        // run13's anchor run: one baseline.* run directory and latest-baseline-run.txt.
+        (config.run13Data ? `cp -R ${quote(path.join(config.run13Data, 'reproduce'))}/. out/\n` : ''))
       script(path.join(harness, 'run_command.sh'), 'true')
       if (config.evaluation) script(path.join(harness, 'run_evaluation.sh'), `# ${HARNESS_NOTE}\n` +
         adapterScript(root, 'run_evaluation', config.fault, config.fault === 'run9-baseline' ? RUN9_RECORDS.baseline : ''))
@@ -480,6 +506,7 @@ fi
       event.methodBytesInPrompt = prompt.includes(METHOD_SECRET)
       const prior = rows(path.join(root, 'calls.jsonl')).filter(call => call.title === title)
       if (title === 'tests') {
+        event.viewBaselineOut = manifest(path.join(view, 'baseline-out'))
         const tests = path.join(view, 'tests')
         fs.mkdirSync(tests, { recursive: true })
         fs.writeFileSync(path.join(tests, 'fixture.txt'), TEST_SECRET)
@@ -497,6 +524,7 @@ test -f "$BASELINE_OUT/values.json"
 test -f "$METHOD_OUT/values.json"
 test ! -f "$METHOD_OUT/tests.json"
 test -f "$(dirname "$0")/fixture.txt"
+python3 -I -c ${quote(BASELINE_SEEN_PY)} "$BASELINE_OUT" ${quote(path.join(root, 'baseline-seen.jsonl'))}
 printf '%s\\n' '${PRIVATE}:tests'
 python3 - "$BASELINE_OUT" "$METHOD_OUT" <<'OUTPUT_CHECKS'
 import json, pathlib, sys
@@ -532,6 +560,8 @@ exit ${config.testExit || 0}`)
           fs.rmSync(path.join(tests, 'run_tests.sh'))
           for (const name of ['run_tests.sh', 'check_outputs.py', 'protocol.json']) fs.copyFileSync(path.join(RUN8, 'tests', name), path.join(tests, name))
         }
+        // run13's frozen tests, byte for byte: they reject more than one baseline ensemble.json.
+        if (config.run13Data) for (const name of ['run_tests.sh', 'check_outputs.py']) fs.copyFileSync(path.join(RUN13, 'tests', name), path.join(tests, name))
       }
       if (title === 'implement') {
         const retry = prior.length > 0
@@ -551,6 +581,7 @@ printf '%s\\n' '${PRIVATE}:run'
 ${emit('out/values.json', [0, 1, 2, 3, 4])}
 ${emit('out/seeds.json', [0, 1, 2, 3, 4])}
 ${config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.method[retry ? 1 : 0])) : 'true'}
+${config.run13Data ? ['ensemble.json', 'stdout.log'].map(file => `cp ${quote(path.join(config.run13Data, 'reproduce', RUN13_RUN, file))} out/${file}`).join('\n') : 'true'}
 ${(config.repair || config.failTwice) && (!retry || config.failTwice) ? 'touch out/fail-equivalence' : 'true'}
 ${config.tamperBaseline ? 'printf modified > "$BASELINE_DIR/pin"' : 'true'}
 ${config.tamperTests ? 'chmod u+w payload/tests/run_tests.sh; printf "# tampered\\n" >> payload/tests/run_tests.sh' : 'true'}
@@ -644,10 +675,27 @@ async function launch(scratch, name, config = {}) {
   const bin = path.join(root, 'bin')
   // Both local receipt telemetry and remote scripts see only this fake GPU tool.
   script(path.join(bin, 'nvidia-smi'), 'exit 1')
+  // Stands in for profiling and later baseline runs (SCHEMAS.md reproduce bullet): once the
+  // `reproduce-freeze` receipt exists, before the next box command, copy `pollute/` over remote out/
+  // (adding files and rewriting some) and apply any reproduce-out tamper ('missing' or 'symlink').
+  if (config.pollute) fs.cpSync(config.pollute, path.join(root, 'pollute'), { recursive: true })
   script(path.join(bin, 'box'), `command=\${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}
 export PATH="$M5_IMPLEMENT_BIN:$PATH"
 cd "$BOX_ROOT"
 printf '%s\\n' "$command" >> "$M5_BOX_COMMANDS"
+frozen=false
+for receipt in "$M5_IMPLEMENT_ROOT"/control/receipts/*-reproduce-freeze.json; do [[ ! -e $receipt ]] || frozen=true; done
+if [[ $frozen == true && ! -e $M5_IMPLEMENT_ROOT/after-freeze ]]; then
+  : > "$M5_IMPLEMENT_ROOT/after-freeze"
+  for remote in "$BOX_ROOT"/m5-*; do
+    [[ -d $remote/out ]] || continue
+    [[ ! -d $M5_IMPLEMENT_ROOT/pollute ]] || cp -R "$M5_IMPLEMENT_ROOT/pollute/." "$remote/out/"
+    case ${quote(config.freezeTamper || 'none')} in
+      missing) rm -rf "$remote/reproduce-out" ;;
+      symlink) rm -rf "$remote/reproduce-out"; ln -s out "$remote/reproduce-out" ;;
+    esac
+  done
+fi
 bash -c "$command"
 if [[ $command == *timeout* ]]; then
   for ((i=0; i<1000; i++)); do
@@ -976,12 +1024,128 @@ function run8FrozenTestCheck() {
     }
   })
 }
+// The shared remote /tmp/m5-<uuid> run directory, mapped into the case's fake box.
+function remoteDirectory(root) {
+  const box = path.join(root, 'box')
+  const directories = fs.readdirSync(box).filter(entry => entry.startsWith('m5-') && fs.existsSync(path.join(box, entry, 'harness')))
+  assert.equal(directories.length, 1, `expected one remote run directory: ${directories}`)
+  return path.join(box, directories[0])
+}
+const receiptOperations = root => fs.readdirSync(path.join(root, 'control', 'receipts')).sort()
+  .filter(file => file.endsWith('.json')).map(file => file.slice(5, -5))
+// SCHEMAS.md reproduce bullet: on PASS, one `reproduce-freeze` under the setup budget copies the anchor
+// run's out/ to reproduce-out/, and the local A/results/reproduce/out/ holds the same outputs. Implement
+// snapshot bullet: baseline-out/ is a copy of reproduce-out/, never the current out/. Views bullet: the
+// test view's baseline-out/ is a copy of A/results/reproduce/out/, so frozen tests run against the
+// baseline outputs their author saw. `pollution` is the directory the fake box copied over out/ after
+// the freeze (profiling, probes and further baseline runs), or null.
+function frozenBaselineChecks(name, run, pollution) {
+  const { root, calls, config } = run
+  check(`${name}: reproduce freezes its outputs once, after the anchor run, under the setup budget`, () => {
+    const operations = receiptOperations(root)
+    assert.equal(operations.filter(operation => operation === 'reproduce-freeze').length, 1, operations.join(','))
+    const freeze = operations.indexOf('reproduce-freeze'), anchors = operations.lastIndexOf('anchors')
+    assert.ok(anchors >= 0 && anchors < freeze, 'freeze must follow the anchor run')
+    assert.ok(operations.slice(anchors + 1, freeze).every(operation => operation === 'upload'), operations.slice(anchors + 1, freeze).join(','))
+    assert.ok(freeze < operations.indexOf('implement-baseline'), 'implement snapshot before the freeze')
+    const receipt = readJSON(path.join(root, 'control', 'receipts', fs.readdirSync(path.join(root, 'control', 'receipts'))
+      .find(file => /^\d{4}-reproduce-freeze\.json$/.test(file))))
+    assert.equal(receipt.budget_s, config.argsBudgets?.setup ?? 1200, 'freeze must use the setup budget')
+    assert.equal(receipt.rc, 0)
+    assert.equal(receipt.fetched, true)
+  })
+  check(`${name}: baseline-out, BASELINE_OUT and the test view hold exactly the frozen reproduce outputs`, () => {
+    const remote = remoteDirectory(root)
+    assert.ok(!fs.lstatSync(path.join(remote, 'reproduce-out')).isSymbolicLink(), 'reproduce-out is a symlink')
+    const frozen = manifest(path.join(remote, 'reproduce-out'))
+    assert.ok(frozen && Object.keys(frozen).length, 'remote reproduce-out missing or empty')
+    assert.deepEqual(manifest(path.join(root, 'agent', 'results', 'reproduce', 'out')), frozen, 'local A/results/reproduce/out differs from remote reproduce-out')
+    assert.deepEqual(manifest(path.join(remote, 'baseline-out')), frozen, 'remote baseline-out is not a copy of reproduce-out')
+    const author = calls.filter(call => call.title === 'tests')
+    assert.equal(author.length, 1)
+    assert.deepEqual(author[0].viewBaselineOut, frozen, 'test view baseline-out differs from the frozen outputs')
+    // run13's byte-for-byte tests do not record BASELINE_OUT; their own verdict is checked instead.
+    if (!config.run13Data) {
+      const seen = rows(path.join(root, 'baseline-seen.jsonl'))
+      assert.ok(seen.length >= 1, 'frozen tests never recorded BASELINE_OUT')
+      for (const row of seen) assert.deepEqual(row, author[0].viewBaselineOut, 'BASELINE_OUT seen by the tests differs from the test view')
+    }
+  })
+  if (pollution) check(`${name}: files added or rewritten in out/ after reproduce never reach baseline-out`, () => {
+    assert.ok(fs.existsSync(path.join(root, 'after-freeze')), 'fixture never changed out/ after the freeze')
+    const remote = remoteDirectory(root)
+    const added = manifest(pollution)
+    for (const [label, tree] of [['baseline-out', manifest(path.join(remote, 'baseline-out'))],
+      ['test view', calls.find(call => call.title === 'tests').viewBaselineOut]]) {
+      for (const [relative, digest] of Object.entries(added)) assert.notEqual(tree[relative], digest, `${label}: ${relative} came from out/ after reproduce`)
+      assert.ok(!Object.keys(tree).some(relative => /^(profile|concurrency)\//.test(relative)), `${label}: profiler outputs present`)
+    }
+  })
+}
+// SCHEMAS.md implement snapshot bullet: "A missing or symlinked `reproduce-out/` fails the snapshot".
+function brokenFreezeCheck(name, run) {
+  check(`${name}: snapshot fails before the adapter smoke and any author call`, () => {
+    assert.ok(fs.existsSync(path.join(run.root, 'after-freeze')), 'fixture never tampered with reproduce-out')
+    assert.equal(run.record?.signature.status, 'FAIL')
+    const titles = rows(path.join(run.root, 'calls.jsonl')).map(call => call.title)
+    for (const title of ['tests', 'implement', 'review', 'adapter-repair']) assert.ok(!titles.includes(title), `${title} called after a failed snapshot`)
+    const operations = receiptOperations(run.root)
+    for (const operation of ['adapter-smoke', 'setup-method', 'run-method', 'run-tests']) assert.ok(!operations.includes(operation), `${operation} ran after a failed snapshot`)
+    assert.equal(run.records.find(row => row.signature?.stage === 'evaluate')?.signature.status, 'SKIPPED')
+    assert.equal(fs.existsSync(path.join(run.root, 'control', 'implement', 'tests.json')), false, 'tests frozen after a failed snapshot')
+  })
+}
+// Small copies of the run13 files the frozen tests read: `reproduce/` is the anchor run's out/;
+// `profiled/` is what reached out/ afterwards (a second run, rewritten latest-baseline-run.txt,
+// small profile/ and concurrency/ outputs; large profiler files are skipped).
+function run13Data() {
+  const data = path.join(scratch, 'run13-data')
+  const copy = (from, to) => {
+    fs.mkdirSync(path.dirname(path.join(data, to)), { recursive: true })
+    fs.copyFileSync(path.join(RUN13, 'results', from), path.join(data, to))
+  }
+  for (const file of [`${RUN13_RUN}/ensemble.json`, `${RUN13_RUN}/stdout.log`, 'latest-baseline-run.txt']) copy(`reproduce/out/${file}`, `reproduce/${file}`)
+  for (const file of ['baseline.xYR708Pq/ensemble.json', 'baseline.xYR708Pq/stdout.log', 'latest-baseline-run.txt',
+    'profile/stages.json', 'profile/total_wall_s.json', 'concurrency/concurrency.json']) copy(`implement/baseline/out/${file}`, `profiled/${file}`)
+  return data
+}
+// run13's check_outputs.py run directly, with a method output equal to the reproduce run.
+function run13Direct(data, baselineOut) {
+  const work = fs.mkdtempSync(path.join(scratch, 'run13-direct-')), method = path.join(work, 'method')
+  fs.copyFileSync(path.join(RUN13, 'tests', 'check_outputs.py'), path.join(work, 'check_outputs.py'))
+  fs.mkdirSync(method)
+  for (const file of ['ensemble.json', 'stdout.log']) fs.copyFileSync(path.join(data, 'reproduce', RUN13_RUN, file), path.join(method, file))
+  const result = spawnSync('python3', ['-I', path.join(work, 'check_outputs.py')], { cwd: work, encoding: 'utf8',
+    env: { ...process.env, BASELINE_OUT: baselineOut, METHOD_OUT: method } })
+  return { result, report: fs.existsSync(path.join(method, 'tests.json')) ? readJSON(path.join(method, 'tests.json')) : null }
+}
+function run13RecordedChecks(data) {
+  const postProfiling = path.join(RUN13, 'results', 'implement', 'baseline', 'out')
+  check('run13 recorded: the post-profiling out/ copy holds two baseline runs, the reproduce out/ one', () => {
+    const runs = directory => fs.readdirSync(directory).filter(entry => fs.existsSync(path.join(directory, entry, 'ensemble.json'))).sort()
+    assert.deepEqual(runs(postProfiling), [RUN13_RUN, 'baseline.xYR708Pq'].sort())
+    assert.deepEqual(runs(path.join(RUN13, 'results', 'reproduce', 'out')), [RUN13_RUN])
+  })
+  check('run13 recorded (old failure mode): frozen tests on the post-profiling out/ copy report every case invalid_output', () => {
+    const { result, report } = run13Direct(data, postProfiling)
+    assert.equal(result.status, 1, result.stderr)
+    const expected = { passed: 0, failed: 9, cases: RUN13_IDS.map(id => ({ id, pass: false, reason_code: 'invalid_output' })) }
+    assert.deepEqual(report, expected)
+    assert.deepEqual(readJSON(path.join(RUN13, 'results', 'implement', 'attempt-1', 'tests', 'out', 'tests.json')), expected, 'recorded attempt-1 report')
+  })
+  check('run13 recorded: the same tests pass all nine cases on the reproduce outputs their author saw', () => {
+    const { result, report } = run13Direct(data, path.join(data, 'reproduce'))
+    assert.equal(result.status, 0, result.stderr)
+    assert.deepEqual(report, { passed: 9, failed: 0, cases: RUN13_IDS.map(id => ({ id, pass: true, reason_code: null })) })
+  })
+}
 async function main() {
   try {
     const happy = await execute('happy')
     verdict('happy', happy, null, { patch_applies: true, tests_pass: true, blind_tests: true, launch_review_pass: true })
     authorChecks(happy)
     receiptChecks(happy)
+    frozenBaselineChecks('happy', happy, null)
     // SCHEMAS.md EVAL_PROTOCOL bullet: "The harness prompt ... and the method author prompt both state these two shapes."
     check('method author prompt states the EVAL_INPUTS and EVAL_SEEDS shapes', () => {
       const author = happy.calls.find(call => call.title === 'implement')
@@ -1043,6 +1207,37 @@ async function main() {
           { attempt, reason_code_counts: { missing_output: 1 } })
       }
     })
+    // After the freeze, out/ gains profiler and probe outputs and a second baseline-style run, and
+    // values.json is rewritten: the fixture's tests compare BASELINE_OUT/values.json with the method's.
+    const pollution = path.join(scratch, 'pollute-generic')
+    writeJSON(path.join(pollution, 'values.json'), [9, 9, 9, 9, 9])
+    writeJSON(path.join(pollution, 'baseline.second', 'values.json'), [0, 1, 2, 3, 4, 5])
+    writeJSON(path.join(pollution, 'profile', 'stages.json'), [{ stage: 'kernels', wall_s: 1, gpu_s: 1 }])
+    writeJSON(path.join(pollution, 'concurrency', 'concurrency.json'), { factor: null })
+    const profiled = await execute('profiled-out', { pollute: pollution })
+    verdict('profiled-out', profiled, null, { patch_applies: true, tests_pass: true, blind_tests: true, launch_review_pass: true })
+    frozenBaselineChecks('profiled-out', profiled, pollution)
+    for (const tamper of ['missing', 'symlink']) {
+      const name = `reproduce-out-${tamper}`
+      const run = await execute(name, { freezeTamper: tamper })
+      brokenFreezeCheck(name, run)
+    }
+    // run13 regression: its frozen tests, its reproduce outputs as the anchor run's out/, and its
+    // post-reproduce run, profile and concurrency outputs added to out/ before implement.
+    const data = run13Data()
+    run13RecordedChecks(data)
+    const run13 = await execute('run13-profiled', { run13Data: data, pollute: path.join(data, 'profiled') })
+    verdict('run13-profiled', run13, null, { patch_applies: true, tests_pass: true, blind_tests: true, launch_review_pass: true })
+    check('run13-profiled: run13 frozen tests pass all nine cases at the first attempt', () => {
+      const report = readJSON(path.join(run13.root, 'agent', 'results', 'implement', 'out', 'tests.json'))
+      assert.deepEqual(report, { passed: 9, failed: 0, cases: RUN13_IDS.map(id => ({ id, pass: true, reason_code: null })) })
+      assert.equal(run13.calls.filter(call => call.title === 'implement').length, 1)
+      assert.equal(fs.existsSync(path.join(run13.root, 'control', 'implement', 'attempt-1.json')), false)
+      const baselineOut = path.join(remoteDirectory(run13.root), 'baseline-out')
+      assert.deepEqual(fs.readdirSync(baselineOut).filter(entry => fs.existsSync(path.join(baselineOut, entry, 'ensemble.json'))), [RUN13_RUN])
+      assert.equal(fs.readFileSync(path.join(baselineOut, 'latest-baseline-run.txt'), 'utf8'), `out/${RUN13_RUN}\n`)
+    })
+    frozenBaselineChecks('run13-profiled', run13, path.join(data, 'profiled'))
     for (const [name, config, errorClass] of [
       ['repair-exhausted', { failTwice: true }, 'numeric'],
       ['review-rejected', { rejectReview: true }, 'other'],

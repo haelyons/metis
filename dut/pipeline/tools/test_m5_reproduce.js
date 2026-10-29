@@ -46,8 +46,10 @@ function script(file, body) {
 function emitJSON(file, value) {
   return `cat > '${file}' <<'M5_FIXTURE_JSON'\n${JSON.stringify(value)}\nM5_FIXTURE_JSON\n`
 }
-function setupScript(directory, failures) {
-  script(path.join(directory, 'setup.sh'), `mkdir -p out baseline-published data
+// `staleFreeze` leaves a reproduce-out/ in the run directory before the freeze (SCHEMAS.md reproduce bullet:
+// the freeze runs `test ! -e reproduce-out` first).
+function setupScript(directory, failures, staleFreeze = false) {
+  script(path.join(directory, 'setup.sh'), `mkdir -p out baseline-published data${staleFreeze ? "\nmkdir -p reproduce-out\nprintf '%s\\n' stale > reproduce-out/stale-marker" : ''}
 printf '%s\\n' '${SENTINEL}:setup'
 n=0
 [[ ! -f .setup-attempts ]] || read -r n < .setup-attempts
@@ -115,7 +117,7 @@ module.exports = {
       // Rewritten scripts carry a marker so their remote bytes can be identified.
       const marker = title === 'anchors-repair' ? '# rewritten by anchors-repair\n' : ''
       if (title === 'harness-repair' || title === 'anchors-repair') snapshot(harness, path.join(root, `pre-${title}`))
-      if (title === 'harness' || title === 'harness-repair') setupScript(harness, failuresFor('setupFailures'))
+      if (title === 'harness' || title === 'harness-repair') setupScript(harness, failuresFor('setupFailures'), config.freezeFailure === 'stale')
       if (writes('run_anchors.sh')) {
         script(path.join(harness, 'run_anchors.sh'), marker + failureScript('anchors', anchorsFailures('run_anchors.sh')) + `bash harness/run_command.sh\ntest -f baseline-published/pin\ntest -f data/input\nmkdir -p out\nprintf '%s\\n' '${SENTINEL}:anchors'\n` +
           (config.missingMeasured ? 'rm -f out/anchors_measured.json\n' : emitJSON('out/anchors_measured.json', config.measured)) +
@@ -226,9 +228,10 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   const config = { anchors: ANCHORS, measured: { first: 100.5, second: 0, ignored: 999 }, timings: TIMINGS, total: 10, gpuUtil: GPU_UTIL, setupFailures: 0, anchorsFailures: 0, profileFailures: 0, ...overrides }
   const args = path.join(root, 'control', 'args.json')
   writeJSON(args, { run_root: root, tag: 'reproduce-test', stub: { propose: 'PASS', implement: 'PASS', evaluate: 'PASS' },
-    ...(config.profileBudget || config.anchorsBudget ? { stage_budgets_s: {
+    ...(config.profileBudget || config.anchorsBudget || config.setupBudget ? { stage_budgets_s: {
       ...(config.profileBudget ? { profile: config.profileBudget } : {}),
-      ...(config.anchorsBudget ? { anchors: config.anchorsBudget } : {}) } } : {}) })
+      ...(config.anchorsBudget ? { anchors: config.anchorsBudget } : {}),
+      ...(config.setupBudget ? { setup: config.setupBudget } : {}) } } : {}) })
   const box = path.join(root, 'box')
   fs.mkdirSync(box, { recursive: true })
   const fakeProbe = `mkdir -p out
@@ -271,6 +274,9 @@ else
   printf 'stdin %s\\n' "$input" >> "$calls"
   [[ $input != quit || -z \${CUDA_MPS_PIPE_DIRECTORY-} ]] || rm -f "$CUDA_MPS_PIPE_DIRECTORY/control"
 fi`)
+  // freezeFailure 'timeout': the documented freeze copy `cp -a out reproduce-out` outlasts the setup budget.
+  const realCp = spawnSync('/bin/bash', ['-c', 'command -v cp'], { encoding: 'utf8' }).stdout.trim()
+  script(path.join(boxBin, 'cp'), `${config.freezeFailure === 'timeout' ? '[[ $# -lt 1 || ${!#} != reproduce-out ]] || sleep 8\n' : ''}exec '${realCp}' "$@"`)
   // Fake CUDA program run by the stub harness command: connects only through the daemon's pipe directory.
   script(path.join(boxBin, 'fake-cuda-client'), `if [[ -n \${CUDA_MPS_PIPE_DIRECTORY-} && -f $CUDA_MPS_PIPE_DIRECTORY/control ]]; then
   log="$(cat "$CUDA_MPS_PIPE_DIRECTORY/control")/control.log"
@@ -314,8 +320,23 @@ exec '${realPython}' "$@"`)
   fi
 fi
 ` : ''
-  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
-  script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\n' + failingFetch + 'exec cp -r -- "$source" "$2"')
+  // Before the first box command after an anchors receipt, keep a copy of the anchor run's remote
+  // out/ in anchor-out/<receipt-id>/ (the latest one is what the freeze must copy).
+  const anchorSnapshot = `latest=
+for receipt in "$BOX_ROOT"/../control/receipts/*.json; do [[ ! -e $receipt ]] || latest=$receipt; done
+if [[ $latest == *-anchors.json ]]; then
+  snapshot="$BOX_ROOT/../anchor-out/$(basename -- "\${latest%.json}")"
+  if [[ ! -e $snapshot ]]; then
+    for remote in "$BOX_ROOT"/m5-*; do
+      [[ ! -d $remote/out || ! -d $remote/harness ]] || { mkdir -p "$snapshot"; cp -a "$remote/out/." "$snapshot/"; }
+    done
+  fi
+fi
+`
+  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\n' + anchorSnapshot + 'bash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
+  // freezeFailure 'fetch': every fetch of the freeze log fails, so the freeze receipt has fetched=false.
+  const failingFreezeFetch = config.freezeFailure === 'fetch' ? `[[ $source != *-reproduce-freeze.log ]] || { echo 'simulated failed fetch' >&2; exit 1; }\n` : ''
+  script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\n' + failingFetch + failingFreezeFetch + 'exec cp -r -- "$source" "$2"')
   const callsFile = path.join(root, 'calls.jsonl')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w')
   const stderrFile = path.join(root, 'stderr.log')
@@ -330,7 +351,8 @@ fi
           M5_CONCURRENCY_CALLS: path.join(root, 'concurrency-calls.jsonl'),
           M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch'),
           // Failing fetches are retried after BOXRUN_FETCH_WAIT_S; 1 s keeps the fixture fast yet measurable.
-          ...(config.concurrencyFetchFailures ? { BOXRUN_FETCH_WAIT_S: config.concurrencyFetchFailures >= 5 ? '0' : '1' } : {}) },
+          ...(config.concurrencyFetchFailures ? { BOXRUN_FETCH_WAIT_S: config.concurrencyFetchFailures >= 5 ? '0' : '1' } : {}),
+          ...(config.freezeFailure === 'fetch' ? { BOXRUN_FETCH_WAIT_S: '0' } : {}) },
       })
       let error
       proc.on('error', value => { error = value })
@@ -352,7 +374,7 @@ fi
   if (stoppedAt) check(`${name}: failure signature`, () => {
     const signature = stage(stoppedAt).signature
     assert.equal(signature.error_class, errorClass)
-    assert.equal(signature.exit_code, errorClass === 'anchor' ? 4 : 2)
+    assert.equal(signature.exit_code, errorClass === 'anchor' ? 4 : errorClass === 'timeout' ? 3 : 2)
   })
   check(`${name}: one harness call and bounded repair`, () => {
     assert.equal(calls.filter(call => call.label === 'harness').length, config.probeFailure ? 0 : 1)
@@ -418,10 +440,14 @@ fi
       assert.equal(receipt.name, file.slice(0, -5))
       // Only the deliberately slow concurrency probe may time out.
       if (config.concurrency === 'timeout' && file.slice(5, -5) === 'concurrency') return { operation: 'concurrency', ...receipt }
+      // The deliberately slow freeze copy times out (checked in freezeChecks).
+      if (config.freezeFailure === 'timeout' && file.slice(5, -5) === 'reproduce-freeze') return { operation: 'reproduce-freeze', ...receipt }
       assert.ok(Number.isInteger(receipt.rc))
       assert.equal(receipt.timed_out, false)
-      // Only the concurrency fetch that fails on all five attempts leaves fetched false.
-      assert.equal(receipt.fetched, !(config.concurrencyFetchFailures >= 5 && file.slice(5, -5) === 'concurrency'), file)
+      // Only the concurrency fetch that fails on all five attempts, or the deliberately failed
+      // freeze log fetch, leaves fetched false.
+      assert.equal(receipt.fetched, !(config.concurrencyFetchFailures >= 5 && file.slice(5, -5) === 'concurrency') &&
+        !(config.freezeFailure === 'fetch' && file.slice(5, -5) === 'reproduce-freeze'), file)
       assert.ok(Number.isInteger(receipt.wall_s) && receipt.wall_s >= 0)
       for (const key of ['started_utc', 'ended_utc']) assert.ok(Number.isFinite(Date.parse(receipt[key])))
       return { operation: file.slice(5, -5), ...receipt }
@@ -436,6 +462,24 @@ fi
       return
     }
     receipts.splice(0, probeIndex + 1)
+    // SCHEMAS.md reproduce bullet: when reproduce passes (and only then, apart from a failing freeze
+    // itself), exactly one `reproduce-freeze` under the setup budget follows the anchor run; profile
+    // commands come after it, and nothing runs after a failed freeze.
+    const freezes = receipts.filter(receipt => receipt.operation === 'reproduce-freeze')
+    const froze = stoppedAt !== 'reproduce' || Boolean(config.freezeFailure)
+    assert.equal(freezes.length, froze ? 1 : 0, `freeze receipts: ${receipts.map(r => r.operation).join(',')}`)
+    if (froze) {
+      const at = receipts.indexOf(freezes[0])
+      const lastAnchors = receipts.findLastIndex(receipt => receipt.operation === 'anchors')
+      assert.ok(lastAnchors >= 0 && lastAnchors < at, 'freeze before the anchor run')
+      assert.ok(receipts.slice(lastAnchors + 1, at).every(receipt => receipt.operation === 'upload'), receipts.map(r => r.operation).join(','))
+      assert.ok(receipts.slice(at + 1).every(receipt => ['upload', 'profile', 'concurrency'].includes(receipt.operation)),
+        `reproduce command after the freeze: ${receipts.map(r => r.operation).join(',')}`)
+      if (config.freezeFailure) assert.equal(at, receipts.length - 1, 'box commands after a failed freeze')
+      assert.equal(freezes[0].budget_s, config.setupBudget ?? 1200, 'freeze must use the setup budget')
+      if (!config.freezeFailure) assert.equal(freezes[0].rc, 0)
+      receipts.splice(at, 1)
+    }
     // SCHEMAS.md "Concurrency probe": after a passing gate, optional upload(s) then exactly one
     // `concurrency` command (no execution retry); nothing after a failed profile.
     const profileAt = receipts.findIndex(receipt => receipt.operation === 'profile')
@@ -494,10 +538,79 @@ fi
       if (row.signature.status === 'SKIPPED' && config.agentDelayMs) assert.ok(row.signature.wall_s < config.agentDelayMs / 1000, 'skip reused earlier duration')
     }
   })
+  if (!config.probeFailure) freezeChecks(name, root, config, stage, stoppedAt)
   if (!config.probeFailure && stoppedAt !== 'reproduce') concurrencyChecks(name, root, config, stage, stoppedAt)
   const run = { root, config, stage }
   if (!config.probeFailure && stoppedAt !== 'reproduce') repairUploadChecks(name, run)
   return run
+}
+// Relative path -> base64 contents for every regular file under a directory.
+function contents(directory) {
+  const result = {}
+  const visit = (parent, prefix) => {
+    for (const entry of fs.readdirSync(parent, { withFileTypes: true })) {
+      const file = path.join(parent, entry.name)
+      if (entry.isDirectory()) visit(file, prefix + entry.name + '/')
+      else if (entry.isFile()) result[prefix + entry.name] = fs.readFileSync(file).toString('base64')
+    }
+  }
+  visit(directory, '')
+  return result
+}
+// SCHEMAS.md reproduce bullet: "When reproduce passes, the pipeline freezes those outputs on the box:
+// through boxrun, as operation `reproduce-freeze` under the `setup` budget, it runs `test ! -e
+// reproduce-out` and then `cp -a out reproduce-out` ... its fetch replaces `A/results/reproduce/out/` ...
+// Later stages never write to `reproduce-out/` ... A failed `reproduce-freeze` (nonzero exit, failed fetch,
+// or timeout) fails reproduce with `error_class: infra`, or `timeout` on a timeout, without repair."
+function freezeChecks(name, root, config, stage, stoppedAt) {
+  const local = path.join(root, 'agent', 'results', 'reproduce', 'out')
+  const freezeReceipt = () => {
+    const directory = path.join(root, 'control', 'receipts')
+    const file = fs.readdirSync(directory).find(file => /^\d{4}-reproduce-freeze\.json$/.test(file))
+    assert.ok(file, 'no reproduce-freeze receipt')
+    return readJSON(path.join(directory, file))
+  }
+  if (stoppedAt !== 'reproduce') check(`${name}: remote reproduce-out equals the anchor run's out/ and the local reproduce out/`, () => {
+    const frozenDirectory = path.join(remoteHarness(root), 'reproduce-out')
+    assert.ok(fs.existsSync(frozenDirectory), 'remote reproduce-out missing')
+    assert.ok(!fs.lstatSync(frozenDirectory).isSymbolicLink(), 'remote reproduce-out is a symlink')
+    const frozen = contents(frozenDirectory)
+    const snapshots = path.join(root, 'anchor-out')
+    assert.ok(fs.existsSync(snapshots), 'fixture never saw the anchor run finish')
+    assert.deepEqual(frozen, contents(path.join(snapshots, fs.readdirSync(snapshots).sort().at(-1))), 'reproduce-out differs from the anchor run out/')
+    assert.ok(Object.hasOwn(frozen, 'anchors_measured.json'), 'anchor measurements missing from reproduce-out')
+    assert.deepEqual(contents(local), frozen, 'local A/results/reproduce/out differs from remote reproduce-out')
+    // Profiling writes to out/ only: its profile/ and concurrency/ outputs and its own run of the
+    // shared command (appended to command-calls.log) never reach reproduce-out or the local copy.
+    assert.ok(!Object.keys(frozen).some(file => /^(profile|concurrency)\//.test(file)), 'profiler outputs in reproduce-out')
+    const profiled = path.join(root, 'agent', 'results', 'profile', 'out', 'command-calls.log')
+    if (fs.existsSync(profiled)) assert.notEqual(frozen['command-calls.log'], fs.readFileSync(profiled).toString('base64'), 'reproduce-out holds the profiler run')
+  })
+  else if (!config.freezeFailure) check(`${name}: no freeze when reproduce fails before passing`, () => {
+    assert.equal(fs.existsSync(path.join(remoteHarness(root), 'reproduce-out')), false)
+  })
+  if (config.freezeFailure) check(`${name}: failed freeze (${config.freezeFailure}) fails reproduce without repair`, () => {
+    const timeout = config.freezeFailure === 'timeout'
+    const signature = stage('reproduce').signature
+    assert.equal(signature.status, 'FAIL')
+    assert.equal(signature.error_class, timeout ? 'timeout' : 'infra')
+    assert.equal(signature.exit_code, timeout ? 3 : 2)
+    // Scoring had passed: the anchor counts and stock verification stand.
+    const { timed_out, budget_s, overrun, ...facts } = stage('reproduce').facts
+    assert.deepEqual(facts, { anchors_passed: 2, anchors_total: 2, stock_verified: true,
+      tuned_control_valid: null, tokens_known: true, gpu_busy_known: false })
+    if (timeout) assert.deepEqual({ timed_out, budget_s, overrun }, { timed_out: true, budget_s: config.setupBudget, overrun: true })
+    else assert.deepEqual([timed_out, budget_s, overrun], [undefined, undefined, undefined], 'timeout fields without a timeout')
+    const receipt = freezeReceipt()
+    if (config.freezeFailure === 'stale') {
+      assert.notEqual(receipt.rc, 0, '`test ! -e reproduce-out` must fail on an existing reproduce-out')
+      // The existing directory is left as it was: the copy never runs.
+      assert.deepEqual(contents(path.join(remoteHarness(root), 'reproduce-out')), { 'stale-marker': Buffer.from('stale\n').toString('base64') })
+    }
+    if (config.freezeFailure === 'fetch') assert.deepEqual([receipt.rc, receipt.fetched], [0, false])
+    if (timeout) assert.equal(receipt.timed_out, true)
+    assert.ok(!rows(path.join(root, 'calls.jsonl')).some(call => /repair/.test(call.label)), 'repair after a failed freeze')
+  })
 }
 // SCHEMAS.md "Concurrency probe" and the profile packet `concurrency` bullet.
 const VALID_PROBE_MODES = { valid: fixture.VALID_CONCURRENCY, 'valid-null': fixture.NULL_CONCURRENCY }
@@ -1242,6 +1355,11 @@ async function main() {
       profileFacts('each-script-repaired', independent, 0.95)
       const missing = await runCase('missing-measured', { missingMeasured: true }, 'reproduce', 'parse')
       reproduceFacts('missing-measured', missing, null, null)
+      // A failed reproduce-freeze (existing reproduce-out, failed fetch, timeout) fails reproduce
+      // after passing anchors, without repair; downstream stages are skipped.
+      for (const [failure, errorClass, extra] of [['stale', 'infra'], ['fetch', 'infra'], ['timeout', 'timeout', { setupBudget: 2 }]]) {
+        await runCase(`freeze-${failure}`, { freezeFailure: failure, ...extra }, 'reproduce', errorClass)
+      }
     }
     const low = await runCase('low-coverage', { timings: TIMINGS.map((row, i) => ({ ...row, wall_s: [3, 2, 3.9][i] })) }, 'profile', 'numeric')
     reproduceFacts('low-coverage', low, 2, 2)
