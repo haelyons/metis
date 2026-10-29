@@ -1,0 +1,114 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "generated": false,
+      "availability": "available",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "hash_verified": true,
+      "bytes": 1814203,
+      "atoms": 23558,
+      "access": "Public unauthenticated HTTPS; place file in driver working directory.",
+      "licence": "Distributed with OpenMM; brief states local running and modification permitted.",
+      "licence_source": [
+        "brief.md",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      ]
+    },
+    {
+      "name": "amber99sb.xml",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "availability": "available",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "access": "Bundled in OpenMM 8.2.0; pinned repository copy accessible without authentication.",
+      "licence": "OpenMM distribution terms; see licences source and brief.",
+      "generated": false
+    },
+    {
+      "name": "tip3p.xml",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "availability": "available",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "access": "Bundled in OpenMM 8.2.0; pinned repository copy accessible without authentication.",
+      "licence": "OpenMM distribution terms; see licences source and brief.",
+      "generated": false
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities",
+      "generation": "context.setVelocitiesToTemperature(300 * unit.kelvin, seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md"
+    },
+    {
+      "name": "Integrator random streams",
+      "generation": "integrator.setRandomNumberSeed(seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md"
+    },
+    {
+      "name": "System",
+      "generation": "OpenMM ForceField.createSystem using published PDB, amber99sb.xml and tip3p.xml; configuration in benchmark.json.",
+      "source": [
+        "brief.md",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+      ]
+    }
+  ],
+  "missing_required_data": [],
+  "access_restrictions": "No authentication or request required for published inputs.",
+  "splits": null,
+  "splits_reason": "Molecular simulation benchmark; no training/test split specified.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "seed_source": "brief.md",
+  "pins": {
+    "openmm_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "openmm_version": "8.2.0",
+    "cuda_plugin_version": "8.2.0",
+    "transitive_dependency_versions": null,
+    "transitive_dependency_reason": "Brief install command does not pin numpy or NVIDIA package dependencies."
+  },
+  "licences": {
+    "status": "permitted",
+    "intended_use": "Local scientific execution and modification as stated in brief.",
+    "sources": [
+      "brief.md",
+      "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    ]
+  },
+  "total_input_GiB": null,
+  "total_input_size_reason": "PDB and direct force-field sizes known; complete transitive force-field data size not inventoried."
+}

@@ -1,0 +1,156 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "gpu_class": "One NVIDIA data-centre GPU, H100/A100/A10 class per brief; actual GPU model unavailable.",
+    "replicas": 8,
+    "atoms_per_replica": 23558,
+    "steps_per_replica": 25000,
+    "step_fs": 4,
+    "ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "energy_samples_per_replica": 100,
+    "scale_source": "brief.md",
+    "scale_selection": "Single fixed brief workload; no scale search or doubling.",
+    "method": "Candidate may run replicas concurrently on same single GPU; physical workload and seeds fixed."
+  },
+  "inputs": {
+    "coordinates": "5dfr_solv-cube_equil.pdb at pinned commit/hash in data.json",
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "configuration": {
+      "atoms": 23558,
+      "force_field": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "energy_interval_steps": 250,
+      "source": [
+        "brief.md",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+        "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+      ]
+    },
+    "driver": "Verbatim dhfr_ensemble.py code from brief.md"
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "top_level_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "per_replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout_fields": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "raw_energy_series": {
+      "available": false,
+      "reason": "Driver samples every 250 steps but retains only mean and final value in JSON. Full-series comparison would need additional instrumentation; no such command published in brief."
+    }
+  },
+  "timing_scope": {
+    "ensemble": "perf_counter before sequential replica loop through completion and destruction of final context/integrator; includes all Context construction, position and velocity initialization, stepping, synchronized energy queries and cleanup.",
+    "excludes": [
+      "Package installation",
+      "Imports",
+      "PDB parsing",
+      "ForceField and System construction before timer",
+      "JSON serialization and stdout after timer"
+    ],
+    "replica": "Starts after Context/positions/velocities initialization; includes 25000 integration steps and 100 energy queries, excludes context creation and cleanup.",
+    "warmup": "None separately specified in supplied driver; first-use kernel costs within ensemble timer.",
+    "candidate": "Use matching ensemble completion timing including creation/initialization/cleanup of all replicas; concurrency launch and synchronization overhead must not be omitted.",
+    "upstream_difference": "benchmark.py uses adaptive step selection for target seconds with initial steps and initialization before integration timing; not the requested fixed-work score.",
+    "source": [
+      "brief.md",
+      "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    ]
+  },
+  "scoring_interface": {
+    "command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+    "source": "brief.md",
+    "primary": {
+      "field": "ensemble.json:total_wall_s",
+      "unit": "s",
+      "direction": "minimize"
+    },
+    "derived": {
+      "aggregate_ns_per_day": "ensemble.json:simulated_ns / ensemble.json:total_wall_s * 86400",
+      "speedup": "baseline total_wall_s / candidate total_wall_s"
+    },
+    "validity": "Require all eight seeds and 25000 steps per replica, one GPU and unchanged physical configuration; compare scientific outcomes per benchmark.json.",
+    "numeric_scientific_tolerance": null,
+    "tolerance_reason": "No published acceptance tolerance or baseline run-to-run energy distribution available.",
+    "published_reference": "anchors.json contains contextual fixed-time throughput reference only."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "budget_evidence": {
+    "runtime_estimate_source": "brief.md",
+    "estimate": "About one minute on H100, a few minutes on slower GPUs; CUDA estimate unverified.",
+    "fit": "Fixed workload expected to fit default budgets based on brief; actual runtime, package installation duration and MPS setup unmeasured.",
+    "runtime_guarantee": null
+  },
+  "repeat_count": null,
+  "repeat_reason": "Not specified; no invented statistical repeat rule.",
+  "published_mps_setup_command": null,
+  "mps_setup_reason": "No daemon setup command supplied in brief; MPS availability and permissions require later verification.",
+  "intake_execution": "No builds, installation checks or simulation workloads run."
+}

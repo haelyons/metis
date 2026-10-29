@@ -1,0 +1,24 @@
+{
+  "method": "data-parallel over inputs",
+  "rationale": "Select the first ranked feasible method, data-parallel over inputs. Deterministic GPU resource guards already passed. Kernels account for 60.23454109417989% of wall time, CUDA API host time 39.55720544106629%, and H2D plus D2H transfers only 0.20825346475383077%. Whole-workload concurrent throughput on one GPU with MPS supplies p=1 and k=min(8, 1.2873874535677055), giving a sealed speedup bound of 1.2873874535677055, not an eightfold prediction. GPU utilization is unavailable; no utilization claim is warranted. With one input and eight existing seeded replicas, dispatch independent (input identity, replica seed) work items through this method while retaining the exact scientific workload. Process startup, separate OpenMM contexts, host scheduling, memory contention, and result collection can reduce realized gains.",
+  "plan_steps": [
+    "In a later implementation phase, locate the existing workload entry point and retain the sealed method name data-parallel over inputs. Represent the existing one input and seeds 1000 through 1007 as eight independent work items; do not add inputs or replicas.",
+    "Use a bounded persistent worker pool on the same single GPU with MPS as assumed by the supplied bound. Keep at most eight workers, respect the existing resource guards, and retain worker-local OpenMM contexts. The measured factor 1.2873874535677055 is a throughput bound, not a worker count.",
+    "Pass each original input and exact seed unchanged to its worker, preserving velocity initialization, Langevin integrator stream configuration, force field, precision, timestep, step count, sampling schedule, and all other scientific settings. Isolate output paths by input identity and seed; collect each work item exactly once and restore original result ordering.",
+    "Measure complete-workload concurrent throughput using the existing sealed timing protocol and budgets, including the same startup and collection boundaries as baseline. Report speedup against the supplied 1.2873874535677055 bound without replacing the method or changing the protocol.",
+    "For scientific comparison at each budget, use only the first scheduled complete timing pair fixed before outcomes are seen. Pair method and baseline summaries by input identity and exact seed, compute method-minus-baseline differences, and require all eight seeds to complete. Timing repeats must not increase independent scientific sample size.",
+    "Apply the unchanged paired population median rule with alpha=0.05 and joint confidence 0.95. For n=8, use the sealed finite Bonferroni minimum-to-maximum intervals and require containment within absolute margins 43.55590959568776 kJ/mol for mean_potential_kj_mol and 192.24862500855554 kJ/mol for final_potential_kj_mol. Do not adapt sample size, replace seeds, revise margins, or select timing pairs after seeing outcomes."
+  ],
+  "files_expected": [
+    "Existing workload dispatch entry point; exact path unavailable in the prepared packet.",
+    "Existing per-replica execution and result aggregation code, if separate; exact paths unavailable in the prepared packet."
+  ],
+  "risks": [
+    "Only one input exists. Parallel work must come solely from its eight already scheduled independent seeded replicas; a serial dependency between those work items would prevent this plan without changing the sealed workload.",
+    "MPS availability, CPU scheduling, worker startup, context memory, GPU contention, and output collection may erode or eliminate the bounded throughput gain despite resource-guard feasibility.",
+    "Concurrent execution can change floating-point ordering and stochastic trajectories. Exact seeds control initialization and Langevin streams but do not establish deterministic trajectories or trajectory-level equivalence; shared RNG state or changed seed assignment would invalidate pairing.",
+    "Equivalence margins derive from baseline across-seed standard deviations divided by sqrt(8), not measured same-seed run-to-run variability. Passing supports only the sealed paired population median summaries, not full distributions or trajectories.",
+    "Conditional power 0.9227446944279201 assumes independent seeded pairs and probability at least 0.99 that each paired difference falls within both margins. Paired-difference variability is unmeasured; empirical power and unconditional 90% power cannot be claimed.",
+    "Missing replicas, duplicate work, output races, altered result ordering, or mismatched input identities and seeds can invalidate results. Preserve all eight seeds and fail incomplete comparisons rather than replacing seeds."
+  ]
+}

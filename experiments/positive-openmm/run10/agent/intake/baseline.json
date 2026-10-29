@@ -1,0 +1,84 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "tag": "8.2.0",
+  "pin_source": "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0",
+  "build_commands": [
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0"
+  ],
+  "build_commands_sources": [
+    "brief.md",
+    "https://pypi.org/project/openmm/8.2.0/",
+    "https://pypi.org/project/OpenMM-CUDA-12/8.2.0/"
+  ],
+  "build_note": "Released binary installation; no source build specified. Commands recorded only, not executed.",
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "run_commands_source": "brief.md",
+  "working_directory": "Directory containing brief driver saved as dhfr_ensemble.py and pinned 5dfr_solv-cube_equil.pdb.",
+  "driver": {
+    "source": "brief.md fenced Python block",
+    "upstream": false,
+    "immutable_pin": "dbea3e3b0c667852ae64399f0bbee17b472635a46d65c7825dae4f9e1276d031",
+    "pin_kind": "SHA-256 of supplied brief containing driver",
+    "access": "Extract code block verbatim during setup; no driver execution during intake."
+  },
+  "installation_check_command": "python3 -m openmm.testInstallation",
+  "installation_check_source": "brief.md",
+  "published_upstream_command": "python benchmark.py --platform=CUDA --test=pme --seconds=60",
+  "published_upstream_command_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+  "published_upstream_command_role": "Provenance for public benchmark only; not replacement for fixed-work representative workload.",
+  "published_configuration": {
+    "atoms": 23558,
+    "force_field": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "step_fs": 4,
+    "constraint_tolerance": 1e-05,
+    "platform": "CUDA",
+    "properties": {
+      "Precision": "single",
+      "DeterministicForces": "true"
+    },
+    "gpu_count": 1,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "seed0": 1000,
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "energy_interval_steps": 250,
+    "source": [
+      "brief.md",
+      "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+    ]
+  },
+  "execution": "Eight independent replicas sequentially, one process, one GPU.",
+  "outputs": [
+    "ensemble.json",
+    "stdout total_wall_s",
+    "stdout aggregate_ns_per_day"
+  ],
+  "published_absolute_fixed_work_performance": null,
+  "performance_reason": "No independently published fixed-work ensemble measurement. Brief one-minute H100 runtime is an unverified estimate.",
+  "dependency_lock": null,
+  "dependency_lock_reason": "Only OpenMM and CUDA plugin versions pinned; transitive wheel versions not pinned.",
+  "builds_or_workloads_run": false
+}

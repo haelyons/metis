@@ -1,0 +1,239 @@
+{
+ "card": "args",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/positive-openmm/run10/agent/wf",
+ "stage": "done",
+ "started": "2026-10-29T06:27:34.498Z",
+ "calls": [
+  {
+   "id": "0001 intake",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 160566,
+   "cost_usd": 0,
+   "tokens": 166105,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0002 harness",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 169741,
+   "cost_usd": 0,
+   "tokens": 196871,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0003 seal",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 126563,
+   "cost_usd": 0,
+   "tokens": 146276,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0004 propose",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 41061,
+   "cost_usd": 0,
+   "tokens": 36392,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0005 skeptic-1",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "opencode-go/glm-5.3-flash",
+   "chain": [
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 30126,
+   "cost_usd": 0,
+   "tokens": 17759,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  },
+  {
+   "id": "0006 skeptic-2",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "opencode-go/glm-5.3-flash",
+   "chain": [
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 6583,
+   "cost_usd": 0,
+   "tokens": 17651,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  },
+  {
+   "id": "0007 skeptic-3",
+   "stage": "",
+   "model": "codex/default@low",
+   "understudy": "opencode-go/glm-5.3-flash",
+   "chain": [
+    "opencode-go/glm-5.3-flash"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 6627,
+   "cost_usd": 0,
+   "tokens": 17691,
+   "kind": "none",
+   "by": "codex/default@low",
+   "errors": []
+  },
+  {
+   "id": "0008 skeptic-4",
+   "stage": "",
+   "model": "claude/sonnet",
+   "understudy": "codex/default@low",
+   "chain": [
+    "codex/default@low"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 3335,
+   "cost_usd": 0.0341938,
+   "tokens": 22,
+   "kind": "none",
+   "by": "claude/sonnet",
+   "errors": []
+  },
+  {
+   "id": "0009 skeptic-5",
+   "stage": "",
+   "model": "claude/sonnet",
+   "understudy": "codex/default@low",
+   "chain": [
+    "codex/default@low"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 2476,
+   "cost_usd": 0.0313156,
+   "tokens": 22,
+   "kind": "none",
+   "by": "claude/sonnet",
+   "errors": []
+  },
+  {
+   "id": "0010 adapter-repair",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 56533,
+   "cost_usd": 0,
+   "tokens": 165430,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.0655094,
+ "tokens": 764219,
+ "by_model": {
+  "codex/default@medium": {
+   "calls": 5,
+   "cost_usd": 0,
+   "tokens": 711074,
+   "failed": 0,
+   "refusals": 0
+  },
+  "claude/sonnet": {
+   "calls": 2,
+   "cost_usd": 0.0655094,
+   "tokens": 44,
+   "failed": 0,
+   "refusals": 0
+  },
+  "codex/default@low": {
+   "calls": 3,
+   "cost_usd": 0,
+   "tokens": 53101,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "codex": {
+   "calls": 8,
+   "cost_usd": 0,
+   "tokens": 764175,
+   "failed": 0,
+   "refusals": 0
+  },
+  "claude": {
+   "calls": 2,
+   "cost_usd": 0.0655094,
+   "tokens": 44,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-10-29T07:51:04.219Z",
+ "go": [
+  "codex/default@medium: $0.000 over 5 calls",
+  "claude/sonnet: $0.066 over 2 calls",
+  "codex/default@low: $0.000 over 3 calls"
+ ]
+}
