@@ -1,4 +1,4 @@
-"""Run the baseline adapter once with the first sealed seed, without scoring."""
+"""Run the baseline adapter once with the sealed protocol, without scoring."""
 from pathlib import Path
 import shutil
 import signal
@@ -11,9 +11,6 @@ from eval_common import invocation, read
 root = Path.cwd().resolve()
 protocol_path = root / "adapter-payload" / "predictions.json"
 protocol = read(protocol_path)
-rule = protocol["paired_seed_tests"]
-if rule.get("kind") == "paired_median":
-    protocol = dict(protocol, paired_seed_tests=dict(rule, seeds=rule["seeds"][:1]))
 work, out, environment, script = invocation(
     root, protocol, "baseline", "smoke", 0, mode="equivalence", protocol_path=protocol_path)
 # boxrun owns the timeout; preserve outputs when its process group receives TERM.

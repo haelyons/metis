@@ -357,13 +357,15 @@ fi`)
 }
 // SCHEMAS.md EVAL_PROTOCOL bullet: "`EVAL_INPUTS` and `EVAL_SEEDS` are JSON encodings of `evaluation_inputs`
 // and `paired_seed_tests`." Each adapter invocation in an evaluate mode must receive run7's sealed objects.
-// Implement's baseline adapter smoke runs in evaluation-work/smoke/ with seeds cut to the first
-// sealed seed (tools/test_m5_adapter_smoke.js); only evaluate's invocations are checked here.
+// Implement's baseline adapter smoke runs in evaluation-work/smoke/ as one complete baseline
+// equivalence invocation with the sealed paired_seed_tests unchanged (tools/test_m5_adapter_smoke.js),
+// so its invocations are checked here alongside evaluate's.
 const isSmoke = row => /\/evaluation-work\/smoke\//.test(row.cwd || '')
-function run7Env(name, captureFile, arms) {
-  const sealed = run7Protocol(), captured = rows(captureFile).filter(row => row.mode !== 'implement' && !isSmoke(row))
+function run7Env(name, captureFile, arms, { smoke = false } = {}) {
+  const sealed = run7Protocol(), captured = rows(captureFile).filter(row => row.mode !== 'implement')
   check(`${name}: every adapter receives run7's sealed evaluation_inputs and paired_seed_tests`, () => {
-    for (const arm of arms) assert.ok(captured.some(row => row.arm === arm && row.mode === 'equivalence'), `${arm} adapter never ran equivalence`)
+    for (const arm of arms) assert.ok(captured.some(row => row.arm === arm && row.mode === 'equivalence' && !isSmoke(row)), `${arm} adapter never ran equivalence`)
+    if (smoke) assert.ok(captured.some(row => isSmoke(row) && row.arm === 'baseline' && row.mode === 'equivalence'), 'baseline adapter never smoked')
     for (const row of captured) {
       const where = `${row.arm}/${row.mode}`
       assert.equal(typeof row.inputs, 'string', `${where}: EVAL_INPUTS missing`)
@@ -412,7 +414,7 @@ async function run7Cases() {
   }
   // Through the real stages, as in run7: sealed PREDICTIONS.json, harness run_evaluation.sh, method run_method.sh.
   const good = await pipeline('run7-contract', { run7: { baseline: 'contract', method: 'contract', capture: capture('pipeline-contract') } })
-  run7Pairs('run7 pipeline', run7Env('run7 pipeline', capture('pipeline-contract'), ['baseline', 'method']))
+  run7Pairs('run7 pipeline', run7Env('run7 pipeline', capture('pipeline-contract'), ['baseline', 'method'], { smoke: true }))
   check('run7 pipeline: contract adapters accepted as valid equivalence measurements', () => {
     const value = readJSON(path.join(good.results, 'equivalence.json'))
     assert.equal(value.status, 'PASS')
@@ -423,6 +425,7 @@ async function run7Cases() {
   check('run7 pipeline every-key harness: the smoke ran it as baseline/equivalence and saw every-key records', () => {
     const smokes = rows(capture('pipeline-every-key')).filter(isSmoke)
     assert.ok(smokes.some(row => row.arm === 'baseline' && row.mode === 'equivalence'), 'baseline adapter never smoked')
+    for (const row of smokes) assert.deepEqual(JSON.parse(row.seeds), run7Protocol().paired_seed_tests, 'smoke EVAL_SEEDS')
     assert.ok(smokes.some(row => row.records?.some(([id]) => id === 'pins')), 'fixture did not emit every-key records')
     assert.ok(!rows(capture('pipeline-every-key')).some(row => !isSmoke(row) && row.mode !== 'implement'), 'an evaluate invocation ran')
   })

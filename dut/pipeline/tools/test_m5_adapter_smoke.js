@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 'use strict'
 
-// Black-box U31 contracts: implement's baseline adapter smoke and its one adapter repair.
+// Black-box U31/U32 contracts: implement's baseline adapter smoke and its one adapter repair.
 // Written from m5/SCHEMAS.md only ("Baseline adapter smoke:" in the implement section, the
-// evaluation adapter interface and evaluation.json record rules). Do not inspect
-// implementation files or git diffs.
+// evaluation adapter interface and evaluation.json record rules). U32: the smoke receives the
+// sealed paired_seed_tests unchanged and needs one record per sealed seed and input id, seeds
+// first. Do not inspect implementation files or git diffs.
 // Usage: node tools/test_m5_adapter_smoke.js
 // Reuses tools/test_m5_implement.js's fake box, fixture and WF_STUB (its probes require
 // working unprivileged bubblewrap, as there).
@@ -15,7 +16,7 @@ const assert = require('node:assert/strict')
 const { spawnSync } = require('node:child_process')
 const { isDeepStrictEqual } = require('node:util')
 const { fixtures } = require('./test_m5_implement.js')
-const { launch, removeScratch, rows, files, sha, readJSON, RUN9, RUN9_RECORDS, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE } = fixtures
+const { launch, removeScratch, rows, files, sha, readJSON, RUN9, RUN9_RECORDS, RUN10, run10Fakes, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE } = fixtures
 const { assertEvalShapes } = require('./test_m5_reproduce.js')
 const ROOT = path.resolve(__dirname, '..')
 const CATEGORIES = ['exit', 'timeout', 'missing_output', 'records', 'metrics']
@@ -30,22 +31,24 @@ function check(label, fn) {
   catch (error) { failures++; console.log(`FAIL ${label}: ${error.message}`) }
 }
 
-// SCHEMAS.md "Baseline adapter smoke": EVAL_SEEDS is "the sealed object with `seeds` cut to its
-// first seed (a deterministic object is passed unchanged)".
-const smokeSeeds = seal => seal.paired_seed_tests.kind === 'deterministic' ? seal.paired_seed_tests
-  : { ...seal.paired_seed_tests, seeds: seal.paired_seed_tests.seeds.slice(0, 1) }
+// SCHEMAS.md "Baseline adapter smoke": "`EVAL_SEEDS` equal to the sealed `paired_seed_tests` object
+// unchanged. Evaluate never passes a subset of the sealed seeds, so the smoke does not either".
+const smokeSeeds = seal => seal.paired_seed_tests
 const finite = value => typeof value === 'number' && Number.isFinite(value)
-// Reference pass criteria, from the same sentence: "one record per sealed input id, in order, at
-// that seed; the sealed `timing_scope`; the sealed `gpu_count`; finite positive `wall_s` for
-// reported timing; and every sealed `equivalence_metrics` name in each record's `metrics` as a
-// finite number". Returns null (pass) or the failure category.
+// Every (seed, input id) pair: "seeds first, then input ids, in sealed order (seed null under a
+// deterministic seal)".
+const sealedPairs = seal => (seal.paired_seed_tests.kind === 'deterministic' ? [null] : seal.paired_seed_tests.seeds)
+  .flatMap(seed => seal.evaluation_inputs.ids.map(id => [seed, id]))
+// Reference pass criteria, from the same sentence: "one record per sealed seed and input id, seeds
+// first, then input ids, in sealed order ...; the sealed `timing_scope`; the sealed `gpu_count`;
+// finite positive `wall_s` for reported timing; and every sealed `equivalence_metrics` name in each
+// record's `metrics` as a finite number". Returns null (pass) or the failure category.
 function smokeFailure(seal, report) {
   if (!report || typeof report !== 'object' || Array.isArray(report)) return 'missing_output'
-  const ids = seal.evaluation_inputs.ids, spec = smokeSeeds(seal)
-  const seed = spec.kind === 'deterministic' ? null : spec.seeds[0]
+  const pairs = sealedPairs(seal)
   const records = report.records
-  if (!Array.isArray(records) || records.length !== ids.length) return 'records'
-  if (records.some((row, i) => !row || row.input_id !== ids[i] || row.seed !== seed)) return 'records'
+  if (!Array.isArray(records) || records.length !== pairs.length) return 'records'
+  if (records.some((row, i) => !row || row.seed !== pairs[i][0] || row.input_id !== pairs[i][1])) return 'records'
   if (!isDeepStrictEqual(report.timing_scope, seal.timing_scope)) return 'records'
   if (report.gpu_count !== seal.hardware_cost_basis.baseline_gpus) return 'records'
   if (seal.timing_scope.kind === 'reported_wall' && !(finite(report.wall_s) && report.wall_s > 0)) return 'records'
@@ -314,31 +317,117 @@ function run9RecordedChecks() {
   // records without the sealed metric names, while the method adapter keyed them by those names.
   const seal = readJSON(path.join(RUN9, 'PREDICTIONS.json'))
   const baseline = readJSON(RUN9_RECORDS.baseline), method = readJSON(RUN9_RECORDS.method)
-  const first = seal.paired_seed_tests.seeds[0]
-  const atFirst = report => ({ ...report, records: report.records.filter(row => row.seed === first) })
-  check('run9 recorded: sealed metric names and first seed', () => {
+  const atFirst = report => ({ ...report, records: report.records.filter(row => row.seed === 1000) })
+  check('run9 recorded: sealed metric names and the full sealed seeds', () => {
     assert.deepEqual(seal.equivalence_metrics.map(metric => metric.name), ['mean_potential_kj_mol', 'final_potential_kj_mol'])
-    assert.equal(first, 1000)
-    assert.deepEqual(smokeSeeds(seal), { ...seal.paired_seed_tests, seeds: [1000] })
+    assert.deepEqual(seal.paired_seed_tests.seeds, [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007])
+    assert.deepEqual(smokeSeeds(seal), seal.paired_seed_tests)
   })
-  check('run9 recorded: baseline record for the first seed fails the smoke on metrics', () => {
-    assert.equal(atFirst(baseline).records.length, 1)
-    assert.equal(smokeFailure(seal, atFirst(baseline)), 'metrics')
-    // The whole recorded baseline report (every sealed seed) is not the one-seed smoke shape either.
-    assert.equal(smokeFailure(seal, baseline), 'records')
+  check('run9 recorded: baseline records for every sealed seed fail the smoke on metrics', () => {
+    assert.deepEqual(baseline.records.map(row => [row.seed, row.input_id]), sealedPairs(seal))
+    assert.equal(smokeFailure(seal, baseline), 'metrics')
+    // A single-seed subset is no longer the smoke shape.
+    assert.equal(smokeFailure(seal, atFirst(baseline)), 'records')
   })
-  check('run9 recorded: method record for the first seed satisfies the smoke criteria', () => {
-    assert.equal(atFirst(method).records.length, 1)
-    assert.equal(smokeFailure(seal, atFirst(method)), null)
+  check('run9 recorded: method records for every sealed seed satisfy the smoke criteria', () => {
+    assert.deepEqual(method.records.map(row => [row.seed, row.input_id]), sealedPairs(seal))
+    assert.equal(smokeFailure(seal, method), null)
+    assert.equal(smokeFailure(seal, atFirst(method)), 'records')
+  })
+}
+
+// Reference criteria on synthetic reports with two or more seeds and two or more inputs: only
+// every (seed, input id) in seeds-first order passes.
+function recordOrderChecks() {
+  const seal = { evaluation_inputs: { ids: ['input-b', 'input-a'] }, paired_seed_tests: { kind: 'paired_median', seeds: [7, 3, 5] },
+    equivalence_metrics: [{ name: 'value_sum' }], timing_scope: { kind: 'reported_wall' }, hardware_cost_basis: { baseline_gpus: 1 } }
+  const report = pairs => ({ records: pairs.map(([seed, input_id]) => ({ input_id, seed, metrics: { value_sum: 1 } })),
+    timing_scope: seal.timing_scope, gpu_count: 1, wall_s: 1 })
+  const seedsFirst = [7, 3, 5].flatMap(seed => ['input-b', 'input-a'].map(id => [seed, id]))
+  const inputsFirst = ['input-b', 'input-a'].flatMap(id => [7, 3, 5].map(seed => [seed, id]))
+  check('reference criteria: seeds-first records for every sealed seed and input pass; deterministic seals use seed null', () => {
+    assert.deepEqual(sealedPairs(seal), seedsFirst)
+    assert.equal(smokeFailure(seal, report(seedsFirst)), null)
+    const deterministic = { ...seal, paired_seed_tests: { kind: 'deterministic', justification: 'fixture' } }
+    assert.equal(smokeFailure(deterministic, report([[null, 'input-b'], [null, 'input-a']])), null)
+    assert.equal(smokeFailure(deterministic, report([[7, 'input-b'], [7, 'input-a']])), 'records')
+  })
+  for (const [label, pairs] of [
+    ['missing seed', seedsFirst.filter(([seed]) => seed !== 5)],
+    ['extra seed', [...seedsFirst, [8, 'input-b'], [8, 'input-a']]],
+    ['single-seed subset', seedsFirst.filter(([seed]) => seed === 7)],
+    ['inputs-first order', inputsFirst],
+    ['sorted seeds', [3, 5, 7].flatMap(seed => ['input-b', 'input-a'].map(id => [seed, id]))],
+  ]) check(`reference criteria: ${label} fails with records`, () => assert.equal(smokeFailure(seal, report(pairs)), 'records'))
+}
+
+// Check 1: EVAL_SEEDS in the smoke is the sealed paired_seed_tests object exactly.
+function sealedSeedsCheck(run) {
+  check(`${run.name}: EVAL_SEEDS in every smoke is JSON of the sealed paired_seed_tests object unchanged (${run.seal.paired_seed_tests.kind})`, () => {
+    assert.ok(run.observations.length >= 1, 'no observed smoke invocation')
+    for (const row of run.observations) {
+      assert.equal(typeof row.env.EVAL_SEEDS, 'string', 'EVAL_SEEDS missing')
+      const passed = JSON.parse(row.env.EVAL_SEEDS)
+      assert.deepEqual(passed, run.seal.paired_seed_tests)
+      assert.deepEqual(Object.keys(passed).sort(), Object.keys(run.seal.paired_seed_tests).sort(), 'keys differ')
+      if (run.seal.paired_seed_tests.kind !== 'deterministic') assert.ok(passed.seeds.length >= 2, 'fixture seal needs several seeds')
+    }
+  })
+}
+
+// Check 3 (direct half): run10's recorded run_evaluation.sh against the driver stand-in, outside the
+// pipeline, with the full sealed seeds and with EVAL_SEEDS cut to [1000].
+function run10DirectChecks() {
+  const seal = readJSON(path.join(RUN10, 'PREDICTIONS.json'))
+  check('run10 recorded: seal has the eight replica seeds 1000..1007 and the two sealed metric names', () => {
+    assert.deepEqual(seal.paired_seed_tests.seeds, [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007])
+    assert.deepEqual(seal.equivalence_metrics.map(metric => metric.name), ['mean_potential_kj_mol', 'final_potential_kj_mol'])
+  })
+  const python = fs.existsSync('/usr/bin/python3')
+  check('run10 script: /usr/bin/python3 present to run run10 run_evaluation.sh unchanged [requires /usr/bin/python3]', () => assert.ok(python))
+  if (!python) return
+  const work = fs.mkdtempSync(path.join(scratch, 'run10-direct-'))
+  const capture = path.join(work, 'driver.jsonl')
+  const built = spawnSync('bash', ['-euc', run10Fakes(capture)], { cwd: work, encoding: 'utf8' })
+  fs.writeFileSync(path.join(work, 'PREDICTIONS.json'), JSON.stringify(seal))
+  const invoke = (name, seeds) => {
+    const out = path.join(work, name, 'out')
+    fs.mkdirSync(out, { recursive: true })
+    const result = spawnSync('bash', [path.join(RUN10, 'harness', 'run_evaluation.sh')], { cwd: path.join(work, name), encoding: 'utf8', timeout: 60000,
+      env: { PATH: process.env.PATH, HOME: process.env.HOME, EVAL_OUT: out, METHOD_OUT: out, BASELINE_DIR: path.join(work, 'baseline-published'),
+        METHOD_DIR: path.join(work, 'baseline-published'), BASELINE_OUT: path.join(work, 'baseline-out'), EVAL_ARM: 'baseline', EVAL_MODE: 'equivalence',
+        EVAL_PROTOCOL: path.join(work, 'PREDICTIONS.json'), EVAL_INPUTS: JSON.stringify(seal.evaluation_inputs),
+        EVAL_SEEDS: JSON.stringify(seeds), EVAL_COMPUTE_BUDGET: '' } })
+    const file = path.join(out, 'evaluation.json')
+    return { ...result, report: fs.existsSync(file) ? readJSON(file) : null }
+  }
+  check('run10 script: with the full sealed seeds it exits 0 and its output passes the smoke criteria', () => {
+    assert.equal(built.status, 0, built.stderr)
+    const full = invoke('full', seal.paired_seed_tests)
+    assert.equal(full.status, 0, full.stderr)
+    assert.deepEqual(full.report.records.map(row => [row.seed, row.input_id]), sealedPairs(seal))
+    assert.equal(smokeFailure(seal, full.report), null)
+    // The stand-in ran once per input id (the published ensemble covers every replica seed).
+    assert.equal(rows(capture).length, seal.evaluation_inputs.ids.length)
+  })
+  check('run10 script: with EVAL_SEEDS cut to [1000] it exits nonzero on its sealed-seed check', () => {
+    assert.equal(built.status, 0, built.stderr)
+    const cut = invoke('cut', { ...seal.paired_seed_tests, seeds: [1000] })
+    assert.notEqual(cut.status, 0)
+    assert.equal(cut.report, null, 'cut run wrote evaluation.json')
+    assert.match(cut.stderr, /Execution seeds must preserve the published eight replica seeds/)
   })
 }
 
 async function main() {
   try {
     run9RecordedChecks()
+    recordOrderChecks()
+    run10DirectChecks()
     // 1, 2, 5: run_anchors.sh is smoked when run_evaluation.sh is absent; the smoke passes.
     const anchors = await scenario('smoke-anchors', {})
     smokeInvocationChecks(anchors, 'run_anchors')
+    sealedSeedsCheck(anchors)
     passChecks(anchors)
     check('smoke-anchors: method author prompt states the record metric names and shared meaning', () => {
       const author = anchors.calls.find(call => call.title === 'implement')
@@ -354,9 +443,17 @@ async function main() {
     // run_evaluation.sh takes precedence (run_anchors.sh's adapter mode is broken here).
     const evaluation = await scenario('smoke-evaluation', { evaluation: true })
     smokeInvocationChecks(evaluation, 'run_evaluation')
+    sealedSeedsCheck(evaluation)
     passChecks(evaluation)
+    check('smoke-evaluation: the passing smoke output has a record for every sealed seed and input id, seeds first', () => {
+      assert.ok(evaluation.seal.paired_seed_tests.seeds.length >= 2 && evaluation.seal.evaluation_inputs.ids.length >= 2, 'fixture seal too small')
+      const outputs = files(path.join(evaluation.root, 'agent', 'results', 'implement', 'adapter')).filter(file => path.basename(file) === 'evaluation.json')
+      assert.equal(outputs.length, 1)
+      assert.deepEqual(readJSON(outputs[0]).records.map(row => [row.seed, row.input_id]), sealedPairs(evaluation.seal))
+    })
     const deterministic = await scenario('smoke-deterministic', { evaluation: true, seal: 'deterministic' })
     smokeInvocationChecks(deterministic, 'run_evaluation')
+    sealedSeedsCheck(deterministic)
     passChecks(deterministic)
 
     // 3: one repair, then implement continues.
@@ -379,7 +476,7 @@ async function main() {
     // 2, 4: every failure category, repaired script failing again.
     for (const [fault, category] of [
       ['exit', 'exit'], ['missing_output', 'missing_output'],
-      ['all_seeds', 'records'], ['order', 'records'], ['missing_input', 'records'], ['wrong_seed', 'records'],
+      ['first_seed', 'records'], ['missing_seed', 'records'], ['extra_seed', 'records'], ['inputs_first', 'records'], ['order', 'records'], ['missing_input', 'records'], ['wrong_seed', 'records'],
       ['scope', 'records'], ['gpus', 'records'], ['wall', 'records'], ['no_wall', 'records'],
       ['missing_metric', 'metrics'], ['renamed_metric', 'metrics'], ['null_metric', 'metrics'], ['bool_metric', 'metrics'], ['string_metric', 'metrics'],
     ]) {
@@ -414,14 +511,15 @@ async function main() {
     check('run9 script: /usr/bin/python3 present to run run9 run_evaluation.sh unchanged [requires /usr/bin/python3]', () => assert.ok(python))
     if (python) {
       const script = await scenario('run9-script', { run9Script: true, repairFault: 'run9-method' })
-      check('run9-script: run9 run_evaluation.sh is the first smoked script; its one-seed record lacks the sealed names', () => {
+      check('run9-script: run9 run_evaluation.sh is the first smoked script; its records for every sealed seed lack the sealed names', () => {
         assert.ok(script.smokes.length >= 1)
         // The fixture adapters log every invocation; run9's script does not.
         assert.equal(script.sequence.filter(line => line.startsWith('smoke ')).length, script.smokes.length - 1)
         const outputs = files(path.join(script.root, 'agent', 'results', 'implement', 'adapter')).filter(file => path.basename(file) === 'evaluation.json')
         const run9Output = outputs.map(readJSON).find(report => report.records?.[0]?.metrics && 'replica_0_wall_s' in report.records[0].metrics)
         assert.ok(run9Output, 'no fetched output from run9 run_evaluation.sh')
-        assert.deepEqual(run9Output.records.map(row => row.seed), [1000])
+        assert.deepEqual(run9Output.records.map(row => [row.seed, row.input_id]), sealedPairs(script.seal))
+        assert.deepEqual(script.seal.paired_seed_tests.seeds, [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007])
         assert.equal(smokeFailure(script.seal, run9Output), 'metrics')
       })
       smokeInvocationChecks(script, 'repaired', { unobserved: 1 })
@@ -436,6 +534,29 @@ async function main() {
     smokeInvocationChecks(recorded, 'run_evaluation')
     repairChecks(recorded, 'metrics')
     continuedChecks(recorded)
+
+    // 3: run10 regression through the real implement stage. run10's repaired run_evaluation.sh
+    // rejects any seed list other than the eight sealed seeds; it exited 1 under the one-seed cut and
+    // implement stopped VOID. Under the full sealed seeds it passes the first smoke.
+    if (python) {
+      const run10 = await scenario('run10-script', { run10Script: true })
+      smokeInvocationChecks(run10, 'run_evaluation', { unobserved: 1 })
+      passChecks(run10)
+      check('run10-script: the smoked script is run10 run_evaluation.sh, given the sealed seeds unchanged', () => {
+        assert.deepEqual(run10.seal.paired_seed_tests.seeds, [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007])
+        const local = path.join(run10.root, 'agent', 'harness', 'run_evaluation.sh')
+        assert.equal(sha(fs.readFileSync(local)), sha(fs.readFileSync(path.join(RUN10, 'harness', 'run_evaluation.sh'))), 'A/harness/run_evaluation.sh changed')
+        const driver = rows(path.join(run10.root, 'run10-driver.jsonl'))
+        assert.equal(driver.length, run10.seal.evaluation_inputs.ids.length, 'driver stand-in invocations')
+        for (const row of driver) {
+          assert.ok(row.cwd.includes(path.join('evaluation-work', 'smoke', '0', 'baseline')), `driver ran outside the smoke directory: ${row.cwd}`)
+          assert.deepEqual(JSON.parse(row.EVAL_SEEDS), run10.seal.paired_seed_tests, 'EVAL_SEEDS')
+          assert.deepEqual(JSON.parse(row.EVAL_INPUTS), run10.seal.evaluation_inputs, 'EVAL_INPUTS')
+        }
+        const outputs = files(path.join(run10.root, 'agent', 'results', 'implement', 'adapter')).filter(file => path.basename(file) === 'evaluation.json')
+        assert.deepEqual(readJSON(outputs[0]).records.map(row => [row.seed, row.input_id]), sealedPairs(run10.seal))
+      })
+    }
   } catch (error) { failures++; console.log(`FAIL test harness: ${error.stack}`) }
   finally { removeScratch(scratch) }
   console.log(failures ? `${failures} failure(s) (${checks} checks)` : `all checks passed (${checks} checks)`)

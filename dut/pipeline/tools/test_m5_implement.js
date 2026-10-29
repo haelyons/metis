@@ -69,7 +69,10 @@ if fault == 'timeout':
     sys.exit(0)
 inputs, spec = json.loads(env['EVAL_INPUTS']), json.loads(env['EVAL_SEEDS'])
 seeds = spec['seeds'] if spec.get('kind') == 'paired_median' else [None]
-if fault == 'all_seeds': seeds = protocol['paired_seed_tests'].get('seeds') or [None, None]
+# Seed-set faults: a single-seed subset (the former one-seed cut), a dropped or an extra seed.
+if fault == 'first_seed': seeds = seeds[:1]
+if fault == 'missing_seed': seeds = seeds[:-1]
+if fault == 'extra_seed': seeds = seeds + [max(s or 0 for s in seeds) + 1]
 ids = inputs['ids']
 if fault.startswith('run9-'):
     with open(recorded) as f: report = json.load(f)
@@ -78,6 +81,8 @@ else:
     metric_names = [m['name'] for m in protocol['equivalence_metrics']]
     records = [{'input_id': i, 'seed': s, 'metrics': {n: 1.0 + k for k, n in enumerate(metric_names)}} for s in seeds for i in ids]
     first = metric_names[0]
+    if fault == 'inputs_first':
+        records = [{'input_id': i, 'seed': s, 'metrics': {n: 1.0 + k for k, n in enumerate(metric_names)}} for i in ids for s in seeds]
     if fault == 'order': records.reverse()
     if fault == 'missing_input': records.pop()
     if fault == 'wrong_seed': records[0]['seed'] = (records[0]['seed'] or 0) + 1000
@@ -119,6 +124,46 @@ with open(a.out, 'w') as f: json.dump(d, f)
 print('total_wall_s: %r' % d['total_wall_s'])
 print('aggregate_ns_per_day: %r' % (d['simulated_ns'] / d['total_wall_s'] * 86400))
 `
+// Recorded public evidence: positive-openmm run10. Its repaired run_evaluation.sh sources
+// $base/cuda-env.sh, lists CUDACXX, CUDA_INCLUDE_DIR/cuda_runtime.h and
+// CUDA_LIBRARY_DIR/libcudart.so, then runs `$base/venv/bin/python3 $base/dhfr_ensemble.py
+// --replicas 8 --steps 25000 --seed0 1000` once per input id with HARNESS_DATA/<pdb> linked into
+// its working directory, and validates the ensemble.json and stdout lines it writes.
+const RUN10 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run10', 'agent')
+const RUN10_ENSEMBLE = path.join(RUN10, 'results', 'implement', 'baseline', 'out', 'command', 'ensemble.json')
+// Stand-in for run10's published driver: replays run10's recorded baseline ensemble without a GPU
+// and logs each invocation (argv, cwd, EVAL_SEEDS, EVAL_INPUTS) to CAPTURE.
+const RUN10_DRIVER = String.raw`import json, os, sys
+argv = sys.argv[1:]
+with open(CAPTURE, 'a') as f:
+    f.write(json.dumps({'argv': argv, 'cwd': os.getcwd(), 'EVAL_SEEDS': os.environ.get('EVAL_SEEDS'),
+                        'EVAL_INPUTS': os.environ.get('EVAL_INPUTS')}) + '\n')
+if dict(zip(argv[::2], argv[1::2])) != {'--replicas': '8', '--steps': '25000', '--seed0': '1000'}:
+    sys.exit('unexpected driver arguments: %r' % argv)
+with open(RECORDED) as f: d = json.load(f)
+with open('ensemble.json', 'w') as f: json.dump(d, f)
+print('total_wall_s: %r' % d['total_wall_s'])
+print('aggregate_ns_per_day: %r' % (d['simulated_ns'] / d['total_wall_s'] * 86400))
+`
+// Shell that builds run10's baseline fakes in the current directory: baseline-published/ with
+// cuda-env.sh, fake CUDA files, venv/bin/python3 and the driver stand-in, plus data/<pdb>.
+function run10Fakes(capture) {
+  return `mkdir -p baseline-published/fake-cuda/bin baseline-published/fake-cuda/include baseline-published/fake-cuda/lib baseline-published/venv/bin data
+: > baseline-published/fake-cuda/bin/nvcc
+: > baseline-published/fake-cuda/include/cuda_runtime.h
+: > baseline-published/fake-cuda/lib/libcudart.so
+: > data/5dfr_solv-cube_equil.pdb
+cat > baseline-published/cuda-env.sh <<'RUN10_CUDA'
+fake="$(cd "$(dirname "\${BASH_SOURCE[0]}")" && pwd)/fake-cuda"
+export CUDACXX="$fake/bin/nvcc" CUDA_INCLUDE_DIR="$fake/include" CUDA_LIBRARY_DIR="$fake/lib"
+RUN10_CUDA
+printf '#!/usr/bin/env bash\\nexec /usr/bin/python3 -I "$@"\\n' > baseline-published/venv/bin/python3
+chmod +x baseline-published/venv/bin/python3
+cat > baseline-published/dhfr_ensemble.py <<'RUN10_DRIVER'
+CAPTURE = ${JSON.stringify(capture)}
+RECORDED = ${JSON.stringify(RUN10_ENSEMBLE)}
+${RUN10_DRIVER}RUN10_DRIVER`
+}
 // Reference equivalence rule for the tests' `equivalence` case, written from
 // SCHEMAS.md only: exact sign-test interval (largest k >= 1 with
 // P(Binomial(n,0.5) < k) <= alpha/2, bounds x[k-1], x[n-k]); reject only when
@@ -347,10 +392,10 @@ printf 'inputs\\n' > data/input` + (config.run9Script ? `
 : > data/5dfr_solv-cube_equil.pdb
 cat > baseline-published/dhfr_ensemble.py <<'RUN9_DRIVER'
 RECORDED = ${JSON.stringify(RUN9_RECORDS.baseline)}
-${RUN9_DRIVER}RUN9_DRIVER` : ''))
+${RUN9_DRIVER}RUN9_DRIVER` : '') + (config.run10Script ? '\n' + run10Fakes(path.join(root, 'run10-driver.jsonl')) : ''))
       // run_anchors.sh doubles as the baseline adapter when EVAL_MODE is set (the documented
       // fallback when run_evaluation.sh is absent).
-      const anchorsFault = config.anchorsFault ?? (config.evaluation || config.run9Script ? 'broken' : config.fault)
+      const anchorsFault = config.anchorsFault ?? (config.evaluation || config.run9Script || config.run10Script ? 'broken' : config.fault)
       script(path.join(harness, 'run_anchors.sh'), `# ${HARNESS_NOTE}
 if [[ -n \${EVAL_MODE:-} ]]; then
 ${adapterScript(root, 'run_anchors', anchorsFault, config.fault === 'run9-baseline' ? RUN9_RECORDS.baseline : '')}
@@ -364,6 +409,8 @@ fi
         adapterScript(root, 'run_evaluation', config.fault, config.fault === 'run9-baseline' ? RUN9_RECORDS.baseline : ''))
       // run9's pre-seal adapter, byte for byte.
       if (config.run9Script) fs.copyFileSync(path.join(RUN9, 'harness', 'run_evaluation.sh'), path.join(harness, 'run_evaluation.sh'))
+      // run10's repaired adapter, byte for byte.
+      if (config.run10Script) fs.copyFileSync(path.join(RUN10, 'harness', 'run_evaluation.sh'), path.join(harness, 'run_evaluation.sh'))
     }
     if (title === 'adapter-repair') {
       // Writes where the harness agent writes; an isolated view, if supplied, takes precedence.
@@ -529,6 +576,7 @@ function fixture(root, config) {
     scheduling_order: { kind: 'randomized_pairs', seed: 42 }, equal_outcome_target: { not_applicable: true, reason: 'fixed-work fixture' } }
   if (config.run8) Object.assign(predictions, readJSON(path.join(RUN8, 'PREDICTIONS.json')))
   if (config.run9 || config.run9Script) Object.assign(predictions, readJSON(path.join(RUN9, 'PREDICTIONS.json')))
+  if (config.run10Script) Object.assign(predictions, readJSON(path.join(RUN10, 'PREDICTIONS.json')))
   writeJSON(path.join(agent, 'PREDICTIONS.json'), predictions)
   const frozen = path.join(root, 'control', 'seals', 'frozen.json')
   writeJSON(frozen, predictions)
@@ -612,7 +660,7 @@ function removeScratch(scratch) {
   fs.rmSync(scratch, { recursive: true, force: true })
 }
 Object.assign(module.exports, { fixtures: { launch, removeScratch, rows, files, sha, readJSON, writeJSON, treeHash,
-  RUN9, RUN9_RECORDS, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE, PRIVATE } })
+  RUN9, RUN9_RECORDS, RUN10, run10Fakes, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE, PRIVATE } })
 if (require.main !== module) return
 
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_implement_'))

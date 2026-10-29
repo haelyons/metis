@@ -149,10 +149,11 @@ The pipeline invokes bash payload/method/setup_method.sh, then bash payload/meth
     if (!category) {
       try {
         const report = readJSON(file), rule = predictions.paired_seed_tests
-        const seed = rule.kind === 'deterministic' ? null : rule.seeds[0]
+        const seeds = rule.kind === 'deterministic' ? [null] : rule.seeds
         const ids = predictions.evaluation_inputs.ids
-        if (!Array.isArray(report.records) || report.records.length !== ids.length
-          || !report.records.every((row, index) => row && row.input_id === ids[index] && row.seed === seed)
+        const identities = seeds.flatMap(seed => ids.map(id => [id, seed]))
+        if (!Array.isArray(report.records) || report.records.length !== identities.length
+          || !report.records.every((row, index) => row && row.input_id === identities[index][0] && row.seed === identities[index][1])
           || !isDeepStrictEqual(report.timing_scope, predictions.timing_scope)
           || !Number.isInteger(report.gpu_count) || report.gpu_count !== predictions.hardware_cost_basis.baseline_gpus
           || (predictions.timing_scope.kind === 'reported_wall' && (!Number.isFinite(report.wall_s) || report.wall_s <= 0))) category = 'records'
