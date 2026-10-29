@@ -10,7 +10,7 @@ const fs = require('node:fs')
 const path = require('node:path')
 const os = require('node:os')
 const assert = require('node:assert/strict')
-const { spawn } = require('node:child_process')
+const { spawn, spawnSync } = require('node:child_process')
 const { createHash, randomUUID } = require('node:crypto')
 const ROOT = path.resolve(__dirname, '..')
 const { assertEvalShapes } = require('./test_m5_reproduce.js')
@@ -20,6 +20,98 @@ const METHOD_SECRET = 'METHOD_SOURCE_SENTINEL_284950'
 const CREDENTIAL = 'FAKE_AUTH_SENTINEL_395061'
 const IDS = ['dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_handling', 'seeds', 'equivalence']
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+// Recorded public evidence: positive-openmm run8 (sealed protocol, frozen tests,
+// representative baseline/method outputs paired by seeds 1000..1007).
+const RUN8 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run8', 'agent')
+const RUN8_ENSEMBLE = {
+  baseline: path.join(RUN8, 'results', 'implement', 'baseline', 'out', 'run', 'ensemble.json'),
+  method: [1, 2].map(n => path.join(RUN8, 'results', 'implement', `attempt-${n}`, 'run', 'out', 'run', 'ensemble.json')),
+}
+// Reference equivalence rule for the tests' `equivalence` case, written from
+// SCHEMAS.md only: exact sign-test interval (largest k >= 1 with
+// P(Binomial(n,0.5) < k) <= alpha/2, bounds x[k-1], x[n-k]); reject only when
+// the interval is disjoint from (-margin, +margin), or under a deterministic
+// seal when some paired difference exceeds the tolerance. No interval: no reject.
+function orderStatisticInterval(diffs, confidence, metrics = 1) {
+  const n = diffs.length, alpha = (1 - confidence) / metrics
+  let k = 0, below = 0, binomial = 1
+  for (let j = 1; j <= n; j++) {
+    below += binomial // C(n, j-1)
+    binomial = binomial * (n - j + 1) / j
+    if (below / 2 ** n <= alpha / 2) k = j; else break
+  }
+  if (k === 0 || k - 1 > n - k) return null
+  const sorted = [...diffs].sort((a, b) => a - b)
+  return [sorted[k - 1], sorted[n - k]]
+}
+function pairedDiffs(baseline, method, name) {
+  const bySeed = new Map(baseline.map(row => [row.seed, row]))
+  return method.filter(row => bySeed.has(row.seed)).map(row => row[name] - bySeed.get(row.seed)[name])
+}
+function rejectsEquivalence(baseline, method, seal) {
+  const metrics = seal.equivalence_metrics
+  for (const { name, tolerance: { abs: margin } } of metrics) {
+    const diffs = pairedDiffs(baseline, method, name)
+    if (seal.paired_seed_tests.kind === 'deterministic') {
+      if (diffs.some(d => Math.abs(d) > margin)) return true
+      continue
+    }
+    const bounds = orderStatisticInterval(diffs, seal.confidence_rule.equivalence.confidence, metrics.length)
+    if (bounds && (bounds[0] >= margin || bounds[1] <= -margin)) return true
+  }
+  return false
+}
+// A contract-following test author's checker: reads only BASELINE_OUT,
+// METHOD_OUT and its sealed-protocol fixture, never evaluation records.
+const CONTRACT_TESTS_PY = `import json, math, os, sys
+from pathlib import Path
+here = Path(__file__).resolve().parent
+seal = json.loads((here / 'protocol.json').read_text())
+baseline, method = Path(os.environ['BASELINE_OUT']), Path(os.environ['METHOD_OUT'])
+cases = []
+def case(name, ok, reason):
+    cases.append({'id': name, 'pass': bool(ok), 'reason_code': None if ok else reason})
+def replicas(root):
+    return json.loads((root / 'run' / 'ensemble.json').read_text())['replicas']
+def interval(diffs, confidence, metrics):
+    n, alpha, k, below = len(diffs), (1 - confidence) / metrics, 0, 0
+    for j in range(1, n + 1):
+        below += math.comb(n, j - 1)
+        if below / 2 ** n <= alpha / 2: k = j
+        else: break
+    if k == 0 or k - 1 > n - k: return None
+    d = sorted(diffs)
+    return d[k - 1], d[n - k]
+def rejects(b, m):
+    by_seed = {r['seed']: r for r in b}
+    pairs = [(by_seed[r['seed']], r) for r in m if r['seed'] in by_seed]
+    metrics = seal['equivalence_metrics']
+    for metric in metrics:
+        name, margin = metric['name'], metric['tolerance']['abs']
+        diffs = [mr[name] - br[name] for br, mr in pairs]
+        if seal['paired_seed_tests'].get('kind') == 'deterministic':
+            if any(abs(d) > margin for d in diffs): return True
+            continue
+        bounds = interval(diffs, seal['confidence_rule']['equivalence']['confidence'], len(metrics))
+        if bounds and (bounds[0] >= margin or bounds[1] <= -margin): return True
+    return False
+try:
+    b, m = replicas(baseline), replicas(method)
+except (OSError, ValueError, KeyError):
+    for name in ('dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_handling', 'seeds', 'equivalence'):
+        case(name, False, 'missing_output')
+else:
+    bs, ms = [r['seed'] for r in b], [r['seed'] for r in m]
+    case('dropped_inputs', set(bs) <= set(ms), 'dropped_inputs')
+    case('duplicated_inputs', len(ms) == len(set(ms)), 'duplicated_inputs')
+    case('ordering', ms == bs, 'ordering')
+    case('tail_handling', bool(ms) and ms[-1] == bs[-1], 'tail_handling')
+    case('seeds', ms == bs, 'seeds')
+    case('equivalence', not rejects(b, m), 'equivalence')
+failed = sum(not c['pass'] for c in cases)
+(method / 'tests.json').write_text(json.dumps({'passed': len(cases) - failed, 'failed': failed, 'cases': cases}))
+sys.exit(1 if failed else 0)
+`
 const rows = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
 const sha = bytes => createHash('sha256').update(bytes).digest('hex')
 const quote = value => "'" + value.replace(/'/g, "'\\''") + "'"
@@ -158,7 +250,8 @@ git init -q --separate-git-dir published-git baseline-published
 printf 'published\\n' > baseline-published/pin
 printf 'inputs\\n' > data/input`)
       script(path.join(harness, 'run_anchors.sh'), emit('out/anchors_measured.json', { anchor: 1 }) +
-        emit('out/values.json', [0, 1, 2, 3, 4]) + emit('out/seeds.json', [0, 1, 2, 3, 4]))
+        emit('out/values.json', [0, 1, 2, 3, 4]) + emit('out/seeds.json', [0, 1, 2, 3, 4]) +
+        (config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.baseline)) : ''))
       script(path.join(harness, 'run_command.sh'), 'true')
     }
     if (['tests', 'implement', 'review'].includes(title)) {
@@ -221,6 +314,17 @@ OUTPUT_CHECKS
 ${config.report === 'missing' ? 'rm -f out/tests.json' : config.report ? emit('out/tests.json', report) : 'true'}
 exit ${config.testExit || 0}`)
         if (config.testSymlink) fs.symlinkSync('fixture.txt', path.join(tests, 'forbidden-link'))
+        if (config.run8 === 'contract') {
+          // Sealed protocol fixture comes from the test view's PREDICTIONS.json.
+          fs.copyFileSync(path.join(view, 'PREDICTIONS.json'), path.join(tests, 'protocol.json'))
+          fs.writeFileSync(path.join(tests, 'check_equivalence.py'), CONTRACT_TESTS_PY)
+          script(path.join(tests, 'run_tests.sh'), `# ${TEST_SECRET}\nexec python3 -I "$(dirname "$0")/check_equivalence.py"`)
+        }
+        if (config.run8 === 'frozen') {
+          // run8's frozen tests, byte for byte: they require evaluation.json records.
+          fs.rmSync(path.join(tests, 'run_tests.sh'))
+          for (const name of ['run_tests.sh', 'check_outputs.py', 'protocol.json']) fs.copyFileSync(path.join(RUN8, 'tests', name), path.join(tests, name))
+        }
       }
       if (title === 'implement') {
         const retry = prior.length > 0
@@ -239,6 +343,7 @@ test ! -f "$METHOD_OUT/values.json"
 printf '%s\\n' '${PRIVATE}:run'
 ${emit('out/values.json', [0, 1, 2, 3, 4])}
 ${emit('out/seeds.json', [0, 1, 2, 3, 4])}
+${config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.method[retry ? 1 : 0])) : 'true'}
 ${(config.repair || config.failTwice) && (!retry || config.failTwice) ? 'touch out/fail-equivalence' : 'true'}
 ${config.tamperBaseline ? 'printf modified > "$BASELINE_DIR/pin"' : 'true'}
 ${config.tamperTests ? 'chmod u+w payload/tests/run_tests.sh; printf "# tampered\\n" >> payload/tests/run_tests.sh' : 'true'}
@@ -290,6 +395,7 @@ function fixture(root, config) {
     sample_sizes: { n: 5 }, confidence_rule: 'paired 95% interval', hardware_cost_basis: 'same box', timing_scope: 'whole run',
     minimum_worthwhile_gain: 1.1, evaluation_inputs: ['fixture'], splits: { evaluation: [0, 5] }, compute_budgets: [1, 2, 4],
     repetitions: 5, warmup: 'one run', scheduling_order: 'alternate', equal_outcome_target: 1 }
+  if (config.run8) Object.assign(predictions, readJSON(path.join(RUN8, 'PREDICTIONS.json')))
   writeJSON(path.join(agent, 'PREDICTIONS.json'), predictions)
   const frozen = path.join(root, 'control', 'seals', 'frozen.json')
   writeJSON(frozen, predictions)
@@ -490,6 +596,131 @@ function receiptChecks(run) {
     assert.equal(readJSON(path.join(run.root, 'agent', 'results', 'implement', 'out', 'tests.json')).failed, 0)
   })
 }
+// Meaning, not wording: each rule must appear within two adjacent sentences.
+function assertTestAuthorRules(prompt) {
+  const sentences = prompt.split(/(?<=[.!?;])\s+|\n+/).filter(Boolean)
+  const windows = sentences.map((sentence, i) => sentence + ' ' + (sentences[i + 1] || ''))
+  const rules = [
+    ['tests see only BASELINE_OUT and METHOD_OUT', [/BASELINE_OUT/, /METHOD_OUT/, /\b(only|exactly two|two sets)\b/i]],
+    ['one method run at the representative scale, inputs and seeds', [/\b(one|single)\b[^.]*\bmethod\b|\bmethod\b[^.]*\b(one|single)\b/i, /representative/i, /\binputs?\b/i, /\bseeds?\b/i]],
+    ['evaluation records, held-out seeds, timing repetitions and compute budgets exist only in evaluate',
+      [/evaluation\.json|evaluation records/i, /held-out seeds/i, /timing repetitions|repetitions/i, /compute budgets?/i, /\bevaluat(e|ion)\b[^.]*\bonly\b|\bonly\b[^.]*\bevaluate\b/i]],
+    ['no case may require evaluation-only data', [/\b(no|never|must not|may not|cannot|do not)\b[^.]*\brequire/i, /evaluation\.json|evaluation records|held-out|compute budgets?|repetitions/i]],
+    ['equivalence applies sealed margins and confidence rule to the representative pairs', [/equivalence/i, /equivalence_metrics|margins?/i, /confidence[ _]rule|sealed confidence/i, /pairs?/i]],
+    ['confidence is for the number of pairs available', [/confidence/i, /number of pairs|pairs available|available pairs/i]],
+    ['fails only when an interval is disjoint from (-margin, +margin)', [/\bfail/i, /\bonly\b/i, /disjoint|entirely outside|does not overlap|no overlap/i, /margin/i]],
+    ['deterministic seal fails when a paired difference exceeds the tolerance', [/deterministic/i, /paired difference|difference/i, /exceed|greater than|larger than/i, /tolerance/i]],
+    ['an overlapping interval passes', [/overlap/i, /\bpass|cannot reject|does not reject|not reject/i]],
+    ['too few pairs for a finite interval passes', [/too few|insufficient|fewer|not enough/i, /pairs?/i, /finite|interval/i, /\bpass|cannot reject|does not reject|not reject/i]],
+    ['evaluate decides acceptance', [/accept/i, /\bevaluate\b/i, /decide|determin/i]],
+  ]
+  const missing = rules.filter(([, patterns]) => !windows.some(text => patterns.every(pattern => pattern.test(text)))).map(([label]) => label)
+  assert.deepEqual(missing, [], 'test author prompt omits: ' + missing.join('; '))
+}
+function run8RuleChecks() {
+  // SCHEMAS.md: "It fails only when the pairs reject equivalence ... An interval that
+  // overlaps (−margin, +margin), or pairs too few for a finite interval, cannot reject".
+  const seal = readJSON(path.join(RUN8, 'PREDICTIONS.json'))
+  const baseline = readJSON(RUN8_ENSEMBLE.baseline).replicas
+  const methods = RUN8_ENSEMBLE.method.map(file => readJSON(file).replicas)
+  check('run8 fixture: eight representative pairs per metric, paired by seeds 1000..1007', () => {
+    assert.equal(seal.outputs_stochastic, true)
+    assert.equal(seal.paired_seed_tests.kind, 'paired_median')
+    assert.deepEqual(seal.confidence_rule.equivalence, { confidence: 0.95, kind: 'paired_median' })
+    assert.equal(seal.equivalence_metrics.length, 2)
+    for (const replicas of [baseline, ...methods]) assert.deepEqual(replicas.map(row => row.seed), [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007])
+    // At n=8, 95% gives k=1 with or without Bonferroni across the two metrics,
+    // so the result below does not depend on that choice: the interval is [min, max].
+    for (const metrics of [1, 2]) assert.deepEqual(orderStatisticInterval([1, 2, 3, 4, 5, 6, 7, 8], 0.95, metrics), [1, 8])
+  })
+  check('run8 reference rule: recorded pairs overlap (-margin, +margin) and are not rejected', () => {
+    for (const method of methods) {
+      for (const { name, tolerance: { abs: margin } } of seal.equivalence_metrics) {
+        const [low, high] = orderStatisticInterval(pairedDiffs(baseline, method, name), 0.95, 2)
+        assert.ok(low < margin && high > -margin, `${name} interval [${low}, ${high}] disjoint from ±${margin}`)
+      }
+      assert.equal(rejectsEquivalence(baseline, method, seal), false)
+    }
+  })
+  check('run8 reference rule: pairs shifted twice the margin clear of zero are rejected', () => {
+    const shifted = (method, direction) => method.map(row => {
+      const out = { ...row }
+      for (const { name, tolerance: { abs: margin } } of seal.equivalence_metrics) {
+        const diffs = pairedDiffs(baseline, method, name)
+        // Move every difference so the nearest one lies 2×margin from zero.
+        const offset = direction > 0 ? 2 * margin - Math.min(...diffs) : -2 * margin - Math.max(...diffs)
+        out[name] = row[name] + offset
+      }
+      return out
+    })
+    for (const method of methods) for (const direction of [1, -1]) {
+      for (const metric of seal.equivalence_metrics) {
+        const only = { ...seal, equivalence_metrics: [metric] }
+        assert.equal(rejectsEquivalence(baseline, shifted(method, direction), only), true, `${metric.name} ${direction}`)
+      }
+    }
+    // Documented on recorded data: a uniform +2×margin shift is not enough, because
+    // the n=8 interval spans the full range of differences (here > 4×margin).
+    const uniform = methods[0].map(row => ({ ...row, final_potential_kj_mol: row.final_potential_kj_mol + 2 * seal.equivalence_metrics[0].tolerance.abs }))
+    assert.equal(rejectsEquivalence(baseline, uniform, { ...seal, equivalence_metrics: [seal.equivalence_metrics[0]] }), false)
+  })
+  check('run8 reference rule: deterministic zero tolerance rejects any nonzero difference, accepts identity', () => {
+    const deterministic = { ...seal, paired_seed_tests: { kind: 'deterministic', justification: 'fixture' },
+      equivalence_metrics: seal.equivalence_metrics.map(metric => ({ ...metric, tolerance: { abs: 0 } })) }
+    for (const method of methods) assert.equal(rejectsEquivalence(baseline, method, deterministic), true)
+    const nudged = baseline.map((row, i) => i === 3 ? { ...row, mean_potential_kj_mol: row.mean_potential_kj_mol + 1e-9 } : row)
+    assert.equal(rejectsEquivalence(baseline, nudged, deterministic), true)
+    assert.equal(rejectsEquivalence(baseline, baseline.map(row => ({ ...row })), deterministic), false)
+  })
+  check('run8 reference rule: three pairs at 95% give no finite interval and are not rejected', () => {
+    const three = methods[0].slice(0, 3).map(row => ({ ...row, final_potential_kj_mol: row.final_potential_kj_mol + 1e6, mean_potential_kj_mol: row.mean_potential_kj_mol + 1e6 }))
+    for (const metrics of [1, 2]) assert.equal(orderStatisticInterval(pairedDiffs(baseline, three, 'final_potential_kj_mol'), 0.95, metrics), null)
+    assert.equal(rejectsEquivalence(baseline, three, seal), false)
+  })
+  check('run8 contract checker: python fixture agrees with the reference rule', () => {
+    // The fixture test script used in the run8-contract scenario must discriminate,
+    // otherwise its PASS through implement would be vacuous.
+    const work = fs.mkdtempSync(path.join(scratch, 'run8-checker-'))
+    fs.writeFileSync(path.join(work, 'check_equivalence.py'), CONTRACT_TESTS_PY)
+    fs.copyFileSync(path.join(RUN8, 'PREDICTIONS.json'), path.join(work, 'protocol.json'))
+    const shift = 3000 // beyond both margins plus the observed spread for both metrics
+    for (const [label, replicas, expected] of [
+      ['recorded', methods[0], 0],
+      ['shifted', methods[0].map(row => ({ ...row, final_potential_kj_mol: row.final_potential_kj_mol + shift })), 1],
+    ]) {
+      const b = path.join(work, label, 'baseline'), m = path.join(work, label, 'method')
+      writeJSON(path.join(b, 'run', 'ensemble.json'), { replicas: baseline })
+      writeJSON(path.join(m, 'run', 'ensemble.json'), { replicas })
+      assert.equal(rejectsEquivalence(baseline, replicas, seal), expected === 1, label)
+      const result = spawnSync('python3', ['-I', path.join(work, 'check_equivalence.py')], { cwd: work, encoding: 'utf8',
+        env: { ...process.env, BASELINE_OUT: b, METHOD_OUT: m } })
+      assert.equal(result.status, expected, `${label}: ${result.stderr}`)
+      const equivalence = readJSON(path.join(m, 'tests.json')).cases.find(row => row.id === 'equivalence')
+      assert.deepEqual(equivalence, { id: 'equivalence', pass: !expected, reason_code: expected ? 'equivalence' : null })
+    }
+  })
+}
+function run8FrozenTestCheck() {
+  // SCHEMAS.md: "Evaluation records (`evaluation.json`), held-out seeds, timing repetitions
+  // and compute budgets exist only in evaluate, and no case may require them."
+  check('run8 recorded implement outputs hold no evaluation.json; run8 frozen tests cannot pass on them', () => {
+    const results = path.join(RUN8, 'results', 'implement')
+    assert.ok(fs.existsSync(results), 'run8 evidence missing')
+    assert.deepEqual(files(results).filter(file => path.basename(file) === 'evaluation.json'), [])
+    const work = fs.mkdtempSync(path.join(scratch, 'run8-frozen-'))
+    for (const name of ['check_outputs.py', 'protocol.json']) fs.copyFileSync(path.join(RUN8, 'tests', name), path.join(work, name))
+    for (const method of RUN8_ENSEMBLE.method) {
+      fs.rmSync(path.join(work, 'out'), { recursive: true, force: true })
+      const result = spawnSync('python3', ['-I', path.join(work, 'check_outputs.py')], { cwd: work, encoding: 'utf8',
+        env: { ...process.env, BASELINE_OUT: path.dirname(path.dirname(RUN8_ENSEMBLE.baseline)), METHOD_OUT: path.dirname(path.dirname(method)) } })
+      assert.equal(result.status, 1, result.stderr)
+      const report = readJSON(path.join(work, 'out', 'tests.json'))
+      assert.deepEqual(report.cases.find(row => row.id === 'equivalence'), { id: 'equivalence', pass: false, reason_code: 'missing_output' })
+      // Every failure is the evaluation-record requirement; the output-shape cases pass.
+      assert.deepEqual(report.cases.filter(row => !row.pass).map(row => row.id), ['equivalence'])
+    }
+  })
+}
 async function main() {
   try {
     const happy = await execute('happy')
@@ -502,6 +733,20 @@ async function main() {
       assert.ok(author, 'missing method author call')
       assertEvalShapes(author.prompt, 'implement')
     })
+    // SCHEMAS.md "A/tests/ and out/tests.json": "Tests see exactly two sets of outputs ...
+    // acceptance is decided in evaluate. The test author prompt states these rules."
+    check('test author prompt states the representative-output equivalence rules', () => {
+      const author = happy.calls.find(call => call.title === 'tests')
+      assert.ok(author, 'missing test author call')
+      assertTestAuthorRules(author.prompt)
+      // Negative control: the matcher depends on the rule statements themselves.
+      for (const word of [/overlap/i, /disjoint|entirely outside|does not overlap|no overlap/i, /held-out seeds/i, /too few|insufficient|not enough/i]) {
+        const stripped = author.prompt.split('\n').filter(line => !word.test(line)).join('\n')
+        assert.throws(() => assertTestAuthorRules(stripped), undefined, `matcher passes without ${word}`)
+      }
+    })
+    run8RuleChecks()
+    run8FrozenTestCheck()
     for (const role of ['tests', 'implement']) check(`${role}: opposing sentinel unreadable [requires bubblewrap]`, () => {
       const call = happy.calls.find(call => call.title === role)
       assert.ok(call, 'missing author call')
@@ -522,6 +767,26 @@ async function main() {
       assert.deepEqual(readJSON(path.join(repaired.root, 'control', 'implement', 'attempt-1.json')), { attempt: 1, reason_code_counts: { equivalence: 1 } })
       assert.equal(readJSON(path.join(repaired.root, 'agent', 'implement-payload.json')).attempt, 2)
       assert.equal(authors[0].frozenHash, authors[1].frozenHash)
+    })
+    // run8 regression through the real implement stage: a contract-following
+    // equivalence test passes on run8's representative pairs; run8's frozen tests,
+    // which require evaluation records, fail with missing_output on both attempts.
+    const contract = await execute('run8-contract', { run8: 'contract' })
+    verdict('run8-contract', contract, null, { patch_applies: true, tests_pass: true, blind_tests: true, launch_review_pass: true })
+    check('run8-contract: equivalence case passes on run8 pairs at the first attempt', () => {
+      const report = readJSON(path.join(contract.root, 'agent', 'results', 'implement', 'out', 'tests.json'))
+      assert.deepEqual(report.cases.find(row => row.id === 'equivalence'), { id: 'equivalence', pass: true, reason_code: null })
+      assert.equal(report.failed, 0)
+      assert.equal(contract.calls.filter(call => call.title === 'implement').length, 1)
+      assert.equal(fs.existsSync(path.join(contract.root, 'control', 'implement', 'attempt-1.json')), false)
+    })
+    const frozen = await execute('run8-frozen', { run8: 'frozen' })
+    verdict('run8-frozen', frozen, 'numeric', { tests_pass: false })
+    check('run8-frozen: evaluation-record tests fail missing_output on both attempts', () => {
+      for (const attempt of [1, 2]) {
+        assert.deepEqual(readJSON(path.join(frozen.root, 'control', 'implement', `attempt-${attempt}.json`)),
+          { attempt, reason_code_counts: { missing_output: 1 } })
+      }
     })
     for (const [name, config, errorClass] of [
       ['repair-exhausted', { failTwice: true }, 'numeric'],
