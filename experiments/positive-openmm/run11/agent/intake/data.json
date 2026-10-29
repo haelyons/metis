@@ -1,0 +1,101 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "kind": "published coordinates",
+      "availability": "available",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "access": "Download pinned raw URL and place in driver working directory.",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "verification": "Fetched in memory; SHA-256 and 23558 atom records verified.",
+      "licence_source": "brief.md#licence"
+    },
+    {
+      "name": "amber99sb.xml",
+      "kind": "packaged force field",
+      "availability": "available",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "access": "Ships in OpenMM 8.2.0 package; use package force-field loader, which resolves bundled includes.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    {
+      "name": "tip3p.xml",
+      "kind": "packaged force field",
+      "availability": "available",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "access": "Ships in OpenMM 8.2.0 package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities and Langevin random streams",
+      "generation": "OpenMM setVelocitiesToTemperature(300 K, seed) and integrator.setRandomNumberSeed(seed).",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md",
+      "availability": "generated during execution; no external dataset required"
+    }
+  ],
+  "missing_required_data": [],
+  "pins": {
+    "openmm_version": "8.2.0",
+    "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "transitive_force_field_hashes": null,
+    "reason": "Individual transitive XML hashes not enumerated; entire source tree pinned by commit."
+  },
+  "splits": null,
+  "splits_reason": "No train/validation/test split: fixed molecular simulation ensemble.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "licences": {
+    "status": "permitted",
+    "intended_use": "Local scientific benchmarking and modification, with applicable licence notices retained.",
+    "components": [
+      {
+        "component": "OpenMM API, Reference and CPU platforms",
+        "licence": "MIT",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "OpenMM CUDA and OpenCL platforms",
+        "licence": "GNU LGPL",
+        "version": null,
+        "version_reason": "Licence overview does not specify version.",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "PDB, force-field files and brief driver",
+        "licence": null,
+        "reason": "Separate component-specific licence not established in this intake; brief states repository distribution and permission for local running and modification.",
+        "intended_use_permission": "Local running and modification permitted according to supplied brief.",
+        "source": "brief.md#licence"
+      }
+    ],
+    "article_reuse": "Cited for observations only; no article or figure redistribution permission established."
+  },
+  "published_energy_ground_truth": null,
+  "published_energy_ground_truth_reason": "No fixed-work CUDA energy ground truth published in supplied sources; this is absent reference evidence, not a missing execution input."
+}

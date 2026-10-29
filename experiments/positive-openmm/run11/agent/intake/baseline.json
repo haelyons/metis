@@ -1,0 +1,71 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "tag": "8.2.0",
+  "immutable_pin_source": "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0",
+  "build_commands": [
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0"
+  ],
+  "build_command_sources": [
+    "brief.md#setup",
+    "https://pypi.org/project/openmm/8.2.0/",
+    "https://pypi.org/project/OpenMM-CUDA-12/8.2.0/"
+  ],
+  "build_note": "Installation of released binaries is baseline build/install step; command recorded only, not executed. Transitive NVIDIA dependencies are not immutable-pinned by brief.",
+  "validation_commands": [
+    "python3 -m openmm.testInstallation"
+  ],
+  "validation_command_source": "brief.md#setup",
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "run_command_source": "brief.md#setup",
+  "driver": {
+    "filename": "dhfr_ensemble.py",
+    "source": "brief.md fenced Python block",
+    "repository_commit": null,
+    "reason": "Custom fixed-work driver supplied in brief, not part of pinned upstream repository. Extract verbatim before execution.",
+    "working_directory": "Directory containing 5dfr_solv-cube_equil.pdb and extracted driver.",
+    "external_script_sha256": null,
+    "external_script_sha256_reason": "No separate published immutable driver artifact."
+  },
+  "published_configuration": {
+    "system": "DHFR in explicit water",
+    "atoms": 23558,
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "timestep_fs": 4,
+    "constraint_tolerance": 1e-05,
+    "platform": "CUDA",
+    "properties": {
+      "Precision": "single",
+      "DeterministicForces": "true"
+    },
+    "gpu_count": 1,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "seed0": 1000,
+    "energy_interval_steps": 250,
+    "sources": [
+      "brief.md",
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    ]
+  },
+  "published_upstream_command": {
+    "command": "python benchmark.py --platform=CUDA --test=pme --seconds=60",
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "role": "Fixed-time published throughput study, not fixed-work baseline execution."
+  },
+  "published_fixed_work_measurements": null,
+  "published_fixed_work_measurements_reason": "Brief says CPU smoke test only; CUDA wall time, context compilation overhead and energy outcomes unmeasured.",
+  "execution_performed": false
+}

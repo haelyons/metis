@@ -1,0 +1,130 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "replicas": 8,
+    "atoms_per_replica": 23558,
+    "steps_per_replica": 25000,
+    "timestep_fs": 4,
+    "simulated_ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "selection": "Fixed scale specified by brief. No scale search, extrapolation or doubling.",
+    "source": "brief.md"
+  },
+  "inputs": {
+    "coordinates": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "driver": "Extract exact dhfr_ensemble.py fenced code from intake/brief.md.",
+    "configuration": {
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "gpu_count": 1,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "energy_interval_steps": 250,
+      "sources": [
+        "brief.md",
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+      ]
+    },
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ]
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "top_level_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "samples_per_replica": 100,
+    "full_energy_series_persisted": false,
+    "source": "brief.md driver"
+  },
+  "timing_scope": {
+    "primary": "perf_counter around sequential replica loop, after PDB loading, force-field system construction and platform lookup; includes context creation, any context JIT compilation, position/velocity initialization, stepping, energy queries, Python aggregation and context destruction.",
+    "per_replica": "Starts after context and position/velocity initialization; includes stepping and 100 energy queries through summary append.",
+    "excluded": [
+      "Package installation",
+      "PDB parsing and system construction before ensemble timer",
+      "JSON file writing and stdout after timer"
+    ],
+    "method_comparison": "Compare same fixed ensemble on one GPU and declare equivalent whole-ensemble timing boundaries; concurrent process launch and MPS setup timing policy is not specified by brief.",
+    "source": "brief.md driver"
+  },
+  "scoring_interface": {
+    "command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+    "result_file": "ensemble.json",
+    "objective_field": "total_wall_s",
+    "direction": "minimize",
+    "aggregate_ns_per_day_formula": "simulated_ns / total_wall_s * 86400",
+    "speedup_formula": "sequential total_wall_s / concurrent total_wall_s",
+    "scientific_checks": [
+      "Eight unique replica indices 0 through 7 with seeds 1000 through 1007 and 25000 steps each",
+      "Report mean and final potential energy per replica against corresponding sequential run"
+    ],
+    "published_numeric_energy_tolerance": null,
+    "reason": "No published fixed-work energy acceptance tolerance or CUDA reference values. Null-tolerance throughput reference does not establish acceptance.",
+    "concurrent_method_command": null,
+    "concurrent_method_command_reason": "Brief proposes MPS concurrency but does not supply fixed-work concurrent driver or command; do not substitute published fixed-time benchmark for fixed-work workload."
+  },
+  "budgets": {
+    "stage_budgets_s_overrides": {},
+    "defaults_s": {
+      "setup": 1200,
+      "anchors": 1200,
+      "profile": 1200,
+      "method_setup": 1200,
+      "method_run": 1200,
+      "tests": 900,
+      "evaluate": 2400
+    },
+    "runtime_evidence": "Brief estimates roughly one minute on H100 and a few minutes on slower GPUs; estimates unverified. Fixed finite 200000 aggregate integration steps; no adaptive scale loop.",
+    "budget_fit_verified": null,
+    "reason": "No workload run; setup, JIT, MPS and actual GPU wall times unknown."
+  },
+  "stage_budgets_s": {}
+}
