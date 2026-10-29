@@ -32,6 +32,34 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def invocation(root, protocol, arm, phase, index, budget=None, mode=None, protocol_path=None):
+    # Each invocation gets a new working directory and empty output tree.
+    work = root / "evaluation-work" / phase / str(index) / arm
+    if work.exists():
+        raise ValueError("reused evaluation workspace")
+    work.mkdir(parents=True)
+    for name in ("baseline-published", "method", "data", "harness", "payload", "baseline-out"):
+        (work / name).symlink_to(root / name, target_is_directory=True)
+    out = work / "out"
+    out.mkdir()
+    environment = dict(os.environ, BASELINE_DIR=str(root / "baseline-published"),
+                       METHOD_DIR=str(root / "method"), BASELINE_OUT=str(root / "baseline-out"),
+                       METHOD_OUT=str(out), EVAL_OUT=str(out), EVAL_ARM=arm, EVAL_MODE=mode or phase,
+                       EVAL_PROTOCOL=str(protocol_path or root / "evaluation-payload" / "predictions.json"),
+                       EVAL_INPUTS=json.dumps(protocol.get("evaluation_inputs")),
+                       EVAL_SEEDS=json.dumps(protocol.get("paired_seed_tests")),
+                       EVAL_COMPUTE_BUDGET="" if budget is None else str(budget))
+    if arm == "method":
+        script = root / "payload/method/run_anchors.sh" if phase == "anchors" else root / "payload/method/run_method.sh"
+        if not script.exists():
+            script = root / "payload/method/run_method.sh"
+    else:
+        script = root / "harness/run_evaluation.sh"
+        if not script.exists():
+            script = root / "harness/run_anchors.sh"
+    return work, out, environment, script
+
+
 def median_interval(values, confidence, two_sided=True):
     """Exact sign-test interval for the population median, no asymptotics."""
     if not values or not all(number(v) for v in values) or not number(confidence) or not .5 <= confidence < 1:
@@ -86,30 +114,7 @@ class Evaluation:
         return [(i, s) for s in seeds for i in ids]
 
     def run(self, arm, phase, index, budget=None):
-        # Each invocation gets a new working directory and empty output tree.
-        work = self.root / "evaluation-work" / phase / str(index) / arm
-        if work.exists():
-            raise ValueError("reused evaluation workspace")
-        work.mkdir(parents=True)
-        for name in ("baseline-published", "method", "data", "harness", "payload", "baseline-out"):
-            (work / name).symlink_to(self.root / name, target_is_directory=True)
-        out = work / "out"
-        out.mkdir()
-        environment = dict(os.environ, BASELINE_DIR=str(self.root / "baseline-published"),
-                           METHOD_DIR=str(self.root / "method"), BASELINE_OUT=str(self.root / "baseline-out"),
-                           METHOD_OUT=str(out), EVAL_OUT=str(out), EVAL_ARM=arm, EVAL_MODE=phase,
-                           EVAL_PROTOCOL=str(self.root / "evaluation-payload" / "predictions.json"),
-                           EVAL_INPUTS=json.dumps(self.protocol.get("evaluation_inputs")),
-                           EVAL_SEEDS=json.dumps(self.protocol.get("paired_seed_tests")),
-                           EVAL_COMPUTE_BUDGET="" if budget is None else str(budget))
-        if arm == "method":
-            script = self.root / "payload/method/run_anchors.sh" if phase == "anchors" else self.root / "payload/method/run_method.sh"
-            if not script.exists():
-                script = self.root / "payload/method/run_method.sh"
-        else:
-            script = self.root / "harness/run_evaluation.sh"
-            if not script.exists():
-                script = self.root / "harness/run_anchors.sh"
+        work, out, environment, script = invocation(self.root, self.protocol, arm, phase, index, budget)
         limit = self.manifest["run_timeout_s"]
         if type(limit) is not int or limit <= 0:
             raise ValueError("invalid timeout")

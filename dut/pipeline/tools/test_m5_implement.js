@@ -27,6 +27,98 @@ const RUN8_ENSEMBLE = {
   baseline: path.join(RUN8, 'results', 'implement', 'baseline', 'out', 'run', 'ensemble.json'),
   method: [1, 2].map(n => path.join(RUN8, 'results', 'implement', `attempt-${n}`, 'run', 'out', 'run', 'ensemble.json')),
 }
+// Recorded public evidence: positive-openmm run9 (sealed protocol, pre-seal harness
+// run_evaluation.sh, and evaluate's equivalence records for each arm).
+const RUN9 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run9', 'agent')
+const RUN9_RECORDS = {
+  baseline: path.join(RUN9, 'results', 'evaluate', 'equivalence-0-baseline.json'),
+  method: path.join(RUN9, 'results', 'evaluate', 'equivalence-0-method.json'),
+}
+// Sentinels that let the adapter-repair prompt be checked for its documented inputs.
+const SEAL_SOURCE = 'SEALED_SOURCE_SENTINEL_610274'
+const INTAKE_NOTE = 'INTAKE_SENTINEL_610275'
+const HARNESS_NOTE = 'HARNESS_SENTINEL_610276'
+// Baseline evaluation adapter fixture (SCHEMAS.md "Baseline and method adapter interface").
+// It records its working directory, environment and links to `obs`, then writes
+// EVAL_OUT/evaluation.json from EVAL_INPUTS, EVAL_SEEDS and the sealed protocol. `fault`
+// injects one smoke failure; `run9-*` faults replay run9's recorded report for the given seeds.
+const ADAPTER_PY = String.raw`import json, os, sys, time
+obs, sequence, label, fault, recorded = sys.argv[1:6]
+cwd, env = os.getcwd(), os.environ
+out = env.get('EVAL_OUT')
+def kind(p):
+    return 'link' if os.path.islink(p) else 'dir' if os.path.isdir(p) else 'file'
+names = ['EVAL_ARM', 'EVAL_MODE', 'EVAL_PROTOCOL', 'EVAL_INPUTS', 'EVAL_SEEDS', 'EVAL_COMPUTE_BUDGET', 'EVAL_OUT',
+         'BASELINE_DIR', 'METHOD_DIR', 'BASELINE_OUT', 'METHOD_OUT']
+row = {'label': label, 'fault': fault, 'cwd': cwd, 'env': {k: env.get(k) for k in names},
+       'entries': {n: kind(os.path.join(cwd, n)) for n in sorted(os.listdir(cwd))},
+       'out': sorted(os.listdir(out)) if out and os.path.isdir(out) else None}
+try:
+    with open(env['EVAL_PROTOCOL']) as f: protocol = json.load(f)
+except Exception:
+    protocol = None
+row['protocol'] = protocol
+with open(obs, 'a') as f: f.write(json.dumps(row) + '\n')
+with open(sequence, 'a') as f: f.write('smoke ' + label + '\n')
+with open(os.path.join(cwd, 'stale-marker'), 'w') as f: f.write(label)
+for i in range(1, 241): print('SMOKELOG:%d:end' % i)
+sys.stdout.flush()
+if fault == 'broken': sys.exit(9)
+if fault == 'timeout':
+    time.sleep(60)
+    sys.exit(0)
+inputs, spec = json.loads(env['EVAL_INPUTS']), json.loads(env['EVAL_SEEDS'])
+seeds = spec['seeds'] if spec.get('kind') == 'paired_median' else [None]
+if fault == 'all_seeds': seeds = protocol['paired_seed_tests'].get('seeds') or [None, None]
+ids = inputs['ids']
+if fault.startswith('run9-'):
+    with open(recorded) as f: report = json.load(f)
+    report['records'] = [r for r in report['records'] if r['seed'] in seeds]
+else:
+    metric_names = [m['name'] for m in protocol['equivalence_metrics']]
+    records = [{'input_id': i, 'seed': s, 'metrics': {n: 1.0 + k for k, n in enumerate(metric_names)}} for s in seeds for i in ids]
+    first = metric_names[0]
+    if fault == 'order': records.reverse()
+    if fault == 'missing_input': records.pop()
+    if fault == 'wrong_seed': records[0]['seed'] = (records[0]['seed'] or 0) + 1000
+    if fault == 'missing_metric': del records[-1]['metrics'][first]
+    if fault == 'renamed_metric':
+        for r in records: r['metrics']['replica_0_' + first] = r['metrics'].pop(first)
+    if fault == 'null_metric': records[0]['metrics'][first] = None
+    if fault == 'bool_metric': records[0]['metrics'][first] = True
+    if fault == 'string_metric': records[0]['metrics'][first] = '1.0'
+    report = {'records': records, 'timing_scope': protocol['timing_scope'],
+              'gpu_count': protocol['hardware_cost_basis']['baseline_gpus'], 'wall_s': 1.5}
+    if fault == 'scope': report['timing_scope'] = dict(protocol['timing_scope'], description='changed scope')
+    if fault == 'gpus': report['gpu_count'] += 1
+    if fault == 'wall': report['wall_s'] = 0
+    if fault == 'no_wall': del report['wall_s']
+if fault != 'missing_output':
+    with open(os.path.join(out, 'evaluation.json'), 'w') as f: json.dump(report, f)
+if fault == 'exit': sys.exit(3)
+`
+function adapterScript(root, label, fault, recorded = '') {
+  return `python3 -I - ${[path.join(root, 'smoke.jsonl'), path.join(root, 'sequence.log'), label, fault || 'none', recorded].map(quote).join(' ')} <<'SMOKE_ADAPTER'
+${ADAPTER_PY}SMOKE_ADAPTER`
+}
+// Stand-in for run9's published driver: replays the recorded replicas for one seed so that
+// run9's own run_evaluation.sh runs unchanged without a GPU.
+const RUN9_DRIVER = String.raw`import argparse, json
+p = argparse.ArgumentParser()
+for a in ('--replicas', '--steps', '--seed0', '--platform', '--out'): p.add_argument(a)
+a = p.parse_args()
+seed0 = int(a.seed0)
+with open(RECORDED) as f: recorded = json.load(f)
+m = next(r for r in recorded['records'] if r['seed'] == seed0)['metrics']
+reps = [{'replica': i, 'seed': seed0 + i, 'steps': int(a.steps), 'wall_s': m['replica_%d_wall_s' % i],
+         'final_potential_kj_mol': m['replica_%d_final_potential_kj_mol' % i],
+         'mean_potential_kj_mol': m['replica_%d_mean_potential_kj_mol' % i]} for i in range(int(a.replicas))]
+d = {'platform': a.platform, 'properties': {'Precision': 'single', 'DeterministicForces': 'true'},
+     'total_wall_s': m['total_wall_s'], 'simulated_ns': m['simulated_ns'], 'replicas': reps}
+with open(a.out, 'w') as f: json.dump(d, f)
+print('total_wall_s: %r' % d['total_wall_s'])
+print('aggregate_ns_per_day: %r' % (d['simulated_ns'] / d['total_wall_s'] * 86400))
+`
 // Reference equivalence rule for the tests' `equivalence` case, written from
 // SCHEMAS.md only: exact sign-test interval (largest k >= 1 with
 // P(Binomial(n,0.5) < k) <= alpha/2, bounds x[k-1], x[n-k]); reject only when
@@ -243,16 +335,53 @@ module.exports = {
     let json = { v: PRIVATE }
     const event = { ...options, returnedSession: randomUUID(), credentialsBefore: credentialsGone(root) }
     const agent = path.join(root, 'agent')
+    fs.appendFileSync(path.join(root, 'sequence.log'), `agent ${title}\n`)
+    const harnessHashes = directory => Object.fromEntries(files(directory).map(file => [path.relative(directory, file), sha(fs.readFileSync(file))]))
     if (title === 'harness') {
       const harness = path.join(agent, 'harness')
       script(path.join(harness, 'setup.sh'), `mkdir -p baseline-published data out
 git init -q --separate-git-dir published-git baseline-published
 printf 'published\\n' > baseline-published/pin
-printf 'inputs\\n' > data/input`)
-      script(path.join(harness, 'run_anchors.sh'), emit('out/anchors_measured.json', { anchor: 1 }) +
+printf 'inputs\\n' > data/input` + (config.run9Script ? `
+: > baseline-published/cuda.env
+: > data/5dfr_solv-cube_equil.pdb
+cat > baseline-published/dhfr_ensemble.py <<'RUN9_DRIVER'
+RECORDED = ${JSON.stringify(RUN9_RECORDS.baseline)}
+${RUN9_DRIVER}RUN9_DRIVER` : ''))
+      // run_anchors.sh doubles as the baseline adapter when EVAL_MODE is set (the documented
+      // fallback when run_evaluation.sh is absent).
+      const anchorsFault = config.anchorsFault ?? (config.evaluation || config.run9Script ? 'broken' : config.fault)
+      script(path.join(harness, 'run_anchors.sh'), `# ${HARNESS_NOTE}
+if [[ -n \${EVAL_MODE:-} ]]; then
+${adapterScript(root, 'run_anchors', anchorsFault, config.fault === 'run9-baseline' ? RUN9_RECORDS.baseline : '')}
+exit 0
+fi
+` + emit('out/anchors_measured.json', { anchor: 1 }) +
         emit('out/values.json', [0, 1, 2, 3, 4]) + emit('out/seeds.json', [0, 1, 2, 3, 4]) +
         (config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.baseline)) : ''))
       script(path.join(harness, 'run_command.sh'), 'true')
+      if (config.evaluation) script(path.join(harness, 'run_evaluation.sh'), `# ${HARNESS_NOTE}\n` +
+        adapterScript(root, 'run_evaluation', config.fault, config.fault === 'run9-baseline' ? RUN9_RECORDS.baseline : ''))
+      // run9's pre-seal adapter, byte for byte.
+      if (config.run9Script) fs.copyFileSync(path.join(RUN9, 'harness', 'run_evaluation.sh'), path.join(harness, 'run_evaluation.sh'))
+    }
+    if (title === 'adapter-repair') {
+      // Writes where the harness agent writes; an isolated view, if supplied, takes precedence.
+      const harness = options.isolation?.directory ? path.join(options.isolation.directory, 'harness') : path.join(agent, 'harness')
+      event.repairDirectory = harness
+      event.harnessBefore = harnessHashes(path.join(agent, 'harness'))
+      // What the repair view supplies, before this agent writes: file hashes and parsed JSON.
+      const view = options.isolation?.directory
+      event.repairView = view ? harnessHashes(view) : null
+      event.repairViewJSON = view ? Object.fromEntries(files(view).filter(file => file.endsWith('.json'))
+        .map(file => { try { return [path.relative(view, file), readJSON(file)] } catch { return [path.relative(view, file), null] } })) : null
+      const recorded = { 'run9-method': RUN9_RECORDS.method, 'run9-baseline': RUN9_RECORDS.baseline }[config.repairFault] || ''
+      script(path.join(harness, 'run_evaluation.sh'), '# rewritten by adapter-repair\n' + adapterScript(root, 'repaired', config.repairFault, recorded))
+      event.repairedSha = sha(fs.readFileSync(path.join(harness, 'run_evaluation.sh')))
+      // Other rewritten scripts must never be accepted, uploaded or run.
+      if (config.stray) for (const name of ['setup.sh', 'run_anchors.sh', 'run_command.sh']) {
+        script(path.join(harness, name), `printf '%s\\n' stray > out/stray-${name}\nexit 9`)
+      }
     }
     if (['tests', 'implement', 'review'].includes(title)) {
       const view = options.isolation?.directory || options.cwd
@@ -266,6 +395,7 @@ printf 'inputs\\n' > data/input`)
         finally { fs.rmSync(planted, { recursive: true }) }
       } else event.probe = await isolationProbe(options, root)
       event.viewFiles = files(view).map(file => path.relative(view, file))
+      event.viewHarness = harnessHashes(path.join(view, 'harness'))
       event.freeze = fs.existsSync(path.join(root, 'control', 'implement', 'tests.json'))
         ? readJSON(path.join(root, 'control', 'implement', 'tests.json')) : null
       event.frozenHash = event.freeze ? treeHash(path.join(agent, 'tests')) : null
@@ -370,32 +500,35 @@ ${config.runFailure ? 'exit 7' : 'true'}`)
   },
   async exportSession(id, file) { fs.writeFileSync(file, '{}') },
 }
-if (require.main !== module) return
-
-const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_implement_'))
-let checks = 0, failures = 0
-function check(label, fn) {
-  checks++
-  try { fn(); console.log(`ok ${label}`) }
-  catch (error) { failures++; console.log(`FAIL ${label}: ${error.message}`) }
-}
 function fixture(root, config) {
   const agent = path.join(root, 'agent')
   writeJSON(path.join(agent, 'intake', 'anchors.json'), [{ id: 'anchor', quantity: 'sum', source: 'fixture', published_value: 1, tolerance: 0 }])
   for (const [name, value] of Object.entries({
-    benchmark: { name: PRIVATE }, data: { available: true },
+    benchmark: { name: PRIVATE }, data: { available: true, note: INTAKE_NOTE },
     baseline: { repo: 'fixture', pin: 'v1', build_commands: ['true'], run_commands: ['true'], published_configuration: { n: 5 } },
     EXECUTION: { representative_scale: { n: 5 }, inputs: ['data/input'], outputs: ['values.json'], timing_scope: 'whole run',
       timeout_s: 10, timeouts: { setup_method: 11, run_method: 12, run_tests: 13 },
-      stage_budgets_s: { method_setup: 21, method_run: 22, tests: 23 } },
+      stage_budgets_s: { method_setup: 21, method_run: config.methodRun || 22, tests: 23 } },
   })) writeJSON(path.join(agent, 'intake', name + '.json'), value)
+  // An executable sealed protocol (SCHEMAS.md "Evaluate: executable sealed protocol"), so the
+  // baseline adapter smoke has sealed input ids, seeds, metric names, scope and GPU count.
+  // Seeds and ids are deliberately unsorted so order is observable.
+  const stochastic = config.seal !== 'deterministic'
   const predictions = { predictions: [{ method: 'batching', expected_speedup_interval: { low: 1.1, high: 1.2 },
     outcome_vs_compute_points: [1, 2, 4].map(compute_budget => ({ compute_budget, predicted_outcome: 1, uncertainty: 'exact' })) }],
-    infeasible_methods: [], equivalence_metrics: ['exact equality'], paired_seed_tests: [0, 1, 2, 3, 4],
-    sample_sizes: { n: 5 }, confidence_rule: 'paired 95% interval', hardware_cost_basis: 'same box', timing_scope: 'whole run',
-    minimum_worthwhile_gain: 1.1, evaluation_inputs: ['fixture'], splits: { evaluation: [0, 5] }, compute_budgets: [1, 2, 4],
-    repetitions: 5, warmup: 'one run', scheduling_order: 'alternate', equal_outcome_target: 1 }
+    infeasible_methods: [], outputs_stochastic: stochastic,
+    equivalence_metrics: [{ name: 'value_sum', source: SEAL_SOURCE, tolerance: { abs: stochastic ? 0.5 : 0 } },
+      { name: 'value_max', source: 'fixture requirement', tolerance: { abs: stochastic ? 0.5 : 0 } }],
+    paired_seed_tests: stochastic ? { kind: 'paired_median', seeds: [7, 3, 5, 1, 9, 11] } : { kind: 'deterministic', justification: 'fixture is deterministic' },
+    sample_sizes: { inputs: 2, seeds: stochastic ? 6 : 1 },
+    confidence_rule: { equivalence: { kind: 'paired_median', confidence: 0.95 }, performance: { kind: 'paired_median', confidence: 0.95 } },
+    hardware_cost_basis: { baseline_gpus: 1, method_gpus: 1, budget_unit: 'gpu_s' },
+    timing_scope: { kind: 'reported_wall', gpu_synchronization: 'adapter', description: 'whole run' },
+    minimum_worthwhile_gain: 1.1, evaluation_inputs: { ids: ['input-b', 'input-a'], pin: 'fixture inputs' },
+    splits: { evaluation: [0, 5] }, compute_budgets: [1, 2, 4], repetitions: 5, warmup: 1,
+    scheduling_order: { kind: 'randomized_pairs', seed: 42 }, equal_outcome_target: { not_applicable: true, reason: 'fixed-work fixture' } }
   if (config.run8) Object.assign(predictions, readJSON(path.join(RUN8, 'PREDICTIONS.json')))
+  if (config.run9 || config.run9Script) Object.assign(predictions, readJSON(path.join(RUN9, 'PREDICTIONS.json')))
   writeJSON(path.join(agent, 'PREDICTIONS.json'), predictions)
   const frozen = path.join(root, 'control', 'seals', 'frozen.json')
   writeJSON(frozen, predictions)
@@ -410,7 +543,9 @@ function fixture(root, config) {
   // harness copies author outputs; otherwise the stage's restart guard fires.
   if (config.tamperSeal === 'initial') fs.appendFileSync(path.join(agent, 'PREDICTIONS.json'), ' ')
 }
-async function execute(name, config = {}) {
+// Runs the real pipeline against the fake box and this file's WF_STUB; shared with
+// tools/test_m5_adapter_smoke.js.
+async function launch(scratch, name, config = {}) {
   const root = path.join(scratch, name)
   fs.mkdirSync(root, { recursive: true })
   fs.symlinkSync(path.join(ROOT, 'm5'), path.join(root, 'm5'), 'dir')
@@ -462,7 +597,33 @@ fi`)
   } finally { fs.closeSync(stdout); fs.closeSync(stderr) }
   const records = rows(path.join(root, 'operator', 'signatures.jsonl'))
   const record = records.find(row => row.signature?.stage === 'implement')
-  const calls = rows(path.join(root, 'calls.jsonl')).filter(call => ['tests', 'implement', 'review'].includes(call.title))
+  const allCalls = rows(path.join(root, 'calls.jsonl'))
+  const calls = allCalls.filter(call => ['tests', 'implement', 'review'].includes(call.title))
+  return { root, child, output, records, record, calls, allCalls, config }
+}
+// Frozen trees require owner write permission before recursive cleanup.
+function removeScratch(scratch) {
+  function writable(directory) {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (entry.isDirectory()) { const child = path.join(directory, entry.name); fs.chmodSync(child, 0o700); writable(child) }
+    }
+  }
+  writable(scratch)
+  fs.rmSync(scratch, { recursive: true, force: true })
+}
+Object.assign(module.exports, { fixtures: { launch, removeScratch, rows, files, sha, readJSON, writeJSON, treeHash,
+  RUN9, RUN9_RECORDS, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE, PRIVATE } })
+if (require.main !== module) return
+
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_implement_'))
+let checks = 0, failures = 0
+function check(label, fn) {
+  checks++
+  try { fn(); console.log(`ok ${label}`) }
+  catch (error) { failures++; console.log(`FAIL ${label}: ${error.message}`) }
+}
+async function execute(name, config = {}) {
+  const { root, child, output, records, record, calls } = await launch(scratch, name, config)
   check(`${name}: workflow completes`, () => {
     assert.ifError(child.error)
     assert.equal(child.status, 0, `status=${child.status} signal=${child.signal}`)
@@ -829,16 +990,7 @@ async function main() {
       })
     }
   } catch (error) { failures++; console.log(`FAIL test harness: ${error.stack}`) }
-  finally {
-    // Frozen trees require owner write permission before recursive cleanup.
-    function writable(directory) {
-      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-        if (entry.isDirectory()) { const child = path.join(directory, entry.name); fs.chmodSync(child, 0o700); writable(child) }
-      }
-    }
-    writable(scratch)
-    fs.rmSync(scratch, { recursive: true, force: true })
-  }
+  finally { removeScratch(scratch) }
   console.log(failures ? `${failures} failure(s) (${checks} checks)` : 'all checks passed')
   process.exitCode = failures ? 1 : 0
 }

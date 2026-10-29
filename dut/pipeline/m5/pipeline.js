@@ -177,7 +177,7 @@ Gate: complete files, found, available required data, permitted licence, and sto
     receipt.overrun = receipt.rc === 124 || receipt.timed_out === true || receipt.wall_s > timeout
     stageReceipts.push(receipt)
     // Transport and integrity commands have no authored script to change. Repair by one identical retry.
-    const authored = ['setup', 'anchors', 'profile', 'concurrency', 'setup-method', 'run-method', 'run-tests']
+    const authored = ['setup', 'anchors', 'profile', 'concurrency', 'adapter-smoke', 'setup-method', 'run-method', 'run-tests']
     if (!retry && !authored.includes(name) && (receipt.rc === 124 || receipt.timed_out === true)) {
       return boxCommand(name, command, destination, timeout, true)
     }

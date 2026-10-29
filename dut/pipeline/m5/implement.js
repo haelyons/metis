@@ -2,6 +2,7 @@
 const path = require('node:path')
 const os = require('node:os')
 const fs = require('node:fs')
+const { isDeepStrictEqual } = require('node:util')
 const { createHash } = require('node:crypto')
 const hash = bytes => createHash('sha256').update(bytes).digest('hex')
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
@@ -13,6 +14,8 @@ const testReasons = ['dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_ha
   'equivalence', 'missing_output', 'invalid_output', 'upstream', 'other']
 const reviewReasons = ['changes_method', 'equivalence_risk', 'resource_mismatch', 'changes_baseline',
   'changes_protocol', 'invalid_payload', 'cost_guard', 'other']
+const evaluationInterface = `
+Evaluation runs in fresh working directories with the same absolute source/data paths. Honor EVAL_ARM, EVAL_MODE, EVAL_PROTOCOL (sealed JSON path), EVAL_INPUTS, EVAL_SEEDS and EVAL_COMPUTE_BUDGET. BASELINE_DIR, METHOD_DIR and BASELINE_OUT are absolute fixed paths; METHOD_OUT and EVAL_OUT are this invocation's empty output directory. EVAL_COMPUTE_BUDGET is empty outside curves. EVAL_INPUTS and EVAL_SEEDS are JSON encodings of evaluation_inputs and paired_seed_tests. EVAL_INPUTS is an object whose ids array lists the sealed input identities in order; each record's input_id is one of those strings, and every other key (pins, configuration, generated-input descriptions) describes inputs and is never itself an input. EVAL_SEEDS is either {kind:"paired_median",seeds:[integer,...]}, whose seeds are the execution seeds in order, or {kind:"deterministic",...}, whose single execution seed is null; other keys are descriptive. Modes are anchors, equivalence, warmup, performance, curve. Non-anchor modes write EVAL_OUT/evaluation.json with records [{input_id,seed,metrics}], timing_scope, gpu_count, wall_s for reported timing, and compute_budget for curves. Iterate seeds first, then sealed input IDs; preserve exact counts/order. Each record's metrics holds every sealed equivalence_metrics name as a finite number for that input and seed, keyed by exactly that name. The method adapter's records mean the same as the baseline adapter's: for each input and seed, the same workload execution and the same metric definitions. timing_scope must equal the sealed scope; gpu_count must equal the arm's sealed hardware_cost_basis count; reported wall_s must be finite positive. Synchronize all used GPUs before returning or stopping reported timers. Include launch, transfer and merge within the sealed scope. Compute budgets are hard GPU-second limits; report outcomes only from computation within the budget.`
 
 // Copy declared evidence only, rejecting links and special files at role boundaries.
 function files(directory, relative = '', includeDirectories = false) {
@@ -111,9 +114,7 @@ ${repairCounts ? `No box access, test source, case IDs, output values, reports o
   : `You may inspect the already-built baseline on the dev box using ~/.cache/metis-serve/box.sh. Remote run directory: ${JSON.stringify(remoteDirectory)}. Do not start/stop the box. No tests have been uploaded. Use probe.json for discovered tools. Never modify baseline-published/ or data/ or baseline-out/.`}
 Write method.patch, setup_method.sh and run_method.sh under method/. You may additionally provide run_anchors.sh, the method variant of the baseline anchor protocol; no other files are allowed. Without it the pipeline invokes run_method.sh with EVAL_MODE=anchors, which must rerun every intake anchor and write out/anchors_measured.json. method.patch is a nonempty git-style patch relative to the published baseline root. The pipeline makes a fresh COPY at method/, checks/applies the patch there, and never patches baseline-published/.
 The pipeline invokes bash payload/method/setup_method.sh, then bash payload/method/run_method.sh, from ${JSON.stringify(remoteDirectory)}. BASELINE_DIR, METHOD_DIR, BASELINE_OUT and METHOD_OUT are absolute paths supplied by the pipeline; METHOD_DIR is already patched. Setup builds only METHOD_DIR. Run the method at the same representative scale, seeds and input set as the baseline; write actual outputs in out/ with exactly the baseline format and relative location scheme. Never copy baseline outputs as method results. Both scripts must fail nonzero on errors, create required output directories, and tolerate a fresh patched copy. Do not edit harness scripts, launchers or tests.`
-    const evaluationInterface = label === 'implement' ? `
-Evaluation runs in fresh working directories with the same absolute source/data paths. Honor EVAL_MODE, EVAL_PROTOCOL (sealed JSON path), EVAL_INPUTS, EVAL_SEEDS and EVAL_COMPUTE_BUDGET. EVAL_INPUTS and EVAL_SEEDS are JSON encodings of evaluation_inputs and paired_seed_tests. EVAL_INPUTS is an object whose ids array lists the sealed input identities in order; each record's input_id is one of those strings, and every other key (pins, configuration, generated-input descriptions) describes inputs and is never itself an input. EVAL_SEEDS is either {kind:"paired_median",seeds:[integer,...]}, whose seeds are the execution seeds in order, or {kind:"deterministic",...}, whose single execution seed is null; other keys are descriptive. Modes are anchors, equivalence, warmup, performance, curve. Non-anchor modes write EVAL_OUT/evaluation.json with records [{input_id,seed,metrics}], timing_scope, gpu_count, wall_s for reported timing, and compute_budget for curves. Iterate seeds first, then sealed input IDs; preserve exact counts/order. Synchronize all used GPUs before returning or stopping reported timers. Include launch, transfer and merge within the sealed scope. Compute budgets are hard GPU-second limits; report outcomes only from computation within the budget.` : ''
-    const reply = await agent(prompt + evaluationInterface, { label, agentType: 'ls-writer', model: 'sonnet',
+    const reply = await agent(prompt + (label === 'implement' ? evaluationInterface : ''), { label, agentType: 'ls-writer', model: 'sonnet',
       repairable: false, fresh: true, ...(repairCounts ? { retry: 1 } : {}),
       isolation: { directory: view, hidden: [root, path.dirname(agent.journal || path.join(A, 'wf', 'journal.jsonl'))],
         box_access: label === 'implement' && !repairCounts } })
@@ -132,6 +133,75 @@ Evaluation runs in fresh working directories with the same absolute source/data 
     if (result.rc === 124 || result.timed_out === true) return { ...result, error: 'timeout', budget_s: timeout }
     if (result.error || !Number.isInteger(result.rc) || result.fetched !== true) return { ...result, error: 'infra' }
     return result
+  }
+  function adapterVoid(category) {
+    for (const name of ['patch_applies', 'tests_pass', 'blind_tests', 'launch_review_pass']) facts[name] = null
+    return { ...failure(facts, category === 'timeout' ? 'timeout' : 'parse'), status: 'VOID' }
+  }
+  async function smokeAdapter(predictions, attempt) {
+    await intact()
+    const to = path.join(destination, 'adapter', String(attempt))
+    const result = await command('adapter-smoke', 'rm -rf out/adapter\npython3 -B adapter-payload/adapter_smoke.py',
+      to, executionTimeout('run_method'))
+    let category = result.error === 'timeout' ? 'timeout' : result.error || result.rc !== 0 ? 'exit' : null
+    const file = path.join(to, 'out', 'adapter', 'evaluation.json')
+    if (!category && !fs.existsSync(file)) category = 'missing_output'
+    if (!category) {
+      try {
+        const report = readJSON(file), rule = predictions.paired_seed_tests
+        const seed = rule.kind === 'deterministic' ? null : rule.seeds[0]
+        const ids = predictions.evaluation_inputs.ids
+        if (!Array.isArray(report.records) || report.records.length !== ids.length
+          || !report.records.every((row, index) => row && row.input_id === ids[index] && row.seed === seed)
+          || !isDeepStrictEqual(report.timing_scope, predictions.timing_scope)
+          || !Number.isInteger(report.gpu_count) || report.gpu_count !== predictions.hardware_cost_basis.baseline_gpus
+          || (predictions.timing_scope.kind === 'reported_wall' && (!Number.isFinite(report.wall_s) || report.wall_s <= 0))) category = 'records'
+        else if (!report.records.every(row => row.metrics && typeof row.metrics === 'object' && !Array.isArray(row.metrics)
+          && Object.values(row.metrics).every(Number.isFinite)
+          && predictions.equivalence_metrics.every(metric => Number.isFinite(row.metrics[metric.name])))) category = 'metrics'
+      } catch { category = 'records' }
+    }
+    return { category, log: result.log }
+  }
+  async function repairAdapter(smoke) {
+    await intact()
+    const view = fs.mkdtempSync(path.join(os.tmpdir(), 'm5-adapter-repair-'))
+    views.push(view)
+    for (const name of ['PREDICTIONS.json', 'intake', 'harness']) copy(path.join(A, name), path.join(view, name))
+    const permitted = path.join('harness', 'run_evaluation.sh')
+    const lines = smoke.log && fs.existsSync(smoke.log) ? fs.readFileSync(smoke.log, 'utf8').split('\n') : []
+    if (lines.at(-1) === '') lines.pop()
+    const log = lines.slice(-200).join('\n')
+    const reply = await agent(`Repair the baseline evaluation adapter once. Use only this private view: ${JSON.stringify(view)}.
+Sealed PREDICTIONS.json, intake files and current harness scripts are provided here. Failure category: ${smoke.category}.
+Rewrite only harness/run_evaluation.sh, creating it when absent. Run the exact published configuration and measure actual outputs; never reuse baseline outputs. Do not change other scripts, source, data, scale, inputs, seeds or tolerances. Do not access the box or run workloads locally.
+The pipeline owns CUDA MPS. No harness script may set, unset or override any CUDA_MPS_* environment variable, or start or stop an MPS daemon; inherit these variables unchanged.
+Script budget: run_evaluation.sh=${executionTimeout('run_method')} seconds. Use one fixed scale from EXECUTION.json, no scale search or doubling loops, and finish well within the budget.
+${evaluationInterface}
+Last at most 200 log lines:\n${log}
+Return a short acknowledgement; the pipeline reads the script.`,
+      { label: 'adapter-repair', agentType: 'ls-writer', model: 'sonnet', retry: 1, repairable: false, fresh: true,
+        isolation: { directory: view, hidden: [root, path.dirname(agent.journal || path.join(A, 'wf', 'journal.jsonl'))], box_access: false } })
+    if (reply == null) throw new Error('invalid adapter repair')
+    const script = path.join(view, permitted)
+    if (!fs.lstatSync(script).isFile() || !fs.statSync(script).size) throw new Error('missing adapter')
+    await exec('bash', ['-n', script])
+    copy(script, path.join(A, permitted))
+  }
+  async function uploadAdapter(attempt) {
+    const commands = ['mkdir -p adapter-payload out']
+    const payload = attempt === 1 ? [
+      ...['eval_common.py', 'adapter_smoke.py'].map(name => [path.join(__dirname, name), 'adapter-payload/' + name]),
+      [path.join(A, 'PREDICTIONS.json'), 'adapter-payload/predictions.json'],
+    ] : [[path.join(A, 'harness', 'run_evaluation.sh'), 'harness/run_evaluation.sh']]
+    for (const [source, target] of payload) {
+      commands.push(`: > ${quote(target)}`)
+      const bytes = fs.readFileSync(source).toString('base64')
+      for (let offset = 0; offset < bytes.length; offset += 24576) {
+        commands.push(`printf %s ${quote(bytes.slice(offset, offset + 24576))} | base64 -d >> ${quote(target)}`)
+      }
+    }
+    return uploadCommands(commands, path.join(destination, 'adapter', String(attempt)))
   }
   const stateCommand = includeTests => `printf %s ${quote(stateScript)} | base64 -d | python3 -I - baseline_sha256 baseline-published data_sha256 data baseline_outputs_sha256 baseline-out${includeTests ? ' tests_sha256 payload/tests method_payload_sha256 payload/method' : ''} > out/implement-state.json`
   async function checkState(attempt, phase, includeTests = true) {
@@ -167,16 +237,19 @@ Evaluation runs in fresh working directories with the same absolute source/data 
       }
     }
     commands.push('find payload/tests -type d -exec chmod 555 {} +', 'find payload/tests -type f -exec chmod 444 {} +')
+    return uploadCommands(commands, path.join(destination, `attempt-${attempt}`, 'upload'))
+  }
+  async function uploadCommands(commands, to) {
     let batch = [], size = 0, result
     for (const line of commands) {
       if (size + line.length > 32768) {
-        result = await command('implement-upload', batch.join('\n'), path.join(destination, `attempt-${attempt}`, 'upload'), executionTimeout('setup_method'))
+        result = await command('implement-upload', batch.join('\n'), to, executionTimeout('setup_method'))
         if (result.error || result.rc !== 0) return result
         batch = []; size = 0
       }
       batch.push(line); size += line.length + 1
     }
-    return command('implement-upload', batch.join('\n'), path.join(destination, `attempt-${attempt}`, 'upload'), executionTimeout('setup_method'))
+    return command('implement-upload', batch.join('\n'), to, executionTimeout('setup_method'))
   }
   async function reviewLaunch() {
     const view = fs.mkdtempSync(path.join(os.tmpdir(), 'm5-review-'))
@@ -235,6 +308,17 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
     if (Object.keys(baselineState).sort().join(',') !== 'baseline_outputs_sha256,baseline_sha256,data_sha256'
       || !Object.values(baselineState).every(value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value))) return failure(facts, 'parse')
     writeJSON(path.join(control, 'baseline.json'), baselineState)
+    let uploaded = await uploadAdapter(1)
+    if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
+    let smoke = await smokeAdapter(predictions, 1)
+    if (smoke.category) {
+      try { await repairAdapter(smoke) } catch { return adapterVoid('records') }
+      uploaded = await uploadAdapter(2)
+      if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
+      smoke = await smokeAdapter(predictions, 2)
+      if (smoke.category) return adapterVoid(smoke.category)
+    }
+    await intact()
     await author('tests', 'tests')
     freeze(tests)
     frozenTests = await treeHash(tests)

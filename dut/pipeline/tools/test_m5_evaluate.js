@@ -108,7 +108,10 @@ else:
                   gpu_count=p['hardware_cost_basis'][arm + '_gpus'], wall_s=wall, private='${SECRET}')
     if mode == 'curve': report['compute_budget'] = float(os.environ['EVAL_COMPUTE_BUDGET'])
     if c.get('missingScope'): del report['timing_scope']
-    if not (c.get('missingOutput') or (mode == 'curve' and c.get('missingCurve'))):
+    # Implement's baseline adapter smoke (SCHEMAS.md "Baseline adapter smoke") runs in
+    # evaluation-work/smoke/; missing outputs model an adapter that fails only in evaluate.
+    smoke = '/evaluation-work/smoke/' in str(pathlib.Path.cwd())
+    if not ((c.get('missingOutput') and not smoke) or (mode == 'curve' and c.get('missingCurve'))):
         (out / 'evaluation.json').write_text(json.dumps(report))
 FIXTURE_PY`
 }
@@ -124,7 +127,7 @@ arm = os.environ.get('EVAL_ARM', '${baseline ? 'baseline' : 'method'}')
 mode = os.environ.get('EVAL_MODE', 'implement')
 out = pathlib.Path(os.environ.get('EVAL_OUT', 'out'))
 out.mkdir(parents=True, exist_ok=True)
-row = dict(arm=arm, mode=mode, inputs=os.environ.get('EVAL_INPUTS'), seeds=os.environ.get('EVAL_SEEDS'),
+row = dict(arm=arm, mode=mode, cwd=os.getcwd(), inputs=os.environ.get('EVAL_INPUTS'), seeds=os.environ.get('EVAL_SEEDS'),
            protocol=pathlib.Path(os.environ['EVAL_PROTOCOL']).read_text() if os.environ.get('EVAL_PROTOCOL') else None)
 def capture():
     with open(c['capture'], 'a') as f: f.write(json.dumps(row) + '\\n')
@@ -307,6 +310,20 @@ fi`)
   { ...env, HOME: home, WF_STUB: __filename, M5_TEST_SOURCE_ROOT: ROOT, M5_EVALUATE_ROOT: root,
     M5_EVALUATE_CONFIG: JSON.stringify(config), M5_REMOTE_ROOTS: path.join(scratch, 'remote-roots'), BOX_ROOT: box, M5_EVALUATE_BIN: bin, BOX: path.join(bin, 'box'), FETCH: path.join(bin, 'fetch') }, ROOT)
   const records = rows(path.join(root, 'operator/signatures.jsonl')), record = records.find(row => row.signature?.stage === 'evaluate')
+  // A baseline adapter failing implement's smoke (and its one repair) stops before evaluate.
+  if (config.stopsAtImplement) {
+    check(`${name}: implement's baseline adapter smoke stops the run before evaluate`, () => {
+      assert.ifError(child.error)
+      assert.equal(child.status, 0)
+      assert.equal(records.find(row => row.signature?.stage === 'reproduce')?.signature.status, 'PASS', 'reproduce')
+      const implement = records.find(row => row.signature?.stage === 'implement')?.signature
+      assert.equal(implement?.status, 'VOID', 'implement')
+      assert.equal(implement.error_class, 'parse')
+      assert.equal(record?.signature.status, 'SKIPPED', 'evaluate')
+      assert.ok(!rows(path.join(root, 'calls.jsonl')).some(row => ['tests', 'implement', 'review'].includes(row.title)), 'an author ran')
+    })
+    return { root, record, records, results: path.join(agent, 'results/evaluate') }
+  }
   check(`${name}: evaluate reached through real reproduce and implement`, () => {
     assert.ifError(child.error)
     assert.equal(child.status, 0)
@@ -340,8 +357,11 @@ fi`)
 }
 // SCHEMAS.md EVAL_PROTOCOL bullet: "`EVAL_INPUTS` and `EVAL_SEEDS` are JSON encodings of `evaluation_inputs`
 // and `paired_seed_tests`." Each adapter invocation in an evaluate mode must receive run7's sealed objects.
+// Implement's baseline adapter smoke runs in evaluation-work/smoke/ with seeds cut to the first
+// sealed seed (tools/test_m5_adapter_smoke.js); only evaluate's invocations are checked here.
+const isSmoke = row => /\/evaluation-work\/smoke\//.test(row.cwd || '')
 function run7Env(name, captureFile, arms) {
-  const sealed = run7Protocol(), captured = rows(captureFile).filter(row => row.mode !== 'implement')
+  const sealed = run7Protocol(), captured = rows(captureFile).filter(row => row.mode !== 'implement' && !isSmoke(row))
   check(`${name}: every adapter receives run7's sealed evaluation_inputs and paired_seed_tests`, () => {
     for (const arm of arms) assert.ok(captured.some(row => row.arm === arm && row.mode === 'equivalence'), `${arm} adapter never ran equivalence`)
     for (const row of captured) {
@@ -398,12 +418,18 @@ async function run7Cases() {
     assert.equal(value.status, 'PASS')
     assert.equal(good.record.facts.equivalence_pass, true)
   })
-  const bad = await pipeline('run7-every-key', { run7: { baseline: 'every-key', method: 'contract', capture: capture('pipeline-every-key') } })
-  run7Env('run7 pipeline every-key harness', capture('pipeline-every-key'), ['baseline', 'method'])
+  // run7's harness now fails implement's baseline adapter smoke (records keyed by every EVAL_INPUTS key).
+  const bad = await pipeline('run7-every-key', { stopsAtImplement: true, run7: { baseline: 'every-key', method: 'contract', capture: capture('pipeline-every-key') } })
+  check('run7 pipeline every-key harness: the smoke ran it as baseline/equivalence and saw every-key records', () => {
+    const smokes = rows(capture('pipeline-every-key')).filter(isSmoke)
+    assert.ok(smokes.some(row => row.arm === 'baseline' && row.mode === 'equivalence'), 'baseline adapter never smoked')
+    assert.ok(smokes.some(row => row.records?.some(([id]) => id === 'pins')), 'fixture did not emit every-key records')
+    assert.ok(!rows(capture('pipeline-every-key')).some(row => !isSmoke(row) && row.mode !== 'implement'), 'an evaluate invocation ran')
+  })
   check('run7 pipeline: harness treating every EVAL_INPUTS key as an input is not accepted', () => {
     const value = fs.existsSync(path.join(bad.results, 'equivalence.json')) ? readJSON(path.join(bad.results, 'equivalence.json')) : null
     assert.notEqual(value?.status, 'PASS')
-    assert.notEqual(bad.record.facts.equivalence_pass, true)
+    assert.notEqual(bad.record.facts?.equivalence_pass, true)
     assert.notEqual(bad.record.signature.status, 'PASS')
   })
 }

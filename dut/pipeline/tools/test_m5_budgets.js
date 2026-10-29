@@ -106,6 +106,8 @@ function budgetKey(operation) {
   if (operation === 'concurrency') return 'profile'
   if (operation === 'setup-method') return 'method_setup'
   if (operation === 'run-method') return 'method_run'
+  // SCHEMAS.md "Baseline adapter smoke": box operation `adapter-smoke` under the method_run budget.
+  if (operation === 'adapter-smoke') return 'method_run'
   if (operation === 'run-tests') return 'tests'
   if (/^implement-/.test(operation) || /^evaluate-(upload|state-)/.test(operation)) return 'method_setup'
   if (/^evaluate-(validity|equivalence|performance)$/.test(operation)) return 'evaluate'
