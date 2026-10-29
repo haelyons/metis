@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 'use strict'
 
-// Black-box U31/U32 contracts: implement's baseline adapter smoke and its one adapter repair.
+// Black-box U31/U32/U34 contracts: implement's baseline adapter smoke and its one adapter repair.
 // Written from m5/SCHEMAS.md only ("Baseline adapter smoke:" in the implement section, the
 // evaluation adapter interface and evaluation.json record rules). U32: the smoke receives the
 // sealed paired_seed_tests unchanged and needs one record per sealed seed and input id, seeds
-// first. Do not inspect implementation files or git diffs.
+// first. U34: the smoke writes out/smoke.json and fails `cost` when one projected performance
+// scorer exceeds 0.9 x the resolved evaluate budget. Do not inspect implementation files or git diffs.
 // Usage: node tools/test_m5_adapter_smoke.js
 // Reuses tools/test_m5_implement.js's fake box, fixture and WF_STUB (its probes require
 // working unprivileged bubblewrap, as there).
@@ -16,10 +17,11 @@ const assert = require('node:assert/strict')
 const { spawnSync } = require('node:child_process')
 const { isDeepStrictEqual } = require('node:util')
 const { fixtures } = require('./test_m5_implement.js')
-const { launch, removeScratch, rows, files, sha, readJSON, RUN9, RUN9_RECORDS, RUN10, run10Fakes, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE } = fixtures
+const { launch, removeScratch, rows, files, sha, readJSON, RUN9, RUN9_RECORDS, RUN10, RUN12, run10Fakes, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE } = fixtures
 const { assertEvalShapes } = require('./test_m5_reproduce.js')
 const ROOT = path.resolve(__dirname, '..')
-const CATEGORIES = ['exit', 'timeout', 'missing_output', 'records', 'metrics']
+const CATEGORIES = ['exit', 'timeout', 'missing_output', 'records', 'metrics', 'cost']
+const DEFAULT_EVALUATE = 2400 // SCHEMAS.md stage_budgets_s default
 const FACTS = ['patch_applies', 'tests_pass', 'blind_tests', 'launch_review_pass']
 const METHOD_RUN = 22 // fixture EXECUTION.stage_budgets_s.method_run
 
@@ -56,6 +58,36 @@ function smokeFailure(seal, report) {
     if (!row.metrics || !finite(row.metrics[name])) return 'metrics'
   }
   return null
+}
+// Reference cost projection, from the same bullet: "`projected_s` = (sealed `warmup` + sealed
+// `repetitions`) × 2 × `process_wall_s` ... plus, unless `equal_outcome_target.not_applicable` is
+// true, `b / baseline_gpus + b / method_gpus` for each sealed compute budget `b`". The smoke passes
+// only when projected_s is at most 0.9 × the resolved evaluate budget.
+function projectedSeconds(seal, processWall) {
+  const { baseline_gpus, method_gpus } = seal.hardware_cost_basis
+  const curve = seal.equal_outcome_target?.not_applicable === true ? 0
+    : seal.compute_budgets.reduce((sum, b) => sum + b / baseline_gpus + b / method_gpus, 0)
+  return (seal.warmup + seal.repetitions) * 2 * processWall + curve
+}
+const costFails = (seal, processWall, evaluateBudget) => projectedSeconds(seal, processWall) > 0.9 * evaluateBudget
+// Seal fields of the fixture seal (tools/test_m5_implement.js) that the projection reads.
+const FIXTURE_COST = { warmup: 1, repetitions: 5, compute_budgets: [1, 2, 4], hardware_cost_basis: { baseline_gpus: 1, method_gpus: 1, budget_unit: 'gpu_s' },
+  equal_outcome_target: { not_applicable: true, reason: 'fixed-work fixture' } }
+// Curve term with GPU counts other than 1: sum(b/2 + b/4) over [8, 16, 40] = 32 + 16 = 48.
+const CURVE_PATCH = { warmup: 2, repetitions: 6, compute_budgets: [8, 16, 40],
+  hardware_cost_basis: { baseline_gpus: 2, method_gpus: 4, budget_unit: 'gpu_s' },
+  equal_outcome_target: { metric: 'value_sum', comparison: '>=', target: 0.9 } }
+const NO_CURVE_PATCH = { ...CURVE_PATCH, equal_outcome_target: { not_applicable: true, reason: 'fixed-work fixture' } }
+// A number stated in the prompt near its name (either side, within 120 characters). Integers may
+// be spelled with a trailing `.0`.
+const COST_NAMES = { process_wall_s: /process_wall_s|process wall/gi, warmup: /warmup/gi, repetitions: /repetitions/gi,
+  projected_s: /projected/gi, evaluate_budget_s: /evaluate/gi }
+function numberNear(text, pattern, value) {
+  const literal = new RegExp(`(?<![\\d.])${String(value).replace('.', '\\.')}${Number.isInteger(value) ? '(?:\\.0+)?' : '0*'}(?!\\.?\\d)`)
+  for (const match of text.matchAll(pattern)) {
+    if (literal.test(text.slice(Math.max(0, match.index - 120), match.index + match[0].length + 120))) return true
+  }
+  return false
 }
 const receiptsOf = root => files(path.join(root, 'control', 'receipts')).filter(file => file.endsWith('.json'))
   .map(file => ({ file, name: path.basename(file, '.json'), number: Number(path.basename(file).slice(0, 4)),
@@ -144,6 +176,8 @@ function smokeInvocationChecks(run, expectedScript, { unobserved = 0 } = {}) {
     const firstAuthor = run.sequence.findIndex(line => ['agent tests', 'agent implement'].includes(line))
     if (firstAuthor !== -1) assert.ok(smokeLines.every(([, i]) => i < firstAuthor), 'an adapter smoke ran after an author call')
   })
+  // Fixtures that replace the fetched smoke.json are checked by injectedChecks instead.
+  if (!run.config.smokeJson) smokeWallChecks(run)
   if (!run.observations.length) return
   check(`${name}: smoke runs ${expectedScript} in a fresh evaluation-work/smoke/0/baseline/ with the documented environment`, () => {
     const remote = remoteRun(root)
@@ -181,6 +215,60 @@ function smokeInvocationChecks(run, expectedScript, { unobserved = 0 } = {}) {
     }
     const attempts = new Set(run.smokes.map(smoke => path.dirname(logs.find(file => path.basename(file) === smoke.name + '.log'))))
     assert.equal(attempts.size, run.smokes.length, 'smoke attempts share a directory')
+  })
+}
+
+// The fetched out/smoke.json of each smoke attempt (A/results/implement/adapter/<attempt>/).
+function smokeJsonOf(run, smoke) {
+  const adapter = path.join(run.root, 'agent', 'results', 'implement', 'adapter')
+  const log = files(adapter).find(file => path.basename(file) === smoke.name + '.log')
+  assert.ok(log, `missing ${smoke.name}.log`)
+  const found = files(path.dirname(log)).filter(file => path.basename(file) === 'smoke.json')
+  assert.equal(found.length, 1, `${smoke.name}: expected one fetched smoke.json, found ${found.length}`)
+  return fs.readFileSync(found[0], 'utf8')
+}
+// "always writes `out/smoke.json` as exactly {"process_wall_s": <finite nonnegative number>},
+// including after a nonzero exit or TERM". `walls[i]` optionally bounds attempt i: [min, max].
+function smokeWallChecks(run, walls = []) {
+  const bounded = walls.some(Boolean) ? ` within ${JSON.stringify(walls)}` : ''
+  check(`${run.name}: every smoke writes out/smoke.json as exactly {"process_wall_s": x}, x finite and nonnegative${bounded}`, () => {
+    assert.ok(run.smokes.length >= 1, 'no adapter-smoke receipt')
+    run.smokes.forEach((smoke, i) => {
+      const value = JSON.parse(smokeJsonOf(run, smoke)) // JSON.parse rejects NaN/Infinity spellings
+      assert.ok(value && typeof value === 'object' && !Array.isArray(value), `${smoke.name}: not an object`)
+      assert.deepEqual(Object.keys(value), ['process_wall_s'], `${smoke.name}: keys`)
+      const wall = value.process_wall_s
+      assert.ok(finite(wall) && wall >= 0, `${smoke.name}: process_wall_s=${wall}`)
+      if (walls[i]) {
+        const [min, max] = walls[i]
+        assert.ok(wall >= min && wall <= max, `${smoke.name} (rc ${smoke.value.rc}, timed_out ${smoke.value.timed_out}): process_wall_s=${wall} outside [${min}, ${max}]`)
+      }
+    })
+  })
+}
+// The fixture replaced (or removed) a fetched smoke.json for every injected adapter label that ran,
+// so the scenario really exercised the injected value.
+function injectedChecks(run) {
+  check(`${run.name}: the fixture replaced the fetched smoke.json of every injected smoke ${JSON.stringify(run.config.smokeJson)}`, () => {
+    const injected = rows(path.join(run.root, 'smoke-inject.jsonl'))
+    const ran = new Set(run.observations.map(row => row.label))
+    for (const label of Object.keys(run.config.smokeJson).filter(label => ran.has(label))) {
+      const row = injected.find(entry => entry.label === label)
+      assert.ok(row, `no fetched smoke.json from the ${label} smoke to replace`)
+      const measured = JSON.parse(row.measured)
+      assert.deepEqual(Object.keys(measured), ['process_wall_s'], `${label}: measured keys`)
+      assert.ok(finite(measured.process_wall_s) && measured.process_wall_s >= 0, `${label}: measured ${row.measured}`)
+    }
+  })
+}
+// SCHEMAS.md: "for `cost` it also receives `process_wall_s`, the sealed warmup and repetitions,
+// `projected_s` and the evaluate budget seconds, as numbers".
+function costPromptChecks(run, expected) {
+  check(`${run.name}: cost repair prompt states ${JSON.stringify(expected)} as numbers`, () => {
+    const prompt = run.repairs[0]?.prompt || ''
+    assert.ok(prompt, 'no adapter-repair prompt')
+    const missing = Object.entries(expected).filter(([key, value]) => !numberNear(prompt, COST_NAMES[key], value)).map(([key, value]) => `${key}=${value}`)
+    assert.deepEqual(missing, [], 'prompt omits ' + missing.join(', '))
   })
 }
 
@@ -361,6 +449,63 @@ function recordOrderChecks() {
   ]) check(`reference criteria: ${label} fails with records`, () => assert.equal(smokeFailure(seal, report(pairs)), 'records'))
 }
 
+// Reference projection on the scenario numbers below, so each pipeline scenario sits on the
+// stated side of the 0.9 x evaluate boundary; and the matcher for numbers in the repair prompt.
+function projectionChecks() {
+  const curve = { ...FIXTURE_COST, ...CURVE_PATCH }, noCurve = { ...FIXTURE_COST, ...NO_CURVE_PATCH }
+  check('reference projection: (warmup + repetitions) x 2 x process_wall_s plus the curve term at GPU counts 2 and 4', () => {
+    assert.equal(projectedSeconds(curve, 53.25), 16 * 53.25 + 48)
+    assert.equal(projectedSeconds(curve, 53.25), 900)
+    assert.equal(projectedSeconds(curve, 53.3125), 901)
+    // The curve term is omitted when not_applicable is true, and only then.
+    assert.equal(projectedSeconds(noCurve, 53.3125), 853)
+    assert.equal(projectedSeconds({ ...curve, equal_outcome_target: { ...curve.equal_outcome_target, not_applicable: false } }, 53.3125), 901)
+  })
+  check('reference projection: boundary at 0.9 x the evaluate budget (EXECUTION 1000, args 1240, default 2400)', () => {
+    // EXECUTION.json evaluate=1000 wins over args 5000: 900 passes, 901 fails; args 5000 or the
+    // default would pass both.
+    assert.equal(costFails(curve, 53.25, 1000), false)
+    assert.equal(costFails(curve, 53.3125, 1000), true)
+    assert.equal(costFails(curve, 53.3125, 5000), false)
+    assert.equal(costFails(curve, 53.3125, DEFAULT_EVALUATE), false)
+    assert.equal(costFails(noCurve, 53.3125, 1000), false)
+    // args evaluate=1240 (no EXECUTION evaluate): 12 x 93 = 1116 = 0.9 x 1240 passes; 1119 fails.
+    assert.equal(projectedSeconds(FIXTURE_COST, 93), 1116)
+    assert.equal(costFails(FIXTURE_COST, 93, 1240), false)
+    assert.equal(costFails(FIXTURE_COST, 93.25, 1240), true)
+    assert.equal(costFails(FIXTURE_COST, 93.25, DEFAULT_EVALUATE), false)
+    // Category order and missing_output scenarios use these walls under the default budget.
+    assert.equal(costFails(FIXTURE_COST, 100000, DEFAULT_EVALUATE), true)
+    assert.equal(costFails(FIXTURE_COST, 1, DEFAULT_EVALUATE), false)
+  })
+  const run12 = readJSON(path.join(RUN12, 'PREDICTIONS.json'))
+  check('run12 recorded: warmup 1, repetitions 8, no outcome curve, one GPU per arm; 488 s fails cost, 60 s passes', () => {
+    assert.equal(run12.warmup, 1)
+    assert.equal(run12.repetitions, 8)
+    assert.equal(run12.equal_outcome_target.not_applicable, true)
+    assert.equal(run12.hardware_cost_basis.baseline_gpus, 1)
+    assert.equal(run12.hardware_cost_basis.method_gpus, 1)
+    assert.equal(projectedSeconds(run12, 488), 8784)
+    assert.equal(costFails(run12, 488, DEFAULT_EVALUATE), true)
+    assert.equal(projectedSeconds(run12, 60), 1080)
+    assert.equal(costFails(run12, 60, DEFAULT_EVALUATE), false)
+    // The recorded evidence: ~488 s baseline invocations and a performance scorer timed out at 2,400 s.
+    const raw = rows(path.join(RUN12, 'results', 'evaluate', 'raw.jsonl'))
+      .filter(row => row.arm === 'baseline' && ['warmup', 'performance'].includes(row.phase) && finite(row.process_wall_s))
+    assert.ok(raw.length && raw.every(row => Math.abs(row.process_wall_s - 488) < 5), 'run12 baseline process_wall_s')
+    const receipt = readJSON(path.join(RUN12, '..', 'control', 'receipts', '0035-evaluate-performance.json'))
+    assert.equal(receipt.timed_out, true)
+    assert.equal(receipt.budget_s, DEFAULT_EVALUATE)
+  })
+  check('cost prompt matcher: a number counts only as itself, near its name', () => {
+    assert.ok(numberNear('projected_s: 901.0 seconds.', COST_NAMES.projected_s, 901))
+    assert.ok(numberNear('process_wall_s=53.3125', COST_NAMES.process_wall_s, 53.3125))
+    assert.ok(!numberNear('projected_s: 9010', COST_NAMES.projected_s, 901))
+    assert.ok(!numberNear('projected_s: 901.5', COST_NAMES.projected_s, 901))
+    assert.ok(!numberNear('projected_s: 1' + ' '.repeat(200) + '901', COST_NAMES.projected_s, 901))
+  })
+}
+
 // Check 1: EVAL_SEEDS in the smoke is the sealed paired_seed_tests object exactly.
 function sealedSeedsCheck(run) {
   check(`${run.name}: EVAL_SEEDS in every smoke is JSON of the sealed paired_seed_tests object unchanged (${run.seal.paired_seed_tests.kind})`, () => {
@@ -424,6 +569,7 @@ async function main() {
     run9RecordedChecks()
     recordOrderChecks()
     run10DirectChecks()
+    projectionChecks()
     // 1, 2, 5: run_anchors.sh is smoked when run_evaluation.sh is absent; the smoke passes.
     const anchors = await scenario('smoke-anchors', {})
     smokeInvocationChecks(anchors, 'run_anchors')
@@ -502,9 +648,107 @@ async function main() {
         const timedOut = run.smokes.map(smoke => smoke.value.timed_out || smoke.value.rc === 124)
         assert.deepEqual(timedOut, [config.fault === 'timeout', config.repairFault === 'timeout'])
       })
+      // U34: smoke.json is written after TERM too, covering the adapter's run up to the 3 s budget.
+      smokeWallChecks(run, [config.fault, config.repairFault].map(fault => fault === 'timeout' ? [1, 3 + 5] : null))
       repairChecks(run, category)
       voidChecks(run, errorClass)
     }
+
+    // U34 check 1: smoke.json measures the adapter's run. The adapter sleeps 2 s, then passes, or
+    // exits 3 (and the repaired adapter passes).
+    const slept = await scenario('wall-sleep', { evaluation: true, fault: 'sleep' })
+    smokeInvocationChecks(slept, 'run_evaluation')
+    smokeWallChecks(slept, [[2, 2 + 5]])
+    passChecks(slept)
+    const sleptExit = await scenario('wall-sleep-exit', { evaluation: true, fault: 'sleep_exit' })
+    smokeInvocationChecks(sleptExit, 'run_evaluation')
+    smokeWallChecks(sleptExit, [[2, 2 + 5], [0, 5]])
+    repairChecks(sleptExit, 'exit')
+    continuedChecks(sleptExit)
+
+    // U34 check 2: the projection boundary, with the curve term at GPU counts 2 and 4 and the
+    // evaluate budget from EXECUTION.json (1000, over args 5000), then from args (1240).
+    const execBudget = { evaluation: true, evaluateBudget: 1000, argsBudgets: { evaluate: 5000 } }
+    const execAt = await scenario('cost-exec-at', { ...execBudget, sealPatch: CURVE_PATCH, smokeJson: { run_evaluation: 53.25 } })
+    smokeInvocationChecks(execAt, 'run_evaluation')
+    injectedChecks(execAt)
+    passChecks(execAt)
+    const execOver = await scenario('cost-exec-over', { ...execBudget, sealPatch: CURVE_PATCH, smokeJson: { run_evaluation: 53.3125, repaired: 53.3125 } })
+    smokeInvocationChecks(execOver, 'run_evaluation')
+    injectedChecks(execOver)
+    repairChecks(execOver, 'cost')
+    costPromptChecks(execOver, { process_wall_s: 53.3125, warmup: 2, repetitions: 6, projected_s: 901, evaluate_budget_s: 1000 })
+    voidChecks(execOver, 'parse')
+    // Same wall, no outcome curve: 853 <= 900 passes.
+    const execNoCurve = await scenario('cost-exec-no-curve', { ...execBudget, sealPatch: NO_CURVE_PATCH, smokeJson: { run_evaluation: 53.3125 } })
+    smokeInvocationChecks(execNoCurve, 'run_evaluation')
+    injectedChecks(execNoCurve)
+    passChecks(execNoCurve)
+    const argsAt = await scenario('cost-args-at', { evaluation: true, argsBudgets: { evaluate: 1240 }, smokeJson: { run_evaluation: 93 } })
+    smokeInvocationChecks(argsAt, 'run_evaluation')
+    injectedChecks(argsAt)
+    passChecks(argsAt)
+    // U34 check 4 (repair continues): cost, then a passing second smoke.
+    const argsOver = await scenario('cost-args-over', { evaluation: true, argsBudgets: { evaluate: 1240 }, smokeJson: { run_evaluation: 93.25, repaired: 10 } })
+    smokeInvocationChecks(argsOver, 'run_evaluation')
+    injectedChecks(argsOver)
+    repairChecks(argsOver, 'cost')
+    costPromptChecks(argsOver, { process_wall_s: 93.25, warmup: 1, repetitions: 5, projected_s: 1119, evaluate_budget_s: 1240 })
+    continuedChecks(argsOver)
+
+    // U34 check 3: records and metrics are decided before cost, even with a ruinous wall.
+    for (const [fault, category] of [['missing_seed', 'records'], ['missing_metric', 'metrics']]) {
+      const run = await scenario(`order-${category}`, { evaluation: true, fault, smokeJson: { run_evaluation: 100000, repaired: 1 } })
+      smokeInvocationChecks(run, 'run_evaluation')
+      injectedChecks(run)
+      repairChecks(run, category)
+      continuedChecks(run)
+    }
+    // Missing or malformed smoke.json after records and metrics pass is missing_output.
+    for (const [name, first, second] of [
+      ['json-extra-key', '{"process_wall_s": 1, "extra": 1}', 1],
+      ['json-nan', '{"process_wall_s": NaN}', '{"process_wall_s": -1}'],
+      ['json-missing', 'missing', 'not json'],
+      ['json-string', '{"process_wall_s": "1"}', '{"process_wall_s": true}'],
+      ['json-array', '[1]', '{"process_wall_s": Infinity}'],
+    ]) {
+      const run = await scenario(name, { evaluation: true, smokeJson: { run_evaluation: first, repaired: second } })
+      smokeInvocationChecks(run, 'run_evaluation')
+      injectedChecks(run)
+      repairChecks(run, 'missing_output')
+      if (finite(second)) continuedChecks(run); else voidChecks(run, 'parse')
+    }
+    // A stale smoke.json is never read: the first smoke fails records with a valid, passing
+    // smoke.json; the second passes records but its smoke.json is missing, so it fails
+    // missing_output (VOID), never passing on the first smoke's measurement.
+    const stale = await scenario('stale-smoke-json', { evaluation: true, fault: 'missing_seed', smokeJson: { repaired: 'missing' } })
+    smokeInvocationChecks(stale, 'run_evaluation')
+    injectedChecks(stale)
+    check('stale-smoke-json: the first smoke left a valid passing smoke.json behind', () => {
+      const first = JSON.parse(smokeJsonOf(stale, stale.smokes[0]))
+      assert.ok(finite(first.process_wall_s) && !costFails(stale.seal, first.process_wall_s, DEFAULT_EVALUATE), JSON.stringify(first))
+    })
+    repairChecks(stale, 'records')
+    voidChecks(stale, 'parse')
+
+    // U34 check 5 (and 4): run12's seal with its measured 488 s baseline invocation fails cost; 60 s
+    // passes; a 60 s repair continues; a second 488 s smoke stops implement.
+    const run12Pass = await scenario('run12-60s', { evaluation: true, run12: true, smokeJson: { run_evaluation: 60 } })
+    smokeInvocationChecks(run12Pass, 'run_evaluation')
+    injectedChecks(run12Pass)
+    passChecks(run12Pass)
+    const run12Repaired = await scenario('run12-488s-then-60s', { evaluation: true, run12: true, smokeJson: { run_evaluation: 488, repaired: 60 } })
+    smokeInvocationChecks(run12Repaired, 'run_evaluation')
+    injectedChecks(run12Repaired)
+    repairChecks(run12Repaired, 'cost')
+    costPromptChecks(run12Repaired, { process_wall_s: 488, warmup: 1, repetitions: 8, projected_s: 8784, evaluate_budget_s: DEFAULT_EVALUATE })
+    continuedChecks(run12Repaired)
+    const run12Twice = await scenario('run12-488s-twice', { evaluation: true, run12: true, smokeJson: { run_evaluation: 488, repaired: 488 } })
+    smokeInvocationChecks(run12Twice, 'run_evaluation')
+    injectedChecks(run12Twice)
+    repairChecks(run12Twice, 'cost')
+    costPromptChecks(run12Twice, { process_wall_s: 488, warmup: 1, repetitions: 8, projected_s: 8784, evaluate_budget_s: DEFAULT_EVALUATE })
+    voidChecks(run12Twice, 'parse')
 
     // 6: run9 regression through the real implement stage.
     const python = fs.existsSync('/usr/bin/python3')

@@ -4,8 +4,9 @@ import shutil
 import signal
 import subprocess
 import sys
+import time
 
-from eval_common import invocation, read
+from eval_common import invocation, read, write
 
 
 root = Path.cwd().resolve()
@@ -15,9 +16,11 @@ work, out, environment, script = invocation(
     root, protocol, "baseline", "smoke", 0, mode="equivalence", protocol_path=protocol_path)
 # boxrun owns the timeout; preserve outputs when its process group receives TERM.
 signal.signal(signal.SIGTERM, lambda *_: sys.exit(124))
+start = time.monotonic()
 try:
     rc = subprocess.call(["bash", str(script)], cwd=work, env=environment)
 finally:
+    write(root / "out" / "smoke.json", {"process_wall_s": time.monotonic() - start})
     shutil.copytree(out, root / "out" / "adapter", dirs_exist_ok=True)
     shutil.rmtree(root / "evaluation-work" / "smoke")
     (root / "evaluation-work").rmdir()

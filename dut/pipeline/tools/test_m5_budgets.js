@@ -15,6 +15,9 @@ const fixture = require('./test_m5_evaluate.js')
 const ROOT = path.resolve(__dirname, '..')
 const DEFAULTS = { setup: 1200, anchors: 1200, profile: 1200, method_setup: 1200, method_run: 1200, tests: 900, evaluate: 2400 }
 const SMALL = Object.fromEntries(Object.keys(DEFAULTS).map(key => [key, 3]))
+const SMOKE_PIN = path.join(__dirname, 'm5_smoke_pin.js')
+const { pinned } = require('./m5_smoke_pin.js')
+const quote = word => `'${word.replaceAll("'", "'\\''")}'`
 const STAGES = ['intake', 'reproduce', 'profile', 'seal', 'propose', 'implement', 'evaluate', 'takeaways']
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
 const rows = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
@@ -175,7 +178,10 @@ if [[ $command == *timeout* && -n $remote_directory ]]; then
     sleep 0.01
   done
 fi`)
-  script(path.join(bin, 'fetch'), 'exec cp -r -- "$1" "$2"')
+  // Evaluate budgets here are as small as 3 s, so implement's smoke cost gate would depend on the
+  // host's speed: pin each fetched smoke measurement (tools/m5_smoke_pin.js).
+  const pinLog = path.join(root, 'smoke-pin.jsonl')
+  script(path.join(bin, 'fetch'), `cp -r -- "$1" "$2"\nexec ${quote(process.execPath)} ${quote(SMOKE_PIN)} "$2" ${quote(pinLog)}`)
   const args = path.join(root, 'control/args.json'), out = path.join(agent, 'wf')
   json(args, { run_root: root, tag: name, raid: name,
     stub: { intake: 'PASS', seal: 'PASS', propose: 'PASS', takeaways: 'PASS' },
@@ -210,6 +216,11 @@ fi`)
   const receipts = fs.existsSync(receiptDir) ? fs.readdirSync(receiptDir).sort().filter(file => file.endsWith('.json'))
     .map(file => ({ operation: file.slice(5, -5), ...read(path.join(receiptDir, file)) })) : []
   const expected = { ...DEFAULTS, ...config.args, ...config.execution }
+  if (receipts.some(receipt => receipt.operation === 'adapter-smoke')) {
+    check(`${name}: the fixture pinned the fetched smoke measurement`, () => {
+      assert.ok(pinned(pinLog).length > 0, 'implement smoked the baseline adapter but no fetched smoke.json was pinned')
+    })
+  }
   check(`${name}: every boxrun receipt has resolved budget_s and overrun`, () => {
     assert.ok(receipts.length > 0, 'no box receipts')
     const profileIndex = receipts.findIndex(receipt => receipt.operation === 'profile')

@@ -63,6 +63,8 @@ with open(sequence, 'a') as f: f.write('smoke ' + label + '\n')
 with open(os.path.join(cwd, 'stale-marker'), 'w') as f: f.write(label)
 for i in range(1, 241): print('SMOKELOG:%d:end' % i)
 sys.stdout.flush()
+# A known run time for the smoke's process_wall_s (then a normal report; sleep_exit exits 3).
+if fault in ('sleep', 'sleep_exit'): time.sleep(2.0)
 if fault == 'broken': sys.exit(9)
 if fault == 'timeout':
     time.sleep(60)
@@ -100,7 +102,7 @@ else:
     if fault == 'no_wall': del report['wall_s']
 if fault != 'missing_output':
     with open(os.path.join(out, 'evaluation.json'), 'w') as f: json.dump(report, f)
-if fault == 'exit': sys.exit(3)
+if fault in ('exit', 'sleep_exit'): sys.exit(3)
 `
 function adapterScript(root, label, fault, recorded = '') {
   return `python3 -I - ${[path.join(root, 'smoke.jsonl'), path.join(root, 'sequence.log'), label, fault || 'none', recorded].map(quote).join(' ')} <<'SMOKE_ADAPTER'
@@ -131,6 +133,34 @@ print('aggregate_ns_per_day: %r' % (d['simulated_ns'] / d['total_wall_s'] * 8640
 // its working directory, and validates the ensemble.json and stdout lines it writes.
 const RUN10 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run10', 'agent')
 const RUN10_ENSEMBLE = path.join(RUN10, 'results', 'implement', 'baseline', 'out', 'command', 'ensemble.json')
+// Recorded public evidence: positive-openmm run12 (sealed warmup 1, repetitions 8, no outcome
+// curve, one GPU per arm; its baseline adapter measured about 488 s per invocation in evaluate).
+const RUN12 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run12', 'agent')
+// Fetch-side stand-in for the smoke's measurement: after a fetch, rewrites a fetched smoke.json
+// according to the plan for the most recently started smoke adapter label (sequence.log). A number
+// becomes {"process_wall_s": n}; 'missing' deletes the file; any other string is written verbatim.
+// Each action is logged to smoke-inject.jsonl so tests can confirm the injection happened.
+const SMOKE_INJECT_PY = String.raw`import json, os, sys
+root, dest = sys.argv[1:3]
+with open(os.path.join(root, 'smoke-inject.json')) as f: plan = json.load(f)
+try:
+    with open(os.path.join(root, 'sequence.log')) as f:
+        labels = [line[6:].strip() for line in f if line.startswith('smoke ')]
+except OSError:
+    labels = []
+if not labels or labels[-1] not in plan: sys.exit(0)
+label, value = labels[-1], plan[labels[-1]]
+candidates = [dest] if os.path.basename(dest) == 'smoke.json' else []
+candidates += [os.path.join(dest, 'smoke.json'), os.path.join(dest, 'out', 'smoke.json')]
+for file in candidates:
+    if not os.path.isfile(file): continue
+    with open(file) as f: measured = f.read()
+    if value == 'missing': os.remove(file)
+    else:
+        with open(file, 'w') as f: f.write(value if isinstance(value, str) else json.dumps({'process_wall_s': value}))
+    with open(os.path.join(root, 'smoke-inject.jsonl'), 'a') as f:
+        f.write(json.dumps({'label': label, 'file': file, 'measured': measured, 'value': value}) + '\n')
+`
 // Stand-in for run10's published driver: replays run10's recorded baseline ensemble without a GPU
 // and logs each invocation (argv, cwd, EVAL_SEEDS, EVAL_INPUTS) to CAPTURE.
 const RUN10_DRIVER = String.raw`import json, os, sys
@@ -555,7 +585,8 @@ function fixture(root, config) {
     baseline: { repo: 'fixture', pin: 'v1', build_commands: ['true'], run_commands: ['true'], published_configuration: { n: 5 } },
     EXECUTION: { representative_scale: { n: 5 }, inputs: ['data/input'], outputs: ['values.json'], timing_scope: 'whole run',
       timeout_s: 10, timeouts: { setup_method: 11, run_method: 12, run_tests: 13 },
-      stage_budgets_s: { method_setup: 21, method_run: config.methodRun || 22, tests: 23 } },
+      stage_budgets_s: { method_setup: 21, method_run: config.methodRun || 22, tests: 23,
+        ...(config.evaluateBudget ? { evaluate: config.evaluateBudget } : {}) } },
   })) writeJSON(path.join(agent, 'intake', name + '.json'), value)
   // An executable sealed protocol (SCHEMAS.md "Evaluate: executable sealed protocol"), so the
   // baseline adapter smoke has sealed input ids, seeds, metric names, scope and GPU count.
@@ -577,6 +608,14 @@ function fixture(root, config) {
   if (config.run8) Object.assign(predictions, readJSON(path.join(RUN8, 'PREDICTIONS.json')))
   if (config.run9 || config.run9Script) Object.assign(predictions, readJSON(path.join(RUN9, 'PREDICTIONS.json')))
   if (config.run10Script) Object.assign(predictions, readJSON(path.join(RUN10, 'PREDICTIONS.json')))
+  if (config.run12) Object.assign(predictions, readJSON(path.join(RUN12, 'PREDICTIONS.json')))
+  // Cost-projection fields (warmup, repetitions, compute_budgets, hardware_cost_basis,
+  // equal_outcome_target); prediction points follow any changed compute budgets.
+  if (config.sealPatch) {
+    Object.assign(predictions, config.sealPatch)
+    predictions.predictions = predictions.predictions.map(row => ({ ...row,
+      outcome_vs_compute_points: predictions.compute_budgets.map(compute_budget => ({ compute_budget, predicted_outcome: 1, uncertainty: 'exact' })) }))
+  }
   writeJSON(path.join(agent, 'PREDICTIONS.json'), predictions)
   const frozen = path.join(root, 'control', 'seals', 'frozen.json')
   writeJSON(frozen, predictions)
@@ -621,12 +660,17 @@ if [[ $command == *timeout* ]]; then
     sleep 0.01
   done
 fi`)
+  if (config.smokeJson) {
+    writeJSON(path.join(root, 'smoke-inject.json'), config.smokeJson)
+    fs.writeFileSync(path.join(root, 'smoke-inject.py'), SMOKE_INJECT_PY)
+  }
   script(path.join(bin, 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\n' +
-    (config.fetchFailure ? '[[ $source != *-run-method.log ]] || exit 7\n' : '') + 'exec cp -r -- "$source" "$2"')
+    (config.fetchFailure ? '[[ $source != *-run-method.log ]] || exit 7\n' : '') +
+    (config.smokeJson ? `cp -r -- "$source" "$2"\nexec python3 -I ${quote(path.join(root, 'smoke-inject.py'))} ${quote(root)} "$2"` : 'exec cp -r -- "$source" "$2"'))
   const args = path.join(root, 'control', 'args.json')
   writeJSON(args, { run_root: root, raid: 'implement-test', tag: 'implement-test', stub: {
     intake: 'PASS', profile: 'PASS', seal: 'PASS', propose: 'PASS', evaluate: 'PASS', takeaways: 'PASS',
-  } })
+  }, ...(config.argsBudgets ? { stage_budgets_s: config.argsBudgets } : {}) })
   const output = path.join(root, 'agent', 'wf')
   const stdout = fs.openSync(path.join(root, 'stdout'), 'w'), stderr = fs.openSync(path.join(root, 'stderr'), 'w')
   let child
@@ -662,7 +706,7 @@ function removeScratch(scratch) {
   fs.rmSync(scratch, { recursive: true, force: true })
 }
 Object.assign(module.exports, { fixtures: { launch, removeScratch, rows, files, sha, readJSON, writeJSON, treeHash,
-  RUN9, RUN9_RECORDS, RUN10, run10Fakes, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE, PRIVATE } })
+  RUN9, RUN9_RECORDS, RUN10, RUN12, run10Fakes, SEAL_SOURCE, INTAKE_NOTE, HARNESS_NOTE, PRIVATE } })
 if (require.main !== module) return
 
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_implement_'))

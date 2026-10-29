@@ -15,6 +15,9 @@ const SECRET = 'EVALUATE_PRIVATE_SENTINEL_486201'
 const IDS = ['dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_handling', 'seeds', 'equivalence']
 const FACTS = ['validity_pass', 'equivalence_pass', 'performance_pass', 'equal_cost', 'speedup_published',
   'speedup_tuned', 'cost_ratio', 'prediction_ratio', 'curve_points', 'tokens_known', 'gpu_busy_known']
+const SMOKE_PIN = path.join(__dirname, 'm5_smoke_pin.js')
+const { pinned } = require('./m5_smoke_pin.js')
+const quote = word => `'${word.replaceAll("'", "'\\''")}'`
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
 const rows = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
 const sha = value => createHash('sha256').update(value).digest('hex')
@@ -302,7 +305,10 @@ if [[ $command == *timeout* && -n $remote_directory ]]; then
     sleep 0.01
   done
 fi`)
-  script(path.join(bin, 'fetch'), 'exec cp -r -- "$1" "$2"')
+  // Implement's smoke cost gate must not depend on the host's speed: pin each fetched smoke
+  // measurement (tools/m5_smoke_pin.js). Malformed smoke.json files pass through unchanged.
+  const pinLog = path.join(root, 'smoke-pin.jsonl')
+  script(path.join(bin, 'fetch'), `cp -r -- "$1" "$2"\nexec ${quote(process.execPath)} ${quote(SMOKE_PIN)} "$2" ${quote(pinLog)}`)
   const args = path.join(root, 'control/args.json'), output = path.join(agent, 'wf')
   writeJSON(args, { run_root: root, tag: 'evaluate-' + name, raid: 'evaluate-' + name, stub: { intake: 'PASS', profile: 'PASS', seal: 'PASS', propose: 'PASS', takeaways: 'PASS' } })
   const child = await execute(process.execPath, [path.join(ROOT, 'idea/wf.js'), '--script', path.join(ROOT, 'm5/pipeline.js'),
@@ -330,6 +336,9 @@ fi`)
     assert.ok(!readJSON(path.join(output, 'result.json')).error, JSON.stringify(readJSON(path.join(output, 'result.json')).error))
     for (const stage of ['reproduce', 'implement']) assert.equal(records.find(row => row.signature?.stage === stage)?.signature.status, 'PASS', stage)
     assert.ok(record)
+  })
+  check(`${name}: the fixture pinned the fetched smoke measurement`, () => {
+    assert.ok(pinned(pinLog).length > 0, 'implement passed but no fetched smoke.json was pinned')
   })
   check(`${name}: exact facts, no model calls, hermetic GPU telemetry`, () => {
     assert.deepEqual(Object.keys(record.facts).sort(), FACTS.slice().sort())

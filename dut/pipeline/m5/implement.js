@@ -141,7 +141,7 @@ The pipeline invokes bash payload/method/setup_method.sh, then bash payload/meth
   async function smokeAdapter(predictions, attempt) {
     await intact()
     const to = path.join(destination, 'adapter', String(attempt))
-    const result = await command('adapter-smoke', 'rm -rf out/adapter\npython3 -B adapter-payload/adapter_smoke.py',
+    const result = await command('adapter-smoke', 'rm -rf out/adapter out/smoke.json\npython3 -B adapter-payload/adapter_smoke.py',
       to, executionTimeout('run_method'))
     let category = result.error === 'timeout' ? 'timeout' : result.error || result.rc !== 0 ? 'exit' : null
     const file = path.join(to, 'out', 'adapter', 'evaluation.json')
@@ -162,7 +162,27 @@ The pipeline invokes bash payload/method/setup_method.sh, then bash payload/meth
           && predictions.equivalence_metrics.every(metric => Number.isFinite(row.metrics[metric.name])))) category = 'metrics'
       } catch { category = 'records' }
     }
-    return { category, log: result.log }
+    let cost
+    if (!category) {
+      try {
+        const smoke = readJSON(path.join(to, 'out', 'smoke.json'))
+        if (!smoke || Array.isArray(smoke) || Object.keys(smoke).length !== 1
+          || !Number.isFinite(smoke.process_wall_s) || smoke.process_wall_s < 0) category = 'missing_output'
+        else {
+          const { warmup, repetitions, hardware_cost_basis: basis } = predictions
+          let projected_s = (warmup + repetitions) * 2 * smoke.process_wall_s
+          if (predictions.equal_outcome_target.not_applicable !== true) {
+            for (const b of predictions.compute_budgets) projected_s += b / basis.baseline_gpus + b / basis.method_gpus
+          }
+          const evaluate_budget_s = executionTimeout('evaluate')
+          if (projected_s > 0.9 * evaluate_budget_s) {
+            category = 'cost'
+            cost = { process_wall_s: smoke.process_wall_s, warmup, repetitions, projected_s, evaluate_budget_s }
+          }
+        }
+      } catch { category = 'missing_output' }
+    }
+    return { category, log: result.log, cost }
   }
   async function repairAdapter(smoke) {
     await intact()
@@ -175,6 +195,7 @@ The pipeline invokes bash payload/method/setup_method.sh, then bash payload/meth
     const log = lines.slice(-200).join('\n')
     const reply = await agent(`Repair the baseline evaluation adapter once. Use only this private view: ${JSON.stringify(view)}.
 Sealed PREDICTIONS.json, intake files and current harness scripts are provided here. Failure category: ${smoke.category}.
+${smoke.category === 'cost' ? `Cost projection: ${JSON.stringify(smoke.cost)}. The complete performance scorer must fit within 0.9 times evaluate_budget_s.` : ''}
 Rewrite only harness/run_evaluation.sh, creating it when absent. Run the exact published configuration and measure actual outputs; never reuse baseline outputs. Do not change other scripts, source, data, scale, inputs, seeds or tolerances. Do not access the box or run workloads locally.
 The pipeline owns CUDA MPS. No harness script may set, unset or override any CUDA_MPS_* environment variable, or start or stop an MPS daemon; inherit these variables unchanged.
 Script budget: run_evaluation.sh=${executionTimeout('run_method')} seconds. Use one fixed scale from EXECUTION.json, no scale search or doubling loops, and finish well within the budget.
