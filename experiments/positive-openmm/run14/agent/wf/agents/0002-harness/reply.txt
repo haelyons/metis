@@ -1,0 +1,4 @@
+Read intake, then write harness scripts. No local builds or workloads.
+Intake fixes OpenMM 8.2.0, eight sequential replicas, 25,000 steps each, one GPU. Harness will preserve driver verbatim, validate measured output, and convert measured throughput to µs/day for reference ID.
+Four scripts written. Review found plugin-path override unnecessary; remove it so OpenMM uses packaged plugin discovery. Next: shell and embedded-Python syntax checks only.
+Created four harness scripts. Shell and embedded Python syntax checks pass. No local builds or workloads run.

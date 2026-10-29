@@ -1,0 +1,15 @@
+[
+  {
+    "id": "nvidia2025-dhfr-eight-mps-throughput-reference",
+    "quantity": "Aggregate DHFR throughput, microseconds/day",
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "published_value": 5.0,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "role": "reference",
+    "configuration": "Eight concurrent DHFR simulations, tuned MPS thread percentage, one L40S or H100; OpenMM 8.2.0 benchmark.py pme, fixed-time protocol.",
+    "qualification": "Approximate approaching value from article prose, not exact per-GPU result. No published acceptance tolerance. Not fixed-work ensemble score.",
+    "acceptance_criterion": null
+  }
+]

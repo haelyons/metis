@@ -1,0 +1,115 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "kind": "published input",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "access": "Public HTTPS; no authentication. PDB must be in working directory; XML files ship with OpenMM.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "verification": "Fetched successfully; size and SHA-256 computed during intake.",
+      "licence": null,
+      "licence_reason": "No separate per-file licence verified; see repository licence and brief intended-use permission.",
+      "licence_source": [
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "brief.md"
+      ]
+    },
+    {
+      "name": "amber99sb.xml",
+      "kind": "published input",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "access": "Public HTTPS; no authentication. PDB must be in working directory; XML files ship with OpenMM.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "verification": "Fetched successfully; size and SHA-256 computed during intake.",
+      "licence": null,
+      "licence_reason": "No separate per-file licence verified; see repository licence and brief intended-use permission.",
+      "licence_source": [
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "brief.md"
+      ]
+    },
+    {
+      "name": "tip3p.xml",
+      "kind": "published input",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "access": "Public HTTPS; no authentication. PDB must be in working directory; XML files ship with OpenMM.",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "verification": "Fetched successfully; size and SHA-256 computed during intake.",
+      "licence": null,
+      "licence_reason": "No separate per-file licence verified; see repository licence and brief intended-use permission.",
+      "licence_source": [
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "brief.md"
+      ]
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities and stochastic integrator streams",
+      "kind": "generated",
+      "availability": "generated at runtime",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md"
+    }
+  ],
+  "missing_required_inputs": [],
+  "access_instructions": "Fetch pinned public PDB to run directory. Install pinned OpenMM packages for bundled force fields. Extract dhfr_ensemble.py verbatim from brief before execution.",
+  "splits": null,
+  "splits_reason": "Simulation benchmark has no training/validation/test split.",
+  "seeds": {
+    "replica_i": "1000+i, i=0..7",
+    "initial_velocities": "replica seed",
+    "integrator": "replica seed",
+    "source": "brief.md"
+  },
+  "licences": [
+    {
+      "component": "OpenMM API, Reference and CPU platforms",
+      "licence": "MIT",
+      "intended_use": "Local scientific execution and modification",
+      "permission": "permitted",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    {
+      "component": "OpenMM CUDA and OpenCL platforms",
+      "licence": "LGPL",
+      "intended_use": "Local scientific execution and modification",
+      "permission": "permitted",
+      "source": "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+    },
+    {
+      "component": "PDB and force-field inputs",
+      "licence": null,
+      "reason": "No separate per-file licence verified; distributed with OpenMM. Brief explicitly states local running and modification permitted.",
+      "permission": "permitted",
+      "source": [
+        "brief.md",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      ]
+    }
+  ],
+  "external_dataset": null,
+  "external_dataset_reason": "All molecular inputs are published in pinned OpenMM repository."
+}

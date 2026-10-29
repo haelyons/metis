@@ -1,0 +1,130 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "atoms_per_replica": 23558,
+    "timestep_ps": 0.004,
+    "ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "scale_policy": "One fixed scale from brief; no scale search or doubling.",
+    "source": "brief.md"
+  },
+  "inputs": {
+    "required_files": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "configuration": {
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_ps": 0.004,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "energy_sampling_steps": 250,
+      "source": [
+        "brief.md",
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+      ]
+    },
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ]
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "ensemble_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_sample_count_per_replica": 100,
+    "full_energy_series_output": null,
+    "full_energy_series_output_reason": "Brief driver does not serialize individual samples.",
+    "source": "brief.md"
+  },
+  "timing_scope": {
+    "ensemble": "perf_counter from before first replica loop through destruction of last context/integrator; includes context creation, CUDA compilation/initialization, velocity setup, integration, energy queries and replica summaries.",
+    "excluded": [
+      "imports",
+      "PDB/force-field loading",
+      "System creation",
+      "JSON serialization"
+    ],
+    "per_replica": "Starts after context/position/velocity setup; includes integration and 100 energy queries.",
+    "concurrent_comparison": "Measure complete same-work ensemble makespan including every replica startup/setup; preserve model, seeds and energy sampling.",
+    "warmup": null,
+    "warmup_reason": "No separate warmup in brief fixed-work driver.",
+    "source": "brief.md"
+  },
+  "scoring_interface": {
+    "wall_time_field": "ensemble.json:total_wall_s",
+    "throughput_formula": "ensemble.json:simulated_ns / ensemble.json:total_wall_s * 86400",
+    "speedup_formula": "sequential total_wall_s / concurrent total_wall_s",
+    "scientific_fields": [
+      "replicas[].seed",
+      "replicas[].steps",
+      "replicas[].final_potential_kj_mol",
+      "replicas[].mean_potential_kj_mol"
+    ],
+    "published_numeric_scientific_tolerance": null,
+    "tolerance_reason": "No published energy acceptance criterion; predictions are not published validation. Exact energy-series test requires output not present in brief driver.",
+    "published_performance_references": "anchors.json; contextual only, no pass/fail tolerance."
+  },
+  "stage_budgets_s": {},
+  "budget_basis": "Use supplied default budgets: 1200 s per stage except tests 900 s and evaluate 2400 s. Brief estimates minute-scale fixed-work runtime; unverified on CUDA.",
+  "runtime_guarantee": null,
+  "runtime_guarantee_reason": "No CUDA reproduction allowed; hardware and setup latency unknown.",
+  "method_configuration": {
+    "proposal": "Eight concurrent independent replicas via MPS on same single GPU.",
+    "mps_thread_percentage": 25,
+    "mps_thread_percentage_basis": "200 / 8; source article rule.",
+    "source": [
+      "brief.md",
+      "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/"
+    ]
+  },
+  "unavailable_commands": {
+    "fixed_work_concurrent_command": null,
+    "reason": "Brief supplies sequential driver command and hypothesis; no fixed-work concurrent implementation published there."
+  }
+}

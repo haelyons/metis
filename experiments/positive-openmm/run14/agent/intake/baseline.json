@@ -1,0 +1,76 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "tag": "8.2.0",
+  "pin_source": "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0",
+  "pin_verification": "Commit from supplied brief; pinned source files fetched successfully. Tag API not independently re-resolved.",
+  "build_commands": [
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0"
+  ],
+  "build_commands_source": "brief.md",
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "run_commands_source": "brief.md",
+  "installation_check_command": "python3 -m openmm.testInstallation",
+  "published_benchmark_command": "python benchmark.py --platform=CUDA --test=pme --seconds=60",
+  "published_benchmark_command_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+  "driver": {
+    "source": "brief.md",
+    "extraction": "Use embedded Python block verbatim as dhfr_ensemble.py.",
+    "sha256": "ae18f3697038d91cd0f651b3e0dc4ff15e9b7d926da69889428cc69bca3d41f8",
+    "sha256_scope": "UTF-8 code block excluding fence lines and trailing newline.",
+    "public_driver_url": null,
+    "public_driver_url_reason": "Fixed-work driver supplied only in brief; public executable underlying benchmark is OpenMM benchmark.py.",
+    "cuda_validated": false
+  },
+  "published_configuration": {
+    "atoms": 23558,
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "timestep_ps": 0.004,
+    "constraint_tolerance": 1e-05,
+    "platform": "CUDA",
+    "properties": {
+      "Precision": "single",
+      "DeterministicForces": "true"
+    },
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "seed0": 1000,
+    "energy_sampling_steps": 250,
+    "source": [
+      "brief.md",
+      "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    ]
+  },
+  "published_configuration_scope": "System and integrator from published benchmark; fixed steps, seeds, deterministic property and ensemble driver from brief.",
+  "working_directory": "Directory containing dhfr_ensemble.py and 5dfr_solv-cube_equil.pdb",
+  "immutable_artifacts": [
+    {
+      "name": "OpenMM CPython 3.12 Linux wheel",
+      "version": "8.2.0",
+      "sha256": "c5c6233a78727ad580961da34f59c4d1f11dcb8e439807e3ddd6464aee07d4f8",
+      "source": "https://pypi.org/pypi/openmm/8.2.0/json"
+    },
+    {
+      "name": "OpenMM-CUDA-12 Linux wheel",
+      "version": "8.2.0",
+      "sha256": "c7d8baf6349e49bf7de0c2cbddb61bd54fdbbd6f753bb03741d706616e8a3063",
+      "source": "https://pypi.org/pypi/OpenMM-CUDA-12/8.2.0/json"
+    }
+  ],
+  "transitive_dependency_lock": null,
+  "transitive_dependency_lock_reason": "No complete immutable dependency lock published in brief.",
+  "execution_performed": false,
+  "reason": "Intake only; builds and workloads prohibited."
+}
