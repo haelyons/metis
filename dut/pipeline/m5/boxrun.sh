@@ -55,6 +55,14 @@ fetch() {
   scp -r -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30 \
     -o BatchMode=yes -o ExitOnForwardFailure=yes -i "$HOME/.ssh/lambda_ed25519" "ubuntu@$ip:$1" "$2"
 }
+retry_fetch() {
+  local attempt
+  for attempt in 0 1 2 3 4; do
+    if ((attempt)); then sleep "${BOXRUN_FETCH_WAIT_S:-60}"; fi
+    fetch "$1" "$2" && return 0
+  done
+  return 1
+}
 # Quote each value before embedding it in the remote shell or run script.
 printf -v script '#!/usr/bin/env bash\ncd -- %q || exit 2\nsamples=%q\n: > "$samples"\n(while :; do nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits >> "$samples" 2>/dev/null; sleep 2; done) &\nsampler=$!\ntrap "kill \"$sampler\" 2>/dev/null; wait \"$sampler\" 2>/dev/null" EXIT\ntimeout %q bash -c %q >%q 2>&1\nrc=$?\nkill "$sampler" 2>/dev/null; wait "$sampler" 2>/dev/null\ntrap - EXIT\nprintf "%%s\\n" "$rc" >%q && mv -- %q %q\n' \
   "$DIR" "$NAME.gpu" "$LIMIT" "$CMD" "$NAME.log" "$NAME.rc.tmp" "$NAME.rc.tmp" "$NAME.rc"
@@ -78,8 +86,8 @@ printf -v telemetry 'cat -- %q' "$DIR/$NAME.gpu"
 timeout 30 "$BOX" "$telemetry" > "$GPU_SAMPLES" 2>/dev/null || true
 if mkdir -p -- "$DEST"; then
   FETCHED=true
-  fetch "$DIR/$SUBDIR" "$DEST" || FETCHED=false
-  fetch "$DIR/$NAME.log" "$DEST" || FETCHED=false
+  retry_fetch "$DIR/$SUBDIR" "$DEST" || FETCHED=false
+  retry_fetch "$DIR/$NAME.log" "$DEST" || FETCHED=false
 fi
 [[ $TIMED_OUT != true ]] || exit 3
 [[ $RC == 0 && $FETCHED == true ]] || exit 2

@@ -281,12 +281,41 @@ fi`)
   const realPython = spawnSync('/bin/bash', ['-c', 'command -v python3'], { encoding: 'utf8' }).stdout.trim()
   const fakeConcurrency = path.join(root, 'fake-concurrency-probe.py')
   if (config.concurrency && config.concurrency !== 'real') fs.writeFileSync(fakeConcurrency, fixture.concurrencyProbe(config.concurrency))
-  script(path.join(boxBin, 'python3'), `if [[ $# -ge 2 && $1 == -I && $2 == profiler/concurrency_probe.py && -f '${fakeConcurrency}' ]]; then
+  script(path.join(boxBin, 'python3'), `[[ $# -lt 2 || $1 != -I || $2 != profiler/concurrency_probe.py ]] || : > "$BOX_ROOT/../concurrency-ran"
+if [[ $# -ge 2 && $1 == -I && $2 == profiler/concurrency_probe.py && -f '${fakeConcurrency}' ]]; then
   cp -- '${fakeConcurrency}' profiler/concurrency_probe.py
 fi
 exec '${realPython}' "$@"`)
+  // Recorded run11 (positive-openmm): after the concurrency probe exited 0, the out/ fetch stalled
+  // after two files and the log fetch failed. With config.concurrencyFetchFailures = N, the first N
+  // attempts of each concurrency fetch fail, the out/ attempts after copying a partial tree
+  // without concurrency.json. Counters record every attempt.
+  const failingFetch = config.concurrencyFetchFailures ? `if [[ -f $BOX_ROOT/../concurrency-ran ]]; then
+  kind=out
+  if [[ $source == *.log ]]; then kind=log; [[ $source == *-concurrency.log ]] || kind=; fi
+  if [[ -n $kind ]]; then
+    counter="$BOX_ROOT/../concurrency-fetch-$kind"
+    count=0
+    [[ ! -f $counter ]] || read -r count < "$counter"
+    count=$((count + 1))
+    printf '%s\\n' "$count" > "$counter"
+    if (( count <= ${Number(config.concurrencyFetchFailures)} )); then
+      if [[ $kind == out ]]; then
+        partial=$(mktemp -d)
+        name=$(basename -- "$source")
+        cp -r -- "$source" "$partial/$name"
+        rm -f -- "$partial/$name/concurrency/concurrency.json"
+        cp -r -- "$partial/$name" "$2"
+        rm -rf -- "$partial"
+      fi
+      echo 'simulated stalled fetch' >&2
+      exit 1
+    fi
+  fi
+fi
+` : ''
   script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
-  script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\nexec cp -r -- "$source" "$2"')
+  script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\n' + failingFetch + 'exec cp -r -- "$source" "$2"')
   const callsFile = path.join(root, 'calls.jsonl')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w')
   const stderrFile = path.join(root, 'stderr.log')
@@ -299,7 +328,9 @@ exec '${realPython}' "$@"`)
         cwd: pipeline, timeout: 240000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr], env: { ...process.env,
           M5_RAIDS_LEDGER: raidsLedger, WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(config), M5_REPRODUCE_CALLS: callsFile,
           M5_CONCURRENCY_CALLS: path.join(root, 'concurrency-calls.jsonl'),
-          M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch') },
+          M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch'),
+          // Failing fetches are retried after BOXRUN_FETCH_WAIT_S; 1 s keeps the fixture fast yet measurable.
+          ...(config.concurrencyFetchFailures ? { BOXRUN_FETCH_WAIT_S: config.concurrencyFetchFailures >= 5 ? '0' : '1' } : {}) },
       })
       let error
       proc.on('error', value => { error = value })
@@ -389,7 +420,8 @@ exec '${realPython}' "$@"`)
       if (config.concurrency === 'timeout' && file.slice(5, -5) === 'concurrency') return { operation: 'concurrency', ...receipt }
       assert.ok(Number.isInteger(receipt.rc))
       assert.equal(receipt.timed_out, false)
-      assert.equal(receipt.fetched, true)
+      // Only the concurrency fetch that fails on all five attempts leaves fetched false.
+      assert.equal(receipt.fetched, !(config.concurrencyFetchFailures >= 5 && file.slice(5, -5) === 'concurrency'), file)
       assert.ok(Number.isInteger(receipt.wall_s) && receipt.wall_s >= 0)
       for (const key of ['started_utc', 'ended_utc']) assert.ok(Number.isFinite(Date.parse(receipt[key])))
       return { operation: file.slice(5, -5), ...receipt }
@@ -487,10 +519,13 @@ function concurrencyChecks(name, root, config, stage, stoppedAt) {
   })
   if (!ran) return
   const id = receipt[0].slice(0, -5)
+  const fetchFailures = config.concurrencyFetchFailures ?? 0
+  // Five failed attempts exhaust the retries: nothing from this probe can be fetched.
+  const lost = fetchFailures >= 5
   check(`${name}: probe log, fetched results, stage unaffected (${mode})`, () => {
-    assert.ok(fs.statSync(path.join(root, 'agent', 'results', 'profile', `${id}.log`)).isFile(), 'probe log missing')
+    if (!lost) assert.ok(fs.statSync(path.join(root, 'agent', 'results', 'profile', `${id}.log`)).isFile(), 'probe log missing')
     assert.equal(stage('profile').signature.status, 'PASS')
-    assert.ok(!fs.existsSync(path.join(fetched, 'stale-marker')), 'remote out/concurrency was not cleared first')
+    if (!lost) assert.ok(!fs.existsSync(path.join(fetched, 'stale-marker')), 'remote out/concurrency was not cleared first')
     const calls = rows(path.join(root, 'concurrency-calls.jsonl'))
     if (mode === 'real') {
       assert.equal(calls.length, 0)
@@ -506,7 +541,7 @@ function concurrencyChecks(name, root, config, stage, stoppedAt) {
   check(`${name}: packet concurrency and headroom fact (${mode})`, () => {
     const packet = readJSON(packetFile)
     const facts = stage('profile').facts
-    if (VALID_PROBE_MODES[mode]) {
+    if (VALID_PROBE_MODES[mode] && !lost) {
       assert.deepEqual(packet.concurrency, VALID_PROBE_MODES[mode])
       assert.deepEqual(readJSON(path.join(fetched, 'concurrency.json')), VALID_PROBE_MODES[mode])
       assert.deepEqual(facts.headroom, VALID_PROBE_MODES[mode].factor)
@@ -539,6 +574,23 @@ function concurrencyChecks(name, root, config, stage, stoppedAt) {
     const factor = packet.concurrency?.factor ?? null
     if (factor !== null && factor >= 1) assert.equal(bounds.batching.k_derivation.factor, factor)
     assert.equal(bounds.batching.k, factor !== null && factor >= 1 ? Math.min(4, factor) : 1)
+  })
+  if (fetchFailures) check(`${name}: concurrency fetches retried, probe run once (run11 regression)`, () => {
+    // SCHEMAS.md receipts: out/ then the log; each failing fetch is retried up to four more times,
+    // only the fetch is repeated, and the retry waits count in wall_s.
+    const attempts = kind => { const file = path.join(root, `concurrency-fetch-${kind}`); return fs.existsSync(file) ? Number(fs.readFileSync(file, 'utf8')) : 0 }
+    const r = readJSON(path.join(receiptDir, receipt[0]))
+    assert.equal(r.rc, 0, 'remote rc recorded')
+    assert.equal(r.timed_out, false)
+    assert.equal(r.fetched, !lost)
+    assert.equal(attempts('out'), Math.min(fetchFailures + 1, 5), 'out/ fetch attempts')
+    if (lost) assert.ok(attempts('log') <= 5, `log fetch attempts ${attempts('log')}`)
+    else {
+      assert.equal(attempts('log'), fetchFailures + 1, 'log fetch attempts')
+      const waits = 2 * fetchFailures * 1
+      assert.ok(r.wall_s >= waits, `retry waits (${waits} s at BOXRUN_FETCH_WAIT_S=1) missing from wall_s ${r.wall_s}`)
+    }
+    assert.equal(rows(path.join(root, 'concurrency-calls.jsonl')).length, 1, 'retry repeated the probe command')
   })
 }
 function reproduceFacts(name, run, passed, total, stock = true) {
@@ -1219,6 +1271,22 @@ async function main() {
       const run = await runCase(name, { concurrency: mode, ...extra })
       profileFacts(name, run, 0.95)
     }
+    // Recorded run11 (positive-openmm): the probe exited 0 but its out/ and log fetches failed,
+    // so the packet lost a valid calibration. One failed attempt each must now be retried into the
+    // validated object; fetches failing on every attempt still give null without affecting the stage.
+    const run11 = await runCase('concurrency-fetch-fails-once', { concurrency: 'valid', concurrencyFetchFailures: 1 })
+    profileFacts('concurrency-fetch-fails-once', run11, 0.95)
+    check('concurrency-fetch-fails-once: validated concurrency and non-null headroom after the retry', () => {
+      assert.deepEqual(readJSON(path.join(run11.root, 'agent', 'profile-packet.json')).concurrency, fixture.VALID_CONCURRENCY)
+      assert.equal(run11.stage('profile').facts.headroom, fixture.VALID_CONCURRENCY.factor)
+    })
+    const lostRun = await runCase('concurrency-fetch-always-fails', { concurrency: 'valid', concurrencyFetchFailures: 99 })
+    profileFacts('concurrency-fetch-always-fails', lostRun, 0.95)
+    check('concurrency-fetch-always-fails: concurrency null, headroom null, profile PASS', () => {
+      assert.equal(readJSON(path.join(lostRun.root, 'agent', 'profile-packet.json')).concurrency, null)
+      assert.equal(lostRun.stage('profile').facts.headroom, null)
+      assert.equal(lostRun.stage('profile').signature.status, 'PASS')
+    })
 
   } catch (error) {
     failures++

@@ -637,7 +637,9 @@ fi`)
         stdio: ['ignore', stdout, stderr], env: { ...process.env, HOME: home, PATH: bin + path.delimiter + process.env.PATH,
           WF_STUB: __filename, M5_IMPLEMENT_ROOT: root, M5_IMPLEMENT_CONFIG: JSON.stringify(config),
           M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl'), BOX_ROOT: box, M5_IMPLEMENT_BIN: bin,
-          M5_BOX_COMMANDS: path.join(root, 'box-commands'), BOX: path.join(bin, 'box'), FETCH: path.join(bin, 'fetch') } })
+          M5_BOX_COMMANDS: path.join(root, 'box-commands'), BOX: path.join(bin, 'box'), FETCH: path.join(bin, 'fetch'),
+          // A failing fetch is retried after BOXRUN_FETCH_WAIT_S; keep the fixture fast.
+          ...(config.fetchFailure ? { BOXRUN_FETCH_WAIT_S: '0' } : {}) } })
       let error
       proc.on('error', value => { error = value })
       proc.on('close', (status, signal) => resolve({ status, signal, error }))

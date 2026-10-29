@@ -8,7 +8,10 @@ runner=$repo/m5/boxrun.sh
 scratch=$(mktemp -d)
 trap 'rm -rf -- "$scratch"' EXIT
 export BOX_ROOT=$scratch/box
-mkdir -p "$BOX_ROOT" "$scratch/bin"
+# Failed fetches are retried after a wait; keep the suite fast unless a case overrides it.
+export BOXRUN_FETCH_WAIT_S=0
+mkdir -p "$BOX_ROOT" "$scratch/bin" "$scratch/sleep-bin"
+real_sleep=$(type -P sleep)
 
 cat > "$scratch/bin/box" <<'SH'
 #!/usr/bin/env bash
@@ -40,7 +43,33 @@ cat > "$scratch/bin/fail-fetch" <<'SH'
 #!/usr/bin/env bash
 exit 1
 SH
-chmod +x "$scratch/bin/"*
+# Counts outputs and log fetch attempts separately (the log is the one ending in .log)
+# and fails the first FAIL_OUT outputs attempts and the first FAIL_LOG log attempts.
+cat > "$scratch/bin/counting-fetch" <<'SH'
+#!/usr/bin/env bash
+kind=out
+[[ $1 != *.log ]] || kind=log
+printf '%s\n' "$kind" >> "$FETCH_DIR/order"
+count=0
+[[ ! -f $FETCH_DIR/$kind ]] || read -r count < "$FETCH_DIR/$kind"
+count=$((count + 1))
+printf '%s\n' "$count" > "$FETCH_DIR/$kind"
+if [[ $kind == out ]]; then fails=${FAIL_OUT:-0}; else fails=${FAIL_LOG:-0}; fi
+if (( count <= fails )); then
+    echo "simulated $kind fetch failure" >&2
+    exit 1
+fi
+cd -- "$BOX_ROOT" || exit 1
+exec cp -r -- "$1" "$2"
+SH
+# Records every sleep; skips the 60-second retry wait instead of taking it.
+cat > "$scratch/sleep-bin/sleep" <<SH
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >> "\$SLEEP_LOG"
+case \$1 in 60|60s|60.0) exit 0 ;; esac
+exec '$real_sleep' "\$@"
+SH
+chmod +x "$scratch/bin/"* "$scratch/sleep-bin/sleep"
 
 check() {
     local label=$1
@@ -123,6 +152,91 @@ run_case() {
     printf '%s\n' "$failures" > "$scratch/$name/failures"
 }
 
+lines() {
+    local -a rows=()
+    [[ ! -f $1 ]] || mapfile -t rows < "$1"
+    printf '%s\n' "${#rows[@]}"
+}
+
+wall_of() {
+    python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["wall_s"])' "$1" 2>/dev/null || echo -1
+}
+
+at_least() {
+    python3 -c 'import sys; sys.exit(0 if float(sys.argv[1]) >= float(sys.argv[2]) else 1)' "$1" "$2"
+}
+
+# SCHEMAS.md receipts: after the remote command, fetch out/ then the log; a failing fetch is
+# retried up to four more times, waiting BOXRUN_FETCH_WAIT_S (default 60 s) before each retry;
+# fetched is true only when both succeed; only the fetch is repeated; waits count in wall_s.
+# wait is a number of seconds, or "default" for an unset BOXRUN_FETCH_WAIT_S with a fake sleep.
+retry_case() {
+    local name=$1 fail_out=$2 fail_log=$3 expected_rc=$4 expected_exit=$5 fetched=$6
+    local seconds=$7 tail=$8 wait=$9
+    local failures=0 remote=$BOX_ROOT/$name dir=$scratch/$name out=$scratch/$name/out
+    local before after status outs logs retries wall order
+    mkdir -p "$remote" "$out" "$dir/fetches"
+    local command="printf 'run\n' >> '$remote/runs'; $prepare$tail"
+    local -a envs=(BOX="$scratch/bin/box" FETCH="$scratch/bin/counting-fetch"
+        FETCH_DIR="$dir/fetches" FAIL_OUT="$fail_out" FAIL_LOG="$fail_log")
+    if [[ $wait == default ]]; then
+        envs=(-u BOXRUN_FETCH_WAIT_S "${envs[@]}" PATH="$scratch/sleep-bin:$PATH" SLEEP_LOG="$dir/sleeps")
+    else
+        envs+=(BOXRUN_FETCH_WAIT_S="$wait")
+    fi
+    before=$(date +%s)
+    env "${envs[@]}" timeout --kill-after=2s 105s bash "$runner" \
+        --name "$name" --cmd "$command" --remote-dir "$remote" \
+        --timeout "$seconds" --fetch artifacts --to "$out" \
+        --receipt "$dir/receipt.json" > "$dir/runner.log" 2>&1
+    status=$?
+    after=$(date +%s)
+    check "$name: exit $expected_exit (got $status)" test "$status" -eq "$expected_exit"
+    check "$name: receipt fields, rc $expected_rc, fetched $fetched" receipt_check "$dir/receipt.json" \
+        "$name" "$expected_rc" "$fetched" "$before" "$after"
+    check "$name: remote exit code" test "$(cat "$remote/$name.rc" 2>/dev/null)" = "$expected_rc"
+    check "$name: remote command ran exactly once (got $(lines "$remote/runs"))" \
+        test "$(lines "$remote/runs")" -eq 1
+    outs=$(cat "$dir/fetches/out" 2>/dev/null || echo 0)
+    logs=$(cat "$dir/fetches/log" 2>/dev/null || echo 0)
+    if [[ $fetched == true ]]; then
+        check "$name: complete outputs fetched" test "$(cat "$out/artifacts/result.txt" 2>/dev/null)" = payload
+        check "$name: log fetched" test "$(cat "$out/$name.log" 2>/dev/null)" = log-marker
+    fi
+    if (( expected_rc != 124 )); then
+        local want_outs=$(( fail_out >= 5 ? 5 : fail_out + 1 ))
+        check "$name: $want_outs outputs fetch attempt(s) (got $outs)" test "$outs" -eq "$want_outs"
+        if (( fail_out < 5 )); then
+            local want_logs=$(( fail_log >= 5 ? 5 : fail_log + 1 ))
+            check "$name: $want_logs log fetch attempt(s) (got $logs)" test "$logs" -eq "$want_logs"
+        fi
+        order=$(tr -d '\n' 2>/dev/null < "$dir/fetches/order")
+        check "$name: outputs fetched before the log ($order)" eval '[[ $order =~ ^(out)+(log)*$ ]]'
+    fi
+    retries=$(( (outs > 0 ? outs - 1 : 0) + (logs > 0 ? logs - 1 : 0) ))
+    if [[ $wait == default ]]; then
+        local sixties=0 entry
+        if [[ -f $dir/sleeps ]]; then
+            while read -r entry; do
+                [[ ! $entry =~ ^60(s|\.0+)?$ ]] || sixties=$((sixties + 1))
+            done < "$dir/sleeps"
+        fi
+        check "$name: default wait is 60 s before each of $retries retries (got $sixties)" \
+            test "$sixties" -eq "$retries"
+    elif (( wait > 0 )); then
+        wall=$(wall_of "$dir/receipt.json")
+        check "$name: $retries retry waits of ${wait}s count in wall_s (wall_s $wall)" \
+            at_least "$wall" "$((retries * wait))"
+        check "$name: runner took the waits ($((after - before))s)" \
+            test "$((after - before))" -ge "$((retries * wait))"
+    fi
+    if (( failures )); then
+        printf '%s\n' "--- $name runner output ---"
+        cat "$dir/runner.log"
+    fi
+    printf '%s\n' "$failures" > "$dir/failures"
+}
+
 # Run independent cases concurrently: two 20-second poll retries must not make
 # the whole suite exceed three minutes. Each runner has a 105-second watchdog.
 prepare='mkdir -p artifacts; printf "payload\n" > artifacts/result.txt; printf "log-marker\n"'
@@ -140,6 +254,37 @@ for name in success nonzero timeout flaky fetch_failure; do
     run_case "$name" "$rc" "$exit_code" "$seconds" "$command" \
         "$box" "$fetch" "$fetched" > "$scratch/$name.results" 2>&1 &
     pids+=("$!")
+done
+# name fail_out fail_log rc exit fetched timeout command-tail wait
+retry_cases=(
+    'out_retry_1 1 0 0 0 true 10 - 0'
+    'out_retry_2 2 0 0 0 true 10 - 0'
+    'out_retry_3 3 0 0 0 true 10 - 0'
+    'out_retry_4 4 0 0 0 true 10 - 0'
+    'log_retry_1 0 1 0 0 true 10 - 0'
+    'log_retry_2 0 2 0 0 true 10 - 0'
+    'log_retry_3 0 3 0 0 true 10 - 0'
+    'log_retry_4 0 4 0 0 true 10 - 0'
+    'out_fail_5 99 0 0 2 false 10 - 0'
+    'out_fail_5_nonzero 99 0 7 2 false 10 exit7 0'
+    'log_fail_5 0 99 0 2 false 10 - 0'
+    'both_retry_wait_env 1 1 0 0 true 10 - 2'
+    'both_retry_wait_default 1 1 0 0 true 10 - default'
+    'no_retry_wait_default 0 0 0 0 true 10 - default'
+    'timeout_fetch_fail 99 99 124 3 false 2 sleep30 0'
+)
+retry_names=()
+for row in "${retry_cases[@]}"; do
+    read -r name fail_out fail_log rc exit_code fetched seconds tail wait <<< "$row"
+    case $tail in
+        -) tail= ;;
+        exit7) tail='; exit 7' ;;
+        sleep30) tail='; sleep 30' ;;
+    esac
+    retry_case "$name" "$fail_out" "$fail_log" "$rc" "$exit_code" "$fetched" \
+        "$seconds" "$tail" "$wait" > "$scratch/$name.results" 2>&1 &
+    pids+=("$!")
+    retry_names+=("$name")
 done
 
 # Kill only the polling runner after the remote command signals that it started.
@@ -171,7 +316,7 @@ check 'detached: exit code appears after runner kill' \
 for pid in "${pids[@]}"; do
     wait "$pid" || { echo 'FAIL: test worker crashed'; failures=$((failures + 1)); }
 done
-for name in success nonzero timeout flaky fetch_failure; do
+for name in success nonzero timeout flaky fetch_failure "${retry_names[@]}"; do
     cat "$scratch/$name.results"
     count=$(cat "$scratch/$name/failures" 2>/dev/null || echo 1)
     failures=$((failures + count))
