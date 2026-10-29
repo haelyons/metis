@@ -1,0 +1,77 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "kind": "published input",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "verification": "Public URL fetched; byte size and SHA-256 computed during intake without executing baseline.",
+      "access": "No authentication required. PDB must be in driver working directory; force-field XML files ship inside OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "intended_use_permission_source": "intake/brief.md"
+    },
+    {
+      "name": "amber99sb.xml",
+      "kind": "published input",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "verification": "Public URL fetched; byte size and SHA-256 computed during intake without executing baseline.",
+      "access": "No authentication required. PDB must be in driver working directory; force-field XML files ship inside OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "intended_use_permission_source": "intake/brief.md"
+    },
+    {
+      "name": "tip3p.xml",
+      "kind": "published input",
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "verification": "Public URL fetched; byte size and SHA-256 computed during intake without executing baseline.",
+      "access": "No authentication required. PDB must be in driver working directory; force-field XML files ship inside OpenMM package.",
+      "licence_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "intended_use_permission_source": "intake/brief.md"
+    }
+  ],
+  "access_instructions": "Retrieve pinned PDB URL and verify stated SHA-256. Install pinned OpenMM distribution to provide both XML force fields. No external dataset or credentials required.",
+  "licence": "permitted for local scientific execution and modification per brief and repository licences",
+  "licence_sources": [
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+    "intake/brief.md"
+  ],
+  "generated_inputs": [
+    {
+      "name": "initial velocities",
+      "generation": "setVelocitiesToTemperature(300 K, seed=1000+i)"
+    },
+    {
+      "name": "Langevin random stream",
+      "generation": "setRandomNumberSeed(1000+i)"
+    }
+  ],
+  "missing_required_data": [],
+  "splits": null,
+  "splits_reason": "Molecular simulation workload; no train/test split.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "data_bytes": 2282791,
+  "data_gib": 0.002126014791429043,
+  "peak_working_set_gib": null,
+  "peak_working_set_reason": "Unpublished and unmeasured; intake runs no workloads."
+}

@@ -1,0 +1,74 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "tag": "8.2.0",
+  "immutable_pin": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "build_commands": [
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0"
+  ],
+  "build_commands_source": "intake/brief.md, Setup; PyPI release metadata corroborates released wheels.",
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "run_commands_source": "intake/brief.md, supplied executable Python driver and invocation",
+  "installation_check_command": "python3 -m openmm.testInstallation",
+  "installation_check_source": "intake/brief.md",
+  "driver": {
+    "source": "intake/brief.md, Python code block",
+    "filename": "dhfr_ensemble.py",
+    "immutable_upstream_pin": null,
+    "reason": "Driver is supplied by the brief, not part of the pinned public repository. Materialize code block verbatim before execution.",
+    "default_output": "ensemble.json"
+  },
+  "published_parent": {
+    "code": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "sha256": "942d21b57d50000499bda4df222cfbd146d32b5da7a5356311f0da3fda4ce25a",
+    "command": "python benchmark.py --platform=CUDA --test=pme --seconds=60",
+    "command_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "limitation": "Parent measures fixed-time throughput with warmup and adaptive step counts; it is not the representative fixed-work command."
+  },
+  "published_configuration": {
+    "atoms": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "timestep_ps": 0.004,
+    "simulation_ns_per_replica": 0.1,
+    "total_simulated_ns": 0.8,
+    "gpu_count": 1,
+    "platform": "CUDA",
+    "precision": "single",
+    "DeterministicForces": true,
+    "forcefield": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "constraint_tolerance": 1e-05,
+    "energy_interval_steps": 250,
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ]
+  },
+  "configuration_sources": [
+    "intake/brief.md",
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+  ],
+  "dependency_lock": null,
+  "dependency_lock_reason": "OpenMM and CUDA plugin released versions pinned; NVIDIA transitive wheel dependencies not locked by supplied command.",
+  "commands_executed": false,
+  "reproduction_status": "Not run; intake only."
+}

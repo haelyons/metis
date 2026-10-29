@@ -1,0 +1,75 @@
+{
+  "records": [
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1000,
+      "metrics": {
+        "mean_potential_kj_mol": -299792.52206323994,
+        "final_potential_kj_mol": -299938.0982381671
+      }
+    },
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1001,
+      "metrics": {
+        "mean_potential_kj_mol": -299709.74533655535,
+        "final_potential_kj_mol": -299889.4015218585
+      }
+    },
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1002,
+      "metrics": {
+        "mean_potential_kj_mol": -299753.4660711135,
+        "final_potential_kj_mol": -300002.4094869464
+      }
+    },
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1003,
+      "metrics": {
+        "mean_potential_kj_mol": -299924.9054759444,
+        "final_potential_kj_mol": -300534.99942224915
+      }
+    },
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1004,
+      "metrics": {
+        "mean_potential_kj_mol": -299903.4307631911,
+        "final_potential_kj_mol": -299735.33648889954
+      }
+    },
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1005,
+      "metrics": {
+        "mean_potential_kj_mol": -299675.97034082783,
+        "final_potential_kj_mol": -300120.8445150226
+      }
+    },
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1006,
+      "metrics": {
+        "mean_potential_kj_mol": -299608.61476679216,
+        "final_potential_kj_mol": -299530.0851766437
+      }
+    },
+    {
+      "input_id": "dhfr-23558-pme-fixed8x25000",
+      "seed": 1007,
+      "metrics": {
+        "mean_potential_kj_mol": -299712.3857656325,
+        "final_potential_kj_mol": -299989.13351648743
+      }
+    }
+  ],
+  "timing_scope": {
+    "description": "Common ensemble wall timer begins before any arm-specific worker launch or first Context creation and ends after all eight replicas complete, GPU synchronization, Context destruction, seed-ordered result merge and worker shutdown. Includes launch, initialization, kernel compilation under fixed cache policy, H2D/D2H transfer, integration, energy queries and merge. Common imports, argument parsing, PDB/force-field loading and System construction precede timer; final output serialization follows timer. No sum of per-replica times. MPS daemon provisioned before both arms and kept fixed; daemon startup excluded for both. Baseline and method must implement identical outer timing boundaries.",
+    "gpu_synchronization": "adapter",
+    "kind": "reported_wall"
+  },
+  "gpu_count": 1,
+  "wall_s": 58.47143693700036
+}

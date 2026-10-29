@@ -1,0 +1,119 @@
+{
+  "found": true,
+  "identity": {
+    "name": "DHFR replica ensembles on one GPU: sequential versus concurrent execution",
+    "software": "OpenMM 8.2.0",
+    "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "public_benchmark": "OpenMM examples/benchmark.py pme",
+    "brief_workload": "Fixed-work eight-replica adaptation, driver printed in brief",
+    "distinction": "Public code, command and inputs exist for the parent benchmark. Fixed-work driver and predictions come from the brief; no independent published fixed-work result is established."
+  },
+  "outcome_definition": {
+    "primary": "Minimize elapsed wall seconds for all eight replicas on one GPU with fixed scientific work and unchanged per-replica outcomes.",
+    "metrics": [
+      "total_wall_s",
+      "aggregate_ns_per_day = 0.8 / total_wall_s * 86400",
+      "speedup = sequential_total_wall_s / candidate_total_wall_s",
+      "per-replica wall_s, mean_potential_kj_mol, final_potential_kj_mol"
+    ],
+    "energy_units": "kJ/mol"
+  },
+  "citations": {
+    "brief": "intake/brief.md",
+    "upstream_code": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "published_study": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "licences": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+    "cuda_properties": "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html",
+    "openmm_release": "https://pypi.org/pypi/openmm/8.2.0/json",
+    "cuda_plugin_release": "https://pypi.org/pypi/OpenMM-CUDA-12/8.2.0/json"
+  },
+  "source_licences": {
+    "status": "permitted",
+    "intended_use": "Local scientific execution and modification",
+    "components": [
+      {
+        "component": "OpenMM API, Reference and CPU platforms",
+        "licence": "MIT",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "OpenMM CUDA and OpenCL platforms",
+        "licence": "GNU LGPL",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "PDB and force-field inputs distributed with OpenMM",
+        "licence": "Repository distribution; brief explicitly permits local running and modification",
+        "source": [
+          "intake/brief.md",
+          "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+        ],
+        "separate_file_specific_licence": null
+      }
+    ],
+    "conditions": "Retain applicable copyright and licence notices; comply with LGPL if redistributing modifications.",
+    "brief_driver_separate_licence": null,
+    "brief_driver_permission_evidence": "Brief supplies driver for local running and modification."
+  },
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "reason": "Stock image manifest, host driver and MPS executable availability not supplied or tested. Wheels establish a plausible installation route, not verified image compatibility.",
+    "requirements": [
+      "Linux x86_64 with compatible manylinux ABI",
+      "Python 3.10 to 3.13",
+      "NVIDIA driver supporting CUDA 12",
+      "One NVIDIA GPU; MPS support and control binary for concurrent method"
+    ],
+    "evidence": [
+      "https://pypi.org/pypi/openmm/8.2.0/json",
+      "https://pypi.org/pypi/OpenMM-CUDA-12/8.2.0/json",
+      "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/"
+    ],
+    "cuda_plugin_dependencies": "PyPI metadata declares NVIDIA CUDA runtime, nvcc, NVRTC, CUPTI and cuFFT wheels; transitive versions are not pinned.",
+    "reproduced": false
+  },
+  "memory": {
+    "data_gib": 0.002126014791429043,
+    "data_scope": "PDB plus two force-field XML files only; excludes installed software.",
+    "peak_working_set_gib": null,
+    "data_plus_peak_working_set_gib": null,
+    "size": "unknown",
+    "reason": "No published or measured peak host/device working set for eight concurrent replicas."
+  },
+  "scoring": {
+    "performance": "Report ensemble wall time, aggregate throughput and speedup at identical fixed work, device and environment.",
+    "published_acceptance_tolerance": null,
+    "reason": "NVIDIA observations have no acceptance tolerances; brief speedup ranges are hypotheses, not published acceptance criteria.",
+    "scientific_outcome_rule": "Brief requests identical energy series; fallback compares mean potential energy against same-seed sequential run-to-run variation.",
+    "fallback_numeric_threshold": null,
+    "fallback_reason": "No CUDA repeats, variation estimate or numeric scientific tolerance supplied. Do not derive tolerance from publication uncertainty.",
+    "constraint_tolerance_note": "Integrator constraint tolerance is a model setting, not a result acceptance tolerance."
+  },
+  "repeatability": {
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "seed_use": "Initial velocities and integrator stream for replica i use 1000+i.",
+    "controls": [
+      "Same GPU model and count",
+      "Same software and force-field inputs",
+      "CUDA single precision",
+      "DeterministicForces=true",
+      "Identical step count and energy sampling"
+    ],
+    "published_repeat_count": null,
+    "published_variation": null,
+    "limitations": "Documented deterministic forces do not establish tested bit-identical stochastic trajectories under concurrency. Brief reports only a small CPU test; CUDA reproduction remains pending."
+  },
+  "search_candidates": [],
+  "search_note": "Opened only brief-named sources and their pinned raw files; no alternative benchmark search.",
+  "anchors_count": 1,
+  "anchored": false
+}

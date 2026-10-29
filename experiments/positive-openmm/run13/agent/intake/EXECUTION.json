@@ -1,0 +1,121 @@
+{
+  "representative_scale": {
+    "atoms": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "timestep_ps": 0.004,
+    "simulation_ns_per_replica": 0.1,
+    "total_simulated_ns": 0.8,
+    "gpu_count": 1,
+    "platform": "CUDA",
+    "precision": "single",
+    "DeterministicForces": true,
+    "forcefield": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "constraint_tolerance": 1e-05,
+    "energy_interval_steps": 250,
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ]
+  },
+  "scale_policy": "Exactly eight replicas, 25000 steps each, one GPU. No scale search or doubling loops.",
+  "inputs": {
+    "files": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "driver": "Code block in intake/brief.md",
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "generated": "Initial velocities and integrator streams generated using specified seeds.",
+    "hardware": "One NVIDIA data-centre GPU; use identical device for baseline and candidate. Exact available GPU model unknown."
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "json_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_samples_per_replica": 100,
+    "energy_series_persisted_by_supplied_driver": false,
+    "limitation": "Driver samples energies every 250 steps but saves only mean and final values. Full-series identity needs additional instrumentation; no published numeric fallback tolerance exists."
+  },
+  "timing_scope": {
+    "ensemble": "Driver perf_counter begins before first Context creation and ends after final Context destruction. Includes context creation/kernel compilation, position and velocity initialization, integration, energy queries and context cleanup.",
+    "excluded": "Imports, argument parsing, PDB/force-field loading and System construction before timer; output serialization after timer; installation.",
+    "replica": "Begins after Context initialization and ends after integration and all energy queries, before Context destruction.",
+    "concurrent_comparison": "Measure elapsed time until all eight replicas finish; preserve equivalent context and initialization scope. No published fixed-work concurrent launcher supplied.",
+    "mps_startup_inclusion": null,
+    "mps_startup_reason": "Brief does not define MPS daemon startup timing policy."
+  },
+  "scoring_interface": {
+    "command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+    "command_source": "intake/brief.md",
+    "metrics": {
+      "aggregate_ns_per_day": "0.8 * 86400 / total_wall_s",
+      "speedup": "baseline total_wall_s / candidate total_wall_s"
+    },
+    "scientific_outputs": "Compare per-replica mean and final potential energies by replica/seed. Full-series verification requires saving sampled series.",
+    "published_scoring_script": null,
+    "published_acceptance_tolerance": null,
+    "reason": "No scoring script or numeric scientific acceptance criterion published for fixed-work adaptation. References in anchors.json are contextual, not pass/fail gates."
+  },
+  "stage_budgets_s": {},
+  "budget_defaults_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "runtime_evidence": {
+    "source": "intake/brief.md",
+    "estimate": "Brief estimates about one minute on H100 and a few minutes on slower GPUs for full ensemble. CUDA runtime not verified.",
+    "measured_runtime_s": null,
+    "budget_fit": "Expected to fit default run budget from brief estimate; not demonstrated."
+  },
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate script paths or commands supplied; only JSON structural consistency checked during intake."
+}

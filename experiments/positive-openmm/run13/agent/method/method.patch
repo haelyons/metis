@@ -1,0 +1,206 @@
+diff --git a/dhfr_concurrent.py b/dhfr_concurrent.py
+new file mode 100644
+--- /dev/null
++++ b/dhfr_concurrent.py
+@@ -0,0 +1,201 @@
++#!/usr/bin/env python3
++"""Four independent MPS workers, two waves, fixed scientific ensemble."""
++import ctypes
++import hashlib
++import json
++import math
++import multiprocessing as mp
++import os
++import signal
++from pathlib import Path
++import time
++import traceback
++
++import openmm as mm
++from openmm import app, unit
++
++DEFAULT_PROTOCOL = {'evaluation_inputs': {'configuration': {'DeterministicForces': True, 'atoms': 23558, 'constraint_tolerance': 1e-05, 'constraints': 'HBonds', 'cutoff_nm': 0.9, 'energy_interval_steps': 250, 'forcefield': ['amber99sb.xml', 'tip3p.xml'], 'friction_per_ps': 1, 'gpu_count': 1, 'hydrogen_mass_amu': 1.5, 'integrator': 'LangevinMiddleIntegrator', 'nonbonded_method': 'PME', 'platform': 'CUDA', 'precision': 'single', 'replicas': 8, 'seeds': [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007], 'simulation_ns_per_replica': 0.1, 'steps_per_replica': 25000, 'temperature_K': 300, 'timestep_ps': 0.004, 'total_simulated_ns': 0.8}, 'generated_inputs': 'For replica i=0..7 use seed 1000+i for setVelocitiesToTemperature(300 K, seed) and LangevinMiddleIntegrator.setRandomNumberSeed(seed). Start each from pinned equilibrated PDB. Preserve 100 samples per replica, every 250 steps. Return mean and final potential in kJ/mol with original seed identity.', 'ids': ['dhfr-23558-pme-fixed8x25000'], 'pins': {'cuda_plugin_version': '8.2.0', 'driver_source': 'intake/brief.md, fixed-work Python code block', 'files': [{'commit': '53770948682c40bd460b39830d4e0f0fd3a4b868', 'name': '5dfr_solv-cube_equil.pdb', 'sha256': 'fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf'}, {'commit': '53770948682c40bd460b39830d4e0f0fd3a4b868', 'name': 'amber99sb.xml', 'sha256': '186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092'}, {'commit': '53770948682c40bd460b39830d4e0f0fd3a4b868', 'name': 'tip3p.xml', 'sha256': '607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c'}], 'openmm_commit': '53770948682c40bd460b39830d4e0f0fd3a4b868', 'openmm_version': '8.2.0'}}, 'paired_seed_tests': {'assumptions': 'Eight seed streams treated as independent exchangeable scientific replicates; same initial coordinates, velocity seed and Langevin seed in both arms. Fixed seeds ensure reproducible pairing, not deterministic scientific outputs.', 'description': 'For each metric, pair candidate minus sequential baseline by input and seed. In each timing pair retain eight seed differences; reduce repeated timing-pair differences to one median per seed before inference. Repeated executions of a fixed seed are not independent scientific samples. Test median paired energy differences, not trajectory identity.', 'kind': 'paired_median', 'seeds': [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007]}, 'equivalence_metrics': [{'name': 'mean_potential_kj_mol', 'source': 'results/reproduce/out/baseline.wdnWYQIH/ensemble.json: sample standard deviation (ddof=1) of mean_potential_kj_mol across baseline seeds 1000..1007 is 109.30760352727 kJ/mol; absolute margin is baseline Monte Carlo standard error, sample SD/sqrt(8). Baseline-only resolution criterion, not a published scientific tolerance or measured same-seed repeatability.', 'tolerance': {'abs': 38.64607384469149}, 'units': 'kJ/mol'}, {'name': 'final_potential_kj_mol', 'source': 'results/reproduce/out/baseline.wdnWYQIH/ensemble.json: sample standard deviation (ddof=1) of final_potential_kj_mol across baseline seeds 1000..1007 is 292.631551040394 kJ/mol; absolute margin is baseline Monte Carlo standard error, sample SD/sqrt(8). Baseline-only resolution criterion, not a published scientific tolerance or measured same-seed repeatability.', 'tolerance': {'abs': 103.46087706490006}, 'units': 'kJ/mol'}], 'hardware_cost_basis': {'accounting': 'Charge one allocated GPU times complete elapsed ensemble wall time, including GPU-idle host launch, transfer and merge periods. Shared MPS workers collectively occupy one GPU, not one GPU each. Same device, driver 570.148.08 and software for both arms.', 'baseline_gpus': 1, 'budget_unit': 'gpu_s', 'device': 'NVIDIA A100-SXM4-40GB', 'method_gpus': 1, 'source': 'results/reproduce/out/probe.json'}, 'timing_scope': {'description': 'Common ensemble wall timer begins before any arm-specific worker launch or first Context creation and ends after all eight replicas complete, GPU synchronization, Context destruction, seed-ordered result merge and worker shutdown. Includes launch, initialization, kernel compilation under fixed cache policy, H2D/D2H transfer, integration, energy queries and merge. Common imports, argument parsing, PDB/force-field loading and System construction precede timer; final output serialization follows timer. No sum of per-replica times. MPS daemon provisioned before both arms and kept fixed; daemon startup excluded for both. Baseline and method must implement identical outer timing boundaries.', 'gpu_synchronization': 'adapter', 'kind': 'reported_wall'}}
++
++
++def synchronize():
++    runtime = ctypes.CDLL('libcudart.so')
++    for name, arguments in (('cudaSetDevice', (0,)), ('cudaDeviceSynchronize', ())):
++        function = getattr(runtime, name)
++        function.restype = ctypes.c_int
++        status = function(*arguments)
++        if status:
++            raise RuntimeError(f'{name} failed: {status}')
++
++
++def worker(connection, system_xml, positions, index, seed, input_id):
++    try:
++        # Fresh interpreter: never inherit an initialized CUDA/OpenMM runtime.
++        system = mm.XmlSerializer.deserialize(system_xml)
++        positions = [mm.Vec3(*xyz) for xyz in positions] * unit.nanometer
++        platform = mm.Platform.getPlatformByName('CUDA')
++        integrator = mm.LangevinMiddleIntegrator(300 * unit.kelvin,
++            1 / unit.picosecond, 0.004 * unit.picoseconds)
++        integrator.setConstraintTolerance(1e-5)
++        integrator.setRandomNumberSeed(seed)
++        context = mm.Context(system, integrator, platform,
++            {'Precision': 'single', 'DeterministicForces': 'true'})
++        context.setPositions(positions)
++        context.setVelocitiesToTemperature(300 * unit.kelvin, seed)
++        began = time.perf_counter()
++        energies = []
++        for _ in range(100):
++            integrator.step(250)
++            energies.append(context.getState(getEnergy=True).getPotentialEnergy()
++                            .value_in_unit(unit.kilojoule_per_mole))
++        synchronize()
++        metrics = dict(mean_potential_kj_mol=sum(energies) / len(energies),
++                       final_potential_kj_mol=energies[-1])
++        if not all(math.isfinite(v) for v in energies + list(metrics.values())):
++            raise ValueError('Nonfinite measured energy')
++        replica = dict(replica=index, seed=seed, steps=25000,
++                       wall_s=time.perf_counter() - began, **metrics)
++        del context, integrator
++        synchronize()
++        connection.send((replica, dict(input_id=input_id, seed=seed, metrics=metrics)))
++    except BaseException:
++        connection.send({'error': traceback.format_exc()})
++        raise
++    finally:
++        connection.close()
++
++
++def main():
++    mode = os.environ.get('EVAL_MODE', 'anchors')
++    if mode not in ('anchors', 'equivalence', 'warmup', 'performance', 'curve'):
++        raise ValueError('Unknown evaluation mode')
++    if os.environ.get('EVAL_ARM', 'method') != 'method':
++        raise ValueError('Method adapter requires method arm')
++    protocol_path = os.environ.get('EVAL_PROTOCOL')
++    protocol = json.loads(Path(protocol_path).read_text()) if protocol_path else DEFAULT_PROTOCOL
++    inputs = json.loads(os.environ.get('EVAL_INPUTS', json.dumps(protocol['evaluation_inputs'])))
++    seed_spec = json.loads(os.environ.get('EVAL_SEEDS', json.dumps(protocol['paired_seed_tests'])))
++    ids = inputs['ids']
++    if ids != protocol['evaluation_inputs']['ids'] or not ids:
++        raise ValueError('Input identities differ from sealed protocol')
++    if seed_spec['kind'] == 'paired_median':
++        seeds = seed_spec['seeds']
++    elif seed_spec['kind'] == 'deterministic':
++        seeds = [None]
++    else:
++        raise ValueError('Unknown seed protocol')
++    config = protocol['evaluation_inputs']['configuration']
++    execution_seeds = config['seeds'] if seeds == [None] else seeds
++    if execution_seeds != list(range(1000, 1008)) or execution_seeds != config['seeds']:
++        raise ValueError('Execution seeds differ from fixed ensemble')
++    if (config['replicas'], config['steps_per_replica'], config['energy_interval_steps']) != (8, 25000, 250):
++        raise ValueError('Unsupported scale')
++    names = [m['name'] for m in protocol['equivalence_metrics']]
++    if set(names) != {'mean_potential_kj_mol', 'final_potential_kj_mol'}:
++        raise ValueError('Unsupported metrics')
++    gpu_count = protocol['hardware_cost_basis']['method_gpus']
++    if gpu_count != 1:
++        raise ValueError('Expected one GPU')
++    raw_budget = os.environ.get('EVAL_COMPUTE_BUDGET', '')
++    budget = json.loads(raw_budget) if raw_budget else None
++    limit = None
++    if mode == 'curve':
++        limit = budget
++        if isinstance(budget, dict):
++            limit = next((budget[k] for k in ('gpu_seconds', 'gpu_s', 'budget_gpu_s',
++                         'compute_budget_gpu_s', 'value') if k in budget), None)
++        if type(limit) not in (int, float) or not math.isfinite(limit) or limit <= 0:
++            raise ValueError('Invalid GPU-second budget')
++    base = Path(os.environ['BASELINE_DIR']).resolve(strict=True)
++    data = base.parent / 'data'
++    output = Path(os.environ.get('EVAL_OUT') or os.environ.get('METHOD_OUT') or 'out').resolve()
++    output.mkdir(parents=True, exist_ok=True)
++    for pin in protocol['evaluation_inputs']['pins']['files']:
++        if hashlib.sha256((data / pin['name']).read_bytes()).hexdigest() != pin['sha256']:
++            raise ValueError('Input hash mismatch: ' + pin['name'])
++    pdb = app.PDBFile(str(data / '5dfr_solv-cube_equil.pdb'))
++    forcefield = app.ForceField(str(data / 'amber99sb.xml'), str(data / 'tip3p.xml'))
++    system = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME,
++        nonbondedCutoff=0.9, constraints=app.HBonds, hydrogenMass=1.5 * unit.amu)
++    system_xml = mm.XmlSerializer.serialize(system)
++    positions = [list(xyz) for xyz in pdb.positions.value_in_unit(unit.nanometer)]
++    ctx = mp.get_context('spawn')
++    tasks = [(i, seed, input_id) for i, seed in enumerate(execution_seeds) for input_id in ids]
++    replicas, records = [], []
++    processes = []
++    connections = []
++    def expired(signum, frame):
++        raise TimeoutError('Ensemble compute budget exhausted')
++    previous_handler = signal.signal(signal.SIGALRM, expired)
++    start = time.perf_counter()
++    allowance = min(1090, limit / gpu_count if limit is not None else 1090)
++    deadline = start + allowance
++    signal.setitimer(signal.ITIMER_REAL, allowance)
++    try:
++        for offset in range(0, len(tasks), 4):
++            wave = []
++            for index, seed, input_id in tasks[offset:offset + 4]:
++                parent, child = ctx.Pipe(duplex=False)
++                process = ctx.Process(target=worker,
++                    args=(child, system_xml, positions, index, seed, input_id))
++                process.start()
++                child.close()
++                processes.append(process)
++                connections.append(parent)
++                wave.append((process, parent))
++            for process, connection in wave:
++                if not connection.poll(max(0, deadline - time.perf_counter())):
++                    raise TimeoutError('Ensemble compute budget exhausted')
++                result = connection.recv()
++                if isinstance(result, dict):
++                    raise RuntimeError(result['error'])
++                process.join(max(0, deadline - time.perf_counter()))
++                if process.is_alive() or process.exitcode != 0:
++                    raise RuntimeError('Replica failed or exceeded budget')
++                replica, record = result
++                replicas.append(replica)
++                records.append(record)
++        synchronize()
++        if seeds == [None]:
++            records = [dict(input_id=input_id, seed=None, metrics={
++                name: sum(r['metrics'][name] for r in records if r['input_id'] == input_id)
++                      / len(execution_seeds) for name in names}) for input_id in ids]
++    finally:
++        signal.setitimer(signal.ITIMER_REAL, 0)
++        signal.signal(signal.SIGALRM, previous_handler)
++        for process in processes:
++            if process.is_alive():
++                process.terminate()
++        for process in processes:
++            process.join(2)
++            if process.is_alive():
++                process.kill()
++                process.join()
++        for connection in connections:
++            connection.close()
++    # Include pipe cleanup and complete worker shutdown in the outer timer.
++    wall = time.perf_counter() - start
++    if not math.isfinite(wall) or wall <= 0 or wall >= allowance:
++        raise RuntimeError('Invalid wall time or exhausted budget')
++    expected = [(input_id, seed) for seed in seeds for input_id in ids]
++    if [(r['input_id'], r['seed']) for r in records] != expected:
++        raise ValueError('Incomplete or unordered scientific records')
++    ensemble = dict(platform='CUDA', properties={'Precision': 'single', 'DeterministicForces': 'true'},
++                    simulated_ns=0.8 * len(ids), total_wall_s=wall, replicas=replicas)
++    (output / 'ensemble.json').write_text(json.dumps(ensemble, indent=2, allow_nan=False) + '\n')
++    print(f'total_wall_s: {wall:.3f}')
++    print(f'aggregate_ns_per_day: {0.8 * len(ids) * 86400 / wall:.1f}')
++    if mode == 'anchors':
++        measured = {'nvidia-2025-dhfr-tuned-eight-throughput-reference': 0.8 * 86400 / wall}
++        encoded = json.dumps(measured, indent=2, allow_nan=False) + '\n'
++        (output / 'anchors_measured.json').write_text(encoded)
++        Path('out').mkdir(exist_ok=True)
++        Path('out/anchors_measured.json').write_text(encoded)
++    else:
++        result = dict(records=records, timing_scope=protocol['timing_scope'], gpu_count=gpu_count, wall_s=wall)
++        if mode == 'curve':
++            result['compute_budget'] = budget
++        (output / 'evaluation.json').write_text(json.dumps(result, indent=2, allow_nan=False) + '\n')
++
++
++if __name__ == '__main__':
++    main()
