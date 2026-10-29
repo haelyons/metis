@@ -1,0 +1,138 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "gpu_class": "One H100, A100 or A10-class NVIDIA GPU; use same physical GPU for baseline and candidate. Exact available model unknown.",
+    "atoms": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "total_steps": 200000,
+    "physical_time_ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "energy_samples_per_replica": 100,
+    "scale_policy": "Fixed supplied scale; no searches, doubling loops or smaller-workload extrapolation."
+  },
+  "inputs": {
+    "coordinates": "5dfr_solv-cube_equil.pdb",
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "configuration": {
+      "openmm": "8.2.0",
+      "gpu_count": 1,
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "sample_interval_steps": 250
+    },
+    "source": "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)"
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "ensemble_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "full_energy_series": null,
+    "full_energy_series_reason": "Supplied driver samples energies every 250 steps internally but serializes only mean and final values. Full-series identity cannot be audited from its JSON alone."
+  },
+  "timing_scope": {
+    "clock": "time.perf_counter",
+    "ensemble_start": "After PDB/force-field/System/platform preparation, immediately before replica loop.",
+    "ensemble_end": "After final replica Context/integrator destruction, before output serialization.",
+    "included": [
+      "Context construction and CUDA initialization/compilation within replica loop",
+      "initial positions and velocities",
+      "all 25000 integration steps per replica",
+      "potential-energy queries every 250 steps",
+      "replica teardown"
+    ],
+    "excluded": [
+      "package installation",
+      "imports",
+      "PDB parsing",
+      "force-field and System preparation",
+      "JSON serialization"
+    ],
+    "per_replica_wall_s": "Starts after Context setup and velocity initialization; includes integration and energy sampling, excludes context setup and teardown.",
+    "candidate_comparison": "Measure entire eight-replica completion including corresponding context setup and teardown; include process orchestration within candidate ensemble interval and report any MPS setup separately."
+  },
+  "scoring_interface": {
+    "time_metric": "ensemble.json total_wall_s, lower is better",
+    "throughput_formula": "simulated_ns / total_wall_s * 86400",
+    "speedup_formula": "sequential_total_wall_s / candidate_total_wall_s",
+    "scientific_outputs": "Match replica ids, seeds, step counts, final and mean potential energy in kJ/mol. Full-series equality requires additional instrumentation.",
+    "published_fixed_work_acceptance_tolerance": null,
+    "reason": "No independently published fixed-work energy acceptance bound. Brief predictions are hypotheses; same-seed run-to-run variability is unmeasured.",
+    "anchor_interface": "anchors.json contains only independent published reference; tolerance null prevents pass/fail scoring against approximate throughput.",
+    "comparison_preconditions": [
+      "Same single GPU model and device",
+      "Same software and force fields",
+      "Same replica seed mapping",
+      "Same work, precision and deterministic-force properties"
+    ],
+    "repeat_count": null,
+    "repeat_count_reason": "No published repeat count or confidence rule for fixed-work ensemble.",
+    "repeatability": "Force determinism documented for CUDA; whole stochastic-trajectory identity under concurrency unverified. CPU platform trial described in brief was nondeterministic."
+  },
+  "runtime_evidence": {
+    "expected_runtime": "Brief estimates roughly one minute on H100 and a few minutes on slower GPUs; not independently measured.",
+    "source": "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)",
+    "budget_fit": null,
+    "budget_fit_reason": "Default budgets exceed brief runtime estimates, but no CUDA reproduction performed."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "tag": "8.2.0",
+  "pin_source": "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0",
+  "pin_verified": true,
+  "build_commands": [
+    "python3 -m pip install openmm==8.2.0 OpenMM-CUDA-12==8.2.0"
+  ],
+  "build_command_sources": [
+    "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)",
+    "https://pypi.org/project/openmm/8.2.0/",
+    "https://pypi.org/project/OpenMM-CUDA-12/8.2.0/"
+  ],
+  "installation_check_commands": [
+    "python3 -m openmm.testInstallation"
+  ],
+  "run_commands": [
+    "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000"
+  ],
+  "run_command_source": "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)",
+  "published_throughput_command": "python benchmark.py --platform=CUDA --test=pme --seconds=60",
+  "published_throughput_command_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+  "driver": {
+    "source": "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)",
+    "materialization": "Extract supplied Python code block verbatim as dhfr_ensemble.py; run beside pinned PDB. Driver is supplied adaptation, not an upstream committed file.",
+    "immutable_pin": null,
+    "immutable_pin_reason": "Embedded driver has no public repository commit; exact supplied text preserved in brief.md.",
+    "brief_sha256": "dbea3e3b0c667852ae64399f0bbee17b472635a46d65c7825dae4f9e1276d031"
+  },
+  "upstream_script": {
+    "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "sha256": "942d21b57d50000499bda4df222cfbd146d32b5da7a5356311f0da3fda4ce25a"
+  },
+  "published_configuration": {
+    "openmm": "8.2.0",
+    "gpu_count": 1,
+    "system": "DHFR in explicit water",
+    "atoms": 23558,
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "cutoff_nm": 0.9,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "temperature_K": 300,
+    "friction_per_ps": 1,
+    "timestep_fs": 4,
+    "constraint_tolerance": 1e-05,
+    "platform": "CUDA",
+    "properties": {
+      "Precision": "single",
+      "DeterministicForces": "true"
+    },
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "seed0": 1000,
+    "sample_interval_steps": 250
+  },
+  "configuration_sources": [
+    "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)",
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "https://docs.openmm.org/8.2.0/userguide/library/04_platform_specifics.html"
+  ],
+  "published_study_configuration": {
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "openmm": "8.2.0",
+    "duration_target_seconds": 60,
+    "concurrent_process_counts": [
+      1,
+      2,
+      4,
+      8
+    ],
+    "tuned_thread_percentage_rule": "200 divided by number of MPS processes",
+    "difference": "Published fixed-time throughput experiment does not specify supplied ensemble seeds or deterministic-force setting."
+  },
+  "dependency_pins": {
+    "openmm": "8.2.0",
+    "OpenMM-CUDA-12": "8.2.0",
+    "numpy": null,
+    "nvidia_cuda_dependencies": null
+  },
+  "dependency_pins_reason": "PyPI metadata leaves transitive NumPy and NVIDIA CUDA runtime/compiler/NVRTC/CUPTI/cuFFT dependency versions unpinned; no lockfile supplied.",
+  "builds_run": false,
+  "workloads_run": false
+}

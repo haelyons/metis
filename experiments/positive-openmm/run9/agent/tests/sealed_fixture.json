@@ -1,0 +1,101 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "gpu_class": "One H100, A100 or A10-class NVIDIA GPU; use same physical GPU for baseline and candidate. Exact available model unknown.",
+    "atoms": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "total_steps": 200000,
+    "physical_time_ps_per_replica": 100,
+    "total_simulated_ns": 0.8,
+    "energy_samples_per_replica": 100,
+    "scale_policy": "Fixed supplied scale; no searches, doubling loops or smaller-workload extrapolation."
+  },
+  "inputs": {
+    "coordinates": "5dfr_solv-cube_equil.pdb",
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "configuration": {
+      "openmm": "8.2.0",
+      "gpu_count": 1,
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_fs": 4,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "properties": {
+        "Precision": "single",
+        "DeterministicForces": "true"
+      },
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "sample_interval_steps": 250
+    },
+    "source": "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)"
+  },
+  "equivalence_metrics": [
+    {
+      "name": "mean_potential_kj_mol",
+      "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of replicas[*].mean_potential_kj_mol across seeds 1000..1007 is 123.19454760158096 kJ/mol; divide by sqrt(8) to obtain baseline Monte Carlo standard error 43.55585000714341 kJ/mol. Seal adopts one measured baseline standard error as positive absolute equivalence margin. This is cross-seed sampling variability, not measured same-seed repeatability or an independently established physical acceptance threshold.",
+      "tolerance": {
+        "abs": 43.55585000714341
+      }
+    },
+    {
+      "name": "final_potential_kj_mol",
+      "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of replicas[*].final_potential_kj_mol across seeds 1000..1007 is 543.760489773663 kJ/mol; divide by sqrt(8) to obtain baseline Monte Carlo standard error 192.24836483013772 kJ/mol. Seal adopts one measured baseline standard error as positive absolute equivalence margin. This is cross-seed sampling variability, not measured same-seed repeatability or an independently established physical acceptance threshold.",
+      "tolerance": {
+        "abs": 192.24836483013772
+      }
+    }
+  ],
+  "confidence_rule": {
+    "confidence": 0.95,
+    "kind": "paired_median"
+  },
+  "paired_seed_tests": {
+    "alpha": 0.05,
+    "decision": "Require the exact two-sided binomial order-statistic confidence interval for the median paired difference to lie strictly inside [-abs_margin,+abs_margin] for both metrics. Bonferroni across the two metrics; no acceptance from lack of significance.",
+    "description": "For each metric and budget, compare method minus baseline outputs matched by input identity and seed. Use one prespecified scientific observation per seed, from timing pair 0; later timing repetitions are not independent scientific seeds. All timing pairs must complete the same work. Fixed seeds do not make Langevin sampling deterministic.",
+    "kind": "paired_median",
+    "scope": "Equivalence concerns typical paired energy-summary differences; it does not certify identical trajectories or every individual replica. Full energy series are not serialized and are not claimed equivalent.",
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ]
+  },
+  "input_ids": [
+    "dhfr-23558-pme-fixed-eight-replicas"
+  ],
+  "outputs_stochastic": true
+}

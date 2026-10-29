@@ -1,0 +1,615 @@
+{
+  "ranked_methods": [
+    {
+      "method": "ensembles",
+      "bounds": {
+        "p": 1,
+        "k": 1.3166816158782397,
+        "bound": 1.3166816158782397,
+        "feasible": true,
+        "k_derivation": {
+          "rule": "min(fixed_cap, concurrency factor)",
+          "fixed_cap": 8,
+          "factor": 1.3166816158782397,
+          "mps": true
+        },
+        "stages": [
+          {
+            "stage": "kernels",
+            "kind": "compute",
+            "wall_fraction": 0.6022135728452029,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "multi-GPU",
+              "ensembles"
+            ]
+          },
+          {
+            "stage": "memcpy H2D",
+            "kind": "transfer",
+            "wall_fraction": 0.0002581148206374974,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles",
+              "pipelining"
+            ]
+          },
+          {
+            "stage": "memcpy D2H",
+            "kind": "transfer",
+            "wall_fraction": 0.001852950628475949,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles",
+              "pipelining"
+            ]
+          },
+          {
+            "stage": "CUDA API host time",
+            "kind": "other",
+            "wall_fraction": 0.3956753617056835,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles"
+            ]
+          },
+          {
+            "stage": "other host time",
+            "kind": "other",
+            "wall_fraction": 0,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "method": "data-parallel over inputs",
+      "bounds": {
+        "p": 1,
+        "k": 1.3166816158782397,
+        "bound": 1.3166816158782397,
+        "feasible": true,
+        "k_derivation": {
+          "rule": "min(fixed_cap, concurrency factor)",
+          "fixed_cap": 8,
+          "factor": 1.3166816158782397,
+          "mps": true
+        },
+        "stages": [
+          {
+            "stage": "kernels",
+            "kind": "compute",
+            "wall_fraction": 0.6022135728452029,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "multi-GPU",
+              "ensembles"
+            ]
+          },
+          {
+            "stage": "memcpy H2D",
+            "kind": "transfer",
+            "wall_fraction": 0.0002581148206374974,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles",
+              "pipelining"
+            ]
+          },
+          {
+            "stage": "memcpy D2H",
+            "kind": "transfer",
+            "wall_fraction": 0.001852950628475949,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles",
+              "pipelining"
+            ]
+          },
+          {
+            "stage": "CUDA API host time",
+            "kind": "other",
+            "wall_fraction": 0.3956753617056835,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles"
+            ]
+          },
+          {
+            "stage": "other host time",
+            "kind": "other",
+            "wall_fraction": 0,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "method": "batching",
+      "bounds": {
+        "p": 1,
+        "k": 1.3166816158782397,
+        "bound": 1.3166816158782397,
+        "feasible": true,
+        "k_derivation": {
+          "rule": "min(fixed_cap, concurrency factor)",
+          "fixed_cap": 4,
+          "factor": 1.3166816158782397,
+          "mps": true
+        },
+        "stages": [
+          {
+            "stage": "kernels",
+            "kind": "compute",
+            "wall_fraction": 0.6022135728452029,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "multi-GPU",
+              "ensembles"
+            ]
+          },
+          {
+            "stage": "memcpy H2D",
+            "kind": "transfer",
+            "wall_fraction": 0.0002581148206374974,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles",
+              "pipelining"
+            ]
+          },
+          {
+            "stage": "memcpy D2H",
+            "kind": "transfer",
+            "wall_fraction": 0.001852950628475949,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles",
+              "pipelining"
+            ]
+          },
+          {
+            "stage": "CUDA API host time",
+            "kind": "other",
+            "wall_fraction": 0.3956753617056835,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles"
+            ]
+          },
+          {
+            "stage": "other host time",
+            "kind": "other",
+            "wall_fraction": 0,
+            "mean_gpu_util": null,
+            "methods": [
+              "data-parallel over inputs",
+              "batching",
+              "ensembles"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "stage_to_method": [
+    {
+      "stage": "kernels",
+      "wall_fraction": 0.6022135728452029,
+      "mean_gpu_util": null,
+      "methods": [
+        "data-parallel over inputs",
+        "batching",
+        "multi-GPU",
+        "ensembles"
+      ]
+    },
+    {
+      "stage": "memcpy H2D",
+      "wall_fraction": 0.0002581148206374974,
+      "mean_gpu_util": null,
+      "methods": [
+        "data-parallel over inputs",
+        "batching",
+        "ensembles",
+        "pipelining"
+      ]
+    },
+    {
+      "stage": "memcpy D2H",
+      "wall_fraction": 0.001852950628475949,
+      "mean_gpu_util": null,
+      "methods": [
+        "data-parallel over inputs",
+        "batching",
+        "ensembles",
+        "pipelining"
+      ]
+    },
+    {
+      "stage": "CUDA API host time",
+      "wall_fraction": 0.3956753617056835,
+      "mean_gpu_util": null,
+      "methods": [
+        "data-parallel over inputs",
+        "batching",
+        "ensembles"
+      ]
+    },
+    {
+      "stage": "other host time",
+      "wall_fraction": 0,
+      "mean_gpu_util": null,
+      "methods": [
+        "data-parallel over inputs",
+        "batching",
+        "ensembles"
+      ]
+    }
+  ],
+  "bounds": {
+    "data-parallel over inputs": {
+      "p": 1,
+      "k": 1.3166816158782397,
+      "bound": 1.3166816158782397,
+      "feasible": true,
+      "k_derivation": {
+        "rule": "min(fixed_cap, concurrency factor)",
+        "fixed_cap": 8,
+        "factor": 1.3166816158782397,
+        "mps": true
+      },
+      "stages": [
+        {
+          "stage": "kernels",
+          "kind": "compute",
+          "wall_fraction": 0.6022135728452029,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "multi-GPU",
+            "ensembles"
+          ]
+        },
+        {
+          "stage": "memcpy H2D",
+          "kind": "transfer",
+          "wall_fraction": 0.0002581148206374974,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        },
+        {
+          "stage": "memcpy D2H",
+          "kind": "transfer",
+          "wall_fraction": 0.001852950628475949,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        },
+        {
+          "stage": "CUDA API host time",
+          "kind": "other",
+          "wall_fraction": 0.3956753617056835,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles"
+          ]
+        },
+        {
+          "stage": "other host time",
+          "kind": "other",
+          "wall_fraction": 0,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles"
+          ]
+        }
+      ]
+    },
+    "batching": {
+      "p": 1,
+      "k": 1.3166816158782397,
+      "bound": 1.3166816158782397,
+      "feasible": true,
+      "k_derivation": {
+        "rule": "min(fixed_cap, concurrency factor)",
+        "fixed_cap": 4,
+        "factor": 1.3166816158782397,
+        "mps": true
+      },
+      "stages": [
+        {
+          "stage": "kernels",
+          "kind": "compute",
+          "wall_fraction": 0.6022135728452029,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "multi-GPU",
+            "ensembles"
+          ]
+        },
+        {
+          "stage": "memcpy H2D",
+          "kind": "transfer",
+          "wall_fraction": 0.0002581148206374974,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        },
+        {
+          "stage": "memcpy D2H",
+          "kind": "transfer",
+          "wall_fraction": 0.001852950628475949,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        },
+        {
+          "stage": "CUDA API host time",
+          "kind": "other",
+          "wall_fraction": 0.3956753617056835,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles"
+          ]
+        },
+        {
+          "stage": "other host time",
+          "kind": "other",
+          "wall_fraction": 0,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles"
+          ]
+        }
+      ]
+    },
+    "multi-GPU": {
+      "p": 0.6022135728452029,
+      "k": 1,
+      "bound": 1,
+      "feasible": false,
+      "k_derivation": {
+        "rule": "max(1, gpu_count)",
+        "gpu_count": 1,
+        "amdahl": 1,
+        "cost_basis": "equal_gpu_seconds"
+      },
+      "stages": [
+        {
+          "stage": "kernels",
+          "kind": "compute",
+          "wall_fraction": 0.6022135728452029,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "multi-GPU",
+            "ensembles"
+          ]
+        }
+      ]
+    },
+    "ensembles": {
+      "p": 1,
+      "k": 1.3166816158782397,
+      "bound": 1.3166816158782397,
+      "feasible": true,
+      "k_derivation": {
+        "rule": "min(fixed_cap, concurrency factor)",
+        "fixed_cap": 8,
+        "factor": 1.3166816158782397,
+        "mps": true
+      },
+      "stages": [
+        {
+          "stage": "kernels",
+          "kind": "compute",
+          "wall_fraction": 0.6022135728452029,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "multi-GPU",
+            "ensembles"
+          ]
+        },
+        {
+          "stage": "memcpy H2D",
+          "kind": "transfer",
+          "wall_fraction": 0.0002581148206374974,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        },
+        {
+          "stage": "memcpy D2H",
+          "kind": "transfer",
+          "wall_fraction": 0.001852950628475949,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        },
+        {
+          "stage": "CUDA API host time",
+          "kind": "other",
+          "wall_fraction": 0.3956753617056835,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles"
+          ]
+        },
+        {
+          "stage": "other host time",
+          "kind": "other",
+          "wall_fraction": 0,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles"
+          ]
+        }
+      ]
+    },
+    "pipelining": {
+      "p": 0.002111065449113446,
+      "k": 2,
+      "bound": 1.0010566480511531,
+      "feasible": false,
+      "k_derivation": {
+        "rule": "fixed_cap",
+        "fixed_cap": 2
+      },
+      "stages": [
+        {
+          "stage": "memcpy H2D",
+          "kind": "transfer",
+          "wall_fraction": 0.0002581148206374974,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        },
+        {
+          "stage": "memcpy D2H",
+          "kind": "transfer",
+          "wall_fraction": 0.001852950628475949,
+          "mean_gpu_util": null,
+          "methods": [
+            "data-parallel over inputs",
+            "batching",
+            "ensembles",
+            "pipelining"
+          ]
+        }
+      ]
+    }
+  },
+  "sealed_equivalence_rule": {
+    "outputs_stochastic": true,
+    "equivalence_metrics": [
+      {
+        "name": "mean_potential_kj_mol",
+        "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of replicas[*].mean_potential_kj_mol across seeds 1000..1007 is 123.19454760158096 kJ/mol; divide by sqrt(8) to obtain baseline Monte Carlo standard error 43.55585000714341 kJ/mol. Seal adopts one measured baseline standard error as positive absolute equivalence margin. This is cross-seed sampling variability, not measured same-seed repeatability or an independently established physical acceptance threshold.",
+        "tolerance": {
+          "abs": 43.55585000714341
+        }
+      },
+      {
+        "name": "final_potential_kj_mol",
+        "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of replicas[*].final_potential_kj_mol across seeds 1000..1007 is 543.760489773663 kJ/mol; divide by sqrt(8) to obtain baseline Monte Carlo standard error 192.24836483013772 kJ/mol. Seal adopts one measured baseline standard error as positive absolute equivalence margin. This is cross-seed sampling variability, not measured same-seed repeatability or an independently established physical acceptance threshold.",
+        "tolerance": {
+          "abs": 192.24836483013772
+        }
+      }
+    ],
+    "paired_seed_tests": {
+      "alpha": 0.05,
+      "decision": "Require the exact two-sided binomial order-statistic confidence interval for the median paired difference to lie strictly inside [-abs_margin,+abs_margin] for both metrics. Bonferroni across the two metrics; no acceptance from lack of significance.",
+      "description": "For each metric and budget, compare method minus baseline outputs matched by input identity and seed. Use one prespecified scientific observation per seed, from timing pair 0; later timing repetitions are not independent scientific seeds. All timing pairs must complete the same work. Fixed seeds do not make Langevin sampling deterministic.",
+      "kind": "paired_median",
+      "scope": "Equivalence concerns typical paired energy-summary differences; it does not certify identical trajectories or every individual replica. Full energy series are not serialized and are not claimed equivalent.",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ]
+    },
+    "sample_sizes": {
+      "inputs": 1,
+      "power_design": {
+        "assumptions": "Eight independent paired seeds; each metric paired difference centered at zero and Gaussian with standard deviation at most one third of its margin. Baseline supplies cross-seed SEM margins but does not establish this paired-difference variance assumption.",
+        "calculation": "With n=8 and two metrics, extreme order statistics give coverage 1-2*(0.5**8)=0.9921875 per metric, exceeding Bonferroni confidence 0.975. If all 16 differences lie within their margins both intervals pass. Under stated Gaussian assumption, union bound on failure is 16*2*Phi(-3)=0.043196736; joint power at least 0.956803264 without assuming independence across metrics.",
+        "limitation": "Power against actual method differences is unknown until evaluation; no adaptive seed or margin expansion allowed. Failure or inconclusive bounds prevent acceptance.",
+        "status": "conditional prospective design; achieved power unavailable",
+        "target_power": 0.95
+      },
+      "seeds": 8
+    },
+    "confidence_rule": {
+      "confidence": 0.95,
+      "kind": "paired_median"
+    }
+  }
+}

@@ -1,0 +1,111 @@
+{
+  "status": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "availability": "available",
+      "kind": "published input",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "access": "Public HTTPS, no authentication; place beside driver under original filename.",
+      "pin": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "bytes": 1814203,
+      "verification": "Fetched pinned file; SHA-256 matched brief; counted 23558 ATOM/HETATM records.",
+      "licence_source": [
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)"
+      ]
+    },
+    {
+      "name": "amber99sb.xml",
+      "availability": "available",
+      "kind": "published force field bundled with OpenMM",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "access": "Included in openmm==8.2.0; pinned source also publicly downloadable.",
+      "pin": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "licence_source": [
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)"
+      ]
+    },
+    {
+      "name": "tip3p.xml",
+      "availability": "available",
+      "kind": "published force field bundled with OpenMM",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "access": "Included in openmm==8.2.0; pinned source also publicly downloadable.",
+      "pin": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "licence_source": [
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)"
+      ]
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities and integrator random streams",
+      "generation": "setVelocitiesToTemperature(300 K, seed) and integrator.setRandomNumberSeed(seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)"
+    }
+  ],
+  "missing_required_data": [],
+  "splits": null,
+  "splits_reason": "Simulation ensemble has no training, validation or test dataset split.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "licences": {
+    "status": "permitted",
+    "intended_use": "Local benchmark execution and modification. Preserve applicable notices and comply with licence conditions on redistribution.",
+    "components": [
+      {
+        "component": "OpenMM API, Reference and CPU platforms",
+        "licence": "MIT",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "OpenMM CUDA and OpenCL platforms",
+        "licence": "GNU LGPL",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "DHFR PDB and force-field inputs",
+        "licence": "Distributed with OpenMM; supplied brief states local running and modification are permitted. No separate input-specific licence identified.",
+        "source": [
+          "brief.md (supplied research brief; embedded dhfr_ensemble.py driver)",
+          "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+          "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb"
+        ]
+      }
+    ],
+    "separate_input_licence": null,
+    "separate_input_licence_reason": "Repository-wide licence statement and supplied intended-use permission are available; no separate PDB licence asserted."
+  },
+  "data_bytes": 2282791,
+  "data_GiB": 0.002126014791429043,
+  "peak_working_set_GiB": null,
+  "peak_working_set_reason": "No published or measured peak host/device memory for fixed-work eight-replica workload. Intake does not run workloads.",
+  "data_plus_peak_working_set_GiB": null,
+  "size": "unknown"
+}
