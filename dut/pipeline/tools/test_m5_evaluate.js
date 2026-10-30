@@ -175,6 +175,8 @@ printf 'input\\n' > data/input`)
     if (title === 'tests') {
       const report = { passed: IDS.length, failed: 0, cases: IDS.map(id => ({ id, pass: true, reason_code: null })) }
       script(path.join(view, 'tests', 'run_tests.sh'), `mkdir -p out\nprintf '%s\\n' '${JSON.stringify(report)}' > out/tests.json`)
+      // SCHEMAS.md "A/tests/": values.json is written by both the harness anchor run and the method.
+      writeJSON(path.join(view, 'tests', 'outputs.json'), { method_outputs: ['values.json'] })
     }
     if (title === 'implement') {
       const directory = path.join(view, 'method')

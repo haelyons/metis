@@ -144,6 +144,27 @@ const RUN13 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', '
 const RUN13_IDS = ['dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_handling', 'seeds', 'equivalence',
   'output_schema', 'fixed_work', 'upstream_output']
 const RUN13_RUN = 'baseline.wdnWYQIH'
+// Recorded public evidence: positive-openmm run15. The frozen tests read run/ensemble.json and
+// run/baseline.log under both BASELINE_OUT and METHOD_OUT; the reproduce outputs hold both. Both
+// method attempts wrote run/ensemble.json and run/method.log, so every case failed missing_output.
+const RUN15 = path.resolve(ROOT, '..', '..', 'experiments', 'positive-openmm', 'run15', 'agent')
+const RUN15_IDS = ['output_schema', 'dropped_inputs', 'duplicated_inputs', 'ordering', 'tail_handling', 'seeds', 'equivalence', 'upstream']
+const RUN15_OUTPUTS = ['run/ensemble.json', 'run/baseline.log']
+// SCHEMAS.md "A/tests/ and out/tests.json": tests/outputs.json names the files the tests read under
+// METHOD_OUT. Layout cases list two extra baseline outputs whose names occur nowhere else (so the
+// prompts can only have them from outputs.json), out of sorted order, plus a case ID that occurs only
+// in the tests' source and report.
+const LAYOUT = 'LAYOUT_PATH_SENTINEL_731902'
+const LAYOUT_EXTRA = [`listed/zeta-${LAYOUT}.json`, `listed/alpha-${LAYOUT}.txt`]
+const LAYOUT_LISTED = ['values.json', ...LAYOUT_EXTRA, 'seeds.json']
+const CASE_SENTINEL = 'case_id_sentinel_731903'
+// Default outputs.json for each fixture: files its fake baseline and method both write. (run13's
+// method writes its run at the top of out/, which is no baseline location, so only the shared files.)
+function methodOutputs(config) {
+  if (config.layout) return LAYOUT_LISTED
+  if (config.run15Data) return RUN15_OUTPUTS
+  return ['values.json', 'seeds.json', ...(config.run8 ? ['run/ensemble.json'] : [])]
+}
 // Written into the fixture's frozen run_tests.sh: records what the tests see as BASELINE_OUT
 // (relative path -> SHA-256 of contents), one JSON line per test run.
 const BASELINE_SEEN_PY = String.raw`import hashlib, json, os, sys
@@ -459,7 +480,10 @@ fi
         emit('out/values.json', [0, 1, 2, 3, 4]) + emit('out/seeds.json', [0, 1, 2, 3, 4]) +
         (config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.baseline)) : '') +
         // run13's anchor run: one baseline.* run directory and latest-baseline-run.txt.
-        (config.run13Data ? `cp -R ${quote(path.join(config.run13Data, 'reproduce'))}/. out/\n` : ''))
+        (config.run13Data ? `cp -R ${quote(path.join(config.run13Data, 'reproduce'))}/. out/\n` : '') +
+        // run15's anchor run: the reproduce run/ensemble.json and run/baseline.log.
+        (config.run15Data ? `cp -R ${quote(path.join(config.run15Data, 'reproduce'))}/. out/\n` : '') +
+        (config.layout ? 'mkdir -p out/listed\n' + LAYOUT_EXTRA.map(file => `printf baseline > out/${file}\n`).join('') : ''))
       script(path.join(harness, 'run_command.sh'), 'true')
       if (config.evaluation) script(path.join(harness, 'run_evaluation.sh'), `# ${HARNESS_NOTE}\n` +
         adapterScript(root, 'run_evaluation', config.fault, config.fault === 'run9-baseline' ? RUN9_RECORDS.baseline : ''))
@@ -539,7 +563,7 @@ checks = {
     'seeds': json.loads((baseline / 'seeds.json').read_text()) == json.loads((method / 'seeds.json').read_text()),
     'equivalence': actual == expected and not (method / 'fail-equivalence').exists(),
 }
-cases = [dict(id=k, pass_=v, reason_code=None if v else k) for k, v in checks.items()]
+${config.layout ? `checks['${CASE_SENTINEL}'] = True\n` : ''}cases =[dict(id=k, pass_=v, reason_code=None if v else k) for k, v in checks.items()]
 for row in cases:
     row['pass'] = row.pop('pass_')
 failed = sum(not row['pass'] for row in cases)
@@ -562,6 +586,16 @@ exit ${config.testExit || 0}`)
         }
         // run13's frozen tests, byte for byte: they reject more than one baseline ensemble.json.
         if (config.run13Data) for (const name of ['run_tests.sh', 'check_outputs.py']) fs.copyFileSync(path.join(RUN13, 'tests', name), path.join(tests, name))
+        // run15's frozen tests, byte for byte.
+        if (config.run15Data) for (const name of ['run_tests.sh', 'check_outputs.py', 'seal.json']) fs.copyFileSync(path.join(RUN15, 'tests', name), path.join(tests, name))
+        if (config.noRunTests) fs.rmSync(path.join(tests, 'run_tests.sh'))
+        // `outputs` replaces the valid default: 'missing' writes none, a string is written verbatim
+        // ({VIEW} becomes this view's absolute path), anything else as JSON.
+        const outputs = config.outputs ?? { method_outputs: methodOutputs(config) }
+        if (outputs !== 'missing') {
+          event.outputsJSON = (typeof outputs === 'string' ? outputs : JSON.stringify(outputs)).replaceAll('{VIEW}', view)
+          fs.writeFileSync(path.join(tests, 'outputs.json'), event.outputsJSON)
+        }
       }
       if (title === 'implement') {
         const retry = prior.length > 0
@@ -582,6 +616,11 @@ ${emit('out/values.json', [0, 1, 2, 3, 4])}
 ${emit('out/seeds.json', [0, 1, 2, 3, 4])}
 ${config.run8 ? 'mkdir -p out/run\n' + emit('out/run/ensemble.json', readJSON(RUN8_ENSEMBLE.method[retry ? 1 : 0])) : 'true'}
 ${config.run13Data ? ['ensemble.json', 'stdout.log'].map(file => `cp ${quote(path.join(config.run13Data, 'reproduce', RUN13_RUN, file))} out/${file}`).join('\n') : 'true'}
+${config.run15Data ? `mkdir -p out/run
+cp ${quote(path.join(config.run15Data, 'method', 'ensemble.json'))} out/run/ensemble.json
+cp ${quote(path.join(config.run15Data, 'method', 'method.log'))} out/run/${retry ? 'baseline.log' : 'method.log'}` : 'true'}
+${config.layout === 'symlink' ? `mkdir -p out/listed\nprintf method > out/${LAYOUT_EXTRA[0]}\nln -s ../values.json out/${LAYOUT_EXTRA[1]}`
+    : config.layout === 'repair' && retry ? 'mkdir -p out/listed\n' + LAYOUT_EXTRA.map(file => `printf method > out/${file}`).join('\n') : 'true'}
 ${(config.repair || config.failTwice) && (!retry || config.failTwice) ? 'touch out/fail-equivalence' : 'true'}
 ${config.tamperBaseline ? 'printf modified > "$BASELINE_DIR/pin"' : 'true'}
 ${config.tamperTests ? 'chmod u+w payload/tests/run_tests.sh; printf "# tampered\\n" >> payload/tests/run_tests.sh' : 'true'}
@@ -1140,6 +1179,92 @@ function run13RecordedChecks(data) {
     assert.deepEqual(report, { passed: 9, failed: 0, cases: RUN13_IDS.map(id => ({ id, pass: true, reason_code: null })) })
   })
 }
+// Small copies of the run15 files the frozen tests read (no PDB/XML inputs): `reproduce/` is the anchor
+// run's out/; `method/` is what both method attempts wrote (attempt 2's run/ensemble.json and run/method.log).
+function run15Data() {
+  const data = path.join(scratch, 'run15-data')
+  const copy = (from, to) => {
+    fs.mkdirSync(path.dirname(path.join(data, to)), { recursive: true })
+    fs.copyFileSync(path.join(RUN15, 'results', from), path.join(data, to))
+  }
+  for (const file of RUN15_OUTPUTS) copy(`reproduce/out/${file}`, `reproduce/${file}`)
+  for (const file of ['ensemble.json', 'method.log']) copy(`implement/attempt-2/run/out/run/${file}`, `method/${file}`)
+  return data
+}
+// run15's check_outputs.py run directly: METHOD_OUT/run/ holds attempt 2's ensemble.json and its log
+// under `logName`. The report goes to out/tests.json under the working directory.
+function run15Direct(data, logName) {
+  const work = fs.mkdtempSync(path.join(scratch, 'run15-direct-')), method = path.join(work, 'method')
+  for (const name of ['check_outputs.py', 'seal.json']) fs.copyFileSync(path.join(RUN15, 'tests', name), path.join(work, name))
+  fs.mkdirSync(path.join(method, 'run'), { recursive: true })
+  fs.copyFileSync(path.join(data, 'method', 'ensemble.json'), path.join(method, 'run', 'ensemble.json'))
+  fs.copyFileSync(path.join(data, 'method', 'method.log'), path.join(method, 'run', logName))
+  const result = spawnSync('python3', ['-I', path.join(work, 'check_outputs.py')], { cwd: work, encoding: 'utf8',
+    env: { ...process.env, BASELINE_OUT: path.join(data, 'reproduce'), METHOD_OUT: method } })
+  return { result, report: fs.existsSync(path.join(work, 'out', 'tests.json')) ? readJSON(path.join(work, 'out', 'tests.json')) : null }
+}
+function run15RecordedChecks(data) {
+  const all = (pass, reason) => ({ passed: pass ? 8 : 0, failed: pass ? 0 : 8, cases: RUN15_IDS.map(id => ({ id, pass, reason_code: reason })) })
+  check('run15 recorded: both attempts wrote run/method.log, no run/baseline.log; every case missing_output; repair saw only counts', () => {
+    for (const attempt of [1, 2]) {
+      const out = path.join(RUN15, 'results', 'implement', `attempt-${attempt}`, 'run', 'out', 'run')
+      assert.ok(fs.existsSync(path.join(out, 'ensemble.json')) && fs.existsSync(path.join(out, 'method.log')), `attempt ${attempt}`)
+      assert.equal(fs.existsSync(path.join(out, 'baseline.log')), false, `attempt ${attempt}`)
+      assert.deepEqual(readJSON(path.join(RUN15, 'results', 'implement', `attempt-${attempt}`, 'tests', 'out', 'tests.json')), all(false, 'missing_output'))
+    }
+    assert.deepEqual(readJSON(path.join(RUN15, '..', 'control', 'implement', 'attempt-1.json')), { attempt: 1, reason_code_counts: { missing_output: 8 } })
+    for (const file of RUN15_OUTPUTS) assert.ok(fs.statSync(path.join(RUN15, 'results', 'reproduce', 'out', file)).isFile(), file)
+  })
+  check('run15 recorded: frozen tests fail all eight cases missing_output on attempt 2 as written', () => {
+    const { result, report } = run15Direct(data, 'method.log')
+    assert.equal(result.status, 1, result.stderr)
+    assert.deepEqual(report, all(false, 'missing_output'))
+  })
+  check('run15 recorded: with the log at run/baseline.log the frozen tests pass all eight cases', () => {
+    const { result, report } = run15Direct(data, 'baseline.log')
+    assert.equal(result.status, 0, result.stderr)
+    assert.deepEqual(report, all(true, null))
+  })
+}
+const runTestsReceipts = root => receiptOperations(root).filter(operation => operation === 'run-tests').length
+// SCHEMAS.md "A/tests/": "A missing or invalid `outputs.json` fails the test author output like a missing
+// `run_tests.sh`." `reference` is the run whose test author wrote no run_tests.sh.
+function invalidOutputsCheck(name, run, reference) {
+  check(`${name}: test author output fails like a missing run_tests.sh, before any method author`, () => {
+    const tests = run.calls.find(call => call.title === 'tests')
+    assert.ok(tests, 'no test author call')
+    if (run.config.outputs !== 'missing') assert.ok(typeof tests.outputsJSON === 'string', 'fixture wrote no outputs.json')
+    const signature = run.record?.signature, expected = reference.record?.signature
+    assert.equal(signature?.status, 'FAIL')
+    assert.equal(signature.exit_code, 2)
+    assert.deepEqual([signature.status, signature.error_class, signature.exit_code], [expected.status, expected.error_class, expected.exit_code])
+    assert.deepEqual(run.record.facts, reference.record.facts)
+    assert.deepEqual(run.calls.map(call => call.title), ['tests'], 'method author or review called')
+    for (const operation of ['setup-method', 'run-method', 'run-tests']) assert.ok(!receiptOperations(run.root).includes(operation), operation)
+    assert.equal(fs.existsSync(path.join(run.root, 'control', 'implement', 'tests.json')),
+      fs.existsSync(path.join(reference.root, 'control', 'implement', 'tests.json')), 'freeze differs from missing run_tests.sh')
+    assert.equal(run.records.find(row => row.signature?.stage === 'evaluate')?.signature.status, 'SKIPPED')
+  })
+}
+// Feedback in a repair prompt: reason_code_counts and missing_paths, as JSON values.
+function repairFeedback(prompt) {
+  const counts = prompt.match(/"?reason_code(?:_counts| counts)"?\s*:\s*(\{[^\n]*?\})/)
+  const missing = prompt.match(/"?missing_paths"?\s*:\s*(\[[^\n]*?\])/)
+  return { counts: counts && JSON.parse(counts[1]), missing: missing && JSON.parse(missing[1]) }
+}
+// SCHEMAS.md method repair bullet: for `layout` the feedback is the reason counts plus the sorted
+// missing paths; no test source, case IDs, values or logs.
+function layoutFeedbackChecks(name, prompt, missing) {
+  const feedback = repairFeedback(prompt)
+  assert.ok(feedback.counts, `${name}: repair prompt has no reason counts`)
+  assert.deepEqual(Object.keys(feedback.counts), ['layout'])
+  assert.ok(Number.isInteger(feedback.counts.layout) && feedback.counts.layout > 0, JSON.stringify(feedback.counts))
+  assert.ok(feedback.missing, `${name}: repair prompt has no missing_paths`)
+  assert.deepEqual(feedback.missing, missing)
+  for (const forbidden of [TEST_SECRET, CASE_SENTINEL, `${PRIVATE}:tests`, `${PRIVATE}:run`, 'fixture.txt', '"cases"', '"failed"', 'run_tests.sh']) {
+    assert.ok(!prompt.includes(forbidden), `repair feedback contains ${forbidden}`)
+  }
+}
 async function main() {
   try {
     const happy = await execute('happy')
@@ -1147,6 +1272,20 @@ async function main() {
     authorChecks(happy)
     receiptChecks(happy)
     frozenBaselineChecks('happy', happy, null)
+    // SCHEMAS.md "A/tests/": outputs.json "is frozen and hashed with the tests".
+    check('happy: valid outputs.json is frozen read-only, in the recorded tree hash and in the remote payload', () => {
+      const written = happy.calls.find(call => call.title === 'tests')?.outputsJSON
+      assert.equal(written, JSON.stringify({ method_outputs: ['values.json', 'seeds.json'] }))
+      const frozenFile = path.join(happy.root, 'agent', 'tests', 'outputs.json')
+      assert.equal(fs.readFileSync(frozenFile, 'utf8'), written)
+      assert.equal(fs.statSync(frozenFile).mode & 0o777, 0o444)
+      const receipt = readJSON(path.join(happy.root, 'control', 'implement', 'tests.json'))
+      assert.deepEqual(receipt.files.find(row => row.path === 'outputs.json'), { path: 'outputs.json', sha256: sha(Buffer.from(written)) })
+      assert.equal(receipt.sha256, treeHash(path.join(happy.root, 'agent', 'tests')))
+      const remote = path.join(remoteDirectory(happy.root), 'payload', 'tests')
+      assert.equal(fs.readFileSync(path.join(remote, 'outputs.json'), 'utf8'), written)
+      assert.equal(treeHash(remote), receipt.sha256)
+    })
     // SCHEMAS.md EVAL_PROTOCOL bullet: "The harness prompt ... and the method author prompt both state these two shapes."
     check('method author prompt states the EVAL_INPUTS and EVAL_SEEDS shapes', () => {
       const author = happy.calls.find(call => call.title === 'implement')
@@ -1239,6 +1378,114 @@ async function main() {
       assert.equal(fs.readFileSync(path.join(baselineOut, 'latest-baseline-run.txt'), 'utf8'), `out/${RUN13_RUN}\n`)
     })
     frozenBaselineChecks('run13-profiled', run13, path.join(data, 'profiled'))
+    // SCHEMAS.md "A/tests/": outputs.json shape and validation. Each invalid file is otherwise a valid
+    // test author output; the reference run differs only by a missing run_tests.sh.
+    const noScript = await execute('tests-no-run-script', { noRunTests: true })
+    check('tests-no-run-script: missing run_tests.sh fails the test author output before any method author', () => {
+      assert.equal(noScript.record?.signature.status, 'FAIL')
+      assert.deepEqual(noScript.calls.map(call => call.title), ['tests'])
+    })
+    for (const [name, outputs, extra] of [
+      ['missing', 'missing'],
+      ['unparseable', '{"method_outputs": ["values.json"]'],
+      ['non-object', ['values.json']],
+      ['extra-key', { method_outputs: ['values.json'], extra: ['seeds.json'] }],
+      ['empty', { method_outputs: [] }],
+      ['duplicate', { method_outputs: ['values.json', 'seeds.json', 'values.json'] }],
+      ['non-string', { method_outputs: ['values.json', 7] }],
+      // An existing baseline-out file named by absolute path.
+      ['absolute', '{"method_outputs": ["{VIEW}/baseline-out/values.json"]}'],
+      // Each of these resolves to an existing regular file under baseline-out/.
+      ['dot-segment', { method_outputs: ['./values.json'] }],
+      ['dotdot-segment', { method_outputs: ['../baseline-out/values.json'] }],
+      ['empty-segment', { method_outputs: ['run//ensemble.json'] }, { run8: 'contract' }],
+      ['absent-from-baseline', { method_outputs: ['values.json', 'absent.json'] }],
+      ['directory', { method_outputs: ['run'] }, { run8: 'contract' }],
+    ]) {
+      const run = await execute('outputs-' + name, { outputs, ...extra })
+      invalidOutputsCheck('outputs-' + name, run, noScript)
+    }
+    // SCHEMAS.md remote execution bullet: the layout check after run_method.sh exits 0, before any test command.
+    const layout = await execute('layout-repaired', { layout: 'repair' })
+    verdict('layout-repaired', layout, null, { patch_applies: true, tests_pass: true, blind_tests: true, launch_review_pass: true })
+    check('layout-repaired: method author prompt lists every method_outputs path and nothing else from the tests', () => {
+      const author = layout.calls.find(call => call.title === 'implement')
+      assert.ok(author, 'missing method author call')
+      for (const file of LAYOUT_LISTED) assert.ok(author.prompt.includes(file), `prompt omits ${file}`)
+      for (const forbidden of [TEST_SECRET, CASE_SENTINEL, 'fixture.txt']) assert.ok(!author.prompt.includes(forbidden), `prompt contains ${forbidden}`)
+      assert.equal(author.testBytesInPrompt, false)
+      assert.ok(!author.viewFiles.some(file => file.startsWith('tests/') || path.basename(file) === 'outputs.json'), 'tests in the method view')
+    })
+    check('layout-repaired: missing listed outputs fail attempt 1 as layout with no test command', () => {
+      const attempt = readJSON(path.join(layout.root, 'control', 'implement', 'attempt-1.json'))
+      assert.deepEqual(Object.keys(attempt).sort(), ['attempt', 'reason_code_counts'])
+      assert.equal(attempt.attempt, 1)
+      assert.deepEqual(Object.keys(attempt.reason_code_counts), ['layout'])
+      const results = path.join(layout.root, 'agent', 'results', 'implement')
+      assert.ok(fs.existsSync(path.join(results, 'attempt-1', 'run')), 'attempt 1 never ran the method')
+      assert.equal(fs.existsSync(path.join(results, 'attempt-1', 'tests')), false, 'attempt 1 ran a test command')
+      assert.ok(fs.existsSync(path.join(results, 'attempt-2', 'tests')), 'attempt 2 did not run the tests')
+      assert.equal(runTestsReceipts(layout.root), 1, 'one test command, for attempt 2 only')
+      assert.equal(layout.calls.filter(call => call.title === 'tests').length, 1)
+      const report = readJSON(path.join(results, 'out', 'tests.json'))
+      assert.equal(report.failed, 0)
+      assert.ok(report.cases.some(row => row.id === CASE_SENTINEL), 'the frozen tests did not run on attempt 2')
+    })
+    check('layout-repaired: repair prompt lists every path; feedback is layout plus sorted missing_paths only', () => {
+      const authors = layout.calls.filter(call => call.title === 'implement')
+      assert.equal(authors.length, 2)
+      assert.match(authors[1].name, /-retry1$/)
+      for (const file of LAYOUT_LISTED) assert.ok(authors[1].prompt.includes(file), `repair prompt omits ${file}`)
+      layoutFeedbackChecks('layout-repaired', authors[1].prompt, [...LAYOUT_EXTRA].sort())
+      assert.deepEqual([...LAYOUT_EXTRA].sort(), [`listed/alpha-${LAYOUT}.txt`, `listed/zeta-${LAYOUT}.json`], 'fixture paths must be listed out of order')
+    })
+    const linked = await execute('layout-symlink', { layout: 'symlink' })
+    check('layout-symlink: a symlink at a listed path satisfies the layout check and the tests run', () => {
+      assert.equal(fs.existsSync(path.join(linked.root, 'control', 'implement', 'attempt-1.json')), false, 'attempt 1 failed')
+      assert.ok(fs.existsSync(path.join(linked.root, 'agent', 'results', 'implement', 'attempt-1', 'tests')), 'attempt 1 ran no test command')
+      assert.equal(runTestsReceipts(linked.root), 1)
+      assert.equal(linked.calls.filter(call => call.title === 'implement').length, 1)
+      assert.ok(fs.lstatSync(path.join(remoteDirectory(linked.root), 'out', LAYOUT_EXTRA[1])).isSymbolicLink(), 'fixture wrote no symlink')
+    })
+    // No stage verdict here: the layout check accepts a symlink, but copying evidence across views
+    // rejects symlinks (SCHEMAS.md "A/tests/"), so the later copy of these outputs may fail the stage.
+    const twice = await execute('layout-twice', { layout: 'twice' })
+    // A second layout failure stops like a second execution failure (run-failed above: numeric).
+    verdict('layout-twice', twice, 'numeric', { tests_pass: false })
+    check('layout-twice: second layout failure stops without tests, a third author or review', () => {
+      for (const attempt of [1, 2]) {
+        const record = readJSON(path.join(twice.root, 'control', 'implement', `attempt-${attempt}.json`))
+        assert.deepEqual(Object.keys(record).sort(), ['attempt', 'reason_code_counts'])
+        assert.equal(record.attempt, attempt)
+        assert.deepEqual(Object.keys(record.reason_code_counts), ['layout'])
+      }
+      assert.equal(runTestsReceipts(twice.root), 0, 'a test command ran')
+      assert.deepEqual(twice.calls.map(call => call.title), ['tests', 'implement', 'implement'])
+      layoutFeedbackChecks('layout-twice', twice.calls[2].prompt, [...LAYOUT_EXTRA].sort())
+    })
+    // run15 regression: its frozen tests and reproduce outputs, outputs.json naming the two files they read.
+    const data15 = run15Data()
+    run15RecordedChecks(data15)
+    const run15 = await execute('run15-layout', { run15Data: data15 })
+    verdict('run15-layout', run15, null, { patch_applies: true, tests_pass: true, blind_tests: true, launch_review_pass: true })
+    check('run15-layout: attempt 2 outputs fail layout with missing_paths ["run/baseline.log"] and no test command', () => {
+      assert.equal(run15.calls.find(call => call.title === 'tests')?.outputsJSON, JSON.stringify({ method_outputs: RUN15_OUTPUTS }))
+      const attempt = readJSON(path.join(run15.root, 'control', 'implement', 'attempt-1.json'))
+      assert.deepEqual(Object.keys(attempt.reason_code_counts), ['layout'])
+      const results = path.join(run15.root, 'agent', 'results', 'implement')
+      assert.equal(fs.existsSync(path.join(results, 'attempt-1', 'tests')), false, 'attempt 1 ran a test command')
+      assert.equal(runTestsReceipts(run15.root), 1)
+      const authors = run15.calls.filter(call => call.title === 'implement')
+      assert.equal(authors.length, 2)
+      for (const call of authors) for (const file of RUN15_OUTPUTS) assert.ok(call.prompt.includes(file), `${call.name} omits ${file}`)
+      layoutFeedbackChecks('run15-layout', authors[1].prompt, ['run/baseline.log'])
+      assert.ok(!authors[1].prompt.includes('output_schema'), 'repair feedback contains a run15 case ID')
+    })
+    check('run15-layout: the repair with the log at run/baseline.log passes all eight frozen cases', () => {
+      const report = readJSON(path.join(run15.root, 'agent', 'results', 'implement', 'out', 'tests.json'))
+      assert.deepEqual(report, { passed: 8, failed: 0, cases: RUN15_IDS.map(id => ({ id, pass: true, reason_code: null })) })
+      assert.equal(readJSON(path.join(run15.root, 'agent', 'implement-payload.json')).attempt, 2)
+    })
     for (const [name, config, errorClass] of [
       ['repair-exhausted', { failTwice: true }, 'numeric'],
       ['review-rejected', { rejectReview: true }, 'other'],

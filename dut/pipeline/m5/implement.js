@@ -62,7 +62,7 @@ module.exports = async function implement(context) {
   const control = path.join(C, 'implement'), destination = path.join(A, 'results', 'implement')
   const tests = path.join(A, 'tests'), method = path.join(A, 'method')
   const stateScript = fs.readFileSync(path.join(__dirname, 'implement_state.py')).toString('base64')
-  let seal, frozenTests, baselineState, methodPayloadHash
+  let seal, frozenTests, baselineState, methodPayloadHash, methodOutputs
   const views = []
   function verifySeal() {
     const seals = path.join(C, 'seals')
@@ -85,7 +85,7 @@ module.exports = async function implement(context) {
       throw new Error('changed tests')
     }
   }
-  async function author(label, output, repairCounts, timeoutFailure) {
+  async function author(label, output, repairCounts, timeoutFailure, missingPaths) {
     const view = fs.mkdtempSync(path.join(os.tmpdir(), `m5-${label}-`))
     views.push(view)
     for (const name of ['proposal.json', 'PREDICTIONS.json', 'intake', 'harness']) {
@@ -104,17 +104,18 @@ Write only under ${JSON.stringify(outputPath)}. Return a short acknowledgement; 
     const prompt = label === 'tests' ? `Author independent output tests, before any method is authored or run.
 ${common}
 You have no method code, patch, build logs or method results. Use only the proposal, baseline interface and baseline outputs, anchors, and sealed tolerances. No box access or workloads.
-Write tests/run_tests.sh plus any fixtures. It is invoked as bash payload/tests/run_tests.sh from the remote run directory.
+Write tests/run_tests.sh, tests/outputs.json and any fixtures. run_tests.sh is invoked as bash payload/tests/run_tests.sh from the remote run directory.
+outputs.json must be exactly {"method_outputs": [path, ...]}: a nonempty array of unique relative POSIX paths naming every file the tests read under METHOD_OUT. No leading / or empty, . or .. path segments are allowed. Each path must name a regular file under this view's baseline-out/. Missing or invalid outputs.json fails author output like a missing run_tests.sh. It is frozen and hashed with the tests; only these paths are shared with the method author.
 BASELINE_DIR points to the frozen published source, BASELINE_OUT to frozen baseline outputs, METHOD_DIR to the patched copy, and METHOD_OUT to out/. Fixtures are beside run_tests.sh; resolve them from its script directory.
 Reuse upstream tests when available. Check actual method OUTPUTS, never source text, for dropped_inputs, duplicated_inputs, ordering, tail_handling, seeds, and equivalence within sealed tolerances. Include non-divisible tails and the final input; use fixed paired seeds or the sealed justified deterministic declaration. Tests see exactly two sets of outputs: BASELINE_OUT, the frozen baseline outputs, and METHOD_OUT, one method run at the same representative scale, inputs and seeds. Evaluation records (evaluation.json), held-out seeds, timing repetitions and compute budgets exist only in evaluate, and no case may require them. The equivalence case pairs baseline and method outputs by input and seed and applies the sealed equivalence_metrics margins and confidence rule to those representative pairs, at the sealed confidence for the number of pairs available. It fails only when for some metric the interval is disjoint from the open interval (-margin, +margin), or, under a deterministic seal, some paired difference exceeds the sealed tolerance. An interval that overlaps (-margin, +margin), or pairs too few for a finite interval, cannot reject, and the case passes; acceptance is decided in evaluate. Do not execute or read method source/scripts.
 Write out/tests.json with exactly {passed, failed, cases: [{id, pass, reason_code}]}. Counts are nonnegative integers and must match cases. IDs are unique nonempty strings. Each pass is boolean; reason_code is null for passes, otherwise one of ${JSON.stringify(testReasons)}. Include case IDs dropped_inputs, duplicated_inputs, ordering, tail_handling, seeds, equivalence. A deterministic/not-applicable seed case must be justified by the seal. Always write the report, exit nonzero on failure. Never loosen a tolerance.`
       : `${repairCounts ? 'Repair the method once using only the failure category counts below.' : 'Implement the selected proposal in one author call.'}
 ${common}
 Never read independent tests or test fixtures, even on the box. They are frozen and hidden from this session.
-${repairCounts ? `No box access, test source, case IDs, output values, reports or logs are available for this repair. Failure reason_code counts: ${JSON.stringify(repairCounts)}.`
+${repairCounts ? `No box access, test source, case IDs, output values, reports or logs are available for this repair. Failure reason_code counts: ${JSON.stringify(repairCounts)}.${missingPaths ? ` Layout feedback: ${JSON.stringify({ missing_paths: missingPaths })}.` : ''}`
   : `You may inspect the already-built baseline on the dev box using ~/.cache/metis-serve/box.sh. Remote run directory: ${JSON.stringify(remoteDirectory)}. Do not start/stop the box. No tests have been uploaded. Use probe.json for discovered tools. Never modify baseline-published/ or data/ or baseline-out/.`}
 Write method.patch, setup_method.sh and run_method.sh under method/. You may additionally provide run_anchors.sh, the method variant of the baseline anchor protocol; no other files are allowed. Without it the pipeline invokes run_method.sh with EVAL_MODE=anchors, which must rerun every intake anchor and write out/anchors_measured.json. method.patch is a nonempty git-style patch relative to the published baseline root. The pipeline makes a fresh COPY at method/, checks/applies the patch there, and never patches baseline-published/.
-The pipeline invokes bash payload/method/setup_method.sh, then bash payload/method/run_method.sh, from ${JSON.stringify(remoteDirectory)}. BASELINE_DIR, METHOD_DIR, BASELINE_OUT and METHOD_OUT are absolute paths supplied by the pipeline; METHOD_DIR is already patched. Setup builds only METHOD_DIR. Run the method at the same representative scale, seeds and input set as the baseline; write actual outputs in out/ with exactly the baseline format and relative location scheme. Never copy baseline outputs as method results. Both scripts must fail nonzero on errors, create required output directories, and tolerate a fresh patched copy. Do not edit harness scripts, launchers or tests.`
+The pipeline invokes bash payload/method/setup_method.sh, then bash payload/method/run_method.sh, from ${JSON.stringify(remoteDirectory)}. BASELINE_DIR, METHOD_DIR, BASELINE_OUT and METHOD_OUT are absolute paths supplied by the pipeline; METHOD_DIR is already patched. Setup builds only METHOD_DIR. Run the method at the same representative scale, seeds and input set as the baseline; write actual outputs in out/ with exactly the baseline format and relative location scheme. Frozen method_outputs: ${JSON.stringify(methodOutputs)}. run_method.sh must write each under METHOD_OUT at that relative path, as the baseline outputs do. Missing paths fail the attempt with category layout before tests run. Never copy baseline outputs as method results. Both scripts must fail nonzero on errors, create required output directories, and tolerate a fresh patched copy. Do not edit harness scripts, launchers or tests.`
     const reply = await agent(prompt + (label === 'implement' ? evaluationInterface : ''), { label, agentType: 'ls-writer', model: 'sonnet',
       repairable: false, fresh: true, ...(repairCounts ? { retry: 1 } : {}),
       isolation: { directory: view, hidden: [root, path.dirname(agent.journal || path.join(A, 'wf', 'journal.jsonl'))],
@@ -123,6 +124,14 @@ The pipeline invokes bash payload/method/setup_method.sh, then bash payload/meth
     const names = files(outputPath)
     if (label === 'tests') {
       if (!names.includes('run_tests.sh') || fs.statSync(path.join(outputPath, 'run_tests.sh')).size === 0) throw new Error('missing tests')
+      const outputs = readJSON(path.join(outputPath, 'outputs.json'))
+      if (!outputs || Object.keys(outputs).join(',') !== 'method_outputs'
+        || !Array.isArray(outputs.method_outputs) || !outputs.method_outputs.length
+        || new Set(outputs.method_outputs).size !== outputs.method_outputs.length
+        || !outputs.method_outputs.every(name => typeof name === 'string' && !name.startsWith('/')
+          && name.split('/').every(segment => segment && segment !== '.' && segment !== '..')
+          && fs.lstatSync(path.join(view, 'baseline-out', name)).isFile())) throw new Error('invalid outputs')
+      methodOutputs = outputs.method_outputs
     } else if (!methodNames.every(name => names.includes(name)) || names.some(name => ![...methodNames, ...optionalMethodNames].includes(name)
       || fs.statSync(path.join(outputPath, name)).size === 0)) throw new Error('invalid method')
     for (const name of names.filter(name => name.endsWith('.sh'))) await exec('bash', ['-n', path.join(outputPath, name)])
@@ -365,7 +374,7 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
       if (stateError) return failure(facts, stateError)
       facts.patch_applies = false
       facts.tests_pass = false
-      let counts, failedClass, timeoutFailure
+      let counts, failedClass, timeoutFailure, missingPaths
       const to = phase => path.join(destination, `attempt-${attempt}`, phase)
       const apply = `git --git-dir=/dev/null --work-tree=${quote(remoteDirectory + '/method')} -C method apply`
       const patched = await command('implement-patch', `rm -rf method\ncp -a baseline-published method\n${apply} --check -- ${quote(remoteDirectory + '/payload/method/method.patch')}\n${apply} -- ${quote(remoteDirectory + '/payload/method/method.patch')}`,
@@ -384,6 +393,16 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
         if (run.error && run.error !== 'timeout') return failure(facts, run.error)
         if (run.rc !== 0) { counts = { run_failed: 1 }; failedClass = 'numeric' }
         if (run.error === 'timeout') { counts = { timeout: 1 }; failedClass = 'timeout'; timeoutFailure = run }
+        if (!counts) {
+          missingPaths = methodOutputs.filter(name => {
+            try {
+              const stat = fs.lstatSync(path.join(to('run'), 'out', name))
+              return !stat.isFile() && !stat.isSymbolicLink()
+            } catch { return true }
+          }).sort()
+          if (missingPaths.length) { counts = { layout: 1 }; failedClass = 'numeric' }
+          else missingPaths = undefined
+        }
       }
       stateError = await checkState(attempt, 'after-method')
       if (stateError) return failure(facts, stateError)
@@ -420,7 +439,7 @@ Check the selected method, unchanged scientific protocol and baseline, payload, 
       }
       writeJSON(path.join(control, `attempt-${attempt}.json`), { attempt, reason_code_counts: counts })
       if (attempt === 2) return failure(facts, failedClass)
-      await author('implement', 'method', counts, timeoutFailure)
+      await author('implement', 'method', counts, timeoutFailure, missingPaths)
     }
   } catch {
     return failure(facts, 'parse')
