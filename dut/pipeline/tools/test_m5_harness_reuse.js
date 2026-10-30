@@ -34,9 +34,9 @@ module.exports = {
     if (process.env.M5_RUN5_ROOT) return run5Agent(options)
     if (['harness-repair', 'anchors-repair'].includes(options.title)) {
       const root = process.env.M5_REPRODUCE_ROOT
-      // Capture the copied scripts before the fake repair changes anything.
+      // Capture the copied scripts before the first fake repair changes anything.
       const harness = path.join(root, 'agent/harness')
-      json(path.join(root, 'before-repair.json'), {
+      if (!fs.existsSync(path.join(root, 'before-repair.json'))) json(path.join(root, 'before-repair.json'), {
         files: Object.fromEntries(fs.readdirSync(harness).map(name => [name, sha(fs.readFileSync(path.join(harness, name)))])),
         source: read(path.join(root, 'control/harness_source.json')),
       })
@@ -127,6 +127,10 @@ function check(label, test) {
 }
 
 async function execute(name, config = {}) {
+  // Failing runs of the failing step: 1 (repair 1 passes), 2 (repair 2 passes) or 3 (exhausted).
+  const failures = !config.failure ? 0 : config.exhausted ? 3 : config.failures ?? 1
+  // SCHEMAS.md "A/harness/": up to two repairs per step, the same under reuse.
+  const repairCount = Math.min(failures, 2)
   const root = path.join(scratch, name)
   const source = path.join(root, 'previous run', 'A', 'harness')
   const agent = path.join(root, 'agent')
@@ -174,8 +178,10 @@ visit(process.env.BOX_ROOT)
     anchors: [{ id: 'first', published_value: 100, tolerance: 1, quantity: 'fixture', source: 'fixture' },
       { id: 'second', published_value: 0, tolerance: 0, quantity: 'fixture', source: 'fixture' }],
     measured: { first: 100, second: 0 },
-    setupFailures: config.failure === 'setup' ? (config.exhausted ? 2 : 1) : 0,
-    anchorsFailures: config.failure && config.failure !== 'setup' ? (config.exhausted ? 2 : 1) : 0,
+    // The reused script fails, then each fake repair passes after `failures - 1` failing rewrites
+    // (tools/test_m5_reproduce.js): exhausted = both repairs fail too.
+    setupFailures: config.failure === 'setup' ? failures : 0,
+    anchorsFailures: config.failure && config.failure !== 'setup' ? failures : 0,
     anchorsRepairTarget: REPAIR_TARGET[config.failure],
     anchorsRepairStray: Boolean(config.stray), rewriteAnchorsUnchanged: Boolean(config.unchangedAnchors),
   }
@@ -226,8 +232,9 @@ visit(process.env.BOX_ROOT)
     assert.equal(calls.filter(call => call.label === 'harness').length, config.generated ? 1 : 0)
     for (const label of ['harness-repair', 'anchors-repair']) {
       const repairs = calls.filter(call => call.label === label)
-      assert.equal(repairs.length, config.failure && label === (operationOf(config.failure) === 'setup' ? 'harness-repair' : 'anchors-repair') ? 1 : 0)
+      assert.equal(repairs.length, config.failure && label === (operationOf(config.failure) === 'setup' ? 'harness-repair' : 'anchors-repair') ? repairCount : 0)
       if (repairs.length) assert.match(repairs[0].name, /-retry1$/)
+      // Every repair receives the fresh probe (checked above) and the run_command.sh rules (below).
     }
   })
   // SCHEMAS.md "The pipeline owns CUDA MPS": reused harnesses get the same rule in every repair prompt.
@@ -265,15 +272,16 @@ visit(process.env.BOX_ROOT)
     assert.equal(fs.existsSync(path.join(root, 'control/harness_source.json')), false)
     for (const file of REQUIRED) assert.ok(fs.statSync(path.join(agent, 'harness', file)).isFile())
   })
-  check(`${name}: scripts execute with exactly one rerun after repair`, () => {
+  check(`${name}: scripts execute with exactly one rerun after each repair`, () => {
     const receipts = fs.readdirSync(path.join(root, 'control/receipts')).sort().map(file => ({ file, ...read(path.join(root, 'control/receipts', file)) }))
     for (const operation of ['setup', 'anchors']) {
       const attempts = receipts.filter(row => new RegExp(`^\\d{4}-${operation}\\.json$`).test(row.file))
       const expected = config.missing || (operation === 'anchors' && config.exhausted && config.failure === 'setup') ? []
-        : config.failure && operationOf(config.failure) === operation ? [7, config.exhausted ? 7 : 0] : [0]
+        : config.failure && operationOf(config.failure) === operation
+          ? Array.from({ length: repairCount + 1 }, (_, attempt) => attempt < failures ? 7 : 0) : [0]
       assert.deepEqual(attempts.map(row => row.rc), expected, operation)
       for (const receipt of attempts) assert.equal(receipt.fetched, true)
-      // One rerun with the original budget (SCHEMAS.md "A/harness/").
+      // One rerun after each repair, with the original budget (SCHEMAS.md "A/harness/").
       assert.ok(attempts.every(row => row.budget_s === attempts[0].budget_s), `${operation}: rerun budget differs`)
     }
     if (config.failure && !config.missing) {
@@ -446,6 +454,7 @@ async function main() {
     await execute('relative-no-optional', { relative: true, optional: false })
     for (const failure of ['setup', 'anchors', 'command', 'both']) {
       await execute(`${failure}-repair`, { failure })
+      await execute(`${failure}-repaired-twice`, { failure, failures: 2 })
       await execute(`${failure}-exhausted`, { failure, exhausted: true })
     }
     // An anchors repair that also edits setup.sh and run_evaluation.sh marks neither modified.

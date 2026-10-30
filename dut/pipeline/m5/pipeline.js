@@ -231,41 +231,44 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
   }
   async function runHarness(name, operation, destination, timeout) {
     const command = `bash harness/${name}`
-    const result = await boxCommand(operation, command, destination, timeout)
-    if (result.error === 'infra' || (result.rc === 0 && !result.error)) return result
-    let tail
-    try {
-      const lines = readFileSync(result.log, 'utf8').trimEnd().split('\n')
-      tail = lines.slice(-200).join('\n')
-    } catch {
-      if (!result.error) return result
-      tail = ''
-    }
-    const names = name === 'setup.sh' ? [name] : ['run_anchors.sh', 'run_command.sh']
-    const before = new Map(name === 'setup.sh' ? [] : names.map(file => [file, readFileSync(path.join(harnessDirectory, file))]))
-    const protectedScripts = new Map(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh'].map(file =>
-      [file, existsSync(path.join(harnessDirectory, file)) ? readFileSync(path.join(harnessDirectory, file)) : null]))
-    const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(harnessDirectory, name))}`
-      : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(harnessDirectory)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
-    const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). ${scope} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is the only repair attempt for this ${name === 'setup.sh' ? 'script' : 'step'}.
+    let result = await boxCommand(operation, command, destination, timeout)
+    for (let retry = 1; retry <= 2; retry++) {
+      if (result.error === 'infra' || result.fetched === false || (result.rc === 0 && !result.error)) return result
+      let tail
+      try {
+        const lines = readFileSync(result.log, 'utf8').trimEnd().split('\n')
+        tail = lines.slice(-200).join('\n')
+      } catch {
+        if (!result.error) return result
+        tail = ''
+      }
+      const names = name === 'setup.sh' ? [name] : ['run_anchors.sh', 'run_command.sh']
+      const before = new Map(name === 'setup.sh' ? [] : names.map(file => [file, readFileSync(path.join(harnessDirectory, file))]))
+      const protectedScripts = new Map(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh'].map(file =>
+        [file, existsSync(path.join(harnessDirectory, file)) ? readFileSync(path.join(harnessDirectory, file)) : null]))
+      const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(harnessDirectory, name))}`
+        : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(harnessDirectory)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
+      const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). ${scope} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is repair attempt ${retry} of 2 for this ${name === 'setup.sh' ? 'script' : 'step'}.
 Budget: ${timeout}s; measured elapsed: ${result.wall_s ?? 'unavailable'}s; measured overrun: ${Number.isFinite(result.wall_s) ? Math.max(0, result.wall_s - timeout) : 'unavailable'}s. ${budgetPrompt()}
 ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
-      { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry: 1 })
-    for (const [file, bytes] of protectedScripts) {
-      if (bytes === null) rmSync(path.join(harnessDirectory, file), { force: true })
-      else writeFileSync(path.join(harnessDirectory, file), bytes)
-    }
-    if (repair == null) return result
-    if (harnessSource) {
-      for (const file of names) {
-        if (!before.has(file) || !before.get(file).equals(readFileSync(path.join(harnessDirectory, file)))) harnessSource.files[file].modified = true
+        { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry })
+      for (const [file, bytes] of protectedScripts) {
+        if (bytes === null) rmSync(path.join(harnessDirectory, file), { force: true })
+        else writeFileSync(path.join(harnessDirectory, file), bytes)
       }
-      writeHarnessSource()
+      if (repair == null) return result
+      if (harnessSource) {
+        for (const file of names) {
+          if (!before.has(file) || !before.get(file).equals(readFileSync(path.join(harnessDirectory, file)))) harnessSource.files[file].modified = true
+        }
+        writeHarnessSource()
+      }
+      const uploaded = await uploadHarness(names, destination, executionTimeout('setup'))
+      if (uploaded.error || uploaded.rc !== 0) return { ...uploaded, error: uploaded.error || 'infra' }
+      result = await boxCommand(operation, command, destination, timeout)
     }
-    const uploaded = await uploadHarness(names, destination, executionTimeout('setup'))
-    if (uploaded.error || uploaded.rc !== 0) return { ...uploaded, error: uploaded.error || 'infra' }
-    return boxCommand(operation, command, destination, timeout)
+    return result
   }
   async function reproduce() {
     // Snapshot only the current allocation; never reuse a prior run's box record.

@@ -49,7 +49,8 @@ function emitJSON(file, value) {
 }
 // `staleFreeze` leaves a reproduce-out/ in the run directory before the freeze (SCHEMAS.md reproduce bullet:
 // the freeze runs `test ! -e reproduce-out` first).
-function setupScript(directory, failures, staleFreeze = false) {
+// `version` is the agent turn that wrote the script (0 = harness, k = k-th repair); it tags the failure log.
+function setupScript(directory, failures, staleFreeze = false, version = 0) {
   script(path.join(directory, 'setup.sh'), `mkdir -p out baseline-published data${staleFreeze ? "\nmkdir -p reproduce-out\nprintf '%s\\n' stale > reproduce-out/stale-marker" : ''}
 printf '%s\\n' '${SENTINEL}:setup'
 n=0
@@ -57,7 +58,7 @@ n=0
 n=$((n + 1))
 printf '%s\\n' "$n" > .setup-attempts
 printf '%s\\n' '${SENTINEL}' > out/setup-private.txt
-${failureLog('setup', failures)}
+${failureLog('setup', failures, version)}
 printf '%s\\n' pinned > baseline-published/pin
 printf '%s\\n' representative > data/input`)
 }
@@ -72,29 +73,60 @@ const anchorsFailureName = config => anchorsRepairScripts(config)[0] === 'run_co
 const STRAY = name => `printf '%s\\n' stray > out/stray-${name}\nexit 9`
 function snapshot(directory, destination) {
   fs.mkdirSync(destination, { recursive: true })
-  for (const name of fs.readdirSync(directory)) fs.copyFileSync(path.join(directory, name), path.join(destination, name))
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true }))
+    if (entry.isFile()) fs.copyFileSync(path.join(directory, entry.name), path.join(destination, entry.name))
 }
-function failureLog(name, failures) {
+// SCHEMAS.md naming: fallback calls add the `fb` descriptor.
+const isFallbackName = value => /(^|-)fb(-|$)/.test(value || '')
+// Failure log lines are `<SENTINEL>:<name>:v<version>:<i>`, so each attempt's log is distinguishable.
+const logLine = (name, version, i) => `${SENTINEL}:${name}:v${version}:${i}`
+function failureLog(name, failures, version = 0) {
   return `if (( n <= ${failures} )); then
-  for ((i=1; i<=240; i++)); do printf '%s:%s:%s\\n' '${SENTINEL}' '${name}' "$i"; done
+  for ((i=1; i<=240; i++)); do printf '%s:%s:v%s:%s\\n' '${SENTINEL}' '${name}' '${version}' "$i"; done
   exit 7
 fi`
 }
-function failureScript(name, failures) {
+function failureScript(name, failures, version = 0) {
   return `printf '%s\\n' '${SENTINEL}:${name}'
 n=0
 [[ ! -f .${name}-attempts ]] || read -r n < .${name}-attempts
 n=$((n + 1))
 printf '%s\\n' "$n" > .${name}-attempts
-${failureLog(name, failures)}\n`
+${failureLog(name, failures, version)}\n`
+}
+// SCHEMAS.md "A/harness/": setup and anchors each permit up to two repairs. `setupFailures` /
+// `anchorsFailures` = N means the scripts written by the first N agent turns (harness, repair 1,
+// repair 2) fail on every run; later turns write passing scripts. `decline` names a repair label
+// whose first turn returns null; `setupRerunFetchFailure` makes every fetch fail once setup has
+// run twice (the rerun after repair 1 exits 0, but its fetch fails: an infrastructure failure).
+function ladder(config) {
+  const step = (failures, declined, infra) => {
+    if (!failures) return { repairs: 0, attempts: 1, passed: true, rcs: [0] }
+    if (declined) return { repairs: 1, attempts: 1, passed: false, rcs: [7] }
+    if (infra) return { repairs: 1, attempts: 2, passed: false, rcs: [7, 0] }
+    const repairs = Math.min(failures, 2)
+    const rcs = Array.from({ length: repairs + 1 }, (_, version) => version < failures ? 7 : 0)
+    return { repairs, attempts: repairs + 1, passed: rcs.at(-1) === 0, rcs }
+  }
+  const setup = step(config.setupFailures, config.decline === 'harness-repair', config.setupRerunFetchFailure)
+  const anchors = setup.passed ? step(config.anchorsFailures, config.decline === 'anchors-repair', false)
+    : { repairs: 0, attempts: 0, passed: false, rcs: [] }
+  return { setup, anchors }
 }
 module.exports = {
   async run({ title, prompt, name }) {
     const root = process.env.M5_REPRODUCE_ROOT
     const config = JSON.parse(process.env.M5_REPRODUCE_CONFIG)
-    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name, probeFetched: fs.existsSync(path.join(root, 'agent', 'results', 'probe', 'probe.json')) }) + '\n')
+    // Earlier turns with this label: a repair's version is its 1-based turn; the harness is version 0.
+    // A fallback call (`-fb` name descriptor) belongs to the turn it falls back from.
+    const earlier = rows(process.env.M5_REPRODUCE_CALLS).filter(call => call.label === title && !isFallbackName(call.name)).length
+    const prior = isFallbackName(name) ? earlier - 1 : earlier
+    // A declined repair: every call of the first turn yields null and nothing is rewritten.
+    const declined = config.decline === title && prior === 0
+    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name, declined, probeFetched: fs.existsSync(path.join(root, 'agent', 'results', 'probe', 'probe.json')) }) + '\n')
     if (config.agentDelayMs) await new Promise(resolve => setTimeout(resolve, config.agentDelayMs))
     const agent = path.join(root, 'agent')
+    if (declined) return null
     let facts = { v: `${title} stub` }
     if (title === 'intake') {
       facts = { found: true, anchors_count: config.anchors.length, data: 'available', licence: 'permitted', stock_environment: true, size: 'tiny' }
@@ -111,23 +143,34 @@ module.exports = {
     if (['harness', 'harness-repair', 'anchors-repair'].includes(title)) {
       const harness = path.join(agent, 'harness')
       // A successful repair must replace the script; rerunning the original cannot pass.
-      const failuresFor = field => config[field] && (title === 'harness' || config[field] >= 2) ? 999 : 0
+      const version = title === 'harness' ? 0 : prior + 1
+      const failuresFor = field => (config[field] ?? 0) > version ? 999 : 0
       const targets = anchorsRepairScripts(config)
       const writes = file => title === 'harness' || (title === 'anchors-repair' && targets.includes(file))
       const anchorsFailures = file => targets.includes(file) ? failuresFor('anchorsFailures') : 0
       // Rewritten scripts carry a marker so their remote bytes can be identified.
       const marker = title === 'anchors-repair' ? '# rewritten by anchors-repair\n' : ''
-      if (title === 'harness-repair' || title === 'anchors-repair') snapshot(harness, path.join(root, `pre-${title}`))
-      if (title === 'harness' || title === 'harness-repair') setupScript(harness, failuresFor('setupFailures'), config.freezeFailure === 'stale')
+      if (title === 'harness-repair' || title === 'anchors-repair') {
+        // `pre-<label>` keeps the state before the first repair; `-<k>` suffixes record each repair,
+        // and `remote-at-<label>-<k>` the box's harness when repair k starts.
+        if (!prior) snapshot(harness, path.join(root, `pre-${title}`))
+        snapshot(harness, path.join(root, `pre-${title}-${version}`))
+        const box = path.join(root, 'box')
+        for (const entry of fs.existsSync(box) ? fs.readdirSync(box) : []) {
+          const remote = path.join(box, entry, 'harness')
+          if (entry.startsWith('m5-') && fs.existsSync(remote)) snapshot(remote, path.join(root, `remote-at-${title}-${version}`))
+        }
+      }
+      if (title === 'harness' || title === 'harness-repair') setupScript(harness, failuresFor('setupFailures'), config.freezeFailure === 'stale', version)
       if (writes('run_anchors.sh')) {
-        script(path.join(harness, 'run_anchors.sh'), marker + failureScript('anchors', anchorsFailures('run_anchors.sh')) + `bash harness/run_command.sh\ntest -f baseline-published/pin\ntest -f data/input\nmkdir -p out\nprintf '%s\\n' '${SENTINEL}:anchors'\n` +
+        script(path.join(harness, 'run_anchors.sh'), marker + failureScript('anchors', anchorsFailures('run_anchors.sh'), version) + `bash harness/run_command.sh\ntest -f baseline-published/pin\ntest -f data/input\nmkdir -p out\nprintf '%s\\n' '${SENTINEL}:anchors'\n` +
           (config.missingMeasured ? 'rm -f out/anchors_measured.json\n' : emitJSON('out/anchors_measured.json', config.measured)) +
           `printf '%s\\n' '${SENTINEL}' > out/anchors-private.txt`)
       }
       // clearMps models a harness that breaks the CUDA MPS rule (like positive-openmm run1's).
       if (writes('run_command.sh')) script(path.join(harness, 'run_command.sh'), marker +
         (config.clearMps ? 'unset CUDA_MPS_PIPE_DIRECTORY CUDA_MPS_LOG_DIRECTORY\n' : '') +
-        (anchorsFailures('run_command.sh') ? failureScript('command', anchorsFailures('run_command.sh')) : '') +
+        (anchorsFailures('run_command.sh') ? failureScript('command', anchorsFailures('run_command.sh'), version) : '') +
         `test -f baseline-published/pin\ntest -f data/input\n! command -v fake-cuda-client > /dev/null || fake-cuda-client\nprintf '%s\\n' '${SENTINEL}:command' >> out/command-calls.log` +
         (title === 'anchors-repair' ? `\nmkdir -p out\nprintf '%s\\n' rerun > out/rewritten-command.txt` : ''))
       // An anchors repair that also edits setup.sh/run_evaluation.sh; a setup repair that also edits the anchor scripts.
@@ -140,7 +183,10 @@ module.exports = {
         script(path.join(harness, 'run_command.sh'), STRAY('command'))
       }
       // What the repair left behind, before the pipeline may revert files outside the repair's scope.
-      if (title === 'harness-repair' || title === 'anchors-repair') snapshot(harness, path.join(root, `post-${title}`))
+      if (title === 'harness-repair' || title === 'anchors-repair') {
+        snapshot(harness, path.join(root, `post-${title}`))
+        snapshot(harness, path.join(root, `post-${title}-${version}`))
+      }
     }
     if (title === 'seal') {
       const bounds = readJSON(path.join(agent, 'bounds.json'))
@@ -337,7 +383,15 @@ fi
   script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\n' + anchorSnapshot + 'bash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
   // freezeFailure 'fetch': every fetch of the freeze log fails, so the freeze receipt has fetched=false.
   const failingFreezeFetch = config.freezeFailure === 'fetch' ? `[[ $source != *-reproduce-freeze.log ]] || { echo 'simulated failed fetch' >&2; exit 1; }\n` : ''
-  script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\n' + failingFetch + failingFreezeFetch + 'exec cp -r -- "$source" "$2"')
+  // setupRerunFetchFailure: once setup has run twice (the rerun after repair 1), every fetch fails.
+  const failingRerunFetch = config.setupRerunFetchFailure ? `for attempts in "$BOX_ROOT"/m5-*/.setup-attempts; do
+  if [[ -f $attempts ]]; then
+    read -r n < "$attempts"
+    if (( n >= 2 )); then echo 'simulated failed fetch' >&2; exit 1; fi
+  fi
+done
+` : ''
+  script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\n' + failingFetch + failingFreezeFetch + failingRerunFetch + 'exec cp -r -- "$source" "$2"')
   const callsFile = path.join(root, 'calls.jsonl')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w')
   const stderrFile = path.join(root, 'stderr.log')
@@ -353,7 +407,7 @@ fi
           M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch'),
           // Failing fetches are retried after BOXRUN_FETCH_WAIT_S; 1 s keeps the fixture fast yet measurable.
           ...(config.concurrencyFetchFailures ? { BOXRUN_FETCH_WAIT_S: config.concurrencyFetchFailures >= 5 ? '0' : '1' } : {}),
-          ...(config.freezeFailure === 'fetch' ? { BOXRUN_FETCH_WAIT_S: '0' } : {}) },
+          ...(config.freezeFailure === 'fetch' || config.setupRerunFetchFailure ? { BOXRUN_FETCH_WAIT_S: '0' } : {}) },
       })
       let error
       proc.on('error', value => { error = value })
@@ -377,18 +431,27 @@ fi
     assert.equal(signature.error_class, errorClass)
     assert.equal(signature.exit_code, errorClass === 'anchor' ? 4 : errorClass === 'timeout' ? 3 : 2)
   })
-  check(`${name}: one harness call and bounded repair`, () => {
+  // SCHEMAS.md "A/harness/": up to two repairs per step; "Each repair receives the failure class and at
+  // most the last 200 log lines of the latest failed attempt."
+  const expected = ladder(config)
+  check(`${name}: one harness call and bounded repairs (setup ${expected.setup.repairs}, anchors ${expected.anchors.repairs})`, () => {
     assert.equal(calls.filter(call => call.label === 'harness').length, config.probeFailure ? 0 : 1)
     assert.equal(calls.filter(call => call.label === 'profile-repair').length, 0)
-    for (const [label, needed] of [['harness-repair', config.setupFailures],
-      ['anchors-repair', config.setupFailures < 2 && config.anchorsFailures]]) {
-      assert.equal(calls.filter(call => call.label === label).length, needed ? 1 : 0, label)
-      for (const call of calls.filter(call => call.label === label)) {
-        assert.match(call.name, /-retry1$/, label)
+    for (const [label, step] of [['harness-repair', expected.setup], ['anchors-repair', expected.anchors]]) {
+      // Repair turns; a fallback call (`fb`) retries the same turn on another family.
+      const all = calls.filter(call => call.label === label)
+      const repairs = all.filter(call => !isFallbackName(call.name))
+      assert.equal(repairs.length, config.probeFailure ? 0 : step.repairs, `${label}: ${all.map(call => call.name).join(', ')}`)
+      if (config.decline !== label) assert.equal(all.length, repairs.length, `${label}: unexpected fallback`)
+      repairs.forEach((call, i) => {
+        assert.match(call.name, i === 0 ? /-retry1$/ : /-retry\d+$/, label)
         const script = label === 'harness-repair' ? 'setup' : anchorsFailureName(config)
-        assert.ok(call.prompt.includes(`${SENTINEL}:${script}:240`), 'last failure log line missing')
-        assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:1\n`), 'unbounded failure log')
-      }
+        // Repair i+1 follows the failed run of the script written by turn i.
+        assert.ok(call.prompt.includes(logLine(script, i, 240)), `${label} ${i + 1}: last line of the latest failure log missing`)
+        assert.ok(!call.prompt.includes(logLine(script, i, 1) + '\n'), `${label} ${i + 1}: unbounded failure log`)
+        for (let earlier = 0; earlier < i; earlier++)
+          assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:v${earlier}:`), `${label} ${i + 1}: prompt carries an earlier attempt's log (v${earlier})`)
+      })
     }
   })
   check(`${name}: harness and repair prompts state the pipeline-owned CUDA MPS rule`, () => {
@@ -447,8 +510,11 @@ fi
       assert.equal(receipt.timed_out, false)
       // Only the concurrency fetch that fails on all five attempts, or the deliberately failed
       // freeze log fetch, leaves fetched false.
+      // With setupRerunFetchFailure, the setup rerun is the last command and its fetch fails.
+      const lastFile = files.filter(name => name.endsWith('.json')).at(-1)
       assert.equal(receipt.fetched, !(config.concurrencyFetchFailures >= 5 && file.slice(5, -5) === 'concurrency') &&
-        !(config.freezeFailure === 'fetch' && file.slice(5, -5) === 'reproduce-freeze'), file)
+        !(config.freezeFailure === 'fetch' && file.slice(5, -5) === 'reproduce-freeze') &&
+        !(config.setupRerunFetchFailure && file === lastFile), file)
       assert.ok(Number.isInteger(receipt.wall_s) && receipt.wall_s >= 0)
       for (const key of ['started_utc', 'ended_utc']) assert.ok(Number.isFinite(Date.parse(receipt[key])))
       return { operation: file.slice(5, -5), ...receipt }
@@ -497,27 +563,31 @@ fi
     assert.ok(receipts.slice(0, firstSetup).every(receipt => receipt.operation === 'upload'))
     // A repair rewriting two scripts may upload them in one or more receipts; only uploads separate the attempts.
     const anchorAttempts = receipts.flatMap((receipt, i) => receipt.operation === 'anchors' ? [i] : [])
-    const anchorsRepairUploads = anchorAttempts.length === 2 ? anchorAttempts[1] - anchorAttempts[0] - 1 : 0
-    if (anchorAttempts.length === 2) {
-      assert.ok(anchorsRepairUploads >= 1, 'no upload between the anchor run and its rerun')
-      assert.ok(anchorsRepairUploads <= anchorsRepairScripts(config).length, 'more anchors-repair uploads than rewritten scripts')
-      // SCHEMAS.md: "the step reruns once with its original budget".
-      assert.equal(receipts[anchorAttempts[1]].budget_s, receipts[anchorAttempts[0]].budget_s, 'rerun changed the anchors budget')
+    let anchorsRepairUploads = 0
+    for (let k = 1; k < anchorAttempts.length; k++) {
+      const uploads = anchorAttempts[k] - anchorAttempts[k - 1] - 1
+      assert.ok(uploads >= 1, `no upload between anchor run ${k} and its rerun`)
+      assert.ok(uploads <= anchorsRepairScripts(config).length, 'more anchors-repair uploads than rewritten scripts')
+      assert.ok(receipts.slice(anchorAttempts[k - 1] + 1, anchorAttempts[k]).every(receipt => receipt.operation === 'upload'))
+      anchorsRepairUploads += uploads
     }
+    // SCHEMAS.md: "then the step reruns once with its original budget" (after each repair).
     for (const i of anchorAttempts) assert.equal(receipts[i].budget_s, config.anchorsBudget ?? 1200, 'anchors budget')
-    assert.equal(count('upload'), firstSetup + (config.setupFailures ? 1 : 0) + anchorsRepairUploads + (stoppedAt === 'reproduce' ? 0 : 1))
-    if (config.setupFailures) assert.equal(receipts[firstSetup + 1].operation, 'upload')
-    assert.equal(count('setup'), config.setupFailures ? 2 : 1)
-    assert.equal(count('anchors'), config.setupFailures >= 2 ? 0 : config.anchorsFailures ? 2 : 1)
+    const setupAttempts = receipts.flatMap((receipt, i) => receipt.operation === 'setup' ? [i] : [])
+    for (const i of setupAttempts) assert.equal(receipts[i].budget_s, config.setupBudget ?? 1200, 'setup budget')
+    // The setup repair rewrites only setup.sh: one upload before each rerun.
+    for (let k = 1; k < setupAttempts.length; k++) assert.equal(setupAttempts[k] - setupAttempts[k - 1], 2, `setup rerun ${k} not preceded by exactly one upload`)
+    for (const k of setupAttempts.slice(1)) assert.equal(receipts[k - 1].operation, 'upload')
+    assert.equal(count('upload'), firstSetup + (expected.setup.attempts - 1) + anchorsRepairUploads + (stoppedAt === 'reproduce' ? 0 : 1),
+      receipts.map(receipt => `${receipt.operation}:${receipt.rc}`).join(','))
+    const operations = receipts.map(receipt => `${receipt.operation}:${receipt.rc}`).join(',')
+    assert.equal(count('setup'), expected.setup.attempts, operations)
+    assert.equal(count('anchors'), expected.anchors.attempts, operations)
     assert.equal(count('profile'), stoppedAt === 'reproduce' ? 0 : 1)
-    for (const [operation, failedAttempts] of [['anchors', config.anchorsFailures], ['profile', 0]]) {
-      const attempts = receipts.filter(receipt => receipt.operation === operation)
-      if (attempts.length) assert.deepEqual(attempts.map(receipt => receipt.rc),
-        failedAttempts >= 2 ? [7, 7] : failedAttempts ? [7, 0] : operation === 'profile' && config.profileFailures ? [2] : [0])
-      for (let i = 1; i < attempts.length; i++) assert.equal(receipts[receipts.indexOf(attempts[i]) - 1].operation, 'upload')
-    }
-    assert.deepEqual(receipts.filter(receipt => receipt.operation === 'setup').map(receipt => receipt.rc),
-      config.setupFailures >= 2 ? [7, 7] : config.setupFailures ? [7, 0] : [0])
+    assert.deepEqual(anchorAttempts.map(i => receipts[i].rc), expected.anchors.rcs, 'anchors rcs')
+    assert.deepEqual(setupAttempts.map(i => receipts[i].rc), expected.setup.rcs, 'setup rcs')
+    const profiles = receipts.filter(receipt => receipt.operation === 'profile')
+    if (profiles.length) assert.deepEqual(profiles.map(receipt => receipt.rc), config.profileFailures ? [2] : [0])
   })
   check(`${name}: private harness output fetched; operator has no sentinel`, () => {
     if (config.probeFailure) { noLeak(path.join(root, 'operator')); return }
@@ -530,10 +600,13 @@ fi
       assert.ok(Number.isFinite(row.signature.wall_s) && row.signature.wall_s >= 0, row.signature.stage)
       const labels = { intake: ['intake'], reproduce: ['harness', 'harness-repair', 'anchors-repair'], profile: [], seal: ['seal'] }[row.signature.stage]
       if (labels && row.signature.status !== 'SKIPPED') {
-        const count = calls.filter(call => labels.includes(call.label)).length
+        // Declined (null) calls report no usage.
+        const count = calls.filter(call => labels.includes(call.label) && !call.declined).length
         assert.equal(row.signature.tokens_in, count * 10, row.signature.stage)
         assert.equal(row.signature.tokens_out, count * 5, row.signature.stage)
-        assert.equal(row.facts.tokens_known, count > 0, row.signature.stage)
+        // SCHEMAS.md: tokens_known only when every runner attempt in the stage reports usage.
+        const unreported = calls.some(call => labels.includes(call.label) && call.declined)
+        assert.equal(row.facts.tokens_known, count > 0 && !unreported, row.signature.stage)
         if (count && config.agentDelayMs) assert.ok(row.signature.wall_s >= count * config.agentDelayMs / 1000 - 0.1, row.signature.stage)
       }
       if (row.signature.status === 'SKIPPED' && config.agentDelayMs) assert.ok(row.signature.wall_s < config.agentDelayMs / 1000, 'skip reused earlier duration')
@@ -707,11 +780,11 @@ function concurrencyChecks(name, root, config, stage, stoppedAt) {
     assert.equal(rows(path.join(root, 'concurrency-calls.jsonl')).length, 1, 'retry repeated the probe command')
   })
 }
-function reproduceFacts(name, run, passed, total, stock = true) {
+function reproduceFacts(name, run, passed, total, stock = true, tokensKnown = true) {
   check(`${name}: reproduce facts and validity`, () => {
     const row = run.stage('reproduce')
     assert.deepEqual(row.facts, { anchors_passed: passed, anchors_total: total, stock_verified: stock,
-      tuned_control_valid: null, tokens_known: true, gpu_busy_known: false })
+      tuned_control_valid: null, tokens_known: tokensKnown, gpu_busy_known: false })
     assert.equal(row.signature.gpu_s, 0)
     // run_valid: true/false with at least one anchor; null when there are no anchors.
     if (total === 0) assert.equal(row.signature.run_valid ?? null, null, 'run_valid must be null without anchors')
@@ -763,6 +836,14 @@ function repairUploadChecks(name, run) {
     assert.deepEqual(bytesOf(path.join(remote, 'harness', 'setup.sh')), bytesOf(path.join(before, 'setup.sh')), 'setup.sh changed on the box')
     assert.deepEqual(bytesOf(path.join(remote, 'harness', 'run_evaluation.sh')), bytesOf(path.join(before, 'run_evaluation.sh')), 'run_evaluation.sh changed on the box')
     for (const file of ['stray-setup', 'stray-evaluation']) assert.ok(!fs.existsSync(path.join(remote, 'out', file)), `${file}: stray script ran`)
+    // With two repairs, the box still holds the original setup.sh/run_evaluation.sh when repair 2 starts.
+    for (let k = 2; k <= ladder(config).anchors.repairs; k++) {
+      const at = path.join(root, `remote-at-anchors-repair-${k}`)
+      assert.ok(bytesOf(path.join(root, `post-anchors-repair-${k - 1}`, 'setup.sh'))?.includes('stray'), `fixture did not edit setup.sh during anchors repair ${k - 1}`)
+      assert.deepEqual(bytesOf(path.join(at, 'setup.sh')), bytesOf(path.join(before, 'setup.sh')), `setup.sh changed on the box after anchors repair ${k - 1}`)
+      const evaluation = bytesOf(path.join(at, 'run_evaluation.sh'))
+      if (evaluation) assert.deepEqual(evaluation, bytesOf(path.join(before, 'run_evaluation.sh')), `run_evaluation.sh changed on the box after anchors repair ${k - 1}`)
+    }
   })
   if (config.setupRepairStray) check(`${name}: setup repair uploads only setup.sh`, () => {
     const remote = remoteHarness(root)
@@ -773,6 +854,26 @@ function repairUploadChecks(name, run) {
       assert.deepEqual(bytesOf(path.join(remote, 'harness', file)), bytesOf(path.join(before, file)), `${file} changed on the box`)
     }
     for (const file of ['stray-anchors', 'stray-command']) assert.ok(!fs.existsSync(path.join(remote, 'out', file)), `${file}: stray script ran`)
+  })
+}
+// SCHEMAS.md "A/harness/": "The second repair runs only after the first repaired script ran and failed
+// again ... After each repair every rewritten script is recopied, then the step reruns once with its
+// original budget." When repair 2 starts, the box holds repair 1's rewrite and the untouched originals.
+function secondRepairChecks(name, run, label) {
+  const { root, config } = run
+  check(`${name}: repair 1's rewrite was on the box before repair 2, other scripts unchanged`, () => {
+    const at = path.join(root, `remote-at-${label}-2`)
+    const original = path.join(root, `pre-${label}`)
+    const rewritten = label === 'harness-repair' ? ['setup.sh'] : anchorsRepairScripts(config)
+    for (const file of rewritten) {
+      assert.notDeepEqual(bytesOf(path.join(root, `post-${label}-1`, file)), bytesOf(path.join(original, file)), `${file}: fixture repair 1 did not rewrite it`)
+      assert.deepEqual(bytesOf(path.join(at, file)), bytesOf(path.join(root, `post-${label}-1`, file)), `${file}: repair 1 rewrite not on the box`)
+    }
+    // Scripts outside the repair's scope, where already uploaded, keep their original bytes.
+    for (const file of ['setup.sh', 'run_anchors.sh', 'run_command.sh'].filter(file => !rewritten.includes(file))) {
+      const remote = bytesOf(path.join(at, file))
+      if (remote) assert.deepEqual(remote, bytesOf(path.join(original, file)), `${file}: changed on the box by ${label} 1`)
+    }
   })
 }
 // SCHEMAS.md: "a rewritten `run_command.sh` still obeys every `run_command.sh` rule above, and the anchors
@@ -1326,12 +1427,42 @@ async function main() {
       }
       const repaired = await runCase('setup-repaired', { setupFailures: 1 })
       reproduceFacts('setup-repaired', repaired, 2, 2)
-      const install = await runCase('setup-twice-failed', { setupFailures: 2 }, 'reproduce', 'install')
-      reproduceFacts('setup-twice-failed', install, null, null, false)
+      // Two setup repairs: fail, repair 1, fail again (different log), repair 2, pass; then anchors run.
+      const repairedTwice = await runCase('setup-repaired-twice', { setupFailures: 2 })
+      reproduceFacts('setup-repaired-twice', repairedTwice, 2, 2)
+      secondRepairChecks('setup-repaired-twice', repairedTwice, 'harness-repair')
+      // Three setup failures exhaust both repairs: install, exit 2, no third repair.
+      const install = await runCase('setup-thrice-failed', { setupFailures: 3 }, 'reproduce', 'install')
+      reproduceFacts('setup-thrice-failed', install, null, null, false)
+      secondRepairChecks('setup-thrice-failed', install, 'harness-repair')
+      // A declined (null) first repair ends the step: no rerun, no second repair.
+      const declined = await runCase('setup-repair-declined', { setupFailures: 3, decline: 'harness-repair' }, 'reproduce', 'install')
+      // The null attempts report no usage, so tokens_known is false.
+      reproduceFacts('setup-repair-declined', declined, null, null, false, false)
+      // The rerun after repair 1 exits 0 but its fetch fails: infra ends the step, no second repair.
+      const rerunInfra = await runCase('setup-rerun-fetch-failed', { setupFailures: 1, setupRerunFetchFailure: true }, 'reproduce', 'infra')
+      check('setup-rerun-fetch-failed: anchor counts stay null', () => {
+        const facts = rerunInfra.stage('reproduce').facts
+        assert.deepEqual([facts.anchors_passed, facts.anchors_total], [null, null])
+      })
       const anchorsRepaired = await runCase('anchors-repaired', { anchorsFailures: 1 })
       reproduceFacts('anchors-repaired', anchorsRepaired, 2, 2)
-      const anchorsFailed = await runCase('anchors-twice-failed', { anchorsFailures: 2, agentDelayMs: 1100 }, 'reproduce', 'anchor')
-      reproduceFacts('anchors-twice-failed', anchorsFailed, null, null)
+      const anchorsTwice = await runCase('anchors-repaired-twice', { anchorsFailures: 2 })
+      reproduceFacts('anchors-repaired-twice', anchorsTwice, 2, 2)
+      scoredFile('anchors-repaired-twice', anchorsTwice)
+      secondRepairChecks('anchors-repaired-twice', anchorsTwice, 'anchors-repair')
+      const anchorsFailed = await runCase('anchors-thrice-failed', { anchorsFailures: 3, agentDelayMs: 1100 }, 'reproduce', 'anchor')
+      reproduceFacts('anchors-thrice-failed', anchorsFailed, null, null)
+      secondRepairChecks('anchors-thrice-failed', anchorsFailed, 'anchors-repair')
+      const anchorsDeclined = await runCase('anchors-repair-declined', { anchorsFailures: 3, decline: 'anchors-repair' }, 'reproduce', 'anchor')
+      reproduceFacts('anchors-repair-declined', anchorsDeclined, null, null, true, false)
+      for (const [label, target] of [['command', 'run_command.sh'], ['both', 'both']]) {
+        const name = `anchors-repair-${label}-twice`
+        const run = await runCase(name, { anchorsFailures: 2, anchorsRepairTarget: target, anchorsBudget: 777 })
+        reproduceFacts(name, run, 2, 2)
+        scoredFile(name, run)
+        secondRepairChecks(name, run, 'anchors-repair')
+      }
       // The anchors repair may rewrite run_command.sh, run_anchors.sh or both; the rerun uses the original budget.
       for (const [label, target] of [['command', 'run_command.sh'], ['both', 'both'], ['anchors-only', 'run_anchors.sh']]) {
         const name = `anchors-repair-${label}`
@@ -1340,12 +1471,19 @@ async function main() {
         scoredFile(name, run)
         profileFacts(name, run, 0.95)
       }
-      const commandExhausted = await runCase('anchors-repair-command-twice-failed', { anchorsFailures: 2, anchorsRepairTarget: 'run_command.sh' }, 'reproduce', 'anchor')
-      reproduceFacts('anchors-repair-command-twice-failed', commandExhausted, null, null)
+      const commandExhausted = await runCase('anchors-repair-command-thrice-failed', { anchorsFailures: 3, anchorsRepairTarget: 'run_command.sh' }, 'reproduce', 'anchor')
+      reproduceFacts('anchors-repair-command-thrice-failed', commandExhausted, null, null)
+      secondRepairChecks('anchors-repair-command-thrice-failed', commandExhausted, 'anchors-repair')
       const anchorsStray = await runCase('anchors-repair-stray', { anchorsFailures: 1, anchorsRepairTarget: 'both', anchorsRepairStray: true })
       reproduceFacts('anchors-repair-stray', anchorsStray, 2, 2)
+      const anchorsStrayTwice = await runCase('anchors-repair-stray-twice', { anchorsFailures: 2, anchorsRepairTarget: 'both', anchorsRepairStray: true })
+      reproduceFacts('anchors-repair-stray-twice', anchorsStrayTwice, 2, 2)
+      secondRepairChecks('anchors-repair-stray-twice', anchorsStrayTwice, 'anchors-repair')
       const setupStray = await runCase('setup-repair-stray', { setupFailures: 1, setupRepairStray: true })
       reproduceFacts('setup-repair-stray', setupStray, 2, 2)
+      const setupStrayTwice = await runCase('setup-repair-stray-twice', { setupFailures: 2, setupRepairStray: true })
+      reproduceFacts('setup-repair-stray-twice', setupStrayTwice, 2, 2)
+      secondRepairChecks('setup-repair-stray-twice', setupStrayTwice, 'harness-repair')
       const profileFailed = await runCase('profile-infra', { profileFailures: 1 }, 'profile', 'infra')
       check('profile-infra: incomplete facts without agent repair', () => {
         assert.equal(profileFailed.stage('profile').facts.profile_complete, false)
