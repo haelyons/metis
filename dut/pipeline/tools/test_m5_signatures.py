@@ -311,6 +311,77 @@ def licence_basis_takeaway(directory, value):
     require(takeaway_anchored(text) == "true", "anchored no longer shown as true")
 
 
+AUTHORITY_LINE = ("Execution authority: owner's standing instruction (2026-10-30), "
+                  "not licence evidence.")
+LICENCES = ("permitted", "unknown", "restricted")
+
+
+def takeaway_licence(text):
+    """Value shown for `licence` among the intake gate flags, and whether it sits next to
+    `licence_basis` (adjacent table columns, or the same line)."""
+    def cells(line):
+        return [cell.strip().strip("`*\"") for cell in line.strip().strip("|").split("|")]
+    lines = text.splitlines()
+    for index, line in enumerate(lines):
+        if not line.strip().startswith("|"):
+            continue
+        header = cells(line)
+        if "licence" not in header:
+            continue
+        column = header.index("licence")
+        adjacent = "licence_basis" in header and abs(header.index("licence_basis") - column) == 1
+        for following in lines[index + 1:]:
+            if not following.strip().startswith("|"):
+                break
+            row = cells(following)
+            if "intake" in row and column < len(row):
+                return row[column], adjacent
+    for line in lines:
+        match = re.search(r"\blicence\b(?!_)\W{0,4}(%s|null)\b" % "|".join(LICENCES), line)
+        if match:
+            return match.group(1), bool(re.search(r"\blicence_basis\b", line))
+    return None, False
+
+
+def licence_takeaway(directory, status, licence, extra, blockers, line):
+    directory.mkdir()
+    intake = dict(FACTS["intake"], anchored=True, licence=licence,
+                  licence_basis="distribution", **extra)
+    if status == "PASS":
+        accepted(directory, "intake", facts=intake)
+        for stage, facts in FACTS.items():
+            if stage != "intake":
+                accepted(directory, stage, facts=facts)
+    else:
+        accepted(directory, "intake", "FAIL", facts=intake,
+                 v1=dict(exit_code=2, exit_kind="guard", error_class="numeric",
+                         blockers=blockers))
+        for stage in FACTS:
+            if stage != "intake":
+                accepted(directory, stage, "SKIPPED")
+    source = directory / "signatures.jsonl"
+    before = source.read_bytes()
+    output = directory / "OPERATOR_TAKEAWAY.md"
+    result = run("m5/operator_takeaway.py", directory, "--out", output)
+    require(result.returncode == 0, "takeaway exit " + str(result.returncode))
+    require(source.read_bytes() == before, "takeaway mutated signatures")
+    require(b"standing instruction" not in before, "authorization carried by a signature record")
+    text = output.read_text()
+    shown, adjacent = takeaway_licence(text)
+    require(shown == licence, "licence shown as " + repr(shown))
+    require(adjacent, "licence not shown next to licence_basis")
+    require(takeaway_licence_basis(text) == "distribution", "licence_basis no longer shown")
+    count = sum(AUTHORITY_LINE in row for row in text.splitlines())
+    if line:
+        require(count == 1 and text.count(AUTHORITY_LINE) == 1,
+                "expected exactly one authority line, found " + str(text.count(AUTHORITY_LINE)))
+        require(len(re.findall(r"execution authority", text, re.I)) == 1,
+                "more than one execution authority statement")
+    else:
+        require(not re.search(r"execution authority|standing instruction", text, re.I),
+                "unexpected authority line")
+
+
 def propose_rows(text):
     """Propose table rows as header->cell maps, plus every text line mentioning propose."""
     def cells(line):
@@ -557,9 +628,10 @@ def main():
             check("accept intake licence_basis=" + repr(value),
                   lambda v=value: accepted(basis, "intake",
                                            facts=dict(FACTS["intake"], licence_basis=v)))
+            # U41: only licence "restricted" names the `licence` blocker.
             check("accept FAIL intake licence_basis=" + repr(value),
                   lambda v=value: accepted(basis, "intake", "FAIL",
-                                           facts=dict(FACTS["intake"], licence="unknown",
+                                           facts=dict(FACTS["intake"], licence="restricted",
                                                       anchored=False, licence_basis=v),
                                            v1=dict(exit_code=2, exit_kind="guard",
                                                    error_class="numeric",
@@ -582,6 +654,21 @@ def main():
             check("takeaway shows intake licence_basis=" + repr(value),
                   lambda v=value: licence_basis_takeaway(
                       root / ("takeaway-licence-basis-" + str(v)), v))
+        # SCHEMAS.md A/intake/ (U41): the takeaway shows `licence` next to `licence_basis`;
+        # a PASS intake with licence other than "permitted" adds exactly one authority line.
+        for status, licence, extra, blockers, line in (
+                ("PASS", "permitted", {}, ["none"], False),
+                ("PASS", "unknown", {}, ["none"], True),
+                ("FAIL", "restricted", {}, ["licence"], False),
+                ("FAIL", "unknown", dict(data="unavailable"), ["data_unavailable"], False),
+                ("FAIL", "unknown", dict(found=False), ["none"], False),
+                ("FAIL", "permitted", dict(stock_environment=False), ["env_irreproducible"], False)):
+            check("takeaway licence=%s on %s intake%s %s authority line"
+                  % (licence, status, "".join(" " + k for k in sorted(extra)),
+                     "with one" if line else "without"),
+                  lambda s=status, l=licence, e=extra, b=blockers, w=line: licence_takeaway(
+                      root / ("takeaway-licence-%s-%s-%s" % (s, l, "-".join(sorted(e)) or "alone")),
+                      s, l, e, b, w))
         # SCHEMAS.md propose facts: optional votes_reject, votes_abstain (nonnegative
         # integers) and outcome (approved, rejected, conditions_unmet, no_feasible_method
         # or null).

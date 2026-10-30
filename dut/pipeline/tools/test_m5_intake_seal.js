@@ -382,7 +382,9 @@ async function recordedIntakeRegression() {
   const run = await runCase(name, facts, { recorded })
   checkStatuses(name, run, 'intake')
   anchoredChecks(name, run, false)
-  blockerChecks(name, run, ['licence', 'data_unavailable'])
+  // Its recorded licence "unknown" no longer names a blocker (U41); only data "partial" does.
+  check(`${name}: recorded licence is "unknown"`, () => assert.equal(facts.licence, 'unknown'))
+  blockerChecks(name, run, ['data_unavailable'])
 }
 
 // SCHEMAS.md A/intake/ baseline.json: "`build_commands` lists every command that builds or installs the
@@ -1250,27 +1252,27 @@ async function intakeBlockerChecks() {
   }
   const L = 'licence', D = 'data_unavailable', E = 'env_irreproducible'
   const cases = [
-    // Each condition alone, then all three in the fixed order.
+    // Each condition alone, then all three in the fixed order. Only "restricted" names `licence` (U41).
     ['blockers-licence-restricted', { licence: 'restricted' }, {}, [L], 'facts'],
-    ['blockers-licence-unknown', { licence: 'unknown' }, {}, [L], 'facts'],
     ['blockers-data-partial', { data: 'partial' }, {}, [D], 'facts'],
     ['blockers-data-unavailable', { data: 'unavailable' }, {}, [D], 'facts'],
     ['blockers-data-unknown', { data: 'unknown' }, {}, [D], 'facts'],
     ['blockers-stock-false', { stock_environment: false }, {}, [E], 'facts'],
     ['blockers-all-three', { licence: 'restricted', data: 'partial', stock_environment: false }, {}, [L, D, E], 'facts'],
     // Conditions are named whatever else failed.
-    ['blockers-not-found-licence', { found: false, licence: 'unknown' }, {}, [L], 'facts'],
-    ['blockers-not-found-all-three', { found: false, licence: 'unknown', data: 'unavailable', stock_environment: false }, {}, [L, D, E], 'facts'],
+    ['blockers-not-found-licence', { found: false, licence: 'restricted' }, {}, [L], 'facts'],
+    ['blockers-not-found-all-three', { found: false, licence: 'restricted', data: 'unavailable', stock_environment: false }, {}, [L, D, E], 'facts'],
+    // Licence "unknown" adds no blocker (U41).
+    ['blockers-not-found-licence-unknown', { found: false, licence: 'unknown' }, {}, ['none'], 'facts'],
+    ['blockers-not-found-unknown-data-stock', { found: false, licence: 'unknown', data: 'unavailable', stock_environment: false }, {}, [D, E], 'facts'],
     ['blockers-incomplete-licence-data', { licence: 'restricted', data: 'unknown' }, { incompleteBaseline: 'run_commands' }, [L, D], 'files'],
     ['blockers-incomplete-stock-false', { stock_environment: false }, { incompleteBaseline: 'run_commands' }, [E], 'files'],
     // A null fact adds nothing.
     ['blockers-not-found-stock-null', { found: false, stock_environment: null }, {}, ['none'], 'facts'],
     // Regression: public blind-openmm run1 intake facts, with otherwise complete valid files.
+    // Its licence "unknown" no longer names a blocker (U41); found false and data "partial" still fail it.
     ['blockers-blind-openmm-run1', { found: false, anchors_count: 0, data: 'partial', licence: 'unknown', stock_environment: null, size: 'unknown' },
-      { anchors: [] }, [L, D], 'facts'],
-    // Regression: a private blind run (facts supplied by the operator; three valid anchors).
-    ['blockers-private-blind', { found: true, anchors_count: 3, data: 'available', licence: 'unknown', stock_environment: null, size: 'unknown' },
-      {}, [L], 'facts'],
+      { anchors: [] }, [D], 'facts'],
   ]
   for (const [name, override, options, expected, reference] of cases) {
     const run = await runCase(name, { ...INTAKE, ...override }, options)
@@ -1280,14 +1282,17 @@ async function intakeBlockerChecks() {
     check(`${name}: exit_code, exit_kind and error_class unchanged from the no-blocker ${reference} reference`, () => {
       assert.deepEqual(exitFields(run.signature('intake')), references[reference])
     })
-    if (name === 'blockers-private-blind') anchoredChecks(name, run, true)
     if (name === 'blockers-blind-openmm-run1') anchoredChecks(name, run, false)
   }
   // PASS intakes keep ["none"], including with stock_environment null.
-  for (const [name, override] of [['blockers-pass', {}], ['blockers-pass-stock-null', { stock_environment: null }]]) {
+  // Regression: a private blind run (facts supplied by the operator; three valid anchors). Its licence
+  // "unknown" no longer blocks (U41), so it PASSes.
+  for (const [name, override] of [['blockers-pass', {}], ['blockers-pass-stock-null', { stock_environment: null }],
+    ['blockers-private-blind', { found: true, anchors_count: 3, data: 'available', licence: 'unknown', stock_environment: null, size: 'unknown' }]]) {
     const run = await runCase(name, { ...INTAKE, ...override })
     checkStatuses(name, run, null)
     blockerChecks(name, run, ['none'])
+    if (name === 'blockers-private-blind') anchoredChecks(name, run, true)
   }
   // The public run's recorded intake facts are the ones replayed above.
   check('blockers-blind-openmm-run1: recorded intake facts match the regression facts', () => {
@@ -1407,7 +1412,8 @@ async function licenceBasisFactChecks() {
   // Base replies and files spanning PASS, each blocker and a file failure, anchored and unanchored.
   const scenarios = [
     ['pass', {}, {}, null, ['none']],
-    ['licence-unknown', { licence: 'unknown' }, {}, 'intake', ['licence']],
+    // Licence "unknown" PASSes with no blocker (U41).
+    ['licence-unknown', { licence: 'unknown' }, {}, null, ['none']],
     ['all-three', { licence: 'restricted', data: 'partial', stock_environment: false }, {}, 'intake', ['licence', 'data_unavailable', 'env_irreproducible']],
     ['incomplete', {}, { incompleteBaseline: 'run_commands' }, 'intake', ['none']],
     ['unanchored', { anchors_count: 0 }, { anchors: [] }, null, ['none']],
@@ -1463,9 +1469,154 @@ async function licenceBasisFactChecks() {
   }
 }
 
+// SCHEMAS.md A/intake/ (U41): "The intake passes only when the files are complete and found is true, data is
+// "available", licence is not "restricted", and stock_environment is not false. ... A `licence` of "unknown" does
+// not block ... Intake records `licence` and `licence_basis` as the evidence shows ... The intake prompt states that
+// "unknown" stays "unknown" when permission is not established, that it does not stop the run, and that
+// "restricted" does." FAIL blockers: "`licence` when the `licence` fact is "restricted"". Takeaway: "shows the
+// intake `licence` fact among the intake gate flags, next to `licence_basis`. When intake PASSes with `licence`
+// other than "permitted", the takeaway adds exactly one line: "Execution authority: owner's standing instruction
+// (2026-10-30), not licence evidence." No other record carries the authorization, and no fact changes because of it."
+const LICENCES = ['permitted', 'unknown', 'restricted']
+const AUTHORITY_LINE = "Execution authority: owner's standing instruction (2026-10-30), not licence evidence."
+// Sentences of the prompt (split at sentence ends and line breaks), and their clauses.
+const sentences = text => text.split(/(?<=[.!?])\s+|\n+/).filter(Boolean)
+const clauses = sentence => sentence.split(/;|\s(?:but|whereas|while)\s|\s[-–—]\s/i)
+const STOP = /\b(?:stops?|stopping|block(?:s|er|ing)?|halts?|fail(?:s|ing|ure)?|ends?|abort(?:s|ing)?|prevents?|gate)\b/i
+const NEGATION = /\b(?:not|never|no|without)\b|n't\b/i
+function licenceRulePromptChecks(name, run) {
+  const prompt = () => {
+    const value = run.calls.find(row => row.label === 'intake')?.prompt
+    assert.ok(value, 'no intake prompt recorded')
+    return value
+  }
+  // Sentences about the licence that name the value as a token, with the surrounding text for context.
+  const licenceSentences = (text, value) => {
+    const all = sentences(text)
+    return all.map((sentence, i) => ({ sentence, context: all.slice(Math.max(0, i - 2), i + 3).join(' ') }))
+      .filter(({ sentence, context }) => valueToken(value).test(sentence) && /licen[cs]e/i.test(context))
+  }
+  check(`${name}: intake prompt states licence "unknown" stays "unknown" when permission is not established`, () => {
+    const found = licenceSentences(prompt(), 'unknown')
+    assert.ok(found.length, 'prompt never names licence "unknown"')
+    assert.ok(found.some(({ sentence, context }) =>
+      /\b(?:stays?|remains?|keeps?|kept|leaves?|left|records?|recorded|reports?|reported|answer|use)\b/i.test(sentence) &&
+      /permi(?:ssion|t)/i.test(context) &&
+      /(?:not|never|un)\s*(?:been\s+)?(?:established|shown|confirmed|verified|demonstrated|clear|stated|found)|unless|cannot\s+(?:be\s+)?establish|no\s+(?:clear\s+)?(?:evidence|statement|licen[cs]e)/i.test(context)),
+    `no statement that licence "unknown" stays "unknown" when permission is not established; sentences: ${JSON.stringify(found.map(f => f.sentence.slice(0, 300)))}`)
+  })
+  check(`${name}: intake prompt states licence "unknown" does not stop the run`, () => {
+    const found = licenceSentences(prompt(), 'unknown')
+    const negatedStop = new RegExp(`(?:\\b(?:not|never|no)|n't)\\s+(?:\\w+\\s+){0,2}${STOP.source}`, 'i')
+    assert.ok(found.some(({ sentence }) => clauses(sentence).some(clause =>
+      valueToken('unknown').test(clause) && (negatedStop.test(clause) || /\b(?:proceeds?|continues?)\b/i.test(clause)))),
+    `no statement that licence "unknown" does not stop the run; sentences: ${JSON.stringify(found.map(f => f.sentence.slice(0, 300)))}`)
+  })
+  check(`${name}: intake prompt states licence "restricted" stops the run`, () => {
+    const found = licenceSentences(prompt(), 'restricted')
+    assert.ok(found.length, 'prompt never names licence "restricted"')
+    assert.ok(found.some(({ sentence }) => STOP.test(sentence) && clauses(sentence).some(clause =>
+      valueToken('restricted').test(clause) && !NEGATION.test(clause) && (STOP.test(clause) || /\b(?:does|do|will)\b/i.test(clause)))),
+    `no statement that licence "restricted" stops the run; sentences: ${JSON.stringify(found.map(f => f.sentence.slice(0, 300)))}`)
+  })
+  check(`${name}: intake prompt no longer states a permitted licence is a gate condition`, () => {
+    const gate = /\bpass(?:es|ing)?\b|\bgate\b|\brequire[sd]?\b|\bmust\b|\bonly\s+(?:when|if)\b|\bunless\b/i
+    const permittedLicence = /licen[cs]e["'`]?\s*(?:is|=|==|:|must\s+be|be|of)\s*["'`]permitted["'`]|["'`]permitted["'`]\s+licen[cs]e|permitted\s+licen[cs]e/i
+    const offending = sentences(prompt()).filter(sentence => permittedLicence.test(sentence) && gate.test(sentence) &&
+      !/\{/.test(sentence))
+    assert.deepEqual(offending.map(sentence => sentence.slice(0, 300)), [])
+  })
+}
+// OPERATOR_TAKEAWAY.md: the `licence` flag among the intake gate flags, next to `licence_basis`.
+function takeawayLicenceNextToBasis(runRoot) {
+  const text = fs.readFileSync(path.join(runRoot, 'operator', 'OPERATOR_TAKEAWAY.md'), 'utf8')
+  const cells = line => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim().replace(/[`*"]/g, ''))
+  const lines = text.split('\n')
+  // Table columns: adjacent header cells.
+  for (const line of lines.filter(line => line.trim().startsWith('|'))) {
+    const header = cells(line)
+    const [l, b] = [header.indexOf('licence'), header.indexOf('licence_basis')]
+    if (l >= 0 && b >= 0) return Math.abs(l - b) === 1
+  }
+  // Inline flags (possibly inside a table cell): both on the same line.
+  return lines.some(line => /\blicence\b\W{0,4}(?:permitted|unknown|restricted|null)\b/.test(line) && /\blicence_basis\b/.test(line))
+}
+function licenceTakeawayChecks(name, run, licence) {
+  check(`${name}: OPERATOR_TAKEAWAY.md shows licence=${licence} among intake gate flags, next to licence_basis`, () => {
+    assert.equal(takeawayFlag(run.runRoot, 'licence', LICENCES), String(licence))
+    assert.ok(takeawayLicenceNextToBasis(run.runRoot), 'licence not shown next to licence_basis')
+  })
+  check(`${name}: authority line present exactly when intake PASSes with licence other than "permitted"`, () => {
+    const text = fs.readFileSync(path.join(run.runRoot, 'operator', 'OPERATOR_TAKEAWAY.md'), 'utf8')
+    const status = run.signature('intake').status
+    if (status === 'PASS' && licence !== 'permitted') {
+      assert.equal(text.split('\n').filter(line => line.includes(AUTHORITY_LINE)).length, 1, 'expected exactly one authority line')
+      assert.equal(text.split(AUTHORITY_LINE).length, 2, 'authority line repeated')
+      assert.equal((text.match(/execution authority/gi) || []).length, 1, 'more than one execution authority statement')
+    } else {
+      assert.ok(!/execution authority|standing instruction/i.test(text), `intake ${status} with licence ${licence} carries an authority line`)
+    }
+  })
+  check(`${name}: no other operator record carries the authorization`, () => {
+    const operator = path.join(run.runRoot, 'operator')
+    for (const file of fs.readdirSync(operator, { recursive: true })) {
+      const full = path.join(operator, file)
+      if (file === 'OPERATOR_TAKEAWAY.md' || !fs.statSync(full).isFile()) continue
+      assert.ok(!/standing instruction|execution authority/i.test(fs.readFileSync(full, 'utf8')), `authorization in ${file}`)
+    }
+  })
+}
+// `licence` and `licence_basis` reach the intake facts in the signature record exactly as replied (null when omitted).
+function licenceRecordedChecks(name, run, facts) {
+  check(`${name}: licence and licence_basis recorded unchanged in the intake signature record`, () => {
+    const signatureFile = path.join(run.runRoot, 'operator', 'signatures.jsonl')
+    const row = readRows(signatureFile).filter(row => (row.signature || row).stage === 'intake').at(-1)
+    assert.ok(row && row.facts, 'no intake signature record')
+    assert.deepEqual(row.facts.licence, facts.licence, 'licence')
+    assert.deepEqual(row.facts.licence_basis, Object.hasOwn(facts, 'licence_basis') ? facts.licence_basis : null, 'licence_basis')
+  })
+}
+async function licenceGateChecks() {
+  const D = 'data_unavailable', E = 'env_irreproducible'
+  const bases = { permitted: 'explicit', unknown: 'distribution', restricted: 'none' }
+  // [label, reply override, runCase options, blockers from the other conditions]
+  const conditions = [
+    ['alone', {}, {}, []],
+    ['data-unavailable', { data: 'unavailable' }, {}, [D]],
+    ['stock-false', { stock_environment: false }, {}, [E]],
+    ['incomplete', {}, { incompleteBaseline: 'run_commands' }, []],
+    ['not-found', { found: false }, {}, []],
+    ['all-others', { found: false, data: 'unavailable', stock_environment: false }, { incompleteBaseline: 'run_commands' }, [D, E]],
+  ]
+  for (const [condition, override, options, others] of conditions) {
+    const outcome = {}
+    for (const licence of LICENCES) {
+      const name = `licence-gate-${condition}-${licence}`
+      const facts = { ...INTAKE, ...override, licence, licence_basis: bases[licence] }
+      const run = await runCase(name, facts, options)
+      const passes = condition === 'alone' && licence !== 'restricted'
+      const blockers = [...(licence === 'restricted' ? ['licence'] : []), ...others]
+      checkStatuses(name, run, passes ? null : 'intake')
+      check(`${name}: intake ${passes ? 'PASS' : 'FAIL'}`, () => assert.equal(run.signature('intake').status, passes ? 'PASS' : 'FAIL'))
+      blockerChecks(name, run, blockers.length ? blockers : ['none'])
+      licenceRecordedChecks(name, run, facts)
+      licenceBasisChecks(name, run, bases[licence])
+      licenceTakeawayChecks(name, run, licence)
+      outcome[licence] = run
+    }
+    // "unknown" adds nothing: same status, blockers and exit metadata as "permitted".
+    check(`licence-gate-${condition}: "unknown" gives the same status, blockers and exit metadata as "permitted"`, () => {
+      const view = run => { const s = run.signature('intake'); return { status: s.status, blockers: s.blockers, ...exitFields(s) } }
+      assert.deepEqual(view(outcome.unknown), view(outcome.permitted))
+    })
+  }
+}
+
 // Public recorded run blind-openmm run3: replayed with its reply facts plus licence_basis "distribution", intake
-// FAILs with blockers ["licence"] and anchored false, and the signature and takeaway carry the basis. With licence
-// "permitted" the same replay PASSes. Files are copied to a temporary directory; experiments/ is read only.
+// now PASSes (U41: licence "unknown" no longer blocks) with blockers ["none"] and anchored false; the signature
+// carries licence "unknown" and the basis, and the takeaway carries the authority line. With licence "restricted"
+// the same replay FAILs with blockers ["licence"]; with "permitted" it PASSes without the authority line.
+// Files are copied to a temporary directory; experiments/ is read only.
 const RUN3_FACTS = { found: true, anchors_count: 1, data: 'available', licence: 'unknown', stock_environment: null, size: 'unknown' }
 async function blindOpenmmRun3Regression() {
   const label = 'recorded-blind-openmm-run3'
@@ -1488,19 +1639,11 @@ async function blindOpenmmRun3Regression() {
     for (const [key, value] of Object.entries(RUN3_FACTS)) assert.deepEqual(facts[key], value, key)
   })
   if (!ready) return
-  {
-    const name = `${label}-distribution`
-    const run = await runCase(name, { ...RUN3_FACTS, licence_basis: 'distribution' }, { recorded: fixture })
-    checkStatuses(name, run, 'intake')
-    check(`${name}: intake FAILs`, () => assert.equal(run.signature('intake').status, 'FAIL'))
-    blockerChecks(name, run, ['licence'])
-    anchoredChecks(name, run, false)
-    licenceBasisChecks(name, run, 'distribution')
-  }
-  {
-    const name = `${label}-permitted`
-    const run = await runCase(name, { ...RUN3_FACTS, licence: 'permitted', licence_basis: 'distribution' }, { recorded: fixture })
-    check(`${name}: intake PASSes with licence permitted`, () => {
+  for (const [suffix, licence] of [['distribution', 'unknown'], ['permitted', 'permitted']]) {
+    const name = `${label}-${suffix}`
+    const facts = { ...RUN3_FACTS, licence, licence_basis: 'distribution' }
+    const run = await runCase(name, facts, { recorded: fixture })
+    check(`${name}: intake PASSes with licence ${licence}`, () => {
       const stderr = fs.readFileSync(path.join(run.runRoot, `stderr-${name}.log`), 'utf8')
       assert.equal(run.signature('intake').status, 'PASS', `${JSON.stringify(run.signature('intake'))}; stderr: ${stderr.slice(-1500)}`)
     })
@@ -1510,6 +1653,20 @@ async function blindOpenmmRun3Regression() {
     blockerChecks(name, run, ['none'])
     anchoredChecks(name, run, false)
     licenceBasisChecks(name, run, 'distribution')
+    licenceRecordedChecks(name, run, facts)
+    licenceTakeawayChecks(name, run, licence)
+  }
+  {
+    const name = `${label}-restricted`
+    const facts = { ...RUN3_FACTS, licence: 'restricted', licence_basis: 'distribution' }
+    const run = await runCase(name, facts, { recorded: fixture })
+    checkStatuses(name, run, 'intake')
+    check(`${name}: intake FAILs`, () => assert.equal(run.signature('intake').status, 'FAIL'))
+    blockerChecks(name, run, ['licence'])
+    anchoredChecks(name, run, false)
+    licenceBasisChecks(name, run, 'distribution')
+    licenceRecordedChecks(name, run, facts)
+    licenceTakeawayChecks(name, run, 'restricted')
   }
 }
 
@@ -1619,6 +1776,9 @@ async function main() {
     licenceBasisPromptChecks('happy (brief)', happy)
     licenceBasisPromptChecks('search-no-brief', search)
     await licenceBasisFactChecks()
+    licenceRulePromptChecks('happy (brief)', happy)
+    licenceRulePromptChecks('search-no-brief', search)
+    await licenceGateChecks()
     await blindOpenmmRun3Regression()
     await commitOrPinChecks()
     await blindOpenmmRun2Regression()
@@ -1633,19 +1793,21 @@ async function main() {
     checkStatuses('pip-install-build-commands', pipBuild, null)
     await positiveOpenmmRegression('run1', true)
     await positiveOpenmmRegression('run2', false)
-    // SCHEMAS.md A/intake/: "Missing executable inputs and unverified permissions block;
-    // missing published tolerances do not." An empty or reference-only anchors.json passes.
+    // SCHEMAS.md A/intake/: "Missing executable inputs and an explicit licence restriction block;
+    // missing published tolerances do not." An empty or reference-only anchors.json passes,
+    // including with licence "unknown" (U41).
     const reference = (id, extra = {}) => ({ id, quantity: 'sum', source: 'https://example.org/reference-1',
       published_value: 499500, tolerance: null, ...extra })
     const thresholdAnchor = { id: 'threshold', quantity: 'sum', source: 'https://example.org/reference-1',
       published_value: 1000, comparison: '>=', tolerance: null }
-    for (const [name, anchors, expected] of [
+    for (const [name, anchors, expected, override = {}] of [
       ['empty-anchors', [], false],
+      ['empty-licence-unknown', [], false, { licence: 'unknown' }],
       ['reference-only', [reference('ref-default'), reference('ref-explicit', { comparison: '==',
         uncertainty: { kind: 'standard_error', value: 12.5 } }), reference('ref-null-uncertainty', { uncertainty: null })], false],
       ['inequality-null-tolerance-anchor', [thresholdAnchor, reference('ref')], true],
     ]) {
-      const run = await runCase(name, { ...INTAKE, anchors_count: anchors.length }, { anchors })
+      const run = await runCase(name, { ...INTAKE, ...override, anchors_count: anchors.length }, { anchors })
       checkStatuses(name, run, null)
       anchoredChecks(name, run, expected)
     }
@@ -1661,7 +1823,7 @@ async function main() {
       // Unanchored intakes still fail on every other gate condition.
       ['empty-not-found', { found: false, anchors_count: 0 }, { anchors: [] }, false],
       ['empty-data-unavailable', { data: 'unavailable', anchors_count: 0 }, { anchors: [] }, false],
-      ['empty-licence-unknown', { licence: 'unknown', anchors_count: 0 }, { anchors: [] }, false],
+      ['empty-licence-restricted', { licence: 'restricted', anchors_count: 0 }, { anchors: [] }, false],
       ['empty-stock-incompatible', { stock_environment: false, anchors_count: 0 }, { anchors: [] }, false],
       ['reference-licence-restricted', { licence: 'restricted', anchors_count: 1 }, { anchors: [reference('ref')] }, false],
       // Invalid anchors.json: the files are incomplete, so the gate fails and anchored is null.

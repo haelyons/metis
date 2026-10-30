@@ -37,6 +37,7 @@ def takeaway(records, raid=None, box=None):
                  if spec is bool and key not in ("tokens_known", "gpu_busy_known")}
         if stage == "intake":
             flags["anchored"] = facts.get("anchored")
+            flags["licence"] = facts.get("licence")
             flags["licence_basis"] = facts.get("licence_basis")
         flags.update({key: entry["signature"][key] if entry else None
                       for key in ("run_valid", "calibration_valid")})
@@ -54,6 +55,9 @@ def takeaway(records, raid=None, box=None):
         values += [str(entry["signature"][key]) if entry else ("none" if key == "model_family" else "0")
                    for key in compute]
         lines.append("| " + " | ".join([stage, status, rendered, *values]) + " |")
+    intake = stages.get("intake")
+    if intake and intake["signature"]["status"] == "PASS" and intake["facts"].get("licence") != "permitted":
+        lines += ["", "Execution authority: owner's standing instruction (2026-10-30), not licence evidence."]
     if stages.get("propose", {}).get("facts", {}).get("outcome") == "no_feasible_method":
         lines += ["", "Finding: negative. No menu method has measured headroom of at least 1.05 on this hardware."]
     rows = [r["signature"] for r in records]
