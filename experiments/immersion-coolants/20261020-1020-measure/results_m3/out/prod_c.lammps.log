@@ -1,0 +1,28 @@
+LAMMPS (29 Aug 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/lammps-stable_29Aug2024/src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+package gpu 1
+# Green-Kubo production, segment 1: NVT + SHAKE, reseed + warmup, sample P-tensor & heat current.
+
+variable        system_dir    index .
+variable        T             index 313.15
+variable        run_id        index 1
+variable        seg           index 1
+variable        timestep_fs   index 1.0
+variable        warmup_steps  index 200000
+variable        prod_steps    index 2000000
+variable        restart_every index 500000
+variable        thermo_every  index 5000
+variable        shake_tol     index 0.0001
+variable        shake_iter    index 20
+variable        shake_order   index 0
+variable        seed          equal 4928459+${run_id}*10007
+variable        seed          equal 4928459+1*10007
+
+variable        dump_dir      index .
+
+log             ${dump_dir}/log_tdm_T${T}K_run${run_id}_seg${seg}.out
+log             /home/ubuntu/m3_run/results_m3/runs/prod_c/log_tdm_T${T}K_run${run_id}_seg${seg}.out
+log             /home/ubuntu/m3_run/results_m3/runs/prod_c/log_tdm_T313.15K_run${run_id}_seg${seg}.out
+log             /home/ubuntu/m3_run/results_m3/runs/prod_c/log_tdm_T313.15K_run1_seg${seg}.out
+log             /home/ubuntu/m3_run/results_m3/runs/prod_c/log_tdm_T313.15K_run1_seg1.out

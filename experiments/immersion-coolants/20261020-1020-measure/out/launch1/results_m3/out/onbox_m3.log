@@ -1,0 +1,21 @@
+[compile: guard] 2026-10-20T12:09:50Z uptime 143.22 s
+[guard] compile: go allowed_seconds=1800 (fits)
+decision=go
+allowed_seconds=1800
+[compile: start (allowed 1800 s)] 2026-10-20T12:09:50Z uptime 143.33 s
+[compile: configure] 2026-10-20T12:10:11Z uptime 164.16 s
+[compile: build with 30 jobs] 2026-10-20T12:10:14Z uptime 166.91 s
+[compile: done (KISS FFT, cmake from image)] 2026-10-20T12:12:07Z uptime 280.57 s
+[lmp -h and GPU check: start] 2026-10-20T12:12:07Z uptime 280.57 s
+[guard] extract: go allowed_seconds=5053 (fits)
+[lmp -h and GPU check: code 0] 2026-10-20T12:12:07Z uptime 280.77 s
+[timed dry run: start] 2026-10-20T12:12:07Z uptime 280.78 s
+[guard] dryrun: go allowed_seconds=5353 (fits)
+[timed dry run: code 0] 2026-10-20T12:12:34Z uptime 307.36 s
+[copy of the box: start] 2026-10-20T12:12:34Z uptime 307.36 s
+[guard] copy: stop allowed_seconds=0 (the copy stage and the stages that must follow need about 10558 s; 7009 s are left before the time or budget limit)
+[void] run_valid=false: stopped by the cost or time guard before the copy stage: the copy stage and the stages that must follow need about 10558 s; 7009 s are left before the time or budget limit
+[copy of the box: code 3] 2026-10-20T12:12:34Z uptime 307.46 s
+[void] run_valid=false: the run stopped with code 3: the box copy stage stopped the run
+[summary] run_valid=False endpoints=E1:PASS_ON_PARTS_PRESENT
+[finish] code 3: the box copy stage stopped the run (2026-10-20T12:12:34Z)

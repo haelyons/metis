@@ -1,0 +1,6 @@
+/usr/bin/nvcc
+/usr/include/cuda_runtime.h
+/usr/lib/x86_64-linux-gnu/libcudart.so
+{"atoms": 23558, "force_fields": ["amber99sb.xml", "tip3p.xml"], "nonbonded_method": "PME", "cutoff_nm": 0.9, "constraints": "HBonds", "hydrogen_mass_amu": 1.5, "integrator": "LangevinMiddleIntegrator", "temperature_K": 300, "friction_per_ps": 1, "step_fs": 4, "constraint_tolerance": 1e-05, "platform": "CUDA", "properties": {"Precision": "single", "DeterministicForces": "true"}, "gpu_count": 1, "replicas": 8, "steps_per_replica": 25000, "seeds": [1000, 1001, 1002, 1003, 1004, 1005, 1006, 1007], "energy_interval_steps": 250, "CUDA_VISIBLE_DEVICES": "0", "command": ["python3", "dhfr_ensemble.py", "--replicas", "8", "--steps", "25000", "--seed0", "1000"]}
+total_wall_s: 134.724
+aggregate_ns_per_day: 513.0

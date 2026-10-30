@@ -1,0 +1,61 @@
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+./build-anchor/MonteCarloMultiGPU Starting...
+
+Using single CPU thread for multiple GPUs
+MonteCarloMultiGPU
+==================
+Parallelization method  = streamed
+Problem scaling         = strong
+Number of GPUs          = 1
+Total number of options = 8192
+Number of paths         = 262144
+main(): generating input data...
+main(): starting 1 host threads...
+main(): GPU statistics, streamed
+GPU Device #0: NVIDIA H100 80GB HBM3
+Options         : 8192
+Simulation paths: 262144
+
+Total time (ms.): 3.911000
+	Note: This is elapsed time for all to compute.
+Options per sec.: 2094604.953218
+main(): comparing Monte Carlo and Black-Scholes results...
+Shutting down...
+Test Summary...
+L1 norm        : 4.850373E-04
+Average reserve: 14.023159
+
+NOTE: The CUDA Samples are not meant for performance measurements. Results may vary when GPU Boost is enabled.
+
+Test passed
+./build-mc/MonteCarloMultiGPU Starting...
+
+Using single CPU thread for multiple GPUs
+MonteCarloMultiGPU
+==================
+Parallelization method  = streamed
+Problem scaling         = strong
+Number of GPUs          = 1
+Total number of options = 1048576
+Number of paths         = 262144
+main(): generating input data...
+main(): starting 1 host threads...
+main(): GPU statistics, streamed
+GPU Device #0: NVIDIA H100 80GB HBM3
+Options         : 1048576
+Simulation paths: 262144
+
+Total time (ms.): 483.553009
+	Note: This is elapsed time for all to compute.
+Options per sec.: 2168482.007994
+main(): comparing Monte Carlo and Black-Scholes results...
+Shutting down...
+Test Summary...
+L1 norm        : 4.811709E-04
+Average reserve: 12.585302
+
+NOTE: The CUDA Samples are not meant for performance measurements. Results may vary when GPU Boost is enabled.
+
+Test passed

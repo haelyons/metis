@@ -1,0 +1,30 @@
+$ /home/ubuntu/m4_run/venv_m4/bin/colabfold_batch --help
+# exit 1 timed_out=False seconds=0.663
+--- stdout ---
+
+--- stderr ---
+Traceback (most recent call last):
+  File "/home/ubuntu/m4_run/venv_m4/bin/colabfold_batch", line 5, in <module>
+    from colabfold.batch import main
+  File "/home/ubuntu/m4_run/venv_m4/lib/python3.10/site-packages/colabfold/batch.py", line 76, in <module>
+    import jax
+  File "/home/ubuntu/m4_run/venv_m4/lib/python3.10/site-packages/jax/__init__.py", line 25, in <module>
+    from jax._src.cloud_tpu_init import cloud_tpu_init as _cloud_tpu_init
+  File "/home/ubuntu/m4_run/venv_m4/lib/python3.10/site-packages/jax/_src/cloud_tpu_init.py", line 17, in <module>
+    from jax._src import config
+  File "/home/ubuntu/m4_run/venv_m4/lib/python3.10/site-packages/jax/_src/config.py", line 27, in <module>
+    from jax._src import lib
+  File "/home/ubuntu/m4_run/venv_m4/lib/python3.10/site-packages/jax/_src/lib/__init__.py", line 156, in <module>
+    cuda_path = _cuda_path()
+  File "/home/ubuntu/m4_run/venv_m4/lib/python3.10/site-packages/jax/_src/lib/__init__.py", line 151, in _cuda_path
+    elif (path := _try_cuda_nvcc_import()) is not None:
+  File "/home/ubuntu/m4_run/venv_m4/lib/python3.10/site-packages/jax/_src/lib/__init__.py", line 146, in _try_cuda_nvcc_import
+    cuda_nvcc_path = pathlib.Path(cuda_nvcc.__file__).parent
+  File "/usr/lib/python3.10/pathlib.py", line 960, in __new__
+    self = cls._from_parts(args)
+  File "/usr/lib/python3.10/pathlib.py", line 594, in _from_parts
+    drv, root, parts = self._parse_args(args)
+  File "/usr/lib/python3.10/pathlib.py", line 578, in _parse_args
+    a = os.fspath(a)
+TypeError: expected str, bytes or os.PathLike object, not NoneType
+

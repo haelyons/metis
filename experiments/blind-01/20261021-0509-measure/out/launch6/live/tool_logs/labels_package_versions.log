@@ -1,0 +1,22 @@
+$ /lambda/nfs/metis-env-us-east-1/m4/venv/bin/python3 -c import json
+out={}
+from importlib.metadata import version, distribution
+for name,key in (('jax','jax'),('jaxlib','jaxlib'),('jax-cuda12-plugin','jax_cuda12_plugin'),('openmm','openmm'),('lightdock','lightdock'),('colabfold','colabfold')):
+    try: out[key]=version(name)
+    except Exception: out[key]=None
+tags=[]
+for name in ('jax','jaxlib','jax-cuda12-plugin'):
+    try: text=distribution(name).read_text('WHEEL') or ''
+    except Exception: text=''
+    for line in text.splitlines():
+        if line.startswith('Tag:'):
+            tags.append(name+' '+line.split(':',1)[1].strip())
+out['wheel_build_tags']=', '.join(tags) if tags else None
+print(json.dumps(out))
+
+# exit 0 timed_out=False seconds=0.090
+--- stdout ---
+{"jax": "0.4.35", "jaxlib": "0.4.35", "jax_cuda12_plugin": "0.4.35", "openmm": "8.1.1", "lightdock": "0.9.4", "colabfold": "1.5.5", "wheel_build_tags": "jax py3-none-any, jaxlib cp310-cp310-manylinux2014_x86_64, jax-cuda12-plugin cp310-cp310-manylinux2014_x86_64"}
+
+--- stderr ---
+

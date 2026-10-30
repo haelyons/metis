@@ -1,0 +1,136 @@
+PASS  rda parser reads 10,593 days 1984-01-01..2012-12-31
+PASS  rda parser keeps 802 missing observed flows as NaN
+PASS  rda parser: no missing rain or evaporation
+PASS  rda parser reads the basin area 360 km2
+PASS  rda parser reads a planted two-day frame
+PASS  rda parser rejects a date gap
+PASS  rda parser rejects a non-UTC time zone
+PASS  rda parser rejects a non-R file
+PASS  heavy imports are blocked for the whole selftest
+PASS  pyreadr guard: without pyreadr the second reading says why it did not run
+PASS  pyreadr comparison: a planted identical frame agrees on values and dates
+PASS  pyreadr comparison: one changed flow value is caught
+PASS  pyreadr comparison: a read failure is reported, not raised
+PASS  every hardcoded GR4J constant appears verbatim in the committed airGR source
+PASS  range parser: transformed bounds -9.99..9.99 from CreateCalibOptions.R
+PASS  range parser: X1 and X3 = [exp(-9.99), exp(9.99)]
+PASS  range parser: X2 = [sinh(-9.99), sinh(9.99)]
+PASS  range parser: X4 = [0.5, 20]
+PASS  range parser rejects an unknown transformation
+PASS  range parser rejects missing calibration bounds
+PASS  install status parser: both steps ok
+PASS  install status parser: apt failure is not ok
+PASS  install status parser rejects a missing field
+PASS  nvidia-smi parser
+PASS  nvidia-smi parser rejects empty output
+PASS  jaxlib version read from jaxlib.__version__
+PASS  jaxlib version read from the jaxlib.version module
+PASS  jaxlib version: an unimportable jaxlib is reported, not raised
+PASS  package versions: one entry per package; blocked imports recorded as errors; pandas never imported
+PASS  version comparison: installing pyreadr alone changes nothing pinned
+PASS  version comparison: a numpy upgrade is caught
+PASS  version comparison: a jax that stops importing is caught
+PASS  versions command: an unchanged reading exits 0; a planted numpy change exits 2
+PASS  GPU check: when JAX cannot list a GPU it exits 3 and RUN_VALID.json says false
+PASS  price parser reads 1.29
+PASS  price parser rejects unset, text, zero and negative values
+PASS  raw-row reader skips blank lines
+PASS  raw-row reader refuses a truncated line in strict mode
+PASS  raw-row reader keeps a truncated line aside in lenient mode
+PASS  a second measurement set into the same file is refused
+PASS  calibration warm-up: 1989-01-01, 365 days
+PASS  validation warm-up: 1989-03-01, 365 days
+PASS  leap-year warm-up: 1991-03-01, 366 days
+PASS  no warm-up when the run starts on day one
+PASS  forcing rule: offset 2 starts on series day 2
+PASS  forcing rule wraps around the record
+PASS  forcing detector passes three distinct seed windows
+PASS  forcing detector fires on constant forcing
+PASS  parameter draw: 2,684 distinct vectors inside the ranges
+PASS  parameter draw is fixed by its seed
+PASS  parameter detector fires on duplicates
+PASS  parameter detector fires outside a range
+PASS  planted: unit-hydrograph ordinates sum to 1 within 1e-9
+PASS  planted: zero rain gives zero quickflow
+PASS  planted: mass balance closes within 1e-6 mm over a planted year
+PASS  build check, not an endpoint: float64 shared equations give anchor_cal NSE 0.495 +/- 0.02
+PASS  build check, not an endpoint: float64 shared equations give generalist_cal NSE 0.336 +/- 0.02
+PASS  build check, not an endpoint: float64 shared equations give michel_val NSE 0.57 +/- 0.02
+PASS  UH1 has 3 nonzero ordinates and UH2 has 5 for X4 = 2.45
+PASS  Fortran single-precision split B is used
+PASS  NSE: perfect simulation gives 1
+PASS  NSE: the observed mean gives 0
+PASS  NSE ignores a missing observation
+PASS  MARE: 1% off everywhere gives 0.01
+PASS  MARE: a non-finite simulated day gives infinity
+PASS  band edges are inclusive: 0.515 passes, 0.5151 fails
+PASS  flow detector flags non-finite and all-zero flow
+PASS  timing detector passes a cell with spread
+PASS  planted zero-dispersion timing cell halts WRONG_VARIANCE_SOURCE
+PASS  timing detector halts on a non-positive or missing time
+PASS  probe detector passes blocks with spread
+PASS  planted zero-dispersion probe blocks halt WRONG_VARIANCE_SOURCE
+PASS  probe detector halts on an empty block
+PASS  I5 planted: ms 2 -> 0.2222 h, ms 20 -> 2.2222 h, speedups 13.5 and 1.35
+PASS  I6 planted: 5.9 h pass, 6.1 h 'Stop and replan', later records and rows run_valid false
+PASS  I7 planted: 3.2655e8 chain-steps per second; equal times give ratio 10
+PASS  card decision: 0.5 h with speedup 25 is if_lever
+PASS  card decision: exactly 1 h is if_not
+PASS  card decision: speedup exactly 20 below 1 h is if_lever
+PASS  card decision: speedup 19.9 is if_not
+PASS  card guess bands are inclusive
+PASS  gate: exactly 6 h passes
+PASS  scaling reading: ratio 7.9 saturates, 12.1 above, 8 and 12 linear
+PASS  cost guard: 1 h up plus 0.5 h at USD 1.29/h stays under USD 5
+PASS  cost guard: 3.5 h up plus 0.3 h at USD 1.29/h stops before USD 5
+PASS  time guard: 50 s left for a 60 s step stops
+PASS  projected spend arithmetic: (1 h + 0.5 h + 0.1 h) x 1.29 = 2.064
+PASS  extract writes basin, ranges, parameters, R script and decision rules
+PASS  extract's parameter file holds 2,684 vectors
+PASS  R script: default warm-up and states, NSE on Qmm, three cases, page date selection
+PASS  airGR output parser accepts the planted three-case output
+PASS  airGR output parser rejects a missing case
+PASS  summary lists the same 14 cells as the records
+PASS  good run: one record per endpoint and control, 14 in all
+PASS  good run: every record has run_valid true
+PASS  good run: every record carries a decision rule and a decision
+PASS  good run: anchors and controls pass
+PASS  good run: E3 median 3.0 ms holds
+PASS  good run: overheads 1.2 (GPU) and 1.1 (CPU) recovered from probe blocks
+PASS  good run: main_run_hours 0.1, CPU hours 2.75, speedup 27.5, if_lever
+PASS  good run: sensitivity line with overhead 4 is present and labelled
+PASS  good run: gate passes and scaling reads linear
+PASS  good run: timing records carry instance type and GPU name
+PASS  good run: records keep input hashes
+PASS  good run: RUN_VALID.json says valid
+PASS  summary after the endpoints stage: all 14 decisions restated exactly, none missing
+PASS  summary on a good run: run_valid true, no labels, no void reasons
+PASS  summary restates headline numbers verbatim, the sensitivity line included
+PASS  summary: the launcher's fetch pattern '*summary*.json' finds it and nothing else
+PASS  failed anchor: E1 FAIL
+PASS  failed anchor: every record written after it has run_valid false
+PASS  failed anchor: timing rows say 'descriptive only; anchor failed' and run_valid false
+PASS  failed anchor: timing records carry the same label
+PASS  summary after a failed anchor: run_valid false, timing label restated, decisions match
+PASS  failed R install: E1 NOT_RUN with the error text
+PASS  failed R install: E2 decided on the page value alone, labelled
+PASS  failed R install: every record carries 'anchor by page value'
+PASS  failed R install: every raw row carries 'anchor by page value'
+PASS  summary after a failed R install: 'anchor by page value' and E1 NOT_RUN restated
+PASS  failed gate: E6 reads 'Stop and replan' at main_run_hours 6.67
+PASS  failed gate: records written before it stay valid, E6 and E7 are run_valid false
+PASS  failed gate: RUN_VALID.json says invalid
+PASS  summary after a failed gate: 'Stop and replan' restated, run_valid false
+PASS  early stop: finished rows relabelled 'incomplete run: descriptive only, no verdict'
+PASS  early stop: records written before the stop relabelled
+PASS  early stop: verdict endpoints give no verdict
+PASS  summary after an early stop: incomplete, labelled, run_valid false, decisions match
+PASS  planted zero-dispersion run halts WRONG_VARIANCE_SOURCE at endpoints
+PASS  halted run: timing records still written, marked HALTED with no verdict, run_valid false
+PASS  summary after a halt: written before the halt propagates, decisions match records
+PASS  summary after a stop before any stage: written, run_valid false, all 14 listed missing
+PASS  summary after the follow-up endpoints run: 14 records restated, none missing
+PASS  stop before any stage: all 14 cells still get a record
+PASS  stop before any stage: missing gate records say NOT_RUN
+PASS  no output calls same-box repeats replication
+selftest: 135/135 checks passed in 1.3 s; PASS

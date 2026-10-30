@@ -5,6 +5,8 @@ node_modules/
 *.tmp
 *.log
 !**/console.log
+# Run logs are evidence (raw workload output, probe logs); kept with the run
+!experiments/**/*.log
 experiments/_scratch/
 # Claude-era transcripts: on disk, not committed (committing was blocked as a possible credential leak); decide first
 experiments/question-tree/claude/

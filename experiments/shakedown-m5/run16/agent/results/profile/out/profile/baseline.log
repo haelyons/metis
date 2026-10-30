@@ -1,0 +1,40 @@
+WARNING: CPU context switch tracing not supported, disabling.
+Try the 'nsys status --environment' command to learn more.
+
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+./baseline-published/build-mc/MonteCarloMultiGPU Starting...
+
+Using single CPU thread for multiple GPUs
+MonteCarloMultiGPU
+==================
+Parallelization method  = streamed
+Problem scaling         = strong
+Number of GPUs          = 1
+Total number of options = 1048576
+Number of paths         = 262144
+main(): generating input data...
+main(): starting 1 host threads...
+main(): GPU statistics, streamed
+GPU Device #0: NVIDIA H100 80GB HBM3
+Options         : 1048576
+Simulation paths: 262144
+
+Total time (ms.): 483.951996
+	Note: This is elapsed time for all to compute.
+Options per sec.: 2166694.236190
+main(): comparing Monte Carlo and Black-Scholes results...
+Shutting down...
+Test Summary...
+L1 norm        : 4.811709E-04
+Average reserve: 12.585302
+
+NOTE: The CUDA Samples are not meant for performance measurements. Results may vary when GPU Boost is enabled.
+
+Test passed
+Collecting data...
+Generating '/tmp/nsys-report-afb8.qdstrm'
+[1/1] [0%                          ] baseline.nsys-rep[1/1] [0%                          ] baseline.nsys-rep[1/1] [5%                          ] baseline.nsys-rep[1/1] [===22%                      ] baseline.nsys-rep[1/1] [=======38%                  ] baseline.nsys-rep[1/1] [=======39%                  ] baseline.nsys-rep[1/1] [========40%                 ] baseline.nsys-rep[1/1] [================70%         ] baseline.nsys-rep[1/1] [================71%         ] baseline.nsys-rep[1/1] [========================100%] baseline.nsys-rep[1/1] [========================100%] baseline.nsys-rep
+Generated:
+	/tmp/m5-c444c3f9-44cd-4352-a76e-d2c6aea367f1/out/profile/baseline.nsys-rep

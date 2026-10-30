@@ -1,0 +1,96 @@
+commit 738debf8a63394ad222858432071d9aa4dd826e6
+Author: env_build <env@metis>
+Date:   Fri Oct 23 04:32:28 2026 +0000
+
+    pins: dm-haiku==0.0.13 because colabfold pins 0.0.10, which calls jax.linear_util removed in jax 0.4.35 (installed --no-deps)
+---
+ pins.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/pins.txt b/pins.txt
+index f667fcf..a11c855 100644
+--- a/pins.txt
++++ b/pins.txt
+@@ -8,3 +8,4 @@ lightdock==0.9.4
+ openmm-cuda==8.1.1.12
+ openmm==8.1.1
+ nvidia-cuda-nvcc-cu12==12.6.85
++dm-haiku==0.0.13
+
+commit b907b50a58ea6c1fc0d1687acd9ee5423708ab46
+Author: env_build <env@metis>
+Date:   Wed Oct 21 18:38:59 2026 +0000
+
+    apt: drop stray lines 120 and 600 because they are not packages and make apt-get install fail
+---
+ apt.txt | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/apt.txt b/apt.txt
+index 45339c2..e9730ac 100644
+--- a/apt.txt
++++ b/apt.txt
+@@ -1,5 +1,3 @@
+-120
+-600
+ aria2
+ build-essential
+ curl
+
+commit d61ff6a222bb5a7b4180be94b53ae4aaf534cf58
+Author: env_build <env@metis>
+Date:   Wed Oct 21 18:38:57 2026 +0000
+
+    pins: nvidia-cuda-nvcc-cu12==12.6.85 because 12.9 wheel lacks __init__.py and jax 0.4.35 import fails on cuda_nvcc.__file__ None
+---
+ pins.txt | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/pins.txt b/pins.txt
+index f2f10ef..f667fcf 100644
+--- a/pins.txt
++++ b/pins.txt
+@@ -7,3 +7,4 @@ jaxlib==0.4.35
+ lightdock==0.9.4
+ openmm-cuda==8.1.1.12
+ openmm==8.1.1
++nvidia-cuda-nvcc-cu12==12.6.85
+
+commit 28864661d58f98fe11a126cf0c282815a12e1b66
+Author: env_build <env@metis>
+Date:   Wed Oct 21 17:59:44 2026 +0000
+
+    env_build: inputs of record (pins.txt, apt.txt)
+---
+ apt.txt  | 7 +++++++
+ pins.txt | 9 +++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/apt.txt b/apt.txt
+new file mode 100644
+index 0000000..45339c2
+--- /dev/null
++++ b/apt.txt
+@@ -0,0 +1,7 @@
++120
++600
++aria2
++build-essential
++curl
++python3-dev
++python3-venv
+diff --git a/pins.txt b/pins.txt
+new file mode 100644
+index 0000000..f2f10ef
+--- /dev/null
++++ b/pins.txt
+@@ -0,0 +1,9 @@
++alphafold-colabfold==2.3.6
++colabfold==1.5.5
++jax-cuda12-pjrt==0.4.35
++jax-cuda12-plugin[with_cuda]==0.4.35
++jax==0.4.35
++jaxlib==0.4.35
++lightdock==0.9.4
++openmm-cuda==8.1.1.12
++openmm==8.1.1

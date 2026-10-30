@@ -1,0 +1,347 @@
+LAMMPS (29 Aug 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/lammps-stable_29Aug2024/src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+package gpu 1
+# Timed dry run, written by run_m3.py (tag m3). Not a committed deck.
+# Built from the committed tdm.in (sha256 4d6a778e7148335a35bf680829a934c7ce4cc864fc6e050a3f23ed9854058a98); every line marked 'verbatim' is copied from it.
+# 1,000 warm-up steps, then 1,000 timed steps bracketed by date stamps, under fix nvt,
+# with tdm.in's computes, variables and fix ave/time lines active throughout.
+# --- verbatim: tdm.in's variable lines
+variable        system_dir    index .
+variable        T             index 313.15
+variable        run_id        index 1
+variable        seg           index 1
+variable        timestep_fs   index 1.0
+variable        warmup_steps  index 200000
+variable        prod_steps    index 2000000
+variable        restart_every index 500000
+variable        thermo_every  index 5000
+variable        shake_tol     index 0.0001
+variable        shake_iter    index 20
+variable        shake_order   index 0
+variable        seed          equal 4928459+${run_id}*10007
+variable        seed          equal 4928459+1*10007
+variable        dump_every    index 5          # steps between samples
+variable        dump_dir      index .
+
+include         ${system_dir}/in.init
+include         /home/ubuntu/m3_run/data/box_mol00557_n250_d0.30_s61453/in.init
+units          real
+atom_style     full
+boundary       p p p
+
+bond_style     harmonic
+angle_style    harmonic
+dihedral_style hybrid opls multi/harmonic
+
+pair_style     lj/cut/coul/long 12.0
+pair_modify    mix geometric tail yes
+kspace_style   pppm 1.0e-5
+special_bonds  lj/coul 0.0 0.0 0.5
+read_data       ${system_dir}/in.data
+read_data       /home/ubuntu/m3_run/data/box_mol00557_n250_d0.30_s61453/in.data
+Reading data file ...
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  11250 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  6 = max angles/atom
+  scanning dihedrals ...
+  19 = max dihedrals/atom
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  11250 bonds
+  reading angles ...
+  22500 angles
+  reading dihedrals ...
+  33750 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0.5     
+  special bond factors coul:  0        0        0.5     
+     4 = max # of 1-2 neighbors
+     9 = max # of 1-3 neighbors
+    18 = max # of 1-4 neighbors
+    21 = max # of special neighbors
+  special bonds CPU = 0.013 seconds
+  read_data CPU = 0.215 seconds
+include         ${system_dir}/in.settings
+include         /home/ubuntu/m3_run/data/box_mol00557_n250_d0.30_s61453/in.settings
+# Generated coefficient commands; keep with in.data for restart/read_data workflows.
+pair_coeff      1 1 0.066000000000000 3.500000   # ctt
+pair_coeff      2 2 0.066000000000000 3.500000   # ct
+pair_coeff      3 3 0.030000000000000 2.500000   # hct
+pair_coeff      4 4 0.026303000000000 2.500000   # hc
+bond_coeff      1 268.000000 1.529000   # CT_CH2 CT_CH3
+bond_coeff      2 268.000000 1.529000   # CT_CH2 CT_CH2
+bond_coeff      3 340.000000 1.090000   # CT_CH3 HC_CH3
+bond_coeff      4 340.000000 1.090000   # CT_CH2 HC_CH2
+angle_coeff     1 37.500000 110.700000   # CT_CH2 CT_CH3 HC_CH3
+angle_coeff     2 33.000000 107.800000   # HC_CH3 CT_CH3 HC_CH3
+angle_coeff     3 58.350000 112.700000   # CT_CH3 CT_CH2 CT_CH2
+angle_coeff     4 37.500000 110.700000   # CT_CH3 CT_CH2 HC_CH2
+angle_coeff     5 37.500000 110.700000   # CT_CH2 CT_CH2 HC_CH2
+angle_coeff     6 33.000000 107.800000   # HC_CH2 CT_CH2 HC_CH2
+angle_coeff     7 58.350000 112.700000   # CT_CH2 CT_CH2 CT_CH2
+dihedral_coeff  1 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH2 CT_CH2 CT_CH2 CT_CH3
+dihedral_coeff  2 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH3 CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  3 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH2 CT_CH2 CT_CH2 CT_CH2
+dihedral_coeff  4 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  5 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH2 CT_CH3 HC_CH3
+dihedral_coeff  6 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH CT_CH2 CT_CH2 CT_CH2
+dihedral_coeff  7 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH2 CT_CH CT_CH2 CT_CH2
+dihedral_coeff  8 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH2 CT_CH HC_CH
+dihedral_coeff  9 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH CT_CH2 HC_CH2
+dihedral_coeff  10 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  11 opls 0.00000000 0.00000000 0.30000000 0.00000000   # HC_CH2 CT_CH2 CT_CH3 HC_CH3
+dihedral_coeff  12 opls 0.00000000 0.00000000 0.30000000 0.00000000   # HC_CH2 CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  13 opls 0.00000000 0.00000000 0.30000000 0.00000000   # HC_CH CT_CH CT_CH2 HC_CH2
+
+neighbor        2.0 bin
+neigh_modify    every 1 delay 0 check yes
+timestep        1
+timestep        2.0
+# --- verbatim: SHAKE, velocities, thermo
+fix             constrain_h all shake ${shake_tol} ${shake_iter} ${shake_order} m 1.008
+fix             constrain_h all shake 0.0001 ${shake_iter} ${shake_order} m 1.008
+fix             constrain_h all shake 0.0001 20 ${shake_order} m 1.008
+fix             constrain_h all shake 0.0001 20 0 m 1.008
+Finding SHAKE clusters ...
+     250 = # of size 2 clusters
+    3250 = # of size 3 clusters
+     250 = # of size 4 clusters
+       0 = # of frozen angles
+  find clusters CPU = 0.004 seconds
+velocity        all create ${T} ${seed} mom yes rot yes dist gaussian
+velocity        all create 313.15 ${seed} mom yes rot yes dist gaussian
+velocity        all create 313.15 4938466 mom yes rot yes dist gaussian
+thermo          ${thermo_every}
+thermo          5000
+thermo_style    custom step temp press density vol etotal
+# --- verbatim: tdm.in's computes and variables
+compute         TT        all temp
+compute         myP       all pressure TT
+compute         myKE      all ke/atom
+compute         myPE      all pe/atom
+compute         stressC   all centroid/stress/atom NULL pair bond angle dihedral improper
+compute         stressK   all stress/atom NULL kspace
+compute         fluxC     all heat/flux myKE myPE stressC
+variable        nktv2p_real equal 68568.415
+variable        JkXa atom -(c_stressK[1]*vx+c_stressK[4]*vy+c_stressK[5]*vz)/${nktv2p_real}
+variable        JkXa atom -(c_stressK[1]*vx+c_stressK[4]*vy+c_stressK[5]*vz)/68568.415
+variable        JkYa atom -(c_stressK[4]*vx+c_stressK[2]*vy+c_stressK[6]*vz)/${nktv2p_real}
+variable        JkYa atom -(c_stressK[4]*vx+c_stressK[2]*vy+c_stressK[6]*vz)/68568.415
+variable        JkZa atom -(c_stressK[5]*vx+c_stressK[6]*vy+c_stressK[3]*vz)/${nktv2p_real}
+variable        JkZa atom -(c_stressK[5]*vx+c_stressK[6]*vy+c_stressK[3]*vz)/68568.415
+compute         redJkX all reduce sum v_JkXa
+compute         redJkY all reduce sum v_JkYa
+compute         redJkZ all reduce sum v_JkZa
+variable        Jtot_x equal c_fluxC[1]+c_redJkX
+variable        Jtot_y equal c_fluxC[2]+c_redJkY
+variable        Jtot_z equal c_fluxC[3]+c_redJkZ
+variable        Pxx equal c_myP[1]
+variable        Pyy equal c_myP[2]
+variable        Pzz equal c_myP[3]
+variable        Pxy equal c_myP[4]
+variable        Pxz equal c_myP[5]
+variable        Pyz equal c_myP[6]
+# --- verbatim: tdm.in's thermostat and fix ave/time lines
+fix             prod all nvt temp ${T} ${T} 100.0
+fix             prod all nvt temp 313.15 ${T} 100.0
+fix             prod all nvt temp 313.15 313.15 100.0
+fix             stress_raw all ave/time ${dump_every} 1 ${dump_every} v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz                 file ${dump_dir}/Stress_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             stress_raw all ave/time 5 1 ${dump_every} v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz                 file ${dump_dir}/Stress_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             stress_raw all ave/time 5 1 5 v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz                 file ${dump_dir}/Stress_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             stress_raw all ave/time 5 1 5 v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/Stress_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             stress_raw all ave/time 5 1 5 v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/Stress_perstep_T313.15K_run${run_id}_seg${seg}.out
+fix             stress_raw all ave/time 5 1 5 v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/Stress_perstep_T313.15K_run1_seg${seg}.out
+fix             stress_raw all ave/time 5 1 5 v_Pxx v_Pyy v_Pzz v_Pxy v_Pxz v_Pyz                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/Stress_perstep_T313.15K_run1_seg1.out
+fix             flux_raw all ave/time ${dump_every} 1 ${dump_every} v_Jtot_x v_Jtot_y v_Jtot_z                 file ${dump_dir}/HeatFlux_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             flux_raw all ave/time 5 1 ${dump_every} v_Jtot_x v_Jtot_y v_Jtot_z                 file ${dump_dir}/HeatFlux_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             flux_raw all ave/time 5 1 5 v_Jtot_x v_Jtot_y v_Jtot_z                 file ${dump_dir}/HeatFlux_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             flux_raw all ave/time 5 1 5 v_Jtot_x v_Jtot_y v_Jtot_z                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/HeatFlux_perstep_T${T}K_run${run_id}_seg${seg}.out
+fix             flux_raw all ave/time 5 1 5 v_Jtot_x v_Jtot_y v_Jtot_z                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/HeatFlux_perstep_T313.15K_run${run_id}_seg${seg}.out
+fix             flux_raw all ave/time 5 1 5 v_Jtot_x v_Jtot_y v_Jtot_z                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/HeatFlux_perstep_T313.15K_run1_seg${seg}.out
+fix             flux_raw all ave/time 5 1 5 v_Jtot_x v_Jtot_y v_Jtot_z                 file /home/ubuntu/m3_run/results_m3/runs/dryrun/HeatFlux_perstep_T313.15K_run1_seg1.out
+
+run             1000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- GPU package (short-range, long-range and three-body potentials): doi:10.1016/j.cpc.2010.12.021, doi:10.1016/j.cpc.2011.10.012, doi:10.1016/j.cpc.2013.08.002, doi:10.1016/j.commatsci.2014.10.068, doi:10.1016/j.cpc.2016.10.020, doi:10.3233/APC200086
+
+@Article{Brown11,
+ author = {W. M. Brown and P. Wang and S. J. Plimpton and A. N. Tharrington},
+ title = {Implementing Molecular Dynamics on Hybrid High Performance Computers---Short Range Forces},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2011,
+ volume =  182,
+ pages =   {898--911},
+ doi =     {10.1016/j.cpc.2010.12.021}
+}
+
+@Article{Brown12,
+ author = {W. M. Brown and A. Kohlmeyer and S. J. Plimpton and A. N. Tharrington},
+ title = {Implementing Molecular Dynamics on Hybrid High Performance Computers - Particle-Particle Particle-Mesh},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2012,
+ volume =  183,
+ doi =     {10.1016/j.cpc.2011.10.012},
+ pages =   {449--459}
+}
+
+@Article{Brown13,
+ author = {W. M. Brown and Y. Masako},
+ title = {Implementing Molecular Dynamics on Hybrid High Performance Computers---Three-Body Potentials},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2013,
+ volume =  184,
+ pages =   {2785--2793},
+ doi =     {10.1016/j.cpc.2013.08.002},
+}
+
+@Article{Trung15,
+ author = {T. D. Nguyen and S. J. Plimpton},
+ title = {Accelerating Dissipative Particle Dynamics Simulations for Soft Matter Systems},
+ journal = {Comput.\ Mater.\ Sci.},
+ year =    2015,
+ doi =     {10.1016/j.commatsci.2014.10.068},
+ volume =  100,
+ pages =   {173--180}
+}
+
+@Article{Trung17,
+ author = {T. D. Nguyen},
+ title = {{GPU}-Accelerated {T}ersoff Potentials for Massively Parallel
+    Molecular Dynamics Simulations},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2017,
+ doi =     {10.1016/j.cpc.2016.10.020},
+ volume =  212,
+ pages =   {113--122}
+}
+
+@inproceedings{Nikolskiy19,
+ author = {V. Nikolskiy and V. Stegailov},
+ title = {{GPU} Acceleration of Four-Site Water Models in {LAMMPS}},
+ booktitle = {Proceedings of the International Conference on Parallel
+    Computing (ParCo 2019), Prague, Czech Republic},
+ doi =     {10.3233/APC200086},
+ year =    2019
+}
+
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+
+@Article{Gissinger24,
+ author = {Jacob R. Gissinger, Ilia Nikiforov, Yaser Afshar, Brendon Waters, Moon-ki Choi, Daniel S. Karls, Alexander Stukowski, Wonpil Im, Hendrik Heinz, Axel Kohlmeyer, and Ellad B. Tadmor},
+ title = {Type Label Framework for Bonded Force Fields in LAMMPS},
+ journal = {J. Phys. Chem. B},
+ year =    2024,
+ volume =  128,
+ number =  13,
+ pages =   {3282–-3297}
+}
+
+- compute centroid/stress/atom for angles, impropers and dihedrals: doi:10.1103/PhysRevE.99.051301
+
+@article{Surblys2019,
+ title = {Application of Atomic Stress to Compute Heat Flux via Molecular
+    Dynamics for Systems With Many-Body Interactions},
+ author = {Surblys, Donatas and Matsubara, Hiroki and Kikugawa, Gota and Ohara, Taku},
+ journal = {Physical Review~E},
+ volume = {99},
+ issue = {5},
+ pages = {051301},
+ year = {2019},
+ doi = {10.1103/PhysRevE.99.051301},
+ url = {https://link.aps.org/doi/10.1103/PhysRevE.99.051301}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Per MPI rank memory allocation (min/avg/max) = 63.52 | 63.52 | 63.52 Mbytes
+   Step          Temp          Press         Density         Volume         TotEng    
+         0   313.15         806.5955       0.29999997     291154.77      9589.5565    
+      1000   309.85815      8.6133475      0.29999997     291154.77      16620.123    
+Loop time of 12.8294 on 1 procs for 1000 steps with 11250 atoms
+
+Performance: 13.469 ns/day, 1.782 hours/ns, 77.946 timesteps/s, 876.889 katom-step/s
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.53419    | 0.53419    | 0.53419    |   0.0 |  4.16
+Bond    | 8.1506     | 8.1506     | 8.1506     |   0.0 | 63.53
+Kspace  | 2.7478     | 2.7478     | 2.7478     |   0.0 | 21.42
+Neigh   | 0.0024205  | 0.0024205  | 0.0024205  |   0.0 |  0.02
+Comm    | 0.14557    | 0.14557    | 0.14557    |   0.0 |  1.13
+Output  | 9.3184e-05 | 9.3184e-05 | 9.3184e-05 |   0.0 |  0.00
+Modify  | 1.2177     | 1.2177     | 1.2177     |   0.0 |  9.49
+Other   |            | 0.03102    |            |       |  0.24
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          14038 ave       14038 max       14038 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 67
+Dangerous builds = 0
+shell           date +%s.%N > ${dump_dir}/dryrun_t0.epoch
+shell           date +%s.%N > /home/ubuntu/m3_run/results_m3/runs/dryrun/dryrun_t0.epoch
+run             1000 pre no
+   Step          Temp          Press         Density         Volume         TotEng    
+      1000   309.85815      8.6133475      0.29999997     291154.77      16620.123    
+      2000   314.42746     -3.9218235      0.29999997     291154.77      16853.356    
+Loop time of 12.9203 on 1 procs for 1000 steps with 11250 atoms
+
+Performance: 13.374 ns/day, 1.794 hours/ns, 77.397 timesteps/s, 870.720 katom-step/s
+99.9% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.56418    | 0.56418    | 0.56418    |   0.0 |  4.37
+Bond    | 8.1946     | 8.1946     | 8.1946     |   0.0 | 63.42
+Kspace  | 2.7545     | 2.7545     | 2.7545     |   0.0 | 21.32
+Neigh   | 0.0026113  | 0.0026113  | 0.0026113  |   0.0 |  0.02
+Comm    | 0.15001    | 0.15001    | 0.15001    |   0.0 |  1.16
+Output  | 9.3153e-05 | 9.3153e-05 | 9.3153e-05 |   0.0 |  0.00
+Modify  | 1.2234     | 1.2234     | 1.2234     |   0.0 |  9.47
+Other   |            | 0.03084    |            |       |  0.24
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          13394 ave       13394 max       13394 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 140
+Dangerous builds = 0
+shell           date +%s.%N > ${dump_dir}/dryrun_t1.epoch
+shell           date +%s.%N > /home/ubuntu/m3_run/results_m3/runs/dryrun/dryrun_t1.epoch
+Total wall time: 0:00:26

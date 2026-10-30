@@ -1,0 +1,4 @@
+configuration: cwd=out/run gpu_count=1 CUDA_VISIBLE_DEVICES=0 replicas=8 steps=25000 seed0=1000 platform=CUDA Precision=single DeterministicForces=true
+command: python3 ../../baseline-published/dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000
+total_wall_s: 52.571
+aggregate_ns_per_day: 1314.8

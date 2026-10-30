@@ -1,0 +1,178 @@
+ok    parse_nvcc_version reads release and build
+ok    parse_nvcc_version returns None on other text
+ok    parse_nvidia_smi_csv reads name, driver, memory
+ok    parse_nvidia_smi_csv gives unknowns on empty output
+ok    format_cuda_version 12080 -> 12.8; 11040 -> 11.4; 0 -> None
+ok    parse_blas_vendor: old style, skips NOT AVAILABLE sections
+ok    parse_blas_vendor: mkl
+ok    parse_blas_vendor: generic names flagged as unnamed, macros ignored
+ok    parse_blas_vendor: new style reads the blas name
+ok    parse_blas_vendor: unknown
+ok    parse_ldd reads resolved and missing libraries
+ok    parse_uptime reads the first field
+ok    parse_positive_float accepts 1.99, rejects '', 'abc', '-1', 'nan'
+ok    parse_nonneg_float accepts 0 and 6
+ok    detect_cusparse_missing on link and header errors
+ok    detect_cusparse_missing ignores other compile errors
+ok    cuda_dir_version_key orders cuda-12.10 above cuda-12.8
+ok    read_jsonl skips blank lines
+ok    read_jsonl rejects a malformed row
+ok    CUDA source defines every function the bindings use
+ok    CUDA source calls cusparseDgtsv2_nopivot_bufferSizeExt then cusparseDgtsv2_nopivot
+ok    CUDA source braces and parentheses balance (comments stripped)
+ok    Thomas launches one block of one thread per system (<<<K, 1>>>)
+ok    PCR launches blocks of 256 threads, one launch per round
+ok    no unroll pragma in the plain Thomas kernel
+ok    compile command is the execution note's, verbatim
+ok    A100 adds -arch=sm_80 only
+ok    no-cuSPARSE rebuild drops -lcusparse and defines M2_NO_CUSPARSE
+ok    pure Thomas on a 16-equation planted system: residual <= 1e-14
+ok    pure PCR mirror: log2(16) = 4 rounds and residual <= 1e-14
+ok    pure Thomas and PCR agree to < 1e-12
+ok    readout control: exact x* reads <= 1e-14
+ok    readout control: x* perturbed by 1e-6 reads inside [1e-7, 1e-5]
+ok    perturbation is exactly 1e-6 relative
+ok    readout control fails a planted bad readout
+ok    Thomas on d = A x* recovers x*
+ok    a wrong solution reads above the anchor tolerance
+ok    fingerprint hashes float64 little-endian bytes
+ok    R rule: 10 ms -> 5; 0.04 ms -> 1250; 50 ms -> 1; 60 ms -> 1
+ok    K rule over the levels is 256, 256, 256, 64, 16
+ok    launch fraction: 10 x 0.004 / 0.05 = 0.8
+ok    median, lower quartile, upper quartile of 1..5 are 3, 2, 4
+ok    least-squares slope of y = 2x + 1 is 2
+ok    timers pass: sleep 100.4 ms, event 50 vs wall 51, 2R ratios 2.02 and 1.98
+ok    timers fail: sleep 106 ms
+ok    timers fail: event 50 against wall 55 (9.1%)
+ok    timers fail: 2R block 2.5x the R block
+ok    guard: early in the run allows the time left minus the reserve
+ok    guard: time guard stops near REMOTE_TIMEOUT
+ok    guard: cost guard stops when the budget is nearly spent
+ok    bad vector: non-finite
+ok    bad vector: all zeros
+ok    bad vector: empty
+ok    good vector passes
+ok    good timing row passes
+ok    bad timing row caught: zero ms
+ok    bad timing row caught: nan block
+ok    bad timing row caught: negative ms
+ok    bad timing row caught: R = 0
+ok    bad timing row caught: non-finite solution
+ok    bad timing row caught: status 3
+ok    bad timing row caught: degenerate warm-up
+ok    complete table passes
+ok    missing seed makes the table incomplete
+ok    E1 passes a clean planted anchor
+ok    E1 fails Thomas at residual 1e-9 and keeps PCR
+ok    E1 fails PCR at a 2e-8 difference against scipy
+ok    E1 flags references disagreeing at 1e-7
+ok    E1 without cuSPARSE reads against scipy alone, 'one reference only'
+ok    E1 fails a non-finite residual
+ok    planted control I2: planted arithmetic for E2 (residual guess band)
+ok    planted control I3: planted arithmetic for E3 (the card's decision rule)
+ok    planted control I4: planted arithmetic for E4 (crossover level)
+ok    planted control I5: planted arithmetic for E5 (proxy 28)
+ok    planted control I6: planted arithmetic for E6 (growth shape)
+ok    planted control I7: planted arithmetic for E7 (CPU floor)
+ok    planted control I8: planted arithmetic for E8 (copies)
+ok    planted control I9: planted arithmetic for E9 (cuSPARSE ratio)
+ok    planted control I10: planted arithmetic for E10 (cost line hours)
+[m2 10:45:38] record timing_rows_check: PASS
+[m2 10:45:38] record dispersion: PASS
+[m2 10:45:38] record E3: if_lever
+[m2 10:45:38] record E4: HOLDS
+[m2 10:45:38] record E5: REFUTED (above, measured / 28 = 14.63)
+[m2 10:45:38] record E6: linear-like
+[m2 10:45:38] record E7: if_lever under the CPU baseline
+[m2 10:45:38] record E8: HOLDS
+[m2 10:45:38] record E9: REPORTED
+[m2 10:45:38] record E10: HOLDS
+ok    endpoints on planted rows complete
+ok    E3 planted: if_lever, no noise label
+ok    E3 planted speedups 2, 26.67, 256, 409.6, 409.6
+ok    E3 reports launch fraction at 2^10 and 2^24 (10 x 0.004 / 0.5 = 0.08)
+ok    E4 planted: crossover 2^10 holds
+ok    E5 planted: 409.6 refuted above, ratio 14.63
+ok    E6 planted: g = 2, linear-like
+ok    E7 planted: if_lever under the CPU baseline, speedup 4 at 2^24
+ok    E8 planted: ratios 1.0, 1.1, 1.5, 2.9, 1.2 hold
+ok    E9 planted: PCR / cuSPARSE = 3 at every level
+ok    E10 planted: 2 h holds
+ok    report-only readings E6..E9 carry the role label
+ok    every record carries run_valid, the dramaturg label and the baseline label
+ok    records are written by the frozen provenance writer (cell, inputs, decision_rule, env)
+ok    every PCR row carries launch_fraction after the launch probe
+[m2 10:45:38] record timing_rows_check: PASS
+[m2 10:45:38] record dispersion: PASS
+[m2 10:45:38] record E3: if_lever
+[m2 10:45:38] record E4: HOLDS (crossover at 2^10 is launch-bound)
+[m2 10:45:38] record E5: REFUTED (above, measured / 28 = 14.63)
+[m2 10:45:38] record E6: linear-like
+[m2 10:45:38] record E7: if_lever under the CPU baseline
+[m2 10:45:38] record E8: HOLDS
+[m2 10:45:38] record E9: REPORTED
+[m2 10:45:38] record E10: HOLDS
+ok    E4 labels 'crossover at 2^10 is launch-bound' when the launch fraction is 0.8
+[m2 10:45:38] VOID by timing rows check: 1 degenerate timing rows
+[m2 10:45:38] record timing_rows_check: FAIL: 1 degenerate rows [run_valid=false]
+[m2 10:45:38] record dispersion: PASS [run_valid=false]
+[m2 10:45:38] record E3: NOT_RUN: Thomas or PCR timing rows incomplete [run_valid=false]
+[m2 10:45:38] record E4: NOT_RUN: Thomas or PCR timing rows incomplete [run_valid=false]
+[m2 10:45:38] record E5: NOT_RUN: Thomas or PCR timing rows incomplete [run_valid=false]
+[m2 10:45:38] record E6: linear-like [run_valid=false]
+[m2 10:45:38] record E7: if_lever under the CPU baseline [run_valid=false]
+[m2 10:45:38] record E8: NOT_RUN: Thomas rows incomplete [run_valid=false]
+[m2 10:45:38] record E9: REPORTED [run_valid=false]
+[m2 10:45:38] record E10: HOLDS [run_valid=false]
+ok    a degenerate timing row voids the run and leaves E3 not run
+[m2 10:45:38] record timing_rows_check: PASS
+[m2 10:45:38] VOID by dispersion: zero dispersion over seeds: [{'quantity': 'Thomas ms / PCR ms', 'N': 262144}]
+[m2 10:45:38] record dispersion: WRONG_VARIANCE_SOURCE [run_valid=false]
+[m2 10:45:38] HALT WRONG_VARIANCE_SOURCE: endpoints not computed
+ok    zero dispersion of the noise-rule ratio halts WRONG_VARIANCE_SOURCE
+[m2 10:45:38] (planted control, temporary directory) record E1: FAIL: thomas residual 1e-09 not <= 1e-10 at N=1024; thomas residual 1e-09 not <= 1e-10 at N=16384
+[m2 10:45:38] (planted control, temporary directory) record timing_rows_check: PASS
+[m2 10:45:38] (planted control, temporary directory) record dispersion: PASS
+[m2 10:45:38] (planted control, temporary directory) record E3: NOT_READ: anchor failed for thomas
+[m2 10:45:38] (planted control, temporary directory) record E4: NOT_READ: anchor failed for thomas
+[m2 10:45:38] (planted control, temporary directory) record E5: NOT_READ: anchor failed for thomas
+[m2 10:45:38] (planted control, temporary directory) record E6: linear-like
+[m2 10:45:38] (planted control, temporary directory) record E7: if_lever under the CPU baseline
+[m2 10:45:38] (planted control, temporary directory) record E8: HOLDS
+[m2 10:45:38] (planted control, temporary directory) record E9: REPORTED
+[m2 10:45:38] (planted control, temporary directory) record E10: HOLDS
+[m2 10:45:38] (planted control, temporary directory) record before_gate: PASS
+[m2 10:45:38] (planted control, temporary directory) VOID by E1 anchor: the two references (cuSPARSE, scipy solve_banded) disagree by >= 1e-8
+[m2 10:45:38] (planted control, temporary directory) record E1: FAIL: the two references (cuSPARSE, scipy) disagree by >= 1e-8: N=1024: 1e-07, N=16384: 1e-07 [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record timing_rows_check: PASS [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record dispersion: PASS [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E3: if_lever [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E4: HOLDS [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E5: REFUTED (above, measured / 28 = 14.63) [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E6: linear-like [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E7: if_lever under the CPU baseline [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E8: HOLDS [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E9: REPORTED [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) record E10: HOLDS [run_valid=false]
+[m2 10:45:38] (planted control, temporary directory) summary written: run_valid=False exit_code=0 (planted)
+ok    gate propagation: Thomas failure: endpoints stage completes
+ok    gate propagation: Thomas residual 1e-9 fails the anchor, PCR passes
+ok    gate propagation: every Thomas timing row is labelled 'descriptive only; anchor failed'
+ok    gate propagation: PCR rows are labelled 'anchor passed'
+ok    gate propagation: E3, E4, E5 are NOT_READ
+ok    gate propagation: report-only readings E6..E10 are still computed
+ok    gate propagation: every later record carries the anchor failure
+ok    gate propagation: run_valid follows the execution note (an anchor failure alone does not void)
+ok    gate propagation: references at 1e-7 fail E1
+ok    gate propagation: the record written before the gate keeps run_valid true
+ok    gate propagation: the row written before the gate keeps run_valid true
+ok    gate propagation: every record written after the gate has run_valid false
+ok    gate propagation: every row written after the gate has run_valid false, per-arm files included
+ok    gate propagation: the summary restates run_valid false
+ok    gate propagation control passes as a whole
+[m2 10:45:38] VOID by summary: no stage wrote the run-validity file, so nothing was measured
+[m2 10:45:38] summary written: run_valid=False exit_code=4 (cost guard inputs missing)
+ok    summary with no stage run writes run_valid false and lists missing records
+ok    no output text calls same-box reruns by the forbidden word
+ok    selftest imported neither numpy nor scipy
+selftest: PASS (115 of 115 checks passed)

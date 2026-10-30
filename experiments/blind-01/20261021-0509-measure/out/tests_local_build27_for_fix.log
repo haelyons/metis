@@ -1,0 +1,47 @@
+TEST stage_exit_code_on_success: FAIL a stage that did all its work exits 3 (RUN_DONE 3, statuses ['unmeasured_by_stop:stage_not_reached']); item 7 has exit 3 only for a guard, ceiling or timeout stop
+TEST parse_nvidia_smi_header: FAIL parse_nvidia_smi_header accepted malformed nvidia_smi_header_truncated.txt and returned {"driver_version": "570.148.08", "cuda_version_header": null}
+TEST parse_nvidia_smi_query: FAIL parse_nvidia_smi_query accepted malformed nvidia_smi_query_field_missing.txt and returned {"gpu_name": "NVIDIA A100-SXM4-40GB", "driver_version": null}
+TEST parse_etimes: PASS
+TEST parse_rank_table_recorded: PASS
+TEST parse_rank_table_malformed: PASS
+TEST parse_pdb: FAIL parse_pdb accepted malformed pose_truncated_tag-m4.pdb and returned {"atoms": [{"record": "ATOM", "serial": "1", "name": "N", "resname": "ASP", "chain": "A", "resseq": 219, "icode": "", "x": -16.842, "y": 25.012, "z": -26.624, "
+TEST parse_colabfold_log: FAIL parse_colabfold_log accepted malformed colabfold_log_field_missing.txt and returned {"per_model_s": [96.4, 61.2, 61.0, 60.9], "download_in_timed_call": false}
+TEST parse_reporter_file: FAIL parse_reporter_file accepted malformed reporter_file_field_missing.txt and returned {"ns_per_day": 128.96, "n_rows": 49, "reason": null, "energies_finite": true, "last_step": 245000}
+TEST parse_engine_rate_line: FAIL engine rate 128.96 ns/day not parsed: {"ns_per_day": 5000.0, "reason": null}
+TEST parse_af2_timing_rows: PASS
+TEST stage_fails_on_malformed_rank_table: PASS
+TEST stage_fails_on_truncated_pose: FAIL anchor: endpoint-anchor_tag-m4.json was not written
+TEST stage_fails_on_malformed_nvidia_smi: FAIL capability with nvidia_smi_header_truncated.txt / nvidia_smi_query.txt: exit 3, expected 2 (voided_by=None failure_kind=None; stderr: )
+TEST stage_fails_on_colabfold_error: PASS
+TEST stage_never_defaults_colabfold_field: PASS
+TEST stage_fails_on_malformed_af2_rows: FAIL endpoints with truncated AlphaFold rows: exit 3, expected 2 (voided_by=None failure_kind=None; stderr: )
+TEST stage_reports_missing_inputs: FAIL a stage with an empty --in must exit 2 naming the missing file: storage exit 3 (None); endpoints exit 3 (None)
+TEST anchor_calls_kept_apart: FAIL two anchor runs (separate --out): docking setups share a working directory: ['/tmp/m4t_anc2_0ogyn2dg/m4_run/work_m4/anchor_serial', '/tmp/m4t_anc2_0ogyn2dg/m4_run/work_m4/anchor_parallel', '/tmp/m4t_anc2_0ogyn2dg/m4_run/work_m4/anchor_serial', '/tmp/m4t_anc2_0ogyn2dg/m4_run/work_m4/anchor_parallel']
+TEST aux_calls_kept_apart: FAIL aux run 1: exit 2 (voided_by=the frame guard refused the docked pose of a pair: fewer than 99 percent of the capsid heavy atoms matched (4142 of 5510); diagnostic at /tmp/m4t_aux2_jaq0rqxl/ failure_kind=anchor_frame; stderr: )
+TEST af2_calls_kept_apart: PASS
+TEST md_calls_kept_apart: FAIL md made 0 production worker calls, expected one per complex (voided_by=None failure_kind=None; stderr: )
+TEST downloads_calls_kept_apart: PASS
+TEST guard_stops_by_time: FAIL time stop: the record does not carry the guard arithmetic: REMOTE_TIMEOUT 3000 missing
+TEST guard_goes_by_time: PASS
+TEST guard_stops_by_budget: FAIL budget stop: the record does not carry the arithmetic: stop_at 6000 s, budget 5 missing
+TEST anchor_reference_against_itself: PASS
+TEST anchor_reference_against_rigid_copy: PASS
+TEST anchor_diagnostics_recorded: PASS
+TEST anchor_box_pose_fails: FAIL anchor: RUN_VALID.json was not written
+TEST anchor_rotated_copy_is_frame_failure: FAIL anchor: endpoint-anchor_tag-m4.json was not written
+TEST after_miss_every_later_record_invalid: FAIL aux_fail wrote no record (exit 2, voided_by=the frame guard refused the docked pose of a pair: fewer than 99 perce); af2_fail endpoint-C1_tag-m4.json run_valid True; md_fail endpoint-C2_tag-m4.json run_valid True; storage_fail endpoint-C4_tag-m4.json run_valid True
+TEST after_miss_calibration_by_own_checks: FAIL C1 calibration_valid False on well-formed inputs after a PASS; C1 decision VOID after the miss, VOID after the PASS (band decisions expected); C2 calibration_valid False on well-formed inputs after a PASS; C2 decision VOID after the miss, VOID after the PASS (band decisions expected)
+TEST after_miss_own_check_failure_stays_own: FAIL endpoints exit 3, expected 4 (voided_by=None failure_kind=None; stderr: )
+TEST anchor_verdict_unchanged_by_later_stages: FAIL anchor decision changed from 'FAIL' to 'VOID'
+TEST md_reporter_nan_and_atoms_calibration: FAIL an MD complex of 119,999 atoms: the md stage ran no worker (exit 3, voided_by=None failure_kind=None; stderr: ); a reporter file with a NaN energy: the md stage ran no worker (exit 3, voided_by=None failure_kind=None; stderr: )
+TEST records_controls: PASS
+TEST sleep_control_failure: PASS
+TEST records_env_check_and_lock: FAIL observed lock None equal False on the recorded pip freeze
+TEST records_anchor_fields: PASS
+TEST records_endpoints: FAIL endpoints after a PASS on well-formed inputs: exit 3 with a stop recorded ([]; ['unmeasured_by_stop:stop_not_recorded', 'unmeasured_by_stop:stop_not_recorded', 'unmeasured_by_stop:stop_not_recorded', 'unmeasured_by_stop:stop_not_recorded'])
+TEST records_downloads: PASS
+TEST records_rows: FAIL md row lacks complex or frame_interval_ps: {"arm": "md", "at_utc": "2026-10-22T19:12:23Z", "complex": "pair1", "run_valid_a; md row lacks complex or frame_interval_ps: {"arm": "md", "at_utc": "2026-10-22T19:12:23Z", "complex": "pair2", "run_valid_a; md row lacks complex or frame_interval_ps: {"arm": "md", "at_utc": "2026-10-22T19:12:23Z", "complex": "pair3", "run_valid_a; no rows_aux_tag-m4.jsonl 
+TEST writes_only_under_out: FAIL stages wrote outside --out: capability: ['work_m4/'] []; controls: ['work_m4/controls_empty_run/', 'work_m4/controls_sleep60/'] []; anchor: ['work_m4/anchor_capsid.pdb', 'work_m4/anchor_parallel/', 'work_m4/anchor_parallel/anchor_capsid.pdb'] []
+tests took 215 s
+TESTS: 17 of 44 passed
+TESTS: FAIL

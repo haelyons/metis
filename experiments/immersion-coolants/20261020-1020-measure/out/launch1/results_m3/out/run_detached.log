@@ -1,0 +1,53 @@
+[setup] using preinstalled torch; adding transformers/accelerate/scikit-learn
+  WARNING: The scripts pip, pip3 and pip3.10 are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+WARNING: Error parsing dependencies of flatbuffers: Invalid version: '1.12.1-git20200711.33e2d80-dfsg1-0.6'
+  WARNING: The script tqdm is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script pygmentize is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script f2py is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script idna is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script markdown-it is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script typer is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx2 is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts hf and tiny-agents are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts accelerate, accelerate-config, accelerate-estimate-memory, accelerate-launch and accelerate-merge-weights are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script transformers is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+virtualenv 20.13.0+ds requires filelock<4,>=3.2, but you have filelock 4.1.0 which is incompatible.
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[setup] torch 2.7.0 cuda 12.8 device NVIDIA A100-SXM4-40GB
+[setup] transformers 5.20.2 numpy 1.26.4 scikit-learn 1.7.2 pillow 12.3.0
+[setup] Gemma2ForCausalLM resolvable
+[run] bash onbox_m3.sh
+[compile: guard] 2026-10-20T12:09:50Z uptime 143.22 s
+[guard] compile: go allowed_seconds=1800 (fits)
+decision=go
+allowed_seconds=1800
+[compile: start (allowed 1800 s)] 2026-10-20T12:09:50Z uptime 143.33 s
+[compile: configure] 2026-10-20T12:10:11Z uptime 164.16 s
+[compile: build with 30 jobs] 2026-10-20T12:10:14Z uptime 166.91 s
+[compile: done (KISS FFT, cmake from image)] 2026-10-20T12:12:07Z uptime 280.57 s
+[lmp -h and GPU check: start] 2026-10-20T12:12:07Z uptime 280.57 s
+[guard] extract: go allowed_seconds=5053 (fits)
+[lmp -h and GPU check: code 0] 2026-10-20T12:12:07Z uptime 280.77 s
+[timed dry run: start] 2026-10-20T12:12:07Z uptime 280.78 s
+[guard] dryrun: go allowed_seconds=5353 (fits)
+[timed dry run: code 0] 2026-10-20T12:12:34Z uptime 307.36 s
+[copy of the box: start] 2026-10-20T12:12:34Z uptime 307.36 s
+[guard] copy: stop allowed_seconds=0 (the copy stage and the stages that must follow need about 10558 s; 7009 s are left before the time or budget limit)
+[void] run_valid=false: stopped by the cost or time guard before the copy stage: the copy stage and the stages that must follow need about 10558 s; 7009 s are left before the time or budget limit
+[copy of the box: code 3] 2026-10-20T12:12:34Z uptime 307.46 s
+[void] run_valid=false: the run stopped with code 3: the box copy stage stopped the run
+[summary] run_valid=False endpoints=E1:PASS_ON_PARTS_PRESENT
+[finish] code 3: the box copy stage stopped the run (2026-10-20T12:12:34Z)

@@ -1,0 +1,277 @@
+
+include         ${system_dir}/in.init
+include         /home/ubuntu/m3_run/results_m3/system/in.init
+units          real
+atom_style     full
+boundary       p p p
+
+bond_style     harmonic
+angle_style    harmonic
+dihedral_style hybrid opls multi/harmonic
+
+pair_style     lj/cut/coul/long 12.0
+pair_modify    mix geometric tail yes
+kspace_style   pppm 1.0e-5
+special_bonds  lj/coul 0.0 0.0 0.5
+read_data       ${system_dir}/in.data
+read_data       /home/ubuntu/m3_run/results_m3/system/in.data
+Reading data file ...
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  11250 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  6 = max angles/atom
+  scanning dihedrals ...
+  19 = max dihedrals/atom
+  orthogonal box = (0 0 0) to (66.2788 66.2788 66.2788)
+  1 by 1 by 1 MPI processor grid
+  reading bonds ...
+  11250 bonds
+  reading angles ...
+  22500 angles
+  reading dihedrals ...
+  33750 dihedrals
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0.5     
+  special bond factors coul:  0        0        0.5     
+     4 = max # of 1-2 neighbors
+     9 = max # of 1-3 neighbors
+    18 = max # of 1-4 neighbors
+    21 = max # of special neighbors
+  special bonds CPU = 0.013 seconds
+  read_data CPU = 0.212 seconds
+include         ${system_dir}/in.settings
+include         /home/ubuntu/m3_run/results_m3/system/in.settings
+# Generated coefficient commands; keep with in.data for restart/read_data workflows.
+pair_coeff      1 1 0.066000000000000 3.500000   # ctt
+pair_coeff      2 2 0.066000000000000 3.500000   # ct
+pair_coeff      3 3 0.030000000000000 2.500000   # hct
+pair_coeff      4 4 0.026303000000000 2.500000   # hc
+bond_coeff      1 268.000000 1.529000   # CT_CH2 CT_CH3
+bond_coeff      2 268.000000 1.529000   # CT_CH2 CT_CH2
+bond_coeff      3 340.000000 1.090000   # CT_CH3 HC_CH3
+bond_coeff      4 340.000000 1.090000   # CT_CH2 HC_CH2
+angle_coeff     1 37.500000 110.700000   # CT_CH2 CT_CH3 HC_CH3
+angle_coeff     2 33.000000 107.800000   # HC_CH3 CT_CH3 HC_CH3
+angle_coeff     3 58.350000 112.700000   # CT_CH3 CT_CH2 CT_CH2
+angle_coeff     4 37.500000 110.700000   # CT_CH3 CT_CH2 HC_CH2
+angle_coeff     5 37.500000 110.700000   # CT_CH2 CT_CH2 HC_CH2
+angle_coeff     6 33.000000 107.800000   # HC_CH2 CT_CH2 HC_CH2
+angle_coeff     7 58.350000 112.700000   # CT_CH2 CT_CH2 CT_CH2
+dihedral_coeff  1 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH2 CT_CH2 CT_CH2 CT_CH3
+dihedral_coeff  2 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH3 CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  3 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH2 CT_CH2 CT_CH2 CT_CH2
+dihedral_coeff  4 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  5 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH2 CT_CH3 HC_CH3
+dihedral_coeff  6 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH CT_CH2 CT_CH2 CT_CH2
+dihedral_coeff  7 multi/harmonic 0.12399307 0.05501721 0.21434202 0.35643881 0.00000000   # CT_CH2 CT_CH CT_CH2 CT_CH2
+dihedral_coeff  8 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH2 CT_CH HC_CH
+dihedral_coeff  9 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH2 CT_CH CT_CH2 HC_CH2
+dihedral_coeff  10 opls 0.00000000 0.00000000 0.30000000 0.00000000   # CT_CH CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  11 opls 0.00000000 0.00000000 0.30000000 0.00000000   # HC_CH2 CT_CH2 CT_CH3 HC_CH3
+dihedral_coeff  12 opls 0.00000000 0.00000000 0.30000000 0.00000000   # HC_CH2 CT_CH2 CT_CH2 HC_CH2
+dihedral_coeff  13 opls 0.00000000 0.00000000 0.30000000 0.00000000   # HC_CH CT_CH CT_CH2 HC_CH2
+
+neighbor        2.0 bin
+neigh_modify    every 1 delay 0 check yes
+timestep        1
+timestep        ${timestep_fs}
+timestep        2.0
+
+thermo          ${thermo_every}
+thermo          5000
+thermo_style    custom step temp press density vol lx ly lz pe etotal
+
+# rebalance MPI domains (dilute packing)
+comm_style      tiled
+balance         1.1 rcb
+Balancing ...
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+
+min_style       cg
+minimize        1.0e-4 1.0e-6 1000 10000
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+Your simulation uses code contributions which should be cited:
+
+- GPU package (short-range, long-range and three-body potentials): doi:10.1016/j.cpc.2010.12.021, doi:10.1016/j.cpc.2011.10.012, doi:10.1016/j.cpc.2013.08.002, doi:10.1016/j.commatsci.2014.10.068, doi:10.1016/j.cpc.2016.10.020, doi:10.3233/APC200086
+
+@Article{Brown11,
+ author = {W. M. Brown and P. Wang and S. J. Plimpton and A. N. Tharrington},
+ title = {Implementing Molecular Dynamics on Hybrid High Performance Computers---Short Range Forces},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2011,
+ volume =  182,
+ pages =   {898--911},
+ doi =     {10.1016/j.cpc.2010.12.021}
+}
+
+@Article{Brown12,
+ author = {W. M. Brown and A. Kohlmeyer and S. J. Plimpton and A. N. Tharrington},
+ title = {Implementing Molecular Dynamics on Hybrid High Performance Computers - Particle-Particle Particle-Mesh},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2012,
+ volume =  183,
+ doi =     {10.1016/j.cpc.2011.10.012},
+ pages =   {449--459}
+}
+
+@Article{Brown13,
+ author = {W. M. Brown and Y. Masako},
+ title = {Implementing Molecular Dynamics on Hybrid High Performance Computers---Three-Body Potentials},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2013,
+ volume =  184,
+ pages =   {2785--2793},
+ doi =     {10.1016/j.cpc.2013.08.002},
+}
+
+@Article{Trung15,
+ author = {T. D. Nguyen and S. J. Plimpton},
+ title = {Accelerating Dissipative Particle Dynamics Simulations for Soft Matter Systems},
+ journal = {Comput.\ Mater.\ Sci.},
+ year =    2015,
+ doi =     {10.1016/j.commatsci.2014.10.068},
+ volume =  100,
+ pages =   {173--180}
+}
+
+@Article{Trung17,
+ author = {T. D. Nguyen},
+ title = {{GPU}-Accelerated {T}ersoff Potentials for Massively Parallel
+    Molecular Dynamics Simulations},
+ journal = {Comput.\ Phys.\ Commun.},
+ year =    2017,
+ doi =     {10.1016/j.cpc.2016.10.020},
+ volume =  212,
+ pages =   {113--122}
+}
+
+@inproceedings{Nikolskiy19,
+ author = {V. Nikolskiy and V. Stegailov},
+ title = {{GPU} Acceleration of Four-Site Water Models in {LAMMPS}},
+ booktitle = {Proceedings of the International Conference on Parallel
+    Computing (ParCo 2019), Prague, Czech Republic},
+ doi =     {10.3233/APC200086},
+ year =    2019
+}
+
+- Type Label Framework: https://doi.org/10.1021/acs.jpcb.3c08419
+
+@Article{Gissinger24,
+ author = {Jacob R. Gissinger, Ilia Nikiforov, Yaser Afshar, Brendon Waters, Moon-ki Choi, Daniel S. Karls, Alexander Stukowski, Wonpil Im, Hendrik Heinz, Axel Kohlmeyer, and Ellad B. Tadmor},
+ title = {Type Label Framework for Bonded Force Fields in LAMMPS},
+ journal = {J. Phys. Chem. B},
+ year =    2024,
+ volume =  128,
+ number =  13,
+ pages =   {3282–-3297}
+}
+
+CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE-CITE
+
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+Generated 6 of 6 mixed pair_coeff terms from geometric mixing rule
+Per MPI rank memory allocation (min/avg/max) = 35.45 | 35.45 | 35.45 Mbytes
+   Step          Temp          Press         Density         Volume           Lx             Ly             Lz           PotEng         TotEng    
+         0   0             -9005.487       0.29999997     291154.77      66.2788        66.2788        66.2788        2571.3986      2571.3986    
+      1000   0             -94.932905      0.29999997     291154.77      66.2788        66.2788        66.2788       -151.03676     -151.03676    
+Loop time of 16.9421 on 1 procs for 1000 steps with 11250 atoms
+
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = max iterations
+  Energy initial, next-to-last, final = 
+      2571.39861558335   -150.50750157545  -151.036756032519
+  Force two-norm initial, final = 1480.9494 21.074705
+  Force max component initial, final = 25.676661 4.1410486
+  Final line search alpha, max atom move = 0.0074475152 0.030840522
+  Iterations, force evaluations = 1000 2003
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.44979    | 0.44979    | 0.44979    |   0.0 |  2.65
+Bond    | 14.154     | 14.154     | 14.154     |   0.0 | 83.54
+Kspace  | 1.7831     | 1.7831     | 1.7831     |   0.0 | 10.52
+Neigh   | 0.085882   | 0.085882   | 0.085882   |   0.0 |  0.51
+Comm    | 0.21357    | 0.21357    | 0.21357    |   0.0 |  1.26
+Output  | 0.00010163 | 0.00010163 | 0.00010163 |   0.0 |  0.00
+Modify  | 0.00023938 | 0.00023938 | 0.00023938 |   0.0 |  0.00
+Other   |            | 0.2556     |            |       |  1.51
+
+Nlocal:          11250 ave       11250 max       11250 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:          10922 ave       10922 max       10922 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 0
+Ave neighs/atom = 0
+Ave special neighs/atom = 11.866667
+Neighbor list builds = 26
+Dangerous builds = 0
+
+velocity        all create ${T} ${seed} mom yes rot yes dist gaussian
+velocity        all create 313.15 ${seed} mom yes rot yes dist gaussian
+velocity        all create 313.15 4938466 mom yes rot yes dist gaussian
+fix             constrain_h all shake ${shake_tol} ${shake_iter} ${shake_order} m 1.008
+fix             constrain_h all shake 0.0001 ${shake_iter} ${shake_order} m 1.008
+fix             constrain_h all shake 0.0001 20 ${shake_order} m 1.008
+fix             constrain_h all shake 0.0001 20 0 m 1.008
+Finding SHAKE clusters ...
+     250 = # of size 2 clusters
+    3250 = # of size 3 clusters
+     250 = # of size 4 clusters
+       0 = # of frozen angles
+  find clusters CPU = 0.004 seconds
+# SHAKE before box-changing fixes
+fix             load_balance all balance 2000 1.05 rcb
+
+# stage 0: Langevin capped-displacement strain relaxation (reduced dt)
+neigh_modify    one 10000 page 200000
+
+timestep        ${relax_dt}
+timestep        0.5
+fix             relax_int  all nve/limit 0.1
+fix             relax_lang all langevin ${T} ${T} ${tdamp} ${seed}
+fix             relax_lang all langevin 313.15 ${T} ${tdamp} ${seed}
+fix             relax_lang all langevin 313.15 313.15 ${tdamp} ${seed}
+fix             relax_lang all langevin 313.15 313.15 100.0 ${seed}
+fix             relax_lang all langevin 313.15 313.15 100.0 4938466
+run             ${pushoff_steps}
+run             20000
+PPPM initialization ...
+  using 12-bit tables for long-range coulomb (src/lammps-stable_29Aug2024/src/kspace.cpp:342)
+  G vector (1/distance) = 0.19346211
+  grid = 20 20 20
+  stencil order = 5
+  estimated absolute RMS force accuracy = 0.0027220264
+  estimated relative force accuracy = 8.1973017e-06
+  using double precision KISS FFT
+  3d grid and FFT values/proc = 15625 8000
+ERROR: Cannot currently use pppm/gpu with fix balance. (src/lammps-stable_29Aug2024/src/GPU/pppm_gpu.cpp:118)
+Last command: run             ${pushoff_steps}

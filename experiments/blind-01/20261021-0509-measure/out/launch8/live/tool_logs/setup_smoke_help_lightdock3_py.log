@@ -1,0 +1,39 @@
+$ /lambda/nfs/metis-env-us-east-1/m4/venv/bin/lightdock3.py --help
+# exit 0 timed_out=False seconds=0.108
+--- stdout ---
+usage: lightdock3 [-h] [-f configuration_file] [-s SCORING_FUNCTION]
+                  [-sg GSO_SEED] [-t TRANSLATION_STEP] [-r ROTATION_STEP] [-V]
+                  [-c CORES] [--profile] [-mpi] [-ns NMODES_STEP] [-min]
+                  [--listscoring] [-l SWARM_LIST [SWARM_LIST ...]]
+                  setup_file steps
+
+positional arguments:
+  setup_file            Setup file name
+  steps                 number of steps of the simulation
+
+options:
+  -h, --help            show this help message and exit
+  -f configuration_file, --file configuration_file
+                        algorithm configuration file
+  -s SCORING_FUNCTION, --scoring_function SCORING_FUNCTION
+                        scoring function used
+  -sg GSO_SEED, --seed GSO_SEED
+                        seed used in the algorithm
+  -t TRANSLATION_STEP, --translation_step TRANSLATION_STEP
+                        translation step
+  -r ROTATION_STEP, --rotation_step ROTATION_STEP
+                        normalized rotation step
+  -V, -v, --version     show version
+  -c CORES, --cores CORES
+                        number of cpu cores to use
+  --profile             Output profiling data
+  -mpi, --mpi           activates the MPI parallel execution
+  -ns NMODES_STEP, --nmodes_step NMODES_STEP
+                        normalized normal modes step
+  -min, --min           activates the local minimization
+  --listscoring         list all available scoring functions
+  -l SWARM_LIST [SWARM_LIST ...], --list SWARM_LIST [SWARM_LIST ...]
+                        List of swarms to simulate
+
+--- stderr ---
+

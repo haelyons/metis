@@ -1,0 +1,29 @@
+$ /lambda/nfs/metis-env-us-east-1/m4/venv/bin/colabfold_batch --num-models 5 --num-recycle 20 --recycle-early-stop-tolerance 0.0 --model-type alphafold2_multimer_v3 --msa-mode single_sequence --num-seeds 1 --random-seed 0 --data /home/ubuntu/m4_run/data /home/ubuntu/m4_run/results_m4/out/pair_pair1_tag-m4.fasta /home/ubuntu/m4_run/results_m4/out/work_m4/af2_pair1_seed0
+# exit 1 timed_out=False seconds=45.872
+--- stdout ---
+2026-10-23 04:28:23,978 Running colabfold 1.5.5
+2026-10-23 04:28:24,469 Unable to initialize backend 'rocm': module 'jaxlib.xla_extension' has no attribute 'GpuAllocatorConfig'
+2026-10-23 04:28:24,472 Unable to initialize backend 'tpu': INTERNAL: Failed to open libtpu.so: libtpu.so: cannot open shared object file: No such file or directory
+2026-10-23 04:29:01,224 generated new fontManager
+2026-10-23 04:29:03,913 Running on GPU
+
+--- stderr ---
+Traceback (most recent call last):
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/bin/colabfold_batch", line 6, in <module>
+    sys.exit(main())
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/colabfold/batch.py", line 2031, in main
+    run(
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/colabfold/batch.py", line 1286, in run
+    from colabfold.alphafold.models import load_models_and_params
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/colabfold/alphafold/models.py", line 4, in <module>
+    import haiku
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/haiku/__init__.py", line 20, in <module>
+    from haiku import experimental
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/haiku/experimental/__init__.py", line 34, in <module>
+    from haiku._src.dot import abstract_to_dot
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/haiku/_src/dot.py", line 163, in <module>
+    @jax.linear_util.transformation
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/jax/_src/deprecations.py", line 55, in getattr
+    raise AttributeError(f"module {module!r} has no attribute {name!r}")
+AttributeError: module 'jax' has no attribute 'linear_util'
+

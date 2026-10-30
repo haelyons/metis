@@ -1,0 +1,38 @@
+$ /lambda/nfs/metis-env-us-east-1/m4/venv/bin/python3 -c 
+import json, sys
+out = {"problems": [], "found": {}}
+try:
+    import jax
+    out["found"]["jax"] = jax.__version__
+    devices = [d.platform for d in jax.devices()]
+    out["found"]["jax_devices"] = devices
+    if not any(p in ("gpu", "cuda") for p in devices):
+        out["problems"].append("jax lists no graphics-processor device")
+except Exception as exc:
+    out["problems"].append("jax unusable: %s" % exc)
+try:
+    import alphafold
+    out["found"]["alphafold"] = getattr(alphafold, "__version__", "present")
+except Exception as exc:
+    out["problems"].append("the AlphaFold-Multimer stack is unusable: %s" % exc)
+try:
+    import colabfold
+    out["found"]["colabfold"] = getattr(colabfold, "__version__", "present")
+except Exception as exc:
+    out["problems"].append("colabfold unusable: %s" % exc)
+try:
+    import openmm
+    from openmm import Platform
+    out["found"]["openmm"] = openmm.version.version
+    Platform.getPlatformByName("CUDA")
+    out["found"]["openmm_cuda"] = True
+except Exception as exc:
+    out["problems"].append("OpenMM has no CUDA platform: %s" % exc)
+print(json.dumps(out))
+
+# exit 0 timed_out=False seconds=10.600
+--- stdout ---
+{"problems": [], "found": {"jax": "0.4.35", "jax_devices": ["gpu"], "alphafold": "present", "colabfold": "present", "openmm": "8.1.1.dev-54c1306", "openmm_cuda": true}}
+
+--- stderr ---
+

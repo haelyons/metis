@@ -1,0 +1,150 @@
+[setup] using preinstalled torch; adding transformers/accelerate/scikit-learn
+  WARNING: The scripts pip, pip3 and pip3.10 are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+WARNING: Error parsing dependencies of flatbuffers: Invalid version: '1.12.1-git20200711.33e2d80-dfsg1-0.6'
+  WARNING: The script tqdm is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script pygmentize is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script f2py is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script idna is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script markdown-it is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script typer is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx2 is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts hf and tiny-agents are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts accelerate, accelerate-config, accelerate-estimate-memory, accelerate-launch and accelerate-merge-weights are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script transformers is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+virtualenv 20.13.0+ds requires filelock<4,>=3.2, but you have filelock 4.1.0 which is incompatible.
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[setup] torch 2.7.0 cuda 12.8 device NVIDIA A10
+[setup] transformers 5.20.2 numpy 1.26.4 scikit-learn 1.7.2 pillow 12.3.0
+[setup] Gemma2ForCausalLM resolvable
+[run] bash onbox_m1.sh
+[onbox 03:25:53] start in /home/ubuntu/m1_run on 129-159-79-123; Python 3.10.12; 30 vCPUs
+[onbox 03:25:53] time cap 5400s; parent 'timeout' started 24s ago; stages must end by epoch 1792471949
+[onbox 03:25:53] price USD 1.29 per hour; budget left USD 4; instance type gpu_1x_a10
+[guard] before preflight: projected spend USD 0.179 is below the budget USD 4.000 (box up 0.038 h, price USD 1.29/h)
+[guard] before pip: projected spend USD 0.308 is below the budget USD 4.000 (box up 0.038 h, price USD 1.29/h)
+[versions before_pip] jax: module version 0.6.0 (read from jax.__version__); installed metadata 0.6.0
+[versions before_pip] jaxlib: module version 0.6.0 (read from jaxlib.__version__); installed metadata 0.6.0
+[versions before_pip] numpy: module version 1.26.4 (read from numpy.__version__); installed metadata 1.26.4
+[versions before_pip] pyreadr: module version None (read from None); installed metadata None; import failed: ModuleNotFoundError("No module named 'pyreadr'")
+[versions before_pip] pandas: module version None (read from None); installed metadata 1.3.5
+[versions before_pip] narwhals: module version None (read from None); installed metadata None
+[onbox 03:25:54] python3 -m pip install --user pyreadr (jax, jaxlib and numpy stay as the image has them)
+Installing collected packages: narwhals, pyreadr
+
+Successfully installed narwhals-2.27.1 pyreadr-0.5.7
+[versions after_pip] jax: module version 0.6.0 (read from jax.__version__); installed metadata 0.6.0
+[versions after_pip] jaxlib: module version 0.6.0 (read from jaxlib.__version__); installed metadata 0.6.0
+[versions after_pip] numpy: module version 1.26.4 (read from numpy.__version__); installed metadata 1.26.4
+[versions after_pip] pyreadr: module version 0.5.7 (read from pyreadr.__version__); installed metadata 0.5.7
+[versions after_pip] pandas: module version None (read from None); installed metadata 1.3.5
+[versions after_pip] narwhals: module version None (read from None); installed metadata 2.27.1
+[versions] jax, jaxlib and numpy are unchanged
+[gpu-check] jax 0.6.0; jaxlib 0.6.0; devices [CudaDevice(id=0)]
+[guard] before r_install: projected spend USD 0.438 is below the budget USD 4.000 (box up 0.040 h, price USD 1.29/h)
+[onbox 03:25:57] sudo apt-get install -y r-base-core gfortran (one attempt)
+[onbox 03:26:03] apt-get exit 100; R CMD INSTALL exit not_tried (a failure means the anchor uses the page value)
+onbox_m1.sh: line 149: R: command not found
+GNU Fortran (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+onbox_m1.sh: line 151: Rscript: command not found
+[onbox 03:26:04] wrote results_m1/out/env.txt
+[guard] before extract: projected spend USD 0.209 is below the budget USD 4.000 (box up 0.042 h, price USD 1.29/h)
+[onbox 03:26:04] stage extract: python3 -u run_m1.py extract --out results_m1/out
+[extract] second reading of the data file with pyreadr: {'ran': True, 'pyreadr_version': '0.5.7', 'values_agree': True, 'dates_agree': True}
+[extract] 10593 days 1984-01-01..2012-12-31; ranges {'X1': [4.58562e-05, 21807.3], 'X2': [-10903.6, 10903.6], 'X3': [4.58562e-05, 21807.3], 'X4': [0.5, 20.0]}; 2684 parameter vectors (seed 0)
+[onbox 03:26:05] stage extract exit 0
+[guard] before anchor_airgr: projected spend USD 0.209 is below the budget USD 4.000 (box up 0.042 h, price USD 1.29/h)
+[onbox 03:26:05] stage anchor_airgr: python3 -u run_m1.py generate --part anchor_airgr --out results_m1/out
+[record] E1: NOT_RUN (run_valid=True)
+[record] I1: NOT_RUN (run_valid=True)
+[onbox 03:26:05] stage anchor_airgr exit 0
+[guard] before anchor_jax: projected spend USD 0.248 is below the budget USD 4.000 (box up 0.042 h, price USD 1.29/h)
+[onbox 03:26:05] stage anchor_jax: python3 -u run_m1.py generate --part anchor_jax --out results_m1/out
+[anchor_jax] gpu anchor_cal: NSE 0.4947751841761373 MARE None
+[anchor_jax] gpu generalist_cal: NSE 0.3359841691845944 MARE None
+[anchor_jax] gpu michel_val: NSE 0.5699305023305035 MARE None
+[anchor_jax] cpu anchor_cal: NSE 0.4947744556743169 MARE None
+[anchor_jax] cpu generalist_cal: NSE 0.33598392990692605 MARE None
+[anchor_jax] cpu michel_val: NSE 0.5699305266527167 MARE None
+[record] E2: PASS (page value only; no independent code ran) (run_valid=True)
+[record] I2: PASS (page value only; no independent code ran) (run_valid=True)
+[onbox 03:26:08] stage anchor_jax exit 0
+[guard] before timers: projected spend USD 0.249 is below the budget USD 4.000 (box up 0.043 h, price USD 1.29/h)
+[onbox 03:26:08] stage timers: python3 -u run_m1.py generate --part timers --out results_m1/out
+[record] I3: PASS (run_valid=True)
+[record] I4: PASS (run_valid=True)
+[onbox 03:26:25] stage timers exit 0
+[guard] before timing_gpu: projected spend USD 0.319 is below the budget USD 4.000 (box up 0.047 h, price USD 1.29/h)
+[onbox 03:26:25] stage timing_gpu: python3 -u run_m1.py generate --part timing --backend gpu --out results_m1/out
+[timing] gpu 268 chains: median 77.314 ms over 30 passes; identical chains 77.149 ms
+[timing] gpu 1340 chains: median 82.451 ms over 30 passes; identical chains 82.246 ms
+[timing] gpu 2684 chains: median 88.361 ms over 30 passes; identical chains 87.669 ms
+[onbox 03:26:35] stage timing_gpu exit 0
+[guard] before timing_cpu: projected spend USD 0.581 is below the budget USD 4.000 (box up 0.050 h, price USD 1.29/h)
+[onbox 03:26:36] stage timing_cpu: python3 -u run_m1.py generate --part timing --backend cpu --out results_m1/out
+[timing] cpu 268 chains: median 131.119 ms over 30 passes; identical chains 134.002 ms
+[timing] cpu 1340 chains: median 583.162 ms over 30 passes; identical chains 600.413 ms
+[timing] cpu 2684 chains: median 1037.500 ms over 30 passes; identical chains 1056.946 ms
+[onbox 03:27:34] stage timing_cpu exit 0
+[guard] before probe_gpu: projected spend USD 0.473 is below the budget USD 4.000 (box up 0.067 h, price USD 1.29/h)
+[onbox 03:27:34] stage probe_gpu: python3 -u run_m1.py generate --part probe --backend gpu --out results_m1/out
+[probe] gpu seed 1: 88.621 ms per iteration
+[probe] gpu seed 2: 88.683 ms per iteration
+[probe] gpu seed 3: 88.674 ms per iteration
+[onbox 03:32:04] stage probe_gpu exit 0
+[guard] before probe_cpu: projected spend USD 0.957 is below the budget USD 4.000 (box up 0.142 h, price USD 1.29/h)
+[onbox 03:32:04] stage probe_cpu: python3 -u run_m1.py generate --part probe --backend cpu --out results_m1/out
+[probe] cpu seed 1: 1080.287 ms per iteration
+[probe] cpu seed 2: 1071.003 ms per iteration
+[probe] cpu seed 3: 1074.263 ms per iteration
+[onbox 04:26:00] stage probe_cpu exit 0
+[guard] before endpoints: projected spend USD 1.497 is below the budget USD 4.000 (box up 1.040 h, price USD 1.29/h)
+[onbox 04:26:00] stage endpoints: python3 -u run_m1.py endpoints --out results_m1/out
+[record] I5: PASS (run_valid=True)
+[planted check in a scratch folder; not this run] [record] E6: pass (run_valid=True)
+[planted check in a scratch folder; not this run] [run_valid] set false: card gate E6 failed: main_run_hours 6.1000 > 6
+[planted check in a scratch folder; not this run] [record] E6: Stop and replan: full Bayesian 671 is not affordable on one GPU (run_valid=False)
+[planted check in a scratch folder; not this run] [record] E7: planted follow-up record (run_valid=False)
+[record] I6: PASS (run_valid=True)
+[record] I7: PASS (run_valid=True)
+[record] E3: REFUTED (run_valid=True)
+[record] E4: REFUTED (run_valid=True)
+[record] E5: if_not (run_valid=True)
+[record] E6: pass (run_valid=True)
+[record] E7: REPORT_ONLY: linear (run_valid=True)
+[endpoints] done; run_valid=True
+[summary] wrote m1_summary.json: run_valid=True, 14 records, 0 missing
+[onbox 04:26:00] stage endpoints exit 0
+[onbox 04:26:00] all stages finished; run validity:
+{
+ "events": [
+  {
+   "event": "label",
+   "label": "anchor by page value",
+   "utc": "2026-10-20T03:26:05+00:00"
+  }
+ ],
+ "incomplete": false,
+ "labels": [
+  "anchor by page value"
+ ],
+ "run_valid": true,
+ "tag": "m1",
+ "timing_labels": [],
+ "updated_utc": "2026-10-20T03:26:05+00:00",
+ "void_reasons": []
+}
+[summary] wrote m1_summary.json: run_valid=True, 14 records, 0 missing
+[onbox 04:26:00] RUN_DONE rc=0

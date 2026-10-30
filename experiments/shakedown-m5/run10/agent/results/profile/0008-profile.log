@@ -1,0 +1,90 @@
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- The CUDA compiler identification is NVIDIA 12.8.93
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - failed
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc - broken
+CMake Error at /usr/share/cmake-3.28/Modules/CMakeTestCCompiler.cmake:67 (message):
+  The C compiler
+
+    "/usr/bin/cc"
+
+  is not able to compile a simple test program.
+
+  It fails with the following output:
+
+    Change Dir: '/tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/build/CMakeFiles/CMakeScratch/TryCompile-py86AM'
+    
+    Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_aab7b/fast
+    /usr/bin/gmake  -f CMakeFiles/cmTC_aab7b.dir/build.make CMakeFiles/cmTC_aab7b.dir/build
+    gmake[1]: Entering directory '/tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/build/CMakeFiles/CMakeScratch/TryCompile-py86AM'
+    Building C object CMakeFiles/cmTC_aab7b.dir/testCCompiler.c.o
+    /usr/bin/cc    -o CMakeFiles/cmTC_aab7b.dir/testCCompiler.c.o -c /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/build/CMakeFiles/CMakeScratch/TryCompile-py86AM/testCCompiler.c
+    Linking C executable cmTC_aab7b
+    /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_aab7b.dir/link.txt --verbose=1
+    /usr/bin/cc /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o -pthread -Wl,--wrap=cudaLaunchKernel -Wl,--wrap=cudaMemcpyAsync -Wl,--wrap=cudaMemcpy -Wl,--wrap=cudaMalloc -Wl,--wrap=cudaFree -Wl,--wrap=cudaDeviceReset  CMakeFiles/cmTC_aab7b.dir/testCCompiler.c.o -o cmTC_aab7b 
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o: in function `check(cudaError) [clone .part.0]':
+    timing.cpp:(.text+0x157): undefined reference to `cudaGetErrorString'
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o: in function `__wrap_cudaLaunchKernel':
+    timing.cpp:(.text+0x232): undefined reference to `cudaEventCreate'
+    /usr/bin/ld: timing.cpp:(.text+0x243): undefined reference to `cudaEventCreate'
+    /usr/bin/ld: timing.cpp:(.text+0x258): undefined reference to `cudaEventRecord'
+    /usr/bin/ld: timing.cpp:(.text+0x283): undefined reference to `cudaLaunchKernel'
+    /usr/bin/ld: timing.cpp:(.text+0x29a): undefined reference to `cudaEventRecord'
+    /usr/bin/ld: timing.cpp:(.text+0x2ab): undefined reference to `cudaEventSynchronize'
+    /usr/bin/ld: timing.cpp:(.text+0x2c7): undefined reference to `cudaEventElapsedTime'
+    /usr/bin/ld: timing.cpp:(.text+0x2d8): undefined reference to `cudaEventDestroy'
+    /usr/bin/ld: timing.cpp:(.text+0x2e9): undefined reference to `cudaEventDestroy'
+    /usr/bin/ld: timing.cpp:(.text+0x3f4): undefined reference to `std::__throw_system_error(int)'
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o: in function `__wrap_cudaMemcpyAsync':
+    timing.cpp:(.text+0x577): undefined reference to `cudaEventCreate'
+    /usr/bin/ld: timing.cpp:(.text+0x589): undefined reference to `cudaEventCreate'
+    /usr/bin/ld: timing.cpp:(.text+0x5a0): undefined reference to `cudaEventRecord'
+    /usr/bin/ld: timing.cpp:(.text+0x5bd): undefined reference to `cudaMemcpyAsync'
+    /usr/bin/ld: timing.cpp:(.text+0x5d4): undefined reference to `cudaEventRecord'
+    /usr/bin/ld: timing.cpp:(.text+0x5e6): undefined reference to `cudaEventSynchronize'
+    /usr/bin/ld: timing.cpp:(.text+0x605): undefined reference to `cudaEventElapsedTime'
+    /usr/bin/ld: timing.cpp:(.text+0x617): undefined reference to `cudaEventDestroy'
+    /usr/bin/ld: timing.cpp:(.text+0x629): undefined reference to `cudaEventDestroy'
+    /usr/bin/ld: timing.cpp:(.text+0x74d): undefined reference to `std::__throw_system_error(int)'
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o: in function `__wrap_cudaMemcpy':
+    timing.cpp:(.text+0x8d6): undefined reference to `cudaEventCreate'
+    /usr/bin/ld: timing.cpp:(.text+0x8e8): undefined reference to `cudaEventCreate'
+    /usr/bin/ld: timing.cpp:(.text+0x8ff): undefined reference to `cudaEventRecord'
+    /usr/bin/ld: timing.cpp:(.text+0x917): undefined reference to `cudaMemcpy'
+    /usr/bin/ld: timing.cpp:(.text+0x92e): undefined reference to `cudaEventRecord'
+    /usr/bin/ld: timing.cpp:(.text+0x940): undefined reference to `cudaEventSynchronize'
+    /usr/bin/ld: timing.cpp:(.text+0x95f): undefined reference to `cudaEventElapsedTime'
+    /usr/bin/ld: timing.cpp:(.text+0x971): undefined reference to `cudaEventDestroy'
+    /usr/bin/ld: timing.cpp:(.text+0x983): undefined reference to `cudaEventDestroy'
+    /usr/bin/ld: timing.cpp:(.text+0xaad): undefined reference to `std::__throw_system_error(int)'
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o: in function `__wrap_cudaMalloc':
+    timing.cpp:(.text+0xc26): undefined reference to `cudaMalloc'
+    /usr/bin/ld: timing.cpp:(.text+0xd04): undefined reference to `std::__throw_system_error(int)'
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o: in function `__wrap_cudaFree':
+    timing.cpp:(.text+0xdae): undefined reference to `cudaFree'
+    /usr/bin/ld: timing.cpp:(.text+0xe8c): undefined reference to `std::__throw_system_error(int)'
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o: in function `__wrap_cudaDeviceReset':
+    timing.cpp:(.text+0xf28): undefined reference to `cudaDeviceSynchronize'
+    /usr/bin/ld: timing.cpp:(.text+0xf35): undefined reference to `cudaDeviceReset'
+    /usr/bin/ld: timing.cpp:(.text+0x101e): undefined reference to `std::__throw_system_error(int)'
+    /usr/bin/ld: /tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/timing.o:(.data.rel.local.DW.ref.__gxx_personality_v0[DW.ref.__gxx_personality_v0]+0x0): undefined reference to `__gxx_personality_v0'
+    collect2: error: ld returned 1 exit status
+    gmake[1]: *** [CMakeFiles/cmTC_aab7b.dir/build.make:99: cmTC_aab7b] Error 1
+    gmake[1]: Leaving directory '/tmp/m5-0cbd0788-708b-4a08-9878-b4e271633874/out/profile/build/CMakeFiles/CMakeScratch/TryCompile-py86AM'
+    gmake: *** [Makefile:127: cmTC_aab7b/fast] Error 2
+    
+    
+
+  
+
+  CMake will not be able to correctly generate this project.
+Call Stack (most recent call first):
+  CMakeLists.txt:5 (project)
+
+
+-- Configuring incomplete, errors occurred!

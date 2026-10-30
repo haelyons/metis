@@ -1,0 +1,12 @@
+/usr/bin/nvcc
+/usr/include/cuda_runtime.h
+/usr/lib/x86_64-linux-gnu/libcudart.so
+Traceback (most recent call last):
+  File "<stdin>", line 79, in <module>
+  File "/usr/lib/python3.10/pathlib.py", line 960, in __new__
+    self = cls._from_parts(args)
+  File "/usr/lib/python3.10/pathlib.py", line 594, in _from_parts
+    drv, root, parts = self._parse_args(args)
+  File "/usr/lib/python3.10/pathlib.py", line 578, in _parse_args
+    a = os.fspath(a)
+TypeError: expected str, bytes or os.PathLike object, not list

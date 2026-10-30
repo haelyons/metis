@@ -1,0 +1,74 @@
+-- The CXX compiler identification is GNU 11.4.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found Git: /usr/bin/git (found version "2.34.1") 
+-- Running check for auto-generated files from make-based build system
+-- Checking for module 'mpi-cxx'
+--   No package 'mpi-cxx' found
+-- Looking for C++ include omp.h
+-- Looking for C++ include omp.h - found
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Found OpenMP: TRUE (found version "4.5") found components: CXX 
+-- Found GZIP: /usr/bin/gzip  
+-- Found FFMPEG: /usr/bin/ffmpeg  
+-- Found PkgConfig: /usr/bin/pkg-config (found version "0.29.2") 
+-- Checking for module 'fftw3'
+--   No package 'fftw3' found
+-- Looking for C++ include cmath
+-- Looking for C++ include cmath - found
+-- Looking for C++ include pthread.h
+-- Looking for C++ include pthread.h - found
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+-- Found Threads: TRUE  
+-- Found CUDA: /usr (found version "12.8") 
+-- Found OpenMP_CXX: -fopenmp (found version "4.5") 
+-- Generating style headers...
+-- Generating package headers...
+-- Generating lmpinstalledpkgs.h...
+-- Found Python3: /usr/bin/python3.10 (found version "3.10.12") found components: Interpreter 
+-- Could NOT find ClangFormat (missing: ClangFormat_EXECUTABLE) (Required is at least version "11.0")
+-- The following tools and libraries have been found and configured:
+ * Git
+ * PkgConfig
+ * Threads
+ * CUDA
+ * OpenMP
+ * Python3
+
+-- <<< Build configuration >>>
+   LAMMPS Version:   20240829 
+   Operating System: Linux Ubuntu" 22.04
+   CMake Version:    3.22.1
+   Build type:       Release
+   Install path:     /home/ubuntu/m3_run/engine
+   Generator:        Unix Makefiles using /usr/bin/gmake
+-- Enabled packages: EXTRA-COMPUTE;GPU;KSPACE;MOLECULE;OPENMP;RIGID
+-- <<< Compilers and Flags: >>>
+-- C++ Compiler:     /usr/bin/c++
+      Type:          GNU
+      Version:       11.4.0
+      C++ Standard:  11
+      C++ Flags:     -O3 -DNDEBUG
+      Defines:       LAMMPS_SMALLBIG;LAMMPS_MEMALIGN=64;LAMMPS_OMP_COMPAT=4;LAMMPS_GZIP;LAMMPS_FFMPEG;FFT_KISS;LMP_OPENMP;LMP_GPU
+-- <<< Linker flags: >>>
+-- Executable name:  lmp
+-- Static library flags:    
+-- <<< GPU package settings >>>
+-- GPU API:                  CUDA
+-- CUDA Compiler:            /usr/bin/nvcc
+-- GPU default architecture: sm_80
+-- GPU binning with CUDPP:   OFF
+-- CUDA MPS support:         OFF
+-- GPU precision:            MIXED
+-- <<< FFT settings >>>
+-- Primary FFT lib:  KISS
+-- Using double precision FFTs
+-- Using non-threaded FFTs
+-- Using builtin distributed FFT algorithms
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/ubuntu/m3_run/engine_src/build

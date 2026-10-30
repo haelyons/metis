@@ -1,0 +1,146 @@
+[setup] using preinstalled torch; adding transformers/accelerate/scikit-learn
+  WARNING: The scripts pip, pip3 and pip3.10 are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+WARNING: Error parsing dependencies of flatbuffers: Invalid version: '1.12.1-git20200711.33e2d80-dfsg1-0.6'
+  WARNING: The script tqdm is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script pygmentize is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script f2py is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script idna is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script markdown-it is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script typer is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx2 is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts hf and tiny-agents are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts accelerate, accelerate-config, accelerate-estimate-memory, accelerate-launch and accelerate-merge-weights are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script transformers is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+virtualenv 20.13.0+ds requires filelock<4,>=3.2, but you have filelock 4.1.0 which is incompatible.
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[setup] torch 2.7.0 cuda 12.8 device NVIDIA A100-SXM4-40GB
+[setup] transformers 5.20.2 numpy 1.26.4 scikit-learn 1.7.2 pillow 12.3.0
+[setup] Gemma2ForCausalLM resolvable
+[run] bash onbox_m3.sh
+[compile: guard] 2026-10-20T12:34:20Z uptime 210.14 s
+[guard] compile: go allowed_seconds=1800 (fits)
+decision=go
+allowed_seconds=1800
+[compile: start (allowed 1800 s)] 2026-10-20T12:34:20Z uptime 210.25 s
+[compile: configure] 2026-10-20T12:34:41Z uptime 231.03 s
+[compile: build with 30 jobs] 2026-10-20T12:34:44Z uptime 233.81 s
+[compile: done (KISS FFT, cmake from image)] 2026-10-20T12:36:37Z uptime 347.22 s
+[lmp -h and GPU check: start] 2026-10-20T12:36:37Z uptime 347.22 s
+[guard] extract: go allowed_seconds=6753 (fits)
+[lmp -h and GPU check: code 0] 2026-10-20T12:36:38Z uptime 347.42 s
+[timed dry run: start] 2026-10-20T12:36:38Z uptime 347.42 s
+[guard] dryrun: go allowed_seconds=7053 (fits)
+[timed dry run: code 0] 2026-10-20T12:37:04Z uptime 374.05 s
+[copy of the box: start] 2026-10-20T12:37:04Z uptime 374.06 s
+[guard] copy: go allowed_seconds=2279 (fits)
+[copy of the box: code 0] 2026-10-20T12:37:04Z uptime 374.19 s
+[equilibration: start] 2026-10-20T12:37:04Z uptime 374.19 s
+[guard] equilibrate: go allowed_seconds=6861 (fits)
+[equilibrate] the first attempt stopped on a load-balancing line: ERROR: Cannot currently use pppm/gpu with fix balance. (src/lammps-stable_29Aug2024/src/GPU/pppm_gpu.cpp:118)
+[guard] equilibrate: go allowed_seconds=6844 (fits)
+[equilibration: code 0] 2026-10-20T13:24:00Z uptime 3190.27 s
+[run a: start] 2026-10-20T13:24:00Z uptime 3190.27 s
+[guard] prod_a: go allowed_seconds=5074 (fits)
+[run a: code 0] 2026-10-20T13:37:01Z uptime 3970.94 s
+[run b: start] 2026-10-20T13:37:01Z uptime 3970.94 s
+[guard] prod_b: go allowed_seconds=4294 (fits)
+[run b: code 0] 2026-10-20T13:46:31Z uptime 4540.68 s
+[run c: start] 2026-10-20T13:46:31Z uptime 4540.69 s
+[guard] prod_c: go allowed_seconds=3724 (fits)
+[run c: code 0] 2026-10-20T13:55:54Z uptime 5103.99 s
+[endpoints: start] 2026-10-20T13:55:54Z uptime 5103.99 s
+[guard] endpoints: go allowed_seconds=3221 (fits)
+[summary] run_valid=True endpoints=E1:PASS_ON_PARTS_PRESENT, E2:WITHIN_BAND, E3:REFUTED_BELOW, E3b:FAIL, E3c:ABOVE_CAP, E4:REPORTED, E5:REPORTED, E6:RUNS, E7:REPORTED, E8:PASS
+[endpoints: code 0] 2026-10-20T13:55:54Z uptime 5104.16 s
+[result] files in results_m3/out/:
+    RUN_VALID.json
+    cmake_build.log
+    cmake_configure.log
+    cmake_install.log
+    compile_record.txt
+    control-I10_tag-m3.json
+    control-I1_tag-m3.json
+    control-I2_tag-m3.json
+    control-I3_tag-m3.json
+    control-I4_tag-m3.json
+    control-I5_tag-m3.json
+    control-I6_tag-m3.json
+    control-I7_tag-m3.json
+    control-I8_tag-m3.json
+    control-I9_tag-m3.json
+    control-R1_tag-m3.json
+    control-deck_edits_tag-m3.json
+    control-engine_packages_tag-m3.json
+    control-equilibrate_edit3_tag-m3.json
+    decks
+    density_npt_T313.15K_run1.dat
+    download.log
+    dryrun.lammps.log
+    dryrun.screen.txt
+    dryrun_t0.epoch
+    dryrun_t1.epoch
+    endpoint-E1_tag-m3.json
+    endpoint-E2_tag-m3.json
+    endpoint-E3_tag-m3.json
+    endpoint-E3b_tag-m3.json
+    endpoint-E3c_tag-m3.json
+    endpoint-E4_tag-m3.json
+    endpoint-E5_tag-m3.json
+    endpoint-E6_tag-m3.json
+    endpoint-E7_tag-m3.json
+    endpoint-E8_tag-m3.json
+    env.txt
+    equilibrate.deck.log
+    equilibrate.lammps.log
+    equilibrate.screen.txt
+    equilibrate_attempt1.deck.log
+    equilibrate_attempt1.lammps.log
+    equilibrate_attempt1.screen.txt
+    guard_rows.jsonl
+    labels.json
+    lmp_help.txt
+    lmp_ldd.txt
+    m3_summary.json
+    nvidia_smi.txt
+    nvidia_smi_query.txt
+    onbox_m3.log
+    prod_a.HeatFlux.head_tail.txt
+    prod_a.Stress.head_tail.txt
+    prod_a.deck.log
+    prod_a.lammps.log
+    prod_a.screen.txt
+    prod_a.volume.txt
+    prod_b.Stress.head_tail.txt
+    prod_b.deck.log
+    prod_b.lammps.log
+    prod_b.screen.txt
+    prod_b.volume.txt
+    prod_c.deck.log
+    prod_c.lammps.log
+    prod_c.screen.txt
+    prod_c.volume.txt
+    raw_runs.jsonl
+    raw_thermo.jsonl
+    run-copy_tag-m3.json
+    run-dryrun_tag-m3.json
+    run-equilibrate_tag-m3.json
+    run-prod_a_tag-m3.json
+    run-prod_b_tag-m3.json
+    run-prod_c_tag-m3.json
+    stages.json
+    toolchain_versions.txt
+[summary] run_valid=True endpoints=E1:PASS_ON_PARTS_PRESENT, E2:WITHIN_BAND, E3:REFUTED_BELOW, E3b:FAIL, E3c:ABOVE_CAP, E4:REPORTED, E5:REPORTED, E6:RUNS, E7:REPORTED, E8:PASS
+[finish] code 0: every stage finished (2026-10-20T13:55:54Z)

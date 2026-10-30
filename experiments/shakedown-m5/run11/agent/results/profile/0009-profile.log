@@ -1,0 +1,35 @@
+Get:1 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease [1477 B]
+Get:2 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  Packages [28.0 kB]
+Fetched 29.5 kB in 0s (283 kB/s)
+Reading package lists...
+Reading package lists...
+Building dependency tree...
+Reading state information...
+E: Unable to locate package nsight-systems-cli
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Some packages could not be installed. This may mean that you have
+requested an impossible situation or if you are using the unstable
+distribution that some required packages have not yet been created
+or been moved out of Incoming.
+The following information may help to resolve the situation:
+
+The following packages have unmet dependencies:
+ nsight-systems-2024.6.2 : Depends: libxcb-xinerama0 but it is not installable
+                           Depends: libxcb-icccm4 but it is not installable
+                           Depends: libxcb-image0 but it is not installable
+                           Depends: libxcb-keysyms1 but it is not installable
+                           Depends: libxcb-render-util0 but it is not installable
+                           Depends: libxkbcommon-x11-0 but it is not installable
+                           Depends: libxcb-xinput0 but it is not installable
+                           Depends: libxcb-cursor0 but it is not installable
+                           Depends: libnss3 but it is not installable
+                           Depends: libopengl0 but it is not installable
+E: Unable to correct problems, you have held broken packages.
+Traceback (most recent call last):
+  File "<stdin>", line 80, in <module>
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['sudo', '-n', 'apt-get', '-o', 'Dir::Etc::sourcelist=/dev/null', '-o', 'Dir::Etc::sourceparts=/tmp/m5-nsys-an0o81au/sources.list.d', 'install', '-y', '--no-install-recommends', '/tmp/m5-a9cc9e5a-222a-41f1-8f2b-8a47a01bfe49/out/profile/nsight-systems.deb']' returned non-zero exit status 100.
+M5_PROFILER_INFRA

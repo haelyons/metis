@@ -1,0 +1,48 @@
+$ apt-cache show build-essential
+# exit 0 timed_out=False seconds=0.060
+--- stdout ---
+Package: build-essential
+Architecture: amd64
+Version: 12.9ubuntu3
+Priority: optional
+Section: devel
+Origin: Ubuntu
+Maintainer: Ubuntu Developers <ubuntu-devel-discuss@lists.ubuntu.com>
+Original-Maintainer: Matthias Klose <doko@debian.org>
+Bugs: https://bugs.launchpad.net/ubuntu/+filebug
+Installed-Size: 21
+Depends: libc6-dev | libc-dev, gcc (>= 4:10.2), g++ (>= 4:10.2), make, dpkg-dev (>= 1.17.11)
+Filename: pool/main/b/build-essential/build-essential_12.9ubuntu3_amd64.deb
+Size: 4744
+MD5sum: 8f82837be1c86fc816b51ac9b519268a
+SHA1: 3f4d2e9af10adff4b07c92df6b7b697bc0be8dd2
+SHA256: 1e464c41488d154b9f5ca19d2e9ac8b18913ae16e3dca713c3ba0223fae2cccc
+SHA512: 65452b51286fa167cb80ffbecbb9c4fb94324aefe19a792a3996a62c24cfefc937ddbcabaaab6f94c507aa0fabf20eb8e4a90e6f88a1ee89de90a4eb3f9cc65e
+Description-en: Informational list of build-essential packages
+ If you do not plan to build Debian packages, you don't need this
+ package.  Starting with dpkg (>= 1.14.18) this package is required
+ for building Debian packages.
+ .
+ This package contains an informational list of packages which are
+ considered essential for building Debian packages.  This package also
+ depends on the packages on that list, to make it easy to have the
+ build-essential packages installed.
+ .
+ If you have this package installed, you only need to install whatever
+ a package specifies as its build-time dependencies to build the
+ package.  Conversely, if you are determining what your package needs
+ to build-depend on, you can always leave out the packages this
+ package depends on.
+ .
+ This package is NOT the definition of what packages are
+ build-essential; the real definition is in the Debian Policy Manual.
+ This package contains merely an informational list, which is all
+ most people need.   However, if this package and the manual disagree,
+ the manual is correct.
+Description-md5: 90ef0ef86cafda0bd16f746eb621d9da
+Task: ubuntustudio-video, ubuntu-mate-core, ubuntu-mate-desktop
+Build-Essential: yes
+
+
+--- stderr ---
+

@@ -1,0 +1,19 @@
+[args] intake: PASS
+[args] reproduce: PASS
+[args] profile: PASS
+[args] seal: PASS
+[args] propose: PASS
+node:fs:2422
+    return binding.writeFileUtf8(
+                   ^
+
+Error: ENOSPC: no space left on device, write
+    at Object.writeFileSync (node:fs:2422:20)
+    at /home/hal/dev/interp/metis/dut/pipeline/idea/wf.js:297:6
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  errno: -28,
+  code: 'ENOSPC',
+  syscall: 'write'
+}
+
+Node.js v24.18.0

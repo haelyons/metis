@@ -1,0 +1,6 @@
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+configuration: platform=CUDA precision=single DeterministicForces=true gpu_count=1 CUDA_VISIBLE_DEVICES=0 replicas=8 steps=25000 seed0=1000 step_fs=4 energy_interval=250 atoms=23558 PME cutoff_nm=0.9 HBonds hydrogen_mass_amu=1.5 LangevinMiddleIntegrator temperature_K=300 friction_per_ps=1 constraint_tolerance=1e-5
+total_wall_s: 105.273
+aggregate_ns_per_day: 656.6

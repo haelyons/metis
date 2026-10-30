@@ -1,0 +1,314 @@
+[setup] using preinstalled torch; adding transformers/accelerate/scikit-learn
+  WARNING: The scripts pip, pip3 and pip3.10 are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+WARNING: Error parsing dependencies of flatbuffers: Invalid version: '1.12.1-git20200711.33e2d80-dfsg1-0.6'
+  WARNING: The script tqdm is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script pygmentize is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script f2py is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script idna is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script markdown-it is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script typer is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx2 is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts hf and tiny-agents are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts accelerate, accelerate-config, accelerate-estimate-memory, accelerate-launch and accelerate-merge-weights are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script transformers is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+virtualenv 20.13.0+ds requires filelock<4,>=3.2, but you have filelock 4.1.0 which is incompatible.
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[setup] torch 2.7.0 cuda 12.8 device NVIDIA A100-SXM4-40GB
+[setup] transformers 5.20.2 numpy 1.26.4 scikit-learn 1.7.2 pillow 12.3.0
+[setup] Gemma2ForCausalLM resolvable
+[run] bash onbox_m2.sh
+[onbox] start 2026-10-20T09:51:40Z REMOTE_TIMEOUT=3600s PRICE_USD_PER_HOUR=1.99 BUDGET_LEFT_USD=6 INSTANCE_TYPE=gpu_1x_a100_sxm4 elapsed=28s
+[onbox] stages: build gpucheck anchor timers residual_sweep thomas_gpu pcr_gpu cusparse_gpu thomas_batched_gpu launch_probe cpu_dgtsv endpoints
+[onbox] stage build: cap 3482s
+[m2 09:51:41] stage build start
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[m2 09:51:41] compile: /usr/bin/nvcc -O3 -shared -Xcompiler -fPIC -o results_m2/build/libm2.so results_m2/build/m2_kernels.cu -lcusparse -lcudart -arch=sm_80
+[m2 09:51:43] record toolchain: PASS
+[m2 09:51:43] stage build end rc=0
+[onbox] stage gpucheck: cap 3480s
+[m2 09:51:43] stage gpucheck start
+[m2 09:51:43] record gpu_check: PASS
+[m2 09:51:43] stage gpucheck end rc=0
+[onbox] stage anchor: cap 3480s
+[m2 09:51:44] stage anchor start
+[m2 09:51:44] record I2: PASS
+[m2 09:51:44] record I3: PASS
+[m2 09:51:44] record I4: PASS
+[m2 09:51:44] record I5: PASS
+[m2 09:51:44] record I6: PASS
+[m2 09:51:44] record I7: PASS
+[m2 09:51:44] record I8: PASS
+[m2 09:51:44] record I9: PASS
+[m2 09:51:44] record I10: PASS
+[m2 09:51:44] (planted control, temporary directory) record E1: FAIL: thomas residual 1e-09 not <= 1e-10 at N=1024; thomas residual 1e-09 not <= 1e-10 at N=16384
+[m2 09:51:44] (planted control, temporary directory) record timing_rows_check: PASS
+[m2 09:51:44] (planted control, temporary directory) record dispersion: PASS
+[m2 09:51:44] (planted control, temporary directory) record E3: NOT_READ: anchor failed for thomas
+[m2 09:51:44] (planted control, temporary directory) record E4: NOT_READ: anchor failed for thomas
+[m2 09:51:44] (planted control, temporary directory) record E5: NOT_READ: anchor failed for thomas
+[m2 09:51:44] (planted control, temporary directory) record E6: linear-like
+[m2 09:51:44] (planted control, temporary directory) record E7: if_lever under the CPU baseline
+[m2 09:51:44] (planted control, temporary directory) record E8: HOLDS
+[m2 09:51:44] (planted control, temporary directory) record E9: REPORTED
+[m2 09:51:44] (planted control, temporary directory) record E10: HOLDS
+[m2 09:51:44] (planted control, temporary directory) record before_gate: PASS
+[m2 09:51:44] (planted control, temporary directory) VOID by E1 anchor: the two references (cuSPARSE, scipy solve_banded) disagree by >= 1e-8
+[m2 09:51:44] (planted control, temporary directory) record E1: FAIL: the two references (cuSPARSE, scipy) disagree by >= 1e-8: N=1024: 1e-07, N=16384: 1e-07 [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record timing_rows_check: PASS [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record dispersion: PASS [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E3: if_lever [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E4: HOLDS [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E5: REFUTED (above, measured / 28 = 14.63) [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E6: linear-like [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E7: if_lever under the CPU baseline [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E8: HOLDS [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E9: REPORTED [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) record E10: HOLDS [run_valid=false]
+[m2 09:51:44] (planted control, temporary directory) summary written: run_valid=False exit_code=0 (planted)
+[m2 09:51:44] record gate_propagation: PASS
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[m2 09:51:44] record I1_exact: PASS
+[m2 09:51:44] record I1_perturbed: PASS
+[m2 09:51:44] record I1_references: PASS
+[m2 09:51:44] record E1: PASS
+[m2 09:51:44] record E2: REFUTED (too pessimistic)
+[m2 09:51:44] stage anchor end rc=0
+[onbox] stage timers: cap 3479s
+[m2 09:51:45] stage timers start
+[m2 09:51:45] record timers: PASS
+[m2 09:51:45] stage timers end rc=0
+[onbox] stage residual_sweep: cap 3477s
+[m2 09:51:46] stage residual_sweep start
+[m2 09:51:46] residual sweep N=1024 seed=0 done
+[m2 09:51:46] residual sweep N=1024 seed=1 done
+[m2 09:51:46] residual sweep N=1024 seed=2 done
+[m2 09:51:46] residual sweep N=1024 seed=3 done
+[m2 09:51:46] residual sweep N=1024 seed=4 done
+[m2 09:51:46] residual sweep N=16384 seed=0 done
+[m2 09:51:46] residual sweep N=16384 seed=1 done
+[m2 09:51:46] residual sweep N=16384 seed=2 done
+[m2 09:51:46] residual sweep N=16384 seed=3 done
+[m2 09:51:46] residual sweep N=16384 seed=4 done
+[m2 09:51:46] residual sweep N=262144 seed=0 done
+[m2 09:51:46] residual sweep N=262144 seed=1 done
+[m2 09:51:46] residual sweep N=262144 seed=2 done
+[m2 09:51:46] residual sweep N=262144 seed=3 done
+[m2 09:51:47] residual sweep N=262144 seed=4 done
+[m2 09:51:49] residual sweep N=4194304 seed=0 done
+[m2 09:51:52] residual sweep N=4194304 seed=1 done
+[m2 09:51:54] residual sweep N=4194304 seed=2 done
+[m2 09:51:57] residual sweep N=4194304 seed=3 done
+[m2 09:51:59] residual sweep N=4194304 seed=4 done
+[m2 09:52:09] residual sweep N=16777216 seed=0 done
+[m2 09:52:19] residual sweep N=16777216 seed=1 done
+[m2 09:52:29] residual sweep N=16777216 seed=2 done
+[m2 09:52:39] residual sweep N=16777216 seed=3 done
+[m2 09:52:49] residual sweep N=16777216 seed=4 done
+[m2 09:52:49] record residual_sweep: REPORTED
+[m2 09:52:49] stage residual_sweep end rc=0
+[onbox] stage thomas_gpu: cap 3414s
+[m2 09:52:49] stage thomas_gpu start
+[m2 09:52:49] thomas_gpu N=1024 seed=0 R=166 ms/solve=0.297016
+[m2 09:52:49] thomas_gpu N=1024 seed=1 R=166 ms/solve=0.296997
+[m2 09:52:49] thomas_gpu N=1024 seed=2 R=167 ms/solve=0.297009
+[m2 09:52:49] thomas_gpu N=1024 seed=3 R=166 ms/solve=0.297003
+[m2 09:52:50] thomas_gpu N=1024 seed=4 R=167 ms/solve=0.297015
+[m2 09:52:50] thomas_gpu N=16384 seed=0 R=10 ms/solve=5.14028
+[m2 09:52:50] thomas_gpu N=16384 seed=1 R=10 ms/solve=5.14007
+[m2 09:52:50] thomas_gpu N=16384 seed=2 R=10 ms/solve=5.14028
+[m2 09:52:50] thomas_gpu N=16384 seed=3 R=10 ms/solve=5.14048
+[m2 09:52:50] thomas_gpu N=16384 seed=4 R=10 ms/solve=5.14028
+[m2 09:52:50] thomas_gpu N=262144 seed=0 R=1 ms/solve=83.2287
+[m2 09:52:50] thomas_gpu N=262144 seed=1 R=1 ms/solve=83.2297
+[m2 09:52:51] thomas_gpu N=262144 seed=2 R=1 ms/solve=83.2317
+[m2 09:52:51] thomas_gpu N=262144 seed=3 R=1 ms/solve=83.2297
+[m2 09:52:51] thomas_gpu N=262144 seed=4 R=1 ms/solve=83.2297
+[m2 09:52:57] thomas_gpu N=4194304 seed=0 R=1 ms/solve=1891.9
+[m2 09:53:03] thomas_gpu N=4194304 seed=1 R=1 ms/solve=1892.01
+[m2 09:53:09] thomas_gpu N=4194304 seed=2 R=1 ms/solve=1892.01
+[m2 09:53:16] thomas_gpu N=4194304 seed=3 R=1 ms/solve=1892.07
+[m2 09:53:22] thomas_gpu N=4194304 seed=4 R=1 ms/solve=1892.06
+[m2 09:53:46] thomas_gpu N=16777216 seed=0 R=1 ms/solve=7598.4
+[m2 09:54:10] thomas_gpu N=16777216 seed=1 R=1 ms/solve=7598.7
+[m2 09:54:35] thomas_gpu N=16777216 seed=2 R=1 ms/solve=7598.49
+[m2 09:54:59] thomas_gpu N=16777216 seed=3 R=1 ms/solve=7598.57
+[m2 09:55:23] thomas_gpu N=16777216 seed=4 R=1 ms/solve=7598.5
+[m2 09:55:23] record thomas_gpu: MEASURED
+[m2 09:55:23] stage thomas_gpu end rc=0
+[onbox] stage pcr_gpu: cap 3259s
+[m2 09:55:24] stage pcr_gpu start
+[m2 09:55:24] pcr_gpu N=1024 seed=0 R=1253 ms/solve=0.034776
+[m2 09:55:24] pcr_gpu N=1024 seed=1 R=1221 ms/solve=0.0347799
+[m2 09:55:24] pcr_gpu N=1024 seed=2 R=1320 ms/solve=0.034771
+[m2 09:55:24] pcr_gpu N=1024 seed=3 R=1253 ms/solve=0.0347735
+[m2 09:55:24] pcr_gpu N=1024 seed=4 R=1285 ms/solve=0.0347746
+[m2 09:55:24] pcr_gpu N=16384 seed=0 R=872 ms/solve=0.0535874
+[m2 09:55:24] pcr_gpu N=16384 seed=1 R=872 ms/solve=0.0536026
+[m2 09:55:24] pcr_gpu N=16384 seed=2 R=872 ms/solve=0.0536015
+[m2 09:55:25] pcr_gpu N=16384 seed=3 R=842 ms/solve=0.0536007
+[m2 09:55:25] pcr_gpu N=16384 seed=4 R=857 ms/solve=0.0535933
+[m2 09:55:25] pcr_gpu N=262144 seed=0 R=304 ms/solve=0.160724
+[m2 09:55:25] pcr_gpu N=262144 seed=1 R=304 ms/solve=0.160832
+[m2 09:55:25] pcr_gpu N=262144 seed=2 R=302 ms/solve=0.160744
+[m2 09:55:25] pcr_gpu N=262144 seed=3 R=304 ms/solve=0.160822
+[m2 09:55:25] pcr_gpu N=262144 seed=4 R=302 ms/solve=0.160846
+[m2 09:55:25] pcr_gpu N=4194304 seed=0 R=11 ms/solve=4.78245
+[m2 09:55:26] pcr_gpu N=4194304 seed=1 R=11 ms/solve=4.78543
+[m2 09:55:26] pcr_gpu N=4194304 seed=2 R=11 ms/solve=4.78506
+[m2 09:55:27] pcr_gpu N=4194304 seed=3 R=11 ms/solve=4.78525
+[m2 09:55:27] pcr_gpu N=4194304 seed=4 R=11 ms/solve=4.79856
+[m2 09:55:29] pcr_gpu N=16777216 seed=0 R=3 ms/solve=21.7484
+[m2 09:55:31] pcr_gpu N=16777216 seed=1 R=3 ms/solve=21.8156
+[m2 09:55:32] pcr_gpu N=16777216 seed=2 R=3 ms/solve=21.8167
+[m2 09:55:34] pcr_gpu N=16777216 seed=3 R=3 ms/solve=21.733
+[m2 09:55:35] pcr_gpu N=16777216 seed=4 R=3 ms/solve=21.8204
+[m2 09:55:35] record pcr_gpu: MEASURED
+[m2 09:55:35] stage pcr_gpu end rc=0
+[onbox] stage cusparse_gpu: cap 3247s
+[m2 09:55:36] stage cusparse_gpu start
+[m2 09:55:36] cusparse_gpu N=1024 seed=0 R=1879 ms/solve=0.0147654
+[m2 09:55:36] cusparse_gpu N=1024 seed=1 R=2713 ms/solve=0.0147742
+[m2 09:55:36] cusparse_gpu N=1024 seed=2 R=2570 ms/solve=0.0147751
+[m2 09:55:36] cusparse_gpu N=1024 seed=3 R=2713 ms/solve=0.0147757
+[m2 09:55:36] cusparse_gpu N=1024 seed=4 R=2570 ms/solve=0.0147755
+[m2 09:55:36] cusparse_gpu N=16384 seed=0 R=922 ms/solve=0.0490198
+[m2 09:55:36] cusparse_gpu N=16384 seed=1 R=940 ms/solve=0.0490322
+[m2 09:55:37] cusparse_gpu N=16384 seed=2 R=958 ms/solve=0.0490205
+[m2 09:55:37] cusparse_gpu N=16384 seed=3 R=958 ms/solve=0.0490248
+[m2 09:55:37] cusparse_gpu N=16384 seed=4 R=977 ms/solve=0.0490252
+[m2 09:55:37] cusparse_gpu N=262144 seed=0 R=475 ms/solve=0.0994768
+[m2 09:55:37] cusparse_gpu N=262144 seed=1 R=479 ms/solve=0.0994541
+[m2 09:55:37] cusparse_gpu N=262144 seed=2 R=479 ms/solve=0.0994328
+[m2 09:55:37] cusparse_gpu N=262144 seed=3 R=475 ms/solve=0.0994358
+[m2 09:55:37] cusparse_gpu N=262144 seed=4 R=479 ms/solve=0.0994242
+[m2 09:55:38] cusparse_gpu N=4194304 seed=0 R=62 ms/solve=0.79981
+[m2 09:55:38] cusparse_gpu N=4194304 seed=1 R=62 ms/solve=0.799992
+[m2 09:55:38] cusparse_gpu N=4194304 seed=2 R=61 ms/solve=0.799962
+[m2 09:55:39] cusparse_gpu N=4194304 seed=3 R=62 ms/solve=0.799645
+[m2 09:55:39] cusparse_gpu N=4194304 seed=4 R=62 ms/solve=0.79948
+[m2 09:55:41] cusparse_gpu N=16777216 seed=0 R=17 ms/solve=3.01863
+[m2 09:55:43] cusparse_gpu N=16777216 seed=1 R=17 ms/solve=2.94201
+[m2 09:55:44] cusparse_gpu N=16777216 seed=2 R=17 ms/solve=2.9437
+[m2 09:55:46] cusparse_gpu N=16777216 seed=3 R=17 ms/solve=2.94322
+[m2 09:55:47] cusparse_gpu N=16777216 seed=4 R=17 ms/solve=2.94189
+[m2 09:55:47] record cusparse_gpu: MEASURED
+[m2 09:55:47] stage cusparse_gpu end rc=0
+[onbox] stage thomas_batched_gpu: cap 3235s
+[m2 09:55:48] stage thomas_batched_gpu start
+[m2 09:55:48] thomas_batched_gpu N=1024 seed=0 R=152 ms/solve=0.321765
+[m2 09:55:48] thomas_batched_gpu N=1024 seed=1 R=154 ms/solve=0.321669
+[m2 09:55:48] thomas_batched_gpu N=1024 seed=2 R=154 ms/solve=0.321722
+[m2 09:55:48] thomas_batched_gpu N=1024 seed=3 R=154 ms/solve=0.321729
+[m2 09:55:48] thomas_batched_gpu N=1024 seed=4 R=154 ms/solve=0.321629
+[m2 09:55:48] thomas_batched_gpu N=16384 seed=0 R=6 ms/solve=9.05574
+[m2 09:55:49] thomas_batched_gpu N=16384 seed=1 R=6 ms/solve=9.05899
+[m2 09:55:49] thomas_batched_gpu N=16384 seed=2 R=6 ms/solve=9.05796
+[m2 09:55:49] thomas_batched_gpu N=16384 seed=3 R=6 ms/solve=9.06172
+[m2 09:55:49] thomas_batched_gpu N=16384 seed=4 R=6 ms/solve=9.05574
+[m2 09:55:49] thomas_batched_gpu N=262144 seed=0 R=1 ms/solve=150.686
+[m2 09:55:50] thomas_batched_gpu N=262144 seed=1 R=1 ms/solve=150.177
+[m2 09:55:50] thomas_batched_gpu N=262144 seed=2 R=1 ms/solve=151.227
+[m2 09:55:51] thomas_batched_gpu N=262144 seed=3 R=1 ms/solve=151.016
+[m2 09:55:51] thomas_batched_gpu N=262144 seed=4 R=1 ms/solve=150.45
+[m2 09:55:58] thomas_batched_gpu N=4194304 seed=0 R=1 ms/solve=2041.59
+[m2 09:56:04] thomas_batched_gpu N=4194304 seed=1 R=1 ms/solve=2041.43
+[m2 09:56:11] thomas_batched_gpu N=4194304 seed=2 R=1 ms/solve=2041.43
+[m2 09:56:17] thomas_batched_gpu N=4194304 seed=3 R=1 ms/solve=2041.36
+[m2 09:56:24] thomas_batched_gpu N=4194304 seed=4 R=1 ms/solve=2041.31
+[m2 09:56:49] thomas_batched_gpu N=16777216 seed=0 R=1 ms/solve=7965.02
+[m2 09:57:15] thomas_batched_gpu N=16777216 seed=1 R=1 ms/solve=7964.67
+[m2 09:57:40] thomas_batched_gpu N=16777216 seed=2 R=1 ms/solve=7964.99
+[m2 09:58:06] thomas_batched_gpu N=16777216 seed=3 R=1 ms/solve=7964.78
+[m2 09:58:31] thomas_batched_gpu N=16777216 seed=4 R=1 ms/solve=7964.77
+[m2 09:58:31] record thomas_batched_gpu: MEASURED
+[m2 09:58:31] stage thomas_batched_gpu end rc=0
+[onbox] stage launch_probe: cap 3072s
+[m2 09:58:32] stage launch_probe start
+[m2 09:58:32] launch_probe N=1024 seed=0 R=6976 ms/launch=0.00267009
+[m2 09:58:32] launch_probe N=1024 seed=1 R=8139 ms/launch=0.00271393
+[m2 09:58:32] launch_probe N=1024 seed=2 R=8139 ms/launch=0.00269569
+[m2 09:58:32] launch_probe N=1024 seed=3 R=8139 ms/launch=0.00270299
+[m2 09:58:32] launch_probe N=1024 seed=4 R=8139 ms/launch=0.00267241
+[m2 09:58:32] launch_probe N=16384 seed=0 R=8139 ms/launch=0.00269041
+[m2 09:58:32] launch_probe N=16384 seed=1 R=5426 ms/launch=0.00270135
+[m2 09:58:32] launch_probe N=16384 seed=2 R=8139 ms/launch=0.00272022
+[m2 09:58:32] launch_probe N=16384 seed=3 R=8139 ms/launch=0.00266612
+[m2 09:58:32] launch_probe N=16384 seed=4 R=8139 ms/launch=0.00266197
+[m2 09:58:32] launch_probe N=262144 seed=0 R=6976 ms/launch=0.00267024
+[m2 09:58:32] launch_probe N=262144 seed=1 R=6976 ms/launch=0.00265527
+[m2 09:58:32] launch_probe N=262144 seed=2 R=6976 ms/launch=0.00268536
+[m2 09:58:32] launch_probe N=262144 seed=3 R=8139 ms/launch=0.00272501
+[m2 09:58:32] launch_probe N=262144 seed=4 R=6976 ms/launch=0.00267479
+[m2 09:58:32] launch_probe N=4194304 seed=0 R=2873 ms/launch=0.0137493
+[m2 09:58:32] launch_probe N=4194304 seed=1 R=2713 ms/launch=0.0137517
+[m2 09:58:32] launch_probe N=4194304 seed=2 R=2873 ms/launch=0.0137493
+[m2 09:58:32] launch_probe N=4194304 seed=3 R=2873 ms/launch=0.0137497
+[m2 09:58:32] launch_probe N=4194304 seed=4 R=2873 ms/launch=0.013749
+[m2 09:58:32] launch_probe N=16777216 seed=0 R=922 ms/launch=0.0500983
+[m2 09:58:32] launch_probe N=16777216 seed=1 R=922 ms/launch=0.0500983
+[m2 09:58:32] launch_probe N=16777216 seed=2 R=922 ms/launch=0.0500983
+[m2 09:58:32] launch_probe N=16777216 seed=3 R=922 ms/launch=0.0500983
+[m2 09:58:32] launch_probe N=16777216 seed=4 R=922 ms/launch=0.0501005
+[m2 09:58:33] record launch_probe: MEASURED
+[m2 09:58:33] stage launch_probe end rc=0
+[onbox] stage cpu_dgtsv: cap 3070s
+[m2 09:58:33] stage cpu_dgtsv start
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[m2 09:58:33] cpu_dgtsv N=1024 seed=0 R=2301 ms/solve=0.0206025
+[m2 09:58:33] cpu_dgtsv N=1024 seed=1 R=2349 ms/solve=0.0205307
+[m2 09:58:33] cpu_dgtsv N=1024 seed=2 R=2352 ms/solve=0.0205566
+[m2 09:58:33] cpu_dgtsv N=1024 seed=3 R=2364 ms/solve=0.0205415
+[m2 09:58:33] cpu_dgtsv N=1024 seed=4 R=2344 ms/solve=0.0205231
+[m2 09:58:33] cpu_dgtsv N=16384 seed=0 R=156 ms/solve=0.309917
+[m2 09:58:33] cpu_dgtsv N=16384 seed=1 R=163 ms/solve=0.312722
+[m2 09:58:34] cpu_dgtsv N=16384 seed=2 R=163 ms/solve=0.310085
+[m2 09:58:34] cpu_dgtsv N=16384 seed=3 R=157 ms/solve=0.30988
+[m2 09:58:34] cpu_dgtsv N=16384 seed=4 R=163 ms/solve=0.309927
+[m2 09:58:34] cpu_dgtsv N=262144 seed=0 R=11 ms/solve=5.00766
+[m2 09:58:34] cpu_dgtsv N=262144 seed=1 R=11 ms/solve=4.94013
+[m2 09:58:34] cpu_dgtsv N=262144 seed=2 R=11 ms/solve=4.93859
+[m2 09:58:34] cpu_dgtsv N=262144 seed=3 R=11 ms/solve=4.93814
+[m2 09:58:34] cpu_dgtsv N=262144 seed=4 R=11 ms/solve=4.93744
+[m2 09:58:35] cpu_dgtsv N=4194304 seed=0 R=1 ms/solve=88.1045
+[m2 09:58:36] cpu_dgtsv N=4194304 seed=1 R=1 ms/solve=81.739
+[m2 09:58:36] cpu_dgtsv N=4194304 seed=2 R=1 ms/solve=95.0237
+[m2 09:58:37] cpu_dgtsv N=4194304 seed=3 R=1 ms/solve=97.8995
+[m2 09:58:38] cpu_dgtsv N=4194304 seed=4 R=1 ms/solve=83.5578
+[m2 09:58:41] cpu_dgtsv N=16777216 seed=0 R=1 ms/solve=416.735
+[m2 09:58:44] cpu_dgtsv N=16777216 seed=1 R=1 ms/solve=417.578
+[m2 09:58:47] cpu_dgtsv N=16777216 seed=2 R=1 ms/solve=484.645
+[m2 09:58:50] cpu_dgtsv N=16777216 seed=3 R=1 ms/solve=372.782
+[m2 09:58:53] cpu_dgtsv N=16777216 seed=4 R=1 ms/solve=370.304
+[m2 09:58:53] record cpu_dgtsv: MEASURED
+[m2 09:58:53] stage cpu_dgtsv end rc=0
+[onbox] stage endpoints: cap 3050s
+[m2 09:58:53] stage endpoints start
+[m2 09:58:53] record timing_rows_check: PASS
+[m2 09:58:53] record dispersion: PASS
+[m2 09:58:53] record E3: if_lever
+[m2 09:58:53] record E4: HOLDS (crossover at 2^10 is launch-bound)
+[m2 09:58:53] record E5: REFUTED (above, measured / 28 = 12.44)
+[m2 09:58:53] record E6: linear-like
+[m2 09:58:53] record E7: if_lever under the CPU baseline
+[m2 09:58:53] record E8: HOLDS
+[m2 09:58:53] record E9: REPORTED
+[m2 09:58:53] record E10: REFUTED (below: the plan over-bought by more than 3x)
+[m2 09:58:53] stage endpoints end rc=0
+[m2 09:58:53] summary written: run_valid=True exit_code=0 (all stages ran)
+[onbox] RUN_DONE rc=0 (all stages ran)

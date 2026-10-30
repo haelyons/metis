@@ -1,0 +1,18 @@
+$ /lambda/nfs/metis-env-us-east-1/m4/venv/bin/python3 /home/ubuntu/m4_run/results_m4/out/md_worker_tag-m4.py --mode build --pdb /home/ubuntu/m4_run/results_m4/out/work_m4/md_pair1/complex.pdb --work /home/ubuntu/m4_run/results_m4/out/work_m4/md_pair1 --padding-nm 0.800 --out /home/ubuntu/m4_run/results_m4/out/work_m4/md_pair1/build_1.json
+# exit 1 timed_out=False seconds=33.822
+--- stdout ---
+
+--- stderr ---
+Traceback (most recent call last):
+  File "/home/ubuntu/m4_run/results_m4/out/md_worker_tag-m4.py", line 94, in <module>
+    sys.exit(main())
+  File "/home/ubuntu/m4_run/results_m4/out/md_worker_tag-m4.py", line 29, in main
+    modeller.addHydrogens(forcefield)
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/openmm/app/modeller.py", line 1012, in addHydrogens
+    system = forcefield.createSystem(newTopology, rigidWater=False, nonbondedMethod=CutoffNonPeriodic, residueTemplates=residueTemplates)
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/openmm/app/forcefield.py", line 1247, in createSystem
+    templateForResidue = self._matchAllResiduesToTemplates(data, topology, residueTemplates, ignoreExternalBonds)
+  File "/lambda/nfs/metis-env-us-east-1/m4/venv/lib/python3.10/site-packages/openmm/app/forcefield.py", line 1462, in _matchAllResiduesToTemplates
+    raise ValueError('No template found for residue %d (%s).  %s  For more information, see https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions#template' % (res.index+1, res.name, _findMatchErrors(self, res)))
+ValueError: No template found for residue 686 (VAL).  The set of atoms matches VAL, but the bonds are different.  Perhaps the chain is missing a terminal group?  For more information, see https://github.com/openmm/openmm/wiki/Frequently-Asked-Questions#template
+

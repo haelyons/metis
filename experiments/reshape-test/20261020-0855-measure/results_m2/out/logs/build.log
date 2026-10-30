@@ -1,0 +1,6 @@
+[m2 09:51:41] stage build start
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[m2 09:51:41] compile: /usr/bin/nvcc -O3 -shared -Xcompiler -fPIC -o results_m2/build/libm2.so results_m2/build/m2_kernels.cu -lcusparse -lcudart -arch=sm_80
+[m2 09:51:43] record toolchain: PASS
+[m2 09:51:43] stage build end rc=0

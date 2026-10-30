@@ -1,0 +1,39 @@
+[launch] gpu_1x_a100_sxm4 @ us-east-1
+[launch] id=ed3c8ab936924896a9288a38257c2ba8
+[poll 1] status=booting ip=
+[poll 2] status=booting ip=
+[poll 3] status=booting ip=
+[poll 4] status=booting ip=
+[poll 5] status=booting ip=
+[poll 6] status=booting ip=
+[poll 7] status=booting ip=
+[poll 8] status=booting ip=
+[poll 9] status=booting ip=193.122.154.60
+[poll 10] status=booting ip=193.122.154.60
+[poll 11] status=booting ip=193.122.154.60
+[poll 12] status=booting ip=193.122.154.60
+[poll 13] status=booting ip=193.122.154.60
+[poll 14] status=booting ip=193.122.154.60
+[poll 15] status=booting ip=193.122.154.60
+[poll 16] status=booting ip=193.122.154.60
+[poll 17] status=booting ip=193.122.154.60
+[poll 18] status=booting ip=193.122.154.60
+[poll 19] status=booting ip=193.122.154.60
+[poll 20] status=booting ip=193.122.154.60
+[poll 21] status=booting ip=193.122.154.60
+[poll 22] status=active ip=193.122.154.60
+[reattach] recorded ed3c8ab936924896a9288a38257c2ba8 193.122.154.60 -> .last_lambda_instance (recover via: bash lambda_reattach.sh)
+[ssh] waiting for sshd @ 193.122.154.60
+[ssh] up
+[scp] code -> box
+[backstop] arming box self-destruct in 9000s (ed3c8ab936924896a9288a38257c2ba8)
+[backstop] armed + confirmed running
+[run] onbox_m4.sh DETACHED on box (cap 7200s); local marker-poll every 60s
+[run] confirmed started (try 1)
+[run] DONE marker rc=2 after 60s
+[fetch] -> results_m4 : tiny criticals FIRST (summary/log/marker), then the big out/ blobs
+[fetch] summary+logs verified (try 1)
+[fetch] full out/ ok (try 1)
+[done] results_m4 (teardown trap will terminate ed3c8ab936924896a9288a38257c2ba8)
+[teardown] terminating ed3c8ab936924896a9288a38257c2ba8
+[teardown] terminate accepted for ed3c8ab936924896a9288a38257c2ba8 (try 1)

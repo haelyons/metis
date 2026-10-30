@@ -1,0 +1,14 @@
+$ /home/ubuntu/m4_run/venv_m4/bin/python3 -c import json
+out={}
+from importlib.metadata import version, PackageNotFoundError
+for name,key in (('jax','jax'),('jaxlib','jaxlib'),('jax-cuda12-plugin','jax_cuda12_plugin'),('openmm','openmm'),('lightdock','lightdock'),('colabfold','colabfold')):
+    try: out[key]=version(name)
+    except Exception: out[key]=None
+print(json.dumps(out))
+
+# exit 0 timed_out=False seconds=0.096
+--- stdout ---
+{"jax": "0.6.0", "jaxlib": "0.6.0", "jax_cuda12_plugin": "0.6.0", "openmm": null, "lightdock": null, "colabfold": null}
+
+--- stderr ---
+

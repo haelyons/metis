@@ -1,0 +1,63 @@
+[setup] using preinstalled torch; adding transformers/accelerate/scikit-learn
+  WARNING: The scripts pip, pip3 and pip3.10 are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+WARNING: Error parsing dependencies of flatbuffers: Invalid version: '1.12.1-git20200711.33e2d80-dfsg1-0.6'
+  WARNING: The script tqdm is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script pygmentize is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script f2py is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script idna is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script markdown-it is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script typer is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script httpx2 is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts hf and tiny-agents are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The scripts accelerate, accelerate-config, accelerate-estimate-memory, accelerate-launch and accelerate-merge-weights are installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script transformers is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+virtualenv 20.13.0+ds requires filelock<4,>=3.2, but you have filelock 4.1.0 which is incompatible.
+/usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version >=1.17.3 and <1.25.0 is required for this version of SciPy (detected version 1.26.4
+  warnings.warn(f"A NumPy version >={np_minversion} and <{np_maxversion}"
+[setup] torch 2.7.0 cuda 12.8 device NVIDIA A10
+[setup] transformers 5.20.2 numpy 1.26.4 scikit-learn 1.7.2 pillow 12.3.0
+[setup] Gemma2ForCausalLM resolvable
+[run] bash onbox_m1.sh
+[onbox 02:36:41] start in /home/ubuntu/m1_run on 150-136-115-79; Python 3.10.12; 30 vCPUs
+[onbox 02:36:41] time cap 5400s; parent 'timeout' started 23s ago; stages must end by epoch 1792468998
+[onbox 02:36:41] price USD 1.29 per hour; budget left USD 5
+[guard] before preflight: projected spend USD 0.186 is below the budget USD 5.000 (box up 0.044 h, price USD 1.29/h)
+[guard] before pip: projected spend USD 0.315 is below the budget USD 5.000 (box up 0.045 h, price USD 1.29/h)
+[onbox 02:36:41] python3 -m pip install --user -U "jax[cuda12]" pyreadr numpy
+Downloading jaxlib-0.6.2-cp310-cp310-manylinux2014_x86_64.whl (89.9 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 89.9/89.9 MB 439.6 kB/s  0:03:17
+Downloading nvidia_cudnn_cu12-9.27.0.42-py3-none-manylinux_2_27_x86_64.whl (766.2 MB)
+[onbox 03:01:41] early stop (rc=2): pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)
+[stop] run marked incomplete (pip install failed with exit code 124 (see results_m1/out/logs/pip_install.log)); relabelled {'rows': 0, 'records': 0, 'unparseable_lines': 0}
+[record] E1: NOT_RUN: the run stopped before this stage (run_valid=False)
+[record] I1: NOT_RUN: the run stopped before this stage (run_valid=False)
+[record] E2: NOT_RUN: the run stopped before this stage (run_valid=False)
+[record] I2: NOT_RUN: the run stopped before this stage (run_valid=False)
+[record] I3: NOT_RUN: the run stopped before this stage (run_valid=False)
+[record] I4: NOT_RUN: the run stopped before this stage (run_valid=False)
+[record] I5: PASS (run_valid=False)
+[planted check in a scratch folder; not this run] [record] E6: pass (run_valid=True)
+[planted check in a scratch folder; not this run] [run_valid] set false: card gate E6 failed: main_run_hours 6.1000 > 6
+[planted check in a scratch folder; not this run] [record] E6: Stop and replan: full Bayesian 671 is not affordable on one GPU (run_valid=False)
+[planted check in a scratch folder; not this run] [record] E7: planted follow-up record (run_valid=False)
+[record] I6: PASS (run_valid=False)
+[record] I7: PASS (run_valid=False)
+[record] E3: NO_VERDICT: incomplete run (descriptive reading: None) (run_valid=False)
+[record] E4: NO_VERDICT: incomplete run (descriptive reading: None) (run_valid=False)
+[record] E5: NO_VERDICT: incomplete run (descriptive reading: None) (run_valid=False)
+[record] E6: NOT_COMPUTABLE: main_run_hours missing (run_valid=False)
+[record] E7: REPORT_ONLY: NO_VERDICT: incomplete run (descriptive reading: none) (run_valid=False)
+[endpoints] done; run_valid=False
+[onbox 03:01:42] RUN_DONE rc=2

@@ -1,0 +1,33 @@
+LAMMPS (29 Aug 2024)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/lammps-stable_29Aug2024/src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+package gpu 1
+# Equilibration: minimize -> relax -> NPT -> deform to mean density -> equilibrated.restart.
+
+variable        system_dir            index .
+variable        T                     index 298.15
+variable        P                     index 1.0
+variable        run_id                index 1
+variable        timestep_fs           index 1.0
+variable        thermo_every          index 5000
+variable        tdamp                 index 100.0
+variable        pdamp                 index 1000.0
+variable        relax_dt              index 0.5
+variable        pushoff_steps         index 50000
+variable        settle_steps          index 100000
+variable        npt_steps             index 1000000
+variable        deform_steps          index 500000
+variable        density_avg_start     index 750000
+variable        density_sample_every  index 100
+variable        density_sample_repeat index 2500
+variable        density_sample_freq   index 250000
+variable        shake_tol             index 0.0001
+variable        shake_iter            index 20
+variable        shake_order           index 0
+variable        seed                  equal 4928459+${run_id}*10007
+variable        seed                  equal 4928459+1*10007
+
+log             ${system_dir}/log_equilibrate_T${T}K_run${run_id}.out
+log             /home/ubuntu/m3_run/results_m3/system/log_equilibrate_T${T}K_run${run_id}.out
+log             /home/ubuntu/m3_run/results_m3/system/log_equilibrate_T313.15K_run${run_id}.out
+log             /home/ubuntu/m3_run/results_m3/system/log_equilibrate_T313.15K_run1.out
