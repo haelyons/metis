@@ -1,0 +1,52 @@
+{
+  "representative_scale": {
+    "fixed_case_count": 93,
+    "selection": "Every paired-apo PINDER-S test complex in release 2024-02; no scale search or doubling.",
+    "candidate_count": 100,
+    "candidate_count_basis": "Prospective fixed intake design choice, not claimed published baseline configuration.",
+    "AAV_challenge": "Separate three-structure redocking challenge; report separately, never pooled into 93-case score.",
+    "source": [
+      "brief.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ]
+  },
+  "inputs": {
+    "required": "Release index/metadata, 93 paired apo receptor-ligand inputs, experimental native dimers, FRODOCK software and configuration.",
+    "format": "Published PINDER pre-rotated and translated monomer PDB files; configuration JSON/YAML and method setup CSV.",
+    "configuration_status": "Not execution-ready: software download, exact IDs, software pin and seed schedule unresolved.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/main.py"
+    ]
+  },
+  "outputs": {
+    "poses": "results_dir/frodock/<pinder_id>/apo_decoys/model_<rank>.pdb; exactly chains R and L.",
+    "scoring_interface": "pinder_eval --eval_dir eval_dir; per-decoy DockQ, iRMS, LRMS and Fnat plus method summaries.",
+    "reports": [
+      "Top-1 acceptable fraction and median DockQ",
+      "Best-of-100 acceptable fraction and median DockQ, reported separately",
+      "Runtime, throughput, cost and time to acceptable pose"
+    ],
+    "missing_predictions": "Apply published missing-system penalties; never silently drop failed cases.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py"
+    ]
+  },
+  "timing_scope": {
+    "setup": "Report installation and input staging separately.",
+    "method_run": "Time complete docking including grids, search, clustering and writing fixed 100 poses for each case.",
+    "evaluate": "Time scoring separately; include all candidates when reporting end-to-end cost.",
+    "time_to_acceptable": "Requires time-stamped candidate availability and retrospective native scoring; not inferable from final ranked output alone.",
+    "source": [
+      "brief.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py"
+    ]
+  },
+  "stage_budgets_s": {},
+  "budget_feasibility": {
+    "verified": false,
+    "reason": "No workloads run. Cannot establish that 93-case docking finishes within default method_run=1200 seconds or evaluation=2400 seconds. No invented runtime estimate or budget override."
+  }
+}

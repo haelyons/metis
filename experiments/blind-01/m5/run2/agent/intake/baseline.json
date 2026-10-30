@@ -1,0 +1,42 @@
+{
+  "repo": "https://github.com/pinder-org/pinder",
+  "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "method": "FRODOCK via published PINDER methods runner",
+  "build_commands": [
+    "docker build --build-arg FRODOCK_SOURCE_ARCHIVE=./frodock.tar.gz -t pinder-frodock -f docker/frodock/Dockerfile.frodock ."
+  ],
+  "build_commands_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+  "build_details": {
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+    "reason": "Docker build encapsulates OS/package installs, git clone plus pip install ., archive extraction and ./compile_frodock.sh; no build executed. Dockerfile does not pin its internal git clone; recorded outer commit alone does not pin external software."
+  },
+  "run_commands": [
+    "pinder_methods predict -m <method> -s <test set> -l <list of PINDER ids> -c `config` -r `results_dir`",
+    "pinder_eval --eval_dir eval_dir"
+  ],
+  "run_commands_sources": [
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  ],
+  "run_commands_status": "First command is published template, not a resolved ready-to-run command. Requires preprocessing setup CSV, FRODOCK archive, config and repairs/verification of runner. No command executed.",
+  "published_configuration": {
+    "supported_subset": "pinder-s",
+    "supported_pairs": "apo",
+    "mpi_np_default": 8,
+    "n_solutions": null,
+    "force": null,
+    "reason": "Runner requires n_solutions and force; no published values found in inspected sources. 93 paired apo cases are benchmark subset, not claimed method result.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/main.py"
+    ]
+  },
+  "external_software_pin": null,
+  "external_software_pin_reason": "No immutable FRODOCK archive identifier retrieved.",
+  "sources": [
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/main.py"
+  ]
+}

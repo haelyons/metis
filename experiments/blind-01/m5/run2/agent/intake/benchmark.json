@@ -1,0 +1,123 @@
+{
+  "identity": {
+    "name": "PINDER-S",
+    "repository": "https://github.com/pinder-org/pinder",
+    "release": "2024-02",
+    "test_complexes": 250,
+    "priority_paired_apo_complexes": 93,
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  },
+  "outcome_definition": {
+    "primary": "Recovery of experimental protein-protein interfaces from independently determined paired apo structures.",
+    "metrics": [
+      "DockQ",
+      "interface RMSD (iRMS)",
+      "native-contact recovery (Fnat)"
+    ],
+    "acceptable_pose": "DockQ >= 0.23",
+    "ranking": "Report top-ranked pose separately from best DockQ among fixed candidate count.",
+    "performance": [
+      "wall-clock time",
+      "cost",
+      "search throughput",
+      "time to first acceptable pose"
+    ],
+    "source": [
+      "brief.md",
+      "https://github.com/wallnerlab/DockQ#quick-start",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/metrics.py"
+    ]
+  },
+  "citations": [
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+    "https://github.com/wallnerlab/DockQ#quick-start"
+  ],
+  "source_licences_and_intended_use_permissions": [
+    {
+      "item": "PINDER repository code",
+      "licence": "Apache-2.0",
+      "intended_use": "Scientific docking evaluation and modification",
+      "permission": "permitted",
+      "basis": "explicit",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE"
+    },
+    {
+      "item": "PINDER hosted structures, index and mappings",
+      "licence": null,
+      "permission": "unknown",
+      "basis": "none",
+      "reason": "Repository Apache licence found; no statement found explicitly covering external hosted dataset. PDB origin does not establish coverage of all derived files.",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "item": "FRODOCK external software archive",
+      "licence": null,
+      "permission": "unknown",
+      "basis": "unreachable",
+      "reason": "Published source-download link returned 404; permission evidence and archive not retrieved.",
+      "source": "https://chaconlab.org/modeling/frodock/frodock-donwload"
+    },
+    {
+      "item": "AAV PDB archive structures",
+      "licence": "CC0-1.0",
+      "permission": "permitted",
+      "basis": "explicit",
+      "source": "https://www.wwpdb.org/about/usage-policies"
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "unreachable",
+  "stock_cuda_image": {
+    "feasible": null,
+    "reason": "Stock CUDA image specification unavailable. PINDER requires Python >=3.10; fastpdb wheels require Linux glibc >=2.34 or Rust build. FRODOCK requires external software, CPU MPI and FFTW. No installation or reproduction performed.",
+    "evidence": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/pyproject.toml",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock"
+    ]
+  },
+  "size": {
+    "data_gib": null,
+    "peak_working_set_gib": null,
+    "data_plus_peak_working_set_gib": null,
+    "category": "unknown",
+    "reason": "No measured peak working set or exact 93-case staged footprint. Full dataset size is not representative-subset memory.",
+    "published_test_structure_directory_gb_decimal": 0.73,
+    "published_full_directories_tb_approx": 1.04,
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  },
+  "scoring": {
+    "formula": "DockQ = (Fnat + 1/(1+(iRMS/1.5)^2) + 1/(1+(LRMS/8.5)^2))/3",
+    "missing_prediction_penalty": {
+      "iRMS": 100.0,
+      "LRMS": 100.0,
+      "Fnat": 0.0,
+      "DockQ": 0.0,
+      "CAPRI": "Incorrect"
+    },
+    "tolerance": null,
+    "reason": "No aggregate reproduction tolerance found. Threshold anchor classifies individual poses; it does not guarantee baseline success rate.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/metrics.py"
+    ]
+  },
+  "repeatability": {
+    "case_selection": "All paired-apo PINDER-S test entries in release 2024-02; freeze exact IDs before execution.",
+    "random_seeds": null,
+    "reason": "Brief requests independent random seeds but specifies no seed values. No published seed schedule found.",
+    "requirements": [
+      "Record code and input hashes, CPU/GPU and thread counts, candidate count, ranking rule and timing boundary.",
+      "Keep AAV redocking results separate from independently unbound benchmark results."
+    ],
+    "source": "brief.md"
+  },
+  "search_candidates": [],
+  "blockers": [
+    "FRODOCK software archive and its permission evidence not retrieved.",
+    "Published FRODOCK candidate-count configuration unavailable in inspected sources.",
+    "Runner source contains apparent execution defects requiring reproduction or repair: pd.from_csv, path concatenation and wildcard shutil.copy."
+  ],
+  "bounded_pass": "Source inspection and endpoint checks only; no builds or scientific workloads."
+}
