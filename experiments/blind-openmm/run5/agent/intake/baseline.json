@@ -1,0 +1,82 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "pin": "S1 archive sha256:3ad3f355af4ca1e459c7fd1131d8a474e1f5430223ce90a9c34ee98862ecb09d",
+  "commit": null,
+  "commit_reason": "Published supplemental script is distributed as ZIP, without a source commit. Content hash pins executable baseline.",
+  "build_commands": [
+    "pip install openmm[cuda12]",
+    "python -m pip install scipy"
+  ],
+  "run_commands": [
+    "python energyBenchmarks.py"
+  ],
+  "published_configuration": {
+    "published_runtime": "OpenMM 7; GPU simulations used CUDA 7.5. Paper reports Titan X Pascal and Tesla K80 hardware; energy-drift subsection does not identify which GPU supplied Table 5.",
+    "system": "DHFR explicit solvent, 23558 atoms including 7023 water molecules",
+    "force_fields": [
+      "amber99sbildn.xml",
+      "tip3p.xml"
+    ],
+    "integrator": "VerletIntegrator, 0.002 ps step, constraint tolerance 1e-6",
+    "nonbonded": "PME; ewaldErrorTolerance=1e-5; other createSystem defaults, including nonbonded cutoff, inherited from installed OpenMM; switching enabled at 0.9 times cutoff",
+    "constraints": "HBonds; rigid water inherited from createSystem default",
+    "initial_state": "Published dhfr.pdb positions; velocities sampled at 300 K independently for each new Context",
+    "precision_modes": [
+      "single",
+      "mixed",
+      "double"
+    ],
+    "trials_per_mode": 10,
+    "steps_per_trial": 500000,
+    "energy_sample_interval_steps": 500,
+    "samples_per_trial": 1000,
+    "simulated_time_per_trial_ns": 1,
+    "platform": "CUDA; one Context at a time; no multi-device index specified",
+    "source": "https://journals.plos.org/ploscompbiol/article/file?type=supplementary&id=10.1371/journal.pcbi.1005659.s001 (SI/Benchmarks/energyBenchmarks.py), https://doi.org/10.1371/journal.pcbi.1005659"
+  },
+  "command_sources": [
+    {
+      "commands": [
+        "python energyBenchmarks.py"
+      ],
+      "source": "https://journals.plos.org/ploscompbiol/article/file?type=supplementary&id=10.1371/journal.pcbi.1005659.s001",
+      "location": "SI/Benchmarks/README.txt"
+    },
+    {
+      "commands": [
+        "pip install openmm[cuda12]"
+      ],
+      "source": "https://docs.openmm.org/8.2.0/userguide/application/01_getting_started.html",
+      "location": "2.2 Installing OpenMM"
+    },
+    {
+      "commands": [
+        "python -m pip install scipy"
+      ],
+      "source": "https://scipy.org/install/"
+    }
+  ],
+  "working_directory": "Extracted SI/Benchmarks",
+  "baseline_script": {
+    "archive_path": "SI/Benchmarks/energyBenchmarks.py",
+    "sha256": "e6b0d107618f4b166b55ed515c1661d3f08292301b37375f7d6ddbfc637262ed",
+    "source": "https://journals.plos.org/ploscompbiol/article/file?type=supplementary&id=10.1371/journal.pcbi.1005659.s001"
+  },
+  "runtime_compatibility_reference": {
+    "repo": "https://github.com/openmm/openmm",
+    "release": "8.2.0",
+    "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "source": "https://api.github.com/repos/openmm/openmm/git/refs/tags/8.2.0"
+  },
+  "installation_limitations": {
+    "commands_are_published": true,
+    "commands_install_pinned_runtime": false,
+    "reason": "Published documentation gives unversioned installs; commands are preserved verbatim. They do not enforce the inspected compatibility release or historical configuration. No pinned install command or dependency lock is invented.",
+    "python_version_pin": null,
+    "scipy_pin": null,
+    "cuda_driver_pin": null,
+    "source_build_commands": null,
+    "source_build_reason": "Released binary installation route documented; no source build required for that route."
+  },
+  "executed": false
+}

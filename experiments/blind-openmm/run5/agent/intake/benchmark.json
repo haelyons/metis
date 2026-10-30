@@ -1,0 +1,152 @@
+{
+  "identity": {
+    "name": "OpenMM 7 DHFR explicit-solvent energy-conservation benchmark",
+    "publication": "Eastman et al. (2017), OpenMM 7: Rapid development of high performance algorithms for molecular dynamics",
+    "doi": "10.1371/journal.pcbi.1005659",
+    "code": "S1 Supporting Information, SI/Benchmarks/energyBenchmarks.py",
+    "found": true
+  },
+  "outcome_definition": {
+    "scientific_quantity": "Slope of total energy versus elapsed simulation time from scipy.stats.linregress, in kJ/mol/ps, summarized by precision mode",
+    "performance_quantity": "Wall-clock time for fixed full published workload, if measured; supplementary energy script does not report timing",
+    "direction": {
+      "wall_time": "lower",
+      "energy_drift": "Reference comparison only; no published pass/fail tolerance"
+    }
+  },
+  "citations": [
+    {
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659",
+      "purpose": "Benchmark identity, scientific protocol, Table 5 reference values"
+    },
+    {
+      "url": "https://journals.plos.org/ploscompbiol/article/file?type=supplementary&id=10.1371/journal.pcbi.1005659.s001",
+      "purpose": "Executable code, run command, input coordinates"
+    },
+    {
+      "url": "https://api.figshare.com/v2/articles/5247880",
+      "purpose": "Archive licence, file identity and published MD5"
+    },
+    {
+      "url": "https://docs.openmm.org/8.2.0/userguide/application/01_getting_started.html",
+      "purpose": "Released runtime installation and CUDA package feasibility"
+    }
+  ],
+  "source_licences_and_intended_use_permissions": {
+    "intended_use": "Run public scientific benchmark and inspect or modify benchmark code for research; retain required attribution and notices",
+    "status": "permitted",
+    "licence_basis": "distribution",
+    "items": [
+      {
+        "item": "Supplementary benchmark script and dhfr.pdb",
+        "licence": "CC BY 4.0",
+        "basis": "explicit",
+        "source": "https://api.figshare.com/v2/articles/5247880",
+        "scope": "Metadata licenses deposited item and lists pcbi.1005659.s001.zip by name; benchmark script and coordinates are members of that archive.",
+        "permission": "Reuse and adaptation allowed with attribution and licence obligations."
+      },
+      {
+        "item": "OpenMM API and application layer",
+        "licence": "MIT",
+        "basis": "explicit",
+        "source": "https://docs.openmm.org/8.2.0/userguide/library/01_introduction.html#license",
+        "permission": "Use and modification allowed; retain copyright and disclaimer when distributing."
+      },
+      {
+        "item": "OpenMM CUDA platform",
+        "licence": "LGPL",
+        "basis": "explicit",
+        "source": "https://docs.openmm.org/8.2.0/userguide/library/01_introduction.html#license",
+        "permission": "Benchmark execution allowed; distribution of modifications has source obligations."
+      },
+      {
+        "item": "Required amber99sbildn.xml and tip3p.xml distributed in OpenMM application-layer data",
+        "licence": "Application-layer MIT distribution basis",
+        "basis": "distribution",
+        "source": "https://docs.openmm.org/8.2.0/userguide/library/01_introduction.html#license",
+        "reason": "Fetched XML files have no individual licence notice. Application-layer licence supplies distribution basis; no input-specific licence statement found."
+      }
+    ]
+  },
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "feasibility": "Unknown pending reproduction; CUDA-enabled pip binaries are documented, but no stock-image specification or driver/GPU inventory supplied.",
+    "evidence": [
+      "https://docs.openmm.org/8.2.0/userguide/application/01_getting_started.html",
+      "https://raw.githubusercontent.com/openmm/openmm/8.2.0/wrappers/python/simtk/openmm/__init__.py",
+      "https://raw.githubusercontent.com/openmm/openmm/8.2.0/wrappers/python/simtk/unit/__init__.py"
+    ],
+    "compatibility_notes": "OpenMM 8.2.0 retains simtk import compatibility used by published script. Exact historical OpenMM 7/CUDA 7.5 compatibility and modern numerical equivalence untested.",
+    "required_dependencies": [
+      "Python",
+      "CUDA-enabled OpenMM",
+      "SciPy"
+    ],
+    "workload_or_build_executed": false
+  },
+  "data_and_peak_working_set": {
+    "required_input_bytes": 2288878,
+    "required_input_GiB": 0.0021316837519407272,
+    "data_scope": "DHFR coordinates plus two force-field XML files from inspected OpenMM 8.2.0; excludes installed software and script",
+    "supplement_archive_bytes": 13673614,
+    "peak_working_set_GiB": null,
+    "peak_working_set_reason": "No published peak host/device working-set measurement found; no workload executed.",
+    "total_GiB": null,
+    "size": "unknown"
+  },
+  "scoring_and_repeatability": {
+    "reference_ids": [
+      "dhfr-energy-drift-single",
+      "dhfr-energy-drift-mixed",
+      "dhfr-energy-drift-double"
+    ],
+    "anchors_count": 3,
+    "anchored": false,
+    "published_acceptance_tolerances": null,
+    "reason": "Table 5 publishes means and standard errors only.",
+    "scientific_scoring": "Parse thirty slope lines grouped by printed Precision and trial labels; compute mean and standard error over ten slopes per precision. Report differences from Table 5 descriptively. No tolerance-based pass/fail is supported.",
+    "performance_scoring": "For a future timed run, use full fixed-workload wall seconds. This is an execution metric, not a published energy-script score.",
+    "seed_values": null,
+    "seed_reason": "Published code omits randomSeed argument to setVelocitiesToTemperature; no seed list or CLI seed option published. Distinct explicit seed identities cannot be verified from source or reproduced exactly.",
+    "deterministic_replay": false,
+    "sampling_rules": "Fixed ten independent initializations per precision, three precision modes; 1000 post-integration energy samples per trial; no scale search."
+  },
+  "search": {
+    "search_calls_used": 2,
+    "candidate_limit": 3,
+    "candidates_inspected": [
+      {
+        "id": "openmm-official-8.2-timing",
+        "url": "https://raw.githubusercontent.com/openmm/openmm/8.2.0/examples/benchmark.py",
+        "selected": false,
+        "reason": "Public executable timing benchmark, but adaptive step-count loop and no explicit seed interface conflict with fixed-work hint."
+      },
+      {
+        "id": "openmm7-dhfr-energy",
+        "url": "https://doi.org/10.1371/journal.pcbi.1005659",
+        "selected": true,
+        "reason": "Supplement contains executable code, documented command and coordinates; fixed independent simulation workload with published reference values."
+      }
+    ],
+    "queries": [
+      "OpenMM DHFR explicit solvent benchmark benchmark.py CUDA independent simulations seeds",
+      "site.github.com/openmm/openmm benchmark.py \"seed\" \"8.2.0\"",
+      "site.docs.openmm.org 8.2.0 \"pip install\" \"cuda\" benchmark"
+    ]
+  },
+  "limitations": [
+    "Published seeds unavailable; cannot claim fixed distinct explicit seeds.",
+    "Peak working set unavailable.",
+    "Installation commands from documentation are unpinned; verify runtime identity before reproduction.",
+    "Modern runtime is a compatibility route, not evidence of exact historical reproduction."
+  ],
+  "gate": {
+    "complete_files": true,
+    "found": true,
+    "data": "available",
+    "licence": "permitted",
+    "stock_environment": null,
+    "eligible_under_stated_gate": true,
+    "reason": "Unknown stock environment does not fail stated intake gate; published tolerances are optional."
+  }
+}

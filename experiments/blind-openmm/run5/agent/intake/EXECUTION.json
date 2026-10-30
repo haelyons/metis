@@ -1,0 +1,65 @@
+{
+  "representative_scale": {
+    "system": "DHFR explicit solvent, 23558 atoms",
+    "fixed_trials": 30,
+    "precision_modes": [
+      "single",
+      "mixed",
+      "double"
+    ],
+    "trials_per_precision": 10,
+    "steps_per_trial": 500000,
+    "total_steps": 15000000,
+    "timestep_fs": 2,
+    "total_simulated_ns": 30,
+    "sampling": "1000 total-energy observations per trial, separated by 500 integration steps (1 ps)",
+    "concurrency": "Sequential trials on one CUDA GPU; expose exactly one device before execution. Published script selects CUDA without specifying multi-device properties.",
+    "scale_search": false,
+    "source": "https://journals.plos.org/ploscompbiol/article/file?type=supplementary&id=10.1371/journal.pcbi.1005659.s001 (SI/Benchmarks/energyBenchmarks.py)"
+  },
+  "inputs": {
+    "required_files": [
+      "SI/Benchmarks/energyBenchmarks.py",
+      "SI/Benchmarks/dhfr.pdb",
+      "OpenMM amber99sbildn.xml",
+      "OpenMM tip3p.xml"
+    ],
+    "runtime_packages": [
+      "CUDA-enabled OpenMM",
+      "SciPy"
+    ],
+    "seed_values": null,
+    "seed_reason": "Published code uses generated seeds; no explicit seed CLI. Fixed distinct reproducible seeds would require a disclosed method change.",
+    "working_directory": "SI/Benchmarks"
+  },
+  "outputs": {
+    "published_interface": "stdout prints Precision: <mode>, trial <1..10>, slope: <numeric> kJ/mol/ps; thirty slopes expected",
+    "published_machine_readable_file": null,
+    "reason": "Source only prints slopes; no output JSON or trajectory file is produced.",
+    "evaluation_interface": "Parse thirty finite slope values grouped by single/mixed/double and ten trial labels each. Summarize mean and sample standard deviation/sqrt(10) per group; report descriptive differences against three anchors.json references.",
+    "validity": "Missing, non-finite, or incomplete trial output is invalid. This is output-integrity checking, not a published scientific tolerance.",
+    "numerical_acceptance_threshold": null,
+    "performance_metric": "Optional full fixed-workload wall time in seconds; no published wall-time result for this energy script."
+  },
+  "timing_scope": {
+    "published_script": "No timer; all fixed trajectories run to completion.",
+    "future_measurement": "Time process invocation through exit, including Python imports, input parsing, force-field construction, CUDA context/kernel initialization, velocity initialization, integration, energy retrieval and regression. Record setup/install time separately.",
+    "warmup": "No separate warmup or adaptive calibration in published energy script.",
+    "published_runtime_seconds": null,
+    "reason": "Not reported for energy-conservation workload; no workload run during intake.",
+    "budget_basis": "Conservative administrative caps for full workload, including historically slow double precision; these are execution limits, not published runtime claims. Actual completion within cap remains unverified."
+  },
+  "stage_budgets_s": {
+    "anchors": 604800,
+    "profile": 604800,
+    "method_run": 604800,
+    "tests": 604800,
+    "evaluate": 604800
+  },
+  "published_configuration_source": "https://journals.plos.org/ploscompbiol/article/file?type=supplementary&id=10.1371/journal.pcbi.1005659.s001",
+  "reproduction_status": "Not executed; no builds or workloads run. Stock-image details, runtime pin enforcement, peak memory and explicit seed replay remain unverified.",
+  "gate_scripts": {
+    "value": null,
+    "reason": "No gate script names or paths supplied; only JSON/schema consistency can be checked in this intake."
+  }
+}
