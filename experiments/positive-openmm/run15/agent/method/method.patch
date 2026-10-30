@@ -1,0 +1,105 @@
+diff --git a/dhfr_ensemble.py b/dhfr_ensemble.py
+--- a/dhfr_ensemble.py
++++ b/dhfr_ensemble.py
+@@ -1,33 +1,24 @@
+ #!/usr/bin/env python3
+-"""Fixed-work DHFR ensemble: independent replicas of the OpenMM 8.2.0 examples/benchmark.py `pme` system, run one after another."""
++"""Fixed DHFR replicas, with four isolated MPS worker processes."""
+ import argparse
++import concurrent.futures
+ import json
++import multiprocessing
++from pathlib import Path
+ import time
+ 
+ import openmm as mm
+ from openmm import app, unit
+ 
+-parser = argparse.ArgumentParser()
+-parser.add_argument('--replicas', type=int, default=8)
+-parser.add_argument('--steps', type=int, default=25000)
+-parser.add_argument('--seed0', type=int, default=1000)
+-parser.add_argument('--platform', default='CUDA')
+-parser.add_argument('--out', default='ensemble.json')
+-args = parser.parse_args()
+-assert args.replicas > 0 and args.steps > 0 and args.steps % 250 == 0
+ 
+-# System exactly as benchmark.py builds `--test pme` with default options (hbonds, cutoff 0.9 nm).
+-pdb = app.PDBFile('5dfr_solv-cube_equil.pdb')
+-forcefield = app.ForceField('amber99sb.xml', 'tip3p.xml')
+-system = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME, nonbondedCutoff=0.9,
+-                                 constraints=app.HBonds, hydrogenMass=1.5 * unit.amu)
+-platform = mm.Platform.getPlatformByName(args.platform)
+-properties = {'Precision': 'single', 'DeterministicForces': 'true'} if args.platform == 'CUDA' else {}
+-
+-replicas = []
+-start = time.perf_counter()
+-for index in range(args.replicas):
+-    seed = args.seed0 + index
++def run_replica(index, seed, steps, platform_name):
++    # System exactly as benchmark.py builds `--test pme` with default options (hbonds, cutoff 0.9 nm).
++    pdb = app.PDBFile('5dfr_solv-cube_equil.pdb')
++    forcefield = app.ForceField('amber99sb.xml', 'tip3p.xml')
++    system = forcefield.createSystem(pdb.topology, nonbondedMethod=app.PME, nonbondedCutoff=0.9,
++                                     constraints=app.HBonds, hydrogenMass=1.5 * unit.amu)
++    platform = mm.Platform.getPlatformByName(platform_name)
++    properties = {'Precision': 'single', 'DeterministicForces': 'true'} if platform_name == 'CUDA' else {}
+     integrator = mm.LangevinMiddleIntegrator(300 * unit.kelvin, 1 / unit.picosecond, 0.004 * unit.picoseconds)
+     integrator.setConstraintTolerance(1e-5)
+     integrator.setRandomNumberSeed(seed)
+@@ -36,17 +27,45 @@
+     context.setVelocitiesToTemperature(300 * unit.kelvin, seed)
+     began = time.perf_counter()
+     energies = []
+-    for _ in range(args.steps // 250):
++    for _ in range(steps // 250):
+         integrator.step(250)
+         energies.append(context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole))
+-    replicas.append(dict(replica=index, seed=seed, steps=args.steps, wall_s=time.perf_counter() - began,
+-                         final_potential_kj_mol=energies[-1], mean_potential_kj_mol=sum(energies) / len(energies)))
++    result = dict(replica=index, seed=seed, steps=steps, wall_s=time.perf_counter() - began,
++                         final_potential_kj_mol=energies[-1], mean_potential_kj_mol=sum(energies) / len(energies))
+     del context, integrator
+-total = time.perf_counter() - start
++    return result
+ 
+-simulated_ns = args.replicas * args.steps * 0.004 / 1000
+-with open(args.out, 'w') as handle:
+-    json.dump(dict(platform=args.platform, properties=properties, simulated_ns=simulated_ns,
+-                   total_wall_s=total, replicas=replicas), handle, indent=1)
+-print(f'total_wall_s: {total:.3f}')
+-print(f'aggregate_ns_per_day: {simulated_ns / total * 86400:.1f}')
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument('--replicas', type=int, default=8)
++    parser.add_argument('--steps', type=int, default=25000)
++    parser.add_argument('--seed0', type=int, default=1000)
++    parser.add_argument('--platform', default='CUDA')
++    parser.add_argument('--out', default='ensemble.json')
++    args = parser.parse_args()
++    assert args.replicas > 0 and args.steps > 0 and args.steps % 250 == 0
++    properties = {'Precision': 'single', 'DeterministicForces': 'true'} if args.platform == 'CUDA' else {}
++    start = time.perf_counter()
++    # The pipeline owns MPS. Inherit its socket and device settings, including
++    # the default MPS socket when no pipe-directory override is exported.
++    with concurrent.futures.ProcessPoolExecutor(
++            max_workers=min(4, args.replicas),
++            mp_context=multiprocessing.get_context('spawn')) as pool:
++        futures = [pool.submit(run_replica, i, args.seed0 + i, args.steps, args.platform)
++                   for i in range(args.replicas)]
++        replicas = [future.result() for future in futures]
++    # Final energy queries synchronize each context; joining the pool completes
++    # every worker's context destruction before timing stops or results return.
++    total = time.perf_counter() - start
++    simulated_ns = args.replicas * args.steps * 0.004 / 1000
++    Path(args.out).resolve().parent.mkdir(parents=True, exist_ok=True)
++    with open(args.out, 'w') as handle:
++        json.dump(dict(platform=args.platform, properties=properties, simulated_ns=simulated_ns,
++                       total_wall_s=total, replicas=replicas), handle, indent=1)
++    print(f'total_wall_s: {total:.3f}')
++    print(f'aggregate_ns_per_day: {simulated_ns / total * 86400:.1f}')
++
++
++if __name__ == '__main__':
++    main()

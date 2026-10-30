@@ -1,0 +1,98 @@
+{
+  "outputs_stochastic": true,
+  "confidence_rule": {
+    "alpha": 0.05,
+    "decision": "Performance: exact one-sided binomial order-statistic lower bound for median baseline/candidate wall-time ratio; require lower bound >1.05. Five independent timing pairs give minimum ratio as finite conservative lower bound, coverage 1-2^-5=0.96875. Equivalence: exact two-sided binomial order-statistic bounds, Bonferroni across two metrics, per-metric alpha=0.025 with alpha/2=0.0125 per tail. Eight seeds give min/max finite CI, coverage 1-2*2^-8=0.9921875 per metric. Require both CIs within (-margin,+margin). Lack of significance is not equivalence. Declare success only if scientific and performance rules both pass.",
+    "equivalence": {
+      "confidence": 0.95,
+      "kind": "paired_median"
+    },
+    "performance": {
+      "confidence": 0.95,
+      "kind": "paired_median"
+    }
+  },
+  "equivalence_metrics": [
+    {
+      "name": "mean_potential_kj_mol",
+      "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of replicas[*].mean_potential_kj_mol across seeds 1000..1007 = 109.30786339077623 kJ/mol; baseline Monte Carlo standard error = SD/sqrt(8) = 38.64616572031532 kJ/mol. This measured baseline variability sets the prospective absolute margin; not a published tolerance or same-seed repeatability estimate.",
+      "tolerance": {
+        "abs": 38.64616572031532
+      }
+    },
+    {
+      "name": "final_potential_kj_mol",
+      "source": "results/reproduce/out/run/ensemble.json: sample standard deviation (ddof=1) of replicas[*].final_potential_kj_mol across seeds 1000..1007 = 292.634677390889 kJ/mol; baseline Monte Carlo standard error = SD/sqrt(8) = 103.46198239671763 kJ/mol. This measured baseline variability sets the prospective absolute margin; not a published tolerance or same-seed repeatability estimate.",
+      "tolerance": {
+        "abs": 103.46198239671763
+      }
+    }
+  ],
+  "paired_seed_tests": {
+    "description": "Pair candidate and baseline by input and identical velocity/integrator seed. For each metric and seed compute candidate minus baseline; use seed-level median difference across the five timing pairs, then exact two-sided order-statistic CI across eight seeds. Timing repetitions are not independent scientific seeds. Require every metric CI strictly inside its positive absolute margins. No exact or bitwise requirement. Seeds are independent random-stream design units; independence remains an assumption.",
+    "kind": "paired_median",
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ]
+  },
+  "input_ids": [
+    "dhfr-pme-23558-fixed-eight-replicas"
+  ],
+  "configuration": {
+    "DeterministicForces": true,
+    "atoms": 23558,
+    "constraint_tolerance": 1e-05,
+    "constraints": "HBonds",
+    "cutoff_nm": 0.9,
+    "energy_interval_steps": 250,
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "friction_per_ps": 1,
+    "gpu_count": 1,
+    "hydrogen_mass_amu": 1.5,
+    "integrator": "LangevinMiddleIntegrator",
+    "nonbonded_method": "PME",
+    "note": "Constraint tolerance is integrator configuration, not an acceptance tolerance.",
+    "platform": "CUDA",
+    "precision": "single",
+    "replicas": 8,
+    "seed0": 1000,
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "source": "brief.md; https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "step_ps": 0.004,
+    "steps_per_replica": 25000,
+    "temperature_K": 300
+  },
+  "representative_scale": {
+    "fixed": true,
+    "gpu_count": 1,
+    "preferred_gpu": "H100, as specified in brief; GPU model must be recorded and held fixed",
+    "atoms_per_replica": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "steps_total": 200000,
+    "step_fs": 4,
+    "simulated_ns_total": 0.8,
+    "energy_samples_per_replica": 100,
+    "scale_search": false,
+    "source": "brief.md"
+  }
+}

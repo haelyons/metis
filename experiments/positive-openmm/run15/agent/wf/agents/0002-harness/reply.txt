@@ -1,0 +1,4 @@
+Read intake, write harness scripts, check syntax locally. Builds and workloads left to pipeline.
+Intake fixes 8 replicas × 25,000 steps, OpenMM 8.2.0, one GPU. Harness will preserve supplied driver, parse measured output, and report reference throughput without invented thresholds. No gate scripts supplied.
+Scripts written. Canonical command saves logs; anchors parse stdout and ensemble JSON. Evaluation runs each sealed seed/input pair with fresh outputs and GPU synchronization. Checking syntax now; no builds or workloads run locally.
+Created four scripts under harness/. Shell and embedded Python syntax checks pass. No builds or workloads run locally.

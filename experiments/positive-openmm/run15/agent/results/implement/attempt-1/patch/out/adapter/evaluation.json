@@ -1,0 +1,75 @@
+{
+  "records": [
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1000,
+      "metrics": {
+        "mean_potential_kj_mol": -299792.5207067336,
+        "final_potential_kj_mol": -299938.117922005
+      }
+    },
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1001,
+      "metrics": {
+        "mean_potential_kj_mol": -299709.7444269789,
+        "final_potential_kj_mol": -299889.382173714
+      }
+    },
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1002,
+      "metrics": {
+        "mean_potential_kj_mol": -299753.46623133076,
+        "final_potential_kj_mol": -300002.40844934876
+      }
+    },
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1003,
+      "metrics": {
+        "mean_potential_kj_mol": -299924.90657541645,
+        "final_potential_kj_mol": -300535.00877588685
+      }
+    },
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1004,
+      "metrics": {
+        "mean_potential_kj_mol": -299903.4313355483,
+        "final_potential_kj_mol": -299735.3406087726
+      }
+    },
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1005,
+      "metrics": {
+        "mean_potential_kj_mol": -299675.9737006606,
+        "final_potential_kj_mol": -300120.8245717853
+      }
+    },
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1006,
+      "metrics": {
+        "mean_potential_kj_mol": -299608.61760218034,
+        "final_potential_kj_mol": -299530.09054773743
+      }
+    },
+    {
+      "input_id": "dhfr-pme-23558-fixed-eight-replicas",
+      "seed": 1007,
+      "metrics": {
+        "mean_potential_kj_mol": -299712.38688425435,
+        "final_potential_kj_mol": -299989.11996668275
+      }
+    }
+  ],
+  "timing_scope": {
+    "description": "One complete invocation from process launch to exit, all eight seeded replicas at fixed steps. Includes interpreter/imports, PDB/XML loading, system and context construction, CUDA compilation, worker launch, H2D/D2H, integration, all energy queries, result merge, serialization and teardown. Adapter synchronizes GPU before completion. Package installation excluded.",
+    "gpu_synchronization": "adapter",
+    "kind": "process_wall"
+  },
+  "gpu_count": 1,
+  "wall_s": 58.721134091000295
+}

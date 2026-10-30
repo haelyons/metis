@@ -1,0 +1,137 @@
+{
+  "representative_scale": {
+    "fixed": true,
+    "gpu_count": 1,
+    "preferred_gpu": "H100, as specified in brief; GPU model must be recorded and held fixed",
+    "atoms_per_replica": 23558,
+    "replicas": 8,
+    "steps_per_replica": 25000,
+    "steps_total": 200000,
+    "step_fs": 4,
+    "simulated_ns_total": 0.8,
+    "energy_samples_per_replica": 100,
+    "scale_search": false,
+    "source": "brief.md"
+  },
+  "inputs": {
+    "required_files": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "driver": "baseline.json driver.code, verbatim from brief.md",
+    "configuration": {
+      "atoms": 23558,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "seed0": 1000,
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "gpu_count": 1,
+      "platform": "CUDA",
+      "precision": "single",
+      "DeterministicForces": true,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "step_ps": 0.004,
+      "constraint_tolerance": 1e-05,
+      "energy_interval_steps": 250,
+      "source": "brief.md; https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "note": "Constraint tolerance is integrator configuration, not an acceptance tolerance."
+    }
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "format": "JSON",
+    "top_level_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "energy_series": {
+      "available": false,
+      "reason": "Driver collects 100 energies per replica internally but serializes only mean and final; full series must be retained by later implementation to test series identity."
+    }
+  },
+  "run_command": "python3 dhfr_ensemble.py --replicas 8 --steps 25000 --seed0 1000",
+  "run_command_source": "brief.md",
+  "timing_scope": {
+    "ensemble": "perf_counter starts after PDB parsing, force-field/system construction and platform selection, before replica loop; ends after all contexts/integrators deleted. Includes integrator/context creation, initialization, compilation, integration, 100 energy queries per replica, reductions and teardown. Excludes package install, input loading/system construction and output serialization.",
+    "per_replica": "Starts after context creation, position/velocity initialization; ends after integration and energy queries.",
+    "candidate": "Measure same fixed ensemble completion scope and include concurrent worker/context start and teardown; use same single GPU. No candidate driver command published in brief.",
+    "warmup": null,
+    "warmup_reason": "No separate warmup prescribed in supplied fixed-work driver."
+  },
+  "scoring_interface": {
+    "primary_metric": "total_wall_s, lower is better",
+    "derived_metrics": {
+      "simulated_ns": 0.8,
+      "aggregate_ns_per_day": "0.8 / total_wall_s * 86400",
+      "speedup": "sequential_total_wall_s / candidate_total_wall_s"
+    },
+    "scientific_outcomes": [
+      "Each replica mean_potential_kj_mol",
+      "Each replica final_potential_kj_mol",
+      "Potential energy samples every 250 steps requested by brief; supplied driver retains summaries only."
+    ],
+    "published_acceptance_tolerance": null,
+    "reason": "No independent fixed-work energy values or published acceptance tolerance. NVIDIA throughput observation is a reference only. Brief speedup ranges and energy-invariance statements are hypotheses, not published acceptance criteria.",
+    "repeatability": {
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "control": "Keep GPU model, software, system, seeds, precision and deterministic-force property fixed. Each replica starts from published coordinates, with seeded initial velocities and integrator.",
+      "repeat_count": null,
+      "repeat_count_reason": "Brief supplies no prescribed repeat count or statistical acceptance rule.",
+      "numerical_acceptance_rule": null,
+      "numerical_acceptance_reason": "Bit identity is predicted, not established on CUDA. Same-seed sequential run-to-run variation fallback is unspecified numerically. Do not invent epsilon or infer tolerance from variation.",
+      "verification_status": "Brief reports CPU-only smoke test; CUDA ensemble not reproduced during intake."
+    }
+  },
+  "reference_comparison": {
+    "anchors_file": "anchors.json",
+    "applicability": "NVIDIA approximate throughput reference uses fixed-time benchmark.py; no strict numeric pass/fail for fixed-work ensemble."
+  },
+  "stage_budgets_s": {},
+  "budget_notes": "Defaults retained: setup, anchors, profile, method_setup, method_run 1200 s; tests 900 s; evaluate 2400 s. Brief estimates about one minute on H100, a few minutes on slower GPUs; not independently measured. Fixed scale only.",
+  "gate_scripts": [],
+  "gate_scripts_reason": "No gate script paths or commands supplied. JSON structure and evidence completeness checked locally; no build or workload executed."
+}

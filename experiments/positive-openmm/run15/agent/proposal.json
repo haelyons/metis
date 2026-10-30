@@ -1,0 +1,22 @@
+{
+  "method": "ensembles",
+  "rationale": "Ensembles is the first ranked feasible method and matches the existing eight-seed workload on one input. Kernels account for 58.2479% of wall time and CUDA API host time for 41.3487%; transfers total only 0.4034%. Concurrent independent replicas on one GPU with MPS can overlap whole-workload execution. The supplied measured concurrent-throughput bound is 1.7633258235987077x, with p=1 and k=min(8,1.7633258235987077); eight is a concurrency cap, not an eightfold speedup claim. GPU utilization is unavailable, so no occupancy inference is needed. Resource guards already passed. Preserve the sealed ensembles method and scientific and timing protocols unchanged.",
+  "plan_steps": [
+    "Locate the existing replica driver and result aggregation entry points during implementation; no source inspection or workloads occur in this proposal stage.",
+    "Schedule the existing eight replicas, seeds 1000 through 1007, as isolated worker processes sharing the same GPU under MPS, with concurrency no greater than eight. Keep input, replica count, velocity and integrator seeds, system, integrator, precision, simulation lengths, sampling, and output definitions unchanged. Do not divide a trajectory or add replicas.",
+    "Give each replica isolated state and output paths, preserve seed identity, propagate worker failures, and aggregate completed results in original seed order using unchanged metric definitions and weighting.",
+    "Evaluate the sealed five timing pairs on the complete fixed workload using the existing timing boundaries. Account for worker startup, CUDA context initialization, MPS scheduling, CPU contention, synchronization, and result collection wherever those boundaries include them. Compare concurrent throughput on one GPU against baseline; treat 1.7633258235987077x as the supplied bound, not a guaranteed result.",
+    "Pair candidate and baseline by the single input and identical velocity/integrator seed. For each of mean_potential_kj_mol and final_potential_kj_mol, compute candidate-minus-baseline differences for each timing pair, then the seed-level median over five pairs. Across the eight independent seed design units, apply the sealed exact two-sided order-statistic paired-median confidence procedure at 95% confidence. Require each entire CI strictly inside (-38.64616572031532,38.64616572031532) kJ/mol for mean potential and (-103.46198239671763,103.46198239671763) kJ/mol for final potential. Timing repetitions are not independent scientific seeds. Do not alter margins, seeds, sample sizes, or confidence rule after observing results."
+  ],
+  "files_expected": [
+    "Existing replica execution driver and aggregation source files; exact paths are not supplied in the packet and must be identified during implementation.",
+    "Existing execution configuration or launcher for single-GPU MPS worker scheduling; exact path is not supplied in the packet.",
+    "results/reproduce/out/run/ensemble.json (existing aggregate output artifact, retaining its schema and seed identities)."
+  ],
+  "risks": [
+    "Process startup, CUDA contexts, MPS scheduling, CPU contention, GPU contention, synchronization, and output I/O may reduce realized throughput below the supplied bound. The packet does not identify the worker count used to measure the concurrency factor.",
+    "Concurrent execution may change floating-point ordering or stochastic trajectory evolution despite identical seeds. Preserve physical parameters and random-stream assignment; scientific acceptance uses the sealed paired confidence intervals, with no exact or bitwise requirement.",
+    "Shared state, output collisions, seed reassignment, omitted replicas, or changed aggregation weights could break equivalence. Isolate workers and validate complete seed-keyed aggregation.",
+    "The absolute margins derive from baseline across-seed Monte Carlo standard errors, not published tolerances or measured same-seed repeatability. Seed independence remains an assumption. The 0.9227446944279201 power lower bound is conditional on the sealed 0.99 joint within-margin probability assumption for each seed; candidate paired differences and unconditional power are unavailable. A failed equivalence gate must not trigger post hoc protocol changes."
+  ]
+}

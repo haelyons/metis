@@ -1,0 +1,124 @@
+{
+  "availability": "available",
+  "required_inputs": [
+    {
+      "name": "5dfr_solv-cube_equil.pdb",
+      "type": "published input",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "verification": "Downloaded in memory during intake; SHA-256 computed; no workload run.",
+      "access_instructions": "Public unauthenticated HTTPS. PDB must be in driver working directory; XML files ship in OpenMM package.",
+      "licence": {
+        "status": "permitted",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "evidence": "Repository-associated inputs distributed with OpenMM; supplied brief explicitly permits local running and modification. No separate file-specific licence identified."
+      }
+    },
+    {
+      "name": "amber99sb.xml",
+      "type": "published input",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "verification": "Downloaded in memory during intake; SHA-256 computed; no workload run.",
+      "access_instructions": "Public unauthenticated HTTPS. PDB must be in driver working directory; XML files ship in OpenMM package.",
+      "licence": {
+        "status": "permitted",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "evidence": "Repository-associated inputs distributed with OpenMM; supplied brief explicitly permits local running and modification. No separate file-specific licence identified."
+      }
+    },
+    {
+      "name": "tip3p.xml",
+      "type": "published input",
+      "required": true,
+      "availability": "available",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "verification": "Downloaded in memory during intake; SHA-256 computed; no workload run.",
+      "access_instructions": "Public unauthenticated HTTPS. PDB must be in driver working directory; XML files ship in OpenMM package.",
+      "licence": {
+        "status": "permitted",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "evidence": "Repository-associated inputs distributed with OpenMM; supplied brief explicitly permits local running and modification. No separate file-specific licence identified."
+      }
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "Initial velocities and Langevin random streams",
+      "generation": "OpenMM setVelocitiesToTemperature(300 K, seed) and integrator.setRandomNumberSeed(seed)",
+      "seeds": [
+        1000,
+        1001,
+        1002,
+        1003,
+        1004,
+        1005,
+        1006,
+        1007
+      ],
+      "source": "brief.md",
+      "missing_data": false
+    }
+  ],
+  "splits": null,
+  "splits_reason": "Simulation ensemble has no train/validation/test split. All replicas use same published equilibrated coordinates.",
+  "seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007
+  ],
+  "missing_required_data": [],
+  "size": {
+    "data_bytes": 2282791,
+    "data_gib": 0.002126014791429043,
+    "peak_working_set_gib": null,
+    "data_plus_peak_working_set_gib": null,
+    "classification": "unknown",
+    "reason": "Required scientific input bytes verified. No published peak host/device working-set measurement for eight contexts; dependency/runtime footprint and CUDA context overhead unmeasured."
+  },
+  "access": "No credentials, registration or restricted download needed for required scientific inputs.",
+  "licences": {
+    "status": "permitted",
+    "intended_use": "Local scientific benchmarking, execution and modification",
+    "components": [
+      {
+        "component": "OpenMM API, Reference and CPU",
+        "licence": "MIT",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "OpenMM CUDA and OpenCL platforms",
+        "licence": "GNU LGPL",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      },
+      {
+        "component": "PDB and force-field inputs",
+        "licence": "Repository-associated distribution; no separate file-specific licence identified",
+        "source": "brief.md; https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt"
+      }
+    ],
+    "reason": "OpenMM licences permit local running and modification; brief states same for intended workload. Redistribution must preserve applicable licence obligations."
+  },
+  "pins": {
+    "openmm_version": "8.2.0",
+    "source_commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+    "transitive_runtime_pins": null,
+    "reason": "Brief install command leaves NVIDIA runtime dependency versions unpinned."
+  }
+}
