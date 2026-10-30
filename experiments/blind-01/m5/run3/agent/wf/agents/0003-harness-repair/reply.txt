@@ -1,0 +1,5 @@
+Read intake and harness scripts. Repair setup dependency failure; check syntax without running workloads.
+Failure: build backend loaded stock setuptools and packaging 21.3; vcs-versioning requires packaging ≥26.2. Upgrade build tools inside existing venv before published install. Pin, CUDA selection, workload configuration stay unchanged.
+Repaired only harness/setup.sh: upgrade venv-local pip, setuptools, wheel, packaging≥26.2 before published install. Pin, configuration, stock image preserved.
+
+Syntax check passed. No workloads run locally.

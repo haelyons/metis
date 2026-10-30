@@ -1,0 +1,63 @@
+{
+  "repo": "https://github.com/pinder-org/pinder",
+  "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "identity": "Published PINDER evaluation harness; FroDock listed as docking baseline candidate with unresolved external setup.",
+  "build_commands": [
+    {
+      "command": "python3 -m venv venv",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "command": "source venv/bin/activate",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "command": "pip install .",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published source-install command, executed from pinned repository root; not run during intake."
+    }
+  ],
+  "run_commands": [
+    {
+      "command": "pinder_eval --eval_dir eval_dir",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py",
+      "context": "eval_dir is the directory of ranked predictions following published layout. CLI scores predictions; does not generate docking poses."
+    }
+  ],
+  "published_configuration": {
+    "evaluator": "MethodMetrics, native PINDER structures, rank parsed from prediction filename, CAPRI metrics; full defaults in pinned implementation.",
+    "python": "README recommends Python 3.11; package requires >=3.10.",
+    "sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/method.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/pyproject.toml"
+    ],
+    "optimized_docking_configuration": null,
+    "unavailable_reason": "PINDER has FroDock wrapper and Docker recipe but no verified obtainable external software archive, immutable FroDock pin or complete published parameter file."
+  },
+  "docking_baseline_candidate": {
+    "name": "FroDock",
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+    "download_url": "https://chaconlab.org/modeling/frodock/frodock-donwload",
+    "download_result": "HTTP 404",
+    "commit": null,
+    "pin": null,
+    "pin_reason": "No immutable external software identifier verified.",
+    "licence": null,
+    "licence_reason": "Linked software download unreachable; PINDER Apache licence does not establish external software permission.",
+    "published_build_command": "docker build --build-arg FRODOCK_SOURCE_ARCHIVE=./frodock.tar.gz -t pinder-frodock -f docker/frodock/Dockerfile.frodock .",
+    "build_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+    "published_run_template": "pinder_methods predict -m <method> -s <test set> -l <list of PINDER ids> -c `config` -r `results_dir`",
+    "run_template_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+    "run_template_executable_as_written": false,
+    "required_configuration": [
+      "n_solutions",
+      "mpi_np",
+      "force"
+    ],
+    "configuration_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+    "additional_evidence": "Pinned runner contains pd.from_csv and wrapper path/copy handling that require reproduction; no working optimized implementation is claimed."
+  },
+  "builds_or_workloads_run": false
+}

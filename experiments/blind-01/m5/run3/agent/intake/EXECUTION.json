@@ -1,0 +1,63 @@
+{
+  "representative_scale": {
+    "benchmark": "PINDER-S",
+    "case_count": 93,
+    "monomer_mode": "paired apo",
+    "candidate_count_per_case": 5,
+    "selection": "All published PINDER-S cases with both apo partners. Freeze IDs and custom index before run.",
+    "scale_search": false,
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+    "candidate_count_basis": "Fixed intake protocol matching published top-5 scoring, not asserted historical docking configuration.",
+    "secondary_aav": "Separate optional challenge; not pooled into primary 93-case score."
+  },
+  "inputs": {
+    "experimental": "Native dimer and paired unbound receptor/ligand for each selected case, from PINDER 2024-02.",
+    "generated": "Five ranked predicted complexes per case: eval_dir/<method>/<pinder_id>/apo_decoys/model_<rank>.pdb; chains R and L.",
+    "manifest": "Pinned case manifest/custom index preserving PINDER schema.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py"
+    ],
+    "seed_schedule": null,
+    "seed_schedule_reason": "Independent seeds required by brief; no published seed values established."
+  },
+  "outputs": {
+    "scoring_command": "pinder_eval --eval_dir eval_dir",
+    "published_interface_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py",
+    "files": [
+      "eval_dir/<method_name>_metrics.csv",
+      "eval_dir/<method_name>_leaderboard.csv"
+    ],
+    "required_metrics": [
+      "DockQ",
+      "iRMS",
+      "Fnat"
+    ],
+    "primary_reporting": "Rank-1 DockQ and maximum DockQ among exactly five generated candidates; report fractions of selected cases with DockQ >=0.23 for each. Report per-case metrics and seed repeats separately.",
+    "performance": [
+      "Search wall-clock seconds",
+      "candidate poses per second",
+      "time to first acceptable pose or censored failure",
+      "compute cost with documented rates"
+    ],
+    "published_numeric_runtime_target": null,
+    "runtime_target_reason": "No independently verified published runtime, throughput or cost anchor."
+  },
+  "timing_scope": {
+    "search": "Start after selected experimental inputs are available and normalized; include per-case maps/features, candidate search, ranking and pose writing.",
+    "evaluation": "Measure scoring separately against native complexes; native structures must not influence search or ranking.",
+    "setup": "Record installation and download time separately.",
+    "time_to_acceptable": "Requires candidate production timestamps and retrospective native scoring; unavailable from final ranked PDBs alone.",
+    "source": "Brief requirements; timing boundaries are intake protocol choices, not published runtime claims."
+  },
+  "stage_budgets_s": {},
+  "budget_basis": "Use supplied pipeline defaults: setup/anchors/profile/method_setup/method_run=1200, tests=900, evaluate=2400 seconds. No runtime measurements support a full docking completion guarantee; fail clearly within budget if unresolved requirements persist.",
+  "execution_readiness": {
+    "evaluation_interface": "published",
+    "full_docking": "unavailable pending working optimized implementation and external software provenance",
+    "memory_gib": null,
+    "memory_reason": "Not published in inspected evidence and no workloads run.",
+    "runtime_s": null,
+    "runtime_reason": "No builds or workloads authorized during intake."
+  }
+}

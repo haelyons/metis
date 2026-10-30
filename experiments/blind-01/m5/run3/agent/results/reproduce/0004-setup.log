@@ -1,0 +1,70 @@
+/usr/bin/nvcc
+/usr/include/cuda_runtime.h
+/usr/lib/x86_64-linux-gnu/libcudart.so
+hint: Using 'master' as the name for the initial branch. This default branch name
+hint: is subject to change. To configure the initial branch name to use in all
+hint: of your new repositories, which will suppress this warning, call:
+hint: 
+hint: 	git config --global init.defaultBranch <name>
+hint: 
+hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+hint: 'development'. The just-created branch can be renamed via this command:
+hint: 
+hint: 	git branch -m <name>
+Initialized empty Git repository in /tmp/m5-ae2d435c-9956-431d-9f1f-ae9fdbf6b919/baseline-published/.git/
+From https://github.com/pinder-org/pinder
+ * branch            ebeb28a2f8411363cef722b7d293c978f7442672 -> FETCH_HEAD
+HEAD is now at ebeb28a Migrate dataset hosting to R2 (#48)
+Processing /tmp/m5-ae2d435c-9956-431d-9f1f-ae9fdbf6b919/baseline-published
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'error'
+  error: subprocess-exited-with-error
+  
+  × Getting requirements to build wheel did not run successfully.
+  │ exit code: 1
+  ╰─> [33 lines of output]
+      Traceback (most recent call last):
+        File "/tmp/m5-ae2d435c-9956-431d-9f1f-ae9fdbf6b919/baseline-published/venv/lib/python3.10/site-packages/pip/_vendor/pep517/in_process/_in_process.py", line 363, in <module>
+          main()
+        File "/tmp/m5-ae2d435c-9956-431d-9f1f-ae9fdbf6b919/baseline-published/venv/lib/python3.10/site-packages/pip/_vendor/pep517/in_process/_in_process.py", line 345, in main
+          json_out['return_val'] = hook(**hook_input['kwargs'])
+        File "/tmp/m5-ae2d435c-9956-431d-9f1f-ae9fdbf6b919/baseline-published/venv/lib/python3.10/site-packages/pip/_vendor/pep517/in_process/_in_process.py", line 130, in get_requires_for_build_wheel
+          return hook(config_settings)
+        File "/usr/lib/python3/dist-packages/setuptools/build_meta.py", line 162, in get_requires_for_build_wheel
+          return self._get_build_requires(
+        File "/usr/lib/python3/dist-packages/setuptools/build_meta.py", line 143, in _get_build_requires
+          self.run_setup()
+        File "/usr/lib/python3/dist-packages/setuptools/build_meta.py", line 158, in run_setup
+          exec(compile(code, __file__, 'exec'), locals())
+        File "setup.py", line 1, in <module>
+        File "/usr/lib/python3/dist-packages/setuptools/__init__.py", line 153, in setup
+          return distutils.core.setup(**attrs)
+        File "/usr/lib/python3/dist-packages/setuptools/_distutils/core.py", line 109, in setup
+          _setup_distribution = dist = klass(attrs)
+        File "/usr/lib/python3/dist-packages/setuptools/dist.py", line 459, in __init__
+          _Distribution.__init__(
+        File "/usr/lib/python3/dist-packages/setuptools/_distutils/dist.py", line 293, in __init__
+          self.finalize_options()
+        File "/usr/lib/python3/dist-packages/setuptools/dist.py", line 836, in finalize_options
+          for ep in sorted(loaded, key=by_order):
+        File "/usr/lib/python3/dist-packages/setuptools/dist.py", line 835, in <lambda>
+          loaded = map(lambda e: e.load(), filtered)
+        File "/usr/lib/python3/dist-packages/pkg_resources/__init__.py", line 2464, in load
+          self.require(*args, **kwargs)
+        File "/usr/lib/python3/dist-packages/pkg_resources/__init__.py", line 2487, in require
+          items = working_set.resolve(reqs, env, installer, extras=self.extras)
+        File "/usr/lib/python3/dist-packages/pkg_resources/__init__.py", line 782, in resolve
+          raise VersionConflict(dist, req).with_context(dependent_req)
+      pkg_resources.ContextualVersionConflict: (packaging 21.3 (/usr/lib/python3/dist-packages), Requirement.parse('packaging>=26.2'), {'vcs-versioning'})
+      [end of output]
+  
+  note: This error originates from a subprocess, and is likely not a problem with pip.
+error: subprocess-exited-with-error
+
+× Getting requirements to build wheel did not run successfully.
+│ exit code: 1
+╰─> See above for output.
+
+note: This error originates from a subprocess, and is likely not a problem with pip.

@@ -1,0 +1,87 @@
+{
+ "card": "args",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/m5/run3/agent/wf",
+ "stage": "reproduce",
+ "started": "2026-10-30T16:28:51.450Z",
+ "calls": [
+  {
+   "id": "0001 intake",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 191909,
+   "cost_usd": 0,
+   "tokens": 396333,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0002 harness",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 156251,
+   "cost_usd": 0,
+   "tokens": 307179,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0003 harness-repair",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "opencode-go/mimo-v2.6-pro",
+   "chain": [
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 41803,
+   "cost_usd": 0,
+   "tokens": 122013,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0,
+ "tokens": 825525,
+ "by_model": {
+  "codex/default@medium": {
+   "calls": 3,
+   "cost_usd": 0,
+   "tokens": 825525,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "codex": {
+   "calls": 3,
+   "cost_usd": 0,
+   "tokens": 825525,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": false,
+ "updated": "2026-10-30T16:37:31.075Z"
+}

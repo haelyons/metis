@@ -1,0 +1,124 @@
+{
+  "required_inputs": [
+    {
+      "name": "PINDER 2024-02 index",
+      "url": "https://pinderdata.org/2024-02/index.parquet",
+      "availability": "available",
+      "evidence": "HTTP GET 200; initial bytes PAR1; Content-Length 124511839",
+      "etag": "2a9a404020a6518c6b34171f742d09ee-2",
+      "hash": null
+    },
+    {
+      "name": "PINDER 2024-02 metadata",
+      "url": "https://pinderdata.org/2024-02/metadata.parquet",
+      "availability": "available",
+      "evidence": "HTTP HEAD 200; Content-Length 103835983",
+      "etag": "cf54a856be1847a074117ef935e86b30-2",
+      "hash": null
+    },
+    {
+      "name": "Native complexes and canonical apo receptor/ligand structures for paired-apo PINDER-S",
+      "url": "https://pinderdata.org/2024-02/test_set_pdbs.zip",
+      "availability": "available",
+      "evidence": "Published ready-to-use test structures and automatic per-system retrieval; test archive HTTP HEAD 200, Content-Length 181968169. Not downloaded or exhaustively validated.",
+      "etag": "4f8d7100484eb7a9aafeef361d75bc95-2",
+      "hash": null,
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    }
+  ],
+  "availability": "available",
+  "availability_basis": "Published public retrieval API and reachable public index, metadata and test archive; availability is remote accessibility, not completed local checksum validation.",
+  "access_instructions": {
+    "preferred": "Use get_index(), select PINDER-S entries with both apo partners, and retrieve structures with PinderSystem; API downloads required files automatically. Set PINDER_BASE_DIR to an authorized execution directory.",
+    "published_full_release_commands": [
+      "pinder_download",
+      "pinder_sync_data"
+    ],
+    "full_release_caution": "These commands retrieve the full release, approximately 1.04 TB, and are not the selected subset workflow. Archives omit files; sync or API retrieval obtains missing files.",
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  },
+  "licences": [
+    {
+      "item": "PINDER source code and evaluation harness",
+      "licence": "Apache-2.0",
+      "permission": "permitted",
+      "basis": "distribution",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+      "reason": "Repository distributes LICENSE; fetched licence does not explicitly identify external dataset files as covered."
+    },
+    {
+      "item": "PINDER 2024-02 derived structures, index and metadata",
+      "licence": null,
+      "permission": "unknown",
+      "basis": "none",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "reason": "No explicit terms covering externally hosted derived dataset were established in the bounded source inspection. Repository code licence alone does not establish coverage."
+    },
+    {
+      "item": "Original PDB archive structures, including 6IHB, 6JCQ, 6JCS",
+      "licence": "CC0-1.0",
+      "permission": "permitted",
+      "basis": "explicit",
+      "source": "https://www.wwpdb.org/about/usage-policies",
+      "reason": "wwPDB usage policy explicitly covers data files contained in the PDB archive."
+    }
+  ],
+  "pins": {
+    "data_release": "2024-02",
+    "code_commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "release_hash": null,
+    "hash_reason": "No complete immutable checksum manifest for chosen 93-case subset fetched; release index can receive patches. ETags are observed validators, not asserted content hashes."
+  },
+  "splits": {
+    "benchmark": "PINDER-S test holdout, 250 cases",
+    "selected": "93 cases with both apo partners",
+    "training": "None required for evaluator",
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  },
+  "seeds": null,
+  "seeds_reason": "Not specified by brief or established published baseline configuration.",
+  "generated_inputs": [
+    {
+      "name": "Ranked docking decoys",
+      "count_per_case": 5,
+      "availability": "to_be_generated",
+      "reason": "Method outputs, not a missing experimental dataset. Require working docking method before evaluation."
+    },
+    {
+      "name": "Fixed selected-case manifest and custom index",
+      "availability": "to_be_generated",
+      "reason": "Derive from published PINDER-S membership and paired apo availability; freeze before timing."
+    }
+  ],
+  "secondary_inputs": [
+    {
+      "pdb_id": "6IHB",
+      "url": "https://files.rcsb.org/download/6IHB.cif",
+      "availability": "available",
+      "evidence": "HTTP HEAD 200",
+      "hash": null,
+      "licence": "CC0-1.0",
+      "licence_source": "https://www.wwpdb.org/about/usage-policies"
+    },
+    {
+      "pdb_id": "6JCQ",
+      "url": "https://files.rcsb.org/download/6JCQ.cif",
+      "availability": "available",
+      "evidence": "HTTP HEAD 200",
+      "hash": null,
+      "licence": "CC0-1.0",
+      "licence_source": "https://www.wwpdb.org/about/usage-policies"
+    },
+    {
+      "pdb_id": "6JCS",
+      "url": "https://files.rcsb.org/download/6JCS.cif",
+      "availability": "available",
+      "evidence": "HTTP HEAD 200",
+      "hash": null,
+      "licence": "CC0-1.0",
+      "licence_source": "https://www.wwpdb.org/about/usage-policies"
+    }
+  ],
+  "missing_data": [],
+  "verification_limit": "No workload or build executed. Individual selected structure checksums and complete subset coverage not reproduced."
+}
