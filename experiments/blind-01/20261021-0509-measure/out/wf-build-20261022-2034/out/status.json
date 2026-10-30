@@ -1,0 +1,66 @@
+{
+ "card": "blind-01-m4-build",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-build-20261022-2034/out",
+ "stage": "done",
+ "started": "2026-10-22T20:34:07.440Z",
+ "calls": [
+  {
+   "id": "0001 gatecheck",
+   "stage": "",
+   "model": "opencode-go/mimo-v2.6-pro",
+   "understudy": "claude/sonnet",
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 107255,
+   "cost_usd": 0.027645323,
+   "tokens": 57956,
+   "kind": "none",
+   "by": "opencode-go/mimo-v2.6-pro",
+   "errors": []
+  },
+  {
+   "id": "0002 build",
+   "stage": "",
+   "model": "opencode-go/mimo-v2.6-pro",
+   "understudy": "claude/opus",
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 2,
+   "ms": 2372163,
+   "cost_usd": 0.29581803799999995,
+   "tokens": 454111,
+   "kind": "none",
+   "by": "opencode-go/mimo-v2.6-pro",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.32346336099999995,
+ "tokens": 512067,
+ "by_model": {
+  "opencode-go/mimo-v2.6-pro": {
+   "calls": 2,
+   "cost_usd": 0.32346336099999995,
+   "tokens": 512067,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "opencode": {
+   "calls": 2,
+   "cost_usd": 0.32346336099999995,
+   "tokens": 512067,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-10-22T21:15:31.355Z",
+ "go": [
+  "opencode-go/mimo-v2.6-pro: $0.323 over 2 calls"
+ ]
+}

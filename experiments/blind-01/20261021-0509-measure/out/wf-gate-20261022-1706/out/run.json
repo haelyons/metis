@@ -1,0 +1,285 @@
+{
+ "name": "blind-01-m4-gate",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-gate-20261022-1706/out",
+ "script": "/home/hal/dev/interp/metis/dut/pipeline/measure/prompt_stage.js",
+ "script_sha256": "568d649531006ac1bdf9f753ddf4700087b262bc461b825f962ca8795cb25c39",
+ "args": {
+  "prompt": "You are the gate for one measure run (tag m4) of the metis pipeline, standing in for the owner, who delegated this human role to you under the standing rules below. You write exactly two files in `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure`: `GATE_COMMIT.md` and `EXEC_NOTE.md`. You write nothing else, edit nothing else, and run nothing.\n\n## What this run is\n\nRead, in this order, with the Read tool:\n1. `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/QUESTION.md`: the measurement question compiled from a card: which of the card's load-bearing inputs are unmeasured, on what protocol, with what gate, anchor and bands.\n2. `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/CARD.json`: the card's calibration record (inputs, measuring phase, anchor, predictions, plan cost).\n3. `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/design_record.json`: the design workflow's return value. `design` is the typed design the build will implement as its spec; `diff.departures` are the questions the diff agent raised; `triage` holds the reader's grounding verdicts, the skeptics' cruxes and the run, author, instrument and shared queues; `gate` is the gate text. If it carries `halt` or `error` instead, write both files as a halt record (decision section first) and stop.\n4. Shape examples from an earlier, unrelated run (another experiment: use only their structure, never their content): `/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/GATE_COMMIT.md` and `/home/hal/dev/interp/metis/experiments/immersion-coolants/20261020-1020-measure/EXEC_NOTE.md`.\n5. The report this addendum rules on: `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/gate_report_20.md`. Also read the current `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/GATE_COMMIT.md` and `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/EXEC_NOTE.md`, which you will extend, not rewrite. Then read yourself the raw files the report rests on (records, logs, diagnostics, code); a ruling on a measured outcome cites in GATE_COMMIT.md the paths it rests on, and a report's conclusion whose evidence you have not read is not a basis for a ruling.\n\n## Standing rules (owner, 2026-10-20 and 21; binding)\n\n1. Budget: hard cap USD 20 of box time for the whole run (the owner's calibration rule, raised from 10 on 2026-10-21; more on the owner's approval; the operator records the spend of every launch and launches until the cap is reached, no fixed count); `BUDGET_LEFT_USD` per launch = the lesser of 5 and what remains of the cap; `gpu_1x_a100_sxm4` (A100 SXM4 40 GB, USD 1.99/h) in us-east-1 if it has capacity, else the cheapest single GPU with capacity (the operator records which). If the design's budget exceeds the cap, shorten the protocol to fit as a ruling of record (fewer steps, fewer repeats, one cell), never drop an input silently; if it cannot fit, decide HALT and say what it would cost.\n2. Time: set `REMOTE_TIMEOUT` (at most 7,200 s per launch). `onbox_m4.sh` reads `PRICE_USD_PER_HOUR`, `BUDGET_LEFT_USD` and `REMOTE_TIMEOUT` from its environment and stops cleanly, writing a void record, before exceeding them.\n3. Scope: measure the inputs on the card's own protocol; no production phase; anchor first; a missed anchor marks every later record scientifically unvalidated (run_valid=false, run_valid_voided_by the anchor) and the inputs are still measured; every later record carries calibration_valid, decided by its own checks only (guards, completion, the workload checks the directive names), never by the anchor; the anchor's verdict never changes (owner ruling 2026-10-22, a deviation of record made after the anchor failed on launches 9 and 10).\n4. Box: Ubuntu 22.04, CUDA 12.8, driver 570, python 3.10, torch 2.7 preinstalled; anything else is installed by `onbox_m4.sh` inside the time cap. Broken infrastructure: exit non-zero with a void record; never patch around.\n5. Files: the build writes exactly `run_m4.py` and `onbox_m4.sh` in `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure` (absolute path) and reads the design record and `frozen/` (provenance.py is the record writer; lambda_run.sh and remote_run.sh show what the box does; `frozen/ONBOX_CONTRACT.md` is the binding execution contract: its stage order, guards, record fields, stage interface and failure checks are directive items unless you tighten them). Payload shipped to the box: `run_m4.py onbox_m4.sh remote_run_m4.sh frozen/provenance.py` and `data/` recursively if it exists, all under `~/m4_run/`; results under `~/m4_run/results_m4/out/`, which the launcher fetches. Nothing else is on the box.\n6. Records, so a script can score them without a model: for each input C1..Cn of QUESTION.md one provenance.py record `results_m4/out/endpoint-C<i>_tag-m4.json` whose `values` carries `measured` (a number in the card's unit), `unit`, `card_value` and `band` ([lo, hi] from QUESTION.md), and whose `decision` is PASS, FAIL or VOID against that band; `run_valid` in every record; an anchor record `endpoint-anchor_tag-m4.json` (values: measured, published, tolerance); `RUN_VALID.json`; `m4_summary.json`; raw rows as JSON lines.\n7. Tests: the runner exposes the contract's stage interface (one stage per invocation, external programs replaceable through environment variables, parsers callable by name, no work at import); the directive names the stages, the variables and the parsers. A separate author writes the tests against that interface with fixtures recorded on the box; they run locally, in the copy of the environment of record, before every launch and must pass; the box does not run them.\n8. Secrets: nothing reads `.keys`; nothing prints its environment; `HF_TOKEN` is used by downloads only.\n9. Labels: every measured record carries instance type, GPU name and driver, engine version and build flags, wall-clock.\n10. Nothing interactive; `sudo` only for declared apt packages; downloads only from sources the design names, URL and hash recorded; the on-box command the build returns is one line the operator runs verbatim through `remote_run_m4.sh`.\n\n## Directive form (owner ruling 2026-10-21)\n\nEXEC_NOTE.md is the current truth, not a changelog: in addendum mode REGENERATE it as one bounded directive of at most 40 numbered items, required-for-launch items first (each marked REQUIRED FOR LAUNCH or REPORTING ONLY), with every superseded or satisfied item removed; the history of rulings stays in GATE_COMMIT.md. Three standing changes of record: (i) the Python environment is an artifact, built once from the pins of record by the operator's env_build on a Lambda filesystem and recorded by its lock file hash in out/env_report.json; the on-box script activates that environment and verifies the lock hash instead of installing; pins live in the environment record, not in the runner; (ii) implementer selftests are not required and not credited: tests are written by a separate author against the stage interface (rule 7), with fixtures recorded on the box, hidden from the builder, and run locally in a copy of the environment of record before every launch; a failure on the box becomes a fixture and a failing local test before the fix is built; (iii) on a stage failure on the box the run holds the box open (HOLD marker) for a bounded fixer whose every change is committed to git on the box and fetched as a change log; the fixer may touch environment and glue, never the measurement protocol or the record fields; a change outside that scope is a halt to the gate.\n\n## GATE_COMMIT.md, in this order (addendum mode: leave every existing section as it is and append one section `## Addendum 20 (<UTC date>)` ruling on every item of the report, each ruling saying what the build must change or that nothing changes and why; then a line `Build 20 authorised` or `HALT`)\n\n- Inputs read (and nothing else)\n- What is being gated, in plain words\n- Decision on budget and build: GO or HALT, with the arithmetic (launches x hours x price) against the cap\n- Answers of record: one numbered answer for every diff departure question, every grounding whose verdict is not \"reproduces\", every run_queue item, every author_queue item, every instrument_queue item and every shared_queue item. \"Accepted as-is\" is an answer; silence is not. Each answer says what the build must do about it, or that nothing changes and why.\n- Labels\n- Checks the gate made before answering\n- Pre-authorisation: launches, caps, instance, what stops a launch\n\n## EXEC_NOTE.md (addendum mode: revise the items the addendum changes in place, marking each `(revised, addendum 20)`; add items at the end)\n\nA one-paragraph header; `## Where to write`; `## Checklist of gate changes the build must carry` (numbered; each item traceable to an answer in GATE_COMMIT.md or a standing rule; rules 5 to 10 above appear as items verbatim or tighter); `## Box`; `## Stage interface`; `## What the runner writes`.\n\n## Operator actions\n\nThe operator runs the launcher and owns `lambda_run_m4.sh`, `remote_run_m4.sh` and the launch environment (instance type and region, REMOTE_TIMEOUT, BUDGET_LEFT_USD, PRICE_USD_PER_HOUR). If any ruling needs a change there (a payload file to ship, a different cap or instance), end GATE_COMMIT.md with a section `## Operator actions` whose every line starts with `OPERATOR:` and names only infrastructure (file names, environment variable values); never the experiment's content. If nothing is needed, write that section with the single line `OPERATOR: none`.\n\nReply with exactly one line: `gate written: <answers> answers, <checklist items> items` (counts only; nothing about the content).\n\nThe user's only message to you is an authorisation line; it is not a task description. Your task is this file.\n",
+  "role": "ls-writer",
+  "model": "sonnet",
+  "label": "gate",
+  "reply_pattern": "^gate written: \\d+ answers, \\d+ items",
+  "cwd": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure",
+  "base": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-gate-20261022-1706/work"
+ },
+ "models": {
+  "main": "opencode-go/mimo-v2.6-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "understudy": {
+  "primary_family": "claude",
+  "mode": "fallback",
+  "on_refusal": "halt",
+  "retry_on": [
+   "timeout",
+   "exit",
+   "runner",
+   "nojson",
+   "schema",
+   "declined"
+  ],
+  "profile": "latent_skeptic",
+  "families": {
+   "opencode": {
+    "models": {
+     "strong": "opencode-go/mimo-v2.6-pro",
+     "main": "opencode-go/mimo-v2.6-pro",
+     "cheap": "opencode-go/glm-5.3-flash"
+    },
+    "by_role": {}
+   },
+   "claude": {
+    "models": {
+     "strong": "claude/opus",
+     "main": "claude/sonnet",
+     "cheap": "claude/sonnet"
+    },
+    "tools": {
+     "qt-bare": "",
+     "qt-web": "WebFetch,WebSearch",
+     "qt-extract": "Read",
+     "qt-research": "Read,Write,Edit,Glob,Grep,WebFetch,WebSearch",
+     "qt-producer": "Read,Write,Edit,Glob,Grep,WebFetch,WebSearch",
+     "triage-reader": "Read,Grep,Glob,Bash",
+     "triage-runner": "Bash,Read",
+     "triage-author": "Read,Glob,Grep,Write",
+     "ls-general": "Read,Glob,Grep,Bash",
+     "ls-builder": "Read,Write,Edit,Glob,Grep,Bash",
+     "ls-writer": "Read,Write,Glob,Grep,Bash",
+     "ls-fixer": "Bash,Read"
+    }
+   }
+  },
+  "routes": [
+   {
+    "match": "^build$",
+    "declined_if": "no_files",
+    "_doc": "a build reply whose runner_py/onbox_sh name no existing file declined the work; hands over"
+   }
+  ]
+ },
+ "opencode_version": "1.18.34",
+ "claude_version": "2.1.308 (Claude Code)",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "e77e152a4747b8e867c9d950308d2e1703ab3e5a",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "triage-author": {
+    "mode": "primary",
+    "description": "Writes ONE new measurement control from a spec, claim-blind. Reads the repo to match conventions; writes a single new file with a model-free selftest and a neutral decision; never edits existing code, never runs anything. Its output is reviewed before the result is trusted.",
+    "prompt": "You write ONE new measurement control from a spec. You build a neutral instrument; you do not know, and must not guess, which outcome would support any hypothesis.\n\n- Claim-blind: you are given a measurement spec, not the claim it bears on. Do not infer a wanted result or tune toward one. Measure the quantity and let the number fall where it does.\n- Read the existing scripts in this repo first (Glob/Grep/Read) to match their conventions, hooks, tokenization, and baselines, so the measurement is correct, not just unbiased. A wrong control is as useless as a biased one.\n- Write exactly ONE new file at the path you are given. Never edit, overwrite, or delete an existing file. No logic beyond what the spec asks.\n- The control must include a model-free `--selftest` and emit a neutral decision: a threshold on the measured number (e.g. \"drop > 30% -> ATTENUATED\"), stated in terms of the measurement only, never in terms of any claim or confound.\n- Do not run it. Writing and running are separate; the runner runs it later, after a human reviews it.\n\nReturn: control_path, the exact run_command (existing launcher + this script, ready for the runner), what it measures, and the neutral decision rule. Output only the JSON.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "write": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Glob, Grep, Write"
+   },
+   "triage-reader": {
+    "mode": "primary",
+    "description": "Read-only grounding check (H3). A claim is grounded by reading the input (the items, labels, or directional-training data a result was computed from) and the outputs (the generations, per-token values, result files), then confirming its numbers reproduce from the raw artifact. Reads in its own context; never runs experiments, never edits. Flags any number whose artifact was never saved as unauditable.",
+    "prompt": "You ground ONE claim by reading the primary artifacts behind it and checking its numbers against the raw data. You read; you do not run experiments (that is the runner) and you do not edit anything.\n\n- Read BOTH sides. The INPUT: the items, labels, or directional-training data a result was computed from. The OUTPUT: the saved generations, the per-token logits / measured values, and the result JSONs. The claim's `evidence` cites where they live; locate them with Glob/Grep.\n- Re-derive the claim's headline number(s) yourself from the raw artifact: load the JSON, recompute the mean / AUROC / count, read the actual generations. Do not trust the summary; reproduce it. Re-derive labels by their STATED MEANING, never by re-running the pipeline under audit (re-running a scorer reproduces its bugs and reports success).\n- Decide:\n  - `reproduces`: your re-derived number matches the claim.\n  - `diverges`: the raw artifact gives a different number (name the gap in `note`).\n  - `unauditable`: the artifact needed to check a number was never saved (say which in `note`). The absence IS the finding, not a failure to look.\n  - `absent`: the cited file does not exist.\n- You read in full so the orchestrator does not have to. Return only the compact verdict, the number(s) you re-derived, and a one-line note, never the raw dump. This preserves the orchestrator's context; it does not replace its reading.\n- Change nothing. No edits, no runs, no commits, no new files. You are a reader.\n\nOutput only the JSON.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "grep": "allow",
+     "glob": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Grep, Glob, Bash"
+   },
+   "triage-runner": {
+    "mode": "primary",
+    "description": "Read-only, non-mutating runner. Runs ONE given control command, returns the control's own result verbatim, confirms teardown. Never edits, commits, or fixes anything. A triager, not a patcher.",
+    "prompt": "You run ONE control command and report what it produced. You are a triager, not a patcher.\n\n- Change nothing. No edits, no commits, no new code, no flag tweaks to make it run. You have no edit tools; if you find yourself wanting them, stop and set matches=\"not_runnable\".\n- Run only the command you are given (an existing script or launcher). If it cannot run without a code change, a new constant, or a model re-pin, set matches=\"not_runnable\" and stop.\n- If the command is long-running, launch it detached and check once when it finishes. Do not poll in a sleep/tail loop.\n- The control decides its own verdict. Read the result it writes and return that decision / those numbers verbatim in `result`. Map `matches`: the control's own verdict supporting the claim -> \"claim\"; supporting the confound -> \"confound\"; unclear or missing -> \"ambiguous\".\n- If the run rents a resource, confirm it is released before returning; `teardown_ok=true` only when nothing remains.\n\nBe literal: report what the control printed, not what you think it means. Output only the JSON.",
+    "permission": {
+     "*": "deny",
+     "bash": "allow",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Bash, Read"
+   },
+   "ls-general": {
+    "mode": "primary",
+    "description": "Reads the files the prompt names and returns the record asked for",
+    "prompt": "You read the files the prompt names and nothing else; you may run read-only shell commands to inspect them. You write no files. You return only the JSON or text asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Glob, Grep, Bash"
+   },
+   "ls-builder": {
+    "mode": "primary",
+    "description": "Builds the execution layer of one pre-registered experiment",
+    "prompt": "You implement exactly the spec you are given, in the files the prompt names, and run only the local checks it names. You never patch infrastructure or rescope the design: when something is broken or ambiguous you stop and report. You return only the record asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Write, Edit, Glob, Grep, Bash"
+   },
+   "ls-writer": {
+    "mode": "primary",
+    "description": "Writes the takeaways file under the contract and runs the gates on it",
+    "prompt": "You write the one file the prompt names from the sources it names, run the gate scripts it names on that file, and rewrite until they pass. You return only what the prompt asks for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "write": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Write, Glob, Grep, Bash"
+   },
+   "ls-fixer": {
+    "mode": "primary",
+    "description": "Bounded fixer or verifier working on a held-open box through one ssh helper",
+    "prompt": "You work only through the helper command the prompt names, which runs commands on one remote box; you run nothing else and read no local files. You change the smallest thing that explains a failure, inside the scope the prompt states, and commit every change on the box. You return only the record asked for.",
+    "permission": {
+     "*": "deny",
+     "bash": "allow",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Bash, Read"
+   }
+  }
+ },
+ "started": "2026-10-22T17:06:16.617Z",
+ "finished": "2026-10-22T17:12:11.202Z",
+ "totals": {
+  "cost_usd": 1.2161731,
+  "tokens": 70731,
+  "calls": 1,
+  "by_model": {
+   "claude/sonnet": {
+    "calls": 1,
+    "cost_usd": 1.2161731,
+    "tokens": 70731,
+    "failed": 0,
+    "refusals": 0
+   }
+  },
+  "by_family": {
+   "claude": {
+    "calls": 1,
+    "cost_usd": 1.2161731,
+    "tokens": 70731,
+    "failed": 0,
+    "refusals": 0
+   }
+  },
+  "substitutions": 0,
+  "refusals": 0
+ }
+}

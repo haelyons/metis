@@ -1,0 +1,191 @@
+{
+ "ts": "2026-10-22T16:27:35.467Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_164705fd4001i7Eef4W0qiRqIK",
+  "x-opencode-session": "ses_e9b8fa0acffemdD750y211B2MD",
+  "x-opencode-session-id": "ses_e9b8fa0acffemdD750y211B2MD",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:34343",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "22914"
+ },
+ "body": {
+  "model": "mimo-v2.6-pro",
+  "max_tokens": 32000,
+  "tools_md": "Read, Write, Glob, Grep, Bash",
+  "messages": [
+   {
+    "role": "system",
+    "content": "You write the one file the prompt names from the sources it names, run the gate scripts it names on that file, and rewrite until they pass. You return only what the prompt asks for.\nYou are powered by the model named mimo-v2.6-pro. The exact model ID is opencode-go/mimo-v2.6-pro\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Thu Oct 22 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"# Anchor diagnostics on the saved result of launch 10 (local, CPU, no launch)\n\nYou diagnose why the anchor failed on launches 9 and 10. You run locally, with no GPU and no network. Do not run the\nsearch or computation again. Your job is to find out whether the scoring and the correspondence are correct, using\nthe saved anchor result and the hash-verified copy of its reference that launch 10 fetched.\n\n## Read (absolute paths under the measure folder M = the current working directory)\n- `M/EXEC_NOTE.md`: the anchor item. It defines the anchor's metrics, the published value, the tolerance, and how the\n  result and the reference are compared.\n- `M/run_m4.py` (build 26, the code that ran on launch 10): the anchor stage and its scoring and correspondence code.\n  You may read it and import from it. Do not edit it.\n- `M/out/launch10/results_m4/out/`: the anchor record (its recorded values, inputs and hashes), the saved anchor\n  result, and the reference copy.\n- `M/out/launch9/results_m4/out/`: the same for launch 9, for comparison only.\n\n## Run\nUse `M/.venv/bin/python` for everything. It is the environment of record, installed locally from its lock file, and\nruns on CPU. One distribution of the lock needs a CUDA compiler and is not installed locally. If importing the runner\nneeds a module from it, put a stub for that module into `sys.modules` before the import, and never call the stub.\nWrite only under `M/out/diag_anchor/`: one script `diag_anchor.py`, its output `diag.json`, and\n`REPORT.md`. Write nothing anywhere else, install nothing, and use no network. Stay under 40 minutes.\n\nHow to work (a previous attempt timed out after 45 minutes having written nothing):\n- Within your first 10 minutes, find the anchor stage's scoring and pairing functions in run_m4.py with grep, and\n  read only those functions and what they call. Do not read the whole file.\n- Write `diag_anchor.py` as one file. Run it with `PYTHONDONTWRITEBYTECODE=1`.\n- Run the checks in the order d0, d5, d1, d2, d4, d3. After each one, rewrite `diag.json` with every result so far,\n  so a timeout keeps your partial results.\n- Write REPORT.md when the checks are done. If you are short of time, write it from the checks you have finished,\n  mark the rest NA, and reply.\n\n## Checks (each one is PASS, FAIL or NA, with the numbers behind it in diag.json and REPORT.md)\n- **d0 provenance:** the reference copy's sha256 matches the hash in the anchor record's inputs, and the saved result\n  is the file the anchor record names.\n- **d5 rescore:** score the saved result against the reference copy with the runner's own functions, now and locally.\n  The values must reproduce the launch 10 anchor record. A difference means the record does not come from these files.\n- **d1 round trip:** score the reference against itself with the runner's own functions. Every anchor metric must be\n  perfect (zero distance, full overlap).\n- **d2 known transformation:** apply a random rigid rotation and translation to the reference, then score it against\n  the untransformed reference with the runner's own functions. Every metric must stay perfect. Also apply one\n  perturbation whose expected score you compute by hand, and check the runner returns that value.\n- **d3 independent scoring:** implement every anchor metric from its definition in EXEC_NOTE, without copying or\n  calling the runner's scoring code, and score the saved result against the reference. Compare with the runner's\n  values: AGREE within 1 % (or within an absolute 0.01 for values near zero), else DISAGREE.\n- **d4 correspondence:** count how many elements of the saved result the runner pairs with an element of the\n  reference, against how many the definition says should be paired. Check whether the identifiers both files use\n  line up. Report FULL (all expected pairs made, identifiers consistent), PARTIAL, or NONE.\n\nThen localise the failure to exactly one locus:\n- `scorer`: d1, d2 or d3 show the runner's scoring is wrong;\n- `correspondence`: d4 is PARTIAL or NONE while the scoring is otherwise right;\n- `reference`: d0 fails, or the reference copy is not what the anchor item specifies;\n- `computation`: scoring and correspondence are correct and the saved result itself is far from the reference;\n- `unknown`: the evidence does not separate these.\n\nGive a confidence of high, medium or low. In REPORT.md, give the numbers, the code locations (function names and\nline numbers in run_m4.py) and the reasoning, so that a gate can rule on them. If the locus is `scorer` or\n`correspondence`, state the smallest code change that would fix it. Do not make that change yourself.\n\n## Reply\nYour final message is exactly one line in this form, nothing else:\n\n`DIAG d0=<PASS|FAIL|NA> d5=<PASS|FAIL|NA> d1=<PASS|FAIL|NA> d2=<PASS|FAIL|NA> d3=<AGREE|DISAGREE|NA> d4=<FULL|PARTIAL|NONE|NA> locus=<scorer|correspondence|reference|computation|unknown> confidence=<high|medium|low>`\n\""
+   },
+   {
+    "role": "assistant",
+    "content": "",
+    "tool_calls": [
+     {
+      "id": "call_3e08c15e13f1402f852c80a0",
+      "type": "function",
+      "function": {
+       "name": "bash",
+       "arguments": "{\"command\":\"ls -la\"}"
+      }
+     },
+     {
+      "id": "call_aab68aca5257495c86d72b82",
+      "type": "function",
+      "function": {
+       "name": "bash",
+       "arguments": "{\"command\":\"ls -la out/launch10/results_m4/out/ out/launch9/results_m4/out/\"}"
+      }
+     }
+    ],
+    "reasoning_content": "Let me start by understanding the task. I need to diagnose why an anchor failed on launches 9 and 10. I must work locally with no GPU and no network. I need to write only under `M/out/diag_anchor/`.\n\nLet me start by reading the key files."
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_3e08c15e13f1402f852c80a0",
+    "content": "total 792\ndrwxrwxr-x 11 hal hal   4096 Oct 22 17:27 .\ndrwxrwxr-x 11 hal hal   4096 Oct 22 16:27 ..\ndrwxrwxr-x  3 hal hal   4096 Oct 21 09:59 .claude\nlrwxrwxrwx  1 hal hal     34 Oct 21 09:59 .keys -> /home/hal/dev/interp/dm_hack/.keys\n-rw-rw-r--  1 hal hal     70 Oct 21 23:32 .last_lambda_instance\ndrwxrwxr-x  6 hal hal   4096 Oct 22 16:28 .venv\n-rw-rw-r--  1 hal hal   4858 Oct 21 06:09 CARD.json\n-rw-rw-r--  1 hal hal  41431 Oct 21 23:42 EXEC_NOTE.md\n-rw-rw-r--  1 hal hal 281560 Oct 21 23:42 GATE_COMMIT.md\n-rw-rw-r--  1 hal hal   5534 Oct 21 06:09 QUESTION.md\n-rw-rw-r--  1 hal hal  45691 Oct 22 17:27 RUN.md\n-rw-rw-r--  1 hal hal    518 Oct 21 06:09 SEALED_PREDICTIONS.md\n-rw-rw-r--  1 hal hal      3 Oct 21 09:59 TAG\ndrwxrwxr-x  2 hal hal   4096 Oct 21 19:37 env\ndrwxrwxr-x  3 hal hal   4096 Oct 21 14:02 frozen\ndrwxrwxr-x  2 hal hal   4096 Oct 21 09:59 gates\n-rw-rw-r--  1 hal hal  17523 Oct 21 18:54 lambda_run_env.sh\n-rw-rw-r--  1 hal hal  17803 Oct 21 20:52 lambda_run_m4.sh\n-rw-rw-r--  1 hal hal  40264 Oct 21 22:01 onbox_m4.sh\ndrwxrwxr-x 93 hal hal  20480 Oct 22 17:27 out\n-r--r--r--  1 hal hal  16216 Oct 21 09:59 pipeline.js\n-rw-rw-r--  1 hal hal   5595 Oct 21 20:52 remote_run_m4.sh\ndrwxrwxr-x  3 hal hal   4096 Oct 21 19:41 results_env\n-rw-rw-r--  1 hal hal 215892 Oct 21 23:23 run_m4.py\ndrwxrwxr-x  2 hal hal   4096 Oct 22 17:27 sessions\ndrwxrwxr-x  2 hal hal   4096 Oct 21 23:43 tests\n-r--r--r--  1 hal hal  17193 Oct 21 09:59 triage_workflow.js\n"
+   },
+   {
+    "role": "tool",
+    "tool_call_id": "call_aab68aca5257495c86d72b82",
+    "content": "out/launch10/results_m4/out/:\ntotal 2592\ndrwxrwxr-x 4 hal hal   4096 Oct 21 23:37 .\ndrwxrwxr-x 3 hal hal   4096 Oct 21 23:37 ..\n-rw-rw-r-- 1 hal hal   1234 Oct 21 23:37 RUN_DONE\n-rw-rw-r-- 1 hal hal   1293 Oct 21 23:37 RUN_VALID.json\n-rw-rw-r-- 1 hal hal   2334 Oct 21 23:37 control-empty-run_tag-m4.json\n-rw-rw-r-- 1 hal hal   2229 Oct 21 23:37 control-sleep_tag-m4.json\n-rw-rw-r-- 1 hal hal   3664 Oct 21 23:37 control-unit-and-scale_tag-m4.json\n-rw-rw-r-- 1 hal hal   3320 Oct 21 23:37 download_log_tag-m4.json\n-rw-rw-r-- 1 hal hal   1117 Oct 21 23:37 downloads_tag-m4.json\n-rw-rw-r-- 1 hal hal   5039 Oct 21 23:37 endpoint-C1_tag-m4.json\n-rw-rw-r-- 1 hal hal   4729 Oct 21 23:37 endpoint-C2_tag-m4.json\n-rw-rw-r-- 1 hal hal   4752 Oct 21 23:37 endpoint-C3_tag-m4.json\n-rw-rw-r-- 1 hal hal   4669 Oct 21 23:37 endpoint-C4_tag-m4.json\n-rw-rw-r-- 1 hal hal   6193 Oct 21 23:37 endpoint-anchor_tag-m4.json\n-rw-rw-r-- 1 hal hal   2450 Oct 21 23:37 env.txt\n-rw-rw-r-- 1 hal hal   2442 Oct 21 23:37 env_check_tag-m4.json\n-rw-rw-r-- 1 hal hal   1500 Oct 21 23:37 env_pip_freeze.txt\n-rw-rw-r-- 1 hal hal  47062 Oct 21 23:37 m4_summary.json\n-rw-rw-r-- 1 hal hal    722 Oct 21 23:37 onbox_m4.log\n-rw-rw-r-- 1 hal hal    790 Oct 21 23:37 pair_pair1_tag-m4.fasta\n-rw-rw-r-- 1 hal hal 492648 Oct 21 23:37 pair_pair1_tag-m4.pdb\n-rw-rw-r-- 1 hal hal    880 Oct 21 23:37 pair_pair2_tag-m4.fasta\n-rw-rw-r-- 1 hal hal 551187 Oct 21 23:37 pair_pair2_tag-m4.pdb\n-rw-rw-r-- 1 hal hal    970 Oct 21 23:37 pair_pair3_tag-m4.fasta\n-rw-rw-r-- 1 hal hal 607119 Oct 21 23:37 pair_pair3_tag-m4.pdb\n-rw-rw-r-- 1 hal hal   5951 Oct 21 23:37 pairs_tag-m4.json\n-rw-rw-r-- 1 hal hal    823 Oct 21 23:37 params_markers_tag-m4.json\n-rw-rw-r-- 1 hal hal 384493 Oct 21 23:37 pose_anchor_parallel_tag-m4.pdb\n-rw-rw-r-- 1 hal hal 384493 Oct 21 23:37 pose_anchor_serial_tag-m4.pdb\n-rw-rw-r-- 1 hal hal     19 Oct 21 23:37 process_groups.json\n-rw-rw-r-- 1 hal hal   6395 Oct 21 23:37 rank_table_anchor_parallel_tag-m4.list\n-rw-rw-r-- 1 hal hal   6395 Oct 21 23:37 rank_table_anchor_serial_tag-m4.list\n-rw-rw-r-- 1 hal hal   1417 Oct 21 23:37 rows_anchor_tag-m4.jsonl\n-rw-rw-r-- 1 hal hal    404 Oct 21 23:37 rows_controls_tag-m4.jsonl\n-rw-rw-r-- 1 hal hal   3932 Oct 21 23:37 run_detached.log\n-rw-rw-r-- 1 hal hal      0 Oct 21 23:37 run_m4.stderr.log\n-rw-rw-r-- 1 hal hal    120 Oct 21 23:37 run_m4.stdout.log\n-rw-rw-r-- 1 hal hal   3761 Oct 21 23:37 setup_log_tag-m4.json\ndrwx------ 2 hal hal   4096 Oct 21 23:37 tests_m4_scratch_4s7fcx3k\n-rw-rw-r-- 1 hal hal   2987 Oct 21 23:37 tests_tag-m4.json\ndrwxrwxr-x 2 hal hal   4096 Oct 21 23:37 tool_logs\n-rw-rw-r-- 1 hal hal   1639 Oct 21 23:37 unit_and_scale_tag-m4.json\n\nout/launch9/results_m4/out/:\ntotal 2596\ndrwxrwxr-x 4 hal hal   4096 Oct 21 23:21 .\ndrwxrwxr-x 3 hal hal   4096 Oct 21 23:18 ..\n-rw-rw-r-- 1 hal hal    523 Oct 21 23:21 CLASSIFIER_NOTE.txt\n-rw-rw-r-- 1 hal hal   1235 Oct 21 23:18 RUN_DONE\n-rw-rw-r-- 1 hal hal   1294 Oct 21 23:18 RUN_VALID.json\n-rw-rw-r-- 1 hal hal   2335 Oct 21 23:18 control-empty-run_tag-m4.json\n-rw-rw-r-- 1 hal hal   2229 Oct 21 23:18 control-sleep_tag-m4.json\n-rw-rw-r-- 1 hal hal   3664 Oct 21 23:18 control-unit-and-scale_tag-m4.json\n-rw-rw-r-- 1 hal hal   3320 Oct 21 23:18 download_log_tag-m4.json\n-rw-rw-r-- 1 hal hal   1117 Oct 21 23:18 downloads_tag-m4.json\n-rw-rw-r-- 1 hal hal   5040 Oct 21 23:18 endpoint-C1_tag-m4.json\n-rw-rw-r-- 1 hal hal   4730 Oct 21 23:18 endpoint-C2_tag-m4.json\n-rw-rw-r-- 1 hal hal   4753 Oct 21 23:18 endpoint-C3_tag-m4.json\n-rw-rw-r-- 1 hal hal   4670 Oct 21 23:18 endpoint-C4_tag-m4.json\n-rw-rw-r-- 1 hal hal   6195 Oct 21 23:18 endpoint-anchor_tag-m4.json\n-rw-rw-r-- 1 hal hal   2436 Oct 21 23:18 env.txt\n-rw-rw-r-- 1 hal hal   2442 Oct 21 23:18 env_check_tag-m4.json\n-rw-rw-r-- 1 hal hal   1500 Oct 21 23:18 env_pip_freeze.txt\n-rw-rw-r-- 1 hal hal  47056 Oct 21 23:18 m4_summary.json\n-rw-rw-r-- 1 hal hal    722 Oct 21 23:18 onbox_m4.log\n-rw-rw-r-- 1 hal hal    790 Oct 21 23:18 pair_pair1_tag-m4.fasta\n-rw-rw-r-- 1 hal hal 492648 Oct 21 23:18 pair_pair1_tag-m4.pdb\n-rw-rw-r-- 1 hal hal    880 Oct 21 23:18 pair_pair2_tag-m4.fasta\n-rw-rw-r-- 1 hal hal 551187 Oct 21 23:18 pair_pair2_tag-m4.pdb\n-rw-rw-r-- 1 hal hal    970 Oct 21 23:18 pair_pair3_tag-m4.fasta\n-rw-rw-r-- 1 hal hal 607119 Oct 21 23:18 pair_pair3_tag-m4.pdb\n-rw-rw-r-- 1 hal hal   5951 Oct 21 23:18 pairs_tag-m4.json\n-rw-rw-r-- 1 hal hal    823 Oct 21 23:18 params_markers_tag-m4.json\n-rw-rw-r-- 1 hal hal 384493 Oct 21 23:18 pose_anchor_parallel_tag-m4.pdb\n-rw-rw-r-- 1 hal hal 384493 Oct 21 23:18 pose_anchor_serial_tag-m4.pdb\n-rw-rw-r-- 1 hal hal     19 Oct 21 23:18 process_groups.json\n-rw-rw-r-- 1 hal hal   6395 Oct 21 23:18 rank_table_anchor_parallel_tag-m4.list\n-rw-rw-r-- 1 hal hal   6395 Oct 21 23:18 rank_table_anchor_serial_tag-m4.list\n-rw-rw-r-- 1 hal hal   1418 Oct 21 23:18 rows_anchor_tag-m4.jsonl\n-rw-rw-r-- 1 hal hal    405 Oct 21 23:18 rows_controls_tag-m4.jsonl\n-rw-rw-r-- 1 hal hal   3932 Oct 21 23:18 run_detached.log\n-rw-rw-r-- 1 hal hal      0 Oct 21 23:18 run_m4.stderr.log\n-rw-rw-r-- 1 hal hal    117 Oct 21 23:18 run_m4.stdout.log\n-rw-rw-r-- 1 hal hal   3762 Oct 21 23:18 setup_log_tag-m4.json\ndrwx------ 2 hal hal   4096 Oct 21 23:18 tests_m4_scratch_7_m8p2v9\n-rw-rw-r-- 1 hal hal   2987 Oct 21 23:18 tests_tag-m4.json\ndrwxrwxr-x 2 hal hal   4096 Oct 21 23:18 tool_logs\n-rw-rw-r-- 1 hal hal   1639 Oct 21 23:18 unit_and_scale_tag-m4.json\n"
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "bash",
+     "description": "Executes a given bash command in a persistent shell session with optional timeout, ensuring proper handling and security measures.\n\nBe aware: OS: linux, Shell: bash\n\nAll commands run in the current working directory by default. Use the `workdir` parameter if you need to run a command in a different directory. AVOID using `cd <directory> && <command>` patterns - use `workdir` instead.\n\nUse `/tmp/opencode` for temporary work outside the workspace. This directory has already been created, already exists, and is pre-approved for external directory access.\n\nIMPORTANT: This tool is for terminal operations like git, npm, docker, etc. DO NOT use it for file operations (reading, writing, editing, searching, finding files) - use the specialized tools for this instead.\n\nBefore executing the command, please follow these steps:\n\n1. Directory Verification:\n   - If the command will create new directories or files, first use `ls` to verify the parent directory exists and is the correct location\n   - For example, before running \"mkdir foo/bar\", first use `ls foo` to check that \"foo\" exists and is the intended parent directory\n\n2. Command Execution:\n   - Always quote file paths that contain spaces with double quotes (e.g., rm \"path with spaces/file.txt\")\n   - Examples of proper quoting:\n     - mkdir \"/Users/name/My Documents\" (correct)\n     - mkdir /Users/name/My Documents (incorrect - will fail)\n     - python \"/path/with spaces/script.py\" (correct)\n     - python /path/with spaces/script.py (incorrect - will fail)\n   - After ensuring proper quoting, execute the command.\n   - Capture the output of the command.\n\nUsage notes:\n  - The command argument is required.\n  - You can specify an optional timeout in milliseconds. If not specified, commands will time out after 120000ms.\n  - If the output exceeds 2000 lines or 51200 bytes, it will be truncated and the full output will be written to a file. You can use Read with offset/limit to read specific sections or Grep to search the full content. Do NOT use `head`, `tail`, or other truncation commands to limit output; the full output will already be captured to a file for more precise searching.\n\n  - Avoid using Bash with the `find`, `grep`, `cat`, `head`, `tail`, `sed`, `awk`, or `echo` commands, unless explicitly instructed or when these commands are truly necessary for the task. Instead, always prefer using the dedicated tools for these commands:\n    - File search: Use Glob (NOT find or ls)\n    - Content search: Use Grep (NOT grep or rg)\n    - Read files: Use Read (NOT cat/head/tail)\n    - Edit files: Use Edit (NOT sed/awk)\n    - Write files: Use Write (NOT echo >/cat <<EOF)\n    - Communication: Output text directly (NOT echo/printf)\n  - When issuing multiple commands:\n    - If the commands are independent and can run in parallel, make multiple bash tool calls in a single message. For example, if you need to run \"git status\" and \"git diff\", send a single message with two bash tool calls in parallel.\n    - If the commands depend on each other and must run sequentially, use a single Bash call with '&&' to chain them together (e.g., `git add . && git commit -m \"message\" && git push`). For instance, if one operation must complete before another starts (like mkdir before cp, Write before Bash for git operations, or git add before git commit), run these operations sequentially instead.\n    - Use ';' only when you need to run commands sequentially but don't care if earlier commands fail\n    - DO NOT use newlines to separate commands (newlines are ok in quoted strings)\n  - AVOID using `cd <directory> && <command>`. Use the `workdir` parameter to change directories instead.\n    <good-example>\n    Use workdir=\"/foo/bar\" with command: pytest tests\n    </good-example>\n    <bad-example>\n    cd /foo/bar && pytest tests\n    </bad-example>\n\n# Git and GitHub\n- Only commit, amend, push, or create PRs when explicitly requested.\n- Before committing, inspect `git status`, `git diff`, and `git log --oneline -10`; stage only intended files and never commit secrets.\n- Write a concise commit message that matches the repo style.\n- Do not update git config, skip hooks, use interactive `-i`, force-push, or create empty commits unless explicitly requested.\n- If a commit fails or hooks reject it, fix the issue and create a new commit; do not amend the failed commit.\n- Before creating a PR, inspect status, diff, remote tracking, recent commits, and the diff from the base branch.\n- Review all commits included in the PR, not just the latest commit.\n- Use `gh` for GitHub tasks, including PRs, issues, checks, and releases; return the PR URL when done.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "command": {
+        "type": "string",
+        "description": "The command to execute"
+       },
+       "timeout": {
+        "minimum": -9007199254740991,
+        "exclusiveMinimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "Optional timeout in milliseconds"
+       },
+       "workdir": {
+        "type": "string",
+        "description": "The working directory to run the command in. Defaults to the current directory. Use this instead of 'cd' commands."
+       }
+      },
+      "required": [
+       "command"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "glob",
+     "description": "- Fast file pattern matching tool that works with any codebase size\n- Supports glob patterns like \"**/*.js\" or \"src/**/*.ts\"\n- Returns matching file paths\n- Use this tool when you need to find files by name patterns\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n- You have the capability to call multiple tools in a single response. It is always better to speculatively perform multiple searches as a batch that are potentially useful.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The glob pattern to match files against"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. If not specified, the current working directory will be used. IMPORTANT: Omit this field to use the default directory. DO NOT enter \"undefined\" or \"null\" - simply omit it for the default behavior. Must be a valid directory path if provided."
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "grep",
+     "description": "- Fast content search tool that works with any codebase size\n- Searches file contents using regular expressions\n- Supports full regex syntax (eg. \"log.*Error\", \"function\\s+\\w+\", etc.)\n- Filter files by pattern with the include parameter (eg. \"*.js\", \"*.{ts,tsx}\")\n- Returns file paths and line numbers with matching lines\n- Use this tool when you need to find files containing specific patterns\n- If you need to identify/count the number of matches within files, use the Bash tool with `rg` (ripgrep) directly. Do NOT use `grep`.\n- When you are doing an open-ended search that may require multiple rounds of globbing and grepping, use the Task tool instead\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "pattern": {
+        "type": "string",
+        "description": "The regex pattern to search for in file contents"
+       },
+       "path": {
+        "type": "string",
+        "description": "The directory to search in. Defaults to the current working directory."
+       },
+       "include": {
+        "type": "string",
+        "description": "File pattern to include in the search (e.g. \"*.js\", \"*.{ts,tsx}\")"
+       }
+      },
+      "required": [
+       "pattern"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "read",
+     "description": "Read a file or directory from the local filesystem. If the path does not exist, an error is returned.\n\nUsage:\n- The filePath parameter should be an absolute path.\n- By default, this tool returns up to 2000 lines from the start of the file.\n- The offset parameter is the line number to start from (1-indexed).\n- To read later sections, call this tool again with a larger offset.\n- Use the grep tool to find specific content in large files or files with long lines.\n- If you are unsure of the correct file path, use the glob tool to look up filenames by glob pattern.\n- Contents are returned with each line prefixed by its line number as `<line>: <content>`. For example, if a file has contents \"foo\\n\", you will receive \"1: foo\\n\". For directories, entries are returned one per line (without line numbers) with a trailing `/` for subdirectories.\n- Any line longer than 2000 characters is truncated.\n- Call this tool in parallel when you know there are multiple files you want to read.\n- Avoid tiny repeated slices (30 line chunks). If you need more context, read a larger window.\n- This tool can read image files and PDFs and return them as file attachments.\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "filePath": {
+        "type": "string",
+        "description": "The absolute path to the file or directory to read"
+       },
+       "offset": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The line number to start reading from (1-indexed)"
+       },
+       "limit": {
+        "minimum": 0,
+        "type": "integer",
+        "maximum": 9007199254740991,
+        "description": "The maximum number of lines to read (defaults to 2000)"
+       }
+      },
+      "required": [
+       "filePath"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

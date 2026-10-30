@@ -1,0 +1,56 @@
+{
+ "option_title": "10 R3 W11 (PASS)",
+ "phases": [
+ {"id":"P0a","what":"build on own CPU; V1, V5"},
+ {"id":"P0b","what":"measure t_m, t_0 on 1x H100; V2-V4; tune noise","stop_rule":"1.5-3x worse: trimmed plan; >3x: also cut E4 to M<=4096, E2 to two error types"},
+ {"id":"P1","what":"production E0-E4","stop_rule":"run E1 first; stop if V6 fails; nothing new once spend would pass $950"},
+ {"id":"P2","what":"second pass"},
+ {"id":"ST","what":"storage"}
+],
+ "numbers": [
+ {"id":"seis_steps","name":"seismic accepted steps, D_c 2 mm pilot run","unit":"steps","basis":"MEASURED","value":122477,"command":"python3 bp1qd.py (D_c 2 mm, 1,600 cells, 700 yr)","output":"pilot/dc2_25.log","machine":"shared 4-core workstation, NumPy FP64","differs_in":["workload: noise-free truth; main truth adds noise"],"measured_by":"P0b"},
+ {"id":"acc_steps","name":"accepted steps, same run","unit":"steps","basis":"MEASURED","value":144891,"output":"pilot/dc2_25.log","machine":"same"},
+ {"id":"events","name":"events in the run","unit":"events","basis":"MEASURED","value":18,"output":"pilot/dc2_25.log","machine":"same"},
+ {"id":"years","name":"simulated years","unit":"yr","basis":"MEASURED","value":700,"output":"pilot/dc2_25.log","machine":"same"},
+ {"id":"rej","name":"rejected-step fraction","unit":"1","basis":"MEASURED","value":0.184,"output":"pilot/dc2_25.log","machine":"same"},
+ {"id":"r_rhs","name":"RHS evaluations per attempted step","unit":"1","basis":"MEASURED","value":6,"output":"pilot/dc2_25.log","machine":"same"},
+ {"id":"t_r","name":"mean interval, period-four cycle (6.48, 49.37, 14.78, 54.18 yr)","unit":"yr","basis":"MEASURED","value":31.2,"output":"pilot/dc2_25.log","machine":"same"},
+ {"id":"s_eq","name":"seismic steps per event","unit":"steps","basis":"DERIVED","expr":"seis_steps / events"},
+ {"id":"s_int","name":"interseismic steps per year","unit":"steps/yr","basis":"DERIVED","expr":"(acc_steps - seis_steps) / years"},
+ {"id":"s_win","name":"serial accepted steps in the busiest window (one cycle)","unit":"steps","basis":"DERIVED","expr":"acc_steps / events"},
+ {"id":"t_a","name":"assimilated years per run","unit":"yr","basis":"DESIGN","value":1000},
+ {"id":"w","name":"assimilation window","unit":"yr","basis":"DESIGN","value":1},
+ {"id":"m_tot","name":"member-runs E1-E4 (30,640+54,400+21,760+215,040)","unit":"runs","basis":"DESIGN","value":321840},
+ {"id":"t_m","name":"GPU s per member per RHS (H100 FP64)","unit":"s","basis":"GUESS","value":3e-7,"rests_on":"5.1 MFLOP per member-RHS at about a quarter of H100's 67 TFLOPS FP64 tensor peak","measured_by":"P0b"},
+ {"id":"t_0","name":"latency floor per batched RHS","unit":"s","basis":"GUESS","value":0.0003,"rests_on":"a chain of roughly 10-30 small kernels","measured_by":"P0b"},
+ {"id":"att","name":"attempted steps per member-run","unit":"steps","basis":"DERIVED","expr":"(1 + rej) * (t_a / t_r * s_eq + t_a * s_int)"},
+ {"id":"thru_gpuh","name":"throughput work","unit":"GPU-h","basis":"DERIVED","expr":"m_tot * r_rhs * att * t_m / 3600"},
+ {"id":"lat_h","name":"latency floor per GPU","unit":"h","basis":"DERIVED","expr":"(t_a / w) * (1 + rej) * s_win * r_rhs * t_0 / 3600"},
+ {"id":"model_wall","name":"modelled production wall time on 8x H100","unit":"h","basis":"DERIVED","expr":"thru_gpuh / 8 + lat_h"},
+ {"id":"nocomp_gpuh","name":"throughput work without compaction","unit":"GPU-h","basis":"DERIVED","expr":"m_tot * (t_a / w) * (1 + rej) * s_win * r_rhs * t_m / 3600"},
+ {"id":"fs_gib","name":"filesystem size","unit":"GiB","basis":"DESIGN","value":100},
+ {"id":"fs_rate","name":"Lambda filesystem price","unit":"usd/GiB-month","basis":"PROXY","value":0.2,"source_id":"s_lambda_billing","page_setting":"worked example; real price shown at creation","differs_in":["example price"],"measured_by":"P0b"}
+],
+ "cost": {
+  "rates": [
+   {"id":"r_h100x1","gpu":"H100 SXM","gpu_memory_gb":80,"n_gpus":1,"per_gpu_usd_h":4.29},
+   {"id":"r_h100x8","gpu":"H100 SXM","gpu_memory_gb":80,"n_gpus":8,"per_gpu_usd_h":3.99}
+  ],
+  "lines": [
+   {"id":"p0b","phase":"P0b","what":"measure GPU timings","kind":"work","rate":"r_h100x1","hours":"6"},
+   {"id":"p1","phase":"P1","what":"production, E0-E4","kind":"work","rate":"r_h100x8","hours":"12","need":"model_wall"},
+   {"id":"p2","phase":"P2","what":"second pass, re-runs, sweeps","kind":"work","rate":"r_h100x8","hours":"8"},
+   {"id":"st","phase":"ST","what":"filesystem, 1 month","kind":"storage","usd":"fs_gib * fs_rate"},
+   {"id":"chaos","phase":"P2","what":"reduced D_c = 1 mm chaos arm","kind":"allotment","usd":"110","optional":true}
+  ],
+  "scenarios": [
+   {"id":"x3","what":"both GPU timings 3x worse","set":{"t_m":9e-7,"t_0":0.0009}}
+  ],
+  "spend_cap_usd": 950,
+  "total_stated": 684
+ },
+ "full_scale": [
+ {"id":"nocomp","what":"same matrix without active-set compaction (counterfactual)","usd":"(nocomp_gpuh / 8) * r_h100x8"}
+],
+ "outside_budget": []
+}

@@ -1,0 +1,69 @@
+{
+ "card": "blind-01-m4-tests",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-tests-20261022-2034/out",
+ "stage": "done",
+ "started": "2026-10-22T20:34:14.771Z",
+ "calls": [
+  {
+   "id": "0001 tests-author",
+   "stage": "",
+   "model": "opencode-go/mimo-v2.6-pro",
+   "understudy": "claude/sonnet",
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 3,
+   "ms": 6988457,
+   "cost_usd": 0.9514390739999998,
+   "tokens": 383086,
+   "understudy_cost_usd": 0.7238207999999998,
+   "understudy_ms": 1588232,
+   "substituted": true,
+   "kind": "timeout",
+   "by": "claude/sonnet",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0.9514390739999998,
+ "tokens": 383086,
+ "by_model": {
+  "opencode-go/mimo-v2.6-pro": {
+   "calls": 1,
+   "cost_usd": 0.22761827399999998,
+   "tokens": 355659,
+   "failed": 1,
+   "refusals": 0
+  },
+  "claude/sonnet": {
+   "calls": 1,
+   "cost_usd": 0.7238207999999998,
+   "tokens": 27427,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "opencode": {
+   "calls": 1,
+   "cost_usd": 0.22761827399999998,
+   "tokens": 355659,
+   "failed": 1,
+   "refusals": 0
+  },
+  "claude": {
+   "calls": 1,
+   "cost_usd": 0.7238207999999998,
+   "tokens": 27427,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 1,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-10-22T22:30:46.322Z",
+ "go": [
+  "opencode-go/mimo-v2.6-pro: $0.228 over 1 calls, 1 failed",
+  "claude/sonnet: $0.724 over 1 calls"
+ ]
+}

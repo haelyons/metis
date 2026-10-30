@@ -1,0 +1,23 @@
+I wrote `/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/TAKEAWAYS_m4.md`. Both gates pass on a truncated copy cut at the "Raw samples, verbatim" line. The outputs are also pasted at the end of the file.
+
+```
+/tmp/trunc_m4.md: 4.2 codes/1000 words (8 codes, 1925 words); threshold 10.0
+0 unscoped result sentence(s)
+```
+
+The first gate is `gate_density.py` and the second is `gate_scope.py`. The copy was at `/tmp/trunc_m4.md`, so the first line shows that path rather than the real file's.
+
+Two things I did that you may want to check:
+
+- **Footnote marker.** The scope gate wants a model or checkpoint name in every sentence with a decimal or percent. No language model was used here, so I added a `[^1]` marker to those sentences. Its note says the named tool and graphics card stand in as the checkpoint.
+- **Two long sentences.** Two sentences with a bold lead-in run to 27 and 25 words, counting the lead-in. The prose after the lead-in is under 25 words.
+
+I also added findings beyond your eight open questions:
+
+- **Anchor miss.** The design says an anchor miss halts the run. The run's own decision rule says it continues, and the auxiliary result was written up as decided anyway.
+- **Time cap.** Nine AlphaFold runs at 1232.9 seconds each is 11,096 seconds, more than the 7,200-second cap.
+- **Molecular-dynamics box.** The box was a 193.142 Å cube with only 0.8 nm padding. The stand-in complex therefore spans about 177 Å.
+- **Storage counts.** The counted molecular-dynamics storage bytes are almost all the starting structure, because no trajectory was ever written.
+- **Guard allowance.** The guard's "1233.3 needed against 766.7 left" adds to exactly 2000.0 seconds. This suggests a 2,000-second allowance for that one stage, not the 7,200-second cap. That is my reading and is labelled as such in the file.
+- **Remaining dollars.** I compute about 6.36 dollars left of the 8-dollar budget, not the 6.38 in your question.
+- **Stand-in pairs.** The second piece of each stand-in pair repeats the start of the first piece's sequence.

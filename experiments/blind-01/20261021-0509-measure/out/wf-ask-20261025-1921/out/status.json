@@ -1,0 +1,55 @@
+{
+ "card": "blind-01-m4-ask",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/out/wf-ask-20261025-1921/out",
+ "stage": "done",
+ "started": "2026-10-25T19:21:41.743Z",
+ "calls": [
+  {
+   "id": "0001 diag4d",
+   "stage": "",
+   "model": "lambda/gpt-oss-120b",
+   "understudy": "codex/default@medium",
+   "chain": [
+    "codex/default@medium",
+    "claude/sonnet"
+   ],
+   "mode": "primary-only",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 35228,
+   "cost_usd": 0,
+   "tokens": 100574,
+   "kind": "none",
+   "by": "lambda/gpt-oss-120b",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0,
+ "tokens": 100574,
+ "by_model": {
+  "lambda/gpt-oss-120b": {
+   "calls": 1,
+   "cost_usd": 0,
+   "tokens": 100574,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "opencode": {
+   "calls": 1,
+   "cost_usd": 0,
+   "tokens": 100574,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-10-25T19:22:18.780Z",
+ "go": [
+  "lambda/gpt-oss-120b: $0.000 over 1 calls"
+ ]
+}

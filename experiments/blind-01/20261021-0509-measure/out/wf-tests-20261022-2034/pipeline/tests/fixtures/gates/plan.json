@@ -1,0 +1,74 @@
+{
+  "option_title": "Fine-tuning steps against policy success in simulation",
+  "question": "Does simulated success keep rising as fine-tuning grows from 2,000 to 32,000 steps on a fixed dataset?",
+  "hypothesis": "Success levels off near 8,000 steps, because the fixed dataset, not training compute, limits what the policy can learn.",
+  "compute_axis": { "quantity": "fine-tuning steps", "unit": "steps", "levels": [2000, 8000, 32000] },
+  "held_fixed": ["dataset", "model size", "evaluation seeds"],
+  "predictions": {
+    "if_lever": "Success at 32,000 steps beats success at 8,000 steps by more than 5 points.",
+    "if_not": "Success at 32,000 steps is within 2 points of success at 8,000 steps across 3 seeds.",
+    "decision_rule": "Compute is the lever if success(32k) - success(8k) > 5 points and exceeds twice the seed spread.",
+    "noise_rule": "Three training seeds per level; a difference counts only if it exceeds twice the spread across seeds.",
+    "expected": "if_not",
+    "expected_why": "Published fine-tuning curves on small datasets flatten early."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "Training steps are bought with GPU hours.",
+  "scored_against": "The simulator's own success flag for each episode.",
+  "arms": [
+    { "id": "A", "what": "fine-tune the action expert only" },
+    { "id": "E2", "what": "full fine-tune" }
+  ],
+  "baseline": { "what": "the released checkpoint without fine-tuning", "value": 0.31, "source_id": "s2" },
+  "anchor": {
+    "what": "Reproduce the released checkpoint's success rate of 31% within 3 points [s2].",
+    "published_value": 0.31,
+    "tolerance": "3 points",
+    "source_id": "s2"
+  },
+  "checks": ["reproduce the released success rate before the sweep", "fixed evaluation seeds across levels"],
+  "phases": [
+    { "id": "P1", "what": "pilot: throughput and reproduction", "stop_rule": "stop if reproduction misses by more than 3 points",
+      "gate": { "on": "steps_per_h", "op": ">=", "value": 3000, "else": "drop the 32,000-step level" } },
+    { "id": "P2", "what": "step sweep, 3 seeds per level" }
+  ],
+  "numbers": [
+    { "id": "steps_per_h", "name": "training steps per instance-hour", "unit": "steps/h", "basis": "PROXY", "value": 5000,
+      "source_id": "s1", "quote": "about 5,000 steps per hour on one 8-GPU H100 node", "page_setting": "a larger policy on a different dataset",
+      "differs_in": ["model size", "dataset"], "measured_by": "P1" },
+    { "id": "steps", "name": "training steps in the sweep (3 seeds per level)", "unit": "steps", "basis": "DESIGN", "value": 126000 },
+    { "id": "t_main", "name": "sweep hours", "unit": "h", "basis": "DERIVED", "expr": "steps / steps_per_h" }
+  ],
+  "cost": {
+    "rates": [{ "id": "h100x8", "gpu": "H100", "gpu_memory_gb": 80, "n_gpus": 8, "per_gpu_usd_h": 3.99 }],
+    "lines": [
+      { "id": "pilot", "phase": "P1", "what": "pilot and reproduction", "kind": "work", "rate": "h100x8", "hours": "2" },
+      { "id": "sweep", "phase": "P2", "what": "step sweep", "kind": "work", "rate": "h100x8", "hours": "t_main" }
+    ],
+    "scenarios": [{ "id": "slow", "what": "half the proxy throughput", "set": { "steps_per_h": 2500 } }],
+    "yields": ["steps"],
+    "spend_cap_usd": 900,
+    "total_stated": 868.22
+  },
+  "full_scale": [{ "id": "fs_long", "what": "the same sweep at 1,000,000 steps", "usd": "1e6 / steps_per_h * h100x8", "ratio_to": "steps" }],
+  "outside_budget": [{ "what": "local CPU checks", "qty": 2, "unit": "hours" }],
+  "restructuring": { "sequential_part": "Each fine-tuning step waits on the weights the step before produced.", "method": "none" },
+  "scope_gap": ["real robots", "larger datasets"],
+  "novelty": {
+    "closest_prior": "A published fine-tuning study trained up to 20,000 steps and reported success still rising at that point [s3].",
+    "closest_source_id": "s3",
+    "prior_max_level": 20000,
+    "left_open": "Whether success keeps rising beyond 20,000 steps when the dataset is held fixed.",
+    "decides": "partly",
+    "searched": true
+  },
+  "limits": ["Says nothing about real robots.", "One dataset only."],
+  "test_summary": "Fine-tune the same policy for 2,000, 8,000 and 32,000 steps, three seeds each. Compare simulated success at each level with the released checkpoint [s2].",
+  "sources": [
+    { "id": "s1", "url": "https://example.org/throughput", "quote": "about 5,000 steps per hour on one 8-GPU H100 node", "supports": "throughput proxy" },
+    { "id": "s2", "url": "https://example.org/release", "quote": "The released checkpoint reaches a 31% success rate.", "supports": "anchor and baseline" },
+    { "id": "s3", "url": "https://example.org/study", "quote": "Success was still rising at 20,000 steps.", "supports": "closest prior" },
+    { "id": "s4", "url": "https://example.org/robots", "quote": "Simulation success transfers poorly to hardware.", "supports": "limits" }
+  ],
+  "files_read": ["/runs/R1/physical-widener.md"]
+}

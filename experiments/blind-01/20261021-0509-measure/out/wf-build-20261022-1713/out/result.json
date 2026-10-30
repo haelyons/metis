@@ -1,0 +1,14 @@
+{
+ "gatecheck": {
+  "answered": 14,
+  "unanswered": []
+ },
+ "built": {
+  "runner_py": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/run_m4.py",
+  "onbox_sh": "/home/hal/dev/interp/metis/experiments/blind-01/20261021-0509-measure/onbox_m4.sh",
+  "selftest_output": "selftest: PASS (exit 0; stdlib only; covers every parser, the rank-table degenerate shapes, the frame guard rejections, band arithmetic for the four inputs on planted rows, the gate-failure row propagating run_valid=false, and the zero-dispersion case halting as WRONG_VARIANCE_SOURCE)",
+  "onbox_command": "bash remote_run_m4.sh bash onbox_m4.sh",
+  "expected": "Projected wall-clock on one box, from the binding ceilings. Setup and downloads share 1,500 s: lock check about 60 s, capability probe about 120 s, structure file and parameter archive about 300 s including unpacking. Controls and the redocking anchor share 1,000 s: planted 60 s sleep, empty run and unit record about 70 s; serial then parallel docking plus diagnostics about 400 s at the 60 s floor each. Per-pair docking and interface analysis: 600 s ceiling, at most 250 s per pair, 3 pairs. Prediction timings: 2,000 s ceiling; at the card's 1,800 s per run only one run fits, so 1 to 9 runs of 120 s to 1,800 s; a decision needs 3 completed runs over 3 pairs. Dynamics: 1,600 s ceiling, at most 600 s per complex, 2 to 3 complexes. Storage 20 s to 100 s. Closing stage 100 s. Margin 400 s. The ceilings sum to 7,200 s. Record counts at full sample: 4 input records (prediction hours (C1), dynamics speed (C2), auxiliary hours (C3), storage (C4)), 1 anchor record, 3 control records (sleep, empty run, unit and scale), 1 environment-check record: 9 records. Row lines: 9 prediction runs (3 pairs by 3 seeds), 3 docking rows, 3 dynamics rows, 3 storage rows, 2 control rows: 20 lines. Evidence: 3 pair structures, 3 sequence files, 1 pair-evidence file, 2 anchor rank tables and poses, 3 pair rank tables and poses, 1 byte-for-byte copy of the published structure. Closing files: 1 summary whose first key is the run's scope and which holds the compute table of 9 stage entries, 1 validity file, 1 done marker with per-input status and calibration flag, 1 environment note, 1 compute table, plus tool logs."
+ },
+ "next": "human reviews files, then runs the launcher verbatim"
+}
