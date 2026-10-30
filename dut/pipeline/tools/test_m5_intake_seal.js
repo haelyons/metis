@@ -138,6 +138,11 @@ module.exports = {
       }
       if (process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE) delete fixtures.baseline[process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE]
       if (process.env.M5_INTAKE_SEAL_BUILD) fixtures.baseline.build_commands = JSON.parse(process.env.M5_INTAKE_SEAL_BUILD)
+      if (process.env.M5_INTAKE_SEAL_BASELINE_PATCH) {
+        const { set = {}, drop = [] } = JSON.parse(process.env.M5_INTAKE_SEAL_BASELINE_PATCH)
+        Object.assign(fixtures.baseline, set)
+        for (const key of drop) delete fixtures.baseline[key]
+      }
       if (process.env.M5_INTAKE_SEAL_EXEC_BUDGETS) fixtures.EXECUTION.stage_budgets_s = JSON.parse(process.env.M5_INTAKE_SEAL_EXEC_BUDGETS)
       for (const name of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
         const custom = process.env.M5_INTAKE_SEAL_ANCHORS
@@ -216,7 +221,7 @@ function noLeak(runRoot) {
   visit(operator)
 }
 
-async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands, argsBudgets, executionBudgets } = {}) {
+async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands, baselinePatch, argsBudgets, executionBudgets } = {}) {
   // `incompleteBaseline`: true drops published_configuration; a string drops that baseline.json key.
   const droppedKey = incompleteBaseline === true ? 'published_configuration' : incompleteBaseline || ''
   const control = path.join(runRoot, 'control')
@@ -250,6 +255,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
           M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_FAULT: sealFault, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
           M5_INTAKE_SEAL_INCOMPLETE_BASELINE: droppedKey,
           M5_INTAKE_SEAL_BUILD: buildCommands ? JSON.stringify(buildCommands) : '',
+          M5_INTAKE_SEAL_BASELINE_PATCH: baselinePatch ? JSON.stringify(baselinePatch) : '',
           M5_INTAKE_SEAL_EXEC_BUDGETS: executionBudgets ? JSON.stringify(executionBudgets) : '',
           M5_INTAKE_SEAL_REPAIR: repairPredictions ? JSON.stringify(repairPredictions) : '',
           M5_INTAKE_SEAL_ANCHORS: anchors ? JSON.stringify(anchors) : '', M5_INTAKE_SEAL_RECORDED: recorded || '' },
@@ -388,6 +394,125 @@ function buildCommandsPromptChecks(name, run) {
     assert.ok(windows.some(installs), 'prompt does not state that build_commands includes package-manager installs of released binaries')
     assert.ok(windows.some(nonEmpty), 'prompt does not state that build_commands is never empty')
   })
+}
+
+// SCHEMAS.md A/intake/ baseline.json (U39): "The intake prompt names every key the completeness check reads exactly
+// as the check reads it, as a JSON key: in baseline.json `repo`, `build_commands`, `run_commands`,
+// `published_configuration`, and `commit` or `pin` ...; in EXECUTION.json `representative_scale`, `inputs`, `outputs`
+// and `timing_scope`. It states that the check reads only these key names, so an equivalent value under another key
+// does not count."
+const COMPLETENESS_KEYS = ['repo', 'build_commands', 'run_commands', 'published_configuration', 'commit', 'pin',
+  'representative_scale', 'inputs', 'outputs', 'timing_scope']
+// A JSON key token: the bare name delimited by matching quotes or backticks, e.g. "pin" or `pin`
+// (so "immutable pin" or `immutable_pin` do not count).
+const keyToken = key => new RegExp(`(["'\`])${key}\\1`)
+function completenessKeyPromptChecks(name, run) {
+  const prompt = () => {
+    const value = run.calls.find(row => row.label === 'intake')?.prompt
+    assert.ok(value, 'no intake prompt recorded')
+    return value
+  }
+  check(`${name}: intake prompt names each completeness key as a JSON key token`, () => {
+    const text = prompt()
+    const missing = COMPLETENESS_KEYS.filter(key => !keyToken(key).test(text))
+    assert.deepEqual(missing, [], `key names not given as JSON keys: ${missing.join(', ')}`)
+  })
+  check(`${name}: intake prompt states that only these key names count, not an equivalent value under another key`, () => {
+    const other = /\b(?:another|other|different|alternative|renamed|equivalent)\b[^.\n]{0,60}\bkeys?\b|\bonly\b[^.\n]{0,40}\bkey\s*names?\b/i
+    const negation = /\b(?:does\s+not|do\s+not|doesn't|don't|never|not|no)\b[^.\n]{0,40}\b(?:count|satisf|qualif|accept|recogni|read)|\bignored\b|\bonly\b/i
+    const text = prompt()
+    const windows = windowsAround(text, other, 300, 300)
+    const keyLines = text.split('\n').filter(line => /\bkey/i.test(line)).map(line => line.slice(0, 400))
+    assert.ok(windows.length, `prompt never refers to other key names; lines mentioning "key": ${JSON.stringify(keyLines)}`)
+    // The statement must be about these keys: it names them or the two files they belong to.
+    const aboutKeys = window => /baseline\.json|EXECUTION\.json/.test(window) || COMPLETENESS_KEYS.some(key => keyToken(key).test(window))
+    assert.ok(windows.some(window => negation.test(window) && aboutKeys(window)),
+      `no statement, about these keys, that only these key names count; lines mentioning "key": ${JSON.stringify(keyLines)}`)
+  })
+}
+
+// The completeness check is unchanged: `commit` or `pin` (non-empty); the identifier under another key does not count.
+async function commitOrPinChecks() {
+  const PIN = 'v8.1.1 release tarball sha256:00ff'
+  for (const [name, baselinePatch, passes] of [
+    ['completeness-commit-null-pin', { set: { commit: null, pin: PIN } }, true],
+    ['completeness-commit-no-pin', { drop: ['pin'] }, true],
+    ['completeness-commit-null-immutable-pin', { set: { commit: null, immutable_pin: PIN }, drop: ['pin'] }, false],
+  ]) {
+    const run = await runCase(name, INTAKE, { baselinePatch })
+    check(`${name}: fixture baseline.json has the intended commit/pin keys`, () => {
+      const baseline = readJSON(path.join(run.runRoot, 'agent', 'intake', 'baseline.json'))
+      for (const [key, value] of Object.entries(baselinePatch.set || {})) assert.deepEqual(baseline[key], value, key)
+      for (const key of baselinePatch.drop || []) assert.ok(!Object.hasOwn(baseline, key), key)
+    })
+    checkStatuses(name, run, passes ? null : 'intake')
+    check(`${name}: intake ${passes ? 'PASS' : 'FAIL'}`, () => {
+      assert.equal(run.signature('intake').status, passes ? 'PASS' : 'FAIL')
+    })
+    if (!passes) blockerChecks(name, run, ['none'])
+  }
+}
+
+// Public recorded run blind-openmm run2: its baseline.json holds `commit: null` and the identifier under
+// `immutable_pin`. Replayed with the run's reply facts, intake FAILs with blockers ["none"] and anchored false;
+// with only `immutable_pin` renamed to `pin`, intake PASSes. Files are copied; experiments/ is read only.
+const RUN2_FACTS = { found: true, anchors_count: 3, data: 'available', licence: 'permitted', stock_environment: null, size: 'unknown' }
+async function blindOpenmmRun2Regression() {
+  const label = 'recorded-blind-openmm-run2'
+  const source = recordedRun(path.join('blind-openmm', 'run2'))
+  const asRecorded = path.join(parent, `${label}-as-recorded-fixture`)
+  const renamed = path.join(parent, `${label}-pin-fixture`)
+  let ready = false
+  check(`${label}: recorded intake files available; commit null, identifier under immutable_pin, no pin`, () => {
+    assert.ok(source.intake, `no recorded intake directory under ${source.run}`)
+    for (const file of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
+      assert.ok(fs.existsSync(path.join(source.intake, `${file}.json`)), `missing ${file}.json`)
+    }
+    fs.cpSync(source.intake, asRecorded, { recursive: true })
+    fs.cpSync(source.intake, renamed, { recursive: true })
+    const baseline = readJSON(path.join(asRecorded, 'baseline.json'))
+    assert.equal(baseline.commit, null)
+    assert.ok(!Object.hasOwn(baseline, 'pin'))
+    assert.ok(baseline.immutable_pin, 'recorded immutable_pin missing')
+    assert.equal(readJSON(path.join(asRecorded, 'anchors.json')).length, RUN2_FACTS.anchors_count)
+    // Rename only the key, keeping its value and position.
+    const text = fs.readFileSync(path.join(renamed, 'baseline.json'), 'utf8')
+    assert.equal(text.split('"immutable_pin":').length, 2, 'expected exactly one immutable_pin key')
+    fs.writeFileSync(path.join(renamed, 'baseline.json'), text.replace('"immutable_pin":', '"pin":'))
+    const { immutable_pin, ...rest } = baseline
+    const { pin, ...renamedRest } = readJSON(path.join(renamed, 'baseline.json'))
+    assert.deepEqual(pin, immutable_pin)
+    assert.deepEqual(renamedRest, rest)
+    ready = true
+  })
+  check(`${label}: recorded intake reply facts match the regression facts`, () => {
+    assert.ok(source.signatures, `no recorded signatures under ${source.run}`)
+    const facts = readRows(source.signatures).filter(row => (row.signature || row).stage === 'intake' && row.facts).at(-1)?.facts
+    assert.ok(facts, 'no recorded intake facts')
+    for (const [key, value] of Object.entries(RUN2_FACTS)) assert.deepEqual(facts[key], value, key)
+  })
+  if (!ready) return
+  {
+    const name = `${label}-as-recorded`
+    const run = await runCase(name, RUN2_FACTS, { recorded: asRecorded })
+    checkStatuses(name, run, 'intake')
+    check(`${name}: intake FAILs`, () => assert.equal(run.signature('intake').status, 'FAIL'))
+    blockerChecks(name, run, ['none'])
+    anchoredChecks(name, run, false)
+  }
+  {
+    const name = `${label}-pin`
+    const run = await runCase(name, RUN2_FACTS, { recorded: renamed })
+    check(`${name}: intake PASSes with immutable_pin renamed to pin`, () => {
+      const stderr = fs.readFileSync(path.join(run.runRoot, `stderr-${name}.log`), 'utf8')
+      assert.equal(run.signature('intake').status, 'PASS', `${JSON.stringify(run.signature('intake'))}; stderr: ${stderr.slice(-1500)}`)
+    })
+    check(`${name}: run does not stop at intake`, () => {
+      assert.notEqual(readJSON(path.join(run.out, 'result.json')).stopped_at, 'intake')
+    })
+    blockerChecks(name, run, ['none'])
+    anchoredChecks(name, run, false)
+  }
 }
 
 // Public recorded runs positive-openmm run1 and run2, gated on their intake files alone. The agent facts
@@ -1272,6 +1397,10 @@ async function main() {
       assert.ok(!Object.hasOwn(readJSON(path.join(search.runRoot, 'control', 'args.json')), 'brief'))
     })
     buildCommandsPromptChecks('search-no-brief', search)
+    completenessKeyPromptChecks('happy (brief)', happy)
+    completenessKeyPromptChecks('search-no-brief', search)
+    await commitOrPinChecks()
+    await blindOpenmmRun2Regression()
     // Gate: build_commands must be non-empty; a single package-manager install suffices.
     const emptyBuild = await runCase('empty-build-commands', INTAKE, { buildCommands: [] })
     checkStatuses('empty-build-commands', emptyBuild, 'intake')
