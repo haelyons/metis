@@ -71,6 +71,13 @@ return (async () => {
   async function intake() {
     if (input.stub?.intake != null) return stub('intake')
     const facts = { ...nullFacts('intake'), tokens_known: false, gpu_busy_known: false }
+    const fail = () => {
+      const blockers = []
+      if (['restricted', 'unknown'].includes(facts.licence)) blockers.push('licence')
+      if (['partial', 'unavailable', 'unknown'].includes(facts.data)) blockers.push('data_unavailable')
+      if (facts.stock_environment === false) blockers.push('env_irreproducible')
+      return { status: 'FAIL', facts, v1: { blockers: blockers.length ? blockers : ['none'] } }
+    }
     const directory = path.join(A, 'intake')
     mkdirSync(directory, { recursive: true })
     const brief = typeof input.brief === 'string' && input.brief.trim() ? input.brief : null
@@ -113,11 +120,11 @@ Gate: complete files, found, available required data, permitted licence, and sto
               && ['standard_error', 'standard_deviation', 'interval_halfwidth'].includes(anchor.uncertainty.kind)
               && nonnegative(anchor.uncertainty.value))))
       facts.anchored = validAnchors && anchors.length === facts.anchors_count ? anchors.some(anchor => !isReference(anchor)) : null
-      if (reply == null) return { status: 'FAIL', facts }
+      if (reply == null) return fail()
       const documents = {}
       for (const name of ['benchmark', 'data', 'baseline', 'EXECUTION']) {
         const value = readJSON(path.join(directory, `${name}.json`))
-        if (!hasValue(value) || typeof value !== 'object' || Array.isArray(value)) return { status: 'FAIL', facts }
+        if (!hasValue(value) || typeof value !== 'object' || Array.isArray(value)) return fail()
         documents[name] = value
       }
       const complete = validAnchors && anchors.length === facts.anchors_count
@@ -126,9 +133,9 @@ Gate: complete files, found, available required data, permitted licence, and sto
         && ['representative_scale', 'inputs', 'outputs', 'timing_scope'].every(key => hasValue(documents.EXECUTION[key]))
       const pass = complete && facts.found && facts.data === 'available'
         && facts.licence === 'permitted' && facts.stock_environment !== false
-      return { status: pass ? 'PASS' : 'FAIL', facts }
+      return pass ? { status: 'PASS', facts } : fail()
     } catch {
-      return { status: 'FAIL', facts }
+      return fail()
     }
   }
   const isReference = anchor => (anchor.comparison === undefined ? '==' : anchor.comparison) === '==' && anchor.tolerance === null

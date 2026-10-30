@@ -136,7 +136,7 @@ module.exports = {
           outputs: { sum: 499500 }, timing_scope: 'whole process', scoring_interface: 'exact integer equality',
         },
       }
-      if (process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE) delete fixtures.baseline.published_configuration
+      if (process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE) delete fixtures.baseline[process.env.M5_INTAKE_SEAL_INCOMPLETE_BASELINE]
       if (process.env.M5_INTAKE_SEAL_BUILD) fixtures.baseline.build_commands = JSON.parse(process.env.M5_INTAKE_SEAL_BUILD)
       if (process.env.M5_INTAKE_SEAL_EXEC_BUDGETS) fixtures.EXECUTION.stage_budgets_s = JSON.parse(process.env.M5_INTAKE_SEAL_EXEC_BUDGETS)
       for (const name of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
@@ -217,6 +217,8 @@ function noLeak(runRoot) {
 }
 
 async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands, argsBudgets, executionBudgets } = {}) {
+  // `incompleteBaseline`: true drops published_configuration; a string drops that baseline.json key.
+  const droppedKey = incompleteBaseline === true ? 'published_configuration' : incompleteBaseline || ''
   const control = path.join(runRoot, 'control')
   const brief = path.join(runRoot, 'brief.md')
   fs.mkdirSync(control, { recursive: true })
@@ -246,7 +248,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
           M5_RAIDS_LEDGER: path.join(parent, 'raids_used.jsonl'),
           M5_INTAKE_SEAL_FACTS: JSON.stringify(facts), M5_INTAKE_SEAL_BRIEF: brief,
           M5_INTAKE_SEAL_CALLS: callsFile, M5_INTAKE_SEAL_FAULT: sealFault, M5_INTAKE_SEAL_PRESERVE: preserve ? '1' : '',
-          M5_INTAKE_SEAL_INCOMPLETE_BASELINE: incompleteBaseline ? '1' : '',
+          M5_INTAKE_SEAL_INCOMPLETE_BASELINE: droppedKey,
           M5_INTAKE_SEAL_BUILD: buildCommands ? JSON.stringify(buildCommands) : '',
           M5_INTAKE_SEAL_EXEC_BUDGETS: executionBudgets ? JSON.stringify(executionBudgets) : '',
           M5_INTAKE_SEAL_REPAIR: repairPredictions ? JSON.stringify(repairPredictions) : '',
@@ -278,7 +280,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   if (!recorded) check(`${name}: intake files contain stub content and supplied brief`, () => {
     for (const file of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
       const value = readJSON(path.join(runRoot, 'agent', 'intake', `${file}.json`))
-      if (file === 'baseline' && incompleteBaseline) assert.ok(!Object.hasOwn(value, 'published_configuration'))
+      if (file === 'baseline' && droppedKey) assert.ok(!Object.hasOwn(value, droppedKey))
       if (file === 'anchors') assert.equal(value.length, anchors ? anchors.length : facts.anchors_count)
       for (const entry of file === 'anchors' ? value : [value]) {
         assert.equal(entry.content, SENTINEL)
@@ -369,6 +371,7 @@ async function recordedIntakeRegression() {
   const run = await runCase(name, facts, { recorded })
   checkStatuses(name, run, 'intake')
   anchoredChecks(name, run, false)
+  blockerChecks(name, run, ['licence', 'data_unavailable'])
 }
 
 // SCHEMAS.md A/intake/ baseline.json: "`build_commands` lists every command that builds or installs the
@@ -1064,8 +1067,113 @@ async function run14CostRegression() {
   }
 }
 
+// SCHEMAS.md A/intake/: "An intake FAIL signature names the failed gate conditions in v1 `blockers`, from the
+// existing blocker vocabulary and in this fixed order: `licence` ..., `data_unavailable` ..., and
+// `env_irreproducible` ... Each condition is read from the facts the record carries, whatever else failed ...;
+// a null or absent fact adds no blocker. When no condition applies, and for every PASS, SKIPPED and stub intake,
+// `blockers` stays `["none"]`. Intake `exit_code`, `exit_kind` and `error_class` are unchanged.
+// `OPERATOR_TAKEAWAY.md` lists these blockers in its Blockers section as for any stage."
+const BLOCKER_VOCABULARY = ['data_unavailable', 'licence', 'env_irreproducible', 'files_local_only', 'compute_cap', 'capacity', 'none']
+// Vocabulary tokens listed in the takeaway's Blockers section (heading containing "blocker" up to the next heading).
+function takeawayBlockers(runRoot) {
+  const lines = fs.readFileSync(path.join(runRoot, 'operator', 'OPERATOR_TAKEAWAY.md'), 'utf8').split('\n')
+  const start = lines.findIndex(line => /^\s*#+\s.*blocker/i.test(line))
+  assert.ok(start >= 0, 'OPERATOR_TAKEAWAY.md has no Blockers section')
+  const end = lines.findIndex((line, i) => i > start && /^\s*#+\s/.test(line))
+  const section = lines.slice(start + 1, end < 0 ? undefined : end).join('\n')
+  return new Set(BLOCKER_VOCABULARY.filter(token => new RegExp(`(?<![A-Za-z0-9_])${token}(?![A-Za-z0-9_])`).test(section)))
+}
+function blockerChecks(name, run, expected) {
+  check(`${name}: intake blockers are ${JSON.stringify(expected)}`, () => {
+    assert.deepEqual(run.signature('intake').blockers, expected)
+  })
+  check(`${name}: SKIPPED stages keep blockers ["none"]`, () => {
+    for (const row of run.stages) {
+      const signature = row.signature || row
+      if (signature.status === 'SKIPPED') assert.deepEqual(signature.blockers, ['none'], signature.stage)
+    }
+  })
+  check(`${name}: OPERATOR_TAKEAWAY.md Blockers section lists ${expected.join(', ')}`, () => {
+    const listed = takeawayBlockers(run.runRoot)
+    if (expected[0] === 'none') assert.deepEqual([...listed], ['none'])
+    else {
+      listed.delete('none')
+      assert.deepEqual([...listed].sort(), [...expected].sort())
+    }
+  })
+}
+const exitFields = signature => ({ exit_code: signature.exit_code, exit_kind: signature.exit_kind, error_class: signature.error_class })
+
+async function intakeBlockerChecks() {
+  const intakeFail = (name, run) => check(`${name}: intake FAILs`, () => assert.equal(run.signature('intake').status, 'FAIL'))
+  // References that name no blocker: a fact-gate failure (found false) and an incomplete required file.
+  const references = {}
+  for (const [kind, override, options] of [
+    ['facts', { found: false }, {}],
+    ['files', {}, { incompleteBaseline: 'run_commands' }],
+  ]) {
+    const name = `blockers-reference-${kind}`
+    const run = await runCase(name, { ...INTAKE, ...override }, options)
+    checkStatuses(name, run, 'intake')
+    blockerChecks(name, run, ['none'])
+    references[kind] = exitFields(run.signature('intake'))
+  }
+  const L = 'licence', D = 'data_unavailable', E = 'env_irreproducible'
+  const cases = [
+    // Each condition alone, then all three in the fixed order.
+    ['blockers-licence-restricted', { licence: 'restricted' }, {}, [L], 'facts'],
+    ['blockers-licence-unknown', { licence: 'unknown' }, {}, [L], 'facts'],
+    ['blockers-data-partial', { data: 'partial' }, {}, [D], 'facts'],
+    ['blockers-data-unavailable', { data: 'unavailable' }, {}, [D], 'facts'],
+    ['blockers-data-unknown', { data: 'unknown' }, {}, [D], 'facts'],
+    ['blockers-stock-false', { stock_environment: false }, {}, [E], 'facts'],
+    ['blockers-all-three', { licence: 'restricted', data: 'partial', stock_environment: false }, {}, [L, D, E], 'facts'],
+    // Conditions are named whatever else failed.
+    ['blockers-not-found-licence', { found: false, licence: 'unknown' }, {}, [L], 'facts'],
+    ['blockers-not-found-all-three', { found: false, licence: 'unknown', data: 'unavailable', stock_environment: false }, {}, [L, D, E], 'facts'],
+    ['blockers-incomplete-licence-data', { licence: 'restricted', data: 'unknown' }, { incompleteBaseline: 'run_commands' }, [L, D], 'files'],
+    ['blockers-incomplete-stock-false', { stock_environment: false }, { incompleteBaseline: 'run_commands' }, [E], 'files'],
+    // A null fact adds nothing.
+    ['blockers-not-found-stock-null', { found: false, stock_environment: null }, {}, ['none'], 'facts'],
+    // Regression: public blind-openmm run1 intake facts, with otherwise complete valid files.
+    ['blockers-blind-openmm-run1', { found: false, anchors_count: 0, data: 'partial', licence: 'unknown', stock_environment: null, size: 'unknown' },
+      { anchors: [] }, [L, D], 'facts'],
+    // Regression: a private blind run (facts supplied by the operator; three valid anchors).
+    ['blockers-private-blind', { found: true, anchors_count: 3, data: 'available', licence: 'unknown', stock_environment: null, size: 'unknown' },
+      {}, [L], 'facts'],
+  ]
+  for (const [name, override, options, expected, reference] of cases) {
+    const run = await runCase(name, { ...INTAKE, ...override }, options)
+    checkStatuses(name, run, 'intake')
+    intakeFail(name, run)
+    blockerChecks(name, run, expected)
+    check(`${name}: exit_code, exit_kind and error_class unchanged from the no-blocker ${reference} reference`, () => {
+      assert.deepEqual(exitFields(run.signature('intake')), references[reference])
+    })
+    if (name === 'blockers-private-blind') anchoredChecks(name, run, true)
+    if (name === 'blockers-blind-openmm-run1') anchoredChecks(name, run, false)
+  }
+  // PASS intakes keep ["none"], including with stock_environment null.
+  for (const [name, override] of [['blockers-pass', {}], ['blockers-pass-stock-null', { stock_environment: null }]]) {
+    const run = await runCase(name, { ...INTAKE, ...override })
+    checkStatuses(name, run, null)
+    blockerChecks(name, run, ['none'])
+  }
+  // The public run's recorded intake facts are the ones replayed above.
+  check('blockers-blind-openmm-run1: recorded intake facts match the regression facts', () => {
+    const source = recordedRun(path.join('blind-openmm', 'run1'))
+    assert.ok(source.signatures, `no recorded signatures under ${source.run}`)
+    const facts = readRows(source.signatures).filter(row => (row.signature || row).stage === 'intake' && row.facts).at(-1)?.facts
+    assert.ok(facts, 'no recorded intake facts')
+    for (const [key, value] of Object.entries({ found: false, anchors_count: 0, data: 'partial', licence: 'unknown', stock_environment: null, size: 'unknown' })) {
+      assert.deepEqual(facts[key], value, key)
+    }
+  })
+}
+
 async function main() {
   try {
+    await intakeBlockerChecks()
     const happy = await runCase('happy')
     checkStatuses('happy', happy, null)
     check('happy: exactly one seal call', () => assert.equal(happy.calls.filter(row => row.label === 'seal').length, 1))
