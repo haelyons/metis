@@ -1,0 +1,29 @@
+{
+  "attempt": 1,
+  "remote_directory": "/tmp/m5-888c056f-9bf0-493e-94d0-b4b5232e8fc1",
+  "baseline_directory": "baseline-published",
+  "method_directory": "method",
+  "baseline_outputs": "baseline-out",
+  "method_outputs": "out",
+  "tests_sha256": "b8003c563ca3210e8589f4cf944cad5e01e04e816d24b7bcbb998fd82955b982",
+  "seal_sha256": "cd774a945f1718a2e474c43fde051f8ffe6f91c15dd887db3c0e373544973b55",
+  "method_files": [
+    {
+      "path": "method.patch",
+      "sha256": "c071de7e76f3eca3a4688655d66ffff42d1e404c0d59a515376c14bb83ac8a72"
+    },
+    {
+      "path": "run_method.sh",
+      "sha256": "9e2fec98a14a9ba4c7d155b83d2dd08b4000a0ca953dcb897285393815d89380"
+    },
+    {
+      "path": "setup_method.sh",
+      "sha256": "02415e45a4ae14b17e04d739c31c85fd5a83ca11022f43aa3945c4773a579695"
+    }
+  ],
+  "timeouts": {
+    "setup_method": 1200,
+    "run_method": 1200,
+    "run_tests": 900
+  }
+}

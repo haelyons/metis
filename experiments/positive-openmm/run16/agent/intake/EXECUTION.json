@@ -1,0 +1,175 @@
+{
+  "representative_scale": {
+    "gpu_count": 1,
+    "gpu_class": "One NVIDIA data-centre GPU, H100/A100/A10 class; use same actual GPU for both methods.",
+    "gpu_model": null,
+    "gpu_model_reason": "Actual stock hardware unspecified.",
+    "replicas": 8,
+    "atoms_per_replica": 23558,
+    "steps_per_replica": 25000,
+    "timestep_ps": 0.004,
+    "simulated_ns_per_replica": 0.1,
+    "total_simulated_ns": 0.8,
+    "scale_search": false,
+    "configuration": {
+      "system": "DHFR in explicit water",
+      "atoms": 23558,
+      "force_fields": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "nonbonded_method": "PME",
+      "cutoff_nm": 0.9,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "integrator": "LangevinMiddleIntegrator",
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_ps": 0.004,
+      "constraint_tolerance": 1e-05,
+      "platform": "CUDA",
+      "precision": "single",
+      "DeterministicForces": true,
+      "replicas": 8,
+      "steps_per_replica": 25000,
+      "energy_interval_steps": 250,
+      "seed0": 1000,
+      "gpu_count": 1,
+      "sources": [
+        {
+          "path": "brief.md",
+          "section": "Setup; embedded dhfr_ensemble.py driver",
+          "sha256": "dbea3e3b0c667852ae64399f0bbee17b472635a46d65c7825dae4f9e1276d031"
+        },
+        "https://github.com/openmm/openmm/blob/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+      ]
+    }
+  },
+  "inputs": {
+    "files": [
+      "5dfr_solv-cube_equil.pdb",
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "driver_source": {
+      "path": "brief.md",
+      "section": "Setup; embedded dhfr_ensemble.py driver",
+      "sha256": "dbea3e3b0c667852ae64399f0bbee17b472635a46d65c7825dae4f9e1276d031"
+    },
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ]
+  },
+  "outputs": {
+    "file": "ensemble.json",
+    "json_fields": [
+      "platform",
+      "properties",
+      "simulated_ns",
+      "total_wall_s",
+      "replicas"
+    ],
+    "per_replica_fields": [
+      "replica",
+      "seed",
+      "steps",
+      "wall_s",
+      "final_potential_kj_mol",
+      "mean_potential_kj_mol"
+    ],
+    "stdout": [
+      "total_wall_s",
+      "aggregate_ns_per_day"
+    ],
+    "samples_per_replica": 100,
+    "raw_energy_series_written": false,
+    "source": {
+      "path": "brief.md",
+      "section": "Setup; embedded dhfr_ensemble.py driver",
+      "sha256": "dbea3e3b0c667852ae64399f0bbee17b472635a46d65c7825dae4f9e1276d031"
+    }
+  },
+  "timing_scope": {
+    "ensemble": "time.perf_counter before replica loop through end of loop, including context/integrator creation, initialization, compilation as incurred, stepping, energy collection and context destruction. Excludes PDB parsing, force-field/system construction, package installation and final JSON writing.",
+    "per_replica": "Starts after position and velocity initialization; includes 25000 steps and 100 energy queries.",
+    "concurrent_method": "Same eight replicas, same work and seeds on same one GPU using MPS; use ensemble elapsed time including analogous initialization/teardown. Concurrency implementation not provided in brief; do not substitute summed per-replica time.",
+    "cold_warm_policy": null,
+    "cold_warm_reason": "Context/kernel compilation cost unmeasured; no published cache normalization protocol."
+  },
+  "scoring_interface": {
+    "primary_quantity": "ensemble total_wall_s, lower is better",
+    "derived_throughput": "aggregate_ns_per_day = 0.8 / total_wall_s * 86400",
+    "speedup": "sequential_total_wall_s / concurrent_total_wall_s on the same single GPU and fixed work",
+    "scientific_outputs": [
+      "per-replica final_potential_kj_mol",
+      "per-replica mean_potential_kj_mol"
+    ],
+    "acceptance_tolerance": null,
+    "reason": "No independently published acceptance tolerance for this fixed-work ensemble. Brief speedup ranges and energy-invariance statements are hypotheses, not published validation criteria.",
+    "references_comparable_directly": false,
+    "reference_limit": "Published reference uses fixed-time benchmark.py; supplied driver uses fixed work and includes context construction in ensemble time."
+  },
+  "correctness_and_repeatability": {
+    "seeds": [
+      1000,
+      1001,
+      1002,
+      1003,
+      1004,
+      1005,
+      1006,
+      1007
+    ],
+    "seed_application": [
+      "initial velocities",
+      "integrator random stream"
+    ],
+    "fixed_conditions": [
+      "GPU model",
+      "software versions",
+      "single precision",
+      "DeterministicForces=true",
+      "coordinates",
+      "force fields",
+      "replica count",
+      "step count"
+    ],
+    "repeat_count": null,
+    "repeat_count_reason": "No published repeat-count rule for fixed-work ensemble.",
+    "energy_comparison": "Compare each replica with same-seed sequential baseline. Brief predicts identical series, otherwise differences within observed same-seed sequential variation.",
+    "energy_tolerance": null,
+    "energy_tolerance_reason": "Variation unmeasured; no numerical rule supplied. Driver emits mean and final energies, not full series; full-series equality cannot be checked from its JSON alone.",
+    "determinism_evidence": "Brief cites CUDA property documentation; CUDA driver not reproduced. Brief reports only a CPU smoke run, which is not an independent anchor."
+  },
+  "method_configuration": {
+    "concurrent_processes": 8,
+    "MPS": true,
+    "tuned_thread_percentage": 25,
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "reason": "Fixed eight-replica scale; published formula 200 / processes. No scale search.",
+    "fixed_work_concurrent_command": null,
+    "command_reason": "Brief supplies sequential fixed-work command only; no invented concurrent driver command."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "runtime_feasibility": {
+    "brief_estimate": "About one minute for whole ensemble on H100; a few minutes on slower GPUs.",
+    "source": "brief.md, Setup",
+    "measured_runtime_s": null,
+    "reason": "No CUDA reproduction or workload run during intake. Estimates are not published anchors. Fixed work expected to fit default run budgets; actual installation and GPU runtime remain unverified."
+  }
+}

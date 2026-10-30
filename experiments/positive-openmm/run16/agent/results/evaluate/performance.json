@@ -1,0 +1,109 @@
+{
+  "status": "PASS",
+  "input_hashes": {
+    "seal_sha256": "cd774a945f1718a2e474c43fde051f8ffe6f91c15dd887db3c0e373544973b55",
+    "baseline_sha256": "cbbf826376eeeaff7ef1eabd222f6da6d263951f0fbce3633b96ae0258b789a2",
+    "data_sha256": "e359eb4ea46ff4bbf88dfb459783ac4f560887e3805107568467bb3f21671f89",
+    "baseline_outputs_sha256": "a64145e878cc3762d3c85ab5f753420c08ba7f5858967939402b07bbf6f14946",
+    "tests_sha256": "b8003c563ca3210e8589f4cf944cad5e01e04e816d24b7bcbb998fd82955b982",
+    "method_payload_sha256": "c774d3730c8dab437a6f92bfb6c9b4e6944772c0ae3b6c0e9637561a3cd594eb",
+    "anchors_sha256": "33e749ea891890c3f09ab6d84b3167c92957f02ae44ed2cfb817c8474c3a5881",
+    "harness_sha256": "0d979589c98edb29384f1961bb0d0be97769cb93b0f8391866675a9fb2184912",
+    "evaluators": {
+      "eval_common.py": "a2552271e15b78901be14b11ca236ed31f0a251b6d5ec2760381cc32137158f9",
+      "score_anchors.py": "89bcb0c1a74e8e7dea0bcfee848bf998bd8506a78790c390bcc7fbbf5f888900",
+      "eval_validity.py": "104586a33a293b08a95f5c1c267488ea551a24f175967e6ac042ddd871a8b99c",
+      "eval_equivalence.py": "116534916bfafa7863f08c3d471f1b698e6c15f2f45b470cbd2aa55008fbc67d",
+      "eval_performance.py": "c631fec6be2079a6455156d77d7418ebd493f9fa2b5bb5a1fac0cc37ae16a769"
+    }
+  },
+  "performance_pass": true,
+  "equal_cost": true,
+  "speedup_published": 1.3039000464669088,
+  "speedup_tuned": null,
+  "cost_ratio": 0.766929951961911,
+  "prediction_ratio": 0.9482909428850246,
+  "confidence": 0.95,
+  "speedup_interval": [
+    1.300628316834408,
+    null
+  ],
+  "matched_outcome": true,
+  "pairs": [
+    {
+      "index": 0,
+      "order": [
+        "method",
+        "baseline"
+      ],
+      "baseline_s": 60.67579385699992,
+      "method_s": 46.53408366799977,
+      "baseline_gpus": 1,
+      "method_gpus": 1,
+      "speedup": 1.3039000464669088,
+      "cost_ratio": 0.766929951961911,
+      "baseline_usd": 0.033540230493174956,
+      "method_usd": 0.025723007360922093
+    },
+    {
+      "index": 1,
+      "order": [
+        "baseline",
+        "method"
+      ],
+      "baseline_s": 60.672243188999346,
+      "method_s": 46.49689303899959,
+      "baseline_gpus": 1,
+      "method_gpus": 1,
+      "speedup": 1.304866609863805,
+      "cost_ratio": 0.7663618583238747,
+      "baseline_usd": 0.03353826776280797,
+      "method_usd": 0.025702449207669214
+    },
+    {
+      "index": 2,
+      "order": [
+        "baseline",
+        "method"
+      ],
+      "baseline_s": 60.71042160500019,
+      "method_s": 46.594707928999924,
+      "baseline_gpus": 1,
+      "method_gpus": 1,
+      "speedup": 1.302946714410347,
+      "cost_ratio": 0.7674910945629526,
+      "baseline_usd": 0.033559371942763996,
+      "method_usd": 0.02575651910519718
+    },
+    {
+      "index": 3,
+      "order": [
+        "method",
+        "baseline"
+      ],
+      "baseline_s": 60.729747717000464,
+      "method_s": 46.69262304299991,
+      "baseline_gpus": 1,
+      "method_gpus": 1,
+      "speedup": 1.300628316834408,
+      "cost_ratio": 0.7688591637262631,
+      "baseline_usd": 0.03357005498800859,
+      "method_usd": 0.02581064440432495
+    },
+    {
+      "index": 4,
+      "order": [
+        "method",
+        "baseline"
+      ],
+      "baseline_s": 60.66853005700068,
+      "method_s": 46.2414100900005,
+      "baseline_gpus": 1,
+      "method_gpus": 1,
+      "speedup": 1.311995675281537,
+      "cost_ratio": 0.7621976343675166,
+      "baseline_usd": 0.03353621522595315,
+      "method_usd": 0.025561223910861387
+    }
+  ]
+}

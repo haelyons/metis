@@ -21,3 +21,5 @@ experiments/blind-01/*/out/wf-*/
 # Shared libraries a harness installs into fetched results are binaries, not evidence, and can exceed GitHub limits
 **/results/**/*.so
 **/results/**/*.so.*
+# Package caches a harness writes into fetched results are downloads, not evidence, and can exceed GitHub limits
+**/results/**/pip-cache/

@@ -1,0 +1,23 @@
+{
+  "method": "ensembles",
+  "rationale": "Choose the first ranked feasible method, ensembles. The supplied whole-workload concurrent-throughput bound on one GPU is 1.7964373791314334x (p=1, k=min(8, measured concurrency factor 1.7964373791314334), MPS enabled); resource guards already passed. Kernels account for 58.24894705766048% of wall time and CUDA API host time for 41.354459352104345%, supporting concurrent execution of existing independent replicas to overlap host submission and GPU work. H2D plus D2H account for only 0.3965935902351708%; transfer pipelining has supplied bound 1.001986907925915x. GPU utilization is unavailable, so no utilization claim is inferred. The concurrency bound is a throughput ceiling, not a guaranteed speedup or single-replica latency improvement. Startup, context creation, scheduling, CPU contention, GPU contention and output aggregation can reduce realized gains.",
+  "plan_steps": [
+    "In a later implementation, locate the existing replica launcher and preserve the sealed workload: one input, eight replicas with seeds 1000 through 1007, unchanged initial coordinates, velocity seeds, Langevin integrator seeds, force settings, DeterministicForces=true, integration steps, sampling and output definitions.",
+    "Schedule those existing replicas through a bounded process pool on the same GPU with MPS enabled. Start with two concurrent workers; retain isolated simulation contexts and per-seed output destinations. Keep each replica's simulation sequence unchanged, reuse workers where supported, and never add replicas or change the scientific workload to fill workers.",
+    "Join all eight replicas and aggregate in stable seed order using the existing formulas and result schema. Propagate worker failures and require exactly one complete result for each sealed seed before aggregation.",
+    "Measure complete-workload throughput on one GPU against the serial baseline with identical timing boundaries, including applicable startup, scheduling and aggregation costs. Treat 1.7964373791314334x as the supplied ceiling. Do not substitute kernel-only timings, add GPUs or change the sealed method or protocol.",
+    "Apply the unchanged sealed paired-median confidence rule at confidence 0.95 to both metrics across the eight identical-seed baseline/method pairs. Require the prescribed finite exact min/max intervals to lie strictly inside the unchanged absolute margins: 38.64602800660285 kJ/mol for mean_potential_kj_mol and 103.46056370784534 kJ/mol for final_potential_kj_mol. Do not require bitwise equality, expand seeds, adjust margins or replace the sealed test after seeing outputs."
+  ],
+  "files_expected": [
+    "Existing replica launcher or orchestration source, exact path unspecified by packet; expected later change for bounded concurrent execution.",
+    "Existing result aggregation source, exact path unspecified by packet; expected later change only if needed for isolated outputs and stable seed ordering.",
+    "results/reproduce/out/ensemble.json: existing result artifact identified by packet; preserve schema and retain baseline separately during later validation."
+  ],
+  "risks": [
+    "Concurrent contexts may contend for GPU execution, memory bandwidth or host CPU resources despite passing deterministic resource guards. MPS availability, process startup and synchronization can erode the measured concurrency benefit.",
+    "Shared mutable simulation state, reused random-number streams, output collisions or aggregation-order changes could alter scientific results. Isolate each replica and preserve seed mapping and aggregation semantics.",
+    "Stochastic dynamics remain stochastic under fixed seeds and DeterministicForces=true. Scheduling and floating-point effects may change trajectories; evaluate only through the sealed paired tests, with no exact or bitwise energy requirement.",
+    "Margins derive from cross-seed baseline ensemble standard errors, not measured same-seed repeatability or a published scientific tolerance. Eight seeds provide finite exact bounds but no empirically calibrated unconditional power claim.",
+    "The supplied power lower bound of 0.92 is conditional on each of 16 paired metric differences falling strictly within its sealed margin with probability at least 0.995; paired method variance is unmeasured. Preserve this limitation and the target power 0.9 without claiming unconditional validation power."
+  ]
+}
