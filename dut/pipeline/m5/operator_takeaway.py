@@ -37,6 +37,7 @@ def takeaway(records, raid=None, box=None):
                  if spec is bool and key not in ("tokens_known", "gpu_busy_known")}
         if stage == "intake":
             flags["anchored"] = facts.get("anchored")
+            flags["licence_basis"] = facts.get("licence_basis")
         flags.update({key: entry["signature"][key] if entry else None
                       for key in ("run_valid", "calibration_valid")})
         rendered = ", ".join(f"{key}={str(value).lower() if value is not None else 'null'}"

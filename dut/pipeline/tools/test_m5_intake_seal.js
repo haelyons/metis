@@ -221,15 +221,18 @@ function noLeak(runRoot) {
   visit(operator)
 }
 
-async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands, baselinePatch, argsBudgets, executionBudgets } = {}) {
+async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name), preserve = false, incompleteBaseline = false, profile = PROFILE, sealFault = '', repairPredictions, anchors, recorded, noBrief = false, buildCommands, baselinePatch, argsBudgets, executionBudgets, stubIntake, invalidReply = false } = {}) {
   // `incompleteBaseline`: true drops published_configuration; a string drops that baseline.json key.
+  // `stubIntake`: an args.stub.intake status, so no intake agent runs. `invalidReply`: the reply is
+  // expected to be rejected, so its facts are not expected to be carried unchanged.
   const droppedKey = incompleteBaseline === true ? 'published_configuration' : incompleteBaseline || ''
   const control = path.join(runRoot, 'control')
   const brief = path.join(runRoot, 'brief.md')
   fs.mkdirSync(control, { recursive: true })
   fs.writeFileSync(brief, `# Intake fixture\n${SENTINEL}\n`)
   const argsFile = path.join(control, 'args.json')
-  writeJSON(argsFile, { run_root: runRoot, ...(noBrief ? {} : { brief }), tag: 'intake-seal-test', stub: { reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' },
+  writeJSON(argsFile, { run_root: runRoot, ...(noBrief ? {} : { brief }), tag: 'intake-seal-test',
+    stub: { ...(stubIntake ? { intake: stubIntake } : {}), reproduce: 'PASS', profile: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' },
     ...(argsBudgets ? { stage_budgets_s: argsBudgets } : {}) })
   // The profile stage is stubbed, so provide its documented output directly.
   writeJSON(path.join(runRoot, 'agent', 'profile-packet.json'), profile)
@@ -278,12 +281,14 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
   const stage = label => stages.find(row => (row.signature || row).stage === label)
   const signature = label => { const row = stage(label); assert.ok(row, `missing ${label} signature`); return row.signature || row }
   const calls = fs.existsSync(callsFile) ? readRows(callsFile) : []
-  check(`${name}: exactly one intake call`, () => assert.equal(calls.filter(row => row.label === 'intake').length, 1))
-  check(`${name}: intake facts emitted unchanged`, () => {
+  // An invalid reply may be retried as for any invalid reply; licence_basis cases compare call sequences with a reference.
+  if (invalidReply) check(`${name}: intake agent called`, () => assert.ok(calls.some(row => row.label === 'intake')))
+  else check(`${name}: exactly ${stubIntake ? 'no' : 'one'} intake call`, () => assert.equal(calls.filter(row => row.label === 'intake').length, stubIntake ? 0 : 1))
+  if (!stubIntake && !invalidReply) check(`${name}: intake facts emitted unchanged`, () => {
     // `anchored` is computed by the pipeline from anchors.json, never copied from the agent.
     for (const [key, value] of Object.entries(facts)) if (key !== 'anchored') assert.deepEqual(stage('intake')?.facts?.[key], value, key)
   })
-  if (!recorded) check(`${name}: intake files contain stub content and supplied brief`, () => {
+  if (!recorded && !stubIntake) check(`${name}: intake files contain stub content and supplied brief`, () => {
     for (const file of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
       const value = readJSON(path.join(runRoot, 'agent', 'intake', `${file}.json`))
       if (file === 'baseline' && droppedKey) assert.ok(!Object.hasOwn(value, droppedKey))
@@ -1296,6 +1301,218 @@ async function intakeBlockerChecks() {
   })
 }
 
+// SCHEMAS.md A/intake/ (U40): "Intake facts add optional `licence_basis`, the basis of the licence judgement for
+// the least-covered item among the benchmark code and its required inputs. It is the first of these values that
+// applies to any item, in this fixed order: `"unreachable"` ..., `"none"` ..., `"owner"` ..., `"distribution"` ...,
+// `"explicit"` .... The intake prompt defines these values and asks for the fact; a value outside the list makes the
+// reply invalid, as for any other fact. It is null when the reply omits it, and on SKIPPED and stub records. It never
+// changes the gate, the `licence` fact, `blockers` or any other fact. Signatures carry it as an enum fact, and
+// `OPERATOR_TAKEAWAY.md` shows it among the intake gate flags."
+const LICENCE_BASES = ['unreachable', 'none', 'owner', 'distribution', 'explicit']
+// Each value's definition in substance, read from the prompt text after the value's token up to the next value's token.
+const LICENCE_BASIS_DEFINITIONS = {
+  unreachable: text => /licen[cs]|evidence|terms/i.test(text) &&
+    /(?:could|can)\s*not\s+(?:be\s+)?(?:fetch|retriev|reach|access|download|load|open)|(?:fetch|retriev|download)\w*\s+(?:fail|error)|fail\w*\s+to\s+(?:fetch|retriev|reach|access|download|load)|unreachable|un(?:fetchable|available|retrievable)/i.test(text),
+  none: text => /\bno\b[^.\n]{0,60}licen[cs]e/i.test(text) && /terms/i.test(text) && /owner/i.test(text),
+  owner: text => /owner/i.test(text) && /\bbrief\b/i.test(text) && /permi(?:ssion|t)/i.test(text) && /\bonly\b/i.test(text),
+  distribution: text => /\bonly\b/i.test(text) && /licen[cs]e/i.test(text) && /repositor|package|archive/i.test(text) &&
+    /\b(?:not|no|never|doesn't|without)\b[^.\n]{0,80}(?:state|say|cover|name|mention|appl)/i.test(text),
+  explicit: text => /licen[cs]e|terms/i.test(text) && /\bcover/i.test(text) && /\bname/i.test(text) && /\bpath/i.test(text) &&
+    /whole|entire/i.test(text),
+}
+const valueToken = value => new RegExp(`(["'\`])${value}\\1`, 'g')
+function licenceBasisSegments(text, value) {
+  const others = LICENCE_BASES.filter(other => other !== value)
+  return [...text.matchAll(valueToken(value))].map(match => {
+    const start = match.index + match[0].length
+    const ends = others.map(other => { const next = valueToken(other); next.lastIndex = start; return next.exec(text)?.index })
+      .filter(index => index !== undefined)
+    return text.slice(start, Math.min(start + 500, ...ends))
+  })
+}
+function licenceBasisPromptChecks(name, run) {
+  const prompt = () => {
+    const value = run.calls.find(row => row.label === 'intake')?.prompt
+    assert.ok(value, 'no intake prompt recorded')
+    return value
+  }
+  check(`${name}: intake prompt asks for licence_basis as a JSON key`, () => {
+    assert.match(prompt(), keyToken('licence_basis'), 'licence_basis not named as a JSON key')
+  })
+  check(`${name}: intake prompt names each licence_basis value`, () => {
+    const missing = LICENCE_BASES.filter(value => !valueToken(value).test(prompt()))
+    assert.deepEqual(missing, [], `values not named: ${missing.join(', ')}`)
+  })
+  for (const value of LICENCE_BASES) {
+    check(`${name}: intake prompt defines licence_basis "${value}" as the contract does`, () => {
+      const segments = licenceBasisSegments(prompt(), value)
+      assert.ok(segments.length, `"${value}" not named`)
+      assert.ok(segments.some(LICENCE_BASIS_DEFINITIONS[value]), `no matching definition of "${value}"; text after it: ${JSON.stringify(segments.map(s => s.slice(0, 300)))}`)
+    })
+  }
+  check(`${name}: intake prompt states licence_basis covers the least-covered of the code and required inputs, first value in order`, () => {
+    const windows = windowsAround(prompt(), /licence_basis/, 300, 900)
+    assert.ok(windows.some(window => /\bcode\b/i.test(window) && /\binputs?\b/i.test(window) &&
+      /least|weakest|first[^.\n]{0,80}(?:appl|order)|in\s+(?:this|the)\s+(?:fixed\s+)?order/i.test(window)),
+    'no statement that licence_basis is the first applicable value for the least-covered item among code and inputs')
+  })
+}
+// The value shown for a flag among the intake gate flags (a table column on the intake row, or inline).
+function takeawayFlag(runRoot, key, values) {
+  const text = fs.readFileSync(path.join(runRoot, 'operator', 'OPERATOR_TAKEAWAY.md'), 'utf8')
+  const cells = line => line.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(cell => cell.trim().replace(/[`*"]/g, ''))
+  const blocks = []
+  let block = []
+  for (const line of text.split('\n')) {
+    if (line.trim().startsWith('|')) block.push(line)
+    else if (block.length) { blocks.push(block); block = [] }
+  }
+  if (block.length) blocks.push(block)
+  for (const table of blocks) {
+    const column = cells(table[0]).indexOf(key)
+    if (column < 0) continue
+    const row = table.slice(1).map(cells).find(row => row.includes('intake'))
+    if (row) return row[column]
+  }
+  const inline = new RegExp(`\\b${key}\\b\\W{0,4}(${[...values, 'null'].join('|')})\\b`).exec(text)
+  return inline ? inline[1] : undefined
+}
+function licenceBasisChecks(name, run, expected) {
+  check(`${name}: intake facts and signature carry licence_basis=${JSON.stringify(expected)}`, () => {
+    const facts = run.stage('intake')?.facts
+    assert.ok(facts, 'no intake record')
+    assert.equal(facts.licence_basis, expected)
+  })
+  check(`${name}: OPERATOR_TAKEAWAY.md shows licence_basis=${expected} among intake gate flags`, () => {
+    assert.equal(takeawayFlag(run.runRoot, 'licence_basis', LICENCE_BASES), String(expected))
+  })
+}
+// Everything except licence_basis that the contract says licence_basis never changes.
+function behaviour(run) {
+  const timing = key => /usd|wall|_s$|^tokens_(?:in|out)$/.test(key)
+  const strip = facts => Object.fromEntries(Object.entries(facts || {}).filter(([key]) => !timing(key) && key !== 'licence_basis'))
+  const intake = run.signature('intake')
+  const facts = run.stage('intake')?.facts || {}
+  return {
+    intake: { status: intake.status, licence: facts.licence, anchored: facts.anchored, blockers: intake.blockers, ...exitFields(intake) },
+    intakeFacts: strip(facts),
+    later: run.stages.map(row => row.signature || row).filter(signature => signature.stage !== 'intake')
+      .map(signature => ({ stage: signature.stage, status: signature.status, blockers: signature.blockers, ...exitFields(signature),
+        facts: strip(run.stages.find(row => (row.signature || row) === signature).facts) })),
+    stopped_at: readJSON(path.join(run.out, 'result.json')).stopped_at,
+    calls: run.calls.map(row => row.label),
+  }
+}
+async function licenceBasisFactChecks() {
+  // Base replies and files spanning PASS, each blocker and a file failure, anchored and unanchored.
+  const scenarios = [
+    ['pass', {}, {}, null, ['none']],
+    ['licence-unknown', { licence: 'unknown' }, {}, 'intake', ['licence']],
+    ['all-three', { licence: 'restricted', data: 'partial', stock_environment: false }, {}, 'intake', ['licence', 'data_unavailable', 'env_irreproducible']],
+    ['incomplete', {}, { incompleteBaseline: 'run_commands' }, 'intake', ['none']],
+    ['unanchored', { anchors_count: 0 }, { anchors: [] }, null, ['none']],
+  ]
+  for (const [label, override, options, stoppedAt, blockers] of scenarios) {
+    const results = {}
+    for (const basis of [undefined, ...LICENCE_BASES]) {
+      const name = `licence-basis-${label}-${basis ?? 'omitted'}`
+      const facts = { ...INTAKE, ...override, ...(basis === undefined ? {} : { licence_basis: basis }) }
+      const run = await runCase(name, facts, options)
+      checkStatuses(name, run, stoppedAt)
+      blockerChecks(name, run, blockers)
+      licenceBasisChecks(name, run, basis ?? null)
+      results[basis ?? 'omitted'] = run
+    }
+    const reference = behaviour(results.omitted)
+    for (const basis of LICENCE_BASES) {
+      check(`licence-basis-${label}: "${basis}" leaves intake status, licence, blockers, anchored, exit metadata, other facts and later stages unchanged`, () => {
+        assert.deepEqual(behaviour(results[basis]), reference)
+      })
+    }
+  }
+
+  // A value outside the list makes the reply invalid, as for any other invalid fact.
+  const invalidReference = await runCase('licence-basis-invalid-reference', { ...INTAKE, size: 17 }, { invalidReply: true })
+  checkStatuses('licence-basis-invalid-reference', invalidReference, 'intake')
+  const invalidOutcome = run => {
+    const signature = run.signature('intake')
+    return { status: signature.status, blockers: signature.blockers, ...exitFields(signature), calls: run.calls.map(row => row.label) }
+  }
+  for (const value of ['Explicit', 'permitted', 'unknown', 'licensed', '', 3, true, ['explicit']]) {
+    const name = `licence-basis-invalid-${JSON.stringify(value).replace(/\W+/g, '') || 'empty'}`
+    const run = await runCase(name, { ...INTAKE, licence_basis: value }, { invalidReply: true })
+    checkStatuses(name, run, 'intake')
+    check(`${name}: licence_basis ${JSON.stringify(value)} fails intake as an invalid fact does`, () => {
+      assert.equal(run.signature('intake').status, 'FAIL')
+      assert.deepEqual(invalidOutcome(run), invalidOutcome(invalidReference))
+    })
+    check(`${name}: the invalid value is not carried into the facts`, () => {
+      assert.notDeepEqual(run.stage('intake')?.facts?.licence_basis, value)
+    })
+  }
+
+  // Stub intake records carry null.
+  for (const status of ['PASS', 'FAIL']) {
+    const name = `licence-basis-stub-${status.toLowerCase()}`
+    const run = await runCase(name, INTAKE, { stubIntake: status })
+    check(`${name}: stub intake record carries licence_basis null`, () => {
+      const facts = run.stage('intake')?.facts
+      assert.ok(facts, 'no intake record')
+      assert.equal(facts.licence_basis, null)
+    })
+  }
+}
+
+// Public recorded run blind-openmm run3: replayed with its reply facts plus licence_basis "distribution", intake
+// FAILs with blockers ["licence"] and anchored false, and the signature and takeaway carry the basis. With licence
+// "permitted" the same replay PASSes. Files are copied to a temporary directory; experiments/ is read only.
+const RUN3_FACTS = { found: true, anchors_count: 1, data: 'available', licence: 'unknown', stock_environment: null, size: 'unknown' }
+async function blindOpenmmRun3Regression() {
+  const label = 'recorded-blind-openmm-run3'
+  const source = recordedRun(path.join('blind-openmm', 'run3'))
+  const fixture = path.join(parent, `${label}-fixture`)
+  let ready = false
+  check(`${label}: recorded intake files available and copied`, () => {
+    assert.ok(source.intake, `no recorded intake directory under ${source.run}`)
+    for (const file of ['benchmark', 'anchors', 'data', 'baseline', 'EXECUTION']) {
+      assert.ok(fs.existsSync(path.join(source.intake, `${file}.json`)), `missing ${file}.json`)
+    }
+    fs.cpSync(source.intake, fixture, { recursive: true })
+    assert.equal(readJSON(path.join(fixture, 'anchors.json')).length, RUN3_FACTS.anchors_count)
+    ready = true
+  })
+  check(`${label}: recorded intake reply facts match the regression facts`, () => {
+    assert.ok(source.signatures, `no recorded signatures under ${source.run}`)
+    const facts = readRows(source.signatures).filter(row => (row.signature || row).stage === 'intake' && row.facts).at(-1)?.facts
+    assert.ok(facts, 'no recorded intake facts')
+    for (const [key, value] of Object.entries(RUN3_FACTS)) assert.deepEqual(facts[key], value, key)
+  })
+  if (!ready) return
+  {
+    const name = `${label}-distribution`
+    const run = await runCase(name, { ...RUN3_FACTS, licence_basis: 'distribution' }, { recorded: fixture })
+    checkStatuses(name, run, 'intake')
+    check(`${name}: intake FAILs`, () => assert.equal(run.signature('intake').status, 'FAIL'))
+    blockerChecks(name, run, ['licence'])
+    anchoredChecks(name, run, false)
+    licenceBasisChecks(name, run, 'distribution')
+  }
+  {
+    const name = `${label}-permitted`
+    const run = await runCase(name, { ...RUN3_FACTS, licence: 'permitted', licence_basis: 'distribution' }, { recorded: fixture })
+    check(`${name}: intake PASSes with licence permitted`, () => {
+      const stderr = fs.readFileSync(path.join(run.runRoot, `stderr-${name}.log`), 'utf8')
+      assert.equal(run.signature('intake').status, 'PASS', `${JSON.stringify(run.signature('intake'))}; stderr: ${stderr.slice(-1500)}`)
+    })
+    check(`${name}: run does not stop at intake`, () => {
+      assert.notEqual(readJSON(path.join(run.out, 'result.json')).stopped_at, 'intake')
+    })
+    blockerChecks(name, run, ['none'])
+    anchoredChecks(name, run, false)
+    licenceBasisChecks(name, run, 'distribution')
+  }
+}
+
 async function main() {
   try {
     await intakeBlockerChecks()
@@ -1399,6 +1616,10 @@ async function main() {
     buildCommandsPromptChecks('search-no-brief', search)
     completenessKeyPromptChecks('happy (brief)', happy)
     completenessKeyPromptChecks('search-no-brief', search)
+    licenceBasisPromptChecks('happy (brief)', happy)
+    licenceBasisPromptChecks('search-no-brief', search)
+    await licenceBasisFactChecks()
+    await blindOpenmmRun3Regression()
     await commitOrPinChecks()
     await blindOpenmmRun2Regression()
     // Gate: build_commands must be non-empty; a single package-manager install suffices.

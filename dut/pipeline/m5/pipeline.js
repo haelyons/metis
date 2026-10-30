@@ -22,7 +22,7 @@ return (async () => {
   input.cwd = A
 
   const fields = {
-    intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size', 'anchored'],
+    intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size', 'anchored', 'licence_basis'],
     reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid'],
     profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
@@ -37,12 +37,13 @@ return (async () => {
 
   const intakeSchema = {
     type: 'object', additionalProperties: false,
-    required: fields.intake.filter(key => key !== 'anchored'),
+    required: fields.intake.filter(key => key !== 'anchored' && key !== 'licence_basis'),
     properties: {
       found: { type: 'boolean' }, anchors_count: { type: 'integer', minimum: 0 },
       anchored: { type: 'boolean' },
       data: { enum: ['available', 'partial', 'unavailable', 'unknown'] },
       licence: { enum: ['permitted', 'restricted', 'unknown'] },
+      licence_basis: { enum: ['unreachable', 'none', 'owner', 'distribution', 'explicit'] },
       stock_environment: { type: ['boolean', 'null'] },
       size: { enum: ['tiny', 'small', 'medium', 'large', 'unknown'] },
     },
@@ -99,6 +100,7 @@ The completeness check reads only these JSON key names in baseline.json and EXEC
 Return only the facts matching the supplied schema. anchors_count must equal the number of items written, including references. Optional anchored is true exactly when at least one item is an anchor rather than a reference; the pipeline derives it from anchors.json.
 found means a public benchmark with executable published code, command and inputs. A benchmark without published tolerances qualifies; record its published values as references without inventing tolerances.
 data=available only when all required data is accessible. licence=permitted only when intended use is allowed.
+Report optional licence_basis for the least-covered item among the benchmark code and its required inputs. Use the first value that applies to any item, in this fixed order: "unreachable" (the licence evidence for the item could not be fetched), "none" (no licence, terms of use or owner statement found for the item), "owner" (the item's only basis is a permission stated by the run's owner in the brief), "distribution" (the item's only basis is a licence of the repository, package or archive that distributes it, and that licence does not state that it covers the item), "explicit" (a licence or terms of use states that it covers the item, by name, by path, or as the whole repository, package or archive). This fact records the basis only; it never changes the gate, licence, blockers or any other fact.
 stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
 size is data plus peak working set: tiny <=1 GiB, small <=10 GiB, medium <=100 GiB, large >100 GiB, otherwise unknown.
 Gate: complete files, found, available required data, permitted licence, and stock_environment is not false. Missing published tolerances do not block. Missing evidence must stay unknown.`
@@ -106,7 +108,8 @@ Gate: complete files, found, available required data, permitted licence, and sto
       const reply = await agent(prompt, { label: 'intake', agentType: 'ls-writer', model: 'sonnet', schema: intakeSchema })
       // Whitelist facts: no benchmark content or arbitrary reply keys can reach S.
       if (reply != null) {
-        for (const key of fields.intake.filter(key => key !== 'anchored')) facts[key] = reply[key]
+        for (const key of intakeSchema.required) facts[key] = reply[key]
+        facts.licence_basis = reply.licence_basis ?? null
       }
       const anchors = readJSON(path.join(directory, 'anchors.json'))
       const validAnchors = Array.isArray(anchors) && new Set(anchors.map(anchor => anchor?.id)).size === anchors.length

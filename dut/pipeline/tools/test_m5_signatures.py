@@ -51,6 +51,8 @@ OUTCOMES = ("approved", "rejected", "conditions_unmet", "no_feasible_method")
 COUNTED = ("approved", "rejected", "conditions_unmet")
 FINDING = ("Finding: negative. No menu method has measured headroom of at least 1.05 "
            "on this hardware.")
+# SCHEMAS.md A/intake/ (U40): optional intake enum fact `licence_basis`, null when omitted.
+LICENCE_BASES = ("unreachable", "none", "owner", "distribution", "explicit")
 BALLOT_LABELS = {
     "approve": r"(?:votes_)?approv(?:e|es|ed|als?)",
     "reject": r"(?:votes_)?reject(?:s|ed|ions?)?",
@@ -174,8 +176,10 @@ def takeaway(directory):
              for line in text.splitlines() if "|" in line]
     allowed = {"true", "false", "null", "none", "unknown", "-", "—", "n/a"}
     allowed.update(FIELDS)
-    # SCHEMAS.md A/intake/: `anchored` is shown among the intake gate flags.
+    # SCHEMAS.md A/intake/: `anchored` and `licence_basis` are shown among the intake gate flags.
     allowed.add("anchored")
+    allowed.add("licence_basis")
+    allowed.update(LICENCE_BASES)
     # SCHEMAS.md propose facts: the propose row shows `outcome` and the four ballot counts.
     allowed.update(PROPOSE_OPTIONAL)
     allowed.update(OUTCOMES)
@@ -262,6 +266,49 @@ def anchored_takeaway(directory, value):
     require(result.returncode == 0, "takeaway exit " + str(result.returncode))
     shown = takeaway_anchored(output.read_text())
     require(shown == json.dumps(value), "anchored shown as " + repr(shown))
+
+
+def takeaway_licence_basis(text):
+    """Value shown for `licence_basis` among the intake gate flags (table column or inline)."""
+    blocks, block = [], []
+    for line in text.splitlines():
+        if line.strip().startswith("|"):
+            block.append(line)
+        elif block:
+            blocks.append(block)
+            block = []
+    if block:
+        blocks.append(block)
+    def cells(line):
+        return [cell.strip().strip("`*\"") for cell in line.strip().strip("|").split("|")]
+    for table in blocks:
+        header = cells(table[0])
+        if "licence_basis" not in header:
+            continue
+        column = header.index("licence_basis")
+        for row in map(cells, table[1:]):
+            if "intake" in row and column < len(row):
+                return row[column]
+    match = re.search(r"\blicence_basis\b\W{0,4}(%s|null)\b" % "|".join(LICENCE_BASES), text)
+    return match.group(1) if match else None
+
+
+def licence_basis_takeaway(directory, value):
+    # SCHEMAS.md A/intake/: OPERATOR_TAKEAWAY.md shows `licence_basis` among the intake gate flags.
+    directory.mkdir()
+    for stage, facts in FACTS.items():
+        if stage == "intake":
+            facts = dict(facts, anchored=True, licence_basis=value)
+        accepted(directory, stage, facts=facts)
+    output = directory / "OPERATOR_TAKEAWAY.md"
+    result = run("m5/operator_takeaway.py", directory, "--out", output)
+    require(result.returncode == 0, "takeaway exit " + str(result.returncode))
+    text = output.read_text()
+    shown = takeaway_licence_basis(text)
+    expected = "null" if value is None else value
+    require(shown == expected, "licence_basis shown as " + repr(shown))
+    # Shown alongside the other intake gate flag.
+    require(takeaway_anchored(text) == "true", "anchored no longer shown as true")
 
 
 def propose_rows(text):
@@ -503,6 +550,38 @@ def main():
         for value in (True, False):
             check("takeaway shows intake anchored=" + repr(value),
                   lambda v=value: anchored_takeaway(root / ("takeaway-anchored-" + str(v)), v))
+        # SCHEMAS.md A/intake/ (U40): optional intake enum fact `licence_basis`, one of five
+        # values or null; null on SKIPPED and stub records.
+        basis = root / "licence-basis"
+        for value in LICENCE_BASES + (None,):
+            check("accept intake licence_basis=" + repr(value),
+                  lambda v=value: accepted(basis, "intake",
+                                           facts=dict(FACTS["intake"], licence_basis=v)))
+            check("accept FAIL intake licence_basis=" + repr(value),
+                  lambda v=value: accepted(basis, "intake", "FAIL",
+                                           facts=dict(FACTS["intake"], licence="unknown",
+                                                      anchored=False, licence_basis=v),
+                                           v1=dict(exit_code=2, exit_kind="guard",
+                                                   error_class="numeric",
+                                                   blockers=["licence"])))
+        check("accept intake without optional licence_basis",
+              lambda: accepted(basis, "intake", facts=FACTS["intake"]))
+        check("accept SKIPPED intake with null licence_basis",
+              lambda: accepted(basis, "intake", "SKIPPED",
+                               facts=dict.fromkeys(list(FACTS["intake"]) + ["anchored", "licence_basis"])))
+        for value in ("Explicit", "EXPLICIT", "explicit ", "distributed", "permitted",
+                      "unknown", "restricted", "null", "None", "", SENTINEL, True, False, 0, 1,
+                      1.5, math.nan, [], ["explicit"], {"licence_basis": "explicit"}):
+            check("reject intake licence_basis=" + repr(value),
+                  lambda v=value: rejected(invalid, stage="intake",
+                                           facts=dict(FACTS["intake"], licence_basis=v)))
+        check("reject licence_basis on a non-intake stage",
+              lambda: rejected(invalid, stage="reproduce",
+                               facts=dict(FACTS["reproduce"], licence_basis="explicit")))
+        for value in LICENCE_BASES + (None,):
+            check("takeaway shows intake licence_basis=" + repr(value),
+                  lambda v=value: licence_basis_takeaway(
+                      root / ("takeaway-licence-basis-" + str(v)), v))
         # SCHEMAS.md propose facts: optional votes_reject, votes_abstain (nonnegative
         # integers) and outcome (approved, rejected, conditions_unmet, no_feasible_method
         # or null).

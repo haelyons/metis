@@ -58,6 +58,8 @@ def validate(value):
     schema = dict(FACTS[stage])
     if stage == "intake" and type(facts) is dict and "anchored" in facts:
         schema["anchored"] = bool
+    if stage == "intake" and type(facts) is dict and "licence_basis" in facts:
+        schema["licence_basis"] = ("unreachable", "none", "owner", "distribution", "explicit")
     if stage == "takeaways" and type(facts) is dict and "run_box_usd" in facts:
         schema["run_box_usd"] = float
     if stage == "profile" and type(facts) is dict and "headroom" in facts:
