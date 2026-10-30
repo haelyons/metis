@@ -1,0 +1,128 @@
+{
+  "identity": {
+    "name": "OpenMM DHFR explicit-solvent PME concurrent simulation throughput",
+    "publication": "Hsu, Clark and Paulsen, Maximizing OpenMM Molecular Dynamics Throughput with NVIDIA Multi-Process Service, NVIDIA Technical Blog, 2025-06-04",
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "code": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "release": "8.2.0",
+    "found": true
+  },
+  "outcome_definition": {
+    "quantity": "aggregate simulation throughput",
+    "unit": "ns/day",
+    "direction": "higher",
+    "definition": "Sum of the two concurrently measured per-process ns_per_day values. Published article reports total throughput; per-process rates come from benchmark.py.",
+    "source": [
+      "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    ]
+  },
+  "citations": [
+    "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/library/01_introduction.rst",
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/theory/05_other_features.rst"
+  ],
+  "source_licences": {
+    "software": {
+      "api_and_application_layer": "MIT",
+      "cuda_platform": "LGPL-3.0",
+      "sources": [
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/library/01_introduction.rst",
+        "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/LGPL.txt"
+      ]
+    },
+    "required_inputs": {
+      "licence": null,
+      "reason": "Per-input licence scope not explicitly established by inspected sources."
+    },
+    "article": {
+      "licence": null,
+      "reason": "No article reuse licence established; citation only."
+    }
+  },
+  "intended_use_permissions": {
+    "intended_use": "Execute public benchmark locally and assess throughput; no redistribution planned.",
+    "software": "permitted by project MIT/LGPL licence statements",
+    "data": null,
+    "overall": "unknown",
+    "reason": "Public availability does not establish a distinct licence grant for benchmark PDB and all benchmark materials."
+  },
+  "stock_cuda_image": {
+    "feasible": null,
+    "evidence": [
+      "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/application/01_getting_started.rst"
+    ],
+    "published_environment": {
+      "openmm": "8.2.0",
+      "cuda": "12",
+      "python": "3.12"
+    },
+    "reason": "Published CUDA installation and concurrent GPU example support feasibility in principle. Stock image inventory, driver compatibility, conda and MPS availability not supplied or tested. No install or workload run."
+  },
+  "size": {
+    "required_input_bytes": 2282791,
+    "required_input_GiB": 0.002126014791429043,
+    "peak_working_set_GiB": null,
+    "data_plus_peak_working_set_GiB": null,
+    "classification": "unknown",
+    "reason": "Input sizes measured from source bytes. Combined host/device peak for two contexts, runtime libraries and compilation not published or measured."
+  },
+  "scoring": {
+    "interface": "Read ns_per_day from each process stdout; require two successful pme results, then sum. Preserve steps, elapsed_time, timestep, configuration and hardware metadata.",
+    "published_acceptance_criterion": null,
+    "tolerance": null,
+    "reason": "No benchmark acceptance threshold or scoring tolerance published. Throughput is hardware-dependent; atom-count reference is not a performance threshold.",
+    "sources": [
+      "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    ]
+  },
+  "repeatability": {
+    "fixed_configuration": "Two independent full-size simulations concurrently on one GPU; each uses --seconds=60. No concurrency or system-size sweep.",
+    "seeds": "Default seed 0 requests distinct generated seeds per Context; actual seed integers not published and benchmark has no seed CLI option.",
+    "determinism": "Same explicit seed would not guarantee identical GPU trajectories.",
+    "sources": [
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/theory/05_other_features.rst"
+    ],
+    "limitations": "Published timer calibrates integration step count internally. Workload size and target duration remain fixed; exact step count, exact seed schedule and hard runtime bound are unavailable."
+  },
+  "search": {
+    "search_calls": 2,
+    "candidate_limit": 3,
+    "candidates": [
+      {
+        "name": "Official OpenMM examples benchmark, release 8.2.0",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+        "status": "Executable baseline used by selected article."
+      },
+      {
+        "name": "NVIDIA concurrent OpenMM/MPS benchmark",
+        "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+        "status": "Selected; two-process case directly published."
+      }
+    ],
+    "other_search_results": "Not inspected as benchmark candidates."
+  },
+  "missing_evidence": [
+    "Published acceptance tolerance",
+    "Published peak memory",
+    "Stock image reproduction",
+    "Per-input licence grant",
+    "Explicit published seed integers",
+    "Immutable binary environment lock"
+  ],
+  "gate": {
+    "complete_files": true,
+    "found": true,
+    "data": "available",
+    "licence": "unknown",
+    "stock_environment": null,
+    "passes": false,
+    "reason": "Intended-use permission for all benchmark input materials remains unknown."
+  }
+}

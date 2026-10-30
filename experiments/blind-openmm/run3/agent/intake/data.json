@@ -1,0 +1,69 @@
+{
+  "required_inputs": [
+    {
+      "path": "examples/5dfr_solv-cube_equil.pdb",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/5dfr_solv-cube_equil.pdb",
+      "availability": "available",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "hash_provenance": "Computed during intake from publicly downloaded bytes; not a published checksum.",
+      "generated": false,
+      "licence": null,
+      "licence_reason": "No separate file-specific grant found in inspected input or example README. XML files are bundled application-layer data; project documents MIT for application layer."
+    },
+    {
+      "path": "wrappers/python/openmm/app/data/amber99sb.xml",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/amber99sb.xml",
+      "availability": "available",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "hash_provenance": "Computed during intake from publicly downloaded bytes; not a published checksum.",
+      "generated": false,
+      "licence": null,
+      "licence_reason": "No separate file-specific grant found in inspected input or example README. XML files are bundled application-layer data; project documents MIT for application layer."
+    },
+    {
+      "path": "wrappers/python/openmm/app/data/tip3p.xml",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/wrappers/python/openmm/app/data/tip3p.xml",
+      "availability": "available",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "hash_provenance": "Computed during intake from publicly downloaded bytes; not a published checksum.",
+      "generated": false,
+      "licence": null,
+      "licence_reason": "No separate file-specific grant found in inspected input or example README. XML files are bundled application-layer data; project documents MIT for application layer."
+    }
+  ],
+  "availability": "available",
+  "access_instructions": "Download benchmark.py and 5dfr_solv-cube_equil.pdb from cited immutable URLs; run from directory containing PDB. ForceField loads amber99sb.xml and tip3p.xml from OpenMM application data. No Amber20 suite needed for pme.",
+  "sources": [
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+    "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/CMakeLists.txt"
+  ],
+  "pin": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "splits": {
+    "value": null,
+    "reason": "Simulation performance benchmark; no training/test split."
+  },
+  "seeds": {
+    "published_values": null,
+    "reason": "Article does not list integer seeds. Unmodified baseline uses default generated distinct seeds per Context.",
+    "policy_source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/theory/05_other_features.rst",
+    "fixed_replay_available": false
+  },
+  "generated_inputs": {
+    "velocities": "Generated at 300 K by Context.setVelocitiesToTemperature.",
+    "random_streams": "Generated uniquely from default seed 0 at Context construction.",
+    "missing_data": false,
+    "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+  },
+  "missing_required_data": [],
+  "licences": {
+    "status": "unknown",
+    "sources": [
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/licenses/Licenses.txt",
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/library/01_introduction.rst"
+    ],
+    "reason": "MIT application layer and LGPL CUDA permissions documented; separate benchmark PDB grant not established."
+  }
+}

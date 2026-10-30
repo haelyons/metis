@@ -1,0 +1,51 @@
+{
+  "representative_scale": {
+    "system": "Full DHFR explicit solvent PME",
+    "atoms_per_simulation": 23558,
+    "independent_simulations": 2,
+    "gpu_count": 1,
+    "target_seconds_per_simulation": 60,
+    "selection_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "scale_search": false,
+    "step_count": null,
+    "step_count_reason": "Published baseline uses timeIntegration calibration, not a fixed published integration-step count."
+  },
+  "inputs": {
+    "required": "All three input files listed in data.json plus pinned benchmark.py and OpenMM 8.2.0 CUDA runtime.",
+    "seeds": "Distinct automatically generated seeds per independent Context; explicit seed numbers unavailable.",
+    "source": [
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/docs-source/usersguide/theory/05_other_features.rst"
+    ]
+  },
+  "outputs": {
+    "required": [
+      "Two independent process exit statuses",
+      "Two stdout records containing pme, ns_per_day, elapsed_time, steps, timestep_in_fs and configuration",
+      "Aggregate throughput in ns/day from summing the two rates",
+      "Hardware, driver and actual OpenMM version"
+    ],
+    "scoring_interface": "Parse named stdout fields printed by benchmark.py. Missing pme result invalidates measurement even if exit status is zero: script catches OpenMMException. No numerical pass/fail tolerance exists.",
+    "published_reference": "23558 atoms per system; reference only.",
+    "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+  },
+  "timing_scope": {
+    "baseline": "Each timeIntegration call performs initial warm-up steps and energy synchronization before timer; times integration plus final energy synchronization. Source setup, imports, data parsing, Context creation and earlier calibration calls excluded from final elapsed_time.",
+    "aggregate": "Sum per-process reported rates from concurrent runs, as article throughput approach. End-to-end wall time is separate and not interchangeable.",
+    "source": [
+      "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py",
+      "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/"
+    ]
+  },
+  "budget_feasibility": {
+    "verified": false,
+    "reason": "No builds or workloads allowed during intake. Two 60-second targets expected below default 1200-second stage budgets; installation, calibration and runtime bounds unverified. No new workload or doubling/scale-search loop specified.",
+    "hard_runtime_bound_s": null
+  },
+  "unavailable": {
+    "explicit_replay_seeds": "Not published",
+    "fixed_integration_steps": "Not published",
+    "accuracy_acceptance_test": "Not published",
+    "gate_scripts": "No gate script named in prompt."
+  }
+}

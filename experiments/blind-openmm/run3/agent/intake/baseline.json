@@ -1,0 +1,52 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "53770948682c40bd460b39830d4e0f0fd3a4b868",
+  "pin": "8.2.0",
+  "pin_source": "https://api.github.com/repos/openmm/openmm/git/ref/tags/8.2.0",
+  "build_commands": [
+    "conda create -n openmm8.2",
+    "conda activate openmm8.2",
+    "conda install -c conda-forge openmm cuda-version=12"
+  ],
+  "build_commands_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+  "build_notes": "Exact published installation commands, not executed. Published install does not constrain OpenMM or Python versions; reproduce reported OpenMM 8.2.0/Python 3.12 before comparing. Immutable source pin does not pin conda dependency resolution.",
+  "run_commands": [
+    "python benchmark.py --platform=CUDA --test=pme --seconds=60"
+  ],
+  "run_commands_source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+  "run_instructions": "Invoke published command in two concurrent independent processes on same single visible GPU. Article selects NSIMS=2. Its printed loop uses seq 1 NSIMS without variable expansion; no corrected shell command invented here. Wait for both processes and capture separate stdout/status.",
+  "published_configuration": {
+    "openmm": "8.2.0",
+    "cuda": "12",
+    "python": "3.12",
+    "system": "DHFR pme, 23558 atoms",
+    "selected_process_count": 2,
+    "target_seconds_per_process": 60,
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "release_script_defaults": {
+      "ensemble": "NVT",
+      "precision": "single",
+      "force_field": [
+        "amber99sb.xml",
+        "tip3p.xml"
+      ],
+      "temperature_K": 300,
+      "friction_per_ps": 1,
+      "timestep_fs": 4,
+      "constraints": "HBonds",
+      "hydrogen_mass_amu": 1.5,
+      "pme_cutoff_nm": 0.9,
+      "constraint_tolerance": 1e-05,
+      "source": "https://raw.githubusercontent.com/openmm/openmm/53770948682c40bd460b39830d4e0f0fd3a4b868/examples/benchmark.py"
+    }
+  },
+  "source_script_sha256": "942d21b57d50000499bda4df222cfbd146d32b5da7a5356311f0da3fda4ce25a",
+  "source_script_hash_provenance": "Computed during intake, not a published checksum.",
+  "mps": {
+    "published_enable_command": "nvidia-cuda-mps-control -d",
+    "source": "https://developer.nvidia.com/blog/maximizing-openmm-molecular-dynamics-throughput-with-nvidia-multi-process-service/",
+    "selected_mode": "Enable MPS for the two-process example, default active thread percentage.",
+    "availability_on_stock_image": null
+  },
+  "executed": false
+}
