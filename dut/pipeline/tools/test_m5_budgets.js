@@ -59,10 +59,13 @@ module.exports = {
       const [repair, , , target] = TARGETS[config.target]
       const initial = target.startsWith('harness/') ? 'harness' : target.startsWith('tests/') ? 'tests' : 'implement'
       const isRepair = options.title === repair && (repair !== 'implement' || prior.some(call => call.title === 'implement'))
+      // `recover: k` makes the k-th repair write a script that finishes in time (true means the first).
+      const turn = prior.filter(call => call.title === repair).length + (repair === 'implement' ? 0 : 1)
+      const recovers = isRepair && config.recover && turn === (config.recover === true ? 1 : config.recover)
       if (options.title === initial || isRepair) {
         // Frozen test scripts always sleep, even after the permitted method repair.
         const file = path.join(target.startsWith('harness/') ? path.join(root, 'agent') : view, target)
-        if (fs.existsSync(file) && (!config.recover || !isRepair)) {
+        if (fs.existsSync(file) && !recovers) {
           fs.writeFileSync(file, fs.readFileSync(file, 'utf8').replace('set -eu\n', 'set -eu\nsleep 4\n'))
         }
       }
@@ -287,19 +290,29 @@ fi`)
       })
       return
     }
-    check(`${name}: exactly one repair, prompt includes budget and elapsed/overrun`, () => {
+    // SCHEMAS.md timeout bullet: "Authored setup and anchor scripts consume their existing repairs (at most
+    // two), and method/test scripts their one bounded repair". A repair runs after each timed-out attempt
+    // until the bound; the attempt after the last repair is final.
+    const bound = ['setup', 'anchors'].includes(config.target) ? 2 : 1
+    const recoverAt = config.recover === true ? 1 : config.recover || 0
+    const repairsExpected = recoverAt || bound
+    check(`${name}: exactly ${repairsExpected === 1 ? 'one repair' : `${repairsExpected} repairs`}, prompts include budget and elapsed/overrun`, () => {
       const repairs = calls.filter(call => call.title === repair).slice(repair === 'implement' ? 1 : 0)
-      assert.equal(repairs.length, 1)
-      assert.match(repairs[0].prompt, /timeout/i)
-      assert.match(repairs[0].prompt, /budget[^\d\n]*1(?!\d)/i)
-      assert.match(repairs[0].prompt, /(?:wall|elapsed)/i)
-      assert.match(repairs[0].prompt, /overrun/i)
+      assert.equal(repairs.length, repairsExpected)
+      for (const call of repairs) {
+        assert.match(call.prompt, /timeout/i)
+        assert.match(call.prompt, /budget[^\d\n]*1(?!\d)/i)
+        assert.match(call.prompt, /(?:wall|elapsed)/i)
+        assert.match(call.prompt, /overrun/i)
+      }
       if (repair === 'implement') assert.equal(calls.filter(call => call.title === 'tests').length, 1)
     })
-    check(`${name}: original budget retained; ${config.recover ? 'repair succeeds' : 'second timeout stops stage'}`, () => {
-      assert.equal(attempts.length, 2)
-      assert.deepEqual(attempts.map(receipt => receipt.rc), config.recover ? [124, 0] : [124, 124])
-      assert.deepEqual(attempts.map(receipt => receipt.budget_s), [1, 1])
+    const finalAttempt = config.recover ? `repair ${recoverAt} succeeds` : `timeout ${bound + 1} stops stage`
+    check(`${name}: original budget retained on every rerun; ${finalAttempt}`, () => {
+      assert.equal(attempts.length, repairsExpected + 1)
+      assert.deepEqual(attempts.map(receipt => receipt.rc), [...Array(repairsExpected).fill(124), config.recover ? 0 : 124])
+      assert.deepEqual(attempts.map(receipt => receipt.budget_s), Array(repairsExpected + 1).fill(1))
+      for (const receipt of attempts.slice(0, -1)) assert.deepEqual([receipt.timed_out, receipt.overrun], [true, true])
       assert.equal(attempts[0].timed_out, true)
       assert.equal(attempts[0].overrun, true)
       const record = records.find(row => row.signature.stage === stage)
@@ -313,8 +326,8 @@ fi`)
         assert.equal(record.signature.exit_code, 3)
         for (const later of STAGES.slice(STAGES.indexOf(stage) + 1).filter(value => value !== 'takeaways'))
           assert.equal(records.find(row => row.signature.stage === later)?.signature.status, 'SKIPPED', later)
-        assert.ok(receipts.slice(receipts.indexOf(attempts[1]) + 1).every(receipt => receipt.operation === 'implement-state'),
-          'scientific work after second timeout')
+        assert.ok(receipts.slice(receipts.indexOf(attempts.at(-1)) + 1).every(receipt => receipt.operation === 'implement-state'),
+          'scientific work after the final timeout')
       }
     })
   }
@@ -327,6 +340,9 @@ async function main() {
     ['independent-fallbacks', { args: { setup: 3, anchors: 2, method_setup: 3, tests: 2 }, execution: { anchors: 1, method_run: 2, evaluate: 3 } }],
     ...Object.keys(TARGETS).map(target => [`timeout-${target}`, { args: { ...SMALL, [target]: 1 }, target }]),
     ['timeout-recovered', { args: { ...SMALL, setup: 1 }, target: 'setup', recover: true }],
+    // Setup and anchors time out twice and the second repair finishes within the original budget.
+    ['timeout-setup-recovered-second', { args: { ...SMALL, setup: 1 }, target: 'setup', recover: 2 }],
+    ['timeout-anchors-recovered-second', { args: { ...SMALL, anchors: 1 }, target: 'anchors', recover: 2 }],
   ]
   try {
     // Two independent workflows at a time keep the full suite below three minutes.
