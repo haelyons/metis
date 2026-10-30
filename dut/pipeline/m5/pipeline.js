@@ -74,7 +74,7 @@ return (async () => {
     const facts = { ...nullFacts('intake'), tokens_known: false, gpu_busy_known: false }
     const fail = () => {
       const blockers = []
-      if (['restricted', 'unknown'].includes(facts.licence)) blockers.push('licence')
+      if (facts.licence === 'restricted') blockers.push('licence')
       if (['partial', 'unavailable', 'unknown'].includes(facts.data)) blockers.push('data_unavailable')
       if (facts.stock_environment === false) blockers.push('env_irreproducible')
       return { status: 'FAIL', facts, v1: { blockers: blockers.length ? blockers : ['none'] } }
@@ -100,10 +100,11 @@ The completeness check reads only these JSON key names in baseline.json and EXEC
 Return only the facts matching the supplied schema. anchors_count must equal the number of items written, including references. Optional anchored is true exactly when at least one item is an anchor rather than a reference; the pipeline derives it from anchors.json.
 found means a public benchmark with executable published code, command and inputs. A benchmark without published tolerances qualifies; record its published values as references without inventing tolerances.
 data=available only when all required data is accessible. licence=permitted only when intended use is allowed.
+When permission is not established, licence="unknown" stays "unknown" and does not stop the run; licence="restricted" does stop the run. Record licence and licence_basis as the evidence shows; never relabel ambiguous coverage as permission.
 Report optional licence_basis for the least-covered item among the benchmark code and its required inputs. Use the first value that applies to any item, in this fixed order: "unreachable" (the licence evidence for the item could not be fetched), "none" (no licence, terms of use or owner statement found for the item), "owner" (the item's only basis is a permission stated by the run's owner in the brief), "distribution" (the item's only basis is a licence of the repository, package or archive that distributes it, and that licence does not state that it covers the item), "explicit" (a licence or terms of use states that it covers the item, by name, by path, or as the whole repository, package or archive). This fact records the basis only; it never changes the gate, licence, blockers or any other fact.
 stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
 size is data plus peak working set: tiny <=1 GiB, small <=10 GiB, medium <=100 GiB, large >100 GiB, otherwise unknown.
-Gate: complete files, found, available required data, permitted licence, and stock_environment is not false. Missing published tolerances do not block. Missing evidence must stay unknown.`
+Gate: complete files, found, available required data, licence is not "restricted", and stock_environment is not false. Missing published tolerances do not block. Missing evidence must stay unknown.`
     try {
       const reply = await agent(prompt, { label: 'intake', agentType: 'ls-writer', model: 'sonnet', schema: intakeSchema })
       // Whitelist facts: no benchmark content or arbitrary reply keys can reach S.
@@ -136,7 +137,7 @@ Gate: complete files, found, available required data, permitted licence, and sto
         && hasValue(documents.baseline.commit ?? documents.baseline.pin)
         && ['representative_scale', 'inputs', 'outputs', 'timing_scope'].every(key => hasValue(documents.EXECUTION[key]))
       const pass = complete && facts.found && facts.data === 'available'
-        && facts.licence === 'permitted' && facts.stock_environment !== false
+        && facts.licence !== 'restricted' && facts.stock_environment !== false
       return pass ? { status: 'PASS', facts } : fail()
     } catch {
       return fail()
