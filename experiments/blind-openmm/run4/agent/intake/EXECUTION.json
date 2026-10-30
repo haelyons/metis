@@ -1,0 +1,78 @@
+{
+  "representative_scale": {
+    "system": "Full published explicit-solvent DHFR PME system, 23,558 atoms",
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659",
+    "replicas": 4,
+    "gpu_count": 1,
+    "device_index": "0",
+    "schedule": "Run four fresh independent simulations sequentially on same GPU.",
+    "seeds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "warmup_steps_per_replica": 5,
+    "timed_steps_per_replica": 100000,
+    "timestep_fs": 4,
+    "total_timed_simulation_ns": 1.6,
+    "scale_origin": "Intake-selected fixed protocol using complete published molecular system. No scale search, adaptive step calibration or doubling loops."
+  },
+  "inputs": {
+    "required_files": [
+      "examples/5dfr_solv-cube_equil.pdb",
+      "wrappers/python/openmm/app/data/amber99sb.xml",
+      "wrappers/python/openmm/app/data/tip3p.xml"
+    ],
+    "baseline": "OpenMM 8.0.0, pinned source commit a7800059645f4471f4b91c21e742fe5aa4513cda",
+    "configuration": "Use baseline.json published_configuration; explicit RNG seeds per replica.",
+    "generated": "System, integrator, velocities and stochastic noise generated per replica.",
+    "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py"
+  },
+  "outputs": {
+    "published_interface": "stdout fields test, platform, precision, constraints, hydrogen_mass, cutoff, ensemble, timestep_in_fs, steps, elapsed_time, ns_per_day. Optional --outfile accepts JSON or YAML.",
+    "fixed_protocol_interface": {
+      "per_replica": [
+        "seed",
+        "steps",
+        "elapsed_time_s",
+        "ns_per_day",
+        "final_potential_energy_kj_per_mol",
+        "final_kinetic_energy_kj_per_mol"
+      ],
+      "aggregate": [
+        "total_simulated_ns",
+        "total_elapsed_time_s",
+        "aggregate_ns_per_day"
+      ],
+      "score_formula": "aggregate_ns_per_day = 86400 * total_simulated_ns / total_elapsed_time_s",
+      "direction": "maximize"
+    },
+    "correctness": "Require finite energies and successful fixed step counts. These are operational checks, not independently published acceptance anchors. No numeric scientific tolerance supplied.",
+    "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py"
+  },
+  "timing_scope": {
+    "published": "timeIntegration performs warmup and energy retrieval before timer; timed region integrates requested steps and retrieves energy to synchronize GPU. Setup excluded.",
+    "fixed_protocol": "For each fresh context, set explicit integrator RNG and velocity seed, perform exactly five warmup steps, synchronize via energy retrieval, then time exactly 100000 steps through final energy synchronization. Sum timed integration seconds across four sequential replicas. Record setup and full wall time separately.",
+    "excluded": [
+      "downloads",
+      "installation",
+      "system construction",
+      "context creation",
+      "initialization",
+      "warmup",
+      "output serialization"
+    ],
+    "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py"
+  },
+  "adapter": {
+    "required": true,
+    "available": false,
+    "reason": "Published CLI has adaptive timing and no seed flag. Future fixed-protocol adapter must preserve published physics and bypass adaptive loop; no invented executable adapter command provided."
+  },
+  "budgets": {
+    "stage_budgets_s": null,
+    "reason": "Use supplied defaults; no overrides. Fixed simulation runtime not measured, so completion within budgets remains unverified. Avoid automatic workload resizing."
+  },
+  "workloads_run": false
+}

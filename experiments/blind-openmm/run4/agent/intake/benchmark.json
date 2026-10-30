@@ -1,0 +1,193 @@
+{
+  "identity": {
+    "name": "OpenMM DHFR explicit-solvent PME benchmark",
+    "repo": "https://github.com/openmm/openmm",
+    "version": "8.0.0",
+    "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+    "entrypoint": "examples/benchmark.py",
+    "test": "pme"
+  },
+  "found": true,
+  "outcome_definition": {
+    "quantity": "simulation throughput",
+    "unit": "ns/day",
+    "direction": "maximize",
+    "published_score": "Integrator step size divided by elapsed seconds per step, converted to ns/day.",
+    "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py"
+  },
+  "citations": [
+    {
+      "title": "OpenMM 8.0.0 executable benchmark source",
+      "url": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py"
+    },
+    {
+      "title": "OpenMM 7: Rapid development of high performance algorithms for molecular dynamics",
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659",
+      "relationship": "Independent publication of DHFR system; historical timings are not same-version targets."
+    },
+    {
+      "title": "OpenMM 8.0 installation instructions",
+      "url": "https://docs.openmm.org/8.0.0/userguide/application/01_getting_started.html"
+    },
+    {
+      "title": "Published OpenMM 8.0 CUDA benchmark command",
+      "url": "https://blog.salad.com/openmm-gpu-benchmark/"
+    }
+  ],
+  "source_licences": {
+    "status": "permitted",
+    "intended_use": "Run and adapt scientific performance benchmark locally on one GPU.",
+    "code": [
+      {
+        "component": "OpenMM API and application layer",
+        "licence": "MIT",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+      },
+      {
+        "component": "CUDA platform",
+        "licence": "LGPL",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt"
+      }
+    ],
+    "inputs": [
+      {
+        "path": "examples/5dfr_solv-cube_equil.pdb",
+        "required": true,
+        "availability": "available",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/5dfr_solv-cube_equil.pdb",
+        "access": "Public HTTPS GET; no registration. PDB must be in benchmark working directory; XML files distributed with OpenMM application layer.",
+        "bytes": 1814203,
+        "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+        "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+        "generated": false,
+        "licence": {
+          "basis": "distribution",
+          "source": [
+            "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt",
+            "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+          ],
+          "item_specific_licence": null,
+          "reason": "Distributed in OpenMM repository; component licences permit scientific use. No statement explicitly naming this input or granting a whole-repository licence located."
+        }
+      },
+      {
+        "path": "wrappers/python/openmm/app/data/amber99sb.xml",
+        "required": true,
+        "availability": "available",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/wrappers/python/openmm/app/data/amber99sb.xml",
+        "access": "Public HTTPS GET; no registration. PDB must be in benchmark working directory; XML files distributed with OpenMM application layer.",
+        "bytes": 467697,
+        "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+        "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+        "generated": false,
+        "licence": {
+          "basis": "distribution",
+          "source": [
+            "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt",
+            "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+          ],
+          "item_specific_licence": null,
+          "reason": "Distributed in OpenMM repository; component licences permit scientific use. No statement explicitly naming this input or granting a whole-repository licence located."
+        }
+      },
+      {
+        "path": "wrappers/python/openmm/app/data/tip3p.xml",
+        "required": true,
+        "availability": "available",
+        "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/wrappers/python/openmm/app/data/tip3p.xml",
+        "access": "Public HTTPS GET; no registration. PDB must be in benchmark working directory; XML files distributed with OpenMM application layer.",
+        "bytes": 891,
+        "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+        "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+        "generated": false,
+        "licence": {
+          "basis": "distribution",
+          "source": [
+            "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt",
+            "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+          ],
+          "item_specific_licence": null,
+          "reason": "Distributed in OpenMM repository; component licences permit scientific use. No statement explicitly naming this input or granting a whole-repository licence located."
+        }
+      }
+    ],
+    "licence_basis": "distribution",
+    "reason": "Use permitted on OpenMM distribution licence basis; input-specific coverage not explicit. Preserve notices and applicable source obligations when distributing modifications."
+  },
+  "stock_cuda_image": {
+    "feasible": null,
+    "evidence": [
+      {
+        "source": "https://docs.openmm.org/8.0.0/userguide/application/01_getting_started.html",
+        "fact": "Official conda installation supports NVIDIA CUDA; cudatoolkit supplied by package manager; compatible vendor driver required."
+      }
+    ],
+    "reason": "Stock image identity, driver, GPU architecture, conda availability and compatible OpenMM 8.0 binary resolution not supplied or reproduced. No builds or workloads run."
+  },
+  "size": {
+    "data_bytes": 2282791,
+    "data_gib": 0.002126014791429043,
+    "peak_working_set_gib": null,
+    "data_plus_peak_working_set_gib": null,
+    "class": "unknown",
+    "reason": "Required input byte sizes verified via public source. Host plus GPU peak working set unavailable; no memory measurement run."
+  },
+  "scoring": {
+    "published_acceptance_criterion": null,
+    "published_tolerance": null,
+    "reason": "No published acceptance tolerance located. Atom count is reference only; cannot provide correctness acceptance.",
+    "fixed_protocol_score": "Aggregate simulated ns / elapsed timed integration seconds * 86400; retain per-seed results.",
+    "protocol_origin": "Intake-selected fixed execution protocol, not claimed as published protocol."
+  },
+  "repeatability": {
+    "published_seed_list": null,
+    "published_seed_control_cli": null,
+    "reason": "Source initializes thermal velocities without explicit seed and exposes no seed CLI option.",
+    "fixed_protocol_seeds": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "seed_origin": "Intake-selected distinct nonzero seeds; set integrator and thermal velocity RNG seed per replica.",
+    "guarantee": "Seed control does not establish bitwise reproducibility across platforms.",
+    "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py"
+  },
+  "search": {
+    "search_calls": 2,
+    "candidate_count": 1,
+    "candidates": [
+      {
+        "id": "openmm-dhfr-pme",
+        "name": "OpenMM published DHFR PME benchmark",
+        "sources": [
+          "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py",
+          "https://doi.org/10.1371/journal.pcbi.1005659",
+          "https://blog.salad.com/openmm-gpu-benchmark/"
+        ],
+        "selected": true,
+        "reason": "Executable published code, command and all required inputs accessible."
+      }
+    ],
+    "queries": [
+      "OpenMM DHFR benchmark test benchmark.py explicit solvent seeds GPU github",
+      "site.openmm.org license input files example public domain MIT OpenMM"
+    ]
+  },
+  "blockers": [],
+  "unresolved": [
+    "Stock-image compatibility pending reproduction.",
+    "Peak working set unknown.",
+    "Fixed-step, explicit-seed execution needs adapter; published CLI uses adaptive timing.",
+    "Published install command is unpinned; installed version must be checked against 8.0.0 before accepting reproduction."
+  ],
+  "gate": {
+    "complete_files": true,
+    "found": true,
+    "data": "available",
+    "licence": "permitted",
+    "stock_environment": null,
+    "passes_stated_intake_gate": true,
+    "reason": "Stated gate permits unknown stock feasibility and requires no published tolerance."
+  }
+}

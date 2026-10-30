@@ -1,0 +1,97 @@
+{
+  "required_inputs": [
+    {
+      "path": "examples/5dfr_solv-cube_equil.pdb",
+      "required": true,
+      "availability": "available",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/5dfr_solv-cube_equil.pdb",
+      "access": "Public HTTPS GET; no registration. PDB must be in benchmark working directory; XML files distributed with OpenMM application layer.",
+      "bytes": 1814203,
+      "sha256": "fc9759761d9b33c58b09a3d0bf1dbdb76f23dbe0e89a8bd92f43ebcf0f2f2fdf",
+      "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+      "generated": false,
+      "licence": {
+        "basis": "distribution",
+        "source": [
+          "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt",
+          "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+        ],
+        "item_specific_licence": null,
+        "reason": "Distributed in OpenMM repository; component licences permit scientific use. No statement explicitly naming this input or granting a whole-repository licence located."
+      }
+    },
+    {
+      "path": "wrappers/python/openmm/app/data/amber99sb.xml",
+      "required": true,
+      "availability": "available",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/wrappers/python/openmm/app/data/amber99sb.xml",
+      "access": "Public HTTPS GET; no registration. PDB must be in benchmark working directory; XML files distributed with OpenMM application layer.",
+      "bytes": 467697,
+      "sha256": "186f8570413f2ad3efe923578fc53cc895006d50de4b612e9fc58977a914c092",
+      "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+      "generated": false,
+      "licence": {
+        "basis": "distribution",
+        "source": [
+          "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt",
+          "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+        ],
+        "item_specific_licence": null,
+        "reason": "Distributed in OpenMM repository; component licences permit scientific use. No statement explicitly naming this input or granting a whole-repository licence located."
+      }
+    },
+    {
+      "path": "wrappers/python/openmm/app/data/tip3p.xml",
+      "required": true,
+      "availability": "available",
+      "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/wrappers/python/openmm/app/data/tip3p.xml",
+      "access": "Public HTTPS GET; no registration. PDB must be in benchmark working directory; XML files distributed with OpenMM application layer.",
+      "bytes": 891,
+      "sha256": "607f0fc9566c3770db2d9eb579fed68c4157578445eed1ec0aa7dccc23d57a6c",
+      "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+      "generated": false,
+      "licence": {
+        "basis": "distribution",
+        "source": [
+          "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt",
+          "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+        ],
+        "item_specific_licence": null,
+        "reason": "Distributed in OpenMM repository; component licences permit scientific use. No statement explicitly naming this input or granting a whole-repository licence located."
+      }
+    }
+  ],
+  "availability": "available",
+  "access_instructions": "Fetch three required files from immutable source URLs. Retain PDB in working directory and use OpenMM 8.0.0 packaged force fields; no Amber20 download needed for pme.",
+  "pin": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+  "splits": null,
+  "splits_reason": "Molecular simulation performance workload; no train, validation or test split.",
+  "seeds": {
+    "published": null,
+    "selected": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "reason": "Published script supplies no fixed seed list. Chosen seeds define proposed bounded protocol, not literature evidence."
+  },
+  "generated_inputs": [
+    {
+      "name": "OpenMM System and integrator",
+      "recipe_source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py",
+      "reason": "Generated from accessible PDB and force-field XML; not missing external data."
+    },
+    {
+      "name": "Initial velocities and Langevin noise",
+      "recipe_source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py",
+      "reason": "Generated per seed at 300 K; explicit seed control needs adapter."
+    }
+  ],
+  "missing_required_data": [],
+  "licence_basis": "distribution",
+  "licence_sources": [
+    "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/licenses/Licenses.txt",
+    "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/docs-source/usersguide/library/01_introduction.rst"
+  ]
+}

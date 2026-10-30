@@ -1,0 +1,52 @@
+{
+  "repo": "https://github.com/openmm/openmm",
+  "commit": "a7800059645f4471f4b91c21e742fe5aa4513cda",
+  "pin": "8.0.0",
+  "pin_source": "https://api.github.com/repos/openmm/openmm/commits/8.0.0",
+  "build_commands": [
+    "conda install -c conda-forge openmm"
+  ],
+  "build_commands_sources": [
+    {
+      "command": "conda install -c conda-forge openmm",
+      "source": "https://docs.openmm.org/8.0.0/userguide/application/01_getting_started.html",
+      "purpose": "Install released baseline binary and dependencies; no source compilation required.",
+      "limitation": "Published command unpinned. It does not itself guarantee OpenMM 8.0.0; version-specific installation command/environment lock unavailable in inspected publication. Do not accept a different installed version as pinned baseline."
+    }
+  ],
+  "run_commands": [
+    "python benchmark.py --platform=CUDA --seconds=60 --test=pme"
+  ],
+  "run_commands_sources": [
+    {
+      "source": "https://blog.salad.com/openmm-gpu-benchmark/",
+      "reason": "Published table offers CUDA or CPU; CUDA alternative selected. Options and pme input path verified against pinned primary source.",
+      "primary_source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py"
+    }
+  ],
+  "working_directory": "OpenMM examples directory containing benchmark.py and 5dfr_solv-cube_equil.pdb",
+  "published_configuration": {
+    "test": "pme",
+    "force_fields": [
+      "amber99sb.xml",
+      "tip3p.xml"
+    ],
+    "temperature_k": 300,
+    "friction_per_ps": 1,
+    "integrator": "LangevinMiddleIntegrator",
+    "timestep_fs": 4,
+    "constraints": "HBonds",
+    "hydrogen_mass_amu": 1.5,
+    "constraint_solver_tolerance": 1e-05,
+    "pme_cutoff_nm": 0.9,
+    "ensemble": "NVT",
+    "precision": "single",
+    "target_seconds": 60,
+    "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py",
+    "note": "Constraint solver tolerance is simulation parameter, not acceptance tolerance."
+  },
+  "source_sha256": "f2d5adc57bf7c35300116a53f5ad3fd6609f425daf907f8aa2fa234e1c2e371e",
+  "source": "https://raw.githubusercontent.com/openmm/openmm/a7800059645f4471f4b91c21e742fe5aa4513cda/examples/benchmark.py",
+  "execution_status": "Not installed, built or run.",
+  "fixed_execution_difference": "Published script calibrates integration length adaptively and lacks explicit seed option. Fixed protocol below requires adapter; no adapter command claimed to be published."
+}
