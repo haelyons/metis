@@ -23,10 +23,12 @@ function check(label, test) {
 
 // Expected values come from SCHEMAS.md, not from the config under test.
 const CHAIN = { codex: ['opencode'], opencode: ['codex'], claude: ['codex'], cursor: ['codex'] }
-const ROUTES = [{ match: '^skeptic-[45]$', primary: 'claude/sonnet' }, { match: '^review$', primary: 'claude/sonnet' }]
+const ROUTES = [{ match: '^skeptic-[45]$', primary: 'claude/sonnet' }, { match: '^review$', primary: 'claude/sonnet' },
+  { match: '^(intake|harness|[a-z]+-repair|seal|propose|tests|implement)$', understudy: 'claude/opus' }]
 const CLAUDE_LABELS = ['skeptic-4', 'skeptic-5', 'review']
-const CODEX_LABELS = ['intake', 'harness', 'harness-repair', 'anchors-repair', 'seal', 'seal-repair', 'propose',
-  'skeptic-1', 'skeptic-2', 'skeptic-3', 'tests', 'implement']
+const AUTHOR_LABELS = ['intake', 'harness', 'harness-repair', 'anchors-repair', 'adapter-repair', 'seal', 'seal-repair',
+  'propose', 'tests', 'implement']
+const CODEX_LABELS = ['skeptic-1', 'skeptic-2', 'skeptic-3']
 const ROLES = [undefined, 'qt-bare', 'ls-writer']
 const PINNED = [undefined, 'haiku', 'sonnet', 'opus']
 const withoutDocs = value => Object.fromEntries(Object.entries(value).filter(([key]) => !key.startsWith('_')))
@@ -60,7 +62,7 @@ function configChecks() {
     assert.deepEqual(u.disabled_families, [])
     assert.deepEqual(u.chain, CHAIN)
   })
-  check('understudy routes are exactly skeptic-4/5 and review to claude/sonnet', () => {
+  check('understudy routes are exactly skeptic-4/5 and review to claude/sonnet, and claude/opus behind authors', () => {
     assert.deepEqual(all.understudy.routes.map(withoutDocs), ROUTES)
   })
   check('no route or family model names Fable', () => assert.ok(!/fable/i.test(JSON.stringify(all.understudy))))
@@ -76,6 +78,20 @@ function configChecks() {
         assert.equal(r.chain.length, 1, `${where}: chain ${JSON.stringify(r.chain)}`)
         assert.equal(U.familyOf(r.chain[0]), 'codex', where)
         assert.equal(r.understudy, r.chain[0], where)
+        assert.equal(r.mode, 'fallback', where)
+      }
+    })
+  }
+  for (const label of AUTHOR_LABELS) {
+    check(`${label}: codex primary, then claude/opus, then opencode (--family codex)`, () => {
+      for (const agentType of ROLES) for (const pinned of PINNED) {
+        const role = U.roleFor(cfg, 'latent_skeptic', { label, agentType })
+        const r = U.resolve(cfg, { label, role, pinned, familyOverride: 'codex' })
+        const where = `role ${role}, pinned ${pinned}`
+        assert.equal(U.familyOf(r.primary), 'codex', `${where}: primary ${r.primary}`)
+        assert.deepEqual(r.chain.map(U.familyOf), ['claude', 'opencode'], `${where}: chain ${JSON.stringify(r.chain)}`)
+        assert.equal(r.chain[0], 'claude/opus', where)
+        assert.equal(r.understudy, 'claude/opus', where)
         assert.equal(r.mode, 'fallback', where)
       }
     })
