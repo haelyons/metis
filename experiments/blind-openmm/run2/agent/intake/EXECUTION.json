@@ -1,0 +1,71 @@
+{
+  "representative_scale": {
+    "fixed": true,
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659.s001 SI/Benchmarks/energyBenchmarks.py",
+    "system": "DHFR explicit solvent, 23558 atoms",
+    "gpu_count": 1,
+    "execution": "Sequential independent contexts on one GPU; expose one GPU to original script.",
+    "precision_modes": [
+      "single",
+      "mixed",
+      "double"
+    ],
+    "simulations_per_precision": 10,
+    "total_simulations": 30,
+    "steps_per_simulation": 500000,
+    "timestep_ps": 0.002,
+    "ns_per_simulation": 1,
+    "total_simulated_ns": 30,
+    "total_steps": 15000000,
+    "scale_search": false,
+    "toy_extrapolation": false
+  },
+  "inputs": {
+    "files": [
+      "dhfr.pdb",
+      "amber99sbildn.xml",
+      "tip3p.xml"
+    ],
+    "manifest": "data.json",
+    "seeds": null,
+    "seed_reason": "Published initialization uses implicit random seeds; fixed distinct numeric seeds and corresponding invocation are unavailable."
+  },
+  "outputs": {
+    "published_interface": "stdout groups Precision, trial, and slope: <value> kJ/mol/ps",
+    "per_trial_records": 30,
+    "quantity": "Linear-regression slope of total energy against simulation time",
+    "aggregation": "For each precision, calculate arithmetic mean of ten slopes and standard error (sample standard deviation / sqrt(10)).",
+    "published_aggregation_source": "https://doi.org/10.1371/journal.pcbi.1005659 Table 5",
+    "raw_trajectory_file": null,
+    "reason": "Original script keeps energy samples in memory and prints slopes; no trajectory output.",
+    "machine_readable_scoring_command": null,
+    "scoring_command_reason": "No published JSON evaluation command supplied; downstream parser would need implementation.",
+    "scoring_interface": {
+      "reference_file": "anchors.json",
+      "match_key": "precision mode in quantity/id",
+      "measured_value": "Mean of ten slopes in (kJ/mol)/ps",
+      "acceptance_threshold": null,
+      "rule": "References only. Null tolerance provides no pass/fail test; standard errors never alter scoring."
+    }
+  },
+  "timing_scope": {
+    "published_wall_clock_measurement": null,
+    "reason": "Energy-conservation script has no wall-clock timing output.",
+    "execution_measurement": "Measure elapsed wall time for entire published command, including imports, input parsing, system/context construction, initialization, all integration, energy transfer, regression and stdout. Setup/install excluded from run timing.",
+    "completion_condition": "All 30 slopes present and finite, ten per mode. This is execution integrity, not a published scientific anchor.",
+    "runtime_guarantee": null,
+    "runtime_reason": "No workloads run and target GPU unspecified; completion time remains unverified."
+  },
+  "stage_budgets_s": {
+    "setup": 86400,
+    "anchors": 604800,
+    "profile": 604800,
+    "method_setup": 86400,
+    "method_run": 604800,
+    "tests": 900,
+    "evaluate": 604800
+  },
+  "budget_reason": "Intake-selected generous caps for full fixed workload and historical setup; caps are not published runtime claims. No scale search or shortened representative run permitted.",
+  "gate_scripts": null,
+  "gate_scripts_reason": "No gate scripts named in prompt."
+}

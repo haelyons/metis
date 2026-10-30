@@ -1,0 +1,132 @@
+{
+  "identity": {
+    "name": "OpenMM 7 DHFR explicit-solvent energy conservation benchmark",
+    "publication": "https://doi.org/10.1371/journal.pcbi.1005659",
+    "code": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+    "selected_script": "SI/Benchmarks/energyBenchmarks.py"
+  },
+  "found": true,
+  "outcome_definition": {
+    "quantity": "Mean linear total-energy drift for each precision mode",
+    "unit": "(kJ/mol)/ps",
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659 Table 5; https://doi.org/10.1371/journal.pcbi.1005659.s001 SI/Benchmarks/energyBenchmarks.py"
+  },
+  "citations": [
+    {
+      "citation": "Eastman et al. (2017), OpenMM 7: Rapid development of high performance algorithms for molecular dynamics, PLoS Comput Biol 13(7): e1005659",
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659"
+    },
+    {
+      "citation": "S1 Supporting Information: benchmark scripts, README and inputs",
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659.s001"
+    },
+    {
+      "citation": "S1 Source Code: OpenMM 7.0.1",
+      "url": "https://doi.org/10.1371/journal.pcbi.1005659.s002"
+    },
+    {
+      "citation": "OpenMM 7.0 User Guide",
+      "url": "https://docs.openmm.org/7.0.0/userguide/library.html"
+    }
+  ],
+  "source_licences": [
+    {
+      "component": "Article and supporting benchmark scripts/data",
+      "licence": "CC0",
+      "source": "https://doi.org/10.1371/journal.pcbi.1005659",
+      "intended_use": "Download, execute, modify and report scientific benchmark results",
+      "permission": "permitted"
+    },
+    {
+      "component": "OpenMM API, application layer and bundled force-field inputs",
+      "licence": "MIT",
+      "source": "https://docs.openmm.org/7.0.0/userguide/library.html#license",
+      "permission": "permitted",
+      "conditions": "Retain notices and disclaimers on redistribution."
+    },
+    {
+      "component": "OpenMM CUDA platform",
+      "licence": "LGPL",
+      "source": "https://docs.openmm.org/7.0.0/userguide/library.html#license",
+      "permission": "permitted",
+      "conditions": "Redistributed modifications to OpenMM CUDA platform require corresponding source under applicable LGPL terms."
+    },
+    {
+      "component": "SciPy",
+      "licence": "BSD-3-Clause",
+      "source": "https://raw.githubusercontent.com/scipy/scipy/main/LICENSE.txt",
+      "permission": "permitted",
+      "conditions": "Retain notices; no endorsement."
+    }
+  ],
+  "intended_use_permission": "permitted",
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "image": null,
+    "reason": "Stock image specification, GPU architecture, driver, Python and toolchain versions not supplied. Historical CUDA compatibility pending reproduction.",
+    "evidence": [
+      {
+        "source": "https://docs.openmm.org/7.0.0/userguide/application.html#installing-with-conda",
+        "fact": "Historical installation guide specifies NVIDIA CUDA 7.5."
+      },
+      {
+        "source": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+        "fact": "Selected script explicitly requests CUDA and imports simtk.openmm plus scipy.stats.linregress."
+      }
+    ],
+    "reproduction_performed": false
+  },
+  "size": {
+    "data_gib": 0.0021316837519407272,
+    "data_bytes": 2288878,
+    "data_scope": "dhfr.pdb plus amber99sbildn.xml and tip3p.xml; excludes software and download archives",
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "category": "unknown",
+    "reason": "No published or measured peak host/device working set found; data size alone cannot determine size class."
+  },
+  "scoring": {
+    "references_file": "anchors.json",
+    "published_acceptance_criterion": null,
+    "tolerance": null,
+    "reason": "Table 5 reports estimates and standard errors, without pass/fail tolerances. Standard error is not acceptance tolerance.",
+    "comparison": "Report measured means, standard errors and differences from published references; no reference-based pass/fail."
+  },
+  "repeatability": {
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659.s001 SI/Benchmarks/energyBenchmarks.py",
+    "protocol": "Ten fresh CUDA contexts per precision mode; random initial velocities at 300 K. Repeat fixed workload without scale search.",
+    "published_numeric_seeds": null,
+    "explicit_distinct_seed_enforcement": false,
+    "reason": "setVelocitiesToTemperature is called without seed argument; original seed numbers and explicit seed controls are unavailable. Exact trajectories cannot be reproduced from published seeds."
+  },
+  "search": {
+    "search_calls": 1,
+    "candidate_limit": 3,
+    "search_call_limit": 2,
+    "query": "OpenMM DHFR explicit solvent benchmark benchmark.py CUDA independent simulations seeds",
+    "candidates": [
+      {
+        "id": "openmm7-dhfr-energy",
+        "citation": "https://doi.org/10.1371/journal.pcbi.1005659",
+        "code": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+        "inspected": true,
+        "selected": true,
+        "qualification": "Public executable Python code, published README command and accessible DHFR and force-field inputs."
+      }
+    ],
+    "other_results_inspected": false
+  },
+  "gate": {
+    "complete_files": true,
+    "found": true,
+    "required_data": "available",
+    "licence": "permitted",
+    "stock_environment": null,
+    "passes_stated_intake_gate": true,
+    "reason": "Published tolerances and confirmed stock compatibility are not required by stated intake gate; stock_environment is not false."
+  },
+  "gate_scripts": {
+    "available": false,
+    "reason": "Prompt names no gate scripts; JSON structure and cross-file consistency checked locally."
+  }
+}

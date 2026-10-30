@@ -1,0 +1,99 @@
+{
+  "repo": "https://github.com/pandegroup/openmm",
+  "repo_source": "https://doi.org/10.1371/journal.pcbi.1005659",
+  "commit": null,
+  "commit_reason": "No commit hash established; immutable publication archive and observed content hash used instead.",
+  "immutable_pin": {
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659.s002",
+    "release": "OpenMM 7.0.1",
+    "archive_sha256": "ca5eff114796c1c0dba4cf7e0bfc933c14e6bff036ec2a863425b990c7efbe1f",
+    "script_source": "https://doi.org/10.1371/journal.pcbi.1005659.s001",
+    "script_path": "SI/Benchmarks/energyBenchmarks.py",
+    "script_sha256": "e6b0d107618f4b166b55ed515c1661d3f08292301b37375f7d6ddbfc637262ed"
+  },
+  "build_commands": [
+    "make",
+    "make install",
+    "make PythonInstall",
+    "python -m pip install scipy"
+  ],
+  "build_command_sources": [
+    {
+      "commands": [
+        "make",
+        "make install",
+        "make PythonInstall"
+      ],
+      "source": "https://docs.openmm.org/7.0.0/userguide/library.html sections 9.4.2, 9.5.2, 9.6.2"
+    },
+    {
+      "commands": [
+        "python -m pip install scipy"
+      ],
+      "source": "https://scipy.org/install/#installing-with-pip"
+    }
+  ],
+  "configuration": {
+    "source": "https://docs.openmm.org/7.0.0/userguide/library.html sections 9.1-9.3",
+    "instructions": "Create separate build directory; use published interactive CCMake workflow with extracted source directory. Enable CUDA and Python wrappers, set PYTHON_EXECUTABLE, set CMAKE_INSTALL_PREFIX to writable location inside intake, then generate Makefiles. Run make commands in configured build directory; install SciPy in same Python environment.",
+    "published_configuration_command_template": "ccmake -i <path to OpenMM src directory>",
+    "automated_setup_command": null,
+    "reason": "Published configuration is interactive; no unattended configuration or dependency installation commands invented."
+  },
+  "dependencies": {
+    "required": [
+      "Python",
+      "SciPy",
+      "C++ compiler",
+      "CMake >=2.8",
+      "SWIG for Python wrappers",
+      "CUDA toolkit and compatible NVIDIA driver"
+    ],
+    "source": "https://docs.openmm.org/7.0.0/userguide/library.html chapter 9; https://doi.org/10.1371/journal.pcbi.1005659.s001 SI/Benchmarks/energyBenchmarks.py",
+    "python_pin": null,
+    "scipy_pin": null,
+    "compiler_pin": null,
+    "reason": "Exact published dependency versions and complete reproducible environment lock unavailable; historical guide recommends CUDA 7.5."
+  },
+  "run_commands": [
+    "python energyBenchmarks.py"
+  ],
+  "run_command_source": "https://doi.org/10.1371/journal.pcbi.1005659.s001 SI/Benchmarks/README.txt",
+  "working_directory": "SI/Benchmarks",
+  "published_configuration": {
+    "source": "https://doi.org/10.1371/journal.pcbi.1005659.s001 SI/Benchmarks/energyBenchmarks.py",
+    "atoms": 23558,
+    "force_fields": [
+      "amber99sbildn.xml",
+      "tip3p.xml"
+    ],
+    "nonbonded_method": "PME",
+    "ewaldErrorTolerance": 1e-05,
+    "constraints": "HBonds",
+    "switching_distance": "0.9 * default nonbonded cutoff",
+    "nonbonded_cutoff_nm": null,
+    "cutoff_reason": "Script relies on createSystem default; explicit numeric cutoff not given in script.",
+    "integrator": "VerletIntegrator",
+    "step_size_ps": 0.002,
+    "constraint_tolerance": 1e-06,
+    "initial_velocity_temperature_K": 300,
+    "precision_modes": [
+      "single",
+      "mixed",
+      "double"
+    ],
+    "trials_per_mode": 10,
+    "steps_per_trial": 500000,
+    "sampling_interval_steps": 500,
+    "samples_per_trial": 1000,
+    "device_index": null,
+    "device_reason": "Published energy script does not set CudaDeviceIndex; one visible GPU is required by selected execution scope."
+  },
+  "builds_run": false,
+  "workloads_run": false,
+  "limitations": [
+    "Historical source may need compiler, Python or CUDA adaptations; none attempted.",
+    "SciPy install command is published but unpinned; exact historical dependency reproduction unavailable.",
+    "Published command does not expose explicit seed assignment."
+  ]
+}
