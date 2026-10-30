@@ -1,0 +1,93 @@
+{
+  "name": "Published PINDER FroDock comparator with PINDER evaluation harness",
+  "repo": "https://github.com/pinder-org/pinder",
+  "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "immutable_pin_source": "https://api.github.com/repos/pinder-org/pinder/commits/main",
+  "docking_software": {
+    "name": "FroDock",
+    "archive": "frodock.tar.gz",
+    "version": null,
+    "immutable_pin": null,
+    "hash": null,
+    "reason": "PINDER expects separately acquired frodock3_linux64 archive. Linked download failed; no immutable upstream archive verified.",
+    "download_url": "https://chaconlab.org/modeling/frodock/frodock-donwload",
+    "observed_download_status": 404,
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md"
+  },
+  "build_commands": [
+    "pip install pinder",
+    "docker build --build-arg FRODOCK_SOURCE_ARCHIVE=./frodock.tar.gz -t pinder-frodock -f docker/frodock/Dockerfile.frodock .",
+    "apt-get --allow-releaseinfo-change update      && apt-get -y install --no-install-recommends      apt-utils      dialog 2>&1      && apt-get install -y --no-install-recommends      git      rsync      ssh      gpg      wget      man-db      procps      tree      unzip      gcc      build-essential      lsb-release      curl      vim      exuberant-ctags      apt-transport-https      ca-certificates      gnupg      libgl1-mesa-glx       libopenblas-base      libopenmpi-dev openmpi-common openmpi-bin libopenmpi3      libfftw3-3 libfftw3-dev libfftw3-mpi-dev      libhdf5-openmpi-dev      && apt-get autoclean      && apt-get autoremove      && rm -rf /var/lib/apt/lists/*",
+    "micromamba install -y -n base -c conda-forge      pyopenssl=23.2.0      python=${MAMBA_PYTHON_VERSION}      requests=2.25.1      google-cloud-storage      gcsfs      keyrings.google-artifactregistry-auth      && micromamba clean --all --yes",
+    "echo \"deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main\" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-cli -y",
+    "gcloud config set project ${MAMBA_PYTHON_VERSION}",
+    "python -m pip install      simple-gcp-object-downloader      kubernetes      pandas==1.5.3",
+    "git clone https://github.com/pinder-org/pinder.git;      cd pinder && pip install .",
+    "tar -xf frodock.tar.gz &&      mv frodock3_linux64 frodock &&      rm frodock.tar.gz",
+    "./compile_frodock.sh"
+  ],
+  "build_command_sources": [
+    {
+      "command_index": 0,
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "scope": "Published package install; unpinned, not run."
+    },
+    {
+      "command_index": 1,
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+      "scope": "Published FroDock image build; archive required, not run."
+    },
+    {
+      "command_indices": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "scope": "All published Dockerfile RUN instructions, included to expose nested dependency installs/builds; not standalone stock-image recipe."
+    }
+  ],
+  "run_commands": [
+    "pinder_methods predict -m <method> -s <test set> -l <list of PINDER ids> -c `config` -r `results_dir`",
+    "pinder_eval --eval_dir eval_dir"
+  ],
+  "run_command_sources": [
+    {
+      "command_index": 0,
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+      "kind": "Published template, placeholders unresolved; implementation uses Fire. Not validated executable as written."
+    },
+    {
+      "command_index": 1,
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "kind": "Published CLI usage with required eval_dir argument; eval_dir must contain real generated models."
+    }
+  ],
+  "published_configuration": {
+    "benchmark": "PINDER-S",
+    "monomer_type": "apo priority from brief",
+    "n_solutions": null,
+    "n_solutions_reason": "Required by runner, no inspected published experiment value.",
+    "mpi_np_default": 8,
+    "mpi_np_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+    "force": null,
+    "force_reason": "Required dictionary key in runner; experiment setting not established.",
+    "python_docker_default": "3.10",
+    "base_image_default": "mambaorg/micromamba:1.5-jammy",
+    "base_image_digest": null,
+    "configuration_sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md"
+    ]
+  },
+  "reproduction_status": "unavailable pending archive, permissions and executable configuration",
+  "reason": "No builds/workloads executed. Code pin obtained but published Dockerfile clones mutable HEAD; dependency graph and upstream archive not pinned. Runner risks recorded in benchmark.json.",
+  "optimized_existing_implementation_evidence": null,
+  "optimization_reason": "FroDock is a published optimized CPU/MPI docking method; no measured optimized stock-image configuration or throughput established."
+}

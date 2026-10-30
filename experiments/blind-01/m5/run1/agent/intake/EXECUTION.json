@@ -1,0 +1,94 @@
+{
+  "representative_scale": {
+    "benchmark": "PINDER-S",
+    "dataset_release": "2024-02",
+    "fixed_case_count": 93,
+    "selection": "All PINDER-S test cases with paired apo receptor and ligand structures. Freeze exact IDs before execution.",
+    "monomer_type": "apo",
+    "scale_search": false,
+    "candidate_count_per_case": null,
+    "candidate_count_reason": "Brief requires a fixed candidate count but specifies none; no published value established. Intake does not fabricate one.",
+    "repeat_count": null,
+    "repeat_count_reason": "Independent seeds requested; numeric schedule unavailable.",
+    "separate_challenge_case_count": 3,
+    "separate_challenge_ids": [
+      "6IHB",
+      "6JCQ",
+      "6JCS"
+    ],
+    "source": [
+      "brief.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ]
+  },
+  "inputs": {
+    "required": "Paired apo structures, experimental native dimer, index and residue/chain mappings for each selected case.",
+    "manifest": "data.json",
+    "hashes": null,
+    "hashes_reason": "Not downloaded during intake.",
+    "generated_candidate_inputs": "Original apo monomers for realistic docking; do not use native complex to initialize a pose. AAV components are separated bound structures, evaluated separately."
+  },
+  "outputs": {
+    "candidate_poses": "Per-case ranked two-chain PDB models in eval_dir/method/PINDER_ID/apo_decoys/model_<rank>.pdb, chains R and L.",
+    "scientific_scores": [
+      "DockQ",
+      "iRMS",
+      "Fnat",
+      "LRMS",
+      "CAPRI"
+    ],
+    "aggregates": [
+      "top-ranked acceptable-pose recovery",
+      "best-of-fixed-candidate-count acceptable-pose recovery"
+    ],
+    "performance": [
+      "end-to-end wall time",
+      "search throughput",
+      "time to first acceptable pose",
+      "compute cost"
+    ],
+    "scoring_interface": {
+      "command_template": "pinder_eval --eval_dir eval_dir",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "aav_interface": "BiotiteDockQ with explicit receptor/ligand chain mappings after assembly extraction; not automatically PINDER IDs.",
+      "aav_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/faq.md"
+    },
+    "pose_acceptance": {
+      "comparison": ">=",
+      "DockQ": 0.23,
+      "source": "https://github.com/wallnerlab/DockQ"
+    },
+    "aggregate_required_score": null,
+    "aggregate_reason": "No published aggregate acceptance criterion established."
+  },
+  "timing_scope": {
+    "primary": "Start after required inputs are staged; include monomer preparation, docking search, scoring/ranking and pose serialization. Record evaluation-harness time separately.",
+    "setup": "Report input download, install/build and initialization separately.",
+    "time_to_acceptable_pose": "Elapsed search time when acceptable candidate is generated; requires generation timestamps. Offline best-of-N evaluation alone cannot establish it.",
+    "fair_comparison": "Fix cases and candidate budget; report search coverage separately from ranking quality; compare wall time, cost and CPU/GPU allocation.",
+    "source": "brief.md",
+    "measured_seconds": null,
+    "measurement_reason": "Intake only; no workload executed."
+  },
+  "stage_budgets_s": {},
+  "budget_defaults_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "execution_ready": false,
+  "unavailable_reasons": [
+    "Upstream docking archive, intended-use permissions and pin unresolved.",
+    "Exact case manifest, candidate count and independent seed schedule not established.",
+    "Published runner needs validation; no new command invented.",
+    "Peak memory and full 93-case runtime unmeasured; cannot assert completion within default budgets.",
+    "AAV assembly and chain/domain selection unresolved."
+  ],
+  "budget_policy": "One fixed 93-case scale; no doubling or scale search. No stage scripts created or run during intake. If representative run cannot fit stage budgets, report unsupported rather than extrapolate from toy cases.",
+  "gate_scripts": null,
+  "gate_scripts_reason": "Prompt names no filesystem gate scripts. JSON and anchor structural validation performed locally."
+}

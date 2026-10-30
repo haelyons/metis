@@ -1,0 +1,119 @@
+{
+  "availability": "available",
+  "availability_basis": "Published public distribution plus HTTP 200 HEAD responses for index, test structures archive, full PDB archive, mappings archive and all three AAV coordinate files. File completeness and integrity not reproduced. Public availability does not imply licence permission.",
+  "required_inputs": [
+    {
+      "name": "PINDER-S paired apo receptor and ligand structures",
+      "cases": 93,
+      "origin": "experimentally determined apo structures mapped by PINDER",
+      "availability": "available",
+      "access": "Use get_index() and PinderSystem to select PINDER-S records with both apo monomers; API downloads needed structures. Test monomers are pre-rotated/translated.",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "name": "PINDER native dimers and mapping/index metadata",
+      "availability": "available",
+      "access": "Public release 2024-02; get_index(), get_metadata(), PinderSystem. Retain native references for evaluation only.",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "name": "AAV bound complexes 6IHB, 6JCQ, 6JCS",
+      "availability": "available",
+      "access": "Public RCSB mmCIF downloads listed below. Separate components only after preregistering assembly/chain/domain selection.",
+      "source": "https://www.wwpdb.org/about/usage-policies"
+    }
+  ],
+  "public_access_checks": [
+    {
+      "url": "https://pinderdata.org/2024-02/index.parquet",
+      "http_status": 200,
+      "method": "HEAD"
+    },
+    {
+      "url": "https://pinderdata.org/2024-02/test_set_pdbs.zip",
+      "http_status": 200,
+      "method": "HEAD"
+    },
+    {
+      "url": "https://pinderdata.org/2024-02/pdbs.zip",
+      "http_status": 200,
+      "method": "HEAD"
+    },
+    {
+      "url": "https://pinderdata.org/2024-02/mappings.zip",
+      "http_status": 200,
+      "method": "HEAD"
+    },
+    {
+      "url": "https://files.rcsb.org/download/6IHB.cif",
+      "http_status": 200,
+      "method": "HEAD"
+    },
+    {
+      "url": "https://files.rcsb.org/download/6JCQ.cif",
+      "http_status": 200,
+      "method": "HEAD"
+    },
+    {
+      "url": "https://files.rcsb.org/download/6JCS.cif",
+      "http_status": 200,
+      "method": "HEAD"
+    }
+  ],
+  "access_commands": [
+    {
+      "command": "pinder_download",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "scope": "Entire release; avoid for selective intake or bounded setup due to full-release size."
+    },
+    {
+      "command": "pinder_sync_data",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "scope": "Fetch missing manifest files after archives. Existing files skipped without checksum revalidation."
+    }
+  ],
+  "licences": {
+    "pinder_code": "Apache-2.0",
+    "pinder_hosted_curated_data": null,
+    "curated_data_reason": "Explicit hosted-data grant not established.",
+    "underlying_pdb_coordinates": "CC0-1.0",
+    "sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+      "https://www.wwpdb.org/about/usage-policies"
+    ]
+  },
+  "pins_and_hashes": {
+    "dataset_release": "2024-02",
+    "code_commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "selected_case_ids": null,
+    "input_sha256": null,
+    "reason": "Release name is published but index may receive patch updates. No inputs downloaded or hashes computed; observed HTTP ETags are not immutable content hashes."
+  },
+  "splits": {
+    "primary": "PINDER-S test split",
+    "fixed_selection": "All 93 records with both paired apo structures.",
+    "holo_complexes": 250,
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+    "training_required": false
+  },
+  "seeds": null,
+  "seeds_reason": "No numeric seed or repeat count supplied by brief or established from inspected configuration.",
+  "generated_inputs": [
+    {
+      "name": "Docking candidate poses",
+      "status": "not generated",
+      "reason": "Workloads prohibited during intake."
+    },
+    {
+      "name": "Separated AAV bound components",
+      "status": "not generated",
+      "reason": "Must fix assembly and extraction protocol first; these would be generated redocking inputs, not missing experimental apo structures."
+    }
+  ],
+  "missing_data": [],
+  "unresolved_preparation": [
+    "Exact 93-case ID manifest and content hashes",
+    "AAV biological assembly and chain/domain selection",
+    "Candidate count and seed schedule"
+  ]
+}
