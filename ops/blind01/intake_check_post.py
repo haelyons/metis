@@ -2,12 +2,12 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -32,6 +32,30 @@ if a.dir == "run5_diag":
         "upload_command_bytes": {"under_128k", "over_128k", "unknown"},
         "large_content": {"embedded_hashes", "embedded_data", "other", "not_large"},
         "hash_checks_requested": {True, False},
+    }
+if a.dir == "run6_diag":
+    ENUMS = {
+        "failure_point": {"script_error", "probe_paths", "missing_tool", "fetch_materials", "hash_mismatch", "build", "other", "unknown"},
+        "same_cause_all_attempts": {True, False},
+        "tail_had_cause": {"all", "some", "none", "unknown"},
+        "repairs_targeted_cause": {"all", "some", "none", "unknown"},
+        "mirror_from_box": {"reached_ok", "reached_failed", "not_reached", "unknown"},
+        "fix_needs": {"harness_repair", "pipeline_repair_inputs", "materials", "brief", "box_image", "unknown"},
+    }
+if a.dir == "run6_diag2":
+    ENUMS = {
+        "tool_kind": {"downloader", "archive", "hash", "build", "cuda", "python_package", "other", "unknown"},
+        "installable": {"apt_listed_source", "pip", "apt_unlisted_source", "not_installable", "unknown"},
+        "rules_allow_fix": {"yes", "no", "unclear", "unknown"},
+        "repair_lacked": {"probe_fact", "permission", "log_context", "nothing", "unknown"},
+        "smallest_fix": {"probe_reports_tool", "rules_permit_install", "rules_clarify", "repair_prompt_context", "box_image", "unknown"},
+    }
+if a.dir == "run6_diag3":
+    ENUMS = {
+        "ubuntu_archive": {"main", "universe", "no", "unknown"},
+        "pypi": {"yes", "no", "unknown"},
+        "role": {"fetch_or_unpack", "build", "runtime_library", "other", "unknown"},
+        "changes_stock_python": {"yes", "no", "unknown"},
     }
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
@@ -61,7 +85,7 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if a.dir == "run5_diag":
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()
