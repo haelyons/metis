@@ -1,0 +1,170 @@
+{
+  "reconstruction": [
+    {
+      "repair_record": "0004-harness-repair",
+      "completed_change_line": 114,
+      "pre_repair_full_snapshot_lines": [
+        38
+      ]
+    },
+    {
+      "repair_record": "0003-harness-repair",
+      "completed_change_line": 99,
+      "pre_repair_full_snapshot_lines": [
+        37
+      ]
+    }
+  ],
+  "static_checks": [
+    {
+      "attempt": 1,
+      "script": "setup-0004.sh",
+      "sha256": "d93b0a96bbc8b5f9d22863a0dcd0a0d706d517c134bdac25b11e60b9d322ca22",
+      "bash_n_rc": 0,
+      "bash_n_stderr": "",
+      "python_blocks_parsed_without_execution": 3,
+      "shellcheck": "not installed; not fetched"
+    },
+    {
+      "attempt": 2,
+      "script": "setup-0006.sh",
+      "sha256": "939f06986a5f61a99355a334838ceba7fb1ffa2946180b744cfc096b72381701",
+      "bash_n_rc": 0,
+      "bash_n_stderr": "",
+      "python_blocks_parsed_without_execution": 3,
+      "shellcheck": "not installed; not fetched"
+    },
+    {
+      "attempt": 3,
+      "script": "setup-0008.sh",
+      "sha256": "1409a51236aea2ed25ee47211552c0e7a044b1c7f8c12e180abed6622dec663e",
+      "bash_n_rc": 0,
+      "bash_n_stderr": "",
+      "python_blocks_parsed_without_execution": 3,
+      "shellcheck": "not installed; not fetched"
+    }
+  ],
+  "repair_tails": [
+    {
+      "folder": "0003-harness-repair",
+      "exact_last_200_line_match": true,
+      "tail_lines": 200
+    },
+    {
+      "folder": "0004-harness-repair",
+      "exact_last_200_line_match": true,
+      "tail_lines": 10
+    }
+  ],
+  "original_harness": {
+    "creation_command_lines": [
+      357
+    ],
+    "final_setup_change_lines": [
+      472
+    ],
+    "exact_creation_match": true
+  },
+  "frodock_archive_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+  "frodock_links": [
+    {
+      "name": "frodock3_linux64/includes/tclap",
+      "target": "../src/tclap"
+    },
+    {
+      "name": "frodock3_linux64/includes/cmdl",
+      "target": "../src/cmdl"
+    }
+  ],
+  "build_targets": [
+    {
+      "target": "libtools/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 3,
+      "missing_sources": []
+    },
+    {
+      "target": "libpdb/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 23,
+      "missing_sources": []
+    },
+    {
+      "target": "libpdb/Release2_gcc",
+      "makefile_exists": true,
+      "source_refs": 23,
+      "missing_sources": []
+    },
+    {
+      "target": "libvolume/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 15,
+      "missing_sources": []
+    },
+    {
+      "target": "libfrm/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 8,
+      "missing_sources": []
+    },
+    {
+      "target": "libbessel/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    },
+    {
+      "target": "libfrodock/Release_MPI_gcc",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    },
+    {
+      "target": "libfrodockcluster/Relase_gcc",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    },
+    {
+      "target": "libprotprot/Release_MPI_gcc",
+      "makefile_exists": true,
+      "source_refs": 6,
+      "missing_sources": []
+    },
+    {
+      "target": "libsas/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    },
+    {
+      "target": "frodock/Release_MPI_gcc",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    },
+    {
+      "target": "frodockgrid/Release_MPI_GCC",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    },
+    {
+      "target": "frodockcluster/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    },
+    {
+      "target": "frodockview/Release_gcc",
+      "makefile_exists": true,
+      "source_refs": 1,
+      "missing_sources": []
+    }
+  ],
+  "build_output_directories_exist": {
+    "bin": true,
+    "lib": true
+  },
+  "release_inventory_selected_count": 3596
+}

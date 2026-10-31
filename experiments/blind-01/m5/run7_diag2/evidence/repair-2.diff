@@ -1,0 +1,25 @@
+--- setup-attempt-2.sh
++++ setup-attempt-3.sh
+@@ -91,8 +91,21 @@
+     'https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz',
+     '91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4')
+ with tarfile.open(archive) as t:
++    archive_root=(root/'frodock3_linux64').resolve()
+     for m in t.getmembers():
+-        if '..' in pathlib.PurePosixPath(m.name).parts or m.name.startswith('/') or m.issym() or m.islnk(): raise RuntimeError('Unsafe FroDock archive')
++        parts=pathlib.PurePosixPath(m.name).parts
++        if (not parts or parts[0]!='frodock3_linux64' or '..' in parts
++                or m.name.startswith('/') or not (m.isfile() or m.isdir() or m.issym())):
++            raise RuntimeError('Unsafe FroDock archive member: '+m.name)
++        destination=(root/m.name).resolve()
++        if destination!=archive_root and archive_root not in destination.parents:
++            raise RuntimeError('FroDock archive member escapes extraction root: '+m.name)
++        # Published include directories link to ../src/tclap and ../src/cmdl.
++        # Relative links within the extracted tree are required for GNU builds.
++        if m.issym():
++            target=(root/m.name).parent.joinpath(m.linkname).resolve()
++            if pathlib.PurePosixPath(m.linkname).is_absolute() or (target!=archive_root and archive_root not in target.parents):
++                raise RuntimeError('Unsafe FroDock archive link: '+m.name)
+     t.extractall(root)
+ soap=root/'frodock3_linux64/bin/soap.bin'
+ if digest(soap)!='791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc': raise RuntimeError('soap.bin hash mismatch')

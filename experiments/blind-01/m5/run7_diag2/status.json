@@ -1,0 +1,11 @@
+{
+  "error_kind_1": "wrong_path",
+  "error_kind_2": "control_flow",
+  "error_kind_3": "wrong_path",
+  "distinct_errors": "some_repeat",
+  "static_catch": "none",
+  "rule_induced": "no",
+  "rerun_refetches": "no",
+  "third_fix_outlook": "unknown",
+  "smallest_fix": "more_repairs"
+}
