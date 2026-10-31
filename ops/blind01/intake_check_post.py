@@ -2,12 +2,12 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -57,6 +57,34 @@ if a.dir == "run6_diag3":
         "role": {"fetch_or_unpack", "build", "runtime_library", "other", "unknown"},
         "changes_stock_python": {"yes", "no", "unknown"},
     }
+if a.dir == "run7_diag":
+    point = {"script_error", "probe_paths", "missing_tool", "apt_install", "fetch_materials", "hash_mismatch", "build", "other", "unknown"}
+    ENUMS = {
+        "attempt1_point": point,
+        "attempt2_point": point,
+        "attempt3_point": point,
+        "run6_library": {"installed_apt", "installed_other", "present_already", "not_needed", "failed", "unknown"},
+        "furthest_phase": {"tool_install", "fetch_materials", "hash_check", "build", "smoke_or_anchor_prep", "other", "unknown"},
+        "repair_regressed": {"yes", "no", "unknown"},
+        "tail_had_cause": {"all", "some", "none", "unknown"},
+        "repairs_targeted_cause": {"all", "some", "none", "unknown"},
+        "mirror_from_box": {"reached_ok", "reached_failed", "not_reached", "unknown"},
+        "hash_checks": {"all_passed", "some_failed", "not_reached", "unknown"},
+        "fix_needs": {"harness_repair", "pipeline_repair_inputs", "pipeline_rules", "materials", "brief", "box_image", "unknown"},
+    }
+if a.dir == "run7_diag2":
+    kind = {"syntax", "unbound_variable", "wrong_path", "command_usage", "control_flow", "environment", "other", "unknown"}
+    ENUMS = {
+        "error_kind_1": kind,
+        "error_kind_2": kind,
+        "error_kind_3": kind,
+        "distinct_errors": {"all_distinct", "some_repeat", "same", "unknown"},
+        "static_catch": {"all", "some", "none", "unknown"},
+        "rule_induced": {"yes", "no", "unknown"},
+        "rerun_refetches": {"yes", "partly", "no", "unknown"},
+        "third_fix_outlook": {"likely_passes_setup", "likely_another_error", "unknown"},
+        "smallest_fix": {"more_repairs", "static_check_before_upload", "harness_prompt_rule", "repair_prompt_context", "setup_split", "unknown"},
+    }
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
     ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
@@ -85,7 +113,7 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3"):
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()
