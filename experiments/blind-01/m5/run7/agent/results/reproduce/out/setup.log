@@ -1,0 +1,415 @@
+/usr/bin/nvcc
+/usr/include/cuda_runtime.h
+/usr/lib/x86_64-linux-gnu/libcudart.so
+Ign:1 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ InRelease
+Get:2 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease [1477 B]
+Get:3 https://download.docker.com/linux/ubuntu jammy InRelease [48.5 kB]
+Hit:4 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ Release
+Get:5 http://archive.lambdalabs.com/ubuntu jammy InRelease [3911 B]
+Get:6 https://packages.microsoft.com/repos/azure-cli jammy InRelease [3596 B]
+Hit:7 http://archive.ubuntu.com/ubuntu jammy InRelease
+Get:8 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+Get:9 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  Packages [28.0 kB]
+Get:10 https://pkg.cloudflare.com/cloudflared jammy InRelease [5043 B]
+Get:11 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+Get:12 https://download.docker.com/linux/ubuntu jammy/stable amd64 Packages [92.3 kB]
+Get:13 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease [18.1 kB]
+Hit:15 https://ppa.launchpadcontent.net/flexiondotorg/nvtop/ubuntu jammy InRelease
+Get:16 http://archive.lambdalabs.com/ubuntu jammy/main amd64 Packages [120 kB]
+Get:17 https://packages.microsoft.com/repos/azure-cli jammy/main all Packages [1099 B]
+Get:18 https://packages.microsoft.com/repos/azure-cli jammy/main amd64 Packages [3679 B]
+Get:19 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+Get:20 https://pkg.cloudflare.com/cloudflared jammy/main amd64 Packages [375 B]
+Get:21 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy/main amd64 Packages [42.0 kB]
+Get:22 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy/main Translation-en [5680 B]
+Get:23 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [3670 kB]
+Get:24 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [3939 kB]
+Get:25 http://security.ubuntu.com/ubuntu jammy-security/main Translation-en [511 kB]
+Get:26 http://security.ubuntu.com/ubuntu jammy-security/main amd64 c-n-f Metadata [14.7 kB]
+Get:27 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [6545 kB]
+Get:28 http://archive.ubuntu.com/ubuntu jammy-updates/main Translation-en [579 kB]
+Get:29 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 c-n-f Metadata [20.1 kB]
+Get:30 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [6778 kB]
+Get:31 http://security.ubuntu.com/ubuntu jammy-security/restricted Translation-en [1260 kB]
+Get:32 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 c-n-f Metadata [600 B]
+Get:33 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1055 kB]
+Get:34 http://archive.ubuntu.com/ubuntu jammy-updates/restricted Translation-en [1303 kB]
+Get:35 http://security.ubuntu.com/ubuntu jammy-security/universe Translation-en [238 kB]
+Get:36 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 c-n-f Metadata [23.2 kB]
+Get:37 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [79.6 kB]
+Get:38 http://security.ubuntu.com/ubuntu jammy-security/multiverse Translation-en [13.7 kB]
+Get:39 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 c-n-f Metadata [544 B]
+Get:40 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 c-n-f Metadata [584 B]
+Get:41 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1290 kB]
+Get:42 http://archive.ubuntu.com/ubuntu jammy-updates/universe Translation-en [326 kB]
+Get:43 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 c-n-f Metadata [30.8 kB]
+Get:44 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [86.1 kB]
+Get:45 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse Translation-en [16.6 kB]
+Get:46 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 c-n-f Metadata [756 B]
+Get:47 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [70.2 kB]
+Get:48 http://archive.ubuntu.com/ubuntu jammy-backports/main Translation-en [11.4 kB]
+Get:49 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 c-n-f Metadata [412 B]
+Get:50 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [30.8 kB]
+Get:51 http://archive.ubuntu.com/ubuntu jammy-backports/universe Translation-en [16.9 kB]
+Get:52 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 c-n-f Metadata [676 B]
+Fetched 28.7 MB in 5s (5549 kB/s)
+Reading package lists...
+libopenmpi-dev:
+  Installed: (none)
+  Candidate: 4.1.2-2ubuntu1
+  Version table:
+     4.1.2-2ubuntu1 500
+        500 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages
+Installing libopenmpi-dev
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages were automatically installed and are no longer required:
+  dpcp ibacm ibarr ibdump ibsim ibsim-doc ibutils2 ibverbs-utils
+  infiniband-diags iser-dkms isert-dkms kernel-mft-dkms knem knem-dkms
+  libibnetdisc5 libopensm libopensm-devel librdmacm-dev libxpmem-dev libxpmem0
+  mft mlnx-ethtool mlnx-iproute2 mlnx-ofed-kernel-dkms mlnx-ofed-kernel-utils
+  mlnx-tools mpitests ofed-scripts opensm opensm-doc perftest pkg-config
+  rdma-core rdmacm-utils rshim srp-dkms srptools xpmem xpmem-dkms
+Use 'sudo apt autoremove' to remove them.
+The following additional packages will be installed:
+  autoconf automake autotools-dev libcaf-openmpi-3 libcoarrays-dev
+  libcoarrays-openmpi-dev libevent-2.1-7 libevent-core-2.1-7 libevent-dev
+  libevent-extra-2.1-7 libevent-openssl-2.1-7 libevent-pthreads-2.1-7
+  libhwloc-dev libhwloc-plugins libhwloc15 libltdl-dev libnuma-dev libopenmpi3
+  libpmix-dev libpmix2 libtool libucx0 libxnvctrl0 m4 openmpi-bin
+  openmpi-common
+Suggested packages:
+  autoconf-archive gnu-standards autoconf-doc gettext libhwloc-contrib-plugins
+  libtool-doc openmpi-doc gcj-jdk m4-doc
+The following packages will be REMOVED:
+  doca-ofed hcoll sharp ucx
+The following NEW packages will be installed:
+  autoconf automake autotools-dev libcaf-openmpi-3 libcoarrays-dev
+  libcoarrays-openmpi-dev libevent-2.1-7 libevent-dev libevent-extra-2.1-7
+  libevent-openssl-2.1-7 libevent-pthreads-2.1-7 libhwloc-dev libhwloc-plugins
+  libhwloc15 libltdl-dev libnuma-dev libopenmpi-dev libopenmpi3 libpmix-dev
+  libpmix2 libtool libucx0 libxnvctrl0 m4 openmpi-bin openmpi-common
+The following packages will be upgraded:
+  libevent-core-2.1-7
+1 upgraded, 26 newly installed, 4 to remove and 323 not upgraded.
+Need to get 9129 kB of archives.
+After this operation, 20.3 MB of additional disk space will be used.
+Get:1 http://archive.lambdalabs.com/ubuntu jammy/main amd64 libxnvctrl0 amd64 570.207-0lambda1 [10.6 kB]
+Get:2 http://archive.ubuntu.com/ubuntu jammy/main amd64 m4 amd64 1.4.18-5ubuntu2 [199 kB]
+Get:3 http://archive.ubuntu.com/ubuntu jammy/main amd64 autoconf all 2.71-2 [338 kB]
+Get:4 http://archive.ubuntu.com/ubuntu jammy/main amd64 autotools-dev all 20220109.1 [44.9 kB]
+Get:5 http://archive.ubuntu.com/ubuntu jammy/main amd64 automake all 1:1.16.5-1.3 [558 kB]
+Get:6 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-core-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [94.8 kB]
+Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-pthreads-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [7644 B]
+Get:8 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 libhwloc15 amd64 2.7.0-2ubuntu1 [159 kB]
+Get:9 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 libhwloc-plugins amd64 2.7.0-2ubuntu1 [15.6 kB]
+Get:10 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libpmix2 amd64 4.1.2-2ubuntu1 [604 kB]
+Get:11 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libucx0 amd64 1.12.1~rc2-1 [891 kB]
+Get:12 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libopenmpi3 amd64 4.1.2-2ubuntu1 [2594 kB]
+Get:13 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libcaf-openmpi-3 amd64 2.9.2-3 [36.5 kB]
+Get:14 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libcoarrays-dev amd64 2.9.2-3 [40.5 kB]
+Get:15 http://archive.ubuntu.com/ubuntu jammy/universe amd64 openmpi-common all 4.1.2-2ubuntu1 [162 kB]
+Get:16 http://archive.ubuntu.com/ubuntu jammy/universe amd64 openmpi-bin amd64 4.1.2-2ubuntu1 [116 kB]
+Get:17 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libcoarrays-openmpi-dev amd64 2.9.2-3 [452 kB]
+Get:18 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [149 kB]
+Get:19 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-extra-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [65.7 kB]
+Get:20 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-openssl-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [15.7 kB]
+Get:21 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-dev amd64 2.1.12-stable-1ubuntu0.2 [279 kB]
+Get:22 http://archive.ubuntu.com/ubuntu jammy/main amd64 libltdl-dev amd64 2.4.6-15build2 [169 kB]
+Get:23 http://archive.ubuntu.com/ubuntu jammy/main amd64 libnuma-dev amd64 2.0.14-3ubuntu2 [35.9 kB]
+Get:24 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 libhwloc-dev amd64 2.7.0-2ubuntu1 [256 kB]
+Get:25 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libpmix-dev amd64 4.1.2-2ubuntu1 [805 kB]
+Get:26 http://archive.ubuntu.com/ubuntu jammy/main amd64 libtool all 2.4.6-15build2 [164 kB]
+Get:27 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libopenmpi-dev amd64 4.1.2-2ubuntu1 [867 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 9129 kB in 2s (5168 kB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 214076 files and directories currently installed.)
+Removing doca-ofed (2.9.2-0.1.5) ...
+Removing hcoll (4.8.3230-1.2410068) ...
+Removing sharp (3.9.0.MLNX20241029.7a20b607-1.2410068) ...
+Unable to find SHARP dir. Exit.
+Removing ucx (1.18.0-1.2410068) ...
+Selecting previously unselected package m4.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 213587 files and directories currently installed.)
+Preparing to unpack .../00-m4_1.4.18-5ubuntu2_amd64.deb ...
+Unpacking m4 (1.4.18-5ubuntu2) ...
+Selecting previously unselected package autoconf.
+Preparing to unpack .../01-autoconf_2.71-2_all.deb ...
+Unpacking autoconf (2.71-2) ...
+Selecting previously unselected package autotools-dev.
+Preparing to unpack .../02-autotools-dev_20220109.1_all.deb ...
+Unpacking autotools-dev (20220109.1) ...
+Selecting previously unselected package automake.
+Preparing to unpack .../03-automake_1%3a1.16.5-1.3_all.deb ...
+Unpacking automake (1:1.16.5-1.3) ...
+Preparing to unpack .../04-libevent-core-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-core-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) over (2.1.12-stable-1build3) ...
+Selecting previously unselected package libevent-pthreads-2.1-7:amd64.
+Preparing to unpack .../05-libevent-pthreads-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-pthreads-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libhwloc15:amd64.
+Preparing to unpack .../06-libhwloc15_2.7.0-2ubuntu1_amd64.deb ...
+Unpacking libhwloc15:amd64 (2.7.0-2ubuntu1) ...
+Selecting previously unselected package libxnvctrl0:amd64.
+Preparing to unpack .../07-libxnvctrl0_570.207-0lambda1_amd64.deb ...
+Unpacking libxnvctrl0:amd64 (570.207-0lambda1) ...
+Selecting previously unselected package libhwloc-plugins:amd64.
+Preparing to unpack .../08-libhwloc-plugins_2.7.0-2ubuntu1_amd64.deb ...
+Unpacking libhwloc-plugins:amd64 (2.7.0-2ubuntu1) ...
+Selecting previously unselected package libpmix2:amd64.
+Preparing to unpack .../09-libpmix2_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libpmix2:amd64 (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libucx0:amd64.
+Preparing to unpack .../10-libucx0_1.12.1~rc2-1_amd64.deb ...
+Unpacking libucx0:amd64 (1.12.1~rc2-1) ...
+Selecting previously unselected package libopenmpi3:amd64.
+Preparing to unpack .../11-libopenmpi3_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libopenmpi3:amd64 (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libcaf-openmpi-3:amd64.
+Preparing to unpack .../12-libcaf-openmpi-3_2.9.2-3_amd64.deb ...
+Unpacking libcaf-openmpi-3:amd64 (2.9.2-3) ...
+Selecting previously unselected package libcoarrays-dev:amd64.
+Preparing to unpack .../13-libcoarrays-dev_2.9.2-3_amd64.deb ...
+Unpacking libcoarrays-dev:amd64 (2.9.2-3) ...
+Selecting previously unselected package openmpi-common.
+Preparing to unpack .../14-openmpi-common_4.1.2-2ubuntu1_all.deb ...
+Unpacking openmpi-common (4.1.2-2ubuntu1) ...
+Selecting previously unselected package openmpi-bin.
+Preparing to unpack .../15-openmpi-bin_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking openmpi-bin (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libcoarrays-openmpi-dev:amd64.
+Preparing to unpack .../16-libcoarrays-openmpi-dev_2.9.2-3_amd64.deb ...
+Unpacking libcoarrays-openmpi-dev:amd64 (2.9.2-3) ...
+Selecting previously unselected package libevent-2.1-7:amd64.
+Preparing to unpack .../17-libevent-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libevent-extra-2.1-7:amd64.
+Preparing to unpack .../18-libevent-extra-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-extra-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libevent-openssl-2.1-7:amd64.
+Preparing to unpack .../19-libevent-openssl-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-openssl-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libevent-dev.
+Preparing to unpack .../20-libevent-dev_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-dev (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libltdl-dev:amd64.
+Preparing to unpack .../21-libltdl-dev_2.4.6-15build2_amd64.deb ...
+Unpacking libltdl-dev:amd64 (2.4.6-15build2) ...
+Selecting previously unselected package libnuma-dev:amd64.
+Preparing to unpack .../22-libnuma-dev_2.0.14-3ubuntu2_amd64.deb ...
+Unpacking libnuma-dev:amd64 (2.0.14-3ubuntu2) ...
+Selecting previously unselected package libhwloc-dev:amd64.
+Preparing to unpack .../23-libhwloc-dev_2.7.0-2ubuntu1_amd64.deb ...
+Unpacking libhwloc-dev:amd64 (2.7.0-2ubuntu1) ...
+Selecting previously unselected package libpmix-dev:amd64.
+Preparing to unpack .../24-libpmix-dev_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libpmix-dev:amd64 (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libtool.
+Preparing to unpack .../25-libtool_2.4.6-15build2_all.deb ...
+Unpacking libtool (2.4.6-15build2) ...
+Selecting previously unselected package libopenmpi-dev:amd64.
+Preparing to unpack .../26-libopenmpi-dev_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libopenmpi-dev:amd64 (4.1.2-2ubuntu1) ...
+Setting up libucx0:amd64 (1.12.1~rc2-1) ...
+Setting up libcoarrays-dev:amd64 (2.9.2-3) ...
+Setting up m4 (1.4.18-5ubuntu2) ...
+Setting up libnuma-dev:amd64 (2.0.14-3ubuntu2) ...
+Setting up libxnvctrl0:amd64 (570.207-0lambda1) ...
+Setting up autotools-dev (20220109.1) ...
+Setting up libhwloc15:amd64 (2.7.0-2ubuntu1) ...
+Setting up libevent-core-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up libevent-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up autoconf (2.71-2) ...
+Setting up openmpi-common (4.1.2-2ubuntu1) ...
+Setting up libevent-pthreads-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up automake (1:1.16.5-1.3) ...
+update-alternatives: using /usr/bin/automake-1.16 to provide /usr/bin/automake (automake) in auto mode
+Setting up libevent-extra-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up libtool (2.4.6-15build2) ...
+Setting up libevent-openssl-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up libhwloc-plugins:amd64 (2.7.0-2ubuntu1) ...
+Setting up libltdl-dev:amd64 (2.4.6-15build2) ...
+Setting up libevent-dev (2.1.12-stable-1ubuntu0.2) ...
+Setting up libhwloc-dev:amd64 (2.7.0-2ubuntu1) ...
+Setting up libpmix2:amd64 (4.1.2-2ubuntu1) ...
+Setting up libopenmpi3:amd64 (4.1.2-2ubuntu1) ...
+Setting up libcaf-openmpi-3:amd64 (2.9.2-3) ...
+Setting up libpmix-dev:amd64 (4.1.2-2ubuntu1) ...
+Setting up openmpi-bin (4.1.2-2ubuntu1) ...
+update-alternatives: using /usr/bin/mpirun.openmpi to provide /usr/bin/mpirun (mpirun) in auto mode
+update-alternatives: using /usr/bin/mpicc.openmpi to provide /usr/bin/mpicc (mpi) in auto mode
+Setting up libcoarrays-openmpi-dev:amd64 (2.9.2-3) ...
+update-alternatives: using /usr/lib/x86_64-linux-gnu/open-coarrays/openmpi/bin/caf to provide /usr/bin/caf.openmpi (caf-openmpi) in auto mode
+update-alternatives: using /usr/bin/caf.openmpi to provide /usr/bin/caf (caf) in auto mode
+Setting up libopenmpi-dev:amd64 (4.1.2-2ubuntu1) ...
+update-alternatives: using /usr/lib/x86_64-linux-gnu/openmpi/include to provide /usr/include/x86_64-linux-gnu/mpi (mpi-x86_64-linux-gnu) in auto mode
+Processing triggers for libc-bin (2.35-0ubuntu3.10) ...
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for install-info (6.8-4build1) ...
+
+Running kernel seems to be up-to-date.
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+libopenmpi-dev:amd64	4.1.2-2ubuntu1
+openmpi-bin:
+  Installed: 4.1.2-2ubuntu1
+  Candidate: 4.1.2-2ubuntu1
+  Version table:
+ *** 4.1.2-2ubuntu1 500
+        500 http://archive.ubuntu.com/ubuntu jammy/universe amd64 Packages
+        100 /var/lib/dpkg/status
+Installing openmpi-bin
+Reading package lists...
+Building dependency tree...
+Reading state information...
+openmpi-bin is already the newest version (4.1.2-2ubuntu1).
+openmpi-bin set to manually installed.
+The following packages were automatically installed and are no longer required:
+  dpcp ibacm ibarr ibdump ibsim ibsim-doc ibutils2 ibverbs-utils
+  infiniband-diags iser-dkms isert-dkms kernel-mft-dkms knem knem-dkms
+  libibnetdisc5 libopensm libopensm-devel librdmacm-dev libxpmem-dev libxpmem0
+  mft mlnx-ethtool mlnx-iproute2 mlnx-ofed-kernel-dkms mlnx-ofed-kernel-utils
+  mlnx-tools mpitests ofed-scripts opensm opensm-doc perftest pkg-config
+  rdma-core rdmacm-utils rshim srp-dkms srptools xpmem xpmem-dkms
+Use 'sudo apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 323 not upgraded.
+openmpi-bin	4.1.2-2ubuntu1
+libfftw3-dev:
+  Installed: (none)
+  Candidate: 3.3.8-2ubuntu8
+  Version table:
+     3.3.8-2ubuntu8 500
+        500 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages
+Installing libfftw3-dev
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages were automatically installed and are no longer required:
+  dpcp ibacm ibarr ibdump ibsim ibsim-doc ibutils2 ibverbs-utils
+  infiniband-diags iser-dkms isert-dkms kernel-mft-dkms knem knem-dkms
+  libibnetdisc5 libopensm libopensm-devel librdmacm-dev libxpmem-dev libxpmem0
+  mft mlnx-ethtool mlnx-iproute2 mlnx-ofed-kernel-dkms mlnx-ofed-kernel-utils
+  mlnx-tools mpitests ofed-scripts opensm opensm-doc perftest pkg-config
+  rdma-core rdmacm-utils rshim srp-dkms srptools xpmem xpmem-dkms
+Use 'sudo apt autoremove' to remove them.
+The following additional packages will be installed:
+  libfftw3-bin libfftw3-double3 libfftw3-long3 libfftw3-quad3 libfftw3-single3
+Suggested packages:
+  libfftw3-doc
+The following NEW packages will be installed:
+  libfftw3-bin libfftw3-dev libfftw3-double3 libfftw3-long3 libfftw3-quad3
+  libfftw3-single3
+0 upgraded, 6 newly installed, 0 to remove and 323 not upgraded.
+Need to get 4654 kB of archives.
+After this operation, 24.7 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-double3 amd64 3.3.8-2ubuntu8 [770 kB]
+Get:2 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-long3 amd64 3.3.8-2ubuntu8 [335 kB]
+Get:3 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-quad3 amd64 3.3.8-2ubuntu8 [614 kB]
+Get:4 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-single3 amd64 3.3.8-2ubuntu8 [800 kB]
+Get:5 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-bin amd64 3.3.8-2ubuntu8 [35.5 kB]
+Get:6 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-dev amd64 3.3.8-2ubuntu8 [2101 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (Dialog frontend will not work on a dumb terminal, an emacs shell buffer, or without a controlling terminal.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 4654 kB in 2s (2527 kB/s)
+Selecting previously unselected package libfftw3-double3:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 216253 files and directories currently installed.)
+Preparing to unpack .../0-libfftw3-double3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-double3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-long3:amd64.
+Preparing to unpack .../1-libfftw3-long3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-long3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-quad3:amd64.
+Preparing to unpack .../2-libfftw3-quad3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-quad3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-single3:amd64.
+Preparing to unpack .../3-libfftw3-single3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-single3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-bin.
+Preparing to unpack .../4-libfftw3-bin_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-bin (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-dev:amd64.
+Preparing to unpack .../5-libfftw3-dev_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-dev:amd64 (3.3.8-2ubuntu8) ...
+Setting up libfftw3-single3:amd64 (3.3.8-2ubuntu8) ...
+Setting up libfftw3-long3:amd64 (3.3.8-2ubuntu8) ...
+Setting up libfftw3-quad3:amd64 (3.3.8-2ubuntu8) ...
+Setting up libfftw3-double3:amd64 (3.3.8-2ubuntu8) ...
+Setting up libfftw3-bin (3.3.8-2ubuntu8) ...
+Setting up libfftw3-dev:amd64 (3.3.8-2ubuntu8) ...
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.10) ...
+
+Running kernel seems to be up-to-date.
+
+No services need to be restarted.
+
+No containers need to be restarted.
+
+No user sessions are running outdated binaries.
+
+No VM guests are running outdated hypervisor (qemu) binaries on this host.
+libfftw3-dev:amd64	3.3.8-2ubuntu8
+libfftw3-single3:
+  Installed: 3.3.8-2ubuntu8
+  Candidate: 3.3.8-2ubuntu8
+  Version table:
+ *** 3.3.8-2ubuntu8 500
+        500 http://archive.ubuntu.com/ubuntu jammy/main amd64 Packages
+        100 /var/lib/dpkg/status
+Installing libfftw3-single3
+Reading package lists...
+Building dependency tree...
+Reading state information...
+libfftw3-single3 is already the newest version (3.3.8-2ubuntu8).
+libfftw3-single3 set to manually installed.
+The following packages were automatically installed and are no longer required:
+  dpcp ibacm ibarr ibdump ibsim ibsim-doc ibutils2 ibverbs-utils
+  infiniband-diags iser-dkms isert-dkms kernel-mft-dkms knem knem-dkms
+  libibnetdisc5 libopensm libopensm-devel librdmacm-dev libxpmem-dev libxpmem0
+  mft mlnx-ethtool mlnx-iproute2 mlnx-ofed-kernel-dkms mlnx-ofed-kernel-utils
+  mlnx-tools mpitests ofed-scripts opensm opensm-doc perftest pkg-config
+  rdma-core rdmacm-utils rshim srp-dkms srptools xpmem xpmem-dkms
+Use 'sudo apt autoremove' to remove them.
+0 upgraded, 0 newly installed, 0 to remove and 323 not upgraded.
+libfftw3-single3:amd64	3.3.8-2ubuntu8
+Traceback (most recent call last):
+  File "<stdin>", line 5, in <module>
+  File "/usr/lib/python3.10/pathlib.py", line 1126, in read_bytes
+    with self.open(mode='rb') as f:
+  File "/usr/lib/python3.10/pathlib.py", line 1119, in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+FileNotFoundError: [Errno 2] No such file or directory: 'harness/pinder-source.tar.gz'
+/usr/bin/nvcc
+/usr/include/cuda_runtime.h
+/usr/lib/x86_64-linux-gnu/libcudart.so
+Downloading https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672
+Verified pinder-source.tar.gz sha256:b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd
+Downloading https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz
+Verified frodock.tar.gz sha256:91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4
+Traceback (most recent call last):
+  File "<stdin>", line 51, in <module>
+RuntimeError: Unsafe FroDock archive
+/usr/bin/nvcc
+/usr/include/cuda_runtime.h
+/usr/lib/x86_64-linux-gnu/libcudart.so
+Traceback (most recent call last):
+  File "<stdin>", line 68, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: 'harness/data.json'

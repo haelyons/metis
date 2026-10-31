@@ -1,0 +1,97 @@
+{
+  "repo": "https://github.com/pinder-org/pinder",
+  "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "pin": "FroDock mirror sha256:91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+  "build_commands": [
+    {
+      "command": "docker build --build-arg FRODOCK_SOURCE_ARCHIVE=./frodock.tar.gz -t pinder-frodock -f docker/frodock/Dockerfile.frodock .",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md"
+    },
+    {
+      "command": "apt-get --allow-releaseinfo-change update      && apt-get -y install --no-install-recommends      apt-utils      dialog 2>&1      && apt-get install -y --no-install-recommends      git      rsync      ssh      gpg      wget      man-db      procps      tree      unzip      gcc      build-essential      lsb-release      curl      vim      exuberant-ctags      apt-transport-https      ca-certificates      gnupg      libgl1-mesa-glx       libopenblas-base      libopenmpi-dev openmpi-common openmpi-bin libopenmpi3      libfftw3-3 libfftw3-dev libfftw3-mpi-dev      libhdf5-openmpi-dev      && apt-get autoclean      && apt-get autoremove      && rm -rf /var/lib/apt/lists/*",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    },
+    {
+      "command": "micromamba install -y -n base -c conda-forge      pyopenssl=23.2.0      python=${MAMBA_PYTHON_VERSION}      requests=2.25.1      google-cloud-storage      gcsfs      keyrings.google-artifactregistry-auth      && micromamba clean --all --yes",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    },
+    {
+      "command": "echo \"deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main\" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-cli -y",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    },
+    {
+      "command": "gcloud config set project ${MAMBA_PYTHON_VERSION}",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    },
+    {
+      "command": "python -m pip install      simple-gcp-object-downloader      kubernetes      pandas==1.5.3",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    },
+    {
+      "command": "git clone https://github.com/pinder-org/pinder.git;      cd pinder && pip install .",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    },
+    {
+      "command": "tar -xf frodock.tar.gz &&      mv frodock3_linux64 frodock &&      rm frodock.tar.gz",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    },
+    {
+      "command": "./compile_frodock.sh",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "context": "Published Dockerfile RUN instruction, recorded verbatim with continuation whitespace folded; not executed."
+    }
+  ],
+  "run_commands": [
+    {
+      "command": "run_frodock.sh receptor.pdb ligand.pdb #ofprocessors",
+      "source": "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz (frodock3_linux64/README)",
+      "context": "Published argument template, not literal shell-ready invocation. Use real paired apo inputs and fixed MPI count."
+    },
+    {
+      "command": "pinder_methods predict -m <method> -s <test set> -l <list of PINDER ids> -c `config` -r `results_dir`",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+      "context": "Published template; CLI cannot be assumed functional until defects below are repaired."
+    },
+    {
+      "command": "pinder_eval --eval_dir eval_dir --serial --method_name frodock",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "context": "Instantiation of published evaluator CLI options; eval_dir is real ranked-pose directory."
+    }
+  ],
+  "published_configuration": {
+    "implementation": "FroDock 3.12 per mirror README, CPU MPI GNU binaries; original study distribution identity unverified",
+    "mpi_np_default": 8,
+    "docking_flags": "--th 10 -t A; receptor VDW/electrostatics/desolvation and ligand desolvation grids; bin/soap.bin scoring input",
+    "n_solutions": null,
+    "n_solutions_reason": "Required adapter parameter; no published default found. Intake fixes 5 outputs to match published top-5 evaluator statistic, not a claim about study settings.",
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+    "source_build_environment": "mambaorg/micromamba:1.5-jammy; Python 3.10; exact commands above; dependency resolution not pinned completely"
+  },
+  "sources": [
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/pyproject.toml",
+    "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz",
+    "brief.md: Materials"
+  ],
+  "material_access": {
+    "url": "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz",
+    "provenance": "unverified_mirror",
+    "sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+    "upstream_hash": null,
+    "reason": "Owner permits local experiment; original-study software and scoring-byte identity remain unresolved."
+  },
+  "known_source_issues": [
+    "Runner uses pd.from_csv, unavailable in pandas; preprocessing and prediction paths require reconciliation.",
+    "Adapter constructs executable/scoring paths by string concatenation without directory separator, does not copy supplied PDB inputs into temporary cwd, ignores subprocess exit status and passes literal wildcard to shutil.copy.",
+    "Dockerfile archive extraction cwd differs from COPY destination; PATH points /app/frodock/bin despite build at /workspace/frodock.",
+    "Published dependency environment is unresolved; installed equivalence and build success unknown."
+  ],
+  "builds_or_workloads_run": false
+}

@@ -1,0 +1,57 @@
+{
+  "representative_scale": {
+    "primary_cases": 93,
+    "selection": "Entire fixed release-2024-02 PINDER-S subset with both primary apo structures; sorted IDs recorded before execution.",
+    "candidate_poses_per_case": 5,
+    "candidate_basis": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/method.py: top_k(1), top_k(5)",
+    "scale_source": [
+      "brief.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ],
+    "mpi_processes": 8,
+    "mpi_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+    "scale_search": false,
+    "separate_challenge_cases": [
+      "6IHB",
+      "6JCQ",
+      "6JCS"
+    ],
+    "challenge_preparation": null,
+    "challenge_reason": "Real listed entries fixed; assembly/domain selection not established. Do not substitute independent unbound structures."
+  },
+  "inputs": {
+    "data_manifest": "data.json inventory and SHA-256 values",
+    "monomers": "Real primary paired-apo PINDER-S receptor and ligand PDBs; native holo dimer for scoring only.",
+    "scoring_input": "FroDock bin/soap.bin with recorded digest; unverified study identity.",
+    "configuration": "Fixed 5 output poses, MPI 8 from published default. Repeat seeds unavailable; record before stochastic runs."
+  },
+  "outputs": {
+    "poses": "eval_dir/frodock/<pinder_id>/apo_decoys/model_<rank>.pdb; exactly R and L chains",
+    "metrics": "eval_dir/frodock_metrics.csv with DockQ, iRMS, LRMS, Fnat per real pose",
+    "leaderboard": "eval_dir/frodock_leaderboard.csv; rank-1 and Max(Top 5) hit rates reported separately",
+    "performance": "Measured end-to-end wall clock, CPU/GPU use, candidate throughput and time to first acceptable pose where observable; cost requires actual provider billing rate, currently unavailable.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py"
+    ]
+  },
+  "timing_scope": {
+    "primary": "Per-case receptor/ligand grid construction, docking search, clustering, coordinate generation and pose write; also full 93-case total.",
+    "separate": "Setup/download/build and evaluator timing measured separately; warm/cold cache and MPI concurrency recorded.",
+    "first_acceptable": "Evaluate candidate in observed generation order with timestamps; final ranked poses alone cannot establish discovery time.",
+    "budget": "No extrapolation from toy workload; fixed complete 93-case workload. Runtime and memory remain unmeasured; do not claim budget compliance before calibration."
+  },
+  "scoring_interface": {
+    "command": "pinder_eval --eval_dir eval_dir --serial --method_name frodock",
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+    "acceptance": "DockQ >= 0.23 for individual pose; no aggregate success tolerance or runtime target published here.",
+    "missing_cases": "Report failures and count missing poses as unsuccessful; do not shrink denominator."
+  },
+  "stage_budgets_s": {
+    "method_run": 86400,
+    "profile": 86400,
+    "evaluate": 7200
+  },
+  "budget_basis": "Scheduling caps selected for fixed full subset, not published performance numbers. Setup/anchors/method_setup default 1200; tests 900. No runtime guarantee established; calibration must confirm adequate headroom before workloads.",
+  "execution_status": "Intake only; no builds or scientific workloads executed. Published baseline source defects need repair before reproduction."
+}

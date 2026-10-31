@@ -1,0 +1,5 @@
+Inspect intake and harness scripts. Repair setup archive handling; preserve baseline pin and configuration.
+Failure: setup assumes bundled archives exist on box. Repair adds pinned Git fetch for PINDER and checksum-verified FroDock download when bundles absent. Build and runtime configuration stay unchanged.
+Repaired only [harness/setup.sh](/home/hal/dev/interp/metis/experiments/blind-01/m5/run7/agent/harness/setup.sh): fetch missing archives from intake URLs; verify pinned SHA-256 hashes.
+
+Baseline configuration preserved. `bash -n` passed. No workloads run locally.

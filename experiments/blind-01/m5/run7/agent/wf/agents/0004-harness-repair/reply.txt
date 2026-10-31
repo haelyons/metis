@@ -1,0 +1,5 @@
+Read intake and harness scripts. Fix setup archive handling; preserve pin, configuration, scope.
+Pinned archive contains two required include symlinks: `tclap` and `cmdl`. Both stay inside FroDock tree. Setup rejects every symlink. Fix allows contained links; retains traversal and special-file checks. No gate scripts supplied; check syntax and archive extraction locally, without running workload.
+Repaired only `harness/setup.sh`: allow required internal FroDock symlinks; retain archive safety checks. Pin and configuration preserved.
+
+Passed shell syntax, pinned archive extraction, include-link checks, `soap.bin` checksum. No workload run.
