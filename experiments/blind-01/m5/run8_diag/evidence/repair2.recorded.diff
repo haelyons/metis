@@ -1,0 +1,22 @@
+@@ -3,2 +3,4 @@
+ mkdir -p out
++# Never leave measurements from a previous invocation after an incomplete run.
++rm -f out/anchors_measured.json
+ # Keep append-only workload logs; inspect only this invocation's new output.
+@@ -6,3 +8,15 @@
+ if [[ -f out/baseline.log ]]; then start=$(wc -c < out/baseline.log); fi
+-bash harness/run_command.sh
++# EXECUTION.json requires abort/report when the fixed workload cannot complete.
++# Reserve time within the 1200-second adapter budget for MPI termination and
++# parsing. GNU timeout signals the workload process group, including MPI ranks.
++status=0
++timeout --signal=TERM --kill-after=15s 1100s bash harness/run_command.sh || status=$?
++if ((status != 0)); then
++    if ((status == 124 || status == 137)); then
++        printf '%s\n' 'Missing complete workload output: fixed 93-case baseline exceeded 1100-second execution allowance within the 1200-second anchors budget. Scale and published configuration preserved; see out/baseline.log and out/run-*/scratch/*/*.log.' | tee -a out/anchors.log >&2
++        exit 1
++    fi
++    printf 'Missing complete workload output: canonical command exited %s; see out/baseline.log and out/run-*/scratch/*/*.log.\n' "$status" | tee -a out/anchors.log >&2
++    exit "$status"
++fi
+ /usr/bin/python3 - "$start" <<'PY'

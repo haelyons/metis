@@ -1,0 +1,16 @@
+{
+  "attempt1_point": "script_error",
+  "attempt2_point": "workload_too_long",
+  "attempt3_point": "workload_too_long",
+  "workload_completed": "partly",
+  "budget_fit": "too_small",
+  "budget_source": "intake_execution",
+  "measured_values": "none",
+  "out_size": "100mb_to_1gb",
+  "fetch_dominates_wall": "no",
+  "materials_issue": "no",
+  "tail_had_cause": "all",
+  "repairs_targeted_cause": "some",
+  "overrun_misled": "no",
+  "smallest_fix": "anchors_budget"
+}

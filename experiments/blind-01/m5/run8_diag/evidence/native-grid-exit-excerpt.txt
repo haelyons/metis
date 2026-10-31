@@ -1,0 +1,73 @@
+250: 				for(int x = 0; x < nzv; x++) // screen all atoms for current coordinates chunk
+251: 					valuesd[ indices[x] ] += values[ x ];
+252: 			}
+253: 
+254: 			// Cast double array directly into float map
+255: 			iterV.begin();
+256: 			cont = 0;
+257: 			do{
+258: 				// Load Master's map into double-array
+259: 				vol->getVoxel(iterV.pos(), value);
+260: 				valuesd[cont] += value;
+261: 				// Store the merged map...
+262:         		vol->setVoxel(iterV.pos(),(float)valuesd[cont]);
+263: 				cont++;
+264: 			}while(iterV.next());
+265: 			free(valuesd); // free double-array memory
+266: 
+267: 			// Only the Master must writes the output VdW map!!!
+268: 	    	FOPS::writeFile(vol,output_vol);
+269: 			fprintf(stdout,"Written output potential (VdW or Electrostatic) map: %s\n",output_vol);
+270: 		}
+271: 		else // I'm a Worker
+272: 		{
+273: 			cont = 0;
+274: 			index = 0;
+275: 			iterV.begin();
+276: 			do{
+277: 				vol->getVoxel(iterV.pos(), value);
+278: 				if(value != 0.0) // Only non-zero values are sent...
+279: 				{
+280: 					values[cont] = value; // Map value
+281: 					indices[cont] = index; // Map index
+282: 					cont++;
+283: 				}
+284: 				index++;
+285: 			}while(iterV.next());
+286: 
+287: 			// Send data chunk to master process (pid=0) from current worker (pid)
+288: 			if(debug_mpi)
+289: 			{
+290: 				fprintf(stdout,"Worker %d sending %d non-zero values for atoms from %d to %d\n",pid,cont,startatom,endatom);
+291: 				fflush(stdout);
+292: 			}
+293: 			MPI_Send( &cont, 1, MPI_INT, 0, 1, MPI_COMM_WORLD); // Sending data chunk...
+294: 			if(debug_mpi)
+295: 			{
+296: 				fprintf(stdout,"Worker %d sending map for atoms from %d to %d\n",pid,startatom,endatom);
+297: 				fflush(stdout);
+298: 			}
+299: 			MPI_Send( values, cont, MPI_FLOAT, 0, 2, MPI_COMM_WORLD); // Sending data chunk...
+300: 			if(debug_mpi)
+301: 			{
+302: 				fprintf(stdout,"Worker %d sending indices for atoms from %d to %d\n",pid,startatom,endatom);
+303: 				fflush(stdout);
+304: 			}
+305: 			MPI_Send( indices, cont, MPI_INT, 0, 3, MPI_COMM_WORLD); // Sending data chunk...
+306: 		}
+307: 		free(values); // release memory
+308: 		free(indices); // release memory
+309: 		MPI_Finalize();
+310: #else
+311: 		vlVolume *vol;
+312: 		if(in_option == 0) // VdW
+313: 			vol = in_pdb->createVDW(grid_size,0,conv,conv_atom,in_vdwradprobe,in_radEmax,in_hyd,1,in_radiusmod,in_f1,in_f2);
+314: 		else // Electrostatic
+315: 			vol = in_pdb->createELE(grid_size, in_threshold, in_type, in_hyd);
+316:     	FOPS::writeFile(vol,output_vol);
+317:     	fprintf(stdout,"Written output potential (VdW or Electrostatic) map: %s\n",output_vol);
+318: #endif
+319:     	free(vol);
+320: 		exit(1);
+321: 	}
+322: 

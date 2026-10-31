@@ -1,0 +1,211 @@
+{
+  "provenance": {
+    "attempt1": {
+      "snapshot": "0005-anchors-repair/codex-1.jsonl:37",
+      "creation": "0002-harness/codex-1.jsonl:250",
+      "data_directory_addition": "0002-harness/codex-1.jsonl:277",
+      "environment_edit": "0002-harness/codex-1.jsonl:380",
+      "creation_matches_snapshot": true
+    },
+    "attempt2": {
+      "command_creation": "0005-anchors-repair/codex-1.jsonl:110",
+      "anchors_creation": "0005-anchors-repair/codex-1.jsonl:116",
+      "anchors_edit": "0005-anchors-repair/codex-1.jsonl:122",
+      "snapshot": "0006-anchors-repair/codex-1.jsonl:47",
+      "creation_and_reversed_patch_match_snapshot": true
+    },
+    "attempt3": {
+      "anchors_edit": "0006-anchors-repair/codex-1.jsonl:116",
+      "command_unchanged": true
+    }
+  },
+  "script_sha256": {
+    "0054-run_command.sh": "3005aad2aff1c88adf7e0008523b63affab6ca5f3ae00f358add7de164a38e5b",
+    "0054-run_anchors.sh": "5556d2ab356e2b9fd856e7fb05eb6ae137b56e3fba4bfa4bfea56024af02e19c",
+    "0056-run_command.sh": "7ffadfa0ed388b1d3694ea05567807809c540bd7677fbd7aaf1470f383ffd0ce",
+    "0056-run_anchors.sh": "f10fe459b2c68f51393ab70a4e4ad1c2103563849b6379e54c7e8fce2564f377",
+    "0058-run_command.sh": "7ffadfa0ed388b1d3694ea05567807809c540bd7677fbd7aaf1470f383ffd0ce",
+    "0058-run_anchors.sh": "07f87581a4ce6b63921a8d4927b22f90e438fd937d02998c423d863692be3fa9"
+  },
+  "logs": {
+    "0054": {
+      "case_count": 0,
+      "cases": [],
+      "case_wall_sum_s": 0,
+      "measurement_lines": 0,
+      "repair_tail_exact_match": true,
+      "repair_tail_lines": 70
+    },
+    "0056": {
+      "case_count": 5,
+      "cases": [
+        {
+          "line": 1076,
+          "id": "1a19__A1_P11540--1a19__B1_P11540",
+          "wall_s": 41.17523330100016
+        },
+        {
+          "line": 2545,
+          "id": "1aua__A1_P24280--1aua__A2_P24280",
+          "wall_s": 244.49238746900005
+        },
+        {
+          "line": 3581,
+          "id": "1ax2__A1_P16404--1ax2__A2_P16404",
+          "wall_s": 261.12751288000027
+        },
+        {
+          "line": 4548,
+          "id": "1dtd__A1_P48052--1dtd__B1_P81511",
+          "wall_s": 182.45080383999994
+        },
+        {
+          "line": 5547,
+          "id": "1dv1__A1_P24182--1dv1__B1_P24182",
+          "wall_s": 286.79252167799996
+        }
+      ],
+      "case_wall_sum_s": 1016.0384591680004,
+      "measurement_lines": 0,
+      "repair_tail_exact_match": true,
+      "repair_tail_lines": 200
+    },
+    "0058": {
+      "case_count": 5,
+      "cases": [
+        {
+          "line": 1076,
+          "id": "1a19__A1_P11540--1a19__B1_P11540",
+          "wall_s": 39.86611659200025
+        },
+        {
+          "line": 2545,
+          "id": "1aua__A1_P24280--1aua__A2_P24280",
+          "wall_s": 243.86436385500065
+        },
+        {
+          "line": 3581,
+          "id": "1ax2__A1_P16404--1ax2__A2_P16404",
+          "wall_s": 261.52484225100034
+        },
+        {
+          "line": 4548,
+          "id": "1dtd__A1_P48052--1dtd__B1_P81511",
+          "wall_s": 181.59344277699984
+        },
+        {
+          "line": 5547,
+          "id": "1dv1__A1_P24182--1dv1__B1_P24182",
+          "wall_s": 286.06480590500087
+        }
+      ],
+      "case_wall_sum_s": 1012.9135713800019,
+      "measurement_lines": 0
+    }
+  },
+  "output": {
+    "bytes": 571053189,
+    "files": 2220,
+    "by_top_level": {
+      "installed-packages.txt": {
+        "bytes": 4267,
+        "files": 1
+      },
+      "probe.json": {
+        "bytes": 4913,
+        "files": 1
+      },
+      "ldd-frodockcluster_gcc.log": {
+        "bytes": 374,
+        "files": 1
+      },
+      "ldd-frodock_mpi_gcc.log": {
+        "bytes": 1182,
+        "files": 1
+      },
+      "baseline.log": {
+        "bytes": 496929,
+        "files": 1
+      },
+      "ldd-frodockview_gcc.log": {
+        "bytes": 374,
+        "files": 1
+      },
+      "ldd-frodockgrid_mpi_gcc.log": {
+        "bytes": 1105,
+        "files": 1
+      },
+      "setup.log": {
+        "bytes": 1007747,
+        "files": 1
+      },
+      "anchors.log": {
+        "bytes": 234,
+        "files": 1
+      },
+      "run-1793485237586031601": {
+        "bytes": 909444,
+        "files": 3
+      },
+      "run-1793485402501382269": {
+        "bytes": 284313310,
+        "files": 1104
+      },
+      "run-1793487733552881707": {
+        "bytes": 284313310,
+        "files": 1104
+      }
+    },
+    "by_extension": {
+      ".txt": {
+        "bytes": 4267,
+        "files": 1
+      },
+      ".json": {
+        "bytes": 4913,
+        "files": 1
+      },
+      ".log": {
+        "bytes": 2018195,
+        "files": 97
+      },
+      ".pdb": {
+        "bytes": 443900634,
+        "files": 2050
+      },
+      ".mrc": {
+        "bytes": 92778532,
+        "files": 49
+      },
+      ".dat": {
+        "bytes": 32346648,
+        "files": 22
+      }
+    },
+    "anchors_measured_exists": false,
+    "anchors_scored_exists": false
+  },
+  "materials": {
+    "intake_brief_equals_named_brief": true,
+    "hash_rows": 3602,
+    "intake_pin_count": 3602,
+    "url_hash_sets_equal": true,
+    "all_recorded_refetch_matches": true,
+    "cached_mirror_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+    "cached_mirror_matches_inventory": true,
+    "grid_source_member": "frodock3_linux64/src/frodockgrid/frodockgrid.cpp",
+    "soap_sha256": "791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc",
+    "grid_exit_excerpt": "native-grid-exit-excerpt.txt",
+    "attempt1_grid_map": {
+      "dimensions": [
+        61,
+        59,
+        55
+      ],
+      "mode": 2,
+      "bytes": 792804,
+      "expected_bytes": 792804,
+      "complete_header_and_payload": true
+    }
+  }
+}
