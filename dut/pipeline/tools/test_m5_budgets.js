@@ -291,19 +291,24 @@ fi`)
       return
     }
     // SCHEMAS.md timeout bullet: "Authored setup and anchor scripts consume their existing repairs (at most
-    // two), and method/test scripts their one bounded repair". A repair runs after each timed-out attempt
-    // until the bound; the attempt after the last repair is final.
-    const bound = ['setup', 'anchors'].includes(config.target) ? 2 : 1
+    // four for setup, two for anchors), and method/test scripts their one bounded repair". A repair runs
+    // after each timed-out attempt until the bound; the attempt after the last repair is final.
+    const bound = { setup: 4, anchors: 2 }[config.target] ?? 1
     const recoverAt = config.recover === true ? 1 : config.recover || 0
     const repairsExpected = recoverAt || bound
     check(`${name}: exactly ${repairsExpected === 1 ? 'one repair' : `${repairsExpected} repairs`}, prompts include budget and elapsed/overrun`, () => {
       const repairs = calls.filter(call => call.title === repair).slice(repair === 'implement' ? 1 : 0)
       assert.equal(repairs.length, repairsExpected)
-      for (const call of repairs) {
+      for (const [i, call] of repairs.entries()) {
         assert.match(call.prompt, /timeout/i)
         assert.match(call.prompt, /budget[^\d\n]*1(?!\d)/i)
         assert.match(call.prompt, /(?:wall|elapsed)/i)
         assert.match(call.prompt, /overrun/i)
+        // SCHEMAS.md "A/harness/" (U46): setup and anchors repair prompts state `repair attempt <n> of <limit>`.
+        if (['setup', 'anchors'].includes(config.target)) {
+          const stated = [...call.prompt.matchAll(/repair attempt (\d+) of (\d+)/g)].map(match => `${match[1]} of ${match[2]}`)
+          assert.deepEqual([...new Set(stated)], [`${i + 1} of ${bound}`], `${repair} ${i + 1}: prompt states ${stated.join(', ') || 'no attempt number'}`)
+        }
       }
       if (repair === 'implement') assert.equal(calls.filter(call => call.title === 'tests').length, 1)
     })
@@ -343,6 +348,8 @@ async function main() {
     // Setup and anchors time out twice and the second repair finishes within the original budget.
     ['timeout-setup-recovered-second', { args: { ...SMALL, setup: 1 }, target: 'setup', recover: 2 }],
     ['timeout-anchors-recovered-second', { args: { ...SMALL, anchors: 1 }, target: 'anchors', recover: 2 }],
+    // U46: setup times out four times and the fourth repair finishes within the original budget.
+    ['timeout-setup-recovered-fourth', { args: { ...SMALL, setup: 1 }, target: 'setup', recover: 4 }],
   ]
   try {
     // Two independent workflows at a time keep the full suite below three minutes.

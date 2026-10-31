@@ -245,8 +245,9 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
   }
   async function runHarness(name, operation, destination, timeout) {
     const command = `bash harness/${name}`
+    const repairLimit = name === 'setup.sh' ? 4 : 2
     let result = await boxCommand(operation, command, destination, timeout)
-    for (let retry = 1; retry <= 2; retry++) {
+    for (let retry = 1; retry <= repairLimit; retry++) {
       if (result.error === 'infra' || result.fetched === false || (result.rc === 0 && !result.error)) return result
       let tail
       try {
@@ -262,7 +263,7 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
         [file, existsSync(path.join(harnessDirectory, file)) ? readFileSync(path.join(harnessDirectory, file)) : null]))
       const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(harnessDirectory, name))}`
         : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(harnessDirectory)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
-      const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). ${scope} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is repair attempt ${retry} of 2 for this ${name === 'setup.sh' ? 'script' : 'step'}.
+      const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). ${scope} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is repair attempt ${retry} of ${repairLimit} for this ${name === 'setup.sh' ? 'script' : 'step'}.
 Budget: ${timeout}s; measured elapsed: ${result.wall_s ?? 'unavailable'}s; measured overrun: ${Number.isFinite(result.wall_s) ? Math.max(0, result.wall_s - timeout) : 'unavailable'}s. ${budgetPrompt()}
 ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
