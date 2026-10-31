@@ -1,0 +1,8 @@
+{
+  "anchors_runtime": "unknown",
+  "runtime_basis": "partial_progress",
+  "profile_same_workload": "yes",
+  "profile_runtime_factor": "unknown",
+  "ceiling_fits_anchors": "unknown",
+  "scale": "published"
+}
