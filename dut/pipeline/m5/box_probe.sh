@@ -131,11 +131,12 @@ pip_j='null'
 [[ -n $pip_name ]] && pip_j=$(tool_json "$pip_name")
 
 # --- apt sources mentioning cuda or nvidia ---
+apt_dir=${M5_PROBE_APT_DIR:-/etc/apt}
 apt_json='[]'
 {
-  [[ -f /etc/apt/sources.list ]] && printf '%s\n' /etc/apt/sources.list
+  [[ -f "$apt_dir/sources.list" ]] && printf '%s\n' "$apt_dir/sources.list"
   shopt -s nullglob
-  for f in /etc/apt/sources.list.d/*; do printf '%s\n' "$f"; done
+  for f in "$apt_dir"/sources.list.d/*; do printf '%s\n' "$f"; done
   shopt -u nullglob
 } >"$tmp/apt_files"
 apt_json=$(python3 -c '
@@ -159,6 +160,47 @@ for path in open(sys.argv[1]):
 print(json.dumps(out))
 ' "$tmp/apt_files" 2>/dev/null) || apt_json='[]'
 
+# --- all enabled apt sources ---
+apt_enabled_json=$(python3 -c '
+import json, re, sys
+out = []
+for path in open(sys.argv[1]):
+    path = path.strip()
+    if path != sys.argv[2] and not path.endswith((".list", ".sources")):
+        continue
+    try:
+        lines = open(path, errors="replace").read().splitlines()
+    except OSError:
+        continue
+    entries = []
+    if path.endswith(".sources"):
+        for stanza in re.split(r"\n\s*\n", "\n".join(lines)):
+            fields = {}
+            key = None
+            for line in stanza.splitlines():
+                if line.lstrip().startswith("#"):
+                    continue
+                if line[:1].isspace() and key:
+                    fields[key] += " " + line.strip()
+                    continue
+                name, sep, value = line.partition(":")
+                key = name.lower() if sep else None
+                if key:
+                    fields[key] = value.strip()
+            if fields.get("enabled", "").lower() == "no":
+                continue
+            entry = " ".join(name + ": " + fields[name.lower()]
+                             for name in ("Types", "URIs", "Suites", "Components")
+                             if name.lower() in fields)
+            if entry:
+                entries.append(entry)
+    else:
+        entries = [line for line in lines if line.split()[:1] == ["deb"]]
+    if entries:
+        out.append({"file": path, "entries": entries})
+print(json.dumps(out))
+' "$tmp/apt_files" "$apt_dir/sources.list" 2>/dev/null) || apt_enabled_json='[]'
+
 # --- sudo -n ---
 sudo_ok=false
 if command -v sudo >/dev/null 2>&1; then
@@ -171,7 +213,7 @@ fi
 OS_JSON="$os_json" KERNEL="${kernel-}" NPROC="${nproc_n-}" MEM="${memory_kb-}" DISK="${disk_home_bytes-}" \
 NVIDIA_JSON="$nvidia_json" NVCC_JSON="$nvcc_json" \
 CMAKE_J="$cmake_j" GCC_J="$gcc_j" GXX_J="$gxx_j" MAKE_J="$make_j" GIT_J="$git_j" \
-PY_J="$python3_j" PIP_J="$pip_j" APT_JSON="$apt_json" SUDO_OK="$sudo_ok" \
+PY_J="$python3_j" PIP_J="$pip_j" APT_JSON="$apt_json" APT_ENABLED_JSON="$apt_enabled_json" SUDO_OK="$sudo_ok" \
 python3 -c '
 import json, os, sys
 
@@ -209,6 +251,7 @@ probe = {
     "python3": parse("PY_J", None),
     "pip": parse("PIP_J", None),
     "apt_sources": parse("APT_JSON", []),
+    "apt_enabled_sources": parse("APT_ENABLED_JSON", []),
     "sudo_nopasswd": os.environ.get("SUDO_OK") == "true",
 }
 path = "out/probe.json"
