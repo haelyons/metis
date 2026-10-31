@@ -34,7 +34,7 @@ Use any that work; record each attempt.
    - its file hashes equal those of a copy at level 1 to 3 (for example an archive capture of the same file).
    Matching sizes, names or record counts alone are not proof.
 5. `regenerated_official`: the input is produced by the study's own published code and procedure, which setup on the box can run, and the result is checked against published checksums or published statistics.
-6. `unverified_mirror`: anything else. Record it; it never makes the materials usable.
+6. `unverified_mirror`: anything else. Record it. It makes the materials usable only with the owner's approval (owner, 2026-10-31: the earlier never-usable rule was too hard), and its provenance stays unverified in every record and claim.
 
 ## Principles (binding)
 - **Science first:**

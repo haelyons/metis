@@ -2,12 +2,12 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -24,7 +24,10 @@ ENUMS = {
 }
 if a.dir != "intake_check":
     ENUMS["alternative"] = {"none", "official_new_location", "archive_snapshot", "author_deposit", "verified_mirror",
-                            "unverified_mirror"} | ({"regenerated_official"} if a.dir == "intake_acquire" else set())
+                            "unverified_mirror"} | ({"regenerated_official"} if a.dir in ("intake_acquire", "intake_mirror") else set())
+if a.dir == "intake_mirror":
+    ENUMS["hashes_recorded"] = {True, False}
+    ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
 
 
 def git(*args):
@@ -55,6 +58,11 @@ if os.path.exists(addendum):
     text = open(addendum, "rb").read()
     print("addendum present; starts with original brief:", text.startswith(original) and len(text) > len(original),
           "; status agrees:", bool(status) and status["run5_brief"] == "addendum")
+    if a.dir == "intake_mirror":
+        extra = text[len(original):]
+        print("addendum section heading:", b"## Materials (owner decision 2026-10-31; recorded by an authorized reader agent)" in extra,
+              "; names unverified_mirror:", b"unverified_mirror" in extra,
+              "; sha256 values:", len(set(re.findall(rb"\b[0-9a-f]{64}\b", extra))))
 else:
     print("addendum absent; status agrees:", bool(status) and status["run5_brief"] == "original")
 
