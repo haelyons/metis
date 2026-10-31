@@ -200,12 +200,26 @@ Gate: complete files, found, available required data, licence is not "restricted
     return { ...receipt, log: path.join(destination, `${id}.log`) }
   }
   async function uploadHarness(names, destination, timeout) {
-    const commands = ['mkdir -p harness out']
+    const commands = []
     for (const name of names) {
+      const remote = `harness/${name}`
+      commands.push(`: > ${quote(remote)}`)
       const bytes = readFileSync(path.join(harnessDirectory, name)).toString('base64')
-      commands.push(`printf %s ${quote(bytes)} | base64 -d > ${quote(`harness/${name}`)}`)
+      for (let offset = 0; offset < bytes.length; offset += 24576) {
+        commands.push(`printf %s ${quote(bytes.slice(offset, offset + 24576))} | base64 -d >> ${quote(remote)}`)
+      }
     }
-    return boxCommand('upload', `set -e\n${commands.join('\n')}`, destination, timeout)
+    const prefix = 'set -e\nmkdir -p harness out'
+    let batch = prefix
+    for (const line of commands) {
+      if (batch.length + line.length + 1 >= 32768) {
+        const result = await boxCommand('upload', batch, destination, timeout)
+        if (result.error || result.rc !== 0) return result
+        batch = prefix
+      }
+      batch += `\n${line}`
+    }
+    return boxCommand('upload', batch, destination, timeout)
   }
   const harnessRules = 'Scope: setup.sh builds and checks only the baseline. The pipeline owns profiling and profiler installation; do not write profile.sh or install profiling tools. A setup repair may change only setup.sh; an anchors repair may change run_anchors.sh, run_command.sh, or both, and nothing else. Stay within each script\'s scope. Run the published build and binary and read measurements from its OUTPUT. run_command.sh contains only the exact measured baseline command and complete environment at the representative scale. run_command.sh is the canonical measured command and complete environment, including working directory, arguments, CUDA_VISIBLE_DEVICES and GPU count. run_command.sh must use paths relative to its working directory, never absolute paths into the run directory, and write only under out/ or temporary files. Concurrency and evaluation run it from sibling work directories linking the same trees. The pipeline owns CUDA MPS. No harness script (setup.sh, run_anchors.sh, run_command.sh, run_evaluation.sh) may set, unset or override any CUDA_MPS_* environment variable, or start or stop an MPS daemon; inherit these variables unchanged. run_anchors.sh must invoke bash harness/run_command.sh without overriding its environment or duplicating the workload command; parse its saved output for every intake item ID, anchors and references. With an empty anchors.json, still run the published command and write out/anchors_measured.json as {}. The fixed profiler invokes that identical file with bash from the same working directory. Keep output paths stable and preserve logs. Every later run script must preserve the published configuration. Validate printed configuration against the actual command and environment. Preserve consistency in repairs; read the other harness scripts while editing only the permitted scripts. Never parse or assert on source text. Measurement checks must fail only on missing or invalid output; the pipeline scores measured values against anchors.'
   let boxProbe
