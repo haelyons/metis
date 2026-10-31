@@ -1,0 +1,67 @@
+{
+  "representative_scale": {
+    "benchmark": "PINDER-S paired-apo docking",
+    "fixed_cases": [
+      "7zj1__B1_P55265--7zj1__A1_P55265"
+    ],
+    "cases": 1,
+    "monomer_kind": "apo",
+    "candidates_per_case": 5,
+    "mpi_processes": 8,
+    "selection_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/tests/methods/test_preprocess.py",
+    "selection_reason": "Published test expects holo/apo/predicted configurations for this exact case. Fixed actual protein docking calibration, no scale search or extrapolation to all 93.",
+    "larger_study_scope": "Prioritize all 93 paired-apo cases in subsequent preregistered study; AAV redocking separate."
+  },
+  "inputs": {
+    "required": "Released index/metadata and primary apo receptor/ligand plus native holo target and mappings for fixed ID; FroDock soap.bin from pinned mirror.",
+    "preprocessing_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/preprocess",
+    "configuration": {
+      "n_solutions": 5,
+      "mpi_np": 8,
+      "force": false
+    },
+    "configuration_status": "Local fixed-scale plan; not a published measured run. Concrete preprocessing output paths and seed protocol unresolved."
+  },
+  "outputs": {
+    "poses": "results_dir/frodock/7zj1__B1_P55265--7zj1__A1_P55265/apo_decoys/model_{i}.pdb, i=1..5",
+    "score_files": [
+      "frodock_metrics.csv",
+      "frodock_leaderboard.csv"
+    ],
+    "score_interface": "pinder_eval reads method/complex/apo_decoys ranked PDBs; emits DockQ, iRMS, LRMS, Fnat and ranks. Compute direct DockQ >= 0.23 success separately from published CAPRI leaderboard.",
+    "reports": [
+      "top-ranked DockQ/iRMS/Fnat",
+      "maximum DockQ among fixed five poses",
+      "number and time of evaluated candidates",
+      "wall-clock elapsed seconds",
+      "time to acceptable pose if observable",
+      "measured CPU/GPU and memory use",
+      "cost only with established compute price"
+    ],
+    "no_result": null
+  },
+  "timing_scope": {
+    "setup": "Acquisition/install/compile and input preparation reported separately, not docking speed.",
+    "baseline_run": "End-to-end maps, docking search, clustering and pose generation for fixed apo pair; include synchronization and CPU/GPU work.",
+    "evaluation": "Native-target scoring separately timed; include in time-to-acceptable if quality requires oracle evaluation.",
+    "first_acceptable_limit": "Published adapter exposes final poses, not candidate arrival times; time-to-first-acceptable may be unavailable rather than inferred from rank.",
+    "repeats": null,
+    "repeats_reason": "No seed list or repeat count established. Timing requires measurement, no claimed budget guarantee."
+  },
+  "stage_budgets_s": {
+    "setup": 1200,
+    "anchors": 1200,
+    "profile": 1200,
+    "method_setup": 1200,
+    "method_run": 3600,
+    "tests": 900,
+    "evaluate": 2400
+  },
+  "budget_basis": "Planning caps; method_run raised for real single-case calibration. No workload run; cannot establish completion time. Abort over-budget runs without changing fixed scale.",
+  "execution_readiness": {
+    "status": "requires source repairs and resolved environment",
+    "reason": "Known adapter/build issues documented in benchmark.json. No builds or workloads authorized during intake.",
+    "gate_scripts": null,
+    "gate_scripts_reason": "Prompt names no gate script paths or commands; validate JSON structure and required keys locally."
+  }
+}
