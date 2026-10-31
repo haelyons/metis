@@ -1,0 +1,58 @@
+--- setup-0021.sh
++++ setup-0039.sh
+@@ -8,6 +8,8 @@
+   timeout --signal=TERM --kill-after=10s 1170s bash harness/setup.sh
+   exit $?
+ fi
++# Match the canonical command's executable search path.
++export PATH=/usr/local/bin:/usr/bin:/bin
+ # Only toolkit locations discovered in the supplied probe are candidates.
+ CUDA_NVCC= CUDA_INCLUDE= CUDA_LIBRARY=
+ for root in /usr/local/cuda /usr/lib/cuda; do
+@@ -22,6 +24,9 @@
+   CUDA_NVCC=/usr/bin/nvcc; CUDA_INCLUDE=/usr/include; CUDA_LIBRARY=/usr/lib/x86_64-linux-gnu/libcudart.so
+ fi
+ ls "$CUDA_NVCC" "$CUDA_INCLUDE/cuda_runtime.h" "$CUDA_LIBRARY"
++export CMAKE_CUDA_COMPILER="$CUDA_NVCC"
++export CPLUS_INCLUDE_PATH="$CUDA_INCLUDE"
++export LD_LIBRARY_PATH="${CUDA_LIBRARY%/*}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+ printf '%s\n' "$CUDA_NVCC" "$CUDA_INCLUDE" "$CUDA_LIBRARY" > data/cuda-paths.txt
+ python3 - <<'PYMETA'
+ import base64,zlib,json,pathlib
+@@ -31,17 +36,35 @@
+ # If stock dependencies are absent, apt is restricted to the sole enabled source in the probe.
+ need=()
+ command -v mpirun >/dev/null || need+=(openmpi-bin libopenmpi3)
+-if ! python3 -m venv --help >/dev/null 2>&1; then need+=(python3-venv); fi
++# venv --help succeeds even when ensurepip is absent. Check both modules.
++if ! python3 -c 'import venv, ensurepip' >/dev/null 2>&1; then need+=(python3-venv); fi
+ if ((${#need[@]})); then
+   repo=$(mktemp)
+   trap 'rm -f "$repo"' EXIT
+   echo 'deb [signed-by=/etc/apt/cloud-init.gpg.d/nvidia-docker-container.gpg] https://nvidia.github.io/libnvidia-container/stable/deb/amd64 /' > "$repo"
+   aptopts=(-o "Dir::Etc::sourcelist=$repo" -o 'Dir::Etc::sourceparts=-')
+   sudo apt-get "${aptopts[@]}" update
++  # The probe lists no Ubuntu repository. Never assume Ubuntu packages exist
++  # in the NVIDIA container repository, and never add a repository as a fallback.
++  unavailable=()
++  for package in "${need[@]}"; do
++    candidate=$(apt-cache "${aptopts[@]}" policy "$package" | awk '$1 == "Candidate:" {print $2}')
++    if [[ -z $candidate || $candidate == '(none)' ]]; then
++      unavailable+=("$package")
++    fi
++  done
++  if ((${#unavailable[@]})); then
++    printf 'Required baseline dependencies have no candidate in the probe-authorized apt source: %s\n' "${unavailable[*]}" >&2
++    printf '%s\n' 'Cannot provision the published eight-rank OpenMPI baseline on this stock image under the supplied source restrictions. No alternate repository, installer, or baseline substitution is permitted.' >&2
++    exit 1
++  fi
+   sudo apt-get "${aptopts[@]}" install -y --no-install-recommends "${need[@]}" || {
+     echo 'Required baseline dependencies unavailable from probe-authorized apt source.' >&2; exit 1;
+   }
+ fi
++command -v mpirun >/dev/null || {
++  echo 'OpenMPI installation did not provide mpirun on the canonical command PATH.' >&2; exit 1;
++}
+ python3 - <<'PYFETCH'
+ import concurrent.futures,hashlib,json,pathlib,urllib.request,shutil,tarfile,time
+ meta=json.load(open('data/intake-manifest.json'))

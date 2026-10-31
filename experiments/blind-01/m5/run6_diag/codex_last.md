@@ -1,0 +1,8 @@
+{
+  "failure_point": "missing_tool",
+  "same_cause_all_attempts": true,
+  "tail_had_cause": "all",
+  "repairs_targeted_cause": "some",
+  "mirror_from_box": "not_reached",
+  "fix_needs": "pipeline_repair_inputs"
+}
