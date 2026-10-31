@@ -2,12 +2,12 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -25,6 +25,14 @@ ENUMS = {
 if a.dir != "intake_check":
     ENUMS["alternative"] = {"none", "official_new_location", "archive_snapshot", "author_deposit", "verified_mirror",
                             "unverified_mirror"} | ({"regenerated_official"} if a.dir in ("intake_acquire", "intake_mirror") else set())
+if a.dir == "run5_diag":
+    ENUMS = {
+        "failed_step": {"probe", "harness_agent", "harness_upload", "setup", "other", "unknown"},
+        "upload_error": {"e2big", "other", "none", "unknown"},
+        "upload_command_bytes": {"under_128k", "over_128k", "unknown"},
+        "large_content": {"embedded_hashes", "embedded_data", "other", "not_large"},
+        "hash_checks_requested": {True, False},
+    }
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
     ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
@@ -53,7 +61,9 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if os.path.exists(addendum):
+if a.dir == "run5_diag":
+    pass
+elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()
     text = open(addendum, "rb").read()
     print("addendum present; starts with original brief:", text.startswith(original) and len(text) > len(original),
