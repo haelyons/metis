@@ -1,0 +1,13 @@
+{
+  "attempt1_point": "script_error",
+  "attempt2_point": "script_error",
+  "attempt3_point": "script_error",
+  "run6_library": "installed_apt",
+  "furthest_phase": "hash_check",
+  "repair_regressed": "no",
+  "tail_had_cause": "all",
+  "repairs_targeted_cause": "all",
+  "mirror_from_box": "reached_ok",
+  "hash_checks": "all_passed",
+  "fix_needs": "harness_repair"
+}
