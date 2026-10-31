@@ -1,0 +1,5 @@
+Inspect intake and harness scripts. Repair timeout within permitted files; no local workload runs.
+Fixed scale requires all 93 cases. Log shows first five consumed 1,016 seconds before DockQ evaluation; 1,200-second cap leaves insufficient evidence for successful completion. Intake explicitly requires abort/report when fixed workload exceeds budget. Add bounded abort with clear failure; preserve configuration, scale and logs.
+Changed only `harness/run_anchors.sh`: bounded abort, preserved logs, removed stale measurements. Shell syntax checks pass. No workloads run locally.
+
+Successful anchors gate remains unresolved: first five of required 93 cases consumed 1,016 seconds. Completing within 1,200 seconds lacks supporting evidence; scale and published configuration preserved.

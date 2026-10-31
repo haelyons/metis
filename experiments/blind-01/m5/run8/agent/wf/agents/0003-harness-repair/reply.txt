@@ -1,0 +1,7 @@
+Read intake and harness scripts. Repair setup only; validate syntax without running workload or accessing box.
+
+Failure: build backend loads stock setuptools and packaging 21.3; new vcs-versioning requires packaging ≥26.2. Fix: install compatible build dependencies inside venv, then use them explicitly for pinned PINDER build. Preserve stock Torch, source pin, configuration.
+
+Repaired only `harness/setup.sh`: pinned compatible venv build tooling; disabled PINDER build isolation. Published pin, configuration, stock Torch preserved.
+
+`bash -n` passed. No workload run or box access.

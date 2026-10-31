@@ -1,0 +1,7 @@
+Read intake and harness scripts. Repair setup dependency conflict; preserve baseline pin and configuration.
+
+Build passed. Preprocessing failed: stock NetworkX uses `np.int`, removed from installed NumPy. Pin compatible NetworkX inside baseline venv; check imports before downloads and compilation.
+
+Repaired only `harness/setup.sh`: pin venv NetworkX 3.2.1; add early import check. Baseline pin, configuration, stock packages preserved.
+
+`bash -n` passed. No workload run locally.

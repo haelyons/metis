@@ -1,0 +1,6 @@
+Read intake, write harness scripts, check syntax locally. Pipeline runs builds and workloads.
+Baseline uses CPU/MPI: 93 paired apo cases, 100 poses each, 8 MPI ranks. Published adapter has path/copy defects; harness will preserve docking stages and options while fixing execution plumbing.
+Setup pins source, archive, scoring file and data checksums. Run scripts will preserve logs and parse measured outputs; no anchor thresholds used as pass/fail gates.
+Published MPI grid binary needs OpenMPI 2 libraries; stock box provides OpenMPI 4. Checking source build path so harness can rebuild grid for stock MPI without substituting algorithm.
+GNU MPI grid target found under `Release_MPI_GCC`; setup rebuilds it against stock OpenMPI. Bash and embedded Python syntax checks pass. Builds and workloads remain for pipeline execution.
+Created four scripts under `harness/`. Syntax checks pass. Pipeline owns build and workload execution.

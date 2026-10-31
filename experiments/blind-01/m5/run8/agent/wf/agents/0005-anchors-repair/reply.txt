@@ -1,0 +1,8 @@
+Inspect intake and harness scripts. Repair permitted scripts only; validate syntax without running workloads.
+Grid wrote `receptor_W.mrc`, then MPI returned 1; runner stopped on exit status. Published adapter leaves status unchecked. Repair will validate generated outputs, preserve fixed 93-case/8-rank/100-pose workload, and reject missing or invalid measurements.
+Saved map’s header and voxel payload are complete. Repair preserves stage logs, validates outputs, and parses only current invocation’s measurements for all intake IDs. Shell syntax passes; workloads remain unrun per instruction.
+Repaired `harness/run_command.sh` and `harness/run_anchors.sh` only.
+
+Validate stage outputs despite legacy MPI exit codes; preserve configuration and logs. Anchor parser handles references, empty anchors, invalid output.
+
+Syntax and synthetic parser checks pass. No workloads run.
