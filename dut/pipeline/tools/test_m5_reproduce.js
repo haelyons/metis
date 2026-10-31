@@ -12,6 +12,16 @@ const ROOT = path.resolve(__dirname, '..')
 const fixture = require('./m5_profile_fixture.js')
 const PROBE_SENTINEL = 'PROBE_PRIVATE_SENTINEL_197352'
 const SENTINEL = 'HARNESS_PRIVATE_SENTINEL_846291'
+// U45: the fake probe reports enabled apt sources beyond CUDA/NVIDIA (SCHEMAS.md `apt_enabled_sources`).
+const FAKE_PROBE = {
+  kernel: PROBE_SENTINEL, cmake: null, nvcc: [],
+  apt_sources: [{ file: '/etc/apt/sources.list.d/cuda.list', lines: ['deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /'] }],
+  apt_enabled_sources: [
+    { file: '/etc/apt/sources.list', entries: ['deb http://archive.ubuntu.com/ubuntu jammy main restricted', 'deb http://archive.ubuntu.com/ubuntu jammy universe APT_ENABLED_SENTINEL_5521'] },
+    { file: '/etc/apt/sources.list.d/ubuntu.sources', entries: ['Types: deb URIs: http://mirror.example.invalid/ubuntu Suites: jammy-updates Components: main universe'] },
+    { file: '/etc/apt/sources.list.d/cuda.list', entries: ['deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /'] },
+  ],
+}
 const STAGES = ['intake', 'reproduce', 'profile', 'seal', 'propose', 'implement', 'evaluate', 'takeaways']
 const readJSON = file => JSON.parse(fs.readFileSync(file, 'utf8'))
 const rows = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
@@ -283,7 +293,7 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
   fs.mkdirSync(box, { recursive: true })
   const fakeProbe = `mkdir -p out
 printf '%s\\n' '{"label":"probe"}' >> "$M5_REPRODUCE_CALLS"
-${config.probeFailure === 'rc' ? 'exit 7' : config.probeFailure === 'json' ? "printf '%s\\n' 'invalid probe JSON' > out/probe.json" : emitJSON('out/probe.json', { kernel: PROBE_SENTINEL, cmake: null, nvcc: [] })}`
+${config.probeFailure === 'rc' ? 'exit 7' : config.probeFailure === 'json' ? "printf '%s\\n' 'invalid probe JSON' > out/probe.json" : emitJSON('out/probe.json', FAKE_PROBE)}`
   const replaceProbe = path.join(root, 'replace-probe.js')
   fs.writeFileSync(replaceProbe, `
 const fs = require('node:fs'), path = require('node:path')
@@ -493,6 +503,18 @@ done
         assert.equal(call.probeFetched, true, `${call.label}: probe not fetched before call`)
         assert.ok(call.prompt.includes(PROBE_SENTINEL), `${call.label}: probe content missing`)
       }
+    }
+  })
+  // U45: SCHEMAS.md probe.json "Full JSON content is included in the harness prompt and every setup and
+  // anchor repair prompt" (now with `apt_enabled_sources`), plus the apt install rule those prompts state.
+  if (!config.probeFailure) check(`${name}: harness and repair prompts carry the full probe JSON and the apt install rule`, () => {
+    const prompts = calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label))
+    assert.ok(prompts.length >= 1, 'no harness prompt')
+    const probe = readJSON(path.join(root, 'agent', 'results', 'probe', 'probe.json'))
+    assert.deepEqual(probe, FAKE_PROBE, 'fetched probe.json differs from the fake probe output')
+    for (const call of prompts) {
+      assert.ok(promptHasJSON(call.prompt, FAKE_PROBE), `${call.label}: prompt lacks the complete probe JSON (incl. apt_enabled_sources)`)
+      assertAptInstallRule(call.prompt, call.label)
     }
   })
   check(`${name}: receipts under C/receipts`, () => {
@@ -879,6 +901,50 @@ function secondRepairChecks(name, run, label) {
 // SCHEMAS.md: "a rewritten `run_command.sh` still obeys every `run_command.sh` rule above, and the anchors
 // repair prompt states this." Checked by meaning, not wording: the prompt names run_command.sh and states
 // the measured-command/complete-environment rule, the relative-path rule and the CUDA MPS rule.
+// True when some balanced JSON object embedded in the prompt parses to exactly `expected`
+// (any whitespace/indentation; key order irrelevant to deepEqual on objects).
+function promptHasJSON(prompt, expected) {
+  for (let start = prompt.indexOf('{'); start !== -1; start = prompt.indexOf('{', start + 1)) {
+    let depth = 0, inString = false, escaped = false, end = -1
+    for (let i = start; i < prompt.length; i++) {
+      const c = prompt[i]
+      if (inString) { if (escaped) escaped = false; else if (c === '\\') escaped = true; else if (c === '"') inString = false; continue }
+      if (c === '"') inString = true
+      else if (c === '{' || c === '[') depth++
+      else if (c === '}' || c === ']') { depth--; if (depth === 0) { end = i; break } if (depth < 0) break }
+    }
+    if (end === -1) continue
+    try { assert.deepStrictEqual(JSON.parse(prompt.slice(start, end + 1)), expected); return true } catch {}
+  }
+  return false
+}
+// SCHEMAS.md probe.json install rule (U45), checked by meaning in each harness/setup/anchors repair prompt.
+function assertAptInstallRule(prompt, label) {
+  const sentences = prompt.split(/(?<=[.!?;])\s+|\n+/)
+  const some = (test, message) => assert.ok(sentences.some(test), `${label}: ${message}`)
+  some(s => /apt-get install/.test(s) && /\bapt_enabled_sources\b/.test(s) || /\bapt_enabled_sources\b/.test(s) && /\b(install|apt)\b/i.test(s) && /\b(any|every|all|from)\b/i.test(s),
+    'prompt does not allow apt installs from sources in apt_enabled_sources')
+  assert.match(prompt, /apt-get install/, `${label}: prompt never names apt-get install`)
+  assert.match(prompt, /apt-get update/, `${label}: prompt lacks apt-get update before installing`)
+  assert.match(prompt, /apt-cache policy/, `${label}: prompt lacks the apt-cache policy candidate check`)
+  some(s => /apt-cache policy/.test(s) && /candidate/i.test(s), 'apt-cache policy is not tied to an install candidate')
+  const never = /\b(never|not|no|don't|must not|forbidden|without)\b/i
+  some(s => never.test(s) && /\badd/i.test(s) && /repositor/i.test(s), 'prompt does not forbid adding repositories')
+  some(s => never.test(s) && /\badd/i.test(s) && /\bkeys?\b/i.test(s), 'prompt does not forbid adding keys')
+  some(s => never.test(s) && /\badd/i.test(s) && /source[s]? lines?|source entr/i.test(s), 'prompt does not forbid adding source lines')
+  some(s => never.test(s) && /enabl/i.test(s) && /comment/i.test(s) && /disabled/i.test(s), 'prompt does not forbid enabling commented or disabled sources')
+  assert.match(prompt, /dpkg-query -W/, `${label}: prompt lacks dpkg-query -W install recording`)
+  some(s => /dpkg-query -W/.test(s) && /version/i.test(s), 'dpkg-query -W is not tied to recording installed versions')
+  some(s => /\bpip\b/.test(s) && /\bcmake\b/i.test(s) && /\bonly\b/i.test(s), 'prompt lacks the cmake-only pip fallback')
+  some(s => /\bfail/i.test(s) && /\bclear/i.test(s), 'prompt lacks the fail-clearly rule')
+  // U45 item 3: installs are no longer confined to the CUDA/NVIDIA `apt_sources` lines.
+  for (const s of sentences) {
+    const restricts = /\b(only|solely|exclusively|restricted to|limited to)\b/i.test(s) && /\binstall|apt-get/i.test(s)
+    assert.ok(!(restricts && /\bapt_sources\b/.test(s)), `${label}: prompt still restricts apt to apt_sources: ${s.slice(0, 300)}`)
+    assert.ok(!(restricts && /\b(CUDA|NVIDIA)\b/i.test(s) && /\b(source|repositor|line)/i.test(s) && !/\bapt_enabled_sources\b/.test(s)),
+      `${label}: prompt still restricts apt to CUDA/NVIDIA sources: ${s.slice(0, 300)}`)
+  }
+}
 function assertRunCommandRules(prompt, label) {
   assert.match(prompt, /run_command\.sh/, `${label}: prompt never names run_command.sh`)
   assert.match(prompt, /run_command\.sh[^\n]*\b(rewrite|rewritten|edit|modif|change|fix)|\b(rewrite|rewritten|edit|modif|change|fix)\w*[^\n]*run_command\.sh/i,
@@ -965,7 +1031,7 @@ async function probeScriptTests() {
       assert.equal(result.status, 0, result.stderr)
       const probe = readJSON(path.join(directory, 'out', 'probe.json'))
       assert.deepEqual(Object.keys(probe).sort(), ['os', 'kernel', 'nproc', 'memory_kb', 'disk_home_avail_bytes',
-        'nvidia', 'nvcc', 'cmake', 'gcc', 'g++', 'make', 'git', 'python3', 'pip', 'apt_sources', 'sudo_nopasswd'].sort())
+        'nvidia', 'nvcc', 'cmake', 'gcc', 'g++', 'make', 'git', 'python3', 'pip', 'apt_sources', 'apt_enabled_sources', 'sudo_nopasswd'].sort())
       const nullableString = value => assert.ok(value === null || typeof value === 'string')
       nullableString(probe.kernel)
       for (const key of ['nproc', 'memory_kb', 'disk_home_avail_bytes']) assert.ok(probe[key] === null || Number.isInteger(probe[key]), key)
@@ -996,6 +1062,13 @@ async function probeScriptTests() {
         assert.ok(Array.isArray(source.lines))
         for (const line of source.lines) assert.equal(typeof line, 'string')
       }
+      assert.ok(Array.isArray(probe.apt_enabled_sources))
+      for (const source of probe.apt_enabled_sources) {
+        assert.deepEqual(Object.keys(source).sort(), ['entries', 'file'])
+        assert.equal(typeof source.file, 'string')
+        assert.ok(Array.isArray(source.entries) && source.entries.length > 0, 'files with no entries must be omitted')
+        for (const entry of source.entries) assert.equal(typeof entry, 'string')
+      }
       assert.equal(typeof probe.sudo_nopasswd, 'boolean')
       if (restricted) {
         assert.equal(probe.cmake, null)
@@ -1007,6 +1080,77 @@ async function probeScriptTests() {
       }
     })
   }
+  await probeAptTests()
+}
+
+// U45: SCHEMAS.md probe.json `apt_enabled_sources` and unchanged `apt_sources`, read from the
+// test hook `${M5_PROBE_APT_DIR:-/etc/apt}` (its `sources.list` and `sources.list.d/`).
+async function probeAptTests() {
+  const runProbe = (directory, aptDir) => new Promise(resolve => {
+    fs.mkdirSync(directory, { recursive: true })
+    const proc = spawn('/bin/bash', [path.join(ROOT, 'm5', 'box_probe.sh')], {
+      cwd: directory, env: { ...process.env, M5_PROBE_APT_DIR: aptDir }, timeout: 60000,
+    })
+    let stderr = '', error
+    proc.stderr.on('data', data => { stderr += data })
+    proc.stdout.resume()
+    proc.on('error', value => { error = value })
+    proc.on('close', status => resolve({ status, stderr, error }))
+  })
+  const apt = path.join(scratch, 'probe-apt-fixture', 'apt')
+  const listD = path.join(apt, 'sources.list.d')
+  fs.mkdirSync(listD, { recursive: true })
+  const main = 'deb http://archive.ubuntu.com/ubuntu jammy main restricted'
+  const universe = 'deb http://archive.ubuntu.com/ubuntu jammy universe'
+  fs.writeFileSync(path.join(apt, 'sources.list'), [
+    '# Ubuntu archive',
+    '# deb http://archive.ubuntu.com/ubuntu jammy-backports main restricted universe',
+    main,
+    universe,
+    '',
+  ].join('\n'))
+  fs.writeFileSync(path.join(listD, 'comments.list'), '# deb http://ppa.example.invalid/commented jammy main\n# nothing enabled here\n')
+  fs.writeFileSync(path.join(listD, 'mirror.sources'), [
+    'Types: deb',
+    'URIs: http://ppa.example.invalid/disabled',
+    'Suites: jammy',
+    'Components: main',
+    'Enabled: no',
+    '',
+    'Types: deb',
+    'URIs: http://mirror.example.invalid/ubuntu',
+    'Suites: jammy-updates',
+    'Components: main universe',
+    '',
+  ].join('\n'))
+  const cuda = 'deb [signed-by=/usr/share/keyrings/cuda-archive-keyring.gpg] https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /'
+  fs.writeFileSync(path.join(listD, 'cuda-ubuntu2204.list'), cuda + '\n')
+  const fixtureResult = await runProbe(path.join(scratch, 'probe-apt-run'), apt)
+  check('probe script: apt_enabled_sources from an M5_PROBE_APT_DIR fixture', () => {
+    assert.ifError(fixtureResult.error)
+    assert.equal(fixtureResult.status, 0, fixtureResult.stderr)
+    const probe = readJSON(path.join(scratch, 'probe-apt-run', 'out', 'probe.json'))
+    const byFile = list => [...list].sort((a, b) => a.file < b.file ? -1 : a.file > b.file ? 1 : 0)
+    assert.deepStrictEqual(byFile(probe.apt_enabled_sources), byFile([
+      { file: path.join(apt, 'sources.list'), entries: [main, universe] },
+      { file: path.join(listD, 'mirror.sources'), entries: ['Types: deb URIs: http://mirror.example.invalid/ubuntu Suites: jammy-updates Components: main universe'] },
+      { file: path.join(listD, 'cuda-ubuntu2204.list'), entries: [cuda] },
+    ]))
+  })
+  check('probe script: apt_sources still lists only the cuda/nvidia line', () => {
+    const probe = readJSON(path.join(scratch, 'probe-apt-run', 'out', 'probe.json'))
+    assert.deepStrictEqual(probe.apt_sources, [{ file: path.join(listD, 'cuda-ubuntu2204.list'), lines: [cuda] }])
+  })
+  const missing = path.join(scratch, 'probe-apt-missing', 'no-such-apt')
+  const missingResult = await runProbe(path.join(scratch, 'probe-apt-missing-run'), missing)
+  check('probe script: missing apt directory yields [] and the probe succeeds', () => {
+    assert.ifError(missingResult.error)
+    assert.equal(missingResult.status, 0, missingResult.stderr)
+    assert.ok(!fs.existsSync(missing))
+    const probe = readJSON(path.join(scratch, 'probe-apt-missing-run', 'out', 'probe.json'))
+    assert.deepStrictEqual(probe.apt_enabled_sources, [])
+    assert.deepStrictEqual(probe.apt_sources, [])
+  })
 }
 
 // Expected score row, derived from SCHEMAS.md "deterministic anchor scoring" only.
