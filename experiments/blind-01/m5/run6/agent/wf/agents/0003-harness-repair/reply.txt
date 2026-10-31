@@ -1,0 +1,5 @@
+Inspect intake and harness scripts. Repair setup.sh only; validate syntax without running workload.
+Enabled apt source supplies no OpenMPI packages. Rules forbid adding repositories or using another installer. Setup must fail clearly here; repair will check package candidates before install and verify dependencies against run_command.sh’s PATH.
+Changed only setup.sh. Added apt candidate checks, corrected venv detection, aligned CUDA environment. `bash -n` passes.
+
+Setup remains blocked: authorized apt source lacks OpenMPI. No compliant installation fallback permitted. No workload run.

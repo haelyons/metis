@@ -1,0 +1,5 @@
+Inspect intake and harness scripts. Repair setup.sh only; no local workloads.
+Failure confirmed: required OpenMPI packages unavailable from sole authorized apt source. Supplied archive has no MPI runtime. Existing setup already fails clearly, as required; making setup pass would require changing dependency policy or baseline.
+No compliant repair available. Published eight-rank baseline requires OpenMPI; sole authorized apt source supplies neither `openmpi-bin` nor `libopenmpi3`. Instructions require failure here.
+
+`setup.sh` unchanged; syntax check passed. No workloads run.

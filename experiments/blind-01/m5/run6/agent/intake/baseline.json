@@ -1,0 +1,127 @@
+{
+  "repo": "https://github.com/pinder-org/pinder",
+  "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "name": "FroDock via published PINDER methods adapter",
+  "software_pin": {
+    "mirror_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+    "release_label": "3.12 (2020-02-08), self-reported mirror README",
+    "authenticated_upstream_pin": null,
+    "reason": "Mirror content hash is immutable identification of supplied copy, not verification against original study distribution."
+  },
+  "build_commands": {
+    "published_image_build": "docker build --build-arg FRODOCK_SOURCE_ARCHIVE=./frodock.tar.gz -t pinder-frodock -f docker/frodock/Dockerfile.frodock .",
+    "dockerfile_RUN_commands": [
+      "apt-get --allow-releaseinfo-change update \n    && apt-get -y install --no-install-recommends \n    apt-utils \n    dialog 2>&1 \n    && apt-get install -y --no-install-recommends \n    git \n    rsync \n    ssh \n    gpg \n    wget \n    man-db \n    procps \n    tree \n    unzip \n    gcc \n    build-essential \n    lsb-release \n    curl \n    vim \n    exuberant-ctags \n    apt-transport-https \n    ca-certificates \n    gnupg \n    libgl1-mesa-glx  \n    libopenblas-base \n    libopenmpi-dev openmpi-common openmpi-bin libopenmpi3 \n    libfftw3-3 libfftw3-dev libfftw3-mpi-dev \n    libhdf5-openmpi-dev \n    && apt-get autoclean \n    && apt-get autoremove \n    && rm -rf /var/lib/apt/lists/*",
+      "micromamba install -y -n base -c conda-forge \n    pyopenssl=23.2.0 \n    python=${MAMBA_PYTHON_VERSION} \n    requests=2.25.1 \n    google-cloud-storage \n    gcsfs \n    keyrings.google-artifactregistry-auth \n    && micromamba clean --all --yes",
+      "echo \"deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main\" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-cli -y",
+      "gcloud config set project ${MAMBA_PYTHON_VERSION}",
+      "python -m pip install \n    simple-gcp-object-downloader \n    kubernetes \n    pandas==1.5.3",
+      "git clone https://github.com/pinder-org/pinder.git; \n    cd pinder && pip install .",
+      "tar -xf frodock.tar.gz && \n    mv frodock3_linux64 frodock && \n    rm frodock.tar.gz",
+      "./compile_frodock.sh"
+    ],
+    "sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock"
+    ],
+    "context": "Commands transcribed from published recipe; never executed. All RUN instructions included, including package installs. Dockerfile clones moving main: reproduction must use recorded source commit; published recipe is not itself fully pinned. FroDock mirror local filename must match frodock.tar.gz. Unresolved recipe defects recorded below."
+  },
+  "run_commands": {
+    "published_template": "pinder_methods predict -m <method> -s <test set> -l <list of PINDER ids> -c `config` -r `results_dir`",
+    "method": "frodock",
+    "test_set": "pinder-s",
+    "real_cli_interface": {
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/main.py",
+      "preprocessing_function": "pinder.methods.main.preprocess(method, data_dir, subset, ids, config, pairs)",
+      "prediction_function": "pinder.methods.main.predict(method, results_dir, data_dir, subset, ids, config, pairs)",
+      "note": "Published short-option template is documented; Fire exposes function arguments. Predict reads setup CSV; preprocessing needed first. CLI execution untested."
+    },
+    "docking_stage_command_templates": [
+      "{run} {pre}frodockgrid{suff} {receptor}.pdb -o {receptor}_W.mrc",
+      "{run} {pre}frodockgrid{suff} {receptor}.pdb -o {receptor}_E.mrc -m 1 -t A",
+      "{run} {pre}frodockgrid{suff} {receptor}.pdb -o {receptor}_DS.mrc -m 3",
+      "{run} {pre}frodockgrid{suff} {ligand}.pdb -o {ligand}_DS.mrc -m 3",
+      "{run} {pre}frodock{suff} {receptor}_ASA.pdb {ligand}_ASA.pdb -w {receptor}_W.mrc -e {receptor}_E.mrc --th 10 -d {receptor}_DS.mrc,{ligand}_DS.mrc -t A -o dock.dat -s {pre}soap.bin",
+      "{pre}frodockcluster{suff2} dock.dat {ligand}.pdb --nc {n_solutions} -o clust_dock.dat",
+      "{pre}frodockview{suff2} clust_dock.dat -r 1-{n_solutions}",
+      "{pre}frodockview{suff2} clust_dock.dat -r 1-{n_solutions} -p {ligand}.pdb"
+    ],
+    "scoring_interface": {
+      "entrypoint": "pinder_eval",
+      "required_option": "--eval_dir",
+      "optional_options": [
+        "--serial",
+        "--method_name",
+        "--allow_missing",
+        "--custom_index",
+        "--max_workers"
+      ],
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py"
+    },
+    "sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/main.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py"
+    ],
+    "template_bindings": {
+      "run": "mpirun -np {mpi_np} --use-hwthread-cpus",
+      "pre": "Path(frodock_mpi_gcc).parent, as published; missing separator remains unresolved",
+      "suff": "_mpi_gcc",
+      "suff2": "_gcc",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py"
+    }
+  },
+  "published_configuration": {
+    "implementation": "GNU MPI FroDock",
+    "mpi_np_default": 8,
+    "interaction_type": "A",
+    "docking_th": 10,
+    "maps": [
+      "receptor vdw",
+      "receptor electrostatic",
+      "receptor desolvation",
+      "ligand desolvation"
+    ],
+    "soap_input": "bin/soap.bin",
+    "n_solutions": null,
+    "n_solutions_reason": "Required adapter parameter without published default in inspected source. Intake chooses five retained solutions, not a claimed study value.",
+    "force": null,
+    "force_reason": "Required config key; no published experimental setting established.",
+    "random_seeds": null,
+    "aggregate_results": null,
+    "original_machine_configuration": null,
+    "sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "brief.md, Materials (owner decision 2026-10-31)"
+    ]
+  },
+  "intake_configuration": {
+    "pairs": "apo",
+    "cases": 93,
+    "n_solutions": 5,
+    "mpi_np": 8,
+    "reason": "Fixed full paired-apo subset; five retained candidates supports published top-5 scoring and top-1 comparison. No search over scales."
+  },
+  "sources": {
+    "readme": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+    "licence": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+    "methods": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md",
+    "runner": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/main.py",
+    "preprocess": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/preprocess/__init__.py",
+    "adapter": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+    "dockerfile": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+    "evaluator": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py",
+    "metrics": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/metrics.py",
+    "method_metrics": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/method.py",
+    "dependencies": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/pyproject.toml",
+    "dockq": "https://raw.githubusercontent.com/bjornwallner/DockQ/master/README.md",
+    "dockq_paper": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0161879",
+    "pdb_terms": "https://www.wwpdb.org/about/usage-policies",
+    "frodock_original": "https://chaconlab.org/modeling/frodock/frodock-donwload",
+    "frodock_mirror": "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz",
+    "brief": "brief.md, Materials (owner decision 2026-10-31)"
+  },
+  "execution_status": "not run",
+  "unresolved_execution_issues": "Source adapter has unresolved execution issues: pd.from_csv, absent copy of input PDBs into temporary directory, concatenated Path prefix without slash, literal wildcard passed to shutil.copy, subprocess return codes unchecked. Dockerfile has inconsistent archive working directory and binary PATH. No build or workload executed."
+}

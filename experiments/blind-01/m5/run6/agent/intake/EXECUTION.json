@@ -1,0 +1,88 @@
+{
+  "representative_scale": {
+    "benchmark": "PINDER-S 2024-02",
+    "case_count": 93,
+    "selection": "All cases with both primary apo_R and apo_L within PINDER-S; sort IDs and freeze before execution.",
+    "monomer_kind": "apo",
+    "retained_candidates_per_case": 5,
+    "mpi_ranks_per_case": 8,
+    "scale_search": false,
+    "basis": [
+      "brief.md, Materials (owner decision 2026-10-31)",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/method.py"
+    ],
+    "secondary_challenge": {
+      "cases": [
+        "6IHB",
+        "6JCQ",
+        "6JCS"
+      ],
+      "mode": "Separate bound-component redocking, never pooled with 93 apo cases.",
+      "preparation_protocol": null,
+      "reason": "Assembly, chain and domain extraction must be resolved from structures; brief gives no exact extraction command."
+    }
+  },
+  "inputs": {
+    "experimental": "Primary apo receptor/ligand pairs; native holo dimers; index, metadata and mappings, all pinned in data.json.",
+    "software": "Pinned PINDER code and permitted-for-use unverified FroDock mirror with required bin/soap.bin.",
+    "configuration": "Exactly five retained solutions, eight MPI ranks; same fixed case set and search settings for comparisons.",
+    "generated": "Prepared monomer PDBs and potential grids; not missing external data.",
+    "seed_values": null,
+    "seed_reason": "No source specifies values or seed plumbing."
+  },
+  "outputs": {
+    "poses": "results_dir/frodock/{pinder_id}/apo_decoys/model_{i}.pdb, i=1..5; complete receptor and ligand with chain IDs R and L.",
+    "scoring_interface": {
+      "entrypoint": "pinder_eval --eval_dir <eval_dir>",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py",
+      "per_pose_csv": "<eval_dir>/<method_name>_metrics.csv",
+      "leaderboard_csv": "<eval_dir>/<method_name>_leaderboard.csv",
+      "metrics": [
+        "DockQ",
+        "iRMS",
+        "LRMS",
+        "Fnat"
+      ],
+      "ranking": "PINDER extracts rank from trailing number in model filename.",
+      "missing_cases": "Keep failures in 93-case denominator; report incomplete output explicitly."
+    },
+    "scientific_comparison": "Top-1 versus highest DockQ among same five candidates. Apply DockQ >= 0.23 per pose. Report paired per-case outcomes; do not infer ranking improvement from oracle coverage.",
+    "performance": "End-to-end elapsed seconds, candidate throughput, time to first acceptable candidate, resource use and actual cost; no published target established."
+  },
+  "timing_scope": {
+    "setup": "Acquisition, dependency install and compilation separately from docking; no work performed here.",
+    "method_run": "Wall clock from prepared monomer pair availability through grid construction, docking search, clustering, coordinate output and result copy. Include all eight adapter stages, process-launch overhead and synchronization.",
+    "evaluate": "Native-reference DockQ/iRMS/LRMS/Fnat evaluation timed separately.",
+    "reporting": "Report per-case and total elapsed time, actual CPU/MPI and any GPU resources; inference and scoring kept distinct. Time-to-acceptable requires emitted-candidate timestamps and retrospective native scoring; absent timestamp data remains unavailable.",
+    "cost": "Use actual resource billing rate and elapsed usage; no prices assumed.",
+    "published_runtime_at_this_scale_s": null,
+    "runtime_reason": "No measured representative runtime or stock-image limits established. No runtime extrapolation, doubling loop or guarantee of completion within defaults."
+  },
+  "stage_budgets_s": {},
+  "budget_policy": "Use prompt defaults: setup/anchors/profile/method_setup/method_run=1200 s, tests=900 s, evaluate=2400 s. No workload run during intake. Later scripts must enforce deadlines; whether full representative workload finishes is unknown, not evidence of infeasibility.",
+  "repeatability": {
+    "fixed_case_selection": "All PINDER-S cases in release 2024-02 with both primary apo monomers, sorted by ID; expected count 93. No case-size search.",
+    "seeds": null,
+    "seed_reason": "Brief requests independent random seeds but gives no values, count or FroDock seed interface; do not invent. Record stochastic transform/search seeds before later execution. Deterministic reruns do not count as independent search.",
+    "candidate_count": 5,
+    "candidate_count_basis": "Intake fixed retained-pose count, using published top-5 evaluator interface; not asserted to be the study search budget or original candidate count.",
+    "published_search_candidate_count": null,
+    "source_pins": {
+      "pinder_commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+      "frodock_mirror_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4"
+    },
+    "sources": [
+      "brief.md, Materials (owner decision 2026-10-31)",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/method.py"
+    ]
+  },
+  "limitations": [
+    "FroDock software and scoring bytes have unverified_mirror provenance. Owner authorizes their use. Original study byte identity remains unresolved; passing anchors does not authenticate these materials.",
+    "No baseline docking success rate, runtime, cost, peak memory, aggregate acceptance target or numerical reproduction tolerance established in this intake.",
+    "Source adapter has unresolved execution issues: pd.from_csv, absent copy of input PDBs into temporary directory, concatenated Path prefix without slash, literal wildcard passed to shutil.copy, subprocess return codes unchecked. Dockerfile has inconsistent archive working directory and binary PATH. No build or workload executed.",
+    "No scientific claim about BBB transcytosis, affinity or therapy follows from pose recovery. AAV inputs support redocking only.",
+    "No gate scripts were named in the prompt or brief. JSON structure and required keys are checked locally; reproduction remains unperformed."
+  ]
+}
