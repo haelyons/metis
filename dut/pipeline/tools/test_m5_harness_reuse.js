@@ -17,6 +17,8 @@ const REQUIRED = ['setup.sh', 'run_anchors.sh', 'run_command.sh']
 const FAILING = { setup: ['setup.sh'], anchors: ['run_anchors.sh'], command: ['run_command.sh'], both: ['run_anchors.sh', 'run_command.sh'] }
 const REPAIR_TARGET = { anchors: 'run_anchors.sh', command: 'run_command.sh', both: 'both' }
 const operationOf = failure => failure === 'setup' ? 'setup' : 'anchors'
+const REPAIR_LIMITS = { setup: 4, anchors: 2 }
+const REPAIR_LABEL = { setup: 'harness-repair', anchors: 'anchors-repair' }
 const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
 const rows = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
 const sha = bytes => createHash('sha256').update(bytes).digest('hex')
@@ -127,10 +129,11 @@ function check(label, test) {
 }
 
 async function execute(name, config = {}) {
-  // Failing runs of the failing step: 1 (repair 1 passes), 2 (repair 2 passes) or 3 (exhausted).
-  const failures = !config.failure ? 0 : config.exhausted ? 3 : config.failures ?? 1
-  // SCHEMAS.md "A/harness/": up to two repairs per step, the same under reuse.
-  const repairCount = Math.min(failures, 2)
+  // SCHEMAS.md "A/harness/" (U46): up to four setup repairs and two anchors repairs, the same under reuse.
+  const limit = config.failure ? REPAIR_LIMITS[operationOf(config.failure)] : 0
+  // Failing runs of the failing step: k (repair k passes) or limit + 1 (exhausted: repair limit + 1 would pass).
+  const failures = !config.failure ? 0 : config.exhausted ? limit + 1 : config.failures ?? 1
+  const repairCount = Math.min(failures, limit)
   const root = path.join(scratch, name)
   const source = path.join(root, 'previous run', 'A', 'harness')
   const agent = path.join(root, 'agent')
@@ -179,7 +182,7 @@ visit(process.env.BOX_ROOT)
       { id: 'second', published_value: 0, tolerance: 0, quantity: 'fixture', source: 'fixture' }],
     measured: { first: 100, second: 0 },
     // The reused script fails, then each fake repair passes after `failures - 1` failing rewrites
-    // (tools/test_m5_reproduce.js): exhausted = both repairs fail too.
+    // (tools/test_m5_reproduce.js): exhausted = every permitted repair fails too.
     setupFailures: config.failure === 'setup' ? failures : 0,
     anchorsFailures: config.failure && config.failure !== 'setup' ? failures : 0,
     anchorsRepairTarget: REPAIR_TARGET[config.failure],
@@ -236,6 +239,15 @@ visit(process.env.BOX_ROOT)
       if (repairs.length) assert.match(repairs[0].name, /-retry1$/)
       // Every repair receives the fresh probe (checked above) and the run_command.sh rules (below).
     }
+  })
+  // SCHEMAS.md "A/harness/" (U46): each repair prompt states `repair attempt <n> of <limit>`, under reuse too.
+  if (config.failure) check(`${name}: repair prompts state attempt n of ${limit}`, () => {
+    const repairs = calls.filter(call => call.label === REPAIR_LABEL[operationOf(config.failure)])
+    repairs.forEach((call, i) => {
+      const stated = [...call.prompt.matchAll(/repair attempt (\d+) of (\d+)/g)].map(match => `${match[1]} of ${match[2]}`)
+      assert.ok(stated.length >= 1, `repair ${i + 1}: prompt lacks "repair attempt ${i + 1} of ${limit}"`)
+      assert.deepEqual([...new Set(stated)], [`${i + 1} of ${limit}`], `repair ${i + 1}: prompt states ${stated.join(', ')}`)
+    })
   })
   // SCHEMAS.md "The pipeline owns CUDA MPS": reused harnesses get the same rule in every repair prompt.
   check(`${name}: harness and repair prompts state the pipeline-owned CUDA MPS rule`, () => {
@@ -457,6 +469,9 @@ async function main() {
       await execute(`${failure}-repaired-twice`, { failure, failures: 2 })
       await execute(`${failure}-exhausted`, { failure, exhausted: true })
     }
+    // U46: a reused setup.sh passes after the third or fourth repair; modified marks setup.sh only.
+    await execute('setup-repaired-thrice', { failure: 'setup', failures: 3 })
+    await execute('setup-repaired-four-times', { failure: 'setup', failures: 4 })
     // An anchors repair that also edits setup.sh and run_evaluation.sh marks neither modified.
     await execute('both-repair-stray', { failure: 'both', stray: true })
     // Rewriting run_anchors.sh with identical bytes is not a change.

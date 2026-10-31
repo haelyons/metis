@@ -104,22 +104,29 @@ n=$((n + 1))
 printf '%s\\n' "$n" > .${name}-attempts
 ${failureLog(name, failures, version)}\n`
 }
-// SCHEMAS.md "A/harness/": setup and anchors each permit up to two repairs. `setupFailures` /
+// SCHEMAS.md "A/harness/" (U46): setup permits up to four repairs, anchors up to two. `setupFailures` /
 // `anchorsFailures` = N means the scripts written by the first N agent turns (harness, repair 1,
-// repair 2) fail on every run; later turns write passing scripts. `decline` names a repair label
-// whose first turn returns null; `setupRerunFetchFailure` makes every fetch fail once setup has
-// run twice (the rerun after repair 1 exits 0, but its fetch fails: an infrastructure failure).
+// repair 2, ...) fail on every run; later turns write passing scripts. `decline` names a repair label
+// whose turn `declineAt` (default 1) returns null; `setupRerunFetchFailure: k` (true = 1) makes every
+// fetch fail once setup has run k + 1 times (the rerun after repair k: an infrastructure failure);
+// `setupUploadFailureAt: k` makes the upload of repair k's setup.sh fail (setup never reruns).
+const REPAIR_LIMITS = { 'harness-repair': 4, 'anchors-repair': 2 }
+const rerunFetchFailureAt = config => config.setupRerunFetchFailure === true ? 1 : config.setupRerunFetchFailure || 0
 function ladder(config) {
-  const step = (failures, declined, infra) => {
+  const step = (failures, limit, declineAt, infraAt, uploadAt) => {
     if (!failures) return { repairs: 0, attempts: 1, passed: true, rcs: [0] }
-    if (declined) return { repairs: 1, attempts: 1, passed: false, rcs: [7] }
-    if (infra) return { repairs: 1, attempts: 2, passed: false, rcs: [7, 0] }
-    const repairs = Math.min(failures, 2)
-    const rcs = Array.from({ length: repairs + 1 }, (_, version) => version < failures ? 7 : 0)
+    const rc = version => version < failures ? 7 : 0
+    // The step ends at repair k: declined (no rerun), or its upload fails (no rerun).
+    for (const at of [declineAt, uploadAt]) if (at) return { repairs: at, attempts: at, passed: false, rcs: Array.from({ length: at }, (_, v) => rc(v)), uploadFailed: at === uploadAt }
+    // The rerun after repair k runs, but its fetch fails.
+    if (infraAt) return { repairs: infraAt, attempts: infraAt + 1, passed: false, rcs: Array.from({ length: infraAt + 1 }, (_, v) => rc(v)) }
+    const repairs = Math.min(failures, limit)
+    const rcs = Array.from({ length: repairs + 1 }, (_, version) => rc(version))
     return { repairs, attempts: repairs + 1, passed: rcs.at(-1) === 0, rcs }
   }
-  const setup = step(config.setupFailures, config.decline === 'harness-repair', config.setupRerunFetchFailure)
-  const anchors = setup.passed ? step(config.anchorsFailures, config.decline === 'anchors-repair', false)
+  const declineAt = label => config.decline === label ? config.declineAt ?? 1 : 0
+  const setup = step(config.setupFailures, REPAIR_LIMITS['harness-repair'], declineAt('harness-repair'), rerunFetchFailureAt(config), config.setupUploadFailureAt || 0)
+  const anchors = setup.passed ? step(config.anchorsFailures, REPAIR_LIMITS['anchors-repair'], declineAt('anchors-repair'), 0, 0)
     : { repairs: 0, attempts: 0, passed: false, rcs: [] }
   return { setup, anchors }
 }
@@ -131,8 +138,8 @@ module.exports = {
     // A fallback call (`-fb` name descriptor) belongs to the turn it falls back from.
     const earlier = rows(process.env.M5_REPRODUCE_CALLS).filter(call => call.label === title && !isFallbackName(call.name)).length
     const prior = isFallbackName(name) ? earlier - 1 : earlier
-    // A declined repair: every call of the first turn yields null and nothing is rewritten.
-    const declined = config.decline === title && prior === 0
+    // A declined repair: every call of turn `declineAt` (default 1) yields null and nothing is rewritten.
+    const declined = config.decline === title && prior === (config.declineAt ?? 1) - 1
     fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name, declined, probeFetched: fs.existsSync(path.join(root, 'agent', 'results', 'probe', 'probe.json')) }) + '\n')
     if (config.agentDelayMs) await new Promise(resolve => setTimeout(resolve, config.agentDelayMs))
     const agent = path.join(root, 'agent')
@@ -393,14 +400,24 @@ fi
   script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\n' + anchorSnapshot + 'bash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
   // freezeFailure 'fetch': every fetch of the freeze log fails, so the freeze receipt has fetched=false.
   const failingFreezeFetch = config.freezeFailure === 'fetch' ? `[[ $source != *-reproduce-freeze.log ]] || { echo 'simulated failed fetch' >&2; exit 1; }\n` : ''
-  // setupRerunFetchFailure: once setup has run twice (the rerun after repair 1), every fetch fails.
+  // setupRerunFetchFailure k: once setup has run k + 1 times (the rerun after repair k), every fetch fails.
   const failingRerunFetch = config.setupRerunFetchFailure ? `for attempts in "$BOX_ROOT"/m5-*/.setup-attempts; do
   if [[ -f $attempts ]]; then
     read -r n < "$attempts"
-    if (( n >= 2 )); then echo 'simulated failed fetch' >&2; exit 1; fi
+    if (( n >= ${rerunFetchFailureAt(config) + 1} )); then echo 'simulated failed fetch' >&2; exit 1; fi
   fi
 done
 ` : ''
+  // setupUploadFailureAt k: once setup has run k times, base64 on the box fails, so the upload of
+  // repair k's setup.sh (`printf %s <chunk> | base64 -d >> harness/setup.sh` under `set -e`) fails.
+  const realBase64 = spawnSync('/bin/bash', ['-c', 'command -v base64'], { encoding: 'utf8' }).stdout.trim()
+  script(path.join(boxBin, 'base64'), (config.setupUploadFailureAt ? `for attempts in "$BOX_ROOT"/m5-*/.setup-attempts; do
+  if [[ -f $attempts ]]; then
+    read -r n < "$attempts"
+    if (( n >= ${Number(config.setupUploadFailureAt)} )); then echo 'simulated failed upload' >&2; exit 1; fi
+  fi
+done
+` : '') + `exec '${realBase64}' "$@"`)
   script(path.join(root, 'bin', 'fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\ncd -- "$BOX_ROOT"\n' + failingFetch + failingFreezeFetch + failingRerunFetch + 'exec cp -r -- "$source" "$2"')
   const callsFile = path.join(root, 'calls.jsonl')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w')
@@ -441,7 +458,7 @@ done
     assert.equal(signature.error_class, errorClass)
     assert.equal(signature.exit_code, errorClass === 'anchor' ? 4 : errorClass === 'timeout' ? 3 : 2)
   })
-  // SCHEMAS.md "A/harness/": up to two repairs per step; "Each repair receives the failure class and at
+  // SCHEMAS.md "A/harness/": up to four setup and two anchors repairs; "Each repair receives the failure class and at
   // most the last 200 log lines of the latest failed attempt."
   const expected = ladder(config)
   check(`${name}: one harness call and bounded repairs (setup ${expected.setup.repairs}, anchors ${expected.anchors.repairs})`, () => {
@@ -462,6 +479,19 @@ done
         for (let earlier = 0; earlier < i; earlier++)
           assert.ok(!call.prompt.includes(`${SENTINEL}:${script}:v${earlier}:`), `${label} ${i + 1}: prompt carries an earlier attempt's log (v${earlier})`)
       })
+    }
+  })
+  // SCHEMAS.md "A/harness/" (U46): each repair prompt states `repair attempt <n> of <limit>`, with limit 4
+  // for setup and 2 for anchors; a fallback call states its turn's attempt number.
+  check(`${name}: repair prompts state their attempt number and the step's limit`, () => {
+    for (const [label, limit] of Object.entries(REPAIR_LIMITS)) {
+      let turn = 0
+      for (const call of calls.filter(call => call.label === label)) {
+        if (!isFallbackName(call.name)) turn++
+        const stated = [...call.prompt.matchAll(/repair attempt (\d+) of (\d+)/g)].map(match => `${match[1]} of ${match[2]}`)
+        assert.ok(stated.length >= 1, `${label} ${turn}: prompt lacks "repair attempt ${turn} of ${limit}"`)
+        assert.deepEqual([...new Set(stated)], [`${turn} of ${limit}`], `${label} ${turn}: prompt states ${stated.join(', ')}`)
+      }
     }
   })
   check(`${name}: harness and repair prompts state the pipeline-owned CUDA MPS rule`, () => {
@@ -600,7 +630,13 @@ done
     // The setup repair rewrites only setup.sh: one upload before each rerun.
     for (let k = 1; k < setupAttempts.length; k++) assert.equal(setupAttempts[k] - setupAttempts[k - 1], 2, `setup rerun ${k} not preceded by exactly one upload`)
     for (const k of setupAttempts.slice(1)) assert.equal(receipts[k - 1].operation, 'upload')
-    assert.equal(count('upload'), firstSetup + (expected.setup.attempts - 1) + anchorsRepairUploads + (stoppedAt === 'reproduce' ? 0 : 1),
+    // A failed repair upload is one more upload than setup reruns, and the last box command.
+    if (expected.setup.uploadFailed) {
+      assert.equal(receipts.at(-1).operation, 'upload', 'setup ran after its repair upload failed')
+      assert.notEqual(receipts.at(-1).rc, 0, 'the failing upload did not fail')
+      assert.ok(receipts.slice(0, -1).every(receipt => receipt.operation !== 'upload' || receipt.rc === 0), 'an earlier upload failed')
+    }
+    assert.equal(count('upload'), firstSetup + (expected.setup.attempts - 1) + (expected.setup.uploadFailed ? 1 : 0) + anchorsRepairUploads + (stoppedAt === 'reproduce' ? 0 : 1),
       receipts.map(receipt => `${receipt.operation}:${receipt.rc}`).join(','))
     const operations = receipts.map(receipt => `${receipt.operation}:${receipt.rc}`).join(',')
     assert.equal(count('setup'), expected.setup.attempts, operations)
@@ -878,23 +914,28 @@ function repairUploadChecks(name, run) {
     for (const file of ['stray-anchors', 'stray-command']) assert.ok(!fs.existsSync(path.join(remote, 'out', file)), `${file}: stray script ran`)
   })
 }
-// SCHEMAS.md "A/harness/": "The second repair runs only after the first repaired script ran and failed
+// SCHEMAS.md "A/harness/": "Each later repair runs only after the previous repaired script ran and failed
 // again ... After each repair every rewritten script is recopied, then the step reruns once with its
-// original budget." When repair 2 starts, the box holds repair 1's rewrite and the untouched originals.
+// original budget." When repair k (k >= 2) starts, the box holds repair k-1's rewrite and the untouched originals.
 function secondRepairChecks(name, run, label) {
   const { root, config } = run
-  check(`${name}: repair 1's rewrite was on the box before repair 2, other scripts unchanged`, () => {
-    const at = path.join(root, `remote-at-${label}-2`)
+  const step = ladder(config)[label === 'harness-repair' ? 'setup' : 'anchors']
+  check(`${name}: each repair's rewrite was on the box before the next repair (${label} 2..${step.repairs}), other scripts unchanged`, () => {
+    assert.ok(step.repairs >= 2, 'case has fewer than two repairs')
     const original = path.join(root, `pre-${label}`)
     const rewritten = label === 'harness-repair' ? ['setup.sh'] : anchorsRepairScripts(config)
-    for (const file of rewritten) {
-      assert.notDeepEqual(bytesOf(path.join(root, `post-${label}-1`, file)), bytesOf(path.join(original, file)), `${file}: fixture repair 1 did not rewrite it`)
-      assert.deepEqual(bytesOf(path.join(at, file)), bytesOf(path.join(root, `post-${label}-1`, file)), `${file}: repair 1 rewrite not on the box`)
-    }
-    // Scripts outside the repair's scope, where already uploaded, keep their original bytes.
-    for (const file of ['setup.sh', 'run_anchors.sh', 'run_command.sh'].filter(file => !rewritten.includes(file))) {
-      const remote = bytesOf(path.join(at, file))
-      if (remote) assert.deepEqual(remote, bytesOf(path.join(original, file)), `${file}: changed on the box by ${label} 1`)
+    for (let k = 2; k <= step.repairs; k++) {
+      const at = path.join(root, `remote-at-${label}-${k}`)
+      const previous = path.join(root, `post-${label}-${k - 1}`)
+      for (const file of rewritten) {
+        assert.notDeepEqual(bytesOf(path.join(previous, file)), bytesOf(path.join(original, file)), `${file}: fixture repair ${k - 1} did not rewrite it`)
+        assert.deepEqual(bytesOf(path.join(at, file)), bytesOf(path.join(previous, file)), `${file}: repair ${k - 1} rewrite not on the box before repair ${k}`)
+      }
+      // Scripts outside the repair's scope, where already uploaded, keep their original bytes.
+      for (const file of ['setup.sh', 'run_anchors.sh', 'run_command.sh'].filter(file => !rewritten.includes(file))) {
+        const remote = bytesOf(path.join(at, file))
+        if (remote) assert.deepEqual(remote, bytesOf(path.join(original, file)), `${file}: changed on the box by ${label} ${k - 1}`)
+      }
     }
   })
 }
@@ -1575,20 +1616,43 @@ async function main() {
       const repairedTwice = await runCase('setup-repaired-twice', { setupFailures: 2 })
       reproduceFacts('setup-repaired-twice', repairedTwice, 2, 2)
       secondRepairChecks('setup-repaired-twice', repairedTwice, 'harness-repair')
-      // Three setup failures exhaust both repairs: install, exit 2, no third repair.
-      const install = await runCase('setup-thrice-failed', { setupFailures: 3 }, 'reproduce', 'install')
-      reproduceFacts('setup-thrice-failed', install, null, null, false)
-      secondRepairChecks('setup-thrice-failed', install, 'harness-repair')
-      // A declined (null) first repair ends the step: no rerun, no second repair.
-      const declined = await runCase('setup-repair-declined', { setupFailures: 3, decline: 'harness-repair' }, 'reproduce', 'install')
+      // U46: setup passes after the third or the fourth repair; the step continues to anchors.
+      for (const [name, setupFailures] of [['setup-repaired-thrice', 3], ['setup-repaired-four-times', 4]]) {
+        const run = await runCase(name, { setupFailures })
+        reproduceFacts(name, run, 2, 2)
+        scoredFile(name, run)
+        secondRepairChecks(name, run, 'harness-repair')
+      }
+      // Five setup failures exhaust all four repairs: five setup runs, install, exit 2, no fifth repair
+      // (a fifth repair would write a passing setup.sh).
+      const install = await runCase('setup-exhausted', { setupFailures: 5 }, 'reproduce', 'install')
+      reproduceFacts('setup-exhausted', install, null, null, false)
+      secondRepairChecks('setup-exhausted', install, 'harness-repair')
+      // A declined (null) repair ends the step: no rerun, no later repair (first turn, and third turn).
+      const declined = await runCase('setup-repair-declined', { setupFailures: 5, decline: 'harness-repair' }, 'reproduce', 'install')
       // The null attempts report no usage, so tokens_known is false.
       reproduceFacts('setup-repair-declined', declined, null, null, false, false)
+      const declinedThird = await runCase('setup-repair-declined-third', { setupFailures: 5, decline: 'harness-repair', declineAt: 3 }, 'reproduce', 'install')
+      reproduceFacts('setup-repair-declined-third', declinedThird, null, null, false, false)
       // The rerun after repair 1 exits 0 but its fetch fails: infra ends the step, no second repair.
       const rerunInfra = await runCase('setup-rerun-fetch-failed', { setupFailures: 1, setupRerunFetchFailure: true }, 'reproduce', 'infra')
       check('setup-rerun-fetch-failed: anchor counts stay null', () => {
         const facts = rerunInfra.stage('reproduce').facts
         assert.deepEqual([facts.anchors_passed, facts.anchors_total], [null, null])
       })
+      // The rerun after repair 3 exits 0 but its fetch fails ("failed fetch after a successful command"):
+      // infra ends the step, no fourth repair.
+      const rerunInfraThird = await runCase('setup-rerun-fetch-failed-third', { setupFailures: 3, setupRerunFetchFailure: 3 }, 'reproduce', 'infra')
+      check('setup-rerun-fetch-failed-third: anchor counts stay null', () => {
+        const facts = rerunInfraThird.stage('reproduce').facts
+        assert.deepEqual([facts.anchors_passed, facts.anchors_total], [null, null])
+      })
+      // The upload of repair 3's setup.sh fails: infra ends the step; setup never reruns, no fourth repair.
+      const uploadFailed = await runCase('setup-repair-upload-failed-third', { setupFailures: 5, setupUploadFailureAt: 3 }, 'reproduce', 'infra')
+      reproduceFacts('setup-repair-upload-failed-third', uploadFailed, null, null, false)
+      secondRepairChecks('setup-repair-upload-failed-third', uploadFailed, 'harness-repair')
+      const uploadFailedFirst = await runCase('setup-repair-upload-failed', { setupFailures: 5, setupUploadFailureAt: 1 }, 'reproduce', 'infra')
+      reproduceFacts('setup-repair-upload-failed', uploadFailedFirst, null, null, false)
       const anchorsRepaired = await runCase('anchors-repaired', { anchorsFailures: 1 })
       reproduceFacts('anchors-repaired', anchorsRepaired, 2, 2)
       const anchorsTwice = await runCase('anchors-repaired-twice', { anchorsFailures: 2 })
