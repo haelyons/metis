@@ -1,0 +1,8 @@
+{
+  "prerequisite": "data",
+  "cause": "source_moved",
+  "materials_usable": false,
+  "alternative": "unverified_mirror",
+  "run5_brief": "original",
+  "owner_action": "supply_materials"
+}
