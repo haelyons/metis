@@ -1,0 +1,8 @@
+{
+  "codex_limit_error": "no",
+  "harness_family": "codex",
+  "setup_repairs_family": "codex",
+  "anchors_repairs_family": "codex",
+  "call_lost": "no",
+  "course_changed": "no"
+}
