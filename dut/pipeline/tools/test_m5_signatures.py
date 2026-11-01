@@ -599,6 +599,34 @@ def main():
         check("reject headroom on a non-profile stage",
               lambda: rejected(invalid, stage="reproduce",
                                facts=dict(FACTS["reproduce"], headroom=2.2)))
+        # SCHEMAS.md profile facts (U49): optional `host_only`, the packet's boolean or null
+        # when no packet was written; optional so older records stay valid; null on SKIPPED/stub.
+        host_only = root / "host-only"
+        for value in (True, False, None):
+            check("accept profile host_only=" + repr(value),
+                  lambda v=value: accepted(host_only, "profile",
+                                           facts=dict(FACTS["profile"], host_only=v)))
+            check("accept profile host_only=%r with headroom" % (value,),
+                  lambda v=value: accepted(host_only, "profile",
+                                           facts=dict(FACTS["profile"], headroom=2.2, host_only=v)))
+        check("accept profile without optional host_only",
+              lambda: accepted(host_only, "profile", facts=FACTS["profile"]))
+        check("accept FAIL profile with null host_only (parse, no packet)",
+              lambda: accepted(host_only, "profile", "FAIL",
+                               facts=dict(FACTS["profile"], profile_complete=False,
+                                          headroom=None, host_only=None),
+                               v1=dict(exit_code=2, exit_kind="guard", error_class="parse")))
+        check("accept SKIPPED profile with null headroom and host_only",
+              lambda: accepted(host_only, "profile", "SKIPPED",
+                               facts=dict.fromkeys(list(FACTS["profile"]) + ["headroom", "host_only"])))
+        for value in ("true", "false", "True", "", "null", SENTINEL, 1, 0, 1.0, 0.0,
+                      math.nan, [], [True], {"host_only": True}):
+            check("reject profile host_only=" + repr(value),
+                  lambda v=value: rejected(invalid, stage="profile",
+                                           facts=dict(FACTS["profile"], host_only=v)))
+        check("reject host_only on a non-profile stage",
+              lambda: rejected(invalid, stage="reproduce",
+                               facts=dict(FACTS["reproduce"], host_only=True)))
         # SCHEMAS.md A/intake/: optional intake `anchored` (boolean); null on stub records.
         anchored = root / "anchored"
         for value in (True, False, None):

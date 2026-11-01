@@ -24,7 +24,7 @@ return (async () => {
   const fields = {
     intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size', 'anchored', 'licence_basis'],
     reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid'],
-    profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom'],
+    profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom', 'host_only'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
     propose: ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass',
       'votes_reject', 'votes_abstain', 'outcome'],
@@ -392,6 +392,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       facts.profile_complete = false
       facts.timed_fraction = null
       facts.gpu_telemetry = null
+      facts.host_only = null
       rmSync(path.join(A, 'profile-packet.json'), { force: true })
       try {
         const directory = path.join(destination, 'out', 'profile')
@@ -423,14 +424,21 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         facts.profile_complete = true
         facts.timed_fraction = Math.min(1, timedWall / total_wall_s)
         facts.gpu_telemetry = gpuUtil.length > 0
+        const hostOnly = gpuUtil.length > 0 && gpuUtil.every(item => item.util === 0)
+          && ['kernels', 'memcpy H2D', 'memcpy D2H', 'CUDA API host time'].every(name => {
+            const rows = stages.filter(item => item.stage === name)
+            return rows.length > 0 && rows.every(item => item.wall_s === 0 && (item.gpu_s === 0 || item.gpu_s === null))
+          })
         writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify({
-          stages: measuredStages, total_wall_s, concurrency: null,
+          stages: measuredStages, total_wall_s, concurrency: null, host_only: hostOnly,
           timed_fraction: facts.timed_fraction, gpu_telemetry: facts.gpu_telemetry,
           gpu_count: Number.isInteger(allocationCount) && allocationCount >= 0 ? allocationCount
             : Array.isArray(boxProbe?.nvidia?.gpus) ? boxProbe.nvidia.gpus.length : 1,
         }, null, 2) + '\n')
+        facts.host_only = hostOnly
         const processWrapper = stages.some(item => /(?:^|[\s_-])(?:process|wrapper|telemetry|total|overall)(?:$|[\s_-])/i.test(item.stage)
-          || (item.wall_s >= total_wall_s * 0.98 && item.wall_s <= total_wall_s * 1.02))
+          || (!(hostOnly && item.stage === 'other host time')
+            && item.wall_s >= total_wall_s * 0.98 && item.wall_s <= total_wall_s * 1.02))
         return stages.length >= 3 && !processWrapper && facts.timed_fraction >= 0.9 && facts.gpu_telemetry
           ? null : 'numeric'
       } catch {

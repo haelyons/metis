@@ -844,7 +844,7 @@ function freezeChecks(name, root, config, stage, stoppedAt) {
   })
 }
 // SCHEMAS.md "Concurrency probe" and the profile packet `concurrency` bullet.
-const VALID_PROBE_MODES = { valid: fixture.VALID_CONCURRENCY, 'valid-null': fixture.NULL_CONCURRENCY }
+const VALID_PROBE_MODES = { valid: fixture.VALID_CONCURRENCY, 'valid-null': fixture.NULL_CONCURRENCY, 'valid-wide': fixture.WIDE_CONCURRENCY }
 function concurrencyChecks(name, root, config, stage, stoppedAt) {
   const ran = stoppedAt === null
   const mode = config.concurrency ?? 'real'
@@ -1109,13 +1109,27 @@ function scoredFile(name, run, expectedRows) {
       anchors_total: anchorRows.length, all_passed: anchorRows.every(row => row.passed), references_total: rows.length - anchorRows.length })
   })
 }
-function profileFacts(name, run, fraction) {
+// SCHEMAS.md packet `host_only` (U49): true exactly when the rows `kernels`, `memcpy H2D`, `memcpy D2H`
+// and `CUDA API host time` are all present, each with wall_s 0 and gpu_s 0 or null, and gpu_util.json
+// holds at least one sample and every sample's util is 0. Otherwise false.
+const CUDA_ROWS = ['kernels', 'memcpy H2D', 'memcpy D2H', 'CUDA API host time']
+function expectedHostOnly(timings, telemetry) {
+  return CUDA_ROWS.every(name => {
+    const matching = timings.filter(row => row.stage === name)
+    return matching.length > 0 && matching.every(row => row.wall_s === 0 && (row.gpu_s === 0 || row.gpu_s === null))
+  }) && telemetry.length > 0 && telemetry.every(sample => sample.util === 0)
+}
+// `hostOnly`: the value the case was built to produce (checked in addition to the file-derived value).
+function profileFacts(name, run, fraction, hostOnly = undefined) {
   check(`${name}: profile packet and facts derived from files`, () => {
     const input = path.join(run.root, 'agent', 'results', 'profile', 'out', 'profile')
     const timings = readJSON(path.join(input, 'stages.json'))
     const total = readJSON(path.join(input, 'total_wall_s.json')).total_wall_s
     const packet = readJSON(path.join(run.root, 'agent', 'profile-packet.json'))
-    assert.deepEqual(Object.keys(packet).sort(), ['concurrency', 'gpu_count', 'gpu_telemetry', 'stages', 'timed_fraction', 'total_wall_s'])
+    assert.deepEqual(Object.keys(packet).sort(), ['concurrency', 'gpu_count', 'gpu_telemetry', 'host_only', 'stages', 'timed_fraction', 'total_wall_s'])
+    assert.equal(typeof packet.host_only, 'boolean', 'packet host_only must be a boolean')
+    assert.equal(packet.host_only, expectedHostOnly(timings, readJSON(path.join(input, 'gpu_util.json'))), 'packet host_only')
+    if (hostOnly !== undefined) assert.equal(packet.host_only, hostOnly, 'packet host_only (case expectation)')
     const telemetry = readJSON(path.join(input, 'gpu_util.json'))
     assert.deepEqual(packet.stages, timings.map(({ stage, wall_s, gpu_s, kind, start_s = null }) => {
       const samples = start_s === null ? [] : telemetry.filter(({ t }) => t >= start_s && t < start_s + wall_s)
@@ -1142,7 +1156,7 @@ function profileFacts(name, run, fraction) {
     } else assert.deepEqual([timed_out, budget_s, overrun], [undefined, undefined, undefined], 'timeout fields without a timeout')
     assert.deepEqual(facts, { profile_complete: true, timed_fraction: fraction,
       gpu_telemetry: packet.gpu_telemetry, tokens_known: false, gpu_busy_known: false,
-      headroom: packet.concurrency === null ? null : packet.concurrency.factor })
+      headroom: packet.concurrency === null ? null : packet.concurrency.factor, host_only: packet.host_only })
     assert.equal(run.stage('profile').signature.gpu_s, 0)
     assert.ok(fs.readFileSync(path.join(input, 'raw-telemetry.txt'), 'utf8').includes(SENTINEL))
   })
@@ -1669,6 +1683,98 @@ function boundsCliTests() {
   }
 }
 
+// U49, SCHEMAS.md "A/results/profile/ and A/profile-packet.json": host-only profile gate.
+// Rows exactly as the fixed-profiler summariser writes them for a run without CUDA activity
+// (gpu_s 0, 0, 0, null; `other host time` is the wall remainder, here the whole command).
+const hostRows = (other = 10, edits = {}) => [
+  { stage: 'kernels', kind: 'compute', wall_s: 0, gpu_s: 0 },
+  { stage: 'memcpy H2D', kind: 'transfer', wall_s: 0, gpu_s: 0 },
+  { stage: 'memcpy D2H', kind: 'transfer', wall_s: 0, gpu_s: 0 },
+  { stage: 'CUDA API host time', kind: 'other', wall_s: 0, gpu_s: null },
+  { stage: 'other host time', kind: 'other', wall_s: other, gpu_s: null },
+].flatMap(row => !Object.hasOwn(edits, row.stage) ? [row] : edits[row.stage] === null ? [] : [{ ...row, ...edits[row.stage] }])
+// timed_fraction = min(1, sum(stage.wall_s) / total_wall_s), total 10 in every case.
+const fractionOf = timings => Math.min(1, timings.reduce((sum, row) => sum + row.wall_s, 0) / 10)
+const HOST_UTIL = [{ t: 0, util: 0 }, { t: 1, util: 0 }, { t: 2.5, util: 0 }, { t: 6, util: 0 }, { t: 9, util: 0 }]
+async function hostOnlyTests() {
+  // 1. Host-only profile passes; packet and facts record host_only true; the probe runs (command mode:
+  // the fake harness has no run_units.sh / units.json, so U50 unit mode does not apply).
+  for (const [name, other] of [['u49-host-only', 10], ['u49-host-only-within-2pct', 9.9]]) {
+    // 'valid-wide' (factor 5): see WIDE_CONCURRENCY in m5_profile_fixture.js.
+    const run = await runCase(name, { timings: hostRows(other), gpuUtil: HOST_UTIL, concurrency: 'valid-wide' })
+    profileFacts(name, run, fractionOf(hostRows(other)), true)
+    check(`${name}: every stage after profile proceeds (diagnostic)`, () => {
+      const summary = STAGES.map(label => { const row = run.stage(label); return `${label}=${row.signature.status}` +
+        (row.signature.status === 'FAIL' ? `(${row.signature.error_class}; blockers ${JSON.stringify(row.signature.blockers)}; facts ${JSON.stringify(row.facts)})` : '') })
+      assert.ok(STAGES.every(label => run.stage(label).signature.status === 'PASS'), summary.join(' '))
+    })
+    check(`${name}: gate passes despite other host time within 2% of total wall; probe ran`, () => {
+      const signature = run.stage('profile').signature
+      assert.equal(signature.status, 'PASS')
+      assert.equal(run.stage('profile').facts.host_only, true)
+      const receipts = fs.readdirSync(path.join(run.root, 'control', 'receipts')).filter(file => /^\d{4}-concurrency\.json$/.test(file))
+      assert.equal(receipts.length, 1, 'concurrency probe did not run after the passing gate')
+      const calls = rows(path.join(run.root, 'concurrency-calls.jsonl'))
+      assert.equal(calls.length, 1)
+      assert.equal(calls[0].argv[1], 'harness/run_command.sh', 'command mode expected without unit harness files')
+      assert.deepEqual(readJSON(path.join(run.root, 'agent', 'profile-packet.json')).concurrency, fixture.WIDE_CONCURRENCY)
+    })
+    // "A host-only profile leaves the pipelining and multi-GPU bounds at 1 (no transfer or compute time)."
+    check(`${name}: pipelining and multi-GPU see no transfer or compute time`, () => {
+      const bounds = readJSON(path.join(run.root, 'agent', 'bounds.json'))
+      assert.equal(bounds.pipelining.p, 0)
+      assert.ok(Math.abs(bounds.pipelining.bound - 1) < 1e-12, `pipelining bound ${bounds.pipelining.bound}`)
+      assert.equal(bounds['multi-GPU'].p, 0)
+      assert.ok(Math.abs(bounds['multi-GPU'].k_derivation.amdahl - 1) < 1e-12, `multi-GPU amdahl ${bounds['multi-GPU'].k_derivation.amdahl}`)
+    })
+  }
+  // 2. Not host-only: gated exactly as before, so `other host time` within 2% of total wall is a
+  // wrapper and the gate fails as numeric; the probe does not run (concurrencyChecks: no receipt).
+  const notHostOnly = [
+    ['util-positive', { timings: hostRows(), gpuUtil: [...HOST_UTIL.slice(0, 2), { t: 2.5, util: 1 }, ...HOST_UTIL.slice(3)] }],
+    ['kernels-wall', { timings: hostRows(9.9, { kernels: { wall_s: 0.1 } }), gpuUtil: HOST_UTIL }],
+    ['h2d-gpu', { timings: hostRows(10, { 'memcpy H2D': { gpu_s: 0.05 } }), gpuUtil: HOST_UTIL }],
+    ['d2h-wall', { timings: hostRows(9.9, { 'memcpy D2H': { wall_s: 0.1, gpu_s: 0.1 } }), gpuUtil: HOST_UTIL }],
+    ['api-wall', { timings: hostRows(9.9, { 'CUDA API host time': { wall_s: 0.1 } }), gpuUtil: HOST_UTIL }],
+    ['api-gpu', { timings: hostRows(10, { 'CUDA API host time': { gpu_s: 0.05 } }), gpuUtil: HOST_UTIL }],
+    ['empty-telemetry', { timings: hostRows(), gpuUtil: [] }],
+    ['missing-kernels-row', { timings: hostRows(10, { kernels: null }), gpuUtil: HOST_UTIL }],
+    ['missing-api-row', { timings: hostRows(10, { 'CUDA API host time': null }), gpuUtil: HOST_UTIL }],
+  ]
+  for (const [label, overrides] of notHostOnly) {
+    const name = `u49-not-host-only-${label}`
+    const run = await runCase(name, { ...overrides, concurrency: 'valid' }, 'profile', 'numeric')
+    profileFacts(name, run, fractionOf(overrides.timings), false)
+    check(`${name}: host_only false, 2% wrapper test fails the gate, probe not run`, () => {
+      assert.equal(run.stage('profile').facts.host_only, false)
+      assert.equal(run.stage('profile').facts.profile_complete, true)
+      assert.equal(rows(path.join(run.root, 'concurrency-calls.jsonl')).length, 0, 'probe ran after a failed gate')
+    })
+  }
+  // 3. The exemption covers only the 2% test of `other host time`.
+  const exemptOnly = [
+    ['named-wrapper', [...hostRows(), { stage: 'process total', kind: 'other', wall_s: 0, gpu_s: null }]],
+    ['named-wrapper-underscore', [...hostRows(9.9), { stage: 'Overall_step', kind: 'other', wall_s: 0.1, gpu_s: null }]],
+    ['low-coverage', hostRows(8.9)],
+  ]
+  for (const [label, timings] of exemptOnly) {
+    const name = `u49-host-only-${label}`
+    const run = await runCase(name, { timings, gpuUtil: HOST_UTIL, concurrency: 'valid' }, 'profile', 'numeric')
+    profileFacts(name, run, fractionOf(timings), true)
+    check(`${name}: host-only profile still fails the other gate conditions; probe not run`, () => {
+      assert.equal(run.stage('profile').facts.host_only, true)
+      assert.equal(rows(path.join(run.root, 'concurrency-calls.jsonl')).length, 0, 'probe ran after a failed gate')
+    })
+  }
+  // 5. SKIPPED profile record (reproduce failed before profiling): host_only null.
+  const skipped = await runCase('u49-profile-skipped', { probeFailure: 'rc' }, 'reproduce', 'infra')
+  check('u49-profile-skipped: SKIPPED profile record has host_only null', () => {
+    const row = skipped.stage('profile')
+    assert.equal(row.signature.status, 'SKIPPED')
+    assert.ok(Object.hasOwn(row.facts, 'host_only'), 'SKIPPED profile record lacks host_only')
+    assert.equal(row.facts.host_only, null)
+  })
+}
 async function main() {
   try {
     if (!process.argv.includes('--profile-only')) {
@@ -1818,6 +1924,11 @@ async function main() {
         assert.equal(profileFailed.stage('profile').facts.profile_complete, false)
         assert.equal(profileFailed.stage('profile').facts.tokens_known, false)
       })
+      check('profile-infra: host_only null (no packet written)', () => {
+        const facts = profileFailed.stage('profile').facts
+        assert.ok(Object.hasOwn(facts, 'host_only'), 'executed profile stage must emit host_only')
+        assert.equal(facts.host_only, null)
+      })
       const independent = await runCase('each-script-repaired', { setupFailures: 1, anchorsFailures: 1 })
       reproduceFacts('each-script-repaired', independent, 2, 2)
       profileFacts('each-script-repaired', independent, 0.95)
@@ -1837,7 +1948,7 @@ async function main() {
     for (const wall of [9.8, 10, 10.2]) {
       const name = `duration-wrapper-${wall}`
       const wrapper = await runCase(name, { timings: [...TIMINGS, { stage: 'baseline', wall_s: wall, gpu_s: null }] }, 'profile', 'numeric')
-      profileFacts(name, wrapper, 1)
+      profileFacts(name, wrapper, 1, false)
     }
     const namedWrapper = await runCase('named-wrapper', { timings: [...TIMINGS, { stage: 'BASELINE_Process', wall_s: 0.1, gpu_s: null }] }, 'profile', 'numeric')
     profileFacts('named-wrapper', namedWrapper, 0.96)
@@ -1845,8 +1956,16 @@ async function main() {
     check('missing-gpu-util: incomplete profile despite numeric GPU stage times', () => {
       assert.equal(noTelemetry.stage('profile').facts.profile_complete, false)
     })
+    // U49: "optional `host_only`: the packet's `host_only` boolean, or null when no packet was written".
+    check('missing-gpu-util: parse failure writes no packet and emits host_only null', () => {
+      assert.ok(!fs.existsSync(path.join(noTelemetry.root, 'agent', 'profile-packet.json')), 'packet written on parse failure')
+      const facts = noTelemetry.stage('profile').facts
+      assert.ok(Object.hasOwn(facts, 'host_only'), 'executed profile stage must emit host_only')
+      assert.equal(facts.host_only, null)
+    })
     const emptyTelemetry = await runCase('empty-gpu-util', { gpuUtil: [] }, 'profile', 'numeric')
     profileFacts('empty-gpu-util', emptyTelemetry, 0.95)
+    await hostOnlyTests()
     // Passing profile gate: the concurrency probe runs and can never fail the stage.
     // The harness command unsets CUDA_MPS_*: the real probe must not record MPS.
     const cleared = await runCase('concurrency-real-mps-cleared', { concurrency: 'real', clearMps: true })
@@ -1855,7 +1974,7 @@ async function main() {
       ['invalid-json'], ['invalid-extra-key'], ['invalid-batch-order'], ['invalid-nonfinite'], ['invalid-singles']]) {
       const name = `concurrency-${mode}`
       const run = await runCase(name, { concurrency: mode, ...extra })
-      profileFacts(name, run, 0.95)
+      profileFacts(name, run, 0.95, false)
     }
     // Recorded run11 (positive-openmm): the probe exited 0 but its out/ and log fetches failed,
     // so the packet lost a valid calibration. One failed attempt each must now be retried into the
