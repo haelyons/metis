@@ -2,12 +2,12 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2|run8_family|run8_diag|run8_diag2] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -85,6 +85,43 @@ if a.dir == "run7_diag2":
         "third_fix_outlook": {"likely_passes_setup", "likely_another_error", "unknown"},
         "smallest_fix": {"more_repairs", "static_check_before_upload", "harness_prompt_rule", "repair_prompt_context", "setup_split", "unknown"},
     }
+if a.dir == "run8_family":
+    family = {"codex", "opus", "opencode", "mixed", "none_run", "unknown"}
+    ENUMS = {
+        "codex_limit_error": {"yes", "no", "unknown"},
+        "harness_family": {"codex", "opus", "opencode", "unknown"},
+        "setup_repairs_family": family,
+        "anchors_repairs_family": family,
+        "call_lost": {"yes", "no", "unknown"},
+        "course_changed": {"yes", "no", "unknown"},
+    }
+if a.dir == "run8_diag":
+    point = {"script_error", "workload_error", "workload_too_long", "output_parse", "missing_input", "other", "unknown"}
+    ENUMS = {
+        "attempt1_point": point,
+        "attempt2_point": point,
+        "attempt3_point": point,
+        "workload_completed": {"yes", "partly", "no", "unknown"},
+        "budget_fit": {"fits", "too_small", "unknown"},
+        "budget_source": {"intake_execution", "pipeline_default", "other", "unknown"},
+        "measured_values": {"all", "some", "none", "unknown"},
+        "out_size": {"under_100mb", "100mb_to_1gb", "over_1gb", "unknown"},
+        "fetch_dominates_wall": {"yes", "no", "unknown"},
+        "materials_issue": {"yes", "no", "unknown"},
+        "tail_had_cause": {"all", "some", "none", "unknown"},
+        "repairs_targeted_cause": {"all", "some", "none", "unknown"},
+        "overrun_misled": {"yes", "no", "unknown"},
+        "smallest_fix": {"more_anchor_repairs", "anchors_budget", "repair_prompt_context", "harness_prompt_rule", "output_size_rule", "materials", "brief", "unknown"},
+    }
+if a.dir == "run8_diag2":
+    ENUMS = {
+        "anchors_runtime": {"under_20m", "20m_to_1h", "1h_to_3h", "3h_to_6h", "6h_to_12h", "over_12h", "unknown"},
+        "runtime_basis": {"published", "partial_progress", "both", "none"},
+        "profile_same_workload": {"yes", "no", "unknown"},
+        "profile_runtime_factor": {"under_2x", "2x_to_5x", "over_5x", "unknown"},
+        "ceiling_fits_anchors": {"yes_with_repair", "yes_no_repair", "no", "unknown"},
+        "scale": {"published", "reduced", "unknown"},
+    }
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
     ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
@@ -113,7 +150,7 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2"):
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()
