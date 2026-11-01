@@ -140,8 +140,11 @@ module.exports = {
     const prior = isFallbackName(name) ? earlier - 1 : earlier
     // A declined repair: every call of turn `declineAt` (default 1) yields null and nothing is rewritten.
     const declined = config.decline === title && prior === (config.declineAt ?? 1) - 1
-    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name, declined, probeFetched: fs.existsSync(path.join(root, 'agent', 'results', 'probe', 'probe.json')) }) + '\n')
+    // `ms`: when the call reached the fake agent (its prompt was built no later), for the U47 time-left checks.
+    fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: title, prompt, name, declined, ms: Date.now(), probeFetched: fs.existsSync(path.join(root, 'agent', 'results', 'probe', 'probe.json')) }) + '\n')
     if (config.agentDelayMs) await new Promise(resolve => setTimeout(resolve, config.agentDelayMs))
+    // `harnessDelayMs`: only the initial harness call is slow (used to exhaust a small run ceiling).
+    if (config.harnessDelayMs && title === 'harness') await new Promise(resolve => setTimeout(resolve, config.harnessDelayMs))
     const agent = path.join(root, 'agent')
     if (declined) return null
     let facts = { v: `${title} stub` }
@@ -152,9 +155,13 @@ module.exports = {
         data: { availability: 'available', licences: ['MIT'], required_inputs: ['fixture'] },
         anchors: config.anchors,
         baseline: { repo: 'https://example.org/fixture', pin: 'fixture-v1', build_commands: ['true'], run_commands: ['true'], published_configuration: { n: 10 } },
-        EXECUTION: { representative_scale: { n: 10 }, inputs: ['fixture'], outputs: ['quantity'], timing_scope: 'whole process', timeout_s: 10 },
+        EXECUTION: { representative_scale: { n: 10 }, inputs: ['fixture'], outputs: ['quantity'], timing_scope: 'whole process', timeout_s: 10,
+          // U47: intake's budgets for setup/anchors/profile are recorded estimates, never timeouts.
+          ...(config.executionBudgets ? { stage_budgets_s: config.executionBudgets } : {}) },
       }
       for (const [name, value] of Object.entries(fixtures)) writeJSON(path.join(agent, 'intake', `${name}.json`), value)
+      // The exact bytes intake wrote, for the U47 check that EXECUTION.json stays unchanged.
+      fs.copyFileSync(path.join(agent, 'intake', 'EXECUTION.json'), path.join(root, 'execution-as-written.json'))
       fs.writeFileSync(path.join(agent, 'intake', 'brief.md'), 'Synthetic contract fixture.\n')
     }
     if (['harness', 'harness-repair', 'anchors-repair'].includes(title)) {
@@ -222,6 +229,61 @@ module.exports = {
   assertMpsRule,
   assertRunCommandRules,
   assertEvalShapes,
+  assertTimeLeft,
+  assertCeilingPrompt,
+  CEILING_DEFAULT: 43200,
+}
+// U47, SCHEMAS.md "Finish-first timing": without an `args.stage_budgets_s` entry, every box command under
+// keys setup, anchors and profile gets `run_ceiling_s` (args, default 43200) minus the whole seconds
+// elapsed since the pipeline script started, resolved when that command starts. `sequence` holds such
+// receipts in receipt order; `spawnedMs` is when the test spawned the workflow (no later than the
+// pipeline's start). Wall times are only bounded, with SLACK_S seconds of tolerance.
+const CEILING_DEFAULT = 43200
+const SLACK_S = 3
+function assertTimeLeft(sequence, ceiling, spawnedMs, label = 'time left') {
+  let previous = null
+  for (const receipt of sequence) {
+    const tag = `${label} ${receipt.name}`
+    assert.ok(Number.isInteger(receipt.budget_s) && receipt.budget_s >= 1 && receipt.budget_s <= ceiling,
+      `${tag}: budget_s ${receipt.budget_s} outside [1, ceiling ${ceiling}]`)
+    const sinceSpawn = (Date.parse(receipt.started_utc) - spawnedMs) / 1000
+    assert.ok(Number.isFinite(sinceSpawn), `${tag}: started_utc unreadable`)
+    assert.ok(receipt.budget_s >= ceiling - Math.ceil(Math.max(0, sinceSpawn)) - SLACK_S,
+      `${tag}: budget_s ${receipt.budget_s} is less than the time left (ceiling ${ceiling}, ${sinceSpawn.toFixed(1)} s since spawn)`)
+    if (previous) {
+      assert.ok(receipt.budget_s <= previous.budget_s, `${tag}: budget_s ${receipt.budget_s} increased after ${previous.name} (${previous.budget_s})`)
+      const between = (Date.parse(receipt.started_utc) - Date.parse(previous.started_utc)) / 1000
+      assert.ok(receipt.budget_s <= previous.budget_s - between + SLACK_S,
+        `${tag}: budget_s ${receipt.budget_s} ignores ${between.toFixed(1)} s elapsed since ${previous.name} (${previous.budget_s})`)
+    }
+    previous = receipt
+  }
+}
+// U47 prompts: "Prompts that state setup, anchors or profile budgets give the seconds resolved when the
+// prompt is built and say the figure is the time left before the run ceiling, not a target; one fixed
+// scale and no scale search still apply." `call.ms` is when the fake agent received the prompt.
+// `exact` maps a script whose key has an args override to that exact value; other listed scripts
+// state a time-left figure.
+function assertCeilingPrompt(call, ceiling, spawnedMs, exact = {}, scripts = ['setup.sh', 'run_anchors.sh']) {
+  const label = call.label ?? call.title
+  let timeLeft = false
+  for (const file of scripts) {
+    const match = call.prompt.match(new RegExp(file.replaceAll('.', '\\.') + '[^=:\\n]*[=:]\\s*(\\d+)(?!\\d)'))
+    assert.ok(match, `${label}: prompt states no budget for ${file}`)
+    const stated = Number(match[1])
+    if (Object.hasOwn(exact, file)) { assert.equal(stated, exact[file], `${label}: ${file} budget`); continue }
+    timeLeft = true
+    const elapsed = Math.ceil(Math.max(0, (call.ms - spawnedMs) / 1000))
+    // A prompt built after the ceiling is exhausted (a repair after the last timed-out attempt) may state 0.
+    assert.ok(stated <= ceiling && stated >= ceiling - elapsed - SLACK_S,
+      `${label}: ${file} budget ${stated} is not the time left before ceiling ${ceiling} (${elapsed} s elapsed)`)
+  }
+  if (timeLeft) {
+    assert.match(call.prompt, /time left before the run ceiling/i, `${label}: budget not described as the time left before the run ceiling`)
+    assert.match(call.prompt, /not a target/i, `${label}: budget not described as not a target`)
+  }
+  assert.match(call.prompt, /(?:no|never|do not|without)[^.\n]*(?:scale.search|doubl)|(?:scale.search|doubl)[^.\n]*(?:forbidden|prohibited)/i, `${label}: no-scale-search rule`)
+  assert.match(call.prompt, /(?:fixed|single|one)[^.\n]*scale|scale[^.\n]*(?:fixed|EXECUTION)/i, `${label}: one-fixed-scale rule`)
 }
 // SCHEMAS.md evaluation adapter environment: "`EVAL_INPUTS` is an object whose `ids` array lists the
 // sealed input identities in order; each record's `input_id` is one of those strings, and every other key
@@ -295,7 +357,10 @@ async function runCase(name, overrides = {}, stoppedAt = null, errorClass = null
     ...(config.profileBudget || config.anchorsBudget || config.setupBudget ? { stage_budgets_s: {
       ...(config.profileBudget ? { profile: config.profileBudget } : {}),
       ...(config.anchorsBudget ? { anchors: config.anchorsBudget } : {}),
-      ...(config.setupBudget ? { setup: config.setupBudget } : {}) } } : {}) })
+      ...(config.setupBudget ? { setup: config.setupBudget } : {}) } } : {}),
+    // U47: optional run ceiling (SCHEMAS.md "Finish-first timing"); absent means the 43200 s default.
+    ...(Object.hasOwn(config, 'ceiling') ? { run_ceiling_s: config.ceiling } : {}) })
+  const ceiling = config.ceiling ?? CEILING_DEFAULT
   const box = path.join(root, 'box')
   fs.mkdirSync(box, { recursive: true })
   const fakeProbe = `mkdir -p out
@@ -424,6 +489,8 @@ done
   const stderrFile = path.join(root, 'stderr.log')
   const stderr = fs.openSync(stderrFile, 'w')
   let child
+  // No later than the pipeline script's start: the U47 time-left bounds are relative to it.
+  const spawnedMs = Date.now()
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea', 'wf.js'), '--script', path.join(pipeline, 'm5', 'pipeline.js'),
@@ -507,6 +574,12 @@ done
       assertEvalShapes(call.prompt, call.label)
     }
   })
+  if (!config.probeFailure) check(`${name}: harness and repair prompts state resolved setup/anchors budgets as time left before the run ceiling`, () => {
+    const prompts = calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label))
+    assert.ok(prompts.length >= 1, 'no harness prompt')
+    const exact = { ...(config.setupBudget ? { 'setup.sh': config.setupBudget } : {}), ...(config.anchorsBudget ? { 'run_anchors.sh': config.anchorsBudget } : {}) }
+    for (const call of prompts) assertCeilingPrompt(call, ceiling, spawnedMs, exact)
+  })
   if (calls.some(call => call.label === 'anchors-repair')) check(`${name}: anchors repair prompt states that a rewritten run_command.sh obeys every run_command.sh rule`, () => {
     for (const call of calls.filter(call => call.label === 'anchors-repair')) assertRunCommandRules(call.prompt, call.label)
   })
@@ -572,6 +645,29 @@ done
       return { operation: file.slice(5, -5), ...receipt }
     })
     assert.deepEqual(files.map(file => Number(file.slice(0, 4))), files.map((_, i) => i + 1))
+    // U47: budgets for setup/anchors/profile come from args.stage_budgets_s when present there (exactly),
+    // otherwise from the time left before the run ceiling; intake's EXECUTION.json values never apply.
+    const overrides = { setup: config.setupBudget, anchors: config.anchorsBudget, profile: config.profileBudget }
+    const freezeAt = receipts.findIndex(receipt => receipt.operation === 'reproduce-freeze')
+    const candidates = (receipt, i) => receipt.operation === 'anchors' ? ['anchors']
+      : ['profile', 'concurrency'].includes(receipt.operation) ? ['profile']
+        // Profiler and probe uploads follow the freeze; SCHEMAS.md names the key of the probe run only.
+        : receipt.operation === 'upload' && freezeAt >= 0 && i > freezeAt ? ['profile', 'setup'] : ['setup']
+    const timeLeft = []
+    receipts.forEach((receipt, i) => {
+      const keys = candidates(receipt, i), fixed = keys.filter(key => overrides[key]).map(key => overrides[key])
+      if (fixed.length === keys.length) assert.ok(fixed.includes(receipt.budget_s), `${receipt.name}: budget_s ${receipt.budget_s}, args override ${fixed}`)
+      else if (!fixed.includes(receipt.budget_s)) timeLeft.push(receipt)
+    })
+    assertTimeLeft(timeLeft, ceiling, spawnedMs)
+    if (config.exhaust) {
+      // The harness agent call outlasted the ceiling: nothing runs on the box after it.
+      const harnessCall = calls.find(call => call.label === 'harness')
+      assert.ok(harnessCall, 'probe never reached the harness call')
+      assert.deepEqual(receipts.map(receipt => receipt.operation), ['upload', 'probe'], 'box command after the run ceiling was reached')
+      for (const receipt of receipts) assert.ok(Date.parse(receipt.started_utc) <= harnessCall.ms + 1000, `${receipt.name} started after the harness call`)
+      return
+    }
     const probeIndex = receipts.findIndex(receipt => receipt.operation.includes('probe') && !receipt.operation.includes('upload'))
     assert.ok(probeIndex >= 1, 'probe run receipt missing or no upload before probe')
     assert.ok(receipts.slice(0, probeIndex).every(receipt => receipt.operation.includes('upload')), 'probe upload receipt missing')
@@ -595,7 +691,8 @@ done
       assert.ok(receipts.slice(at + 1).every(receipt => ['upload', 'profile', 'concurrency'].includes(receipt.operation)),
         `reproduce command after the freeze: ${receipts.map(r => r.operation).join(',')}`)
       if (config.freezeFailure) assert.equal(at, receipts.length - 1, 'box commands after a failed freeze')
-      assert.equal(freezes[0].budget_s, config.setupBudget ?? 1200, 'freeze must use the setup budget')
+      // With an args setup budget the freeze uses it exactly; otherwise its time-left budget is checked above.
+      if (config.setupBudget) assert.equal(freezes[0].budget_s, config.setupBudget, 'freeze must use the setup budget')
       if (!config.freezeFailure) assert.equal(freezes[0].rc, 0)
       receipts.splice(at, 1)
     }
@@ -607,7 +704,7 @@ done
       assert.ok(afterProfile.length >= 1, `concurrency receipt missing: ${[...receipts, ...afterProfile].map(r => r.operation).join(',')}`)
       assert.equal(afterProfile.at(-1).operation, 'concurrency')
       assert.ok(afterProfile.slice(0, -1).every(receipt => receipt.operation === 'upload'), afterProfile.map(r => r.operation).join(','))
-      assert.equal(afterProfile.at(-1).budget_s, config.profileBudget ?? 1200, 'probe must use the resolved profile budget')
+      if (config.profileBudget) assert.equal(afterProfile.at(-1).budget_s, config.profileBudget, 'probe must use the resolved profile budget')
     } else assert.deepEqual(afterProfile.map(receipt => receipt.operation), [], 'box commands after failed profile')
     const count = operation => receipts.filter(receipt => receipt.operation === operation).length
     const firstSetup = receipts.findIndex(receipt => receipt.operation === 'setup')
@@ -623,10 +720,11 @@ done
       assert.ok(receipts.slice(anchorAttempts[k - 1] + 1, anchorAttempts[k]).every(receipt => receipt.operation === 'upload'))
       anchorsRepairUploads += uploads
     }
-    // SCHEMAS.md: "then the step reruns once with its original budget" (after each repair).
-    for (const i of anchorAttempts) assert.equal(receipts[i].budget_s, config.anchorsBudget ?? 1200, 'anchors budget')
+    // SCHEMAS.md (U47): "the step reruns once, with its budget resolved at the rerun's start": an args budget
+    // exactly on every attempt, otherwise the time left (non-increasing, checked above).
+    if (config.anchorsBudget) for (const i of anchorAttempts) assert.equal(receipts[i].budget_s, config.anchorsBudget, 'anchors budget')
     const setupAttempts = receipts.flatMap((receipt, i) => receipt.operation === 'setup' ? [i] : [])
-    for (const i of setupAttempts) assert.equal(receipts[i].budget_s, config.setupBudget ?? 1200, 'setup budget')
+    if (config.setupBudget) for (const i of setupAttempts) assert.equal(receipts[i].budget_s, config.setupBudget, 'setup budget')
     // The setup repair rewrites only setup.sh: one upload before each rerun.
     for (let k = 1; k < setupAttempts.length; k++) assert.equal(setupAttempts[k] - setupAttempts[k - 1], 2, `setup rerun ${k} not preceded by exactly one upload`)
     for (const k of setupAttempts.slice(1)) assert.equal(receipts[k - 1].operation, 'upload')
@@ -648,7 +746,8 @@ done
     if (profiles.length) assert.deepEqual(profiles.map(receipt => receipt.rc), config.profileFailures ? [2] : [0])
   })
   check(`${name}: private harness output fetched; operator has no sentinel`, () => {
-    if (config.probeFailure) { noLeak(path.join(root, 'operator')); return }
+    // No harness script runs when the ceiling is exhausted before its upload.
+    if (config.probeFailure || config.exhaust) { noLeak(path.join(root, 'operator')); return }
     const results = path.join(root, 'agent', 'results', 'reproduce')
     assert.ok(fs.readdirSync(results).filter(file => file.endsWith('.log')).some(file => fs.readFileSync(path.join(results, file), 'utf8').includes(SENTINEL)), 'sentinel absent from fetched logs')
     noLeak(path.join(root, 'operator'))
@@ -776,7 +875,11 @@ function concurrencyChecks(name, root, config, stage, stoppedAt) {
       assert.equal(calls.length, 0)
     } else {
       assert.equal(calls.length, 1, 'probe must run exactly once (no retry)')
-      const budget = String(config.profileBudget ?? 1200)
+      // The probe's <budget_s> argument is the resolved profile budget, the same value as its receipt's
+      // budget_s (an args override exactly; otherwise the time left, checked with the receipts).
+      const resolved = readJSON(path.join(receiptDir, receipt[0])).budget_s
+      if (config.profileBudget) assert.equal(resolved, config.profileBudget)
+      const budget = String(resolved)
       assert.deepEqual(calls[0].argv, ['profiler/concurrency_probe.py', 'harness/run_command.sh', 'out/concurrency', budget])
       assert.equal(calls[0].isolated, true, 'probe must run with python3 -I')
       assert.equal(calls[0].harness, true, 'probe must run from the shared run directory')
@@ -1585,6 +1688,24 @@ async function main() {
         assert.deepEqual(score.anchors.map(row => [row.id, row.measured_value, row.passed]), [['first', 100.5, true], ['second', 0, true]])
       })
       scoredFile('happy', happy)
+      // U47: a small run ceiling and intake budgets far below it for setup/anchors/profile. Every
+      // setup/anchors attempt, rerun after a repair, upload, the freeze, the profiler and the concurrency
+      // probe get the time left (non-increasing, at most the ceiling); intake's values never apply and
+      // EXECUTION.json keeps its bytes.
+      const ceilingRun = await runCase('ceiling-repairs', { setupFailures: 2, anchorsFailures: 1, ceiling: 300, agentDelayMs: 1100,
+        executionBudgets: { setup: 5, anchors: 6, profile: 7 } })
+      reproduceFacts('ceiling-repairs', ceilingRun, 2, 2)
+      check('ceiling-repairs: intake budgets ignored for setup/anchors/profile; EXECUTION.json byte-identical', () => {
+        const receipts = fs.readdirSync(path.join(ceilingRun.root, 'control', 'receipts')).filter(file => file.endsWith('.json'))
+          .map(file => readJSON(path.join(ceilingRun.root, 'control', 'receipts', file)))
+        assert.ok(receipts.length >= 10, 'too few receipts')
+        for (const receipt of receipts) assert.ok(![5, 6, 7].includes(receipt.budget_s), `${receipt.name}: intake budget ${receipt.budget_s} used as a timeout`)
+        assert.deepEqual(fs.readFileSync(path.join(ceilingRun.root, 'agent', 'intake', 'EXECUTION.json')),
+          fs.readFileSync(path.join(ceilingRun.root, 'execution-as-written.json')), 'EXECUTION.json changed')
+      })
+      // U47: "When the time left is below 1 s, the command does not run and its step fails as a timeout does
+      // (`error_class: timeout`, exit 3)." The harness call outlasts an 8 s ceiling, so the harness upload never runs.
+      await runCase('ceiling-exhausted', { ceiling: 8, harnessDelayMs: 9000, exhaust: true }, 'reproduce', 'timeout')
       const mismatch = await runCase('anchor-mismatch', { measured: { first: 102, second: 0 } }, 'reproduce', 'anchor')
       reproduceFacts('anchor-mismatch', mismatch, 1, 2)
       // Unanchored runs: the intake gate passes and reproduce passes on stock verification.

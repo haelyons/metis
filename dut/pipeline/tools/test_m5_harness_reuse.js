@@ -60,7 +60,7 @@ const VERSION_ASSERTION = 'openmm.__version__'
 async function run5Agent(options) {
   const root = process.env.M5_RUN5_ROOT
   const agent = path.join(root, 'agent')
-  fs.appendFileSync(path.join(root, 'calls.jsonl'), JSON.stringify({ label: options.title, prompt: options.prompt, name: options.name }) + '\n')
+  fs.appendFileSync(path.join(root, 'calls.jsonl'), JSON.stringify({ label: options.title, prompt: options.prompt, name: options.name, ms: Date.now() }) + '\n')
   let facts = { v: `${options.title} stub` }
   if (options.title === 'intake') {
     const intake = path.join(root, 'fixture', 'intake')
@@ -94,7 +94,9 @@ function contents(directory) {
 // SCHEMAS.md reproduce bullet: when reproduce passes, one `reproduce-freeze` under the setup budget
 // copies the anchor run's out/ to remote reproduce-out/, and its fetch replaces A/results/reproduce/out/.
 // The reused-harness path freezes too; a failed reproduce never does.
-function assertFreeze(root, passed, measured, budget = 1200) {
+// U47: no case sets args.stage_budgets_s, so the freeze budget is the time left before the run ceiling
+// (checked with every reproduce receipt by assertReceiptsTimeLeft); `budget` pins an exact value if given.
+function assertFreeze(root, passed, measured, budget = null) {
   const operations = fs.readdirSync(path.join(root, 'control/receipts')).sort().filter(file => file.endsWith('.json')).map(file => file.slice(5, -5))
   const freezes = operations.flatMap((operation, i) => operation === 'reproduce-freeze' ? [i] : [])
   const box = path.join(root, 'box')
@@ -111,12 +113,22 @@ function assertFreeze(root, passed, measured, budget = 1200) {
   assert.ok(operations.slice(anchors + 1, freezes[0]).every(operation => operation === 'upload'), operations.join(','))
   const receipt = read(path.join(root, 'control/receipts', fs.readdirSync(path.join(root, 'control/receipts')).sort()
     .filter(file => file.endsWith('.json'))[freezes[0]]))
-  assert.deepEqual([receipt.rc, receipt.fetched, receipt.budget_s], [0, true, budget])
+  assert.deepEqual([receipt.rc, receipt.fetched], [0, true])
+  if (budget !== null) assert.equal(receipt.budget_s, budget)
   assert.equal(remote.length, 1, 'expected one remote run directory')
   const frozen = path.join(remote[0], 'reproduce-out')
   assert.ok(fs.existsSync(frozen) && !fs.lstatSync(frozen).isSymbolicLink(), 'remote reproduce-out missing or a symlink')
   assert.deepEqual(contents(frozen), contents(path.join(root, 'agent/results/reproduce/out')), 'local reproduce out/ differs from reproduce-out')
   assert.deepEqual(read(path.join(frozen, 'anchors_measured.json')), measured)
+}
+
+// U47: without args.stage_budgets_s every reproduce command (probe and harness uploads, probe, setup and
+// anchors attempts and reruns, freeze) gets the time left before the run ceiling, resolved at its start.
+function assertReceiptsTimeLeft(root, ceiling, spawnedMs) {
+  const directory = path.join(root, 'control/receipts')
+  const receipts = fs.readdirSync(directory).sort().filter(file => file.endsWith('.json')).map(file => read(path.join(directory, file)))
+  assert.ok(receipts.length > 0, 'no receipts')
+  fixture.assertTimeLeft(receipts, ceiling, spawnedMs)
 }
 
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_harness_reuse_'))
@@ -149,6 +161,8 @@ async function execute(name, config = {}) {
   const originals = Object.fromEntries(fs.readdirSync(source).map(file => [file, fs.readFileSync(path.join(source, file))]))
   const args = { run_root: root, tag: name, stub: { profile: 'PASS', seal: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } }
   if (!config.generated) args.harness_from = config.relative ? path.relative(pipeline, source) : source
+  if (config.ceiling) args.run_ceiling_s = config.ceiling
+  const ceiling = config.ceiling ?? fixture.CEILING_DEFAULT
   json(path.join(root, 'control/args.json'), args)
   // A previous run's probe and measurements must not satisfy this run.
   json(path.join(root, 'previous run/A/results/probe/probe.json'), { kernel: 'stale-probe' })
@@ -187,10 +201,12 @@ visit(process.env.BOX_ROOT)
     anchorsFailures: config.failure && config.failure !== 'setup' ? failures : 0,
     anchorsRepairTarget: REPAIR_TARGET[config.failure],
     anchorsRepairStray: Boolean(config.stray), rewriteAnchorsUnchanged: Boolean(config.unchangedAnchors),
+    ...(config.agentDelayMs ? { agentDelayMs: config.agentDelayMs } : {}),
   }
   const stdoutFile = path.join(root, 'stdout.log'), stderrFile = path.join(root, 'stderr.log')
   const stdout = fs.openSync(stdoutFile, 'w'), stderr = fs.openSync(stderrFile, 'w')
   let child
+  const spawnedMs = Date.now()
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea/wf.js'), '--script', path.join(pipeline, 'm5/pipeline.js'),
@@ -254,6 +270,10 @@ visit(process.env.BOX_ROOT)
     for (const call of calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label)))
       fixture.assertMpsRule(call.prompt, call.label)
   })
+  if (calls.some(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label))) check(`${name}: harness and repair prompts state setup/anchors budgets as time left before the run ceiling`, () => {
+    for (const call of calls.filter(call => ['harness', 'harness-repair', 'anchors-repair'].includes(call.label)))
+      fixture.assertCeilingPrompt(call, ceiling, spawnedMs)
+  })
   if (calls.some(call => call.label === 'anchors-repair')) check(`${name}: anchors repair prompt states the run_command.sh rules`, () => {
     for (const call of calls.filter(call => call.label === 'anchors-repair')) fixture.assertRunCommandRules(call.prompt, call.label)
   })
@@ -293,9 +313,9 @@ visit(process.env.BOX_ROOT)
           ? Array.from({ length: repairCount + 1 }, (_, attempt) => attempt < failures ? 7 : 0) : [0]
       assert.deepEqual(attempts.map(row => row.rc), expected, operation)
       for (const receipt of attempts) assert.equal(receipt.fetched, true)
-      // One rerun after each repair, with the original budget (SCHEMAS.md "A/harness/").
-      assert.ok(attempts.every(row => row.budget_s === attempts[0].budget_s), `${operation}: rerun budget differs`)
     }
+    // One rerun after each repair, "with its budget resolved at the rerun's start (U47)" (SCHEMAS.md "A/harness/").
+    assertReceiptsTimeLeft(root, ceiling, spawnedMs)
     if (config.failure && !config.missing) {
       const remote = fs.readdirSync(box).filter(entry => entry.startsWith('m5-')).map(entry => path.join(box, entry, 'harness'))
         .filter(directory => fs.existsSync(directory))
@@ -391,6 +411,7 @@ exec /bin/bash "$@"
   const stderrFile = path.join(root, 'stderr.log')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w'), stderr = fs.openSync(stderrFile, 'w')
   let child
+  const spawnedMs = Date.now()
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea/wf.js'), '--script', path.join(pipeline, 'm5/pipeline.js'),
@@ -424,12 +445,18 @@ exec /bin/bash "$@"
     assert.ok(prompt.includes(PROBE), 'fresh probe missing from repair prompt')
     fixture.assertRunCommandRules(prompt, 'anchors-repair')
   })
-  check(`${name}: rewritten run_command.sh uploaded before the single rerun with the original budget`, () => {
+  check(`${name}: rewritten run_command.sh uploaded before the single rerun with the budget resolved at its start`, () => {
     const receipts = fs.readdirSync(path.join(root, 'control/receipts')).sort().filter(file => /^\d{4}-anchors\.json$/.test(file))
       .map(file => read(path.join(root, 'control/receipts', file)))
     assert.deepEqual(receipts.map(row => row.rc), [1, 0])
-    const budget = execution.stage_budgets_s?.anchors ?? 1200
-    assert.deepEqual(receipts.map(row => row.budget_s), [budget, budget])
+    // U47: the recorded intake's EXECUTION.json budgets are estimates; every reproduce command gets the
+    // time left before the default 12 h ceiling instead.
+    assertReceiptsTimeLeft(root, fixture.CEILING_DEFAULT, spawnedMs)
+    for (const key of ['setup', 'anchors']) if (Number.isInteger(execution.stage_budgets_s?.[key]))
+      assert.ok(fs.readdirSync(path.join(root, 'control/receipts')).filter(file => file.endsWith('.json'))
+        .every(file => read(path.join(root, 'control/receipts', file)).budget_s !== execution.stage_budgets_s[key]), `intake ${key} budget used as a timeout`)
+    assert.deepEqual(fs.readFileSync(path.join(agent, 'intake', 'EXECUTION.json')), fs.readFileSync(path.join(root, 'fixture', 'intake', 'EXECUTION.json')), 'EXECUTION.json changed')
+    fixture.assertCeilingPrompt(rows(callsFile).find(call => call.label === 'anchors-repair'), fixture.CEILING_DEFAULT, spawnedMs)
     const runs = rows(shimLog).filter(row => row.script === 'harness/run_anchors.sh')
     assert.deepEqual(runs.map(row => row.asserted), [true, false], 'fake box did not see the rewritten run_command.sh')
     assert.equal(runs[1].command_sha256, sha(fs.readFileSync(path.join(agent, 'harness/run_command.sh'))))
@@ -445,7 +472,7 @@ exec /bin/bash "$@"
     assert.equal(reproduce?.signature.status, 'PASS')
   })
   check(`${name}: reproduce-freeze copies the repaired anchor run's outputs to reproduce-out`, () => {
-    assertFreeze(root, true, read(path.join(root, 'measured.json')), execution.stage_budgets_s?.setup ?? 1200)
+    assertFreeze(root, true, read(path.join(root, 'measured.json')))
   })
   check(`${name}: provenance marks only run_command.sh modified, source hashes unchanged`, () => {
     const manifest = read(path.join(root, 'control/harness_source.json'))
@@ -472,6 +499,9 @@ async function main() {
     // U46: a reused setup.sh passes after the third or fourth repair; modified marks setup.sh only.
     await execute('setup-repaired-thrice', { failure: 'setup', failures: 3 })
     await execute('setup-repaired-four-times', { failure: 'setup', failures: 4 })
+    // U47: under a small run ceiling, a reused setup.sh repaired twice reruns with non-increasing
+    // time-left budgets (each repair call takes over a second).
+    await execute('ceiling-setup-repaired-twice', { failure: 'setup', failures: 2, ceiling: 240, agentDelayMs: 1100 })
     // An anchors repair that also edits setup.sh and run_evaluation.sh marks neither modified.
     await execute('both-repair-stray', { failure: 'both', stray: true })
     // Rewriting run_anchors.sh with identical bytes is not a change.
