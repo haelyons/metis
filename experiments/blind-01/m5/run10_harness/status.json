@@ -1,0 +1,10 @@
+{
+  "copies_written": "yes",
+  "units_listed": "all_units",
+  "outputs_exist_in_reproduce": "all",
+  "outputs_per_unit_only": "yes",
+  "cost_source": "reproduce_outputs",
+  "subset_mechanism": "published_option",
+  "command_differs_only_in_subset": "no",
+  "bash_syntax_ok": "yes"
+}
