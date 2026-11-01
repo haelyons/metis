@@ -2,12 +2,12 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2|run8_family|run8_diag|run8_diag2] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2|run8_family|run8_diag|run8_diag2|run9_obs|run9_diag|run9_diag2|run9_diag3|run9_diag4|run9_replay|run9_par|run9_scale|run9_scale2|run9_replay2] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -122,6 +122,126 @@ if a.dir == "run8_diag2":
         "ceiling_fits_anchors": {"yes_with_repair", "yes_no_repair", "no", "unknown"},
         "scale": {"published", "reduced", "unknown"},
     }
+if a.dir == "run9_obs":
+    ENUMS = {
+        "items_measured": {"all", "some", "none", "unknown"},
+        "anchor_margin": {"comfortable", "near_edge", "inequality_met", "unknown"},
+        "references_agree": {"close", "mixed", "far", "no_references", "unknown"},
+        "measures_published_quantity": {"yes", "no", "unknown"},
+        "scale": {"published", "reduced", "unknown"},
+        "anchor_failures_cause": {"script_error", "output_format", "workload_error", "mixed", "unknown"},
+        "reruns_repeated_workload": {"yes", "partly", "no", "unknown"},
+        "out_size": {"under_1gb", "1gb_to_10gb", "10gb_to_100gb", "over_100gb", "unknown"},
+        "fetch_dominates_wall": {"yes", "no", "unknown"},
+        "profile_fits_time_left": {"yes", "no", "unknown"},
+    }
+if a.dir == "run9_diag":
+    ENUMS = {
+        "failure_source": {"run_command", "profiler", "resources", "workload", "fetch", "unknown"},
+        "failure_point": {"early", "middle", "late", "unknown"},
+        "fetch_share": {"under_25pct", "25_to_50pct", "over_50pct", "unknown"},
+        "run_command_ran_before": {"yes", "no", "unknown"},
+        "same_scale_as_anchors": {"yes", "no", "unknown"},
+        "log_tail_has_cause": {"yes", "no", "unknown"},
+        "repairable_by_harness_repair": {"yes", "no", "unknown"},
+        "smallest_fix": {"profile_repair", "profiler_fix", "harness_prompt_rule", "fetch_scope", "resources", "unknown"},
+    }
+if a.dir == "run9_diag2":
+    ENUMS = {
+        "stats_files_present": {"all", "some", "none"},
+        "reproduces_locally": {"yes", "no", "unknown"},
+        "summariser_error": {"invalid_csv_row", "missing_csv_header", "missing_name_column", "unknown_time_unit", "missing_report_file",
+                             "invalid_duration", "invalid_telemetry", "invalid_wall_or_origin", "json_decode", "other", "none", "unknown"},
+        "failing_input": {"kern_sum", "mem_time_sum", "api_sum", "telemetry", "raw_wall", "other", "unknown"},
+        "input_valid_nsys_format": {"yes", "no", "unknown"},
+        "fix_location": {"profile_summarise", "profile_nsys", "both", "unknown"},
+    }
+if a.dir == "run9_diag3":
+    ENUMS = {
+        "kern_file_state": {"empty", "status_lines_only", "header_unmatched", "other"},
+        "stats_log_says_no_kernel_data": {"yes", "no", "unknown"},
+        "stats_log_says_skipped": {"yes", "no", "unknown"},
+        "duration_column_form": {"not_applicable", "unit_not_in_parentheses", "different_column_word", "no_duration_column", "other"},
+        "other_reports_parse": {"both", "one", "neither", "unknown"},
+        "succeeds_if_kern_has_no_rows": {"yes", "no", "unknown"},
+        "workload_has_cuda_kernels": {"yes", "no", "unknown"},
+        "nsys_version": {"2023", "2024", "2025", "other", "unknown"},
+    }
+if a.dir == "run9_diag4":
+    ENUMS = {
+        "gpu_util_during_command": {"zero", "under_10pct", "10_to_50pct", "over_50pct", "unknown"},
+        "compute_api": {"cuda", "opencl", "other_gpu", "cpu_only", "unknown"},
+        "api_choice": {"published", "harness_or_intake_fallback", "unknown"},
+        "nsys_capture_problem": {"yes", "no", "unknown"},
+        "published_gpu_workload": {"yes", "no", "unknown"},
+        "empty_reports_true_finding": {"yes", "no", "unknown"},
+    }
+if a.dir == "run9_replay":
+    ENUMS = {
+        "summariser_exit_u48": {"zero", "nonzero", "not_run"},
+        "stage_count_ok": {"yes", "no", "unknown"},
+        "wrapper_rule": {"none", "name", "within_2pct", "both", "unknown"},
+        "timed_fraction_ok": {"yes", "no", "unknown"},
+        "gpu_telemetry": {"true", "false", "unknown"},
+        "gate_after_u48": {"pass", "numeric", "parse", "unknown"},
+        "command_wall": {"under_10min", "10_to_60min", "1_to_2h", "2_to_4h", "over_4h", "unknown"},
+        "probe_singles_fit_run9": {"yes", "no", "unknown"},
+        "probe_fits_fresh_box": {"singles_and_batches", "singles_only", "no", "unknown"},
+        "box_logical_cpus": {"under_8", "8_to_31", "32_to_63", "64_plus", "unknown"},
+        "mps_for_cpu_only_command": {"verified", "mps_failed_then_plain", "unknown"},
+    }
+if a.dir == "run9_par":
+    ENUMS = {
+        "cpu_threads": {"single", "multi", "unknown"},
+        "cpu_threads_basis": {"measured", "code_or_docs", "none"},
+        "independent_units": {"yes", "partly", "no", "unknown"},
+        "units_at_run_scale": {"one", "2_to_7", "8_to_63", "64_plus", "unknown"},
+        "units_order": {"serial", "concurrent", "not_applicable", "unknown"},
+        "per_unit_timing_saved": {"yes", "no"},
+        "gpu_path_published": {"yes", "no", "unknown"},
+        "more_units_changes_result": {"tighter_uncertainty", "closer_to_published_scale", "both", "neither", "unknown"},
+        "published_uncertainty": {"yes", "no", "unknown"},
+    }
+if a.dir == "run9_scale":
+    ENUMS = {
+        "gated_anchors": {"one", "two_plus"},
+        "references_within_tolerance": {"all", "some", "none", "no_references", "unknown"},
+        "anchor_quantity": {"main", "secondary", "incidental", "unknown"},
+        "scale_dimension": {"replicates_or_samples", "length_or_steps", "problem_size", "several", "not_reduced", "unknown"},
+        "scale_factor": {"under_2x", "2_to_10x", "10_to_100x", "over_100x", "unknown"},
+        "published_values_at_published_scale": {"yes", "no", "unknown"},
+        "anchor_expectation": {"scale_invariant", "scale_dependent", "unknown"},
+        "tolerance_vs_noise": {"much_wider", "comparable", "narrower", "deterministic", "unknown"},
+        "tolerance_source": {"published_uncertainty", "intake_judgement", "other", "unknown"},
+        "margin": {"under_25pct_used", "25_to_75pct_used", "over_75pct_used", "unknown"},
+        "defect_detectable_run_scale": {"likely", "unlikely", "unknown"},
+        "defect_detectable_published_scale": {"likely", "unlikely", "unknown"},
+        "full_scale_adds": {"tighter_same_quantities", "more_quantities", "both", "nothing_beyond_noise", "unknown"},
+        "full_scale_resolves_provenance": {"yes", "partly", "no", "unknown"},
+        "published_scale_runtime": {"under_12h", "12_to_48h", "2_to_7d", "over_7d", "unknown"},
+    }
+if a.dir == "run9_scale2":
+    ENUMS = {
+        "comparison": {"equality_tolerance", "lower_threshold", "upper_threshold", "other", "unknown"},
+        "published_value_scale": {"published_scale", "run_scale", "scale_free", "unknown"},
+        "reduced_scale_effect": {"easier", "harder", "neither", "unknown"},
+        "relative_difference": {"under_5pct", "5_to_20pct", "20_to_50pct", "over_50pct", "unknown"},
+        "references_measure": {"same_quantity_other_conditions", "different_quantities", "mix", "unknown"},
+        "best_description": {"calibration", "consistency_check", "weak_check", "unknown"},
+    }
+if a.dir == "run9_replay2":
+    ENUMS = {
+        "u48_failing_check": {"kernel_statement", "memory_statement", "api_statement", "telemetry", "wall", "other", "none"},
+        "kernel_phrase": {"cuda_kernel_data", "other", "absent"},
+        "memory_phrase": {"cuda_memory_data", "gpu_memory_data", "other", "absent"},
+        "api_phrase": {"cuda_api_data", "cuda_trace_data", "other", "absent"},
+        "patched_exit": {"zero", "nonzero", "not_run"},
+        "stage_count_ok": {"yes", "no", "unknown"},
+        "wrapper_rule": {"none", "name", "within_2pct", "both", "unknown"},
+        "timed_fraction_ok": {"yes", "no", "unknown"},
+        "gpu_telemetry": {"true", "false", "unknown"},
+        "gate_after_fix": {"pass", "numeric", "parse", "unknown"},
+    }
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
     ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
@@ -150,7 +270,7 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2"):
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()

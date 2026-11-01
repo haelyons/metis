@@ -15,6 +15,9 @@ The scripts and prompts the blind operator used for blind-01 m5, copied from `~/
 - `run7_diag*.md`/`.sh`: two read-only Codex diagnoses of run7's setup failures (no network). Outputs in `m5/run7_diag*/`; they led to U46 (setup four repairs).
 - `run8_family.md`/`.sh`: a check-only Codex reader of run8's call records: whether the Codex usage outage changed which family answered (it did not). Output in `m5/run8_family/`.
 - `run8_diag*.md`/`.sh`: two read-only Codex diagnoses of run8's anchors failures (no network). Outputs in `m5/run8_diag*/`; they led to U47 (finish-first timing for setup, anchors and profile). `retry38.sh` since then gives the pipeline 46,800 s and the box `--max-hours 14`, one hour beyond the 12 h run ceiling.
+- `run9_obs.md`/`.sh` and `run9_diag*.md`/`.sh`: Codex readers of run9 (reproduce PASS, profile FAIL parse). They found a CPU-only published baseline and Nsight 2025 writing empty skipped reports, which led to U48.
+- `retry44.sh` (U48) and `retry45.sh` (U48 correction), with their prompts `u48*.md`: Codex implements, Opus writes tests from SCHEMAS.md with the implementation Read-denied.
+- `run9_replay.md`/`.sh`, `run9_replay2.md`/`.sh`, `run9_par.md`/`.sh`, `run9_scale.md`/`.sh` and `run9_scale2.md`/`.sh`: the owner's neutral assessment of run9. The replays ran the summariser and gate on saved files and showed that merged U48 used phrases Nsight never prints. The others covered the workload's parallel structure and what the reduced-scale reproduce pass establishes.
 - `intake_check_post.py`: validates each reader's status as fixed enums (all the operator sees), checks the addendum prefix, scans for secrets, then commits and pushes.
 
 The materials the readers downloaded (about 2.4 GB) stay in `~/.cache/blind01/intake_check_dl/` on the operator machine and are not committed. Pushing third-party materials to a remote would re-host them, which the readers' rules exclude.
