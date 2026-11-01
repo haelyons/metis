@@ -1,0 +1,62 @@
+Processing ./baseline-published/pinder-src
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: nbformat in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (5.11.1)
+Requirement already satisfied: biotite<1.7,>=1.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (1.2.0)
+Requirement already satisfied: torchtyping in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (0.1.5)
+Requirement already satisfied: torch_geometric in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (2.8.1)
+Requirement already satisfied: tqdm in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (4.70.1)
+Requirement already satisfied: numpy<2 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (1.26.4)
+Requirement already satisfied: pandas in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (1.3.5)
+Requirement already satisfied: PyYAML in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (5.4.1)
+Requirement already satisfied: plotly in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (7.1.0)
+Requirement already satisfied: fastpdb in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (1.3.3)
+Requirement already satisfied: tabulate in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (0.10.0)
+Requirement already satisfied: scikit-learn in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (0.23.2)
+Requirement already satisfied: typeguard==2.13.3 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (2.13.3)
+Requirement already satisfied: pydantic>=2.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (2.14.2)
+Requirement already satisfied: pyarrow>=12.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (25.0.1)
+Requirement already satisfied: torch in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (2.7.0)
+Requirement already satisfied: typing_extensions in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.0.0+gebeb28a2) (4.16.0)
+Requirement already satisfied: packaging>=24.0 in ./baseline-published/venv/lib/python3.10/site-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (26.3)
+Requirement already satisfied: biotraj<2.0,>=1.0 in ./baseline-published/venv/lib/python3.10/site-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (1.2.2)
+Requirement already satisfied: requests>=2.12 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (2.25.1)
+Requirement already satisfied: msgpack>=0.5.6 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (1.0.3)
+Requirement already satisfied: networkx>=2.0 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (2.4)
+Requirement already satisfied: typing-inspection>=0.4.4 in ./baseline-published/venv/lib/python3.10/site-packages (from pydantic>=2.0->pinder==0.0.0+gebeb28a2) (0.4.4)
+Requirement already satisfied: pydantic-core==2.50.2 in ./baseline-published/venv/lib/python3.10/site-packages (from pydantic>=2.0->pinder==0.0.0+gebeb28a2) (2.50.2)
+Requirement already satisfied: annotated-types>=0.6.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pydantic>=2.0->pinder==0.0.0+gebeb28a2) (0.8.0)
+Requirement already satisfied: jupyter-core!=5.0.*,>=4.12 in ./baseline-published/venv/lib/python3.10/site-packages (from nbformat->pinder==0.0.0+gebeb28a2) (5.9.1)
+Requirement already satisfied: jsonschema>=2.6 in /usr/lib/python3/dist-packages (from nbformat->pinder==0.0.0+gebeb28a2) (3.2.0)
+Requirement already satisfied: fastjsonschema>=2.15 in ./baseline-published/venv/lib/python3.10/site-packages (from nbformat->pinder==0.0.0+gebeb28a2) (2.22.2)
+Requirement already satisfied: traitlets>=5.1 in ./baseline-published/venv/lib/python3.10/site-packages (from nbformat->pinder==0.0.0+gebeb28a2) (5.16.1)
+Requirement already satisfied: narwhals>=1.15.1 in ./baseline-published/venv/lib/python3.10/site-packages (from plotly->pinder==0.0.0+gebeb28a2) (2.28.0)
+Requirement already satisfied: xxhash in ./baseline-published/venv/lib/python3.10/site-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (4.0.2)
+Requirement already satisfied: aiohttp in ./baseline-published/venv/lib/python3.10/site-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (3.14.5)
+Requirement already satisfied: fsspec in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (2024.3.1)
+Requirement already satisfied: jinja2 in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (3.0.3)
+Requirement already satisfied: pyparsing in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (2.4.7)
+Requirement already satisfied: psutil>=5.8.0 in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (5.9.0)
+Requirement already satisfied: scipy>=1.13 in ./baseline-published/venv/lib/python3.10/site-packages (from biotraj<2.0,>=1.0->biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (1.15.3)
+Requirement already satisfied: platformdirs>=2.5 in /usr/lib/python3/dist-packages (from jupyter-core!=5.0.*,>=4.12->nbformat->pinder==0.0.0+gebeb28a2) (2.5.1)
+Requirement already satisfied: aiosignal>=1.4.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (1.4.0)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (2.7.1)
+Requirement already satisfied: attrs>=17.3.0 in /usr/lib/python3/dist-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (21.2.0)
+Requirement already satisfied: yarl<2.0,>=1.25.1 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (1.25.1)
+Requirement already satisfied: frozenlist>=1.1.1 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (1.8.0)
+Requirement already satisfied: multidict<8.0,>=4.5 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (7.1.0)
+Requirement already satisfied: propcache>=0.2.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (0.5.4)
+Requirement already satisfied: async-timeout<6.0,>=4.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (5.0.1)
+Requirement already satisfied: idna>=2.0 in /usr/lib/python3/dist-packages (from yarl<2.0,>=1.25.1->aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (3.3)
+Building wheels for collected packages: pinder
+  Building wheel for pinder (pyproject.toml): started
+  Building wheel for pinder (pyproject.toml): finished with status 'done'
+  Created wheel for pinder: filename=pinder-0.0.0+gebeb28a2-py3-none-any.whl size=344128 sha256=1935fe256ed9e58cb42101eaecfd1b801b29abebd123ddb83c00b8835cb1723e
+  Stored in directory: /tmp/pip-ephem-wheel-cache-_7va1jlq/wheels/1c/2c/6b/b737489a2226eeccc44b5acc31b4edfdaa4166f0dc7ea87df0
+Successfully built pinder
+Installing collected packages: pinder
+  Attempting uninstall: pinder
+    Found existing installation: pinder 0.0.0+gebeb28a2
+    Uninstalling pinder-0.0.0+gebeb28a2:
+      Successfully uninstalled pinder-0.0.0+gebeb28a2
+Successfully installed pinder-0.0.0+gebeb28a2

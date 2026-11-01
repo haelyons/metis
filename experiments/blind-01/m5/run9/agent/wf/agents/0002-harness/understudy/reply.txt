@@ -1,0 +1,18 @@
+The harness is written in `harness/`, but none of it has been run. Nothing was built or executed locally and I didn't touch the box; the only check was a bash syntax check, which all four scripts pass. Expect the first real failures to show up in the first pipeline run.
+
+**The pinned PINDER FroDock adapter can't run as published.** Besides the issues the intake already listed, I found two more blockers in `predict.py`: the path to the FroDock tools is missing a `/`, and the input structures are never copied into the temporary directory the stages run in. I wrote `harness/pinder_frodock_fixes.patch` with the smallest fixes that make it run: the two intake issues in `main.py`, those two path bugs, the `*.pdb` copy, and resolving the CSV's input paths against `data_dir`. Setup applies it to the pinned source and keeps a copy in `baseline-published/records/` and `out/setup/`. The intake says changes like this must be recorded with the results, because the executed code is no longer the published source.
+
+**How the scripts behave:**
+- **`setup.sh`** checks the pinder source, FroDock archive and `soap.bin` against the intake SHA-256s, installs only missing packages from the published Dockerfile list, and runs the published `compile_frodock.sh`. pinder plus `fire` go into a venv layered over the stock Python, so stock torch is left alone. It downloads the release-2024-02 data, checking each file against `harness/pinder_inputs.tsv`, a list of 3,593 files with hashes copied from the brief. It then picks the 8 cases by the preregistered rule and runs the published preprocess step for holo and apo, giving 16 docking jobs.
+- **`run_command.sh`** runs the published `pinder_methods predict` (50 poses per job, 8 MPI ranks, `force: false`) and then the published `pinder_eval`, answering "y" to its prompts so systems not run here get the published penalty. It prints the PINDER-S system count and the apo-paired count from the index and checks the printed config.
+- **`run_anchors.sh`** calls `run_command.sh` and writes all three anchor IDs to `out/anchors_measured.json`, with per-job top-1 and best DockQ, iRMS, Fnat, LRMS and docking wall-clock in `out/anchors_details.json`.
+- **`run_evaluation.sh`** runs the published commands for each sealed seed, then each input, and writes `evaluation.json`.
+
+**Choices you may want to change:**
+- **GPU:** FroDock is CPU and MPI only, so I set `CUDA_VISIBLE_DEVICES=""` and report a GPU count of 0. A curve-mode GPU-second budget is therefore never used up.
+- **Threshold anchor:** I report `dockq_acceptable_threshold` as the best DockQ across all 800 decoys. Using the top-ranked pose instead would be a one-line change.
+- **Seeds:** FroDock takes no seed, so seeded evaluations repeat identical runs and only record the seed.
+- **Compile fallback:** if `compile_frodock.sh` (written for gcc 7.3) fails under gcc 11 for any required binary, setup uses the archive's prebuilt copy and records that.
+- **Version:** setup sets a stand-in pinder version, `0.0.0+gebeb28a2`, because the source archive has no git history for the build tool to read.
+
+**Deviation from your instructions:** to find these defects I read the pinned PINDER source and the FroDock mirror by streaming them from their URLs straight to stdout, without saving anything. That goes beyond reading only the intake files. The only files I wrote are in `harness/`.

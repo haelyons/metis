@@ -1,0 +1,35 @@
+[
+  {
+    "id": "dockq_acceptable_threshold",
+    "quantity": "DockQ score of a predicted pose that qualifies as an acceptable-quality prediction (CAPRI acceptable or better), for a PINDER-S case",
+    "source": "brief.md: 'DockQ >= 0.23 defines an acceptable-quality prediction under the standard benchmark convention.' This is the community DockQ/CAPRI convention as recorded in the brief; no primary publication was fetched during this intake, and the pinned PINDER source does not contain this cut-off (its capri_class() classifies from Fnat/iRMS/LRMS instead).",
+    "published_value": 0.23,
+    "comparison": ">=",
+    "tolerance": null,
+    "uncertainty": null,
+    "kind": "anchor",
+    "note": "Published acceptance criterion expressed as a threshold: measured DockQ >= 0.23 means the pose is acceptable-quality. Tolerance is ignored for inequalities and none is invented."
+  },
+  {
+    "id": "pinder_s_system_count",
+    "quantity": "Number of test systems (dimers) in the PINDER-S test subset",
+    "source": "PINDER repository README.md at commit ebeb28a2f8411363cef722b7d293c978f7442672, dataset table line 255 and description line 786 ('250 clusters (188 heterodimer and 62 homodimers)'); independently restated in brief.md ('250 protein-protein test complexes')",
+    "published_value": 250,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "kind": "reference",
+    "note": "Published composition count with no published acceptance criterion; recorded as a reference with tolerance null."
+  },
+  {
+    "id": "pinder_s_apo_paired_count",
+    "quantity": "Number of PINDER-S test systems that have paired apo (unbound) structures for both monomers",
+    "source": "PINDER repository README.md at commit ebeb28a2f8411363cef722b7d293c978f7442672, dataset table line 255 and description line 786 ('93 of which have apo paired structures'); independently restated in brief.md ('including 93 with paired unbound structures')",
+    "published_value": 93,
+    "comparison": "==",
+    "tolerance": null,
+    "uncertainty": null,
+    "kind": "reference",
+    "note": "Published composition count with no published acceptance criterion; recorded as a reference with tolerance null."
+  }
+]

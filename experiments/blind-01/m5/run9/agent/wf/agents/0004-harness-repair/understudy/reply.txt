@@ -1,0 +1,13 @@
+I've repaired `harness/setup.sh` and changed no other file. It passes a bash syntax check, but it hasn't been run: the next pipeline attempt is the real test. Shellcheck isn't installed here, so the script wasn't linted.
+
+**Cause:** `pip install .` for pinder failed at line 260 with `packaging 21.3 … Requirement.parse('packaging>=26.2'), {'vcs-versioning'}`. The traceback shows pip used the stock `/usr/lib/python3/dist-packages/setuptools`. Most likely, in a venv that can see the system packages, pip 22.0.2's separate build environment puts its own build tools after the system packages, so the stock setuptools and packaging 21.3 were loaded first. The newest `setuptools_scm` that pip fetched for the build needs packaging 26.2 or later, which caused the conflict.
+
+**Fix (venv section, around lines 259–276):**
+- Before pinder is built, setup now installs `setuptools>=64`, `setuptools_scm>=8`, `packaging` and `wheel` into the venv itself, logged to `out/setup/pip_install_build_tools.log`. Venv packages load ahead of the system ones, and the stock Python and torch are not touched; the existing check that torch is unchanged still runs.
+- A new check prints each build tool's version and location. Setup stops with a clear error if any of them loads from outside the venv.
+- pinder is installed with `pip install --no-build-isolation` so it builds against those venv tools. The `SETUPTOOLS_SCM_PRETEND_VERSION` variables are kept.
+- The change is listed as a deviation in `setup_record.json`.
+
+Unchanged: the pinder and FroDock pins and checksums, the recorded fixes patch, the apt step and its sudo use, the CUDA path selection and the output paths. Setup still doesn't touch profiling or MPS. A backup of the previous version is at `/tmp/setup.sh.attempt1.bak`.
+
+One risk: the venv's newer `packaging` now takes precedence over the system 21.3 for anything imported inside the venv. I expect that to be fine for torch and pinder, but it's the first thing to check if the import check after the install fails.

@@ -1,0 +1,104 @@
+{
+  "identity": {
+    "name": "PINDER-S",
+    "full_name": "PINDER (Protein INteraction Dataset and Evaluation Resource), PINDER-S test subset",
+    "version": "dataset release 2024-02; code at commit ebeb28a2f8411363cef722b7d293c978f7442672",
+    "task": "protein-protein docking: predict the bound dimer pose from separated receptor and ligand monomers (holo, apo or predicted), evaluated against the experimentally observed complex",
+    "repository": "https://github.com/pinder-org/pinder",
+    "data_host": "https://pinderdata.org/2024-02/",
+    "source_of_identity": "brief.md (first section: 'Use PINDER-S as the primary benchmark: https://github.com/pinder-org/pinder'; '250 protein-protein test complexes, including 93 with paired unbound structures') and repository README.md at the pinned commit, line 255 and line 786",
+    "secondary_challenge": {
+      "description": "AAV-AAVR redocking from separated components, PDB entries 6IHB (AAV2-PKD2), 6JCQ (AAV1-PKD2), 6JCS (AAV5-PKD1)",
+      "source": "brief.md, paragraphs 2-3",
+      "note": "brief.md states these are redocking inputs, not independently determined unbound structures; they are not part of the published PINDER-S benchmark and carry no published benchmark score"
+    }
+  },
+  "outcome_definition": {
+    "primary_metrics": ["DockQ", "interface RMSD (iRMS)", "ligand RMSD (LRMS)", "native-contact recovery (Fnat)", "CAPRI class"],
+    "metric_implementation": "pinder.eval.dockq (CLI: pinder_eval); DockQ computed as (Fnat + 1/(1+(iRMS/1.5)^2) + 1/(1+(LRMS/8.5)^2))/3 in src/pinder-eval/pinder/eval/dockq/metrics.py at the pinned commit",
+    "acceptance_convention": "DockQ >= 0.23 defines an acceptable-quality prediction (standard benchmark convention, stated in brief.md). The repository's own capri_class() classifies Acceptable/Medium/High from Fnat, iRMS and LRMS thresholds (metrics.py lines ~237-276) rather than from a DockQ cut-off; the 0.23 cut-off is the convention recorded in the brief, not a value found in the repository source.",
+    "reported_outcomes": [
+      "DockQ / CAPRI class of the top-ranked pose",
+      "DockQ / CAPRI class of the best pose among a fixed number of generated candidates",
+      "wall-clock time, search throughput, time to an acceptable pose"
+    ],
+    "missing_prediction_penalty": {"iRMS": 100.0, "LRMS": 100.0, "Fnat": 0.0, "DockQ": 0.0, "CAPRI": "Incorrect", "source": "repository README.md, evaluation harness section"}
+  },
+  "citations": [
+    {"what": "benchmark code, evaluation harness, dataset description, PINDER-S composition, leaderboard method list", "citation": "https://github.com/pinder-org/pinder at commit ebeb28a2f8411363cef722b7d293c978f7442672 (archive https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672, sha256 b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd, re-fetched and hash-verified during this intake)"},
+    {"what": "dataset distribution", "citation": "https://pinderdata.org/2024-02/ (index.parquet, metadata.parquet, test_set_pdbs.zip, manifests/*.jsonl.gz), per-file sizes and SHA-256 listed in brief.md inventory table"},
+    {"what": "baseline docking software FroDock 3.12", "citation": "PINDER repository src/pinder-methods/pinder/methods/README.md points to https://chaconlab.org/modeling/frodock/frodock-donwload (HTTP 404 at intake; verified 404 again during this intake). Bytes used come from the unverified mirror https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz recorded in brief.md."},
+    {"what": "AAV-AAVR structures", "citation": "RCSB PDB entries 6IHB, 6JCQ, 6JCS, files.rcsb.org mmCIF downloads, sizes and SHA-256 in brief.md inventory table"},
+    {"what": "DockQ >= 0.23 acceptable-quality convention", "citation": "brief.md ('DockQ >= 0.23 defines an acceptable-quality prediction under the standard benchmark convention'); no primary publication was fetched during this intake"}
+  ],
+  "published_numbers_available": {
+    "found": ["PINDER-S composition counts (250 systems; 93 with paired apo; 188 heterodimers; 62 homodimers), README.md line 255/786"],
+    "not_found": "No published per-method leaderboard values (e.g. FroDock DockQ success rate on PINDER-S) were located in the pinned repository source during this intake. None are invented here; see anchors.json."
+  },
+  "source_licences": [
+    {
+      "item": "PINDER benchmark and evaluation code",
+      "licence": "Apache License 2.0",
+      "evidence": "LICENSE file at the repository root of the pinned source archive; pyproject.toml classifier 'License :: OSI Approved :: Apache Software License'",
+      "covers_item": "explicit (whole repository)",
+      "intended_use_permitted": true
+    },
+    {
+      "item": "PINDER dataset files at pinderdata.org/2024-02 (index, metadata, test_set_pdbs, manifests, mappings, pdbs)",
+      "licence": "unknown",
+      "evidence": "No licence or terms-of-use statement for the hosted data was found: the repository README states only the Apache-2.0 badge for the code, https://pinderdata.org/LICENSE returns HTTP 404, and https://pinderdata.org/ serves a GitHub page rather than a terms document. The repository's Apache-2.0 licence does not state that it covers the separately hosted dataset.",
+      "covers_item": "distribution at best",
+      "intended_use_permitted": null
+    },
+    {
+      "item": "FroDock 3.12 docking software and its bin/soap.bin scoring input",
+      "licence": "unknown",
+      "evidence": "The cited distribution page https://chaconlab.org/modeling/frodock/frodock-donwload returns HTTP 404 (re-checked during this intake), so the licence/terms evidence for this item could not be fetched. The PINDER repository explicitly states 'We do not provide the source software.' The bytes in use come from a third-party unverified mirror with no licence file established and no author endorsement. The run owner approved use of the unverified mirror for this local experiment (brief.md, Materials), which is a provenance decision and not a licence grant.",
+      "covers_item": "unreachable",
+      "intended_use_permitted": null
+    },
+    {
+      "item": "RCSB PDB entries 6IHB, 6JCQ, 6JCS",
+      "licence": "unknown (not fetched during this intake)",
+      "evidence": "No RCSB terms-of-use document was fetched or recorded in this intake; no permission is asserted.",
+      "covers_item": "none established",
+      "intended_use_permitted": null
+    }
+  ],
+  "licence_summary": {
+    "licence": "unknown",
+    "licence_basis": "unreachable",
+    "least_covered_item": "FroDock 3.12 (licence evidence page unreachable, HTTP 404)",
+    "reason": "Benchmark code is explicitly Apache-2.0, but intended-use permission is not established for the dataset, the FroDock software/scoring bytes, or the RCSB mmCIF files. No evidence of a restriction was found either, so the licence stays 'unknown' rather than 'permitted' or 'restricted'."
+  },
+  "stock_cuda_image_feasibility": {
+    "stock_environment": null,
+    "reason": "Unknown pending reproduction. Evidence for feasibility: the published environment (docker/frodock/Dockerfile.frodock) needs only OS packages (openmpi, fftw3, hdf5, gcc, build-essential) plus a pip install of the pinder package (requires-python >= 3.10; deps include torch, biotite<1.7, numpy<2, pyarrow, torch_geometric), all obtainable on a stock CUDA image; FroDock ships prebuilt linux64 binaries and a compile_frodock.sh. Evidence against assuming feasibility: the published base image is mambaorg/micromamba:1.5-jammy, not a CUDA image; brief.md records that the mirror README lists gcc 7.3.0 / Intel 18 and that 'compatibility, rebuilding and equivalence of compiled/prebuilt executables were not measured'; compile_frodock.sh prints a FRODOCK-2.0 banner while README utility versions differ. GPU is not required by the FroDock baseline (CPU + MPI).",
+    "evidence_paths": ["docker/frodock/Dockerfile.frodock", "pyproject.toml", "src/pinder-methods/pinder/methods/README.md", "brief.md Materials section"]
+  },
+  "size": {
+    "required_download_gib": 0.996,
+    "required_download_bytes": 1068926514,
+    "download_basis": "sum of all 3,602 inventoried inputs in brief.md (AAV mmCIFs, FroDock mirror archive, index.parquet, metadata.parquet, manifests, test_set_pdbs.zip, 3,590 individual structural/mapping files, source archive)",
+    "peak_working_set_gib_estimate": 1.4,
+    "working_set_basis": "test_set_pdbs.zip expands to 730,945,215 uncompressed bytes (0.68 GiB), FroDock archive expands to 65,507,120 bytes (0.061 GiB), plus FroDock grid/potential maps and decoy PDBs per docking run (tens of MiB per case) and in-memory index/metadata parquet (~0.3 GiB)",
+    "total_gib_estimate": 2.4,
+    "size": "small",
+    "note": "The complete PINDER release is ~1.04 TB (README.md line 18), but the full training set and bulk PDB/mapping ZIPs are not required for PINDER-S evaluation; brief.md records the same scoping."
+  },
+  "scoring_and_repeatability": {
+    "scoring_interface": "pinder_eval --eval_dir <dir> [--method_name <name>] [--allow_missing] [--max_workers N]; eval_dir layout is <method>/<pinder_id>/{holo_decoys,apo_decoys,predicted_decoys}/model_<rank>.pdb, each decoy with exactly two chains R and L (README.md evaluation harness section)",
+    "rank_extraction": "decoy rank parsed with regex r\"\\d+(?=\\D*$)\" in pinder.eval.dockq.MethodMetrics",
+    "determinism": "not established. FroDock's FFT-based search is deterministic for fixed inputs and parameters in principle, but this was not measured; MPI rank count may affect clustering/ordering. The DockQ evaluation itself is deterministic given fixed decoys.",
+    "repeatability_rules": [
+      "Use a fixed, preregistered selection of benchmark cases and independent random seeds (brief.md)",
+      "Report top-ranked pose and best-of-N separately; do not conflate search coverage with ranking quality (brief.md)",
+      "Record mpi_np, n_solutions and all FroDock stage parameters with results; the published adapter hard-codes the stage commands in src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "Material-identity caveat: the FroDock bytes are an unverified mirror; agreement with published-value anchors does not establish identity with the study's software (brief.md, Materials)"
+    ]
+  },
+  "search_candidates": {
+    "searched": false,
+    "reason": "The brief names a single benchmark (PINDER-S) with an executable published code path; no benchmark search was required and no substitute was considered."
+  }
+}

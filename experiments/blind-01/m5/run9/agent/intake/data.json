@@ -1,0 +1,141 @@
+{
+  "status": "available",
+  "status_reason": "Every input required to run and score the PINDER-S docking baseline is reachable at a recorded URL with a recorded size and SHA-256: the PINDER index and metadata, the separated test-set PDBs, the per-case mapping/structure files, the published source archive, the FroDock software/scoring archive (via an unverified mirror, owner-approved for this run), and the three AAV mmCIF files. brief.md records that all 3,602 URLs were re-fetched successfully on 2026-10-31 with matching streaming SHA-256 and sizes; the source archive was independently re-fetched and hash-verified during this intake.",
+  "required_inputs": [
+    {
+      "name": "index.parquet",
+      "role": "PINDER index defining splits, including the pinder_s test subset and apo/holo/predicted monomer pairings",
+      "url": "https://pinderdata.org/2024-02/index.parquet",
+      "bytes": 124511839,
+      "sha256": "ced1936c4f36ea79161579df8d4b23bb4862b9c88f30af9defeeb85af99adac4",
+      "provenance": "official_original_location",
+      "availability": "available",
+      "licence": "unknown",
+      "licence_evidence": "No licence or terms-of-use statement found for the pinderdata.org distribution; https://pinderdata.org/LICENSE returns HTTP 404."
+    },
+    {
+      "name": "metadata.parquet",
+      "role": "per-system metadata used by the index/eval harness",
+      "url": "https://pinderdata.org/2024-02/metadata.parquet",
+      "bytes": 103835983,
+      "sha256": "see brief.md inventory row 'metadata.parquet'",
+      "provenance": "official_original_location",
+      "availability": "available",
+      "licence": "unknown",
+      "licence_evidence": "as index.parquet"
+    },
+    {
+      "name": "test_set_pdbs.zip",
+      "role": "separated receptor/ligand monomer PDBs (holo, apo, predicted) and native complexes for the test systems; the docking inputs and evaluation references",
+      "url": "https://pinderdata.org/2024-02/test_set_pdbs.zip",
+      "bytes": 181968169,
+      "uncompressed_bytes": 730945215,
+      "entries": "3,915 entries (3,914 regular files plus one directory); CRCs valid (brief.md)",
+      "sha256": "see brief.md inventory row 'test_set_pdbs.zip'",
+      "provenance": "official_original_location",
+      "availability": "available",
+      "licence": "unknown",
+      "licence_evidence": "as index.parquet"
+    },
+    {
+      "name": "individual test_set_pdbs/*.pdb and mappings/*.parquet",
+      "role": "per-case structural and residue-mapping inputs; 1,618 inputs covering all 250 PINDER-S cases plus 1,972 default-API auxiliary downloads for the prioritized 93",
+      "url": "https://pinderdata.org/2024-02/{test_set_pdbs,mappings,pdbs}/<file>",
+      "count": 3590,
+      "sha256": "per-file SHA-256 for each of the 3,590 files is listed in brief.md inventory table",
+      "provenance": "official_original_location",
+      "availability": "available",
+      "licence": "unknown",
+      "licence_evidence": "as index.parquet",
+      "note": "Redundant with test_set_pdbs.zip for the test monomers; both paths are recorded. Auxiliary predicted/alternative apo files do not replace primary paired apo inputs."
+    },
+    {
+      "name": "manifests/{root,pdbs,mappings,test_set_pdbs}.jsonl.gz",
+      "role": "official checksum/size manifests used to verify the downloaded data",
+      "url": "https://pinderdata.org/2024-02/manifests/*.jsonl.gz",
+      "bytes": {"root.jsonl.gz": 761, "test_set_pdbs.jsonl.gz": 117615, "mappings.jsonl.gz": 25354997, "pdbs.jsonl.gz": 91012054},
+      "provenance": "official_original_location",
+      "availability": "available",
+      "licence": "unknown",
+      "licence_evidence": "as index.parquet"
+    },
+    {
+      "name": "frodock3_linux64.tgz (FroDock 3.12 binaries, sources and bin/soap.bin scoring file)",
+      "role": "baseline docking software and its distributed scoring input",
+      "url": "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz",
+      "bytes": 26637000,
+      "sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+      "provenance": "unverified_mirror",
+      "availability": "available",
+      "licence": "unknown",
+      "licence_evidence": "The cited official distribution page https://chaconlab.org/modeling/frodock/frodock-donwload returns HTTP 404 (re-checked in this intake), so licence evidence for this item could not be fetched; the mirror carries no established licence. The run owner approved use of this unverified mirror for this local experiment (brief.md, Materials); that is a provenance approval, not a licence grant.",
+      "integrity_caveat": "Identity with the original study distribution is unverified. No authoritative upstream checksum, size or member manifest exists for comparison. Required scoring file bin/soap.bin is 7,536,604 bytes, sha256 791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc; the distinct member src/frodockonstraint/Release_intel/soap.bin (3,014,640 bytes) is not a substitute."
+    },
+    {
+      "name": "6IHB.cif, 6JCQ.cif, 6JCS.cif",
+      "role": "AAV-AAVR structures for the separate, biologically motivated redocking challenge (AAV2-PKD2, AAV1-PKD2, AAV5-PKD1)",
+      "url": "https://files.rcsb.org/download/{6IHB,6JCQ,6JCS}.cif",
+      "bytes": {"6IHB.cif": 551618, "6JCQ.cif": 529158, "6JCS.cif": 527195},
+      "sha256": {"6IHB.cif": "4d21c63db04eb915fb656a3ed0a28f004a63e71a340098f6cecfd56b69cfc9d9", "6JCQ.cif": "5d8ad99cc6953dfe8499198db290650a66ef5322676566c2c565a14a1cb8a5d3", "6JCS.cif": "19af2cc309713ccd0f163802830ec9f02949446bb52202004e0e34ba2f4a3ae4"},
+      "provenance": "official_original_location",
+      "availability": "available",
+      "licence": "unknown",
+      "licence_evidence": "RCSB terms of use were not fetched or recorded during this intake; no permission is asserted.",
+      "caveat": "RCSB entry IDs do not pin a historical revision and no independent published checksum for these mmCIF responses was established. Components are separated for redocking; they are not independently determined unbound structures."
+    },
+    {
+      "name": "pinder source archive",
+      "role": "published benchmark code, evaluation harness, FroDock adapter and build recipes",
+      "url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+      "bytes": 22835334,
+      "sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+      "provenance": "official_original_location",
+      "availability": "available",
+      "licence": "Apache-2.0",
+      "licence_evidence": "LICENSE file at archive root (explicit, whole repository)",
+      "verified_this_intake": "downloaded and SHA-256 matched the value recorded in brief.md"
+    }
+  ],
+  "generated_inputs": [
+    {
+      "name": "FroDock docking-ready monomers and potential maps",
+      "description": "ASA-prepared receptor/ligand PDBs and *_W.mrc / *_E.mrc / *_DS.mrc potential maps are produced at run time by frodockgrid from the downloaded monomers; they are generated, not downloaded.",
+      "source": "src/pinder-methods/pinder/methods/run/frodock/predict.py (stages 1-4)"
+    },
+    {
+      "name": "decoy pose PDBs (model_<rank>.pdb)",
+      "description": "Generated by FroDock clustering/view stages into results_dir/frodock/<pinder_id>/<kind>_decoys/; they are the input to pinder_eval.",
+      "source": "src/pinder-methods/pinder/methods/run/frodock/predict.py and README.md eval_dir layout"
+    },
+    {
+      "name": "AAV separated components",
+      "description": "Chain/assembly extraction and separation of 6IHB/6JCQ/6JCS into docking components is later study work, not a downloaded input (brief.md)."
+    }
+  ],
+  "missing_data": [],
+  "access_instructions": {
+    "pinder_dataset": "pip install the pinder package, then `pinder_download --pinder_base_dir <dir>` (downloads and extracts the published archives with checksum verification from https://pinderdata.org/2024-02/), or `pinder_update_index` / `pinder_sync_data` for index-only and incremental structure sync. Location is controlled by $PINDER_BASE_DIR (README.md lines 123-240). Only index, metadata and test_set_pdbs are required here; the full release is ~1.04 TB.",
+    "frodock": "Fetch https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz into its own empty directory, verify sha256 91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4, extract root frodock3_linux64/, and supply it to the published Docker build argument FRODOCK_SOURCE_ARCHIVE (which defaults to ./frodock.tar.gz; the suffix differs but the container format is the same).",
+    "aav": "curl https://files.rcsb.org/download/{6IHB,6JCQ,6JCS}.cif"
+  },
+  "pins_and_hashes": {
+    "code_commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "code_tree": "adc153de2eef1ac428c1136d609b30728c88cc7b",
+    "code_archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+    "dataset_release": "2024-02",
+    "frodock_archive_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+    "per_file_hashes": "SHA-256 for all 3,602 inventoried inputs is recorded in brief.md (copied to intake/brief.md); four official manifests (root, pdbs, mappings, test_set_pdbs) provide upstream sizes and MD5s",
+    "unpinned": "RCSB mmCIF responses have no publisher checksum and no revision pin; the FroDock mirror has no authoritative upstream hash."
+  },
+  "splits": {
+    "benchmark_split": "pinder_s (250 systems: 188 heterodimers, 62 homodimers)",
+    "prioritized_subset": "the 93 PINDER-S systems with paired apo monomers for both receptor and ligand (brief.md instruction)",
+    "monomer_kinds": ["holo_decoys", "apo_decoys", "predicted_decoys"],
+    "training_val_sets": "PINDER-Train and PINDER-Val exist but are not used and are not downloaded"
+  },
+  "seeds": {
+    "published_seeds": null,
+    "reason": "No seed values are published by the benchmark or the FroDock adapter; FroDock's FFT search is not seed-parameterised in the published stage commands. brief.md requires independent random seeds and a fixed, preregistered case selection for any stochastic component introduced by the study; those seeds will be chosen and recorded by the study, not taken from a published value.",
+    "case_selection_seed": "none: the case selection is a deterministic, preregistered, sorted-ID selection (see EXECUTION.json), not a random draw"
+  }
+}

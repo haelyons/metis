@@ -1,0 +1,13 @@
+I've repaired `harness/setup.sh`, but nothing has run on the box yet, so whether setup now passes is still unconfirmed. The only check I did was `bash -n`, which found no syntax errors.
+
+**Cause (from the log):** pinder's install put numpy 1.26.4 into the venv. The venv still uses the system's packages, so it loaded the older stock networkx 2.4. That version uses `np.int`, which numpy 1.24 removed, so the pinder import check failed at line 284 while loading biotite.
+
+**What I changed in `harness/setup.sh`:**
+- **Lines 279–296:** right after the `fire` install, setup now installs fresh copies of networkx, pandas and scikit-learn into the venv, with numpy held below 2 as pinder requires. These are pinder dependencies whose stock versions fail the same way on the new numpy. Setup then checks that numpy, scipy, networkx, pandas and sklearn load from inside the venv, prints their versions, and stops with a clear message if any don't. The pip output goes to `out/setup/pip_install_venv_refresh.log` and the constraint to `out/setup/venv_constraints.txt`.
+- **Line 4026:** I added this as a listed deviation in `setup_record.json`.
+
+Everything else is unchanged: the pinder pin and patch, FroDock, the apt step (still the only use of sudo), the CUDA layout selection, data staging, output paths and logs. Stock torch is still shared into the venv, and the existing check that setup leaves it unchanged is still there. No other file was touched.
+
+**Remaining risk:** other old stock packages could still break against numpy 1.26 if pinder imports them. That would show up when setup reaches its pinder import check.
+
+A copy of the previous script is at `/tmp/setup.sh.bak`.

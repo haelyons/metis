@@ -1,0 +1,56 @@
+{
+  "representative_scale": {
+    "summary": "8 real PINDER-S test systems, docked with the published FroDock adapter in both holo and apo monomer pairings, 50 candidate poses per docking job, mpi_np=8, and scored with the published pinder_eval harness: 16 docking jobs and 800 decoys in total.",
+    "case_selection": "The first 8 PINDER IDs, in ascending lexicographic order, among the 93 PINDER-S systems that have paired apo monomers for both receptor and ligand (selected from index.parquet; deterministic and preregistered before any docking is run, as brief.md requires). The selection rule is fixed here; no scale search, doubling loop or post-hoc reselection is permitted.",
+    "fixed_parameters": {"n_solutions": 50, "mpi_np": 8, "pairs": "holo and apo", "subset": "pinder-s", "method": "frodock"},
+    "why_representative": "These are unmodified benchmark cases drawn from the benchmark's own prioritised apo-paired subset, run through the published preprocessing, the published FroDock stage commands with published parameters, and scored through the published pinder_eval CLI on the published eval_dir layout. Nothing is simulated, downscaled or extrapolated; the only reduction against the full benchmark is the number of cases.",
+    "relation_to_full_benchmark": "The full PINDER-S benchmark is 250 systems (93 apo-paired). Running all 93 apo-paired systems in both pairings at this per-case cost would exceed the 43200 s run ceiling, so 8 cases are run at full fidelity. Per-case DockQ values and measured per-case wall-clock are reported as such; no benchmark-wide success rate is claimed from 8 cases.",
+    "aav_challenge": "The 6IHB/6JCQ/6JCS redocking challenge is out of scope for this scale: those entries need chain/assembly extraction and component separation that the published pipeline does not provide, and they carry no published benchmark score. Inputs are recorded in data.json so the challenge can be set up later."
+  },
+  "inputs": {
+    "data_root": "$PINDER_BASE_DIR (release 2024-02): index.parquet, metadata.parquet and the extracted test_set_pdbs/ monomer and native PDBs",
+    "per_case_inputs": "for each selected PINDER ID, the pre-transformed receptor and ligand monomer PDBs for the holo and apo pairings, as listed by `pinder_methods preprocess` in frodock_setup.csv (columns: id, kind, receptor, ligand)",
+    "software_inputs": "FroDock 3.12 binaries on $PATH (frodockgrid_mpi_gcc, frodock_mpi_gcc, frodockcluster_gcc, frodockview_gcc) and the scoring file bin/soap.bin (7,536,604 bytes, sha256 791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc), from the owner-approved unverified mirror",
+    "config_file": "frodock_config.yaml containing n_solutions: 50, mpi_np: 8, force: false",
+    "reference_structures": "the native bound complexes shipped in test_set_pdbs, used by pinder_eval to compute Fnat, iRMS, LRMS and DockQ",
+    "not_required": "PINDER-Train, PINDER-Val, bulk pdbs/mappings ZIPs, predicted (AF2) monomer pairings, and the ~1.04 TB full release"
+  },
+  "outputs": {
+    "decoys": "$RESULTS_DIR/frodock/<pinder_id>/{holo_decoys,apo_decoys}/model_<rank>.pdb, ranks 1..50, each a two-chain (R, L) complex",
+    "scores": "pinder_eval leaderboard csv written under $RESULTS_DIR with per-decoy Fnat, iRMS, LRMS, DockQ and CAPRI class, aggregated per system and monomer kind",
+    "derived_reported_quantities": [
+      "DockQ of the top-ranked pose (rank 1) per system and pairing",
+      "best DockQ among the fixed 50 candidates per system and pairing",
+      "acceptable-pose indicator, DockQ >= 0.23, for both of the above",
+      "iRMS and Fnat alongside DockQ, reported separately and never collapsed into DockQ alone",
+      "per-stage and per-case wall-clock seconds, candidate poses evaluated per second, and time to the first acceptable pose where one occurs"
+    ],
+    "run_record": "frodock_setup.csv, the resolved config, the selected PINDER IDs, mpi_np, host CPU count, FroDock and pinder version strings, and the input SHA-256 values, written alongside the results",
+    "failure_reporting": "systems where FroDock produces no solutions are reported explicitly and scored with the published penalty (DockQ 0.0, CAPRI 'Incorrect'), never silently dropped"
+  },
+  "timing_scope": {
+    "primary": "wall-clock seconds per docking job, measured from the start of the first FroDock stage (receptor vdW grid) to the completion of decoy writing for that job, as issued by pinder_methods predict; reported per system and per pairing, and summed over the 16 jobs",
+    "stage_breakdown": "wall-clock seconds for each of the 8 published FroDock stages, so that grid generation, FFT search, and clustering/pose generation can be separated when asking what limits the number of concurrently evaluable poses",
+    "scoring_time": "wall-clock seconds for the pinder_eval pass over the 800 decoys, reported separately from docking time",
+    "excluded": "dataset download, archive extraction, package installation, FroDock compilation and the preprocess step are excluded from the primary docking timing and reported separately as setup time",
+    "hardware_note": "the FroDock baseline is CPU and MPI only; GPU time is not part of this baseline's timing scope. Host CPU model, core count and mpi_np are recorded with every timing number.",
+    "repeats": "each of the 16 docking jobs is run once at this scale; no timing variance estimate is claimed from a single repeat"
+  },
+  "stage_budgets_s": {
+    "setup": 5400,
+    "anchors": 900,
+    "profile": 7200,
+    "method_setup": 3600,
+    "method_run": 14400,
+    "tests": 900,
+    "evaluate": 2400,
+    "rationale": "method_setup covers ~1 GiB of downloads, package installation, FroDock extraction/compilation and preprocessing. method_run covers 16 FroDock jobs; FroDock's FFT search on dimers of this size typically completes in single-digit minutes per job on 8 MPI ranks, so the expected total is well under the budget, but no runtime has been measured in this intake, so the budget carries headroom. evaluate covers 800 DockQ evaluations with the parallel harness, which is minutes. Sum of all stage budgets is 34800 s, inside the 43200 s run ceiling.",
+    "measured": false
+  },
+  "ceiling_s": 43200,
+  "caveats": [
+    "No build and no workload was run during this intake; all durations above are estimates, not measurements.",
+    "If the known source issues recorded in baseline.json block execution, the required patches must be recorded verbatim with the results; they change the executed code away from the pinned published source.",
+    "The FroDock bytes are an unverified mirror; any agreement with published values does not establish identity with the original study distribution."
+  ]
+}

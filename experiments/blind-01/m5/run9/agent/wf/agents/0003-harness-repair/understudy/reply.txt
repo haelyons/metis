@@ -1,0 +1,11 @@
+I've repaired `harness/setup.sh`. It passes `bash -n`, but it hasn't been run. Nothing was run locally and I didn't touch the box, so the next pipeline run is the real test.
+
+**Cause:** setup died at line 134 on `cp harness/pinder_frodock_fixes.patch` because only the harness scripts get uploaded to the box. The run logs show three uploads, and the two helper files the original harness wrote (`pinder_frodock_fixes.patch` and `pinder_inputs.tsv`) never got there. The input list would have failed the same way a few steps later.
+
+**Fix (only `setup.sh` changed):**
+- **Files built into the script:** both helper files are now inside `setup.sh`, copied byte for byte. Setup writes them to `baseline-published/records/pinder_frodock_fixes.patch` and `baseline-published/records/pinder_inputs.tsv`. That's the same patch path the setup record already points to.
+- **Integrity checks:** each written file is compared against a stored SHA-256, and setup stops with a clear error if either doesn't match. I confirmed that the copies inside the script reproduce the originals exactly (patch `295af03d…`, input list `0bf8878f…`).
+- **Paths:** setup now reads both files from those new locations, and nothing in it references `harness/pinder_*` any more. Nothing else uses those files.
+- **Unchanged:** the pinder pin and archive hash, the FroDock archive and `soap.bin` checks, the CUDA layout selection (distro, as on the last run), the apt steps (sudo for apt only), the venv, the 8-case selection, preprocessing, and the output and log paths.
+
+The input list has 3,594 entries, so `setup.sh` is now about 617 KB.

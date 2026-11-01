@@ -1,0 +1,6 @@
+Inspect harness and intake evidence. Repair output validation; preserve published command and configuration.
+Docking finished all 16 jobs. Failure comes from added atom-count check before scoring. Inspect saved PDB records to fix chain restoration without changing poses.
+Saved decoys already contain receptor `R` and ligand `L` regions. Fix uses emitted chain labels to locate ligand suffix, restores only blank ligand `HETATM` labels, preserves other bytes. Checking saved outputs and shell syntax; no workload run.
+Repaired `harness/run_command.sh`: removed invalid input/output atom-count assumption; retained targeted ligand chain-label restoration.
+
+Shell syntax passed. Validation passed across 800 saved decoys. Published configuration unchanged. No workloads run locally.

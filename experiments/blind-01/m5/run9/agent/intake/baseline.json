@@ -1,0 +1,69 @@
+{
+  "name": "FroDock 3.12 via the published PINDER methods runner, scored by the PINDER evaluation harness",
+  "repo": "https://github.com/pinder-org/pinder",
+  "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "pin": "git tree adc153de2eef1ac428c1136d609b30728c88cc7b; source archive https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672 sha256 b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd; FroDock archive sha256 91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4; dataset release 2024-02",
+  "commit_source": "brief.md Materials section records commit ebeb28a2f8411363cef722b7d293c978f7442672 and tree adc153de2eef1ac428c1136d609b30728c88cc7b, confirmed by anonymous git ls-remote for refs/heads/main at 2026-10-31T15:28:47Z; the archive was re-downloaded during this intake and its SHA-256 matched the recorded value.",
+  "build_commands": [
+    "curl -fL -o pinder-src.tar.gz https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672   # verify sha256 b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd, then extract",
+    "apt-get update && apt-get install -y --no-install-recommends git wget unzip curl gcc build-essential ca-certificates libgl1-mesa-glx libopenblas-base libopenmpi-dev openmpi-common openmpi-bin libopenmpi3 libfftw3-3 libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev",
+    "pip install .   # run from the extracted pinder source root; installs the pinder package and the pinder_methods / pinder_eval / pinder_download console scripts (pyproject.toml [project.scripts])",
+    "pip install fire   # imported by pinder.methods.main.main() as the CLI driver but absent from the pyproject dependency list at this commit",
+    "curl -fL -o frodock.tar.gz https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz   # verify sha256 91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+    "tar -xf frodock.tar.gz && mv frodock3_linux64 frodock && rm frodock.tar.gz",
+    "cd frodock && ./compile_frodock.sh",
+    "export PATH=\"$PWD/frodock/bin:$PATH\"   # the adapter resolves frodock_mpi_gcc, frodockgrid_mpi_gcc, frodockcluster_gcc, frodockview_gcc and soap.bin from $PATH",
+    "# published container alternative, equivalent to the four FroDock steps above: docker build --build-arg FRODOCK_SOURCE_ARCHIVE=./frodock.tar.gz -t pinder-frodock -f docker/frodock/Dockerfile.frodock ."
+  ],
+  "build_commands_source": "docker/frodock/Dockerfile.frodock (apt package list, pip install of pinder, COPY/tar/mv of the FroDock archive, ./compile_frodock.sh, PATH update) and src/pinder-methods/pinder/methods/README.md ('Building docker images for physics-based docking methods', docker build command line), both at commit ebeb28a2f8411363cef722b7d293c978f7442672. The `pip install fire` line is added because pinder.methods.main imports fire while pyproject.toml does not list it; this is recorded as a deviation, not a published command. No build was run during this intake.",
+  "run_commands": [
+    "pinder_download --pinder_base_dir $PINDER_BASE_DIR   # downloads and extracts the published 2024-02 archives with checksum verification (README.md); only index, metadata and test_set_pdbs are required here",
+    "pinder_methods preprocess --method frodock --data_dir $DATA_DIR --subset pinder-s --pairs all   # writes $DATA_DIR/frodock_setup.csv listing id, kind, receptor, ligand",
+    "pinder_methods predict --method frodock --data_dir $DATA_DIR --results_dir $RESULTS_DIR --subset pinder-s --pairs all --config frodock_config.yaml   # config supplies n_solutions, mpi_np and force; --ids <list> selects specific PINDER IDs and takes priority over --subset",
+    "pinder_eval --eval_dir $RESULTS_DIR --method_name frodock --max_workers N [--allow_missing]   # computes Fnat, iRMS, LRMS, DockQ and CAPRI class per decoy and writes the leaderboard csv"
+  ],
+  "run_commands_source": "src/pinder-methods/pinder/methods/README.md ('pinder_methods predict -m <method> -s <test set> -l <list of PINDER ids> -c `config` -r `results_dir`'), README.md evaluation-harness section (pinder_eval usage block and eval_dir layout), README.md download section (pinder_download usage), and the argparse/fire signatures in src/pinder-methods/pinder/methods/main.py and src/pinder-eval/pinder/eval/run.py, all at the pinned commit. Long-form flag names are used here; the README shows the equivalent short forms. No command was executed during this intake.",
+  "internal_stage_commands": {
+    "description": "The published FroDock adapter (src/pinder-methods/pinder/methods/run/frodock/predict.py) issues these eight stages per receptor/ligand pair; they are invoked by pinder_methods predict and are not run directly.",
+    "stages": [
+      "mpirun -np <mpi_np> --use-hwthread-cpus <bin>/frodockgrid_mpi_gcc <receptor>.pdb -o <receptor>_W.mrc",
+      "mpirun -np <mpi_np> --use-hwthread-cpus <bin>/frodockgrid_mpi_gcc <receptor>.pdb -o <receptor>_E.mrc -m 1 -t A",
+      "mpirun -np <mpi_np> --use-hwthread-cpus <bin>/frodockgrid_mpi_gcc <receptor>.pdb -o <receptor>_DS.mrc -m 3",
+      "mpirun -np <mpi_np> --use-hwthread-cpus <bin>/frodockgrid_mpi_gcc <ligand>.pdb -o <ligand>_DS.mrc -m 3",
+      "mpirun -np <mpi_np> --use-hwthread-cpus <bin>/frodock_mpi_gcc <receptor>_ASA.pdb <ligand>_ASA.pdb -w <receptor>_W.mrc -e <receptor>_E.mrc --th 10 -d <receptor>_DS.mrc,<ligand>_DS.mrc -t A -o dock.dat -s <bin>/soap.bin",
+      "<bin>/frodockcluster_gcc dock.dat <ligand>.pdb --nc <n_solutions> -o clust_dock.dat",
+      "<bin>/frodockview_gcc clust_dock.dat -r 1-<n_solutions>",
+      "<bin>/frodockview_gcc clust_dock.dat -r 1-<n_solutions> -p <ligand>.pdb"
+    ],
+    "environment": "OMPI_ALLOW_RUN_AS_ROOT=1 and OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 are set by the adapter"
+  },
+  "published_configuration": {
+    "method": "frodock",
+    "subset": "pinder-s",
+    "pairs": "all (holo, apo and predicted monomer pairs; brief.md prioritises the 93 apo-paired systems)",
+    "mpi_np": 8,
+    "mpi_np_source": "src/pinder-methods/pinder/methods/run/frodock/predict.py: mpi_np = int(params.get(\"mpi_np\", 8)); docstring 'Number of processors to use for MPI. Default is 8.'",
+    "n_solutions": "required config key with no published default value in the source; the number of decoys per case must be chosen and recorded by the study (see EXECUTION.json)",
+    "force": "required config key (bool); False skips a case whose model_1.pdb already exists",
+    "docking_parameters": "fixed in the adapter stage commands: electrostatic map -m 1 -t A, desolvation maps -m 3, docking --th 10 with vdW/electrostatic/desolvation maps, SOAP scoring file bin/soap.bin, clustering --nc <n_solutions>",
+    "output_layout": "<results_dir>/frodock/<pinder_id>/<holo|apo|predicted>_decoys/model_<rank>.pdb, each decoy a two-chain (R, L) complex",
+    "evaluation_configuration": "pinder_eval over that layout; missing systems penalised with iRMS=100.0, LRMS=100.0, Fnat=0.0, DockQ=0.0, CAPRI='Incorrect'",
+    "container_base": "mambaorg/micromamba:1.5-jammy, platform linux/amd64, python 3.10 (docker/frodock/Dockerfile.frodock)",
+    "source": "docker/frodock/Dockerfile.frodock, src/pinder-methods/pinder/methods/run/frodock/predict.py, src/pinder-methods/pinder/methods/main.py and README.md at the pinned commit"
+  },
+  "published_baseline_numbers": {
+    "available": false,
+    "detail": "The pinned repository lists FroDock on the PINDER-XL/S/AF2 leaderboards but contains no numeric leaderboard values; no published FroDock DockQ or success-rate number for PINDER-S was located during this intake. None is invented. See anchors.json for the published values that were located."
+  },
+  "known_source_issues": {
+    "note": "Recorded from reading the pinned source during this intake; untested, since no build or workload was run. They may require small, recorded patches before the baseline executes.",
+    "issues": [
+      "src/pinder-methods/pinder/methods/main.py:117 checks `SUPPORTED_ACTIONS.PREDICT.value in SUPPORTED_METHODS[method]` while SUPPORTED_METHODS holds SUPPORTED_ACTIONS members, so the string/enum comparison can fail for every method",
+      "src/pinder-methods/pinder/methods/main.py:133 calls pd.from_csv, which is not a pandas API (pandas.read_csv is)",
+      "src/pinder-methods/pinder/methods/run/frodock/predict.py:~250 calls shutil.copy with a literal '*.pdb' glob string, which shutil does not expand",
+      "fire is imported by pinder.methods.main but is not declared in pyproject.toml dependencies",
+      "docker/frodock/Dockerfile.frodock sets ENV PATH=/app/frodock/bin while the archive is extracted to /workspace/frodock, and clones pinder from main rather than the pinned commit"
+    ]
+  },
+  "material_identity_caveat": "The FroDock software and its bin/soap.bin scoring input come from an unverified third-party mirror approved by the run owner for this local experiment. Identity with the original study distribution is unestablished; passing published-value anchors checks only the properties those anchors measure and does not establish byte identity. Claims about the original remain conditional (brief.md, Materials)."
+}

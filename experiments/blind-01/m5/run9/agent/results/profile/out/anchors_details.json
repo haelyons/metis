@@ -1,0 +1,448 @@
+{
+  "definitions": {
+    "dockq_acceptable_threshold": "max DockQ over all scored decoys of the 16 holo/apo jobs (best-of-50 per job, then max)",
+    "pinder_s_system_count": "PINDER-S systems in index.parquet (release 2024-02) via pinder.core.get_index",
+    "pinder_s_apo_paired_count": "PINDER-S systems with apo_R and apo_L",
+    "docking_wall_s": "pinder logger timestamp of 'Running FroDock' to 'Copying the results' for that job"
+  },
+  "selected_ids": [
+    "1a19__A1_P11540--1a19__B1_P11540",
+    "1aua__A1_P24280--1aua__A2_P24280",
+    "1ax2__A1_P16404--1ax2__A2_P16404",
+    "1dtd__A1_P48052--1dtd__B1_P81511",
+    "1dv1__A1_P24182--1dv1__B1_P24182",
+    "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+    "1ht8__A1_P05979--1ht8__B1_P05979",
+    "1nr5__A1_P07547--1nr5__A2_P07547"
+  ],
+  "jobs": [
+    {
+      "id": "1a19__A1_P11540--1a19__B1_P11540",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.010824999306350946,
+        "iRMS": 18.72527503967285,
+        "Fnat": 0.0,
+        "LRMS": 51.92354965209961,
+        "CAPRI": "Incorrect",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.8841500212480357,
+        "iRMS": 0.6404566764831543,
+        "Fnat": 0.8648648648648649,
+        "LRMS": 2.1134073734283447,
+        "CAPRI": "High",
+        "rank": 4
+      },
+      "top1_acceptable": false,
+      "best_acceptable": true,
+      "docking_wall_s": 42.38700008392334,
+      "poses_per_s": 1.179606952627066
+    },
+    {
+      "id": "1a19__A1_P11540--1a19__B1_P11540",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.044399187279244266,
+        "iRMS": 13.867110252380371,
+        "Fnat": 0.0,
+        "LRMS": 22.841930389404297,
+        "CAPRI": "Incorrect",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.8487283227679966,
+        "iRMS": 0.9831313490867615,
+        "Fnat": 0.918918918918919,
+        "LRMS": 2.371896505355835,
+        "CAPRI": "High",
+        "rank": 2
+      },
+      "top1_acceptable": false,
+      "best_acceptable": true,
+      "docking_wall_s": 40.5,
+      "poses_per_s": 1.2345679012345678
+    },
+    {
+      "id": "1aua__A1_P24280--1aua__A2_P24280",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.247782335992445,
+        "iRMS": 4.392855644226074,
+        "Fnat": 0.47368421052631576,
+        "LRMS": 19.1047306060791,
+        "CAPRI": "Incorrect",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.8037010211693613,
+        "iRMS": 0.9257805943489075,
+        "Fnat": 0.8421052631578947,
+        "LRMS": 3.6426444053649902,
+        "CAPRI": "High",
+        "rank": 7
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 198.0659999847412,
+      "poses_per_s": 0.25244110550953697
+    },
+    {
+      "id": "1aua__A1_P24280--1aua__A2_P24280",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.22771144932822177,
+        "iRMS": 4.438515663146973,
+        "Fnat": 0.39473684210526316,
+        "LRMS": 17.787996292114258,
+        "CAPRI": "Incorrect",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.7987628756907948,
+        "iRMS": 1.096470594406128,
+        "Fnat": 0.8421052631578947,
+        "LRMS": 2.7948617935180664,
+        "CAPRI": "Medium",
+        "rank": 3
+      },
+      "top1_acceptable": false,
+      "best_acceptable": true,
+      "docking_wall_s": 207.37600016593933,
+      "poses_per_s": 0.2411079390092909
+    },
+    {
+      "id": "1ax2__A1_P16404--1ax2__A2_P16404",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.9267099889275295,
+        "iRMS": 0.6185465455055237,
+        "Fnat": 0.9607843137254902,
+        "LRMS": 1.6265043020248413,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.9267099889275295,
+        "iRMS": 0.6185465455055237,
+        "Fnat": 0.9607843137254902,
+        "LRMS": 1.6265043020248413,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 150.6159999370575,
+      "poses_per_s": 0.33197004316204803
+    },
+    {
+      "id": "1ax2__A1_P16404--1ax2__A2_P16404",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.007221427280455828,
+        "iRMS": 24.46738624572754,
+        "Fnat": 0.0,
+        "LRMS": 62.925167083740234,
+        "CAPRI": "Incorrect",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.8662252593663783,
+        "iRMS": 0.7534908652305603,
+        "Fnat": 0.8431372549019608,
+        "LRMS": 1.8011329174041748,
+        "CAPRI": "High",
+        "rank": 4
+      },
+      "top1_acceptable": false,
+      "best_acceptable": true,
+      "docking_wall_s": 235.1909999847412,
+      "poses_per_s": 0.2125931689700878
+    },
+    {
+      "id": "1dtd__A1_P48052--1dtd__B1_P81511",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.035954155027866364,
+        "iRMS": 10.983567237854004,
+        "Fnat": 0.0,
+        "LRMS": 27.102266311645508,
+        "CAPRI": "Incorrect",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.9103310114919804,
+        "iRMS": 0.5561242699623108,
+        "Fnat": 0.9152542372881356,
+        "LRMS": 2.2118072509765625,
+        "CAPRI": "High",
+        "rank": 2
+      },
+      "top1_acceptable": false,
+      "best_acceptable": true,
+      "docking_wall_s": 77.67400002479553,
+      "poses_per_s": 0.6437160437731895
+    },
+    {
+      "id": "1dtd__A1_P48052--1dtd__B1_P81511",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.013167259593804678,
+        "iRMS": 15.017375946044922,
+        "Fnat": 0.0,
+        "LRMS": 48.64868927001953,
+        "CAPRI": "Incorrect",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.048648813108013854,
+        "iRMS": 10.956809997558594,
+        "Fnat": 0.01694915254237288,
+        "LRMS": 24.104026794433594,
+        "CAPRI": "Incorrect",
+        "rank": 17
+      },
+      "top1_acceptable": false,
+      "best_acceptable": false,
+      "docking_wall_s": 156.01600003242493,
+      "poses_per_s": 0.320479950707674
+    },
+    {
+      "id": "1dv1__A1_P24182--1dv1__B1_P24182",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.31386405569419523,
+        "iRMS": 3.297498941421509,
+        "Fnat": 0.3815789473684211,
+        "LRMS": 10.662577629089355,
+        "CAPRI": "Acceptable",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.8431123474188018,
+        "iRMS": 0.7599237561225891,
+        "Fnat": 0.8421052631578947,
+        "LRMS": 2.9657697677612305,
+        "CAPRI": "High",
+        "rank": 7
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 559.922000169754,
+      "poses_per_s": 0.08929815221556088
+    },
+    {
+      "id": "1dv1__A1_P24182--1dv1__B1_P24182",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.7111932938559015,
+        "iRMS": 0.9359527230262756,
+        "Fnat": 0.7894736842105263,
+        "LRMS": 6.593369960784912,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.8017746189184356,
+        "iRMS": 0.7920178771018982,
+        "Fnat": 0.8421052631578947,
+        "LRMS": 4.4979963302612305,
+        "CAPRI": "High",
+        "rank": 4
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 241.19400000572205,
+      "poses_per_s": 0.20730200584929065
+    },
+    {
+      "id": "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.901402824936491,
+        "iRMS": 0.5794236063957214,
+        "Fnat": 0.9181818181818182,
+        "LRMS": 2.5762414932250977,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.901402824936491,
+        "iRMS": 0.5794236063957214,
+        "Fnat": 0.9181818181818182,
+        "LRMS": 2.5762414932250977,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 442.63899993896484,
+      "poses_per_s": 0.11295886717368886
+    },
+    {
+      "id": "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.7917522925319093,
+        "iRMS": 1.22913658618927,
+        "Fnat": 0.9181818181818182,
+        "LRMS": 3.4466748237609863,
+        "CAPRI": "Medium",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.7917522925319093,
+        "iRMS": 1.22913658618927,
+        "Fnat": 0.9181818181818182,
+        "LRMS": 3.4466748237609863,
+        "CAPRI": "Medium",
+        "rank": 1
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 401.63499999046326,
+      "poses_per_s": 0.12449114245817033
+    },
+    {
+      "id": "1ht8__A1_P05979--1ht8__B1_P05979",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.9001090431726108,
+        "iRMS": 0.5542128086090088,
+        "Fnat": 0.8451612903225807,
+        "LRMS": 1.3532347679138184,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.9001090431726108,
+        "iRMS": 0.5542128086090088,
+        "Fnat": 0.8451612903225807,
+        "LRMS": 1.3532347679138184,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 549.3090000152588,
+      "poses_per_s": 0.0910234494585217
+    },
+    {
+      "id": "1ht8__A1_P05979--1ht8__B1_P05979",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.888320788004065,
+        "iRMS": 0.5610988140106201,
+        "Fnat": 0.8258064516129032,
+        "LRMS": 1.6915485858917236,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.888320788004065,
+        "iRMS": 0.5610988140106201,
+        "Fnat": 0.8258064516129032,
+        "LRMS": 1.6915485858917236,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 582.4049999713898,
+      "poses_per_s": 0.0858509113116409
+    },
+    {
+      "id": "1nr5__A1_P07547--1nr5__A2_P07547",
+      "kind": "holo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.9775788581560528,
+        "iRMS": 0.31775161623954773,
+        "Fnat": 0.9809523809523809,
+        "LRMS": 0.6186391711235046,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.9775788581560528,
+        "iRMS": 0.31775161623954773,
+        "Fnat": 0.9809523809523809,
+        "LRMS": 0.6186391711235046,
+        "CAPRI": "High",
+        "rank": 1
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 326.07100009918213,
+      "poses_per_s": 0.15334083676497245
+    },
+    {
+      "id": "1nr5__A1_P07547--1nr5__A2_P07547",
+      "kind": "apo",
+      "n_decoys_scored": 50,
+      "penalised_missing": false,
+      "top1": {
+        "DockQ": 0.5092026018907153,
+        "iRMS": 2.5373055934906006,
+        "Fnat": 0.6190476190476191,
+        "LRMS": 6.24305534362793,
+        "CAPRI": "Acceptable",
+        "rank": 1
+      },
+      "best": {
+        "DockQ": 0.5092026018907153,
+        "iRMS": 2.5373055934906006,
+        "Fnat": 0.6190476190476191,
+        "LRMS": 6.24305534362793,
+        "CAPRI": "Acceptable",
+        "rank": 1
+      },
+      "top1_acceptable": true,
+      "best_acceptable": true,
+      "docking_wall_s": 325.1820001602173,
+      "poses_per_s": 0.1537600481433935
+    }
+  ],
+  "failed_jobs_penalised": [],
+  "summary": {
+    "n_jobs": 16,
+    "top1_acceptable_jobs": 10,
+    "best_acceptable_jobs": 15,
+    "docking_wall_s_sum": 4536.183000564575
+  },
+  "measured": {
+    "dockq_acceptable_threshold": 0.9775788581560528,
+    "pinder_s_system_count": 250,
+    "pinder_s_apo_paired_count": 93
+  }
+}
