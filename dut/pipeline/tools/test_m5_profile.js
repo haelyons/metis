@@ -84,17 +84,20 @@ function summariserTests() {
     const dir = fs.mkdtempSync(path.join(scratch, 'skips-'))
     csv(dir)
     for (const [report, activity] of [
-      ['cuda_gpu_kern_sum', 'CUDA kernel'], ['cuda_gpu_mem_time_sum', 'CUDA memory'], ['cuda_api_sum', 'CUDA API'],
+      ['cuda_gpu_kern_sum', 'CUDA kernel'], ['cuda_gpu_mem_time_sum', 'GPU memory'], ['cuda_api_sum', 'CUDA trace'],
     ]) fs.writeFileSync(path.join(dir, `stats_${report}.csv`),
-      `SKIPPED: fixture.nsys-rep does not contain ${activity} data.\n`)
+      `SKIPPED: /tmp/x/report.sqlite does not contain ${activity} data.\n`)
     assert.equal(summarise(dir).status, 0)
     const stages = read(path.join(dir, 'stages.json'))
     assert.deepEqual(stages.map(row => row.wall_s), [0, 0, 0, 0, 10])
     assert.deepEqual(stages.map(row => row.gpu_s), [0, 0, 0, null, null])
   })
   // U48: Nsight 2025 writes empty files for skipped reports and logs the skip in stats.log.
-  const REPORTS = { kernel: ['cuda_gpu_kern_sum', 'CUDA kernel'], memory: ['cuda_gpu_mem_time_sum', 'CUDA memory'], api: ['cuda_api_sum', 'CUDA API'] }
+  // Nsight's own wordings (SCHEMAS.md U48); the old memory/API phrases no longer count.
+  const REPORTS = { kernel: ['cuda_gpu_kern_sum', 'CUDA kernel'], memory: ['cuda_gpu_mem_time_sum', 'GPU memory'], api: ['cuda_api_sum', 'CUDA trace'] }
+  const OLD_PHRASES = { memory: 'CUDA memory', api: 'CUDA API' }
   const skipLine = key => `SKIPPED: /tmp/fixture/baseline.nsys-rep does not contain ${REPORTS[key][1]} data.\n`
+  const oldSkipLine = key => `SKIPPED: /tmp/fixture/baseline.nsys-rep does not contain ${OLD_PHRASES[key]} data.\n`
   function skipFixture({ files = {}, log } = {}) {
     const dir = fs.mkdtempSync(path.join(scratch, 'u48-'))
     csv(dir)
@@ -144,9 +147,23 @@ function summariserTests() {
     ['all files empty, no stats.log', { files: { kernel: '', memory: '', api: '' } }],
     ['absent kernel file, stats.log states only memory/API skips', { files: { kernel: null }, log: skipLine('memory') + skipLine('api') }],
     ['absent API file, no stats.log', { files: { api: null } }],
+    // Old phrases never occur in Nsight output and no longer count as statements.
+    ['empty memory file, stats.log says only old "CUDA memory data"', { files: { memory: '' }, log: oldSkipLine('memory') }],
+    ['absent memory file, stats.log says only old "CUDA memory data"', { files: { memory: null }, log: oldSkipLine('memory') }],
+    ['empty API file, stats.log says only old "CUDA API data"', { files: { api: '' }, log: oldSkipLine('api') }],
+    ['absent API file, stats.log says only old "CUDA API data"', { files: { api: null }, log: oldSkipLine('api') }],
+    ['all files empty, kernel statement plus old memory/API phrases', { files: { kernel: '', memory: '', api: '' }, log: skipLine('kernel') + oldSkipLine('memory') + oldSkipLine('api') }],
   ]) check(`U48: ${name} fails parsing`, () => {
     const dir = skipFixture(options)
     assert.notEqual(summarise(dir).status, 0)
+  })
+  check('U48: realistic Nsight 2025 stats.log with three empty CSVs counts as zero', () => {
+    const reports = '/opt/nvidia/nsight-systems-cli/2025.3.1/host-linux-x64/reports'
+    const log = [['cuda_gpu_kern_sum', 'CUDA kernel'], ['cuda_gpu_mem_time_sum', 'GPU memory'], ['cuda_api_sum', 'CUDA trace']]
+      .map(([report, activity]) => `Processing [/tmp/x/report.sqlite] with [${reports}/${report}.py]... \n` +
+        `SKIPPED: /tmp/x/report.sqlite does not contain ${activity} data.\n\n`).join('')
+    const dir = skipFixture({ files: { kernel: '', memory: '', api: '' }, log })
+    assertZeroSummary(dir, summarise(dir))
   })
   check('U48: absent CSVs with their stats.log statements count as zero', () => {
     const dir = skipFixture({ files: { kernel: null, memory: null, api: null }, log: allSkipsLog })
@@ -285,10 +302,12 @@ case "$1" in
       if [[ $1 == --output ]]; then output=$2; shift 2; else shift; fi
     done
     ${mode !== 'nsight-2025-skips' ? '' : `# Nsight 2025: empty file per skipped report, skip logged (stdout and stderr).
-    for pair in cuda_gpu_kern_sum:kernel cuda_gpu_mem_time_sum:memory cuda_api_sum:API; do
+    # Nsight's own wordings: CUDA kernel / GPU memory / CUDA trace.
+    for pair in 'cuda_gpu_kern_sum:CUDA kernel' 'cuda_gpu_mem_time_sum:GPU memory' 'cuda_api_sum:CUDA trace'; do
       : > "\${output}_\${pair%%:*}.csv"
-      echo "SKIPPED: \${output}.nsys-rep does not contain CUDA \${pair#*:} data."
-      echo "SKIPPED: \${output}.nsys-rep does not contain CUDA \${pair#*:} data." >&2
+      echo "Processing [\${output}.sqlite] with [/opt/nvidia/nsight-systems-cli/2025.3.1/host-linux-x64/reports/\${pair%%:*}.py]... "
+      echo "SKIPPED: \${output}.sqlite does not contain \${pair#*:} data."
+      echo "SKIPPED: \${output}.sqlite does not contain \${pair#*:} data." >&2
     done
     exit 0`}
     for report in cuda_gpu_kern_sum cuda_gpu_mem_time_sum cuda_api_sum; do
