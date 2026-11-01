@@ -92,6 +92,73 @@ function summariserTests() {
     assert.deepEqual(stages.map(row => row.wall_s), [0, 0, 0, 0, 10])
     assert.deepEqual(stages.map(row => row.gpu_s), [0, 0, 0, null, null])
   })
+  // U48: Nsight 2025 writes empty files for skipped reports and logs the skip in stats.log.
+  const REPORTS = { kernel: ['cuda_gpu_kern_sum', 'CUDA kernel'], memory: ['cuda_gpu_mem_time_sum', 'CUDA memory'], api: ['cuda_api_sum', 'CUDA API'] }
+  const skipLine = key => `SKIPPED: /tmp/fixture/baseline.nsys-rep does not contain ${REPORTS[key][1]} data.\n`
+  function skipFixture({ files = {}, log } = {}) {
+    const dir = fs.mkdtempSync(path.join(scratch, 'u48-'))
+    csv(dir)
+    for (const [key, content] of Object.entries(files)) {
+      const file = path.join(dir, `stats_${REPORTS[key][0]}.csv`)
+      if (content === null) fs.unlinkSync(file)
+      else fs.writeFileSync(file, content)
+    }
+    if (log !== undefined) fs.writeFileSync(path.join(dir, 'stats.log'), log)
+    return dir
+  }
+  const allSkipsLog = 'Processing [/tmp/fixture/baseline.sqlite] with [cuda_gpu_kern_sum.py]...\n' +
+    ['kernel', 'memory', 'api'].map(skipLine).join('\nProcessing next report...\n')
+  function assertZeroSummary(dir, result) {
+    assert.equal(result.status, 0, result.stderr)
+    const stages = read(path.join(dir, 'stages.json'))
+    assert.deepEqual(stages.map(row => row.stage), ['kernels', 'memcpy H2D', 'memcpy D2H', 'CUDA API host time', 'other host time'])
+    assert.deepEqual(stages.map(row => row.wall_s), [0, 0, 0, 0, 10])
+    assert.deepEqual(stages.map(row => row.gpu_s), [0, 0, 0, null, null])
+    assert.deepEqual(read(path.join(dir, 'total_wall_s.json')), { total_wall_s: 10 })
+    assert.deepEqual(read(path.join(dir, 'gpu_util.json')), [{ t: 0, util: 0 }, { t: 1, util: 50 }])
+  }
+  for (const [name, content] of [['empty (zero-byte)', ''], ['whitespace-only', '\n  \n\t\n   ']]) check(`U48: ${name} CSVs with stats.log skips count as zero`, () => {
+    const dir = skipFixture({ files: { kernel: content, memory: content, api: content }, log: allSkipsLog })
+    assertZeroSummary(dir, summarise(dir))
+  })
+  check('U48: only kernel report empty with its statement; others parsed', () => {
+    const dir = skipFixture({ files: { kernel: '' }, log: skipLine('kernel') })
+    assert.equal(summarise(dir).status, 0)
+    assert.deepEqual(read(path.join(dir, 'stages.json')), [
+      { stage: 'kernels', kind: 'compute', wall_s: 0, gpu_s: 0 },
+      { stage: 'memcpy H2D', kind: 'transfer', wall_s: 1, gpu_s: 1 },
+      { stage: 'memcpy D2H', kind: 'transfer', wall_s: 0.5, gpu_s: 0.5 },
+      { stage: 'CUDA API host time', kind: 'other', wall_s: 1.5, gpu_s: null },
+      { stage: 'other host time', kind: 'other', wall_s: 7, gpu_s: null },
+    ])
+  })
+  for (const [name, options] of [
+    ['empty kernel file, stats.log states only memory/API skips', { files: { kernel: '' }, log: skipLine('memory') + skipLine('api') }],
+    ['empty memory file, stats.log states only kernel/API skips', { files: { memory: '' }, log: skipLine('kernel') + skipLine('api') }],
+    ['empty API file, stats.log states only kernel/memory skips', { files: { api: '' }, log: skipLine('kernel') + skipLine('memory') }],
+    ['whitespace-only kernel file, stats.log states only memory/API skips', { files: { kernel: '\n \n' }, log: skipLine('memory') + skipLine('api') }],
+    ['empty kernel file, no stats.log', { files: { kernel: '' } }],
+    ['whitespace-only kernel file, no stats.log', { files: { kernel: ' \n\n' } }],
+    ['empty kernel file, irrelevant stats.log', { files: { kernel: '' }, log: 'Processing [baseline.sqlite] with [cuda_gpu_kern_sum.py]...\nGenerated report.\n' }],
+    ['empty kernel file, empty stats.log', { files: { kernel: '' }, log: '' }],
+    ['all files empty, no stats.log', { files: { kernel: '', memory: '', api: '' } }],
+    ['absent kernel file, stats.log states only memory/API skips', { files: { kernel: null }, log: skipLine('memory') + skipLine('api') }],
+    ['absent API file, no stats.log', { files: { api: null } }],
+  ]) check(`U48: ${name} fails parsing`, () => {
+    const dir = skipFixture(options)
+    assert.notEqual(summarise(dir).status, 0)
+  })
+  check('U48: absent CSVs with their stats.log statements count as zero', () => {
+    const dir = skipFixture({ files: { kernel: null, memory: null, api: null }, log: allSkipsLog })
+    assertZeroSummary(dir, summarise(dir))
+  })
+  check('U48: absent kernel CSV with its statement; others parsed', () => {
+    const dir = skipFixture({ files: { kernel: null }, log: skipLine('kernel') })
+    assert.equal(summarise(dir).status, 0)
+    const stages = read(path.join(dir, 'stages.json'))
+    assert.deepEqual(stages.map(row => row.wall_s), [0, 1, 0.5, 1.5, 7])
+    assert.deepEqual(stages.map(row => row.gpu_s), [0, 1, 0.5, null, null])
+  })
   for (const failure of ['missing', 'malformed']) check(`${failure} CSV fails parsing`, () => {
     const dir = fs.mkdtempSync(path.join(scratch, 'invalid-'))
     csv(dir)
@@ -105,7 +172,7 @@ function script(file, body) {
   fs.writeFileSync(file, '#!/bin/bash\nset -eu\n' + body + '\n', { mode: 0o700 })
 }
 function profilerTests() {
-  for (const mode of ['success', 'collection-failure', 'export-failure', 'missing-nsys', 'deb-hash-mismatch', 'deb-success']) check(`profile_nsys.sh: ${mode}`, () => {
+  for (const mode of ['success', 'collection-failure', 'export-failure', 'missing-nsys', 'deb-hash-mismatch', 'deb-success', 'nsight-2025-skips']) check(`profile_nsys.sh: ${mode}`, () => {
     const deb = mode.startsWith('deb-')
     const dir = fs.mkdtempSync(path.join(scratch, 'collect-')), bin = path.join(dir, 'bin')
     fs.mkdirSync(bin)
@@ -217,6 +284,13 @@ case "$1" in
     ${mode === 'export-failure' ? 'exit 9' : `while (( $# )); do
       if [[ $1 == --output ]]; then output=$2; shift 2; else shift; fi
     done
+    ${mode !== 'nsight-2025-skips' ? '' : `# Nsight 2025: empty file per skipped report, skip logged (stdout and stderr).
+    for pair in cuda_gpu_kern_sum:kernel cuda_gpu_mem_time_sum:memory cuda_api_sum:API; do
+      : > "\${output}_\${pair%%:*}.csv"
+      echo "SKIPPED: \${output}.nsys-rep does not contain CUDA \${pair#*:} data."
+      echo "SKIPPED: \${output}.nsys-rep does not contain CUDA \${pair#*:} data." >&2
+    done
+    exit 0`}
     for report in cuda_gpu_kern_sum cuda_gpu_mem_time_sum cuda_api_sum; do
       printf 'Time (%%),Total Time (ns),Instances,Name\\n100,1000000,1,' > "\${output}_\${report}.csv"
       case "$report" in
@@ -290,6 +364,21 @@ esac`)
       const telemetry = read(path.join(out, 'gpu_util.json'))
       assert.ok(telemetry.length > 0, 'missing telemetry')
       assert.ok(telemetry.every(row => row.t >= 0 && row.t <= wall && row.util === 30))
+    } else if (mode === 'nsight-2025-skips') {
+      // U48: empty reports with logged skips are a zero profile, not parse/infra.
+      assert.equal(result.status, 0, result.stderr + result.stdout)
+      assert.doesNotMatch(result.stderr + result.stdout, /M5_PROFILER_INFRA/)
+      assert.ok(!fs.existsSync(path.join(out, 'infra.json')), 'infra.json written')
+      assert.match(fs.readFileSync(env.FAKE_CALLS, 'utf8'), /stats --report cuda_gpu_kern_sum,cuda_gpu_mem_time_sum,cuda_api_sum --format csv/)
+      assert.equal(fs.readFileSync(path.join(dir, 'command-calls'), 'utf8'), 'executed\n')
+      const wall = read(path.join(out, 'total_wall_s.json')).total_wall_s
+      assert.ok(wall >= 0.3, `wall=${wall}`)
+      const stages = read(path.join(out, 'stages.json'))
+      assert.deepEqual(stages.map(row => row.stage), ['kernels', 'memcpy H2D', 'memcpy D2H', 'CUDA API host time', 'other host time'])
+      assert.deepEqual(stages.map(row => row.wall_s), [0, 0, 0, 0, wall])
+      assert.deepEqual(stages.map(row => row.gpu_s), [0, 0, 0, null, null])
+      const telemetry = read(path.join(out, 'gpu_util.json'))
+      assert.ok(telemetry.length > 0, 'missing telemetry')
     } else {
       assert.equal(result.status, 2, result.stderr + result.stdout)
       assert.match(result.stderr + result.stdout, /M5_PROFILER_INFRA/)

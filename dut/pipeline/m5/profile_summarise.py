@@ -19,13 +19,14 @@ def seconds(value, unit):
 
 def report_rows(file):
     """Ignore nsys status lines; require a recognizable duration header."""
-    if not file.exists():
+    content = file.read_text(encoding="utf-8-sig") if file.exists() else ""
+    if not content.strip():
         activity = {"stats_cuda_gpu_kern_sum.csv": "CUDA kernel data",
                     "stats_cuda_gpu_mem_time_sum.csv": "CUDA memory data",
                     "stats_cuda_api_sum.csv": "CUDA API data"}[file.name]
         if "does not contain " + activity in (file.parent / "stats.log").read_text():
             return
-    lines = file.read_text(encoding="utf-8-sig").splitlines()
+    lines = content.splitlines()
     for index, line in enumerate(lines):
         header = next(csv.reader([line]))
         columns = [(i, re.fullmatch(r"Total (?:Time|Duration) \((ns|us|µs|ms|s)\)", name.strip()))
