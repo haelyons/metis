@@ -1,0 +1,117 @@
+--- run9/agent/harness/run_command.sh
++++ run10_harness/run_units.sh
+@@ -1,15 +1,15 @@
+ #!/usr/bin/env bash
+-# run_command.sh - the exact measured baseline command and its complete environment.
++# run_units.sh - the measured baseline restricted through published preprocessing selection.
+ #
+-# Invoked as:  bash harness/run_command.sh   (working directory = the shared run directory, or a sibling
++# Invoked as:  bash harness/run_units.sh <system_id:holo|system_id:apo>...   (working directory = the shared run directory, or a sibling
+ # work directory that links baseline-published/, data/ and harness/). All paths are relative to that
+ # working directory. PATH entries are resolved from this working directory because the published
+ # FroDock adapter changes directory into a temporary stage directory.
+ #
+ # Representative scale (EXECUTION.json, fixed): the 8 preregistered PINDER-S apo-paired systems in
+-# data/selection.json, holo and apo pairings (16 docking jobs), n_solutions=50, mpi_np=8, force=false,
++# data/selection.json; requested holo/apo jobs only, n_solutions=50, mpi_np=8, force=false,
+ # docked by the published `pinder_methods predict --method frodock` and scored by the published
+-# `pinder_eval` (800 decoys). FroDock is CPU + MPI only: no GPU is used (CUDA_VISIBLE_DEVICES="",
++# `pinder_eval` (50 decoys per selected job). FroDock is CPU + MPI only: no GPU is used (CUDA_VISIBLE_DEVICES="",
+ # GPU count 0). CUDA MPS variables are inherited unchanged.
+ #
+ # Output (stdout+stderr of both published commands): out/run_command/run_command.log
+@@ -17,6 +17,7 @@
+ #   scores:  out/results/frodock_metrics.csv, out/results/frodock_leaderboard.csv
+ # Exit status: nonzero if either published command fails.
+ set -Eeuo pipefail
++[ "$#" -gt 0 ] || { echo "ERROR: at least one system_id:holo or system_id:apo is required" >&2; exit 2; }
+ 
+ # ------------------------------------------------------------------ complete environment
+ export CUDA_VISIBLE_DEVICES=""          # CPU/MPI-only baseline
+@@ -79,11 +80,64 @@
+ mpi_np: $MPI_NP
+ force: $FORCE
+ EOF
+-cp data/frodock/frodock_setup.csv "$RESULTS/frodock_setup.csv"   # predict reads <results_dir>/frodock_setup.csv
++# Select through the published preprocess --ids / --pairs interface into private out/.
++# Keep the original prepared input paths and bytes used by the measured command.
++"$VPY" - "$VENV/bin/pinder_methods" "$METHOD" "$RUN_DIR" "$RESULTS" "$@" <<'PY'
++import csv, json, re, subprocess, sys, tempfile
++from pathlib import Path
++
++program, method, run_dir, results = sys.argv[1:5]
++requested = sys.argv[5:]
++with open("data/frodock/frodock_setup.csv", newline="") as stream:
++    reader = csv.DictReader(stream)
++    fields = reader.fieldnames
++    full = list(reader)
++by_key = {}
++for row in full:
++    key = row["id"] + ":" + row["kind"]
++    if key in by_key:
++        sys.exit(f"ERROR: duplicate prepared unit {key}")
++    by_key[key] = row
++if len(set(requested)) != len(requested):
++    sys.exit("ERROR: duplicate requested unit")
++for key in requested:
++    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:+=-]{0,127}", key) or key not in by_key:
++        sys.exit(f"ERROR: unknown unit {key!r}")
++selected = []
++for key in requested:
++    original = by_key[key]
++    pid, kind = original["id"], original["kind"]
++    prep = Path(tempfile.mkdtemp(prefix="unit-preprocess-", dir=run_dir))
++    if prep.is_absolute():
++        prep = prep.relative_to(Path.cwd())
++    command = [sys.executable, program, "preprocess", "--method", method,
++               "--data_dir", str(prep), "--ids", json.dumps([pid]), "--pairs", kind]
++    try:
++        subprocess.run(command, check=True)
++    except subprocess.CalledProcessError as exc:
++        sys.exit(exc.returncode)
++    with open(prep / "frodock_setup.csv", newline="") as stream:
++        rows = list(csv.DictReader(stream))
++    if len(rows) != 1 or (rows[0]["id"], rows[0]["kind"]) != (pid, kind):
++        sys.exit(f"ERROR: published preprocess did not select exactly {key}")
++    for column in ("receptor", "ligand"):
++        relative = Path(original[column])
++        fresh_relative = Path(rows[0][column])
++        if relative.is_absolute() or ".." in relative.parts or fresh_relative != relative:
++            sys.exit(f"ERROR: preprocessing changed the prepared input path for {key} {column}")
++        if (prep / relative).read_bytes() != (Path("data/frodock") / relative).read_bytes():
++            sys.exit(f"ERROR: preprocessing changed the prepared input bytes for {key} {column}")
++    selected.append(original)
++with open(Path(results) / "frodock_setup.csv", "w", newline="") as stream:
++    writer = csv.DictWriter(stream, fieldnames=fields)
++    writer.writeheader()
++    writer.writerows(selected)
++print("REQUESTED_UNITS=" + json.dumps(requested))
++PY
+ 
+ # ------------------------------------------------------------------ printed configuration (validated)
+ "$VPY" - "$RUN_DIR/frodock_config.yaml" "$RESULTS/frodock_setup.csv" data/selection.json \
+-    "$METHOD" "$N_SOLUTIONS" "$MPI_NP" "$FORCE" "$EVAL_MAX_WORKERS" "$BASELINE_GPU_COUNT" <<'PY'
++    "$METHOD" "$N_SOLUTIONS" "$MPI_NP" "$FORCE" "$EVAL_MAX_WORKERS" "$BASELINE_GPU_COUNT" "$@" <<'PY'
+ import json, os, sys, yaml
+ import pandas as pd
+ from pinder.core import get_index
+@@ -96,15 +150,15 @@
+ print(f"PINDER_S_APO_PAIRED_COUNT={apo['id'].nunique()}")
+ print("SELECTED_IDS=" + json.dumps(ids))
+ errs = []
+-if sys.argv[4:] != ["frodock", "50", "8", "false", "8", "0"]: errs.append("actual command parameters differ from fixed configuration")
++if sys.argv[4:10] != ["frodock", "50", "8", "false", "8", "0"]: errs.append("actual command parameters differ from fixed configuration")
+ if os.environ.get("CUDA_VISIBLE_DEVICES") != "": errs.append("CPU baseline must expose zero GPUs")
+ if os.environ.get("PINDER_BASE_DIR") != "data" or os.environ.get("PINDER_RELEASE") != "2024-02": errs.append("dataset environment differs from fixed configuration")
+ if ids != sel["ids"]: errs.append("selection from index differs from data/selection.json")
+ if sel["n"] != 8 or len(ids) != 8: errs.append("representative scale must contain exactly 8 systems")
+ if cfg != {"n_solutions": 50, "mpi_np": 8, "force": False}: errs.append(f"config {cfg} is not the published representative config")
+-if sorted(set(jobs["id"])) != sorted(ids): errs.append("frodock_setup.csv ids differ from selection")
+-if sorted(set(jobs["kind"])) != ["apo", "holo"] or len(jobs) != 2 * len(ids): errs.append("frodock_setup.csv is not holo+apo for every id")
+-if set(zip(jobs["id"], jobs["kind"])) != {(pid, kind) for pid in ids for kind in ("holo", "apo")}: errs.append("frodock_setup.csv lacks an expected id/pairing")
++requested = sys.argv[10:]
++if [pid + ":" + kind for pid, kind in zip(jobs["id"], jobs["kind"])] != requested: errs.append("frodock_setup.csv differs from requested unit order")
++if not set(zip(jobs["id"], jobs["kind"])).issubset({(pid, kind) for pid in ids for kind in ("holo", "apo")}): errs.append("frodock_setup.csv has a unit outside the fixed selection")
+ print(f"CONFIG method=frodock subset=pinder-s pairs=holo,apo n_jobs={len(jobs)} n_solutions={cfg.get('n_solutions')} "
+       f"mpi_np={cfg.get('mpi_np')} force={cfg.get('force')} CUDA_VISIBLE_DEVICES='{os.environ.get('CUDA_VISIBLE_DEVICES')}' "
+       f"host_nproc={os.cpu_count()} PINDER_BASE_DIR={os.environ.get('PINDER_BASE_DIR')}")

@@ -1,0 +1,20 @@
+{
+  "diff_argument_handling": "yes",
+  "diff_subset_selection": "yes",
+  "diff_messages_or_log_paths": "yes",
+  "diff_output_locations": "yes",
+  "diff_environment": "no",
+  "diff_thread_setting": "no",
+  "diff_configuration_or_scale": "no",
+  "diff_binary_or_entry": "yes",
+  "diff_working_directory": "no",
+  "diff_other": "no",
+  "same_computation_per_unit": "unknown",
+  "writes_only_out_or_temp": "unknown",
+  "mps_untouched": "yes",
+  "units_complete_and_ordered": "yes",
+  "outputs_own_files_only": "yes",
+  "costs_match_records": "yes",
+  "contract_met": "no",
+  "verdict": "needs_fix"
+}
