@@ -1,0 +1,13 @@
+{
+  "summariser_exit_u48": "nonzero",
+  "stage_count_ok": "unknown",
+  "wrapper_rule": "unknown",
+  "timed_fraction_ok": "unknown",
+  "gpu_telemetry": "unknown",
+  "gate_after_u48": "parse",
+  "command_wall": "1_to_2h",
+  "probe_singles_fit_run9": "no",
+  "probe_fits_fresh_box": "unknown",
+  "box_logical_cpus": "8_to_31",
+  "mps_for_cpu_only_command": "mps_failed_then_plain"
+}
