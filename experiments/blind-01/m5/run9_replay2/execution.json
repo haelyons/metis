@@ -1,0 +1,39 @@
+{
+  "executions": {
+    "u48_direct": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "/home/hal/dev/interp/metis/experiments/blind-01/m5/run9_replay2/u48_direct.py",
+        "/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py",
+        "/home/hal/dev/interp/metis/experiments/blind-01/m5/run9_replay2/u48"
+      ],
+      "exit_code": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"/home/hal/dev/interp/metis/experiments/blind-01/m5/run9_replay2/u48_direct.py\", line 8, in <module>\n    module.summarise(Path(sys.argv[2]))\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^\n  File \"/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py\", line 60, in summarise\n    for name, value in report_rows(directory / \"stats_cuda_gpu_mem_time_sum.csv\"):\n                       ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py\", line 47, in report_rows\n    raise ValueError(\"missing CSV header\")\nValueError: missing CSV header\n"
+    },
+    "patched": {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "/home/hal/dev/interp/metis/experiments/blind-01/m5/run9_replay2/patched_summarise.py",
+        "/home/hal/dev/interp/metis/experiments/blind-01/m5/run9_replay2/patched"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "skip_lines": [
+    "SKIPPED: out/profile/baseline.sqlite does not contain CUDA kernel data.",
+    "SKIPPED: out/profile/baseline.sqlite does not contain GPU memory data.",
+    "SKIPPED: out/profile/baseline.sqlite does not contain CUDA trace data."
+  ],
+  "original_module_sha256": "a3ea6b804a90eb0f5983d7b2c64c285168dce58a8c34a3f100e405b6bf29db29",
+  "original_module_unchanged": true,
+  "actual_activity_phrases": [
+    "CUDA kernel data",
+    "GPU memory data",
+    "CUDA trace data"
+  ]
+}

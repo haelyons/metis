@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/home/hal/dev/interp/metis/experiments/blind-01/m5/run9_replay2/u48_direct.py", line 8, in <module>
+    module.summarise(Path(sys.argv[2]))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py", line 60, in summarise
+    for name, value in report_rows(directory / "stats_cuda_gpu_mem_time_sum.csv"):
+                       ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py", line 47, in report_rows
+    raise ValueError("missing CSV header")
+ValueError: missing CSV header

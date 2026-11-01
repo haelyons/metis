@@ -1,0 +1,54 @@
+{
+  "validator_return": "numeric",
+  "facts": {
+    "profile_complete": true,
+    "timed_fraction": 1,
+    "gpu_telemetry": true
+  },
+  "stages": [
+    {
+      "stage": "kernels",
+      "kind": "compute",
+      "wall_s": 0,
+      "gpu_s": 0
+    },
+    {
+      "stage": "memcpy H2D",
+      "kind": "transfer",
+      "wall_s": 0,
+      "gpu_s": 0
+    },
+    {
+      "stage": "memcpy D2H",
+      "kind": "transfer",
+      "wall_s": 0,
+      "gpu_s": 0
+    },
+    {
+      "stage": "CUDA API host time",
+      "kind": "other",
+      "wall_s": 0,
+      "gpu_s": null
+    },
+    {
+      "stage": "other host time",
+      "kind": "other",
+      "wall_s": 5621.4601993279975,
+      "gpu_s": null
+    }
+  ],
+  "stage_count": 5,
+  "stage_count_ok": true,
+  "total_wall_s": 5621.4601993279975,
+  "timed_wall_s": 5621.4601993279975,
+  "timed_fraction": 1,
+  "timed_fraction_ok": true,
+  "wrapper_lower_inclusive": 5509.030995341437,
+  "wrapper_upper_inclusive": 5733.889403314558,
+  "wrapper_name_matches": [],
+  "wrapper_wall_matches": [
+    "other host time"
+  ],
+  "gpu_util_sample_count": 38622,
+  "gpu_telemetry": true
+}
