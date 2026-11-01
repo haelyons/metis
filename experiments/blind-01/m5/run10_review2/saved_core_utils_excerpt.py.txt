@@ -1,0 +1,65 @@
+def get_pinder_location() -> Path:
+    """
+    Determines the base directory location for the Pinder data.
+
+    First, check the environment for PINDER_DATA_DIR. If provided, assume
+    it is the full path to the directory containing the index, pdbs/, and mappings/.
+    Otherwise, the PINDER_BASE_DIR environment variable is checked, and if unset,
+    falls back to the default XDG_DATA_HOME location (~/.local/share), and
+    appends the current version of the Pinder release. The Pinder release can be
+    controlled via the PINDER_RELEASE environment variable.
+
+    Returns:
+        Path: The path to the base directory for Pinder data.
+    """
+    pinder_data = os.environ.get("PINDER_DATA_DIR", "")
+    default_loc = os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")
+    if pinder_data:
+        pinder_base = Path(pinder_data)
+    else:
+        base_dir = os.environ.get("PINDER_BASE_DIR", default_loc)
+        pinder_release = os.environ.get("PINDER_RELEASE", "2024-02")
+        if isinstance(base_dir, str):
+            base_dir = Path(base_dir)
+        pinder_base = base_dir.absolute() / "pinder" / pinder_release
+    if not pinder_base.is_dir():
+        pinder_base.mkdir(exist_ok=True, parents=True)
+        log.debug(f"Pinder is located at {pinder_base}")
+    return pinder_base
+
+
+def get_pinder_bucket_root() -> str:
+    """Constructs the public R2 release URL for the Pinder data
+    based on the PINDER_RELEASE environment variable.
+
+    Returns:
+        str: The root bucket path as a string.
+    """
+    pinder_release = os.environ.get("PINDER_RELEASE", "2024-02")
+    return str(dataset.release_url(pinder_release))
+
+
+def get_index_location(
+    csv_name: str = "index.parquet", remote: bool = False
+) -> Path | str:
+    """Gets the file path for the Pinder index CSV/Parquet file, either locally or remotely.
+
+    Parameters:
+        csv_name (str): The name of the CSV/Parquet file. Defaults to "index.parquet".
+        remote (bool): A flag to determine if the remote file path should be returned.
+                       Defaults to False.
+
+    Returns:
+        Union[Path, str]:
+            The path to the index CSV/Parquet file, either as a Path object (local)
+            or a string (remote).
+    """
+    if remote:
+        return f"{get_pinder_bucket_root()}/{csv_name}"
+    return get_pinder_location() / csv_name
+
+
+@lru_cache
+def get_index(csv_name: str = "index.parquet", update: bool = False) -> pd.DataFrame:
+    """Retrieves the Pinder index as a pandas DataFrame. If the index is not already
+    loaded, it reads from the local CSV/Parquet file, or downloads it if not present.

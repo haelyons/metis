@@ -1,0 +1,180 @@
+    eval_systems = []
+    for subdir in eval_methods_or_subset:
+        if subdir.stem in pinder_ids:
+            # Subdir is itself a pinder_id
+            eval_system: dict[str, Path | str] = {
+                "system": subdir,
+                "method_name": subdir.parent.stem,
+            }
+            eval_systems.append(eval_system)
+        elif subdir.stem in subsets:
+            for subset_subdir in _glob_dirs(subdir):
+                if subset_subdir.stem in pinder_ids:
+                    # Assumption is method_name contains pinder subset dirs
+                    eval_system = {
+                        "system": subset_subdir,
+                        "method_name": subdir.parent.stem,
+                    }
+                    eval_systems.append(eval_system)
+                    continue
+                for system_subddir in _glob_dirs(subset_subdir):
+                    try:
+                        validate_system_id(system_subddir, pinder_ids)
+                    except ValueError as e:
+                        log.warning(f"{system_subddir.stem} not a valid ID, skipping")
+                        continue
+                    # Assumption is pinder subset dir contains method_name dirs
+                    eval_system = {
+                        "system": system_subddir,
+                        "method_name": subset_subdir.stem,
+                    }
+                    eval_systems.append(eval_system)
+        else:
+            # Eval dir contains subdirectories of method names
+            for system_subddir in _glob_dirs(subdir):
+                try:
+                    validate_system_id(system_subddir, pinder_ids)
+                except ValueError as e:
+                    log.warning(f"{system_subddir.stem} not a valid ID, skipping")
+                    continue
+                eval_system = {
+                    "system": system_subddir,
+                    "method_name": subdir.stem,
+                }
+                eval_systems.append(eval_system)
+    if not eval_systems:
+        raise FileNotFoundError(
+            "Invalid directory structure! Unable to locate methods & systems!"
+        )
+    return eval_systems
+
+
+class SubsetIds(TypedDict):
+    count: int
+    ids: set[str]
+
+
+def get_expected_counts(
+    pindex: pd.DataFrame, subsets: list[str]
+) -> dict[tuple[str, str], SubsetIds]:
+    expected_counts: dict[tuple[str, str], SubsetIds] = {}
+    for subset in subsets:
+        for monomer_name in ["holo", "apo", "predicted"]:
+            subset_mono_ids = set(
+                pindex.query(f"{subset} and ({monomer_name}_R and {monomer_name}_L)").id
+            )
+            n_ids: int = len(subset_mono_ids)
+            subset_expected: SubsetIds = {
+                "count": n_ids,
+                "ids": subset_mono_ids,
+            }
+            expected_counts[(subset, monomer_name)] = subset_expected
+    return expected_counts
+
+
+def summarize_valid_systems(
+    eval_dir: Path,
+    confirm: bool = True,
+    custom_index: str = "",
+) -> None:
+    eval_systems = get_valid_eval_systems(eval_dir)
+    pindex = get_index(csv_name=custom_index) if custom_index != "" else get_index()
+    counts_lst = []
+    for eval_system in eval_systems:
+        system = Path(eval_system["system"])
+        method_name = eval_system["method_name"]
+        row = pindex.query(f'id == "{system.stem}"')
+        entry = IndexEntry(**row.to_dict(orient="records")[0])
+        subdirs = _glob_dirs(Path(system))
+        if "_decoys" in subdirs[0].stem:
+            decoy_subdirs = subdirs
+        else:
+            decoy_subdirs = []
+            for d in subdirs:
+                decoy_subdirs.append(d / "models")
+
+        for decoy_dir in decoy_subdirs:
+            models = list(decoy_dir.glob("*.pdb"))
+            # add which monomer kind and subset this is in
+            if decoy_dir.stem == "models":
+                monomer_name = decoy_dir.parent.stem
+            else:
+                monomer_name = decoy_dir.stem.split("_decoys")[0]
+
+            # validate presence of two chains named R and L (only one decoy is checked)
+            if len(models):
+                test_decoy = models[0]
+                decoy_chains = set(atom_array_from_pdb_file(test_decoy).chain_id)
+                if len(decoy_chains) < 2:
+                    raise TooFewChainsError(test_decoy, list(decoy_chains))
+                if decoy_chains != {"R", "L"}:
+                    raise ExpectedChainsNotFoundError(test_decoy, list(decoy_chains))
+            counts_lst.append(
+                {
+                    "id": entry.id,
+                    "method_name": method_name,
+                    "pinder_xl": entry.pinder_xl,
+                    "pinder_s": entry.pinder_s,
+                    "pinder_af2": entry.pinder_af2,
+                    "monomer_name": monomer_name,
+                    "n_decoys": len(models),
+                }
+            )
+
+    expected_counts = get_expected_counts(pindex, subsets)
+    counts: pd.DataFrame = pd.DataFrame(counts_lst)
+    for (subset, monomer), expected in expected_counts.items():
+        matching = counts.query(f"{subset} and monomer_name == '{monomer}'")
+        matching = matching[matching["id"].isin(expected["ids"])].reset_index(drop=True)
+        actual = len(set(matching.id))
+        n_expected = expected["count"]
+        missing = n_expected - actual
+        missing_ids = set(expected["ids"]) - set(matching.id)
+        if actual < n_expected:
+            lab = f"{subset} {monomer}"
+            log.error(f"Method is missing {missing} systems from {lab}")
+            print("#" * 100)
+            print("The following systems are missing:")
+            print("\n".join(missing_ids))
+            print("#" * 100)
+
+            print(
+                "If you proceed with submission, these systems will receive metrics "
+                f"that will penalize the method in {lab} evaluation."
+            )
+            if confirm:
+                proceed = input("Do you wish to proceed? (y/n)\n")
+                if proceed == "" or proceed.lower()[0] != "y":
+                    raise RuntimeError("Method rejected! Missing systems!")
+
+
+def download_entry(entry: IndexEntry) -> None:
+    from pinder.core import PinderSystem
+
+    # Will download single entry if not present
+    PinderSystem(entry.id)
+
+
+def get_eval_metrics(
+    eval_system: dict[str, Path | str],
+    parallel_io: bool = False,
+    custom_index: str = "",
+) -> pd.DataFrame:
+    pindex = get_index(csv_name=custom_index) if custom_index != "" else get_index()
+    system = Path(eval_system["system"])
+    method_name = str(eval_system["method_name"])
+    row = pindex.query(f'id == "{system.stem}"')
+    entry = IndexEntry(**row.to_dict(orient="records")[0])
+    native = dataset_root / f"pdbs/{entry.pinder_pdb}"
+    if not native.is_file():
+        native.parent.mkdir(exist_ok=True, parents=True)
+        download_entry(entry)
+
+    subdirs = _glob_dirs(Path(system))
+    if "_decoys" in subdirs[0].stem:
+        decoy_subdirs = subdirs
+    else:
+        decoy_subdirs = []
+        for d in subdirs:
+            decoy_subdirs.append(d / "models")
+
