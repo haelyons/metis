@@ -1,0 +1,10 @@
+{
+  "copies_written": "yes",
+  "review_findings_resolved": "some",
+  "units_json_changed": "no",
+  "subset_mechanism": "other",
+  "command_differs_only_in_subset": "yes",
+  "same_computation_per_unit": "unknown",
+  "writes_only_out_or_temp": "unknown",
+  "bash_syntax_ok": "yes"
+}
