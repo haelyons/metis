@@ -1,0 +1,8 @@
+{
+  "mechanism": "other",
+  "per_unit_code_unmodified": "no",
+  "non_unit_share": "under_5pct",
+  "skipped_steps_affect_unit_files": "no_steps_skipped",
+  "partial_catch_reason": "both",
+  "cost_check_possible": "yes"
+}
