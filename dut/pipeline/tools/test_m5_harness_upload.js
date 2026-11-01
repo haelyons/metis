@@ -133,6 +133,7 @@ visit(process.env.BOX_ROOT)
   const stderrFile = path.join(root, 'stderr.log')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w'), stderr = fs.openSync(stderrFile, 'w')
   let child
+  const spawnedMs = Date.now()
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea/wf.js'), '--script', path.join(pipeline, 'm5/pipeline.js'),
@@ -167,8 +168,11 @@ visit(process.env.BOX_ROOT)
   // Where the run stopped, for failure messages (scratch is removed afterwards).
   const progress = () => JSON.stringify({ receipts: receipts.map(r => `${r.operation}:${r.rc}`),
     stages: signatures.map(({ signature: { stage, status, error_class } }) => `${stage}:${status}:${error_class ?? ''}`) })
-  return { name, root, agent, receipts, boxrun, reproduce, remote, progress }
+  return { name, root, agent, receipts, boxrun, reproduce, remote, progress, spawnedMs }
 }
+// U47: no args.stage_budgets_s and no run_ceiling_s, so every (reproduce) command, harness uploads
+// included, gets the time left before the default 12 h ceiling, resolved at its start.
+const assertTimeLeft = run => fixture.assertTimeLeft(run.receipts, fixture.CEILING_DEFAULT, run.spawnedMs)
 
 // Harness upload receipts between two indexes of the receipt list (after the probe run).
 const probeAt = run => run.receipts.findIndex(receipt => receipt.operation === 'probe')
@@ -224,7 +228,8 @@ function initialUploadChecks(run, { large, empty }) {
     assert.ok(uploads.every(receipt => receipt.operation === 'upload'), run.progress())
     if (large) assert.ok(uploads.length > 1, `${uploads.length} upload receipt(s) for a setup.sh of over ${LARGE} bytes`)
     else assert.equal(uploads.length, 1, run.progress())
-    for (const receipt of uploads) assert.deepEqual([receipt.rc, receipt.timed_out, receipt.fetched, receipt.budget_s], [0, false, true, 1200], receipt.file)
+    for (const receipt of uploads) assert.deepEqual([receipt.rc, receipt.timed_out, receipt.fetched], [0, false, true], receipt.file)
+    assertTimeLeft(run)
   })
   check(`${name}: every harness upload --cmd is below ${LIMIT} characters and begins with set -e, mkdir -p harness out`, () => {
     const commands = commandsFor(run, uploads)
@@ -276,10 +281,11 @@ function repairUploadChecks(run) {
     assert.equal(run.reproduce?.signature.status, 'PASS', run.progress())
     const setups = setupAts(run)
     assert.deepEqual(setups.map(i => run.receipts[i].rc), [7, 0], run.progress())
-    assert.equal(setups.map(i => run.receipts[i].budget_s).filter(budget => budget !== 1200).length, 0, 'setup budget')
     uploads = run.receipts.slice(setups[0] + 1, setups[1])
     assert.ok(uploads.length > 1 && uploads.every(receipt => receipt.operation === 'upload'), run.progress())
-    for (const receipt of uploads) assert.deepEqual([receipt.rc, receipt.fetched, receipt.budget_s], [0, true, 1200], receipt.file)
+    for (const receipt of uploads) assert.deepEqual([receipt.rc, receipt.fetched], [0, true], receipt.file)
+    // Setup attempts, the rerun and the re-upload batches: time left, non-increasing.
+    assertTimeLeft(run)
   })
   check(`${name}: every re-upload --cmd is below ${LIMIT} characters and begins with set -e, mkdir -p harness out`, () => {
     const commands = commandsFor(run, uploads)

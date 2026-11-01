@@ -13,7 +13,7 @@ const assert = require('node:assert/strict')
 const { spawn, spawnSync } = require('node:child_process')
 const { createHash, randomUUID } = require('node:crypto')
 const ROOT = path.resolve(__dirname, '..')
-const { assertEvalShapes } = require('./test_m5_reproduce.js')
+const { assertEvalShapes, assertTimeLeft, CEILING_DEFAULT } = require('./test_m5_reproduce.js')
 const PRIVATE = 'IMPLEMENT_PRIVATE_SENTINEL_593771'
 const TEST_SECRET = 'TEST_SOURCE_SENTINEL_174839'
 const METHOD_SECRET = 'METHOD_SOURCE_SENTINEL_284950'
@@ -762,6 +762,7 @@ fi`)
   const output = path.join(root, 'agent', 'wf')
   const stdout = fs.openSync(path.join(root, 'stdout'), 'w'), stderr = fs.openSync(path.join(root, 'stderr'), 'w')
   let child
+  const spawnedMs = Date.now()
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
@@ -781,7 +782,7 @@ fi`)
   const record = records.find(row => row.signature?.stage === 'implement')
   const allCalls = rows(path.join(root, 'calls.jsonl'))
   const calls = allCalls.filter(call => ['tests', 'implement', 'review'].includes(call.title))
-  return { root, child, output, records, record, calls, allCalls, config }
+  return { root, child, output, records, record, calls, allCalls, config, spawnedMs }
 }
 // Frozen trees require owner write permission before recursive cleanup.
 function removeScratch(scratch) {
@@ -805,7 +806,7 @@ function check(label, fn) {
   catch (error) { failures++; console.log(`FAIL ${label}: ${error.message}`) }
 }
 async function execute(name, config = {}) {
-  const { root, child, output, records, record, calls } = await launch(scratch, name, config)
+  const { root, child, output, records, record, calls, spawnedMs } = await launch(scratch, name, config)
   check(`${name}: workflow completes`, () => {
     assert.ifError(child.error)
     assert.equal(child.status, 0, `status=${child.status} signal=${child.signal}`)
@@ -842,7 +843,7 @@ async function execute(name, config = {}) {
       if (!call.isolation.box_access) assert.equal(call.probe.boxReadable, false, 'unprivileged role sees box credentials')
     }
   })
-  return { root, calls, record, records, config }
+  return { root, calls, record, records, config, spawnedMs }
 }
 function verdict(name, run, errorClass, expected) {
   check(`${name}: implement ${errorClass || 'PASS'} and downstream stop`, () => {
@@ -1090,7 +1091,9 @@ function frozenBaselineChecks(name, run, pollution) {
     assert.ok(freeze < operations.indexOf('implement-baseline'), 'implement snapshot before the freeze')
     const receipt = readJSON(path.join(root, 'control', 'receipts', fs.readdirSync(path.join(root, 'control', 'receipts'))
       .find(file => /^\d{4}-reproduce-freeze\.json$/.test(file))))
-    assert.equal(receipt.budget_s, config.argsBudgets?.setup ?? 1200, 'freeze must use the setup budget')
+    // U47: an args setup budget exactly; otherwise the time left before the default 12 h run ceiling.
+    if (config.argsBudgets?.setup) assert.equal(receipt.budget_s, config.argsBudgets.setup, 'freeze must use the setup budget')
+    else assertTimeLeft([receipt], CEILING_DEFAULT, run.spawnedMs, 'freeze')
     assert.equal(receipt.rc, 0)
     assert.equal(receipt.fetched, true)
   })
