@@ -1,0 +1,49 @@
+{
+  "stages": [
+    {
+      "stage": "kernels",
+      "kind": "compute",
+      "wall_s": 0.0,
+      "gpu_s": 0
+    },
+    {
+      "stage": "memcpy H2D",
+      "kind": "transfer",
+      "wall_s": 0.0,
+      "gpu_s": 0.0
+    },
+    {
+      "stage": "memcpy D2H",
+      "kind": "transfer",
+      "wall_s": 0.0,
+      "gpu_s": 0.0
+    },
+    {
+      "stage": "CUDA API host time",
+      "kind": "other",
+      "wall_s": 0.0,
+      "gpu_s": null
+    },
+    {
+      "stage": "other host time",
+      "kind": "other",
+      "wall_s": 5621.4601993279975,
+      "gpu_s": null
+    }
+  ],
+  "total_wall_s": 5621.4601993279975,
+  "sample_count": 38622,
+  "util_values": [
+    0.0
+  ],
+  "first_sample": {
+    "t": 0.10748221299945726,
+    "util": 0.0
+  },
+  "last_sample": {
+    "t": 5621.430496616002,
+    "util": 0.0
+  },
+  "other_host_relative_difference": 0.0,
+  "other_host_within_2pct": true
+}
