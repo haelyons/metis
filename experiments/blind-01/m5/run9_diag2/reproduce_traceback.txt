@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import sys; sys.path.insert(0, '/home/hal/dev/interp/metis/dut/pipeline/m5'); import profile_summarise as p; from pathlib import Path; p.summarise(Path('run9_diag2/work'))
+                                                                                                                                           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py", line 57, in summarise
+    kernels = sum(value for _, value in report_rows(directory / "stats_cuda_gpu_kern_sum.csv"))
+  File "/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py", line 57, in <genexpr>
+    kernels = sum(value for _, value in report_rows(directory / "stats_cuda_gpu_kern_sum.csv"))
+                                        ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/hal/dev/interp/metis/dut/pipeline/m5/profile_summarise.py", line 46, in report_rows
+    raise ValueError("missing CSV header")
+ValueError: missing CSV header

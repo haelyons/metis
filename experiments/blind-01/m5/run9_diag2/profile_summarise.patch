@@ -1,0 +1,35 @@
+--- a/dut/pipeline/m5/profile_summarise.py
++++ b/dut/pipeline/m5/profile_summarise.py
+@@ -19,11 +19,16 @@
+ 
+ def report_rows(file):
+     """Ignore nsys status lines; require a recognizable duration header."""
+-    if not file.exists():
+-        activity = {"stats_cuda_gpu_kern_sum.csv": "CUDA kernel data",
+-                    "stats_cuda_gpu_mem_time_sum.csv": "CUDA memory data",
+-                    "stats_cuda_api_sum.csv": "CUDA API data"}[file.name]
+-        if "does not contain " + activity in (file.parent / "stats.log").read_text():
++    if not file.exists() or file.stat().st_size == 0:
++        activities = {
++            "stats_cuda_gpu_kern_sum.csv": ("CUDA kernel data",),
++            "stats_cuda_gpu_mem_time_sum.csv": ("CUDA memory data", "GPU memory data"),
++            "stats_cuda_api_sum.csv": ("CUDA API data", "CUDA trace data"),
++        }[file.name]
++        log_file = file.parent / "stats.log"
++        log = log_file.read_text() if log_file.exists() else ""
++        if any(re.fullmatch(r"SKIPPED: .+ does not contain " + re.escape(activity) + r"\.", line.strip())
++               for line in log.splitlines() for activity in activities):
+             return
+     lines = file.read_text(encoding="utf-8-sig").splitlines()
+     for index, line in enumerate(lines):
+@@ -41,9 +46,7 @@
+                 raise ValueError("invalid CSV row")
+             yield row[name_column], seconds(row[duration[0]], duration[1])
+         return
+-    # nsys skips a report when no matching activity was collected.
+-    if "SKIPPED" not in "\n".join(lines):
+-        raise ValueError("missing CSV header")
++    raise ValueError("missing CSV header")
+ 
+ 
+ def summarise(directory):
