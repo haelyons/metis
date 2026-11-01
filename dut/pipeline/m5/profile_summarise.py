@@ -22,8 +22,8 @@ def report_rows(file):
     content = file.read_text(encoding="utf-8-sig") if file.exists() else ""
     if not content.strip():
         activity = {"stats_cuda_gpu_kern_sum.csv": "CUDA kernel data",
-                    "stats_cuda_gpu_mem_time_sum.csv": "CUDA memory data",
-                    "stats_cuda_api_sum.csv": "CUDA API data"}[file.name]
+                    "stats_cuda_gpu_mem_time_sum.csv": "GPU memory data",
+                    "stats_cuda_api_sum.csv": "CUDA trace data"}[file.name]
         if "does not contain " + activity in (file.parent / "stats.log").read_text():
             return
     lines = content.splitlines()
