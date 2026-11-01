@@ -1,0 +1,16 @@
+{
+  "unit_kind": "distinct_inputs",
+  "reduced_dimension": "inputs",
+  "expansion_effect": "coverage",
+  "expansion_effect_basis": "inferred",
+  "combination": "best_or_max",
+  "unit_wall": "1_to_10min",
+  "unit_cost_cv": "over_50pct",
+  "subset_selectable": "published_option",
+  "unit_output_repeatable": "bitwise",
+  "random_state": "unknown",
+  "thread_setting": "unknown",
+  "threads_vs_cpus": "half_or_more",
+  "writes_outside_out": "unknown",
+  "earlier_categories_merged": "yes"
+}
