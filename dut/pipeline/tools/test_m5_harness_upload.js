@@ -46,6 +46,17 @@ function payload(seed) {
   }
   return Buffer.concat(parts)
 }
+// SCHEMAS.md "A/harness/", "Optional unit files (U50)": run_units.sh and units.json. `large` gives a
+// run_units.sh of over LARGE bytes (non-ASCII, NUL, invalid UTF-8) and a units.json over one chunk.
+const UNIT_FILES = ['run_units.sh', 'units.json']
+function unitFiles(size) {
+  const units = Array.from({ length: size === 'large' ? 1500 : 4 }, (_, i) => ({ id: `u${i}`, outputs: [`units/u${i}.txt`], cost_s: 1 + i / 3 }))
+  return {
+    'run_units.sh': size === 'large' ? Buffer.concat([Buffer.from('#!/usr/bin/env bash\n# λ ü 日本 — 🙂\n'), payload(777)])
+      : Buffer.from('#!/usr/bin/env bash\nset -eu\n# λ ü 日本 — 🙂\nfor id in "$@"; do mkdir -p out/units; printf "%s\\n" "$id" > "out/units/$id.txt"; done\n'),
+    'units.json': Buffer.from(JSON.stringify({ units }, null, size === 'large' ? 2 : 0) + '\n'),
+  }
+}
 
 // Fake agents: the reproduce suite's agents, then optionally a large setup.sh or an empty run_command.sh.
 module.exports = {
@@ -56,6 +67,9 @@ module.exports = {
     if (result && (config.largeSetup ?? []).includes(options.title))
       fs.appendFileSync(path.join(harness, 'setup.sh'), payload(options.title === 'harness' ? 17 : 4242))
     if (result && options.title === 'harness' && config.emptyCommand) fs.writeFileSync(path.join(harness, 'run_command.sh'), '')
+    // U50: optional unit files present in A/harness/ before the initial upload.
+    if (result && options.title === 'harness' && config.units) for (const [file, bytes] of Object.entries(unitFiles(config.units)))
+      fs.writeFileSync(path.join(harness, file), bytes)
     return result
   },
   exportSession: fixture.exportSession,
@@ -129,6 +143,7 @@ visit(process.env.BOX_ROOT)
       { id: 'second', published_value: 0, tolerance: 0, quantity: 'fixture', source: 'fixture' }],
     measured: { first: 100, second: 0 }, setupFailures: config.setupFailures ?? 0, anchorsFailures: 0,
     largeSetup: config.largeSetup ?? [], emptyCommand: Boolean(config.emptyCommand),
+    ...(config.units ? { units: config.units } : {}),
   }
   const stderrFile = path.join(root, 'stderr.log')
   const stdout = fs.openSync(path.join(root, 'stdout.log'), 'w'), stderr = fs.openSync(stderrFile, 'w')
@@ -300,6 +315,49 @@ function repairUploadChecks(run) {
   })
 }
 
+// U50a: unit files are part of the initial upload (same encoding and batching) and never uploaded later;
+// a harness without them uploads only the scripts. Run after initialUploadChecks / repairUploadChecks.
+const mentions = (commands, file) => new RegExp(`harness/${escape(file)}\\b`).test(commands.join('\n'))
+function unitUploadChecks(run, { units }) {
+  const { name } = run
+  const local = path.join(run.agent, 'harness')
+  const setups = setupAts(run)
+  const initial = () => run.receipts.slice(probeAt(run) + 1, setups[0])
+  check(`${name}: initial upload ${units ? 'carries run_units.sh and units.json' : 'carries no unit files'}; replay yields exactly the local harness files`, () => {
+    assert.ok(probeAt(run) >= 0 && setups.length > 0, run.progress())
+    const commands = commandsFor(run, initial())
+    if (units) {
+      for (const [file, bytes] of Object.entries(unitFiles(units))) {
+        assert.ok(bytes.equals(fs.readFileSync(path.join(local, file))), `${file}: fixture did not write it`)
+        assert.match(commands.join('\n'), new RegExp(`:\\s*>\\s*['"]?harness/${escape(file)}['"]?`), `${file}: never truncated in the initial upload`)
+      }
+    } else for (const file of UNIT_FILES) {
+      assert.equal(fs.existsSync(path.join(local, file)), false, `${file}: fixture wrote it`)
+      assert.equal(mentions(commands, file), false, `${file}: named in an upload without unit files`)
+    }
+    initial().forEach((receipt, i) => {
+      assert.deepEqual([receipt.operation, receipt.rc, receipt.fetched], ['upload', 0, true], receipt.file)
+      assertBatch(commands[i], receipt.file)
+    })
+    // Large unit files alone need several batches; small ones fit the single batch (checked by initialUploadChecks).
+    if (units === 'large') assert.ok(initial().length > 1, `${initial().length} upload receipt(s) for unit files over ${LARGE} bytes`)
+    assertTimeLeft(run)
+    const replayed = replay(commands)
+    assert.deepEqual(fs.readdirSync(replayed).sort(), harnessFiles(run), 'replayed harness files')
+    // After a setup repair the local setup.sh is the rewritten one; compare only files no repair changes.
+    const unchanged = setups.length > 1 ? harnessFiles(run).filter(file => file !== 'setup.sh') : harnessFiles(run)
+    assertSame(replayed, local, unchanged, 'replay')
+    assertSame(run.remote(), local, harnessFiles(run), 'box')
+    for (const file of units ? [] : UNIT_FILES) assert.equal(fs.existsSync(path.join(run.remote(), file)), false, `${file}: on the box`)
+  })
+  if (setups.length > 1) check(`${name}: no upload after the initial one names a unit file`, () => {
+    const later = run.receipts.slice(setups[0] + 1).filter(receipt => receipt.operation === 'upload')
+    assert.ok(later.length > 0, 'no re-upload after the repair')
+    const commands = commandsFor(run, later)
+    for (const file of UNIT_FILES) assert.equal(mentions(commands, file), false, `${file}: uploaded after the initial upload`)
+  })
+}
+
 async function main() {
   try {
     // Copy the runtime without reading implementation text; all mutations stay in scratch.
@@ -310,8 +368,21 @@ async function main() {
     fs.renameSync(boxrun, path.join(pipeline, 'm5/boxrun.orig.sh'))
     fs.writeFileSync(path.join(scratch, 'boxrun-shim.js'), SHIM)
     fs.writeFileSync(boxrun, `#!/usr/bin/env bash\nexec "$M5_TEST_NODE" ${JSON.stringify(path.join(scratch, 'boxrun-shim.js'))} "$0" "$@"\n`, { mode: 0o755 })
-    initialUploadChecks(await execute('large', { largeSetup: ['harness'] }), { large: true })
-    initialUploadChecks(await execute('small'), { large: false })
+    const large = await execute('large', { largeSetup: ['harness'] })
+    initialUploadChecks(large, { large: true })
+    unitUploadChecks(large, { units: null })
+    const small = await execute('small')
+    initialUploadChecks(small, { large: false })
+    unitUploadChecks(small, { units: null })
+    // U50a: unit files in A/harness/ join the initial upload: one batch when small, chunked when large.
+    const unitsSmall = await execute('units-small', { units: 'small' })
+    initialUploadChecks(unitsSmall, { large: false })
+    unitUploadChecks(unitsSmall, { units: 'small' })
+    // (initialUploadChecks' large mode expects a large setup.sh; unitUploadChecks checks these batches.)
+    unitUploadChecks(await execute('units-large', { units: 'large' }), { units: 'large' })
+    const unitsRepair = await execute('units-repair-reupload', { units: 'small', setupFailures: 1, largeSetup: ['harness-repair'] })
+    repairUploadChecks(unitsRepair)
+    unitUploadChecks(unitsRepair, { units: 'small' })
     initialUploadChecks(await execute('empty-file', { emptyCommand: true }), { large: false, empty: true })
     failedBatchChecks(await execute('failed-middle-batch', { largeSetup: ['harness'], failUpload: 2 }))
     repairUploadChecks(await execute('repair-reupload', { setupFailures: 1, largeSetup: ['harness-repair'] }))

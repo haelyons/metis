@@ -273,7 +273,8 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
       }
       const names = name === 'setup.sh' ? [name] : ['run_anchors.sh', 'run_command.sh']
       const before = new Map(name === 'setup.sh' ? [] : names.map(file => [file, readFileSync(path.join(harnessDirectory, file))]))
-      const protectedScripts = new Map(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh'].map(file =>
+      const protectedScripts = new Map([...(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh']),
+        'run_units.sh', 'units.json'].map(file =>
         [file, existsSync(path.join(harnessDirectory, file)) ? readFileSync(path.join(harnessDirectory, file)) : null]))
       const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(harnessDirectory, name))}`
         : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(harnessDirectory)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
@@ -335,7 +336,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         if (typeof input.harness_from !== 'string' || !input.harness_from.trim()) return failure(facts, 'parse')
         const source = path.resolve(input.harness_from)
         const names = ['setup.sh', 'run_anchors.sh', 'run_command.sh',
-          ...(existsSync(path.join(source, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])]
+          ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(source, name)))]
         const scripts = names.map(name => [name, readFileSync(path.join(source, name))])
         harnessSource = { source, files: {} }
         for (const [name, bytes] of scripts) {
@@ -348,7 +349,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         if (reply == null) return failure(facts, 'parse')
       }
       const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'run_command.sh',
-        ...(existsSync(path.join(harnessDirectory, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])], destination, 'setup')
+        ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(harnessDirectory, name)))], destination, 'setup')
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
       const setup = await runHarness('setup.sh', 'setup', destination, 'setup')
       if (setup.error) {
