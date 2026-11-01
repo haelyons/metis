@@ -1,0 +1,70 @@
+--- run9/agent/harness/run_command.sh
++++ run10_harness3/run_units.sh
+@@ -1,15 +1,16 @@
+ #!/usr/bin/env bash
+-# run_command.sh - the exact measured baseline command and its complete environment.
++# run_units.sh - the measured baseline restricted to original prepared input records.
+ #
+-# Invoked as:  bash harness/run_command.sh   (working directory = the shared run directory, or a sibling
+-# work directory that links baseline-published/, data/ and harness/). All paths are relative to that
+-# working directory. PATH entries are resolved from this working directory because the published
++# Invoked as:  bash harness/run_units.sh <system_id:kind>...   (working directory = the shared run directory, or a sibling
++# work directory that links baseline-published/, data/ and harness/). Command paths are relative;
++# absolute PATH entries and TMPDIR are inherited from run_command.sh (see REPORT.md).
++# PATH entries are resolved from this working directory because the published
+ # FroDock adapter changes directory into a temporary stage directory.
+ #
+ # Representative scale (EXECUTION.json, fixed): the 8 preregistered PINDER-S apo-paired systems in
+-# data/selection.json, holo and apo pairings (16 docking jobs), n_solutions=50, mpi_np=8, force=false,
++# data/selection.json; requested holo/apo jobs only, n_solutions=50, mpi_np=8, force=false,
+ # docked by the published `pinder_methods predict --method frodock` and scored by the published
+-# `pinder_eval` (800 decoys). FroDock is CPU + MPI only: no GPU is used (CUDA_VISIBLE_DEVICES="",
++# `pinder_eval` (50 decoys per selected job). FroDock is CPU + MPI only: no GPU is used (CUDA_VISIBLE_DEVICES="",
+ # GPU count 0). CUDA MPS variables are inherited unchanged.
+ #
+ # Output (stdout+stderr of both published commands): out/run_command/run_command.log
+@@ -17,6 +18,7 @@
+ #   scores:  out/results/frodock_metrics.csv, out/results/frodock_leaderboard.csv
+ # Exit status: nonzero if either published command fails.
+ set -Eeuo pipefail
++[ "$#" -gt 0 ] || { echo "ERROR: at least one system_id:kind is required" >&2; exit 2; }
+ 
+ # ------------------------------------------------------------------ complete environment
+ export CUDA_VISIBLE_DEVICES=""          # CPU/MPI-only baseline
+@@ -113,6 +115,36 @@
+ PY
+ echo "GPU_COUNT=$BASELINE_GPU_COUNT CUDA_SELECTION=$CUDA_SEL MPIRUN=$(command -v mpirun) FRODOCK_BIN=$(dirname "$(command -v frodock_mpi_gcc)")"
+ echo "PINDER_VERSION=$("$VPY" -c 'import importlib.metadata as m;print(m.version("pinder"))')"
++
++# Restrict the validated prepared list; retain its header and original record bytes.
++# The unchanged prediction command reads this path through its existing --results_dir.
++"$VPY" - "$RESULTS/frodock_setup.csv" "$@" <<'PY'
++import csv
++import io
++from pathlib import Path
++import re
++import sys
++
++target = Path(sys.argv[1])
++requested = sys.argv[2:]
++if not requested or len(set(requested)) != len(requested):
++    sys.exit("ERROR: provide one or more distinct system_id:kind keys")
++raw = target.read_bytes().splitlines(keepends=True)
++reader = csv.DictReader(io.StringIO(b"".join(raw).decode("utf-8"), newline=""), strict=True)
++rows = list(reader)
++if reader.fieldnames != ["id", "kind", "receptor", "ligand"] or not rows:
++    sys.exit("ERROR: unexpected prepared manifest schema")
++if len(raw) != len(rows) + 1 or any(not line.endswith(b"\n") for line in raw):
++    sys.exit("ERROR: expected the original newline-terminated one-line-per-record format")
++keys = [row["id"] + ":" + row["kind"] for row in rows]
++if len(set(keys)) != len(keys):
++    sys.exit("ERROR: duplicate prepared unit")
++if any(not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:+=-]{0,127}", key)
++       or key not in keys for key in requested):
++    sys.exit("ERROR: unknown or invalid requested unit")
++target.write_bytes(raw[0] + b"".join(raw[keys.index(key) + 1] for key in requested))
++print("RESTRICTED_UNITS=" + ",".join(requested))
++PY
+ 
+ # ------------------------------------------------------------------ published docking command
+ set +e
