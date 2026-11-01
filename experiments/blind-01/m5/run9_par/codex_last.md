@@ -1,0 +1,11 @@
+{
+  "cpu_threads": "multi",
+  "cpu_threads_basis": "measured",
+  "independent_units": "yes",
+  "units_at_run_scale": "8_to_63",
+  "units_order": "serial",
+  "per_unit_timing_saved": "yes",
+  "gpu_path_published": "unknown",
+  "more_units_changes_result": "closer_to_published_scale",
+  "published_uncertainty": "unknown"
+}
