@@ -1,0 +1,2672 @@
+#include <stdio.h>
+#include <math.h>
+#include "timer.h"
+#include "mersenne.h"
+#if defined  _WIN32 || defined _WIN64
+#define isnan(x) ((x) != (x))
+#endif
+
+#include <libpdb/include/Macromolecule.h>
+#include <libpdb/include/pdbIter.h>
+#include "sas.h"
+
+namespace ASA
+{
+#define abs(x) ((x) >= 0 ? (x) : -(x))
+
+float atom_types_Radius[54]=
+	{1.95,//  1   CNH2// carbonyl C in Asn and Gln and guanidyl C in Arg
+	 1.95,//  2   COO// carboxyl C in Asp and Glu
+	 1.95,//  3   CH1// aliphatic C with one H (Val, Ile, Thr)
+	 1.95,//  4   CH2// aliphatic C with two H (other residues)
+	 1.95,//  5   CH3// aliphatic C with three H (Ala)
+   1.8,//  6   aroC                    // aromatic ring C (His, Phe, Tyr, Trp)
+   1.7,//  7   Ntrp                    // N in Trp side-chain
+   1.7,//  8   Nhis                    // N in His side-chain
+  1.7,//  9   NH2O                    // N in Asn and Gln side-chain
+  1.7,// 10   NLYS                    // N in Lys side-chain, N-terminus?
+  1.7,// 11   Narg                    // N in Arg side-chain   **** -7.0, 07/08/01 ... too many buried Arg
+  1.7,// 12   Npro                    // N in Pro backbone
+  1.6,// 13   OH                      // hydroxyl O in Ser, Thr and Tyr
+  1.4,// 14   ONH2                    // carbonyl O in Asn and Gln  **** -5.85, 07/08/01 ... too many buried Asn,Arg
+  1.4,// 15   OOC                     // carboyxl O in Asp and Glu
+  2.0,// 16   S                       // sulfur in Cys and Met
+  1.7,// 17   Nbb                     // backbone N'
+  1.95,// 18   CAbb                    // backbone CA
+  1.95,// 19   CObb                    // backbone C'
+  1.4,// 20   OCbb                    // backbone O'
+/******/
+	2.0330,// 21   Phos                    // nucleic acid P (from S)
+  1.0700,// 22   Hpol                    // polar H
+  1.2840,// 23   Hapo                    // nonpolar H
+  1.2840,// 24   Haro                    // aromatic H
+  1.0700,// 25   HNbb                    // backbone HN
+  1.4000,// 26   H2O                     // H2O
+  1.7100,// 27   F                       // F    wild guess
+  2.0700,// 28   Cl                      // Cl   wild guess
+  2.2200,// 29   Br                      // Br   wild guess
+  2.3600,// 30   I                       // I    wild guess
+  1.0900,// 31   Zn2p                    // Zn2p wild guess
+  0.7800,// 32   Fe2p                    // Fe2p wild guess
+  0.6500,// 33   Fe3p                    // Fe3p wild guess
+  1.1850,// 34   Mg2p                    // Mg2p wild guess
+  1.3670,// 35   Ca2p                    // Ca2p wild guess
+  1.3638,// 36   Na1p                    // Na1p wild guess
+  1.7638,// 37   K1p                     // K1p  wild guess
+  0.0000,// 38    1 ASP/GLU              // V01
+  0.0000,// 39    2 ASP/GLU              // V02
+  0.0000,// 40    3 ASN/GLN or BB        // V03
+  0.0000,// 41    4 ASN/GLN or BB        // V04
+  0.0000,// 42    5 ASN/GLN or BB        // V05
+  0.0000,// 43    6 SER OG               // V06
+  0.0000,// 44    7 SER CB               // V07
+  0.0000,// 45    8 CYS SG               // V08
+  0.0000,// 46    9 CYS CB               // V09
+  0.0000,// 47   10 ARG NH               // V10
+  0.0000,// 48   11 ARG NE               // V11
+  0.0000,// 49   12 LYS NZ               // V12
+  0.0000,// 50   13 LYS CE               // V13
+  0.0000,// 51   14 HIS ND               // V14
+  0.0000,// 52   15 HIS NE               // V15
+  0.0000,// 53   16 HIS CB               // V16
+  0.0000// 54   17 HPOL                 // V17
+	 };
+
+float atom_types_asolpar[54]=
+	{0.01918,  //  1   CNH2		      // carbonyl C in Asn and Gln and guanidyl C in Arg
+  0.01918,  //  2   COO		      // carboxyl C in Asp and Glu
+  0.01918,  //  3   CH1		      // aliphatic C with one H (Val, Ile, Thr)
+  0.01918,  //  4   CH2		      // aliphatic C with two H (other residues)
+  0.01918,  //  5   CH3		      // aliphatic C with three H (Ala)
+  0.1108,   //  6   aroC		      // aromatic ring C (His, Phe, Tyr, Trp)
+  -0.03910, //  7   Ntrp		      // N in Trp side-chain
+  -0.03910, //  8   Nhis		      // N in His side-chain
+  -0.03910, //  9   NH2O		      // N in Asn and Gln side-chain
+  -0.12604, // 10   NLYS		      // N in Lys side-chain, N-terminus?
+  -0.06256, // 11   Narg		      // N in Arg side-chain   **** -7.0, 07/08/01 ... too many buried Arg
+  -0.03910, // 12   Npro		      // N in Pro backbone
+  -0.04255, // 13   OH		      // hydroxyl O in Ser, Thr and Tyr
+  -0.03128, // 14   ONH2		      // carbonyl O in Asn and Gln  **** -5.85, 07/08/01 ... too many buried Asn,Arg
+  -0.06877, // 15   OOC		      // carboyxl O in Asp and Glu
+  0.02576,  // 16   S 		      // sulfur in Cys and Met
+  -0.03910, // 17   Nbb		      // backbone N'
+  0.01918,   // 18   CAbb		      // backbone CA
+  0.01918,   // 19   CObb		      // backbone C'
+  -0.03128,  // 20   OCbb
+/******/
+	0.0,// 21   Phos                    // nucleic acid P (from S)
+  0.0,// 22   Hpol                    // polar H
+  0.0,// 23   Hapo                    // nonpolar H
+  0.0,// 24   Haro                    // aromatic H
+  0.0,// 25   HNbb                    // backbone HN
+  0.0,// 26   H2O                     // H2O
+  0.0,// 27   F                       // F    wild guess
+  0.0,// 28   Cl                      // Cl   wild guess
+  0.0,// 29   Br                      // Br   wild guess
+  0.0,// 30   I                       // I    wild guess
+  0.0,// 31   Zn2p                    // Zn2p wild guess
+  0.0,// 32   Fe2p                    // Fe2p wild guess
+  0.0,// 33   Fe3p                    // Fe3p wild guess
+  0.0,// 34   Mg2p                    // Mg2p wild guess
+  0.0,// 35   Ca2p                    // Ca2p wild guess
+  0.0,// 36   Na1p                    // Na1p wild guess
+  0.0,// 37   K1p                     // K1p  wild guess
+  0.0,// 38    1 ASP/GLU              // V01
+  0.0,// 39    2 ASP/GLU              // V02
+  0.0,// 40    3 ASN/GLN or BB        // V03
+  0.0,// 41    4 ASN/GLN or BB        // V04
+  0.0,// 42    5 ASN/GLN or BB        // V05
+  0.0,// 43    6 SER OG               // V06
+  0.0,// 44    7 SER CB               // V07
+  0.0,// 45    8 CYS SG               // V08
+  0.0,// 46    9 CYS CB               // V09
+  0.0,// 47   10 ARG NH               // V10
+  0.0,// 48   11 ARG NE               // V11
+  0.0,// 49   12 LYS NZ               // V12
+  0.0,// 50   13 LYS CE               // V13
+  0.0,// 51   14 HIS ND               // V14
+  0.0,// 52   15 HIS NE               // V15
+  0.0,// 53   16 HIS CB               // V16
+  0.0// 54   17 HPOL                 // V17
+	 };
+
+Atom_vp atom_vpn[4]=
+{
+{1.4,1.4,1.4,1.4},//OLD
+{1.4,1.7,1.4,1.4},//VP1
+{1.29,1.96,1.08,1.29},//VP2
+{1.51,1.88,1.51,1.51}//Vp3
+};
+
+
+//#define maxS 6000 // max number of spheres // ks
+#define maxN 200    // max number of neighbors per sphere // kl
+#define maxA maxN*2 // max angles' or arcs' number
+
+
+#define piBY2 2*PDB_PI
+#define piBY3 3*PDB_PI
+#define piBY4 4*PDB_PI
+#define piD2  PDB_PI*0.5
+
+char in_input[30];
+bool VOL;
+
+//LOCAL FUNCTIONS
+/**
+ * Local function for ASA computation
+ */
+inline int make_neighbors( double **spheres, int *neighbors_number, int *index_start, int *neighbors_indices,  int ns);
+/**
+ * Local function for ASA computation
+ */
+inline int neighbors(int i, double **spheres, int *ind, int ns);
+/**
+ * Local function for ASA computation
+ */
+inline int areavolume(double **sphere_local, int nls, double **circles, double **arcs, double **newarcs, double *angles, double *av);
+/**
+ * Local function for ASA computation
+ */
+inline double asa(double **sphere_local, int nls, double **circles, double **arcs, double **newarcs, double *angles, int *narcs);
+/**
+ * Local function for ASA computation
+ */
+inline int north_pole_test( double **spheres, int *neighbors_number, int *index_start, int *neighbors_indices,  int ns);
+/**
+ * Local function for ASA computation
+ */
+inline int local_spheres(double **spheres, int *ind,double **sphere_local, int nls);
+/**
+ * Local function for ASA computation
+ */
+inline int north_pole_test_local( double **sphere_local,  int nls);
+/**
+ * Local function for ASA computation
+ */
+inline int north_pole_test_local_probe( double **sphere_local,  int nls);
+/**
+ * Local function for ASA computation
+ */
+inline int spheres_rotation(double **sphere_local, int nls, double sa);
+/**
+ * Local function for ASA computation
+ */
+inline int make_ts_circles(double **sphere_local, double **circles,  int nls);
+/**
+ * Local function for ASA computation
+ */
+inline int circles_to_arcs(double **circles, double **arcs, double **newarcs, double *angles, int nls);
+/**
+ * Local function for ASA computation
+ */
+inline int circle_in_circle(int i, int k, double **circles);
+/**
+ * Local function for ASA computation
+ */
+inline int point_in_circle(double t, double s, int k, double **circles);
+/**
+ * Local function for ASA computation
+ */
+inline int mysort(double *angles,  int num_angle);
+/**
+ * Local function for ASA computation
+ */
+inline void shell_sort(double *,  int );
+/**
+ * Local function for ASA computation
+ */
+inline void shell_sortd(double *,  int );
+/**
+ * Local function for ASA computation
+ */
+inline int mydsort(double *angles, int num_angle);
+/**
+ * Local function for ASA computation
+ */
+inline int delete_equal(double *angles, int num_angle);
+/**
+ * Local function for ASA computation
+ */
+inline int avintegral(double **circles, double **arcs,int narcs, double r1, double z1, double *avi);
+/**
+ * Local function for ASA computation
+ */
+inline double aintegral(double **circles, double **arcs,int narcs, double r1, double z1);
+/**
+ * Local function for ASA computation
+ */
+inline int new_arcs(int i, double **circles, double **arcsnew, double *angles,  int nls);
+/**
+ * Local function for ASA computation
+ */
+inline int circles_intersection(int ic1, int ic2, double **circles,  double *a1, double *a2, double *b1, double *b2);
+
+/**
+ * Local function for ASA computation
+ * Adapted to compute ASA variance due to a probe
+ */
+inline double asa_3(double **sphere_local, int nls, double **circles, double **arcs, double **newarcs, double *angles, int narcs0, double value);
+/**
+ * Local function for ASA computation
+ * Adapted to compute ASA variance due to a probe
+ */
+inline int make_ts_circles_3(double **sphere_local, double **circles,  int nls);
+/**
+ * Local function for ASA computation
+ * Adapted to compute ASA variance due to a probe
+ */
+inline int circles_to_arcs_3(double **circles, double **arcs, double **newarcs, double *angles, int nls, int narcs);
+/**
+ * Local function for ASA computation
+ * Adapted to compute ASA variance due to a probe
+ */
+inline int new_arcs_3(int i, double **circles, double **arcsnew, double *angles,  int nls, int *);
+
+
+
+void eraseSAS(SAS_t *sas)
+{
+ 		int i;
+
+
+    for(i=0;i<ns;i++)
+    	free(sas->spheres[i]);
+    free(sas->spheres);
+
+    free(sas->index_start);
+    free(sas->neighbors_number);
+    free(sas->neighbors_indices);
+		for(i=0;i<ns;i++)
+			free(sas->sphere_local[i]);
+		free(sas->sphere_local);
+
+		free(sas->ind);
+    free(sas->angles);
+
+    for(i=0;i<maxA;i++)
+			free(sas->arcs[i]);
+		free(sas->arcs);
+
+		for(i=0;i<ns;i++)
+			free(sas->circles[i]);
+		free(sas->circles);
+
+    for(i=0;i<maxA;i++)
+			free(sas->arcsnew[i]);
+ 		free(sas->arcsnew);
+}
+
+void preSAS(pdbIter *iter ,SAS_t *sas,float in_wradprobe, VP_type option_VP)
+{
+		Htimer t_total, t_part;
+
+
+    /* System generated locals */
+    int i,j,i2;
+		Atom *at;
+		Tcoor pos;
+		int ns_aux;
+		char name_atom[5];
+		//Fragment *res =new Residue("ALA");
+		PDB_Container *fath;
+		int aminoacid;
+		bool contA;
+		float rad,rwater,asolpar;
+		int index_vp, index_type_atom;
+
+		// option_VP is not working!!
+
+        atom_vpn[0].rapolar=in_wradprobe;
+        atom_vpn[0].rpolar=in_wradprobe;
+        atom_vpn[0].rcarboxyl=in_wradprobe;
+        atom_vpn[0].rdefault=in_wradprobe;
+
+		switch(option_VP)
+		{
+			case VP1:
+					index_vp=1;
+				break;
+			case VP2:
+					index_vp=2;
+				break;
+			case VP3:
+					index_vp=3;
+				break;
+			case VOLD:
+					index_vp=0;
+				break;
+		}
+		ns=iter->num_atom();
+
+//		printf("ns=%d\n",ns);
+
+		//Reservas de memoria
+		sas->spheres=(double**)malloc(sizeof(double*)*ns);
+		for(i=0;i<ns;i++)
+			sas->spheres[i]=(double*)malloc(sizeof(double)*5);
+		sas->index_start=(int*)malloc(sizeof(int)*ns+1);
+		sas->neighbors_number=(int*)malloc(sizeof(int)*ns);
+		sas->neighbors_indices=(int*)malloc(sizeof(int)*ns*maxN);
+		sas->sphere_local=(double**)malloc(sizeof(double*)*ns);
+		for(i=0;i<ns;i++)
+			sas->sphere_local[i]=(double*)malloc(sizeof(double)*4);
+		sas->ind=(int*)malloc(sizeof(int)*ns);
+		sas->angles=(double*)malloc(sizeof(double)*maxA);
+		sas->arcs=(double**)malloc(sizeof(double*)*maxA);
+		for(i=0;i<maxA;i++)
+			sas->arcs[i]=(double*)malloc(sizeof(double)*3);
+		sas->circles=(double**)malloc(sizeof(double*)*ns);
+		for(i=0;i<ns;i++)
+			sas->circles[i]=(double*)malloc(sizeof(double)*4);
+		sas->arcsnew=(double**)malloc(sizeof(double*)*maxA);
+		for(i=0;i<maxA;i++)
+			sas->arcsnew[i]=(double*)malloc(sizeof(double)*3);
+
+    t_total.restart();
+    t_part.restart();
+
+    //fprintf(stderr,"Flag1\n");
+		//Recorrido de todos los residuos y grupos de heteroatomos
+		i2=0;
+		for(iter->pos_atom=0;!iter->gend_atom();iter->next_atom())
+		{
+			at=iter->get_atom();
+			fath=(PDB_Container*)at->getFather();
+			rwater=0.0;
+			at->getPosition(pos);
+
+			//Se coloca la esfera asociada al atomo
+			//en la posicion
+			sas->spheres[i2][0]=pos[0];
+			sas->spheres[i2][1]=pos[1];
+			sas->spheres[i2][2]=pos[2];
+			//Nombre del atomo
+			strcpy(name_atom,at->getName());
+			name_atom[4]='\0';
+
+//		    fprintf(stderr,"Flag2\n");
+
+			//Atom type
+			if(fath->getClass()==pdb_residue || fath->getClass()==pdb_nucleotide)
+			{
+				for(j=0;j<N_AMINO;j++)
+				{
+					if(strcmp(fath->getName(),AA[j].aa_name3)==0)
+					{
+				 		aminoacid=j;
+						j=42;
+					}
+				 }
+				 //Si j<40, no es un residuo es un grupo de heteroatomos
+				 if(j==42)
+				 {
+				    printf("Alert: Fragment not found %s, considered heteroatom\n",fath->getName());
+				    aminoacid=42;
+				        		//exit(1);
+				 }
+			}
+			else
+				aminoacid=42;
+
+		    //fprintf(stderr,"Flag3\n");
+
+			//Si el atomo esta en un aminoacido conocido
+			//Buscar su tipo en tabla de tipos
+			index_type_atom=-1;
+			if(aminoacid!=42)
+			{
+				for(j=0;j<AA[aminoacid].natoms+3 && index_type_atom==-1;j++)
+				{
+					if(strcmp(name_atom,AA[aminoacid].atom[j].atom_name)==0)
+					{
+						index_type_atom=AA[aminoacid].atom[j].fullatom_type-1;
+					}
+				}
+				if(index_type_atom==-1)
+				{
+					printf("Error: radius not found for atom %s in fragment %s\n",at->getName(),fath->getName());
+					exit(1);
+				}
+			}
+			else
+			{
+				switch((at->getElement())->symbol)
+				{
+					case O:
+						index_type_atom=12;
+						break;
+
+					case N:
+						index_type_atom=16;
+						break;
+
+					case C:
+						index_type_atom=0;
+						break;
+
+					case S:
+						index_type_atom=15;
+						break;
+
+					case FE:
+						index_type_atom=31;
+						break;
+
+					case P:
+						index_type_atom=20;
+						break;
+
+					case CL:
+						index_type_atom=27;
+						break;
+
+					case BR:
+						index_type_atom=28;
+						break;
+
+					case I:
+						index_type_atom=29;
+						break;
+
+					case ZN:
+						index_type_atom=30;
+					break;
+
+					case MG:
+						index_type_atom=33;
+						break;
+
+					case CA:
+						index_type_atom=34;
+						break;
+
+					case NA:
+						index_type_atom=35;
+						break;
+
+					case K:
+						index_type_atom=36;
+						break;
+
+					default:
+						printf("Error: Atom not found %s\n",at->getName());
+						exit(1);
+						break;
+				}
+			}
+		    //fprintf(stderr,"Flag4\n");
+
+			//En funcion del tipo se definen el radio del atomo y el asolpar
+			rad=atom_types_Radius[index_type_atom];
+			asolpar=atom_types_asolpar[index_type_atom];
+			if(index_type_atom==15)
+			{
+				if(strcmp(fath->getName(),"CYX")==0  || strcmp(fath->getName(),"MET")==0)
+				{
+					rad=1.85;
+					asolpar=0.00506;
+				}
+			}
+
+			//Calculo del radio del agua
+			if(atom_types[index_type_atom].polar==POLAR)
+			{
+				rwater=atom_vpn[index_vp].rpolar;
+			}
+			else
+			{
+				rwater=atom_vpn[index_vp].rapolar;
+			}
+			//Caso especial oxigeno carboxyl
+			if(index_type_atom==13 || index_type_atom==14)
+			{
+				rwater=atom_vpn[index_vp].rcarboxyl;
+			}
+
+			//Introduccion del radio y asolpar de los atomos
+			sas->spheres[i2][3]=rad+rwater;
+			sas->spheres[i2][4]=asolpar;
+			i2++;
+
+		 //   fprintf(stderr,"Flag5\n");
+
+		}
+
+
+
+
+
+
+//     ns - spheres number
+//     Study the neighborhood relations
+    t_part.restart();
+    make_neighbors( sas->spheres, sas->neighbors_number, sas->index_start, sas->neighbors_indices, ns);
+    double maxneig=0;
+    double aveneig=0;
+     for ( i = 0; i < ns; i++) {
+       aveneig +=sas->neighbors_number[i];
+       if (maxneig<sas->neighbors_number[i])
+         maxneig=sas->neighbors_number[i];
+     }
+    // fprintf(stderr," Max %f average %f time %s\n",maxneig,aveneig/ns,t_part.print_time_sec());
+
+}
+
+
+float localSAS(pdbIter *iter,int num,SAS_t sas,bool prove)
+{
+
+	double area,a,dump;
+	int npole,nls,narcs;
+	int narcs2;
+	int i,j,k;
+	int32 seed = (int32)time(0);        // random seed
+	CRandomMersenne rg(seed);           // make instance of random number generator
+	double xi,yi,zi,ri,d1,d2,d3,dd,rk;
+
+	a = 0.0;
+	npole=0;
+
+	for (i = 0; i < num; i++)
+	{
+
+		// 	 Determination of i-th sphere's neighbors (row indices in matrix spheres)
+		if (sas.neighbors_number[i] < 0 )
+		{
+			// ith sphere is subset of other sphere sphere(i,4) will be done negative
+
+			area = 0.0;
+		}
+		else
+			if (sas.neighbors_number[i] == 0)
+			{
+				// there are no neighbors (nls - number of local spheres = ith sphere + neighbors)
+				dump = sas.spheres[i][3];
+				area = dump * dump * piBY4;
+
+			}
+			else
+			{
+				// there are neighbors
+				nls = sas.neighbors_number[i] + 1;
+				sas.ind[0] = i; // reference sphere
+				for (j = 0; j < nls-1; j++) // neighbors
+					sas.ind[j+1] = sas.neighbors_indices [sas.index_start[i] + j  ];
+
+
+				if(prove)
+				{
+					xi = sas.spheres[i][0];
+					yi = sas.spheres[i][1];
+					zi = sas.spheres[i][2];
+					ri = sas.spheres[i][3];
+					d1 = xi - sas.spheres[ns-1][0];
+					d2 = yi - sas.spheres[ns-1][1];
+					d3 = zi - sas.spheres[ns-1][2];
+					dd = sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+					rk=sas.spheres[ns-1][3];
+
+					//check the prove distance. If too far away, or inside of atom i
+					//or atom i inside of the probe them do nothing
+					if( (dd + ri <= rk) || (dd > ri + rk) || (dd + rk <= ri))
+					{
+						area=0;
+						nls=-1;
+						//fprintf(stderr,"ATENTION: prove too far away\n");
+					}
+					else
+					{
+						sas.ind[nls]=ns-1;
+						nls++;
+					}
+				}
+
+
+				if(nls>0)
+				{
+					// we will work only with ith and neighbors spheres
+					local_spheres(sas.spheres, sas.ind, sas.sphere_local, nls);
+
+					while(north_pole_test_local(sas.sphere_local, nls) == 0)
+					{
+						spheres_rotation (sas.sphere_local, nls, rg.Random());
+						npole++;
+						// fprintf(stderr,"npole\n");
+						// random molecule rotation
+					}
+					area = asa(sas.sphere_local, nls, sas.circles, sas.arcs, sas.arcsnew, sas.angles, &narcs2);
+				}
+			}
+
+
+		if(area<-0.000000001)
+		{
+
+			fprintf(stderr,"Warning area=%f index %d rad %.3f pos %.3f %.3f %.3f \n",area, i,
+					sas.spheres[nls-1][3],sas.spheres[nls-1][0],sas.spheres[nls-1][1],sas.spheres[nls-1][2]);
+
+			if(prove)
+				fprintf(stderr,"Error: negative ASA %f\n", area);
+			//					iter->pos_atom=i;
+			//					fprintf(stderr,"area=%f atom=%d %s\n",area,(iter->get_atom())->getPdbSerial(),(iter->get_atom())->getPdbName());
+			//					fprintf(stderr,"sphere radius=%f asolpar=%f\n",sas.spheres[i][3],sas.spheres[i][4]);
+			//					fprintf(stderr,"position probe=%f %f %f\n",sas.spheres[ns-1][0],sas.spheres[ns-1][1],sas.spheres[ns-1][2]);
+			//					exit(1);
+
+
+
+		}
+		else
+			if(area<0.0)
+				area=0.0;
+
+
+		iter->pos_atom=i;
+		if(iter!=NULL && nls>0)
+		{
+			iter->pos_atom=i;
+			(iter->get_atom())->setPdbocc(area);
+			//(iter->get_atom())->setPdbocc(1.0);
+		}
+		a+=area;
+	}
+
+
+	//	if(!prove)
+	//	{
+	//		fprintf(stderr," Area:   %.5f Spheres num:  %d\n",a,ns);
+	//	}
+	return a;
+}
+
+float localSAS(int start, int end, SAS_t sas, float *sasa, bool prove)
+{
+	double area,a,dump;
+	int npole,nls,narcs,nat;
+	int narcs2;
+	int i,j,k,sas_cont;
+	int32 seed = (int32)time(0);        // random seed
+	CRandomMersenne rg(seed);           // make instance of random number generator
+	double xi,yi,zi,ri,d1,d2,d3,dd,rk;
+
+	a = 0.0;
+	npole=0;
+
+	sas_cont = 0;
+	for (i = start, nat=0; i < end; i++, nat++)
+	{
+		// 	 Determination of i-th sphere's neighbors (row indices in matrix spheres)
+		if (sas.neighbors_number[i] < 0 )
+		{
+			// ith sphere is subset of other sphere sphere(i,4) will be done negative
+			area = 0.0;
+		}
+		else
+			if (sas.neighbors_number[i] == 0)
+			{
+				// there are no neighbors (nls - number of local spheres = ith sphere + neighbors)
+				dump = sas.spheres[i][3]; // sphere radius
+				area = dump * dump * piBY4; // sphere surface
+			}
+			else
+			{
+				// there are neighbors
+				nls = sas.neighbors_number[i] + 1;
+				sas.ind[0] = i; // reference sphere
+				for (j = 0; j < nls-1; j++) // neighbors
+					sas.ind[j+1] = sas.neighbors_indices [sas.index_start[i] + j  ];
+
+				if(prove)
+				{
+					xi = sas.spheres[i][0];
+					yi = sas.spheres[i][1];
+					zi = sas.spheres[i][2];
+					ri = sas.spheres[i][3];
+					d1 = xi - sas.spheres[ns-1][0];
+					d2 = yi - sas.spheres[ns-1][1];
+					d3 = zi - sas.spheres[ns-1][2];
+					dd = sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+					rk=sas.spheres[ns-1][3];
+
+					//check the prove distance. If too far away, or inside of atom i
+					//or atom i inside of the probe them do nothing
+					if( (dd + ri <= rk) || (dd > ri + rk) || (dd + rk <= ri))
+					{
+						area=0;
+						nls=-1;
+						//fprintf(stderr,"ATENTION: prove too far away\n");
+					}
+					else
+					{
+						sas.ind[nls]=ns-1;
+						nls++;
+					}
+				}
+
+				if(nls>0)
+				{
+					// we will work only with ith and neighbors spheres
+					local_spheres(sas.spheres, sas.ind, sas.sphere_local, nls);
+
+					while(north_pole_test_local(sas.sphere_local, nls) == 0)
+					{
+						spheres_rotation (sas.sphere_local, nls, rg.Random());
+						npole++;
+						// fprintf(stderr,"npole\n");
+						// random molecule rotation
+					}
+					area = asa(sas.sphere_local, nls, sas.circles, sas.arcs, sas.arcsnew, sas.angles, &narcs2);
+				}
+			}
+
+
+		if(area<-0.000000001)
+		{
+
+			fprintf(stderr,"Warning area=%f index %d rad %.3f pos %.3f %.3f %.3f \n",area, i,
+					sas.spheres[nls-1][3],sas.spheres[nls-1][0],sas.spheres[nls-1][1],sas.spheres[nls-1][2]);
+
+			if(prove)
+				fprintf(stderr,"Error: negative ASA %f\n", area);
+			//					iter->pos_atom=i;
+			//					fprintf(stderr,"area=%f atom=%d %s\n",area,(iter->get_atom())->getPdbSerial(),(iter->get_atom())->getPdbName());
+			//					fprintf(stderr,"sphere radius=%f asolpar=%f\n",sas.spheres[i][3],sas.spheres[i][4]);
+			//					fprintf(stderr,"position probe=%f %f %f\n",sas.spheres[ns-1][0],sas.spheres[ns-1][1],sas.spheres[ns-1][2]);
+			//					exit(1);
+
+		}
+		else
+			if(area<0.0)
+				area=0.0;
+
+		if(nls>0)
+		{
+			sasa[sas_cont] = area;
+			sas_cont++;
+		}
+
+		a += area;
+	}
+
+	//	if(!prove)
+	//	{
+	//		fprintf(stderr," Area:   %.5f Spheres num:  %d\n",a,ns);
+	//	}
+	return a;
+}
+
+
+
+
+float localSAS_3(int atom_pos,int num_valid_pos_probe,SAS_t sas, int *vpos, float *values, float ox,float oy, float oz, float gz )
+{
+
+	double area,a,dump;
+	int npole,nls;
+	int i,j,k;
+	int32 seed = (int32)time(0);        // random seed
+	CRandomMersenne rg(seed);           // make instance of random number generator
+	double xi,yi,zi,ri,d1,d2,d3,dd,rk;
+
+	int narcs0, narcs2;
+
+ /*
+	double *angles;
+	angles=(double*)malloc(sizeof(double)*maxA);
+
+	double **arcsold;
+	arcsold=(double**)malloc(sizeof(double*)*maxA);
+	for(i=0;i<maxA;i++)
+		arcsold[i]=(double*)malloc(sizeof(double)*3);
+*/
+	double angles[maxA];
+	double arcsold[maxA][maxA];
+
+
+
+	a = 0.;
+	npole=0;
+	for(int posV=0;posV<=num_valid_pos_probe;posV++)
+		values[posV]=0;
+
+	i=atom_pos;
+
+
+
+
+	// 	 Determination of i-th sphere's neighbors (row indices in matrix spheres)
+	if (sas.neighbors_number[i] < 0 )
+	{
+		// ith sphere is subset of other sphere sphere(i,4) will be done negative
+		a= 0;
+	}
+	else
+		if (sas.neighbors_number[i] == 0)
+		{
+			// there are no neighbors (nls - number of local spheres = ith sphere + neighbors)
+			dump = sas.spheres[i][3];
+			a= dump * dump * piBY4;
+		}
+		else
+		{
+			// there are neighbors
+			nls = sas.neighbors_number[i] + 1;
+			sas.ind[0] = i; // reference sphere
+			for (j = 0; j < nls-1; j++) // neighbors
+				sas.ind[j+1] = sas.neighbors_indices [sas.index_start[i] + j  ];
+
+			local_spheres(sas.spheres, sas.ind, sas.sphere_local, nls);
+
+
+
+			while(north_pole_test_local(sas.sphere_local, nls) == 0)
+				spheres_rotation (sas.sphere_local, nls, 0.234);
+
+			a = asa(sas.sphere_local, nls, sas.circles, sas.arcs, sas.arcsnew, sas.angles, &narcs0);
+		    //fprintf(stderr,"narcs0=%d %f\n",narcs0, a);
+
+			// copy arcs
+			for(int ii=0;ii<narcs0;ii++)
+				for(int k=0;k<3;k++)
+				arcsold[ii][k]=sas.arcs[ii][k];
+
+
+			for(int posV=0;posV<num_valid_pos_probe;posV++) {
+
+  			// put probe in last position
+				sas.sphere_local[nls][0]=vpos[posV*3]*gz+ox;
+				sas.sphere_local[nls][1]=vpos[posV*3+1]*gz+oy;
+				sas.sphere_local[nls][2]=vpos[posV*3+2]*gz+oz;
+				sas.sphere_local[nls][3]=sas.spheres[ns-1][3];
+				//				printf("processing local r %f  at %f %f %f %f\n",
+				//						sas.sphere_local[nls][3],
+				//						sas.sphere_local[nls][0],
+				//						sas.sphere_local[nls][1],
+				//						sas.sphere_local[nls][2]);
+
+
+				if (north_pole_test_local_probe(sas.sphere_local, nls)==0) {
+				    //fprintf(stderr,"npole\n");
+					while(north_pole_test_local(sas.sphere_local, nls+1) == 0)
+							spheres_rotation (sas.sphere_local, nls+1, 0.123);
+					area = asa(sas.sphere_local, nls+1, sas.circles, sas.arcs, sas.arcsnew, sas.angles, &narcs2);
+					//fprintf(stderr,"npole\n");
+					local_spheres(sas.spheres, sas.ind, sas.sphere_local, nls);
+
+
+				}  else {
+
+					for(int ii=0;ii<narcs0;ii++)
+						for(int k=0;k<3;k++)
+						sas.arcs[ii][k]=arcsold[ii][k];
+
+					for(int ii=narcs0;ii<nls;ii++)
+						for(int k=0;k<3;k++)
+						sas.arcs[ii][k]=0;
+
+
+					// we will work only with ith and neighbors spheres
+					area = asa_3(sas.sphere_local, nls+1, sas.circles, sas.arcs, sas.arcsnew, sas.angles, narcs0, a);
+
+					// area = asa(sas.sphere_local, nls+1, sas.circles, sas.arcs, sas.arcsnew, sas.angles, &narcs2);
+
+				}
+
+
+
+				if ( (area<-0.0001) || (isnan(area)) )
+				{
+					fprintf(stderr,"Warning area=%f index %d %d rad %.3f pos %.3f %.3f %.3f \n",area, i, posV,
+							sas.sphere_local[i][3],sas.sphere_local[nls][0],sas.sphere_local[nls][1],sas.sphere_local[nls][2]);
+
+					area=0.0;
+					//exit(1);
+				}
+				else
+					if(area<0.0)
+						area=0.0;
+
+
+				//fprintf(stderr,"area=%f %d\n",a-area,  posV);
+				//				getchar();
+
+				//fprintf(stderr,"%d area=%f\n", posV, a-area);
+				values[posV]=a-area;
+			}
+		}
+	return a;
+}
+
+
+
+
+
+
+//___________________________________________________________
+
+inline int make_neighbors( double **spheres, int *neighbors_number, int *index_start, int *neighbors_indices,  int ns)
+{
+
+    //      Determination of neighbors for all atoms.
+    //      We construct next structure:
+    //      neighbors_number(i)=neighbors number for ith atom
+    //		 index_start(i)=start of neighbors indices for ith atom in array
+    //                              neighbors_indices
+    //		 neighbors_indices - array of neighbors indices for each atom
+
+    // neighbors_indices(index_start(i)):neighbors_ind(index_start(i)+neighbors_number(i)-1)
+
+    //	For example: 1. atom has neighbors with indices 2, 4, 7
+    //		         2. atom has neighbors with indices 1, 3
+    //		         3. atom has neighbors with indices 2, 4
+    //		         4. atom has neighbors with indices 1, 3
+    //               5. atom is subset of some atom
+    //               6. atom has no neighbors
+    //		         7. atom has neighbors with index 1
+    //		                  then we have
+    //          neighbors_number=(3,2,2,2,-1,0,1)
+    // 		  index_start=(1,4,6,8,10,10,10,11)
+    //			  neighbors_indices(2,4,7,1,3,2,4,1,3,1)
+
+
+
+    /* Local variables */
+    int i, j;
+
+ /*
+    int *ind;
+    ind=(int*)malloc(sizeof(int)*maxN);
+		if(ind==NULL)
+		{
+			fprintf(stderr,"ind NULL \n");
+			exit(1);
+		}
+ */
+    int ind[maxN];
+
+    /* Function Body */
+    index_start[0] = 0;
+    for ( i = 0; i < ns; i++) {
+
+      neighbors_number[i] = neighbors(i, spheres, ind,  ns);
+			if(neighbors_number[i]>maxN)
+			{
+				fprintf(stderr,"Error: Too many neighbors %d. Increase maxN=%d\n",neighbors_number[i],maxN);
+				exit(1);
+			}
+
+
+			if (neighbors_number[i] <= 0) {
+        // sphere is subset ot there are no neighbors
+	    	index_start[i + 1] = index_start[i];
+			} else {
+	     	// there are neighbors
+	    	index_start[i + 1] = index_start[i] + neighbors_number[i];
+	    	for (j = 0; j < neighbors_number[i]; j++) {
+					neighbors_indices[index_start[i] + j ] = ind[j];
+	    	}
+
+			}
+
+    }
+
+
+//    free(ind);
+
+
+    return 0;
+}
+
+//___________________________________________________________
+
+inline int neighbors(int i, double **spheres, int *ind, int ns)
+{
+
+/* 	Function */
+/*     If ith sphere is a subset of other sphere, index_number(i)=-1 and we change its */
+/*     radius in matrix spheres to -radius !!! */
+/*     If some other sphere is subset of ith sphere, than we change its radius to -radius !!! */
+
+
+    /* Local variables */
+    static int k;
+    static double dd, d1,d2,d3, ri, rk, xi, yi, zi;
+    static int neighbors_num;
+
+
+    /* Function Body */
+    neighbors_num = 0;
+    /* i-th sphere data */
+    xi = spheres[i][0];
+    yi = spheres[i][1];
+    zi = spheres[i][2];
+    ri = spheres[i][3];
+
+
+
+    for (k = 0; k < ns; k++) {
+	if (k != i) {
+	     // first simple test
+	  if ( abs(xi - spheres[k][0]) < (ri + spheres[k][3]) ) {
+
+		d1 = xi - spheres[k][0];
+		d2 = yi - spheres[k][1];
+		d3 = zi - spheres[k][2];
+		dd = sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+
+		rk = spheres[k][3];
+		if (dd < ri + rk) {
+		    if (dd + ri <= rk) {
+		        // ith sphere is inside of other sphere
+				 return -1;
+
+		    } else if (dd + rk > ri) {
+		        //  kth sphere is neighbor
+
+
+					ind[neighbors_num] = k;
+					neighbors_num++;
+		    }
+		}
+	    }
+	}
+    }
+
+    return neighbors_num;
+}
+
+
+
+//___________________________________________________________
+
+inline int areavolume(double **sphere_local, int nls, double **circles, double **arcs, double **newarcs, double *angles, double *av)
+{
+
+  /* Local variables */
+    static int j;
+    static double r1, z1, d1,d2;
+    static double avi[2];
+    static int npos;
+    static int narcs;
+
+  	av[0] = 0.;
+	av[1] = 0.;
+	make_ts_circles(sphere_local, circles, nls);
+
+	narcs = circles_to_arcs(circles, arcs, newarcs, angles, nls);
+
+
+    npos = 0;
+	for (j = 0; j < nls-1; ++j)
+			{
+	    	if (circles[j][3] > 0.)
+	    	{
+					++npos;
+	    	}
+			}
+			z1 = sphere_local[0][2];
+			r1 = sphere_local[0][3];
+
+			if (npos > 0)
+			{
+/*           there exists positive oriented circle */
+	    	avintegral(circles, arcs, narcs, r1, z1, avi);
+	    	av[0] += avi[0];
+	    	av[1] += avi[1];
+
+			}
+			else
+			{
+/*           all circles are negative oriented - we compute complement */
+
+	    	avintegral(circles, arcs, narcs, r1, z1, avi);
+	    	av[0] +=  avi[0] + r1*r1*r1*piBY4 / 3.;
+	    	av[1] +=  avi[1] + r1*r1*piBY4;
+
+			}
+
+		return 0;
+
+}
+
+//
+inline double asa_3(double **sphere_local, int nls, double **circles, double **arcs, double **newarcs, double *angles, int narcs0, double without)
+{
+
+  /* Local variables */
+    static int j;
+    static double r1, z1, d1,d2;
+    static double area;
+    static int npos;
+    static int narcs;
+
+
+	area=0.;
+
+	//make_ts_circles(sphere_local, circles, nls);
+
+	make_ts_circles_3(sphere_local, circles, nls);
+
+	/* Function Body */
+
+
+	//narcs = circles_to_arcs(circles, arcs, newarcs, angles, nls);
+	//printf("dentro y fuera =%d %d\n",narcs, narcs0);
+	narcs = circles_to_arcs_3(circles, arcs, newarcs, angles, nls, narcs0);
+	//printf("dentro y fuera =%d %d\n",narcs, narcs0);
+
+    //if (narcs <= narcs0) printf("dentro=%d %d\n",narcs, narcs0);
+
+    npos = 0;
+    if (narcs<0) return without;
+
+	for (j = 0; j < nls-1; ++j)
+			{
+	    	if (circles[j][3] > 0.)
+	    	{
+					++npos;
+	    	}
+			}
+			z1 = sphere_local[0][2];
+			r1 = sphere_local[0][3];
+
+			if (npos > 0)
+			{
+/*           there exists positive oriented circle */
+	    	area += aintegral(circles, arcs, narcs, r1, z1);
+
+			}
+			else
+			{
+/*           all circles are negative oriented - we compute complement */
+
+	    	area+=aintegral(circles, arcs, narcs, r1, z1)+ r1*r1*piBY4;
+
+			}
+
+		return area;
+
+
+}
+
+
+
+
+
+//___________________________________________________________
+
+inline double asa(double **sphere_local, int nls, double **circles, double **arcs, double **newarcs, double *angles, int *narcs2)
+{
+
+  /* Local variables */
+    static int j;
+    static double r1, z1, d1,d2;
+    static double area;
+    static int npos;
+    int narcs;
+
+
+	area=0.;
+	make_ts_circles(sphere_local, circles, nls);
+	narcs = circles_to_arcs(circles, arcs, newarcs, angles, nls);
+	narcs2[0]=narcs;
+	// printf("nna=%d %d\n",narcs, narcs2);
+
+    npos = 0;
+	for (j = 0; j < nls-1; ++j)
+			{
+	    	if (circles[j][3] > 0.)
+	    	{
+					++npos;
+	    	}
+			}
+			z1 = sphere_local[0][2];
+			r1 = sphere_local[0][3];
+
+			if (npos > 0)
+			{
+/*           there exists positive oriented circle */
+	    	area += aintegral(circles, arcs, narcs, r1, z1);
+
+			}
+			else
+			{
+/*           all circles are negative oriented - we compute complement */
+
+	    	area+=aintegral(circles, arcs, narcs, r1, z1)+ r1*r1*piBY4;
+
+			}
+
+		return area;
+
+}
+
+
+//___________________________________________________________
+
+inline int local_spheres(double **spheres, int *ind,
+	double **sphere_local, int nls)
+{
+    /* Local variables */
+    static int i, j;
+
+    for (i = 0; i < nls; ++i) {
+	for (j = 0; j < 4; ++j) {
+
+	    sphere_local [i][j] = spheres [ind[i]][j];
+	}
+    }
+
+    return 0;
+}
+
+//___________________________________________________________
+
+inline int north_pole_test_local( double **sphere_local,  int nls)
+
+{
+
+    /* Local variables */
+    static double d,d1,d2,d3,xi,yi,zi,ri;
+    static int i, k, ink, npt;
+    static double dmin, eps_north_pole;
+
+
+    /* Function Body */
+    eps_north_pole = 1e-4;
+    dmin= 1e4;
+
+
+   xi = sphere_local[0][0];
+   yi = sphere_local[0][1];
+   zi = sphere_local[0][2];
+   ri = sphere_local[0][3];
+
+   for (k = 0; k < nls -1; ++k) {
+	d1 = xi - sphere_local[k + 1][0];
+	d2 = yi - sphere_local[k + 1][1];
+	d3 = zi + ri - sphere_local[k + 1][2];
+    d = abs((sqrt(d1 * d1 + d2 * d2 + d3 * d3)-sphere_local[k+1][3]));
+
+    if (d < eps_north_pole) return 0;
+
+	}
+
+
+  //fprintf(stderr," Rotation inside after bad North Pole test %.11f\r",dmin);
+
+    return 1;
+}
+inline int north_pole_test_local_probe( double **sphere_local, int nls)
+
+{
+
+    /* Local variables */
+    static double d,d1,d2,d3,xi,yi,zi,ri;
+    static int i, ink, npt;
+    static double dmin, eps_north_pole;
+
+
+    /* Function Body */
+    eps_north_pole = 1e-4;
+    dmin= 1e4;
+
+
+   xi = sphere_local[0][0];
+   yi = sphere_local[0][1];
+   zi = sphere_local[0][2];
+   ri = sphere_local[0][3];
+
+   d1 = xi - sphere_local[nls][0];
+   d2 = yi - sphere_local[nls][1];
+   d3 = zi + ri - sphere_local[nls][2];
+   d = abs((sqrt(d1 * d1 + d2 * d2 + d3 * d3)-sphere_local[nls][3]));
+
+    if (d < eps_north_pole) return 0;
+    else return 1;
+
+
+
+  //fprintf(stderr," Rotation inside after bad North Pole test %.11f\r",dmin);
+
+
+}
+
+inline int north_pole_test( double **spheres, int *neighbors_number, int *index_start, int *neighbors_indices,  int ns)
+
+{
+
+    /* Local variables */
+    static double d,d1,d2,d3;
+    static int i, k, ink;
+    static double  eps_north_pole;
+
+
+
+    /* Function Body */
+    eps_north_pole = 1e-4;
+
+
+    for (i = 0; i < ns; i++) {
+	for (k = 0; k < neighbors_number[i]; k++) {
+            /* kth neighbor index */
+	    ink = neighbors_indices[index_start[i] + k ];
+        d1 =  spheres[i][0] - spheres[ink][0];
+		d2 =  spheres[i][1] - spheres[ink][1];
+		d3 =  spheres[i][2] + spheres[i][3]- spheres[ink][2];
+		d = abs((sqrt(d1 * d1 + d2 * d2 + d3 * d3)-spheres[ink][3]));
+	    if (d < eps_north_pole) return 0;
+
+
+	}
+    }
+
+
+    return 1;
+}
+
+//___________________________________________________________
+
+inline int spheres_rotation(double **spheres, int nls, double sa)
+{
+
+    /* Local variables */
+    static int i;
+    static double x, z, ca;
+
+    ca = sqrt(1. - sa * sa);
+    for (i = 0; i < nls; i++) {
+	x = spheres[i][0];
+	z = spheres[i][2];
+	spheres[i][0] = ca * x - sa * z;
+	spheres[i][2] = sa * x + ca * z;
+    }
+    return 0;
+}
+
+
+//___________________________________________________________
+
+inline int make_ts_circles(double **sphere_local, double **circles,  int nls)
+{
+
+    /* Local variables */
+    static double a, b, c, d, d1,d2;
+    static int k;
+    static double r1, dx, dy;
+
+/*     Preparing circles structure for 1st sphere in array	circles */
+/*     according to the paper Hayrjan, Dzurina, Plavka, Busa */
+
+/*     circles(i,1)=ti */
+/*     circles(i,2)=si     - ith circle's center coordinates */
+/*     circles(i,3)=ri    - ith circle's radius */
+/*     circles(i,4)=+1/-1 - circle orientation */
+
+    /* Function Body */
+    r1 = sphere_local[0][3];
+
+    for (k = 0; k < nls -1; ++k) {
+	dx = sphere_local[0][0] - sphere_local[k + 1][0];
+	dy = sphere_local[0][1] - sphere_local[k + 1][1];
+	d1 = sphere_local[0][2] + r1 - sphere_local[k + 1][2];
+	d2 = sphere_local[k + 1][3];
+	a = dx * dx + dy * dy + d1*d1 - d2*d2;
+	b = r1 * 8. * r1 * dx;
+	c = r1 * 8. * r1 * dy;
+    d1 = sphere_local[0][2] - r1 - sphere_local[k + 1][2];
+    d= r1 * 4. * r1 * (dx * dx + dy * dy + d1 * d1 - d2 * d2);
+	circles[k][0] = -b / (a * 2.);
+	circles[k][1] = -c / (a * 2.);
+	circles[k][2] = sqrt((b * b + c * c - a * 4. * d) / (a * 4. * a));
+
+	if (a > 0.) {
+	    circles[k][3] = -1.;
+	} else {
+	    circles[k][3] = 1.;
+	}
+    }
+    return 0;
+}
+
+inline int make_ts_circles_3(double **sphere_local, double **circles,  int nls)
+{
+
+    /* Local variables */
+    static double a, b, c, d, d1,d2;
+    static int k;
+    static double r1, dx, dy;
+
+/*     Preparing circles structure for 1st sphere in array	circles */
+/*     according to the paper Hayrjan, Dzurina, Plavka, Busa */
+
+/*     circles(i,1)=ti */
+/*     circles(i,2)=si     - ith circle's center coordinates */
+/*     circles(i,3)=ri    - ith circle's radius */
+/*     circles(i,4)=+1/-1 - circle orientation */
+
+    /* Function Body */
+    r1 = sphere_local[0][3];
+
+
+    k=nls-2;
+
+  	dx = sphere_local[0][0] - sphere_local[k + 1][0];
+  	dy = sphere_local[0][1] - sphere_local[k + 1][1];
+  	d1 = sphere_local[0][2] + r1 - sphere_local[k + 1][2];
+  	d2 = sphere_local[k + 1][3];
+  	a = dx * dx + dy * dy + d1*d1 - d2*d2;
+  	b = r1 * 8. * r1 * dx;
+  	c = r1 * 8. * r1 * dy;
+      d1 = sphere_local[0][2] - r1 - sphere_local[k + 1][2];
+      d= r1 * 4. * r1 * (dx * dx + dy * dy + d1 * d1 - d2 * d2);
+  	circles[k][0] = -b / (a * 2.);
+  	circles[k][1] = -c / (a * 2.);
+  	circles[k][2] = sqrt((b * b + c * c - a * 4. * d) / (a * 4. * a));
+
+  	if (a > 0.) {
+  	    circles[k][3] = -1.;
+  	} else {
+  	    circles[k][3] = 1.;
+  	}
+
+      return 0;
+
+ }
+
+
+//___________________________________________________________
+
+inline int circles_to_arcs(double **circles, double **arcs, double **arcsnew, double *angles, int nls)
+{
+
+    /* Local variables */
+    static int i, j, k, number_arc, nna;
+
+
+/*     Computing integration arcs */
+
+/*     arcs(i,1)=ci 	   - corresponding circle index */
+/*     arcs(i,2)=sigma     - starting arc angle */
+/*     arcs(i,3)=delta     - oriented arc angle */
+
+/*     Arcs (with their orientation) are parts of circles, which */
+/*     bounds are circles intersection points. If the center of */
+/* 	   arc lies inside all other positive and outside all other */
+/*     negative circles, then we will put it inside arcs structure */
+
+
+    /* Function Body */
+    number_arc = 0;
+    if (nls == 2) {
+/* 	    we have only 1 circle */
+	number_arc = 1;
+	arcs[0][0] = 1.;
+	arcs[0][1] = 0.;
+	arcs[0][2] = circles[0][3] * piBY2;
+    } else {
+/* 	    more than 1 circle */
+
+	for (i = 0; i < nls-1; ++i) {
+	    nna = new_arcs(i, circles, arcsnew, angles, nls);
+		//	if (nna>1) printf("nna=%d\n",nna);
+	    if (nna > 0) {
+
+		for (j = 0; j < nna; ++j) {
+		    for (k = 0; k < 3; ++k) {
+			arcs[number_arc + j][k] = arcsnew[j][k];
+		    }
+		}
+		number_arc += nna;
+	    }
+	}
+    }
+
+
+    //if (number_arc>15) printf("nna=%d\n",number_arc);
+//	for(int ii=0;ii<number_arc+2;ii++) {
+//							//fprintf(stderr,"%d\n angle=%f %f    %f %f\n",i,angles[2*i], sas.angles[2*i], angles[2*i+1],sas.angles[2*i+1]  );
+//   fprintf(stderr,"iarc=%f %f %f\n",arcs[ii][0],arcs[ii][1],arcs[ii][2]);
+//						}
+    return number_arc;
+}
+
+inline int circles_to_arcs_3(double **circles, double **arcs, double **arcsnew, double *angles, int nls, int narcs0)
+{
+
+	/* Local variables */
+    int j, k, number_arc, number_arc0, nna;
+	int intersec[200], col[200];
+	float olda0[200], olda1[200], olda2[200];
+	bool co;
+
+	/*     Computing integration arcs */
+
+	/*     arcs(i,1)=ci 	   - corresponding circle index */
+	/*     arcs(i,2)=sigma     - starting arc angle */
+	/*     arcs(i,3)=delta     - oriented arc angle */
+
+	/*     Arcs (with their orientation) are parts of circles, which */
+	/*     bounds are circles intersection points. If the center of */
+	/* 	arc lies inside all other positive and outside all other */
+	/*     negative circles, then we will put it inside arcs structure */
+
+
+	/* Function Body */
+	// number_arc = 0;
+	if (nls == 2) {
+		/* 	    we have only 1 circle */
+		number_arc = 1;
+		arcs[0][0] = 1.;
+		arcs[0][1] = 0.;
+		arcs[0][2] = circles[0][3] * piBY2;
+	} else {
+		/* 	    more than 1 circle */
+
+		for (int ii = 0; ii < narcs0; ++ii) {
+			olda0[ii]=arcs[ii][0];
+		    olda1[ii]=arcs[ii][1];
+		    olda2[ii]=arcs[ii][2];
+		}
+
+		intersec[0]=arcs[0][0];
+		int dist_narcs=1;
+		for (int ii = 1; ii < narcs0; ++ii)
+			if (arcs[ii][0]!=arcs[ii-1][0]) {
+				intersec[dist_narcs]=	arcs[ii][0];
+				//printf(" inter %d  %d \n", dist_narcs,  intersec[dist_narcs]);
+				dist_narcs++;
+			}
+
+
+
+
+		number_arc=0;
+		//nna = new_arcs_3(nls-2, circles, arcsnew, angles, nls, col);
+		nna = new_arcs(nls-2, circles, arcsnew, angles, nls);
+
+//		if (nna> 0) printf("nna first=%d %d\n",nna, nls);
+//		else printf("nna 0 =%d %d\n",nna, nls);
+		if (nna > 0)
+	    for (j = 0; j < nna; ++j)
+		 if (arcsnew[j][0]==nls-2)  {
+			if (arcsnew[j][1]==0) return -9;
+//			printf("intersecta con la ultima=%d %d %f %f %f\n",nna, nls-1, arcsnew[0][0], arcsnew[0][1], arcsnew[0][2] );
+//		    // getchar();
+		}
+
+		if (nna > 0) {
+
+			for (j = 0; j < nna; ++j) {
+//				if ((arcsnew[j][0]==nls-2)&&(arcsnew[j][1]==0))
+//				 nna--;
+//				else
+				for (k = 0; k < 3; ++k) {
+					arcs[number_arc + j][k] = arcsnew[j][k];
+					//printf("nna-c=%d %d %d %f\n", number_arc, j, nna, arcs[number_arc + j][k] );
+				}
+			}
+			number_arc += nna;
+
+		} else  {
+			// printf(" nna--cero %d  cero=%d ", narcs0,  nna);
+			return -9;
+		}
+
+
+
+
+
+/*
+		    printf(" col %d  from %d cero=%d\n", col[0], narcs0,  nna);
+			for (int ii = 1; ii < col[0]; ii++)
+				 printf("col %d\n", col[ii]);
+
+			for (int ii = 0; ii < narcs0;++ii)
+			printf("olda %f\n", olda0[ii]);
+
+			int iii, ind=0;
+
+			for (k = 0; k < narcs0;k++)
+			{
+
+				co=false;
+				for (iii = 1; iii < col[0]; iii++) {
+
+					if ((int)olda0[k]==abs(col[iii])) {
+						co=true;
+						break;
+					}
+				}
+
+				if ((co)&&(col[iii]<0)) continue;
+
+				if (co) {
+
+					if (k==0) {
+						nna = new_arcs(olda0[k], circles, arcsnew, angles, nls);
+
+															if (nna > 0) {
+																for (j = 0; j < nna; ++j)
+																	for (int kk = 0; kk < 3; ++kk) {
+																		arcs[number_arc+j][kk] = arcsnew[j][kk];
+																				}
+																			number_arc += nna;
+																		}
+															printf("calc %f  nma %d %d\n", olda0[k], nna, number_arc);
+															ind++;
+											}       else
+
+					if (olda0[k]!=olda0[k-1]) {
+					nna = new_arcs(olda0[k], circles, arcsnew, angles, nls);
+
+									if (nna > 0) {
+										for (j = 0; j < nna; ++j)
+											for (int kk = 0; kk < 3; ++kk) {
+												arcs[number_arc+j][kk] = arcsnew[j][kk];
+														}
+													number_arc += nna;
+												}
+									printf("calc %f  nma %d %d\n", olda0[k], nna, number_arc);
+									ind++;
+					}
+
+				}
+				else {	 // if not collide copy from olda0
+
+					arcs[number_arc][0]=olda0[k];
+					arcs[number_arc][1]=olda1[k];
+					arcs[number_arc][2]=olda2[k];
+					printf("copy %f %f %d %d\n", olda0[k],olda1[k], k,  number_arc);
+					number_arc++;
+					getchar();
+				}
+
+			}
+
+*/
+
+
+		int ind=0;
+		for (int ii = 0; ii < dist_narcs; ++ii)
+		{
+
+			nna = new_arcs(intersec[ind], circles, arcsnew, angles, nls);
+			ind++;
+			if (nna > 0) {
+				for (j = 0; j < nna; ++j)
+					for (k = 0; k < 3; ++k) {
+						arcs[number_arc+j][k] = arcsnew[j][k];
+					}
+				//printf("ini=%d %d %d\n",  nna, number_arc+j, intersec[ind-1]);
+				number_arc += nna;
+			}
+		}
+
+
+
+//		double dum1,dum2,dum3;
+//
+//		for (int ii = 0; ii < number_arc-1; ++ii)
+//			for (int jj = 0; jj < number_arc -1 -ii; ++jj)
+//				if ( arcs[jj+1][0] < arcs[jj][0] ) {
+//
+//					dum1=arcs[jj][0];
+//					dum2=arcs[jj][1];
+//					dum3=arcs[jj][2];
+//					for (k = 0; k < 3; ++k)
+//						arcs[jj][k] = arcs[jj+1][k];
+//					arcs[jj+1][0]=dum1;
+//					arcs[jj+1][1]=dum2;
+//					arcs[jj+1][2]=dum3;
+//
+//				}
+
+
+
+
+
+
+	  for (int ii = number_arc; ii < narcs0; ii++) {
+ 	 	arcs[ii][0]=0;
+	    arcs[ii][1]=0;
+	    arcs[ii][2]=0;
+	  }
+		//printf("nna-=%d %d dist %d\n",number_arc, narcs0,  dist_narcs);
+
+		// i =  nls-2;
+
+		// for (i = 0; i < nls-1; ++i)
+		// {
+
+
+		//  }
+	} // else
+
+
+	//printf("nnaf=%d %d\n", number_arc, narcs0);
+	//if (number_arc>15) printf("nna=%d\n",number_arc);
+
+
+
+	return number_arc;
+}
+
+//___________________________________________________________
+
+inline int new_arcs(int i, double **circles, double **arcsnew,  double *angles, int nls)
+{
+
+    /* Local variables */
+    static double d,d1,d2;
+    static int j;
+    static double r, s, t, a1, a2;
+    static int num_angle;
+    static double b1, b2;
+    static int na, jj;
+    static double ri, si, ti;
+    static int number_cond;
+    static int num_arc;
+
+
+
+/* 	Function prepares arcs, which are part of i-th circle */
+/* 	in circle structure circles. */
+/* 	Interesting are these arcs, which are inside other positive */
+/* 	circles or outside other negative circles */
+
+/* 	Matrix arcsnew in each row has elements */
+
+/*     arcsnew(i,1)=ic - ic is the index of arc-circle in circle */
+/*     arcsnew(i,2)=sigma - sigma is the starting angle of arc */
+/*     arcsnew(i,3)=delta - delta is oriented arc angle */
+
+
+    /* Function Body */
+    num_arc = -1;
+    num_angle = 0;
+    ti = circles[i][0];
+    si = circles[i][1];
+    ri = circles[i][2];
+
+    for (j = 0; j < nls-1; ++j) {
+/* 	   composition of angles vector, consisting of intersection points */
+	if (j != i) {
+	    t = circles[j][0];
+	    s = circles[j][1];
+	    r = circles[j][2];
+	    d1 = ti - t;
+	    d2 = si - s;
+	    d = sqrt(d1 * d1 + d2 * d2);
+	    if ( (d < r + ri) &&  (abs(r-ri) < d)) {
+	      //    2 intersection points exist
+		circles_intersection(i, j, circles, &a1, &a2, &b1, &b2);
+		angles[num_angle + 0] = a1;
+		angles[num_angle + 1] = a2;
+		num_angle += 2;
+	    }
+	}
+    }
+
+
+    if (num_angle == 0) {
+/* 	    there are no double intersections of i-th circles with others */
+	number_cond = 0;
+/* 		if i-th circle is inside of all other positive and outside of */
+/*         all other negative circles, it will be new arc */
+
+	for (j = 0; j < nls -1; ++j) {
+	    if (j != i) {
+	     number_cond += circle_in_circle(i, j, circles);
+	    }
+	}
+
+
+	if (number_cond == nls - 2) {
+/* 		    all conditions hold */
+	    num_arc = 0;
+	    arcsnew[0][0] = (double) i;
+	    arcsnew[0][1] = 0.;
+	    arcsnew[0][2] = circles[i][3] * piBY2;
+	}
+    } else {
+
+/* 	    there are double intersection points */
+	if (circles[i][3] > 0.) {
+		    shell_sort(angles, num_angle);
+     	     // mysort(angles, num_angle);
+	} else {
+     	    // mydsort(angles, num_angle);
+     	   shell_sortd(angles, num_angle);
+	}
+
+
+	 na = delete_equal(angles, num_angle);
+	 num_angle = na;
+
+	for (j = 0; j <= na -1; ++j) {
+	    number_cond = 0;
+	    for (jj = 0; jj < nls -1; ++jj) {
+		if (jj != i) {
+		    t = ti + ri * cos((angles[j] + angles[j+1]) / 2.);
+		    s = si + ri * sin((angles[j] + angles[j+1]) / 2.);
+		    number_cond += point_in_circle(t, s, jj, circles);
+		}
+	    }
+
+	    if (number_cond == nls - 2) {
+/* 			    all conditions hold */
+		++num_arc;
+		arcsnew[num_arc][0]  = (double) i;
+		arcsnew[num_arc][1]  = angles[j];
+		arcsnew[num_arc][2]  = angles[j+1] - angles[j];
+
+	    }
+	}
+	number_cond = 0;
+	for (j = 0; j < nls -1; ++j) {
+	    if (j != i) {
+		t = ti + ri * cos((angles[0] + piBY2 + angles[na]) / 2.);
+		s = si + ri * sin((angles[0] + piBY2 + angles[na]) / 2.);
+		number_cond += point_in_circle(t, s, j, circles);
+	    }
+	}
+
+
+	if (number_cond == nls - 2) {
+/* 			all conditions hold */
+			++num_arc;
+	    arcsnew[num_arc][0]  = (double) i;
+	    arcsnew[num_arc][1]  = angles[na];
+	    arcsnew[num_arc][2]  = angles[0] + circles[i][3]* piBY2
+	                           - angles[na];
+
+	}
+    }
+
+
+
+    return  num_arc+1;
+}
+
+//___________________________________________________________
+
+inline int new_arcs_3(int i, double **circles, double **arcsnew,  double *angles, int nls, int *col)
+{
+
+    /* Local variables */
+    static double d,d1,d2;
+    static int j;
+    static double r, s, t, a1, a2;
+    static int num_angle;
+    static double b1, b2;
+    static int na, jj;
+    static double ri, si, ti;
+    static int number_cond;
+    static int num_arc;
+     int  inter;
+
+
+
+/* 	Function prepares arcs, which are part of i-th circle */
+/* 	in circle structure circles. */
+/* 	Interesting are these arcs, which are inside other positive */
+/* 	circles or outside other negative circles */
+
+/* 	Matrix arcsnew in each row has elements */
+
+/*     arcsnew(i,1)=ic - ic is the index of arc-circle in circle */
+/*     arcsnew(i,2)=sigma - sigma is the starting angle of arc */
+/*     arcsnew(i,3)=delta - delta is oriented arc angle */
+
+
+    /* Function Body */
+    num_arc = -1;
+    num_angle = 0;
+    ti = circles[i][0];
+    si = circles[i][1];
+    ri = circles[i][2];
+
+    for (j = 0; j < nls-1; ++j) {
+ /* 	   composition of angles vector, consisting of intersection points */
+ 	if (j != i) {
+ 	    t = circles[j][0];
+ 	    s = circles[j][1];
+ 	    r = circles[j][2];
+ 	    d1 = ti - t;
+ 	    d2 = si - s;
+ 	    d = sqrt(d1 * d1 + d2 * d2);
+ 	    if ( (d < r + ri) &&  (abs(r-ri) < d)) {
+ 	      //    2 intersection points exist
+ 		circles_intersection(i, j, circles, &a1, &a2, &b1, &b2);
+ 		angles[num_angle + 0] = a1;
+ 		angles[num_angle + 1] = a2;
+ 		num_angle += 2;
+ 	    }
+ 	}
+     }
+
+
+
+
+
+//    inter=1;
+//     for (j = 0; j < nls-1; ++j)
+//    {
+///* 	   composition of angles vector, consisting of intersection points */
+//	if (j != i) {
+//	    t = circles[j][0];
+//	    s = circles[j][1];
+//	    r = circles[j][2];
+//	    d1 = ti - t;
+//	    d2 = si - s;
+//	    d = sqrt(d1 * d1 + d2 * d2);
+//
+//	    printf("intersec %d %f %f %f %f %f\n", j, d, r, ri, r-ri, r+ri);
+//
+//	    if ((abs(r-ri) >= d)) {
+//	    	if ( (( r > ri) && ( r > d)) || (( r < ri) && ( ri > d)) )
+//	    	 col[inter++]=j;
+//	    	 else {
+//	    		col[inter++]=-j;
+//	    		printf("intersec %d \n", j);
+//	    	 }
+//	    }
+//	    else
+//	    if ( (d < r + ri) ) {
+//	      //    2 intersection points exist
+//		circles_intersection(i, j, circles, &a1, &a2, &b1, &b2);
+//		angles[num_angle + 0] = a1;
+//		angles[num_angle + 1] = a2;
+//		num_angle += 2;
+//	    col[inter++]=j;
+//
+//	    } if (r+ri -abs(r-ri)  <d) col[inter++]=j;
+//
+//	}
+//    }
+//     col[0]=inter;
+
+//     if (inter>0)
+//    {
+//   	 printf("inter %d\n", inter);
+//   	 for (int i = 1; i < col[0]; i++)
+//   	  printf("intersec %d\n", col[i]);
+//   	}
+
+
+    if (num_angle == 0) {
+/* 	    there are no double intersections of i-th circles with others */
+	number_cond = 0;
+/* 		if i-th circle is inside of all other positive and outside of */
+/*         all other negative circles, it will be new arc */
+
+for (j = 0; j < nls -1; ++j)
+//	j=nls-2;
+	{
+	    if (j != i) {
+	     number_cond += circle_in_circle(i, j, circles);
+	    }
+	}
+
+
+	if (number_cond == nls - 2) {
+/* 		    all conditions hold */
+	    num_arc = 0;
+	    arcsnew[0][0] = (double) i;
+	    arcsnew[0][1] = 0.;
+	    arcsnew[0][2] = circles[i][3] * piBY2;
+	}
+    } else {
+
+/* 	    there are double intersection points */
+	if (circles[i][3] > 0.) {
+		    shell_sort(angles, num_angle);
+     	     // mysort(angles, num_angle);
+	} else {
+     	    // mydsort(angles, num_angle);
+     	   shell_sortd(angles, num_angle);
+	}
+
+
+	 na = delete_equal(angles, num_angle);
+	 num_angle = na;
+
+	for (j = 0; j <= na -1; ++j) {
+	    number_cond = 0;
+	    for (jj = 0; jj < nls -1; ++jj) {
+		if (jj != i) {
+		    t = ti + ri * cos((angles[j] + angles[j+1]) / 2.);
+		    s = si + ri * sin((angles[j] + angles[j+1]) / 2.);
+		    number_cond += point_in_circle(t, s, jj, circles);
+		}
+	    }
+
+	    if (number_cond == nls - 2) {
+/* 			    all conditions hold */
+		++num_arc;
+		arcsnew[num_arc][0]  = (double) i;
+		arcsnew[num_arc][1]  = angles[j];
+		arcsnew[num_arc][2]  = angles[j+1] - angles[j];
+
+	    }
+	}
+	number_cond = 0;
+	for (j = 0; j < nls -1; ++j) {
+	    if (j != i) {
+		t = ti + ri * cos((angles[0] + piBY2 + angles[na]) / 2.);
+		s = si + ri * sin((angles[0] + piBY2 + angles[na]) / 2.);
+		number_cond += point_in_circle(t, s, j, circles);
+	    }
+	}
+
+
+	if (number_cond == nls - 2) {
+/* 			all conditions hold */
+			++num_arc;
+	    arcsnew[num_arc][0]  = (double) i;
+	    arcsnew[num_arc][1]  = angles[na];
+	    arcsnew[num_arc][2]  = angles[0] + circles[i][3]* piBY2
+	                           - angles[na];
+
+	}
+    }
+
+
+
+    return  num_arc+1;
+}
+
+
+
+
+
+//___________________________________________________________
+
+inline int circles_intersection(int ic1, int ic2,double **circles,  double *a1, double *a2, double *b1, double *b2)
+{
+
+    /* Local variables */
+  static double tangab,a, b, c, d, d1, r1, s1, t1, t2, s2, r2, eps_deltat;
+
+
+/* 	Function returns angles of two intersection points */
+/* 	of circles with indices ic1 and ic2 in circles structure circles */
+/* 	(we will use it ONLY IN CASE, WHEN 2 INTERSECTION POINTS EXIST!!!) */
+
+/* 	a1 and a2 are corresponding angles with respect to the center of 1st circle */
+/* 	b1 and b2 are corresponding angles with respect to the center of 2nd circle */
+
+    /* Function Body */
+    eps_deltat = 1e-12;
+/*     (t,s) - circle center, r - circle radius */
+    t1 = circles[ic1][0];
+    s1 = circles[ic1][1];
+    r1 = circles[ic1][2];
+    t2 = circles[ic2][0];
+    s2 = circles[ic2][1];
+    r2 = circles[ic2][2];;
+    if ((abs(t2-t1)) < eps_deltat) {
+/*         t2 .EQ. t1 */
+	b = ((r1 * r1 - r2 * r2) / (s2 - s1) - (s2 - s1)) / 2.;
+	a = sqrt(r2 * r2 - b * b);
+	if (b == 0.) {
+	     *b1 = 0.;
+	     *b2 = PDB_PI;
+	} else if (b > 0.) {
+	     *b1 = atan(abs(b/a));
+	     *b2 = PDB_PI -  *b1;
+	} else {
+	     *b1 = atan(abs(b/a)) + PDB_PI;
+	     *b2 = piBY3 -  *b1;
+	}
+	b = b + s2 - s1;
+	if (b == 0.) {
+	     *a1 = 0.;
+	     *a2 = PDB_PI;
+	} else if (b > 0.) {
+	     *a1 = atan(abs(b/a));
+	     *a2 = PDB_PI -  *a1;
+	} else {
+	     *a1 = atan(abs(b/a)) + PDB_PI;
+	     *a2 = piBY3 -  *a1;
+	}
+    } else {
+/* 	  t2 .NE. t1 */
+	d1 = s2 - s1;
+	c = ((r1 * r1 - r2 * r2 - d1 * d1) / (t2 - t1) - (t2 - t1)) /
+		2.;
+	d = (s1 - s2) / (t2 - t1);
+	b = (-c * d + sqrt((d * d + 1.) * r2 * r2 - c * c)) / (
+		d * d + 1.);
+	a = c + d * b;
+	if (a == 0.) {
+	    if (b > 0.) {
+		 *b1 = piD2;
+	    } else {
+		 *b1 = -piD2;
+	    }
+	} else if (a > 0.) {
+	     *b1 = atan(b / a);
+	} else {
+	     *b1 = atan(b / a) + PDB_PI;
+	}
+	b = b + s2 - s1;
+	a = a + t2 - t1;
+	if (a == 0.) {
+	    if (b > 0.) {
+		 *a1 = piD2;
+	    } else {
+		 *a1 = -piD2;
+	    }
+	} else if (a > 0.) {
+	     *a1 = atan(b / a);
+	} else {
+	     *a1 = atan(b / a) + PDB_PI;
+	}
+	b = (-c * d - sqrt((d * d + 1.) * r2 * r2 - c * c)) / (
+		d * d + 1.);
+	a = c + d * b;
+	if (a == 0.) {
+	    if (b > 0.) {
+		 *b2 = piD2;
+	    } else {
+		 *b2 = -piD2;
+	    }
+	} else if (a > 0.) {
+	     *b2 = atan(b / a);
+	} else {
+	     *b2 = atan(b / a) + PDB_PI;
+	}
+	b = b + s2 - s1;
+	a = a + t2 - t1;
+	if (a == 0.) {
+	    if (b > 0.) {
+		 *a2 = piD2;
+	    } else {
+		 *a2 = -piD2;
+	    }
+	} else if (a > 0.) {
+	     *a2 = atan(b / a);
+	} else {
+	     *a2 = atan(b / a) + PDB_PI;
+	}
+    }
+    if ( *a1 < 0.) {
+	 *a1 += piBY2;
+    }
+    if ( *a2 < 0.) {
+	 *a2 += piBY2;
+    }
+    if ( *b1 < 0.) {
+	 *b1 += piBY2;
+    }
+    if ( *b2 < 0.) {
+	 *b2 += piBY2;
+    }
+
+    return 0;
+} /* circles_intersection */
+
+
+//_________________________________________________________
+
+inline int circle_in_circle(int i, int k, double **circles)
+{
+
+    /* Local variables */
+    static double d,d1,d2;
+    int ret_val;
+
+/*      1  if i-th circle is inside k-th positive circle or */
+/*                          outside k-th negative circle */
+/* 	 0  - otherwise */
+
+/*      WE KNOW, THAT CIRCLES HAVE LESS THAN 2 INTERSECTION POINTS !!! */
+
+
+    /* Function Body */
+/* Computing 2nd power */
+    d1 = circles[i][0] + circles[i][2] - circles[k][0];
+/* Computing 2nd power */
+    d2 = circles[i][1] - circles[k][1];
+    d = sqrt(d1 * d1 + d2 * d2);
+    if (d < circles[k][2]) {
+	if (circles[k][3] > 0.) {
+	    ret_val = 1;
+	} else {
+	    ret_val = 0;
+	}
+    } else if (d > circles[k][2]) {
+	if (circles[k][3] > 0.) {
+	    ret_val = 0;
+	} else {
+	    ret_val = 1;
+	}
+    } else {
+      /*         d=circles(k,3) - right point on k-th circle - touching of circles */
+	d1 = circles[i][0] - circles[k][0];
+	d2 = circles[i][1] - circles[k][1];
+	d = sqrt(d1 * d1 + d2 * d2);
+	if (d < circles[k][2]) {
+	    if (circles[k][3] > 0.) {
+		ret_val = 1;
+	    } else {
+		ret_val = 0;
+	    }
+	} else {
+	    if (circles[k][3] > 0.) {
+		ret_val = 0;
+	    } else {
+		ret_val = 1;
+	    }
+
+	}
+    }
+    return ret_val;
+} /* circle_in_circle */
+
+
+
+//_______________________________________________________
+
+inline int point_in_circle(double t, double s, int k, double **circles)
+{
+
+    /* Local variables */
+  static double d,d1,d2;
+  int ret_val;
+
+
+/*     1  if point (t,s) is inside k-th positive circle */
+/*                      or outside k-th negative circle */
+/*     0  - otherwise */
+
+/* 	WE KNOW, THAT POINT IS NOT ON THE CIRCLE !!! */
+
+
+    /* Function Body */
+
+    d1 = t - circles[k][0];
+    d2 = s - circles[k][1];
+    d = sqrt(d1 * d1 + d2 * d2);
+    if (d < circles[k][2]) {
+	if (circles[k][3] > 0.) {
+	    ret_val = 1;
+	} else {
+	    ret_val = 0;
+	}
+    } else {
+	if (circles[k][3] > 0.) {
+	    ret_val = 0;
+	} else {
+	    ret_val = 1;
+	}
+    }
+    return ret_val;
+} /* point_in_circle */
+
+
+//__________________________________________________
+
+inline int mysort(double *angles,  int num_angle)
+{
+
+    /* Local variables */
+    static int i, j, ii;
+    static double amax;
+
+/* 	Sorting array angles in increasing order */
+/* 	num_angle is the angles array length */
+
+
+//    printf("i %d\n", num_angle);
+    for (i = 0; i < num_angle-1; ++i) {
+	ii = i;
+	amax = angles[i];
+	for (j = i +1; j < num_angle; ++j) {
+	    if (amax > angles[j]) {
+		ii = j;
+		amax = angles[j];
+	    }
+	}
+	if (ii != i) {
+	    angles[ii] = angles[i];
+	    angles[i] = amax;
+	}
+    }
+    return 0;
+}
+
+inline void shell_sort2(double *A,  int size)
+{
+  int i, j, increment;
+  double temp;
+  increment = size / 2;
+
+  while (increment > 0)
+  { for (i = increment; i < size; i++)
+    { j = i;
+      temp = A[i];
+      while ((j >= increment) && (A[j-increment] > temp))
+      { A[j] = A[j - increment];
+        j = j - increment;
+      }
+      A[j] = temp;
+    }
+
+    if (increment == 2)
+       increment = 1;
+    else
+       increment = (int) (increment / 2.2);
+  }
+}
+
+inline void shell_sort (double *a, int n)
+{
+    int i, j, k, h;
+    double v;
+    int cols[8] = {701, 301, 132, 57, 23, 10, 4, 1};
+    for (k=0; k<8; k++)
+    {
+        h=cols[k];
+        for (i=h; i<n; i++)
+        {
+            v=a[i];
+            j=i;
+            while (j>=h && a[j-h]>v)
+            {
+                a[j]=a[j-h];
+                j=j-h;
+            }
+            a[j]=v;
+        }
+    }
+}
+//__________________________________________________________
+
+inline void shell_sortd (double *a, int n)
+{
+    int i, j, k, h;
+    double v;
+    int cols[8] = {701, 301, 132, 57, 23, 10, 4, 1};
+    for (k=0; k<8; k++)
+    {
+        h=cols[k];
+        for (i=h; i<n; i++)
+        {
+            v=a[i];
+            j=i-h;
+            while (j>=0 && a[j]<v)
+            {
+                a[j+h]=a[j];
+                j-=h;
+            }
+            a[j+h]=v;
+        }
+    }
+}
+
+
+//__________________________________________________________
+
+inline int mydsort(double *angles, int num_angle)
+{
+
+    /* Local variable */
+    static int i, j, ii;
+    static double amin;
+
+/* 	Sorting array angles in decreasing order */
+/* 	num_angle is the angles array length */
+//    printf("d %d\n", num_angle);
+    for (i = 0; i < num_angle -1; ++i) {
+	ii = i;
+	amin = angles[i];
+	for (j = i+1 ; j < num_angle; ++j) {
+	    if (amin < angles[j]) {
+		ii = j;
+		amin = angles[j];
+	    }
+	}
+	if (ii != i) {
+	    angles[ii] = angles[i];
+	    angles[i] = amin;
+	}
+    }
+    return 0;
+} /* mydsort_ */
+
+//________________________________________________________
+
+inline int delete_equal(double *angles, int num_angle)
+{
+
+    /* Local variables */
+    static int i, m, dup;
+    static double eps_angle, d1, angle;
+
+
+/* 	Deletion of "equal" (to some precision eps_angle) */
+/* 	angles in sorted vector angles */
+
+
+    /* Function Body */
+    eps_angle = 1e-12;
+    m = 0; dup=0;
+    angle = angles[0];
+
+    for (i = 1; i < num_angle; ++i) {
+	if (abs(angles[i] - angle) > eps_angle) {
+	   angle = angles[i];
+	   ++m;
+	  //  anglesnew[m] = angle;
+       if (m!=i) angles[m]=angles[i];
+	} else dup++;
+
+    }
+
+
+    return m;
+}
+
+
+//_______________________________________________
+
+inline int avintegral(double **circles, double **arcs,
+	 int narcs, double r1, double z1, double *avi)
+{
+
+    double d1, d2, d3, d4, d5, d7;
+
+    /* Local variables */
+    static double a, b, c;
+    static int k;
+    static double fb1,fa1,fb2,fa2,r, s, t, ca, cb, be, al, sa, sb, rr, delta_aint,delta_vint, eps_two_pi;
+    static double vione, vjone, vitwo, vjtwo, vithree, vjthree;
+
+
+
+
+/* 	Computing integrals over arcs given in arc structure */
+/*     according to paper Hayrian, Dzurina, Plavka, Busa */
+
+    eps_two_pi=1e-12;
+    avi[0]=0;
+    avi[1]=0;
+
+    for (k = 0; k < narcs; ++k) {
+/* 		cycle over all arcs */
+      t = circles[(int) arcs[k][0]][0];
+      s = circles[(int) arcs[k][0]][1];
+      r = circles[(int) arcs[k][0]][2];
+	a = (r1 * 4. * r1 + t * t + s * s + r * r) / 2.;
+	b = t * r;
+	c = s * r;
+	s = sqrt(a * a - b * b - c * c);
+	rr = r * r - a;
+
+	if (abs(abs(arcs[k][2]) - piBY2) < eps_two_pi) {
+/* 		    full circle arc */
+	    vione = piBY2 / s;
+	    vitwo = a * piBY2 / (s*s*s);
+	    vithree = (a * 2. * a + b * b + c * c) *
+		    PDB_PI / (s*s*s*s*s);
+	    vjone = rr / 2. * vione + PDB_PI;
+	    vjtwo = (vione + rr * vitwo) / 4.;
+	    vjthree = (vitwo + rr * vithree) / 8.;
+
+        d2 = r1*r1;
+	    d3 = r1*d2;
+	    d4 = r1*d3;
+        d5 = r1*d4;
+	    d7 = r1*r1*d5;
+
+	    delta_vint = (vjthree * 128. * d7 + vjtwo *
+			  8. * d5 + vjone * 2. * d3) / 3.
+                   - d4 * 8. * vjtwo * (z1 + r1);
+
+	    delta_aint = vjone * 2. * d2;
+
+	    if (arcs[k][2] < 0.) {
+		delta_vint = -delta_vint;
+		delta_aint = -delta_aint;
+	    }
+	    avi[0] += delta_vint;
+	    avi[1] += delta_aint;
+	} else {
+/*         integration over arcs */
+	    if (arcs[k][2] < 0.) {
+		al = arcs[k][1] + arcs[k][2];
+		be = arcs[k][1];
+	    } else {
+	        be = arcs[k][1] + arcs[k][2];
+	        al = arcs[k][1];
+	    }
+	    vione = (piD2 - atan((a * cos((be - al) / 2.) + b *
+		    cos((al + be) / 2.) + c * sin((al + be) / 2.)) / (s *
+		    sin((be - al) / 2.)))) * 2. / s;
+
+	    sb = sin(be);
+	    cb = cos(be);
+	    sa = sin(al);
+	    ca = cos(al);
+
+            d2 = a + b * cb + c * sb;
+            fb1=(-b * sb + c * cb) / d2;
+            fb2=fb1/d2;
+
+            d2 = a + b * ca + c * sa;
+            fa1=(-b * sa + c * ca) / d2;
+            fa2=fa1/d2;
+
+
+	    vitwo = (fb1 - fa1 + a * vione) / (s * s);
+
+
+
+	    vithree = (fb2 - fa2
+		    + (fb1-fa1)/a
+                    + (a * 2. * a + b * b + c * c) * vitwo / a) / (s * 2. * s);
+	    vjone = (be - al + rr * vione) / 2.;
+	    vjtwo = (vione + rr * vitwo) / 4.;
+	    vjthree = (vitwo + rr * vithree) / 8.;
+
+	    d2 = r1*r1;
+	    d3 = r1*d2;
+	    d4 = r1*d3;
+            d5 = r1*d4;
+	    d7 = r1*r1*d5;
+
+	    delta_vint = (vjthree * 128. * d7 + vjtwo *
+			  8. * d5 + vjone * 2. * d3) / 3.
+                    - d4 * 8. * vjtwo * (z1 + r1);
+		delta_aint = vjone * 2. * d2;
+
+
+	    if (arcs[k][2] < 0.) {
+		delta_vint = -delta_vint;
+		delta_aint = -delta_aint;
+	    }
+	    avi[0] += delta_vint;
+	    avi[1] += delta_aint;
+	}
+    }
+    return 0;
+}
+//________________________________________________________________________________
+
+//_______________________________________________
+
+inline double aintegral(double **circles, double **arcs, int narcs, double r1, double z1)
+{
+
+
+
+    /* Local variables */
+    static double a, b, c,area;
+    static int k;
+    static double r, s, t,  al, be, rr, delta_aint, eps_two_pi;
+    static double vione, vjone;
+
+
+
+
+/* 	Computing integrals over arcs given in arc structure */
+/*     according to paper Hayrian, Dzurina, Plavka, Busa */
+
+    eps_two_pi=1e-12;
+
+    area=0;
+
+    for (k = 0; k < narcs; ++k) {
+/* 		cycle over all arcs */
+      t = circles[(int) arcs[k][0]][0];
+      s = circles[(int) arcs[k][0]][1];
+      r = circles[(int) arcs[k][0]][2];
+	a = (r1 * 4. * r1 + t * t + s * s + r * r) / 2.;
+	b = t * r;
+	c = s * r;
+	s = sqrt(a * a - b * b - c * c);
+	rr = r * r - a;
+
+	//printf("a %f %f %f     %f %f %f\n", t,  s, r, arcs[k][0], arcs[k][1], arcs[k][2]);
+
+	if (abs(abs(arcs[k][2]) - piBY2) < eps_two_pi) {
+/* 		    full circle arc */
+	    vione = piBY2 / s;
+	    vjone = rr / 2. * vione + PDB_PI;
+	    delta_aint = vjone * 2. * r1*r1;
+
+	    if (arcs[k][2] < 0.) {
+		delta_aint = -delta_aint;
+	    }
+	    area += delta_aint;
+	} else {
+/*         integration over arcs */
+	    if (arcs[k][2] < 0.) {
+		al = arcs[k][1] + arcs[k][2];
+		be = arcs[k][1];
+	    } else {
+	        be = arcs[k][1] + arcs[k][2];
+	        al = arcs[k][1];
+	    }
+	    vione = (piD2 - atan((a * cos((be - al) / 2.) + b *
+		    cos((al + be) / 2.) + c * sin((al + be) / 2.)) / (s *
+		    sin((be - al) / 2.)))) * 2. / s;
+
+	    vjone = (be - al + rr * vione) / 2.;
+		delta_aint = vjone * 2. * r1*r1;
+
+
+	    if (arcs[k][2] < 0.) {
+		delta_aint = -delta_aint;
+	    }
+	    area += delta_aint;
+	}
+    }
+    return area;
+}
+
+}// namespace ASA

@@ -1,0 +1,100 @@
+{
+  "pinder": {
+    "archive": "/home/hal/.cache/blind01/intake_check_dl/codex/pinder_code.1.body",
+    "sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+    "members": {
+      "src/pinder-methods/pinder/methods/__init__.py": {
+        "copy": "evidence/methods_init.py.txt",
+        "sha256": "42d1681491367d76773dd086aa661b3098609d3f50ce9835e3a3873baafcd2c0",
+        "lines": 30
+      },
+      "src/pinder-methods/pinder/methods/main.py": {
+        "copy": "evidence/main.py.txt",
+        "sha256": "db8a2134048799347b099ecf890b0d106eb187b651d3f43ed6b331b84ba0ca15",
+        "lines": 156
+      },
+      "src/pinder-methods/pinder/methods/run/frodock/predict.py": {
+        "copy": "evidence/predict.py.txt",
+        "sha256": "5484319debcff97e1eda38d5224a7f77e3c9161960e4bedde149b478b199b5ea",
+        "lines": 233
+      },
+      "src/pinder-eval/pinder/eval/dockq/method.py": {
+        "copy": "evidence/eval_method.py.txt",
+        "sha256": "ff2c04315707b02a7aa619e40d29f777d363217451bc536b20754e703143e103",
+        "lines": 900
+      }
+    }
+  },
+  "native": {
+    "archive": "/home/hal/.cache/blind01/intake_check_dl/acquire/gcp_mirror_package.body",
+    "sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+    "members": {
+      "src/frodockgrid/frodockgrid.cpp": {
+        "copy": "evidence/frodockgrid.cpp.txt",
+        "sha256": "82b4f310b92c2ab592b6e85eb4668579850a9829b62909cfdf5ba0f35bf44c20",
+        "lines": 1100
+      },
+      "src/libsas/sas.cpp": {
+        "copy": "evidence/sas.cpp.txt",
+        "sha256": "b61197ff28290a1b32f673132d3e4a9b52b82876ba5f04dfdd9b687036222d79",
+        "lines": 2672
+      },
+      "src/libsas/include/mersenne.h": {
+        "copy": "evidence/mersenne.h.txt",
+        "sha256": "0d32cff52fc461128fa3848a5a53c1acb565a18803601178eba6baed8e2b63c3",
+        "lines": 400
+      },
+      "src/frodockgrid/Release_MPI_GCC/makefile": {
+        "copy": "evidence/grid_MPI_GCC_makefile.txt",
+        "sha256": "a25c2abc07c5f2c6252ff4ae702a1edbbec24bcaaccf5401c58d95c7c8a12ee1",
+        "lines": 57
+      },
+      "src/frodockgrid/Release_MPI_GCC/objects.mk": {
+        "copy": "evidence/grid_MPI_GCC_objects.mk.txt",
+        "sha256": "676a9bec62c58b306e8cdbee58a3b28706dda0fc3357571e1d7e322cd81ecdf1",
+        "lines": 8
+      },
+      "src/frodockgrid/Release_MPI_GCC/subdir.mk": {
+        "copy": "evidence/grid_MPI_GCC_subdir.mk.txt",
+        "sha256": "b592ed8ca022a74115d31583c097f7a310d30e0f74b8801a5d5ad3f8d491ec4c",
+        "lines": 24
+      },
+      "src/libsas/Release_gcc/makefile": {
+        "copy": "evidence/sas_gcc_makefile.txt",
+        "sha256": "7543fa546a6f51bd0e640c11a7ce029b12b673003e76860f1897abbfeabd4b6a",
+        "lines": 57
+      },
+      "src/libsas/Release_gcc/subdir.mk": {
+        "copy": "evidence/sas_gcc_subdir.mk.txt",
+        "sha256": "51a09e4fe453f6e3d326aef8cfc2f8e117b995ace78a2c49b96cf850a03a76bd",
+        "lines": 24
+      },
+      "compile_frodock.sh": {
+        "copy": "evidence/compile_frodock.sh.txt",
+        "sha256": "129944fbdbb4be22932a1e931b0319de769100c03d3a741bc5dda576a16b4e18",
+        "lines": 32
+      }
+    }
+  },
+  "run_command_sha256": "08d645d90c83ce0548f72e9a0b6a6e2a038bf188f8c6f13eefae1f385f231ae5",
+  "candidate_parity": {
+    "environment": true,
+    "output_setup": true,
+    "prediction_repair_evaluation": true
+  },
+  "applied_patch_matches": true,
+  "manifest": {
+    "path": "run9/agent/results/reproduce/out/results/frodock_setup.csv",
+    "sha256": "9e29837be20fb33f8cd891dea4ee36cf3bbaa62c3d9339cab6beb7d7b4fd6f56",
+    "units": 16,
+    "fields": [
+      "id",
+      "kind",
+      "receptor",
+      "ligand"
+    ],
+    "unit_order_and_all_800_path_formulas_match": true,
+    "in_memory_selection_cases": 17,
+    "selected_fields_and_original_line_bytes_retained": true
+  }
+}

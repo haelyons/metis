@@ -1,0 +1,1100 @@
+/***************************************************************************
+                          main.cpp  -  description
+                             -------------------
+    begin                : Thu Jul 22 16:15:56 CEST 2004
+    copyright            : (C) 2004 by Jose Ignacio Garzon
+    email                :
+ ***************************************************************************/
+
+/***************************************************************************
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ ***************************************************************************/
+
+/**
+ * Precomputation of potential maps.
+ *
+ */
+
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <stdlib.h>
+#include <math.h>
+
+#include <libvolume/include/floatops.h>
+#include <libpdb/include/Macromolecule.h>
+#include <libpdb/include/pdbIter.h>
+#include <libsas/include/sas.h>
+
+#ifdef MPI_RELEASE
+#include <mpi.h>
+#endif
+
+#include <cmdl/CmdLine.h>
+using namespace TCLAP;
+using namespace ASA;
+
+#define VALID_POS_PROBE 1500
+
+void mask_invalid(vlVolume *vol, int num,ASA::SAS_t sas,float rad_prove,float **map_pos,ASA::VP_type option_VP);
+
+//Line Parameters
+//input & output files
+char input_pdb[256],output_vol[256],output_vol2[256];
+//Conventions
+int name_convention,atom_convention;
+//map grid_size
+float grid_size;
+//Type map to create
+int in_option;
+//Type of interaction to study
+int in_type;
+
+bool in_hyd,in_pdbf;
+float in_radEmax=1.0,in_radprobe, in_vdwradprobe, in_wradprobe, in_threshold,in_radiusmod;
+ASA::VP_type in_SC_option;
+
+float in_f1=1,in_f2=1;
+
+int main(int argc, char *argv[])
+{
+	//Local variables
+	int i;
+	vlVolume *vol;
+	Macromolecule *in_pdb;
+	ConventionNames conv;
+	Convention conv_atom;
+	float asa_thr = 0.0049;
+	bool debug_mpi = false; // Output MPI debugging info...
+	int pid=0; // To be compatible with MPI
+
+#ifdef MPI_RELEASE
+		int np;
+		MPI_Status status;
+		MPI_Init (&argc, &argv);      /* starts MPI */
+		MPI_Comm_rank (MPI_COMM_WORLD, &pid);        /* get current process id */
+		MPI_Comm_size (MPI_COMM_WORLD, &np);        /* get number of processes */
+//		if(pid==0)
+//			fprintf(stdout,"Awaking %d processes: ",np);
+		fprintf(stdout,"%d ",pid);
+		fflush(stdout);
+	 // printf( "Process %d of %d awake!\n", pid, np);
+		MPI_Barrier(MPI_COMM_WORLD);
+		if(pid==0)
+			fprintf(stdout,"MPI processes (%d) awake!\n",np);
+#endif
+
+	void parseOptions(int argc, char** argv);
+
+	//Read parameters
+	parseOptions(argc,argv);
+
+	switch(name_convention)
+	{
+	case 0:
+		// fprintf(stdout,"Name H convention: iupac\n");
+		conv=iupac;
+		break;
+	case 1:
+		// fprintf(stdout,"Name H convention: pdb\n");
+		conv=pdb;
+		break;
+	case 2:
+		// fprintf(stdout,"Name H convention: Sybil\n");
+		conv=sybil;
+		break;
+	default:
+		fprintf(stdout,"Invalid H name convention set to PDB 3.0\n");
+		conv=pdb;
+	}
+
+	switch(atom_convention)
+	{
+	case 0:
+		// fprintf(stdout,"Force Field: CHARMM\n");
+		conv_atom=Rosseta;
+		break;
+	case 1:
+		// fprintf(stdout,"Force Field: ICM\n");
+		conv_atom=ICM;
+		break;
+	case 2:
+		// fprintf(stdout,"Force Field: EEF1\n");
+		conv_atom=EEF1;
+		break;
+	case 3:
+		// fprintf(stdout,"Force Field: Sybil\n");
+		conv_atom=Sybil;
+		break;
+	default:
+		fprintf(stdout,"Invalid convention set to CHARMM\n");
+		conv_atom=Rosseta;
+	}
+
+	init_aminoacids(conv_atom,conv);
+
+	//read pdb input
+	in_pdb= new Macromolecule("pdb");
+	in_pdb->readPDB(input_pdb);
+	// in_pdb->writePDB("frdg.pdb");
+	if(pid==0)
+	{
+		if(in_hyd)
+			fprintf(stdout,"With hydrogens: yes\n");
+		else
+			fprintf(stdout,"With hydrogens: no\n");
+	}
+	if(!in_hyd)
+  	in_pdb->deleteHYDS();
+
+//	in_pdb->info(stderr);
+
+	if(pid==0)
+		fprintf(stdout,"Grid voxel: %1.1f\n",grid_size);
+
+	// VDW or Electrostatic potential
+	if(in_option==0 || in_option==1)
+	{
+		if(pid==0)
+		{
+			if(in_option == 0)
+				fprintf(stdout,"Option: VdW potential. Probe radius: %1.1f\n",in_vdwradprobe);
+			else
+				fprintf(stdout,"Option: Electrostatic potential.\n");
+		}
+
+#ifdef MPI_RELEASE
+  		pdbIter *iter = new pdbIter( in_pdb ); // iter to screen atoms
+  		// pdbIter *iter = new pdbIter( this, true, true, true, true ); // iter to screen atoms
+		int natom,natomr,startatom,endatom;
+
+		// Define of Atoms for each process...
+		natom = iter->num_atom() / np; // Number of Atoms per process
+		natomr = iter->num_atom() % np; // Number of Atoms per process remainder
+
+		if(pid==0)
+			fprintf(stdout,"parallelization:  num_atom= %d  natom= %d  natomr= %d\n", iter->num_atom(), natom, natomr);
+
+		// Distributing job chunks over available processors...
+		if(pid == 0) // if Master
+		{
+			startatom = 0;
+			endatom = natom;
+		}
+		else if(pid == 1) // if first Worker, then do the remainder too
+		{
+			startatom = natom;
+			endatom = 2*natom + natomr;
+		}
+		else // standard Worker
+		{
+			startatom = pid*natom + natomr;
+			endatom = (pid+1)*natom + natomr;
+		}
+		delete iter;
+
+		// Doing the job...
+		vlVolume *vol;
+		if(in_option == 0)
+			vol = in_pdb->createVDW(startatom, endatom, grid_size, 0, conv,conv_atom,in_vdwradprobe,in_radEmax,in_hyd,1,in_radiusmod,in_f1,in_f2);
+		else
+			vol = in_pdb->createELE(startatom, endatom, grid_size, in_threshold, in_type, in_hyd);
+
+		// Send results from workers to master:  vol
+		float value = 0.0;
+		int cont = 0;
+		int index = 0;
+		int nzv = 0; // Number of Non-Zero-Voxels
+		float *values = (float *) malloc( sizeof(float) * vol->voxelCount() ); // Allocating more memory than required...
+		int *indices = (int *) malloc( sizeof(int) * vol->voxelCount() ); // Allocating more memory than required...
+	    vlVolIter<float, vlLayout::Linear> iterV(vol);
+
+		if(pid==0) // I'm the Master of puppets
+		{
+			// Use doubles to minimize accumulation errors
+			double *valuesd = (double *) malloc( sizeof(double) * vol->voxelCount() ); // Allocating more memory than required...
+			for(unsigned int i=0; i<vol->voxelCount(); i++)
+				valuesd[i] = 0.0; // Array of doubles initialization
+
+			// Translate back the contiguous array into the Volume object... (Fucking shit...)
+			for(int id = 1; id < np; id++)
+			{
+				// Get raw map
+				MPI_Recv( &nzv, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+				if(debug_mpi)
+				{
+					fprintf(stdout,"Master received %d as number of non-zero values from worker %d\n", nzv, status.MPI_SOURCE);
+					fflush(stdout);
+				}
+				MPI_Recv( values, nzv, MPI_FLOAT, status.MPI_SOURCE, 2, MPI_COMM_WORLD, &status);
+				if(debug_mpi)
+				{
+					fprintf(stdout,"Master received %d non-zero values from worker %d\n", nzv, status.MPI_SOURCE);
+					fflush(stdout);
+				}
+				MPI_Recv( indices, nzv, MPI_INT, status.MPI_SOURCE, 3, MPI_COMM_WORLD, &status);
+				if(debug_mpi)
+				{
+					fprintf(stdout,"Master received %d indices of non-zero values from worker %d\n", nzv, status.MPI_SOURCE);
+					fflush(stdout);
+				}
+
+				// Accumulate current output chunk
+				for(int x = 0; x < nzv; x++) // screen all atoms for current coordinates chunk
+					valuesd[ indices[x] ] += values[ x ];
+			}
+
+			// Cast double array directly into float map
+			iterV.begin();
+			cont = 0;
+			do{
+				// Load Master's map into double-array
+				vol->getVoxel(iterV.pos(), value);
+				valuesd[cont] += value;
+				// Store the merged map...
+        		vol->setVoxel(iterV.pos(),(float)valuesd[cont]);
+				cont++;
+			}while(iterV.next());
+			free(valuesd); // free double-array memory
+
+			// Only the Master must writes the output VdW map!!!
+	    	FOPS::writeFile(vol,output_vol);
+			fprintf(stdout,"Written output potential (VdW or Electrostatic) map: %s\n",output_vol);
+		}
+		else // I'm a Worker
+		{
+			cont = 0;
+			index = 0;
+			iterV.begin();
+			do{
+				vol->getVoxel(iterV.pos(), value);
+				if(value != 0.0) // Only non-zero values are sent...
+				{
+					values[cont] = value; // Map value
+					indices[cont] = index; // Map index
+					cont++;
+				}
+				index++;
+			}while(iterV.next());
+
+			// Send data chunk to master process (pid=0) from current worker (pid)
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending %d non-zero values for atoms from %d to %d\n",pid,cont,startatom,endatom);
+				fflush(stdout);
+			}
+			MPI_Send( &cont, 1, MPI_INT, 0, 1, MPI_COMM_WORLD); // Sending data chunk...
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending map for atoms from %d to %d\n",pid,startatom,endatom);
+				fflush(stdout);
+			}
+			MPI_Send( values, cont, MPI_FLOAT, 0, 2, MPI_COMM_WORLD); // Sending data chunk...
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending indices for atoms from %d to %d\n",pid,startatom,endatom);
+				fflush(stdout);
+			}
+			MPI_Send( indices, cont, MPI_INT, 0, 3, MPI_COMM_WORLD); // Sending data chunk...
+		}
+		free(values); // release memory
+		free(indices); // release memory
+		MPI_Finalize();
+#else
+		vlVolume *vol;
+		if(in_option == 0) // VdW
+			vol = in_pdb->createVDW(grid_size,0,conv,conv_atom,in_vdwradprobe,in_radEmax,in_hyd,1,in_radiusmod,in_f1,in_f2);
+		else // Electrostatic
+			vol = in_pdb->createELE(grid_size, in_threshold, in_type, in_hyd);
+    	FOPS::writeFile(vol,output_vol);
+    	fprintf(stdout,"Written output potential (VdW or Electrostatic) map: %s\n",output_vol);
+#endif
+    	free(vol);
+		exit(1);
+	}
+
+//	// Electrostatic potential
+//	if(in_option==1)
+//	{
+//			fprintf(stdout,"Option: Electrostatic potential.\n");
+//			if(!in_pdbf) // NOT use charges from PDB
+//			{
+//				// in_pdb->writeELE(output_vol,grid_size,conv,conv_atom,in_threshold,in_type,in_hyd);
+//				vlVolume *vol = in_pdb->createELE(grid_size, in_threshold, in_type, in_hyd);
+//				FOPS::writeFile(vol,output_vol);
+//				free(vol);
+//			}
+//			else // Use charges from PDB file (fact)
+//				in_pdb->writeELE(output_vol,grid_size,in_type,in_hyd);
+//			exit(1);
+//	}
+
+	// Charge projection
+	if(in_option==2)
+	{
+		fprintf(stdout,"Option: Charge projection.\n");
+		in_pdb->writeCharge(output_vol,grid_size,in_hyd);
+		exit(1);
+	}
+
+   //SOLVATATION potential
+	if(in_option==3)
+	{
+		//Solvation variables
+		ASA::SAS_t sas;
+		int *list_asa;
+		int cont_asa=0,cont_aux;
+		Tcoor pos_atom;
+		int pos_voxel[3];
+		float **map_pos;
+		vlPoint3f pos_orig;
+		int x_high,x_low,y_high,y_low,z_high,z_low;
+		float dist;
+		int cont_affected,cont_out=0,cont_in=0;
+		Atom *at;
+	 	SMol *smol;
+		float Total_value,value1,value2,rad,rad2,rad_max;
+		float asolpar;
+		int cont_void=0;
+
+		if(pid==0) // I'm the Master of puppets
+			fprintf(stdout,"Option: Desolvation potential.\n        Radius -> Water: %f - Generic atom probe: %f\n\n",in_wradprobe, in_radprobe);
+
+		pdbIter *iter=new pdbIter(in_pdb,true);
+		//Probe variables
+		int *valid_pos_probe;
+		float *value_pos_probe;
+		int num_valid_pos_probe;
+		valid_pos_probe=(int*)malloc(sizeof(int)*VALID_POS_PROBE*3);
+		value_pos_probe=(float*)malloc(sizeof(float)*VALID_POS_PROBE);
+
+		// Pre-stage  for ASA computation
+		if(pid==0)
+		{
+			fprintf(stdout,"Pre-stage for ASA computation (in_wradprobe= %f)... ",in_wradprobe);
+			fflush(stdout);
+		}
+		ASA::preSAS(iter,&sas,in_wradprobe,in_SC_option);
+		if(pid==0)
+		{
+			fprintf(stdout,"Finished!\n");
+			fflush(stdout);
+			fprintf(stdout,"Computing the original ASA in all the %d atoms...\n",iter->num_atom());
+			fflush(stdout);
+		}
+
+		// Computation of the original ASA in all the atoms.
+		// This is the Second bottleneck
+		int natom,natomr,startatom,endatom,nat;
+#ifdef MPI_RELEASE
+
+		// Define of Atoms for each process...
+		natom = iter->num_atom() / np; // Number of Atoms per process
+		natomr = iter->num_atom() % np; // Number of Atoms per process remainder
+
+		if(pid==0)
+			fprintf(stdout,"Minor bottleneck parallelization:  num_atom= %d  natom= %d  natomr= %d\n", iter->num_atom(), natom, natomr);
+
+		// Distributing job chunks over available processors...
+		float *sasa;
+		if(pid == 0) // if Master
+		{
+			startatom = 0;
+			endatom = natom;
+			sasa = (float *) malloc( sizeof(float) * iter->num_atom() ); // Master keeps all atoms SAS
+		}
+		else if(pid == 1) // if first Worker, then do the remainder too
+		{
+			startatom = natom;
+			endatom = 2*natom + natomr;
+			sasa = (float *) malloc( sizeof(float) * (endatom-startatom) );
+		}
+		else // standard Worker
+		{
+			startatom = pid*natom + natomr;
+			endatom = (pid+1)*natom + natomr;
+			sasa = (float *) malloc( sizeof(float) * (endatom-startatom) );
+		}
+
+		// Doing the job...
+		ASA::localSAS(startatom,endatom,sas,sasa);
+
+		if(pid==0) // if Master, collect results from Workers
+		{
+			// Translate back the contiguous array into the Volume object... (Fucking shit...)
+			for(int id = 1; id < np; id++)
+			{
+				// Get raw results
+				MPI_Recv( &nat, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+				if(debug_mpi)
+				{
+					fprintf(stdout,"Master received SAS data of %d atoms from worker %d\n", nat, status.MPI_SOURCE);
+					fflush(stdout);
+				}
+				if(status.MPI_SOURCE == 1)
+				{
+					MPI_Recv( sasa + status.MPI_SOURCE*natom, natom + natomr, MPI_FLOAT, status.MPI_SOURCE, 2, MPI_COMM_WORLD, &status);
+					if(debug_mpi)
+						fprintf(stdout,"Master received %d SAS data from worker %d\n", natom + natomr, status.MPI_SOURCE);
+				}
+				else
+				{
+					MPI_Recv( sasa + status.MPI_SOURCE*natom + natomr, natom, MPI_FLOAT, status.MPI_SOURCE, 2, MPI_COMM_WORLD, &status);
+					if(debug_mpi)
+						fprintf(stdout,"Master received %d SAS data from worker %d\n", natom, status.MPI_SOURCE);
+				}
+				fflush(stdout);
+			}
+
+			// Frodock requires ASA info in occupancy field of <file>_ASA.pdb
+			for( iter->pos_atom=0; iter->pos_atom < iter->num_atom(); iter->next_atom() )
+				(iter->get_atom())->setPdbocc(sasa[iter->pos_atom]);
+		}
+		else // if Worker, send results to Master
+		{
+			int mysize = endatom - startatom;
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending %d atoms from %d to %d\n",pid,mysize,startatom,endatom);
+				fflush(stdout);
+			}
+			MPI_Send( &mysize, 1, MPI_INT, 0, 1, MPI_COMM_WORLD); // Sending data chunk...
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending SAS data for atoms from %d to %d\n",pid,startatom,endatom);
+				fflush(stdout);
+			}
+			MPI_Send( sasa, mysize, MPI_FLOAT, 0, 2, MPI_COMM_WORLD); // Sending data chunk...
+		}
+
+		// MPI_Barrier(MPI_COMM_WORLD);
+#else
+		ASA::localSAS(iter,iter->num_atom(),sas);
+#endif
+		ASA::eraseSAS(&sas);
+		if(debug_mpi)
+		{
+			fprintf(stdout,"Finished!\n");
+			fflush(stdout);
+		}
+
+		// Writing PDB with ASA
+		if(pid==0)
+		{
+			char output_pdb[100];
+			char *point;
+			strcpy(output_pdb,input_pdb);
+			point=strrchr(output_pdb,'.');
+			if(point==NULL)
+				point=output_pdb+strlen(output_pdb)-1;
+			*point='\0';
+			strcat(output_pdb,"_ASA.pdb");
+			in_pdb->writePDB(output_pdb);
+			fprintf(stdout,"ASA pdb file %s created (ASA introduced in Occupancy column)\n",output_pdb);
+			fflush(stdout);
+
+			// writing ASA projection map
+			if(strcmp(output_vol2,"")!=0)
+			{
+				in_pdb->writeASA_c(output_vol2,grid_size,in_hyd);
+				fprintf(stdout,"ASA projection map file %s created\n",output_vol2);
+			}
+		}
+
+		// Add the generic atom probe to end of pdb
+		Macromolecule *pdb2=new Macromolecule(in_pdb);
+		pos_atom[0]=pos_atom[1]=pos_atom[2]=1000;
+		at = new Atom(Table_Elements::getElement("C "), pos_atom, 0.0, " CA ", 0, 0.0, in_radprobe );
+		// fprintf(stdout,"Probe %f\n",in_radprobe);
+		smol= new SMol("PRO");
+		smol->add(at);
+		pdb2->add(smol);
+
+		// Pre-staging for ASA computation with probe
+		pdbIter *iter2=new pdbIter(pdb2);
+		ASA::preSAS(iter2,&sas,in_wradprobe, in_SC_option);
+
+		// Set up the radius of the probe
+		int numprobe;
+		numprobe= iter2->num_atom();
+		sas.spheres[numprobe-1][3]=in_wradprobe+in_radprobe;
+
+#ifdef MPI_RELEASE
+		// Creation of List of atoms with ASA (this atoms are the only that can be affected by the probe)
+		if(pid==0)
+		{
+			for (int x=0; x < iter->num_atom(); x++)
+			{
+				if( sasa[x] >= asa_thr )
+					cont_asa++;
+			}
+			list_asa = (int *) malloc( sizeof(int)*cont_asa ); // Master allocate memory
+			cont_aux = 0;
+			for (int x=0; x < iter->num_atom(); x++)
+			{
+				if( sasa[x] >= asa_thr)
+				{
+					list_asa[cont_aux]=x;
+					cont_aux++;
+				}
+				// 			if(pid==0)
+				// 				fprintf(stderr,"%4d %10f\n", x, sasa[x]);
+			}
+		}
+
+		// Broadcasting "cont_asa" and the whole "list_asa" to all workers
+		//
+		// everyone calls Bcast, data is taken from root and ends up in everyone's buffer...
+        MPI_Bcast(&cont_asa, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
+		if(debug_mpi)
+		{
+			fprintf(stdout,"Master (%d) broadcasted \"cont_asa\" (%d) to all workers...\n",pid,cont_asa);
+			fflush(stdout);
+		}
+
+    	if(pid!=0) // Workers must allocate memory too...
+			list_asa = (int *) malloc( sizeof(int)*cont_asa );
+
+        MPI_Bcast(list_asa, cont_asa, MPI_FLOAT, 0, MPI_COMM_WORLD);
+		if(debug_mpi)
+		{
+			fprintf(stdout,"Master (%d) broadcasted \"list_asa\" (%d elements) to all workers...\n",pid,cont_asa);
+			fflush(stdout);
+		}
+#else
+		// Creation of List of atoms with ASA (this atoms are the only that can be affected by the probe)
+		for (iter->pos_atom=0; !iter->gend_atom() ; iter->next_atom())
+		{
+ 			if((iter->get_atom())->getPdbocc() >= asa_thr)
+ 				cont_asa++;
+		}
+		list_asa=(int*)malloc(sizeof(int)*cont_asa);
+		for (cont_aux=0,i=0,iter->pos_atom=0; !iter->gend_atom() ; iter->next_atom(),i++)
+		{
+ 			if( (iter->get_atom())->getPdbocc() >= asa_thr)
+ 			{
+ 				list_asa[cont_aux]=i;
+ 				cont_aux++;
+ 			}
+		}
+#endif
+
+		// Solvation Map creation
+		vlVolume *volS = in_pdb->createVolumeCentered(grid_size);
+		volS->clear(0.0); // reset map
+		volS = FOPS::padVolume(volS, vlDim(6,6,6),true); // some padding
+ 		volS->getPosition(&pos_orig); // get origin
+
+		// Computing position of atoms in map
+		map_pos = (float **) malloc( sizeof(float*) * iter->num_atom() );
+		for(i=0,iter->pos_atom=0; i<iter->num_atom(); i++,iter->next_atom())
+		{
+			map_pos[i] = (float *) malloc( sizeof(float)*3 );
+			(iter->get_atom())->getPosition(pos_atom);
+			map_pos[i][0]=(pos_atom[0]-pos_orig.x())/volS->units().x();
+			map_pos[i][1]=(pos_atom[1]-pos_orig.y())/volS->units().y();
+			map_pos[i][2]=(pos_atom[2]-pos_orig.z())/volS->units().z();
+		}
+
+		// Creating mask volume of invalid positions for the probe (in that positions the probe collides with atoms)
+		if(pid==0)
+		{
+			fprintf(stdout,"Creating mask volume of invalid positions for the probe (where probe collides with atoms)... ");
+			fflush(stdout);
+		}
+		vlVolume *mask = new vlVolume(volS);
+		mask->clear();
+		mask_invalid(mask, iter->num_atom(),sas,in_wradprobe,map_pos,in_SC_option);
+		if(pid==0)
+		{
+			fprintf(stdout,"Finished!\nComputing Solvation Map...\n");
+			fflush(stdout);
+		}
+
+		// For each atom with ASA, close valid positions for probe are explored
+		// The following loop is the First bottleneck
+		cont_in = cont_out = cont_void = 0;
+		int nasa,nasar,startasa,endasa;
+#ifdef MPI_RELEASE
+
+		// Define Number of ASA computations for each process...
+		nasa = cont_asa / np; // Number of ASA
+		nasar = cont_asa % np; // Number of ASA remainder
+
+		if(pid==0)
+			fprintf(stdout,"Main bottleneck parallelization:  cont_asa= %d  nasa= %d  nasar= %d\n", cont_asa, nasa, nasar);
+
+		// Distributing job chunks over available processors...
+		if(pid == 0) // if Master
+		{
+			startasa = pid*nasa;
+			endasa = (pid+1)*nasa;
+		}
+		else if(pid == 1) // if first Worker, then do the remainder too
+		{
+			startasa = pid*nasa;
+			endasa = (pid+1)*nasa + nasar;
+		}
+		else // standard Worker
+		{
+			startasa = pid*nasa + nasar;
+			endasa = (pid+1)*nasa + nasar;
+		}
+#else
+		startasa = 0;
+		endasa = cont_asa;
+#endif
+
+		for(i=startasa; i<endasa; i++)
+		{
+			int p0;
+			iter->pos_atom = p0 = list_asa[i];
+
+			double xi = sas.spheres[p0][0]-pos_orig.x();
+			double yi = sas.spheres[p0][1]-pos_orig.y();
+			double zi = sas.spheres[p0][2]-pos_orig.z();
+			double ri = sas.spheres[p0][3];
+			double rk = sas.spheres[numprobe-1][3];
+            double d1,d2,d3,dd;
+
+			rad = ri+rk;
+			rad2 = rad-0.1 ;
+			rad_max=(rad+0.01)*(rad+0.01); // Mon: This variable seems unused
+
+			// Area around atom
+			x_low= (int)floor(map_pos[p0][0]*volS->units().x()-rad2);
+			x_high= (int)ceil(map_pos[p0][0]*volS->units().x()+rad2);
+			y_low= (int)floor(map_pos[p0][1]*volS->units().y()-rad2);
+			y_high= (int)ceil(map_pos[p0][1]*volS->units().y()+rad2);
+			z_low= (int)floor(map_pos[p0][2]*volS->units().z()-rad2);
+			z_high= (int)ceil(map_pos[p0][2]*volS->units().z()+rad2);
+
+			// Explore valid positions for probe
+			num_valid_pos_probe=0;
+			for(pos_voxel[0]=x_low;pos_voxel[0]<=x_high;pos_voxel[0]++)
+				for(pos_voxel[1]=y_low;pos_voxel[1]<=y_high;pos_voxel[1]++)
+					for(pos_voxel[2]=z_low;pos_voxel[2]<=z_high;pos_voxel[2]++)
+					{
+						mask->getVoxel(vlPoint3ui(pos_voxel[0],pos_voxel[1],pos_voxel[2]),value1);
+
+						if( value1 == 0.0 )
+						{
+							d1 = xi - (float) pos_voxel[0];
+							d2 = yi - (float) pos_voxel[1];
+							d3 = zi - (float) pos_voxel[2];
+							dd = sqrt(d1 * d1 + d2 * d2 + d3 * d3); // Mon: this is slow, do this squared...
+
+							// not inside the atom ; not too far away ; probe not inside atom i
+							if( (dd <= ri - in_wradprobe) || (dd > ri + rk) || ((ri>=rk)&&(dd<ri-rk)) || ((ri>=rk)&&(dd<=rk-ri)) )
+								cont_out++;
+							else
+							{
+								valid_pos_probe[num_valid_pos_probe*3]=pos_voxel[0];
+								valid_pos_probe[num_valid_pos_probe*3+1]=pos_voxel[1];
+								valid_pos_probe[num_valid_pos_probe*3+2]=pos_voxel[2];
+								num_valid_pos_probe++;
+							}
+						} // if mask
+					}
+
+			// Computes variation of ASA for each atom for all the available position of the probe around it
+            value2=ASA::localSAS_3(list_asa[i],num_valid_pos_probe,sas,valid_pos_probe,value_pos_probe, pos_orig.x(), pos_orig.y(), pos_orig.z(), volS->units().x() );
+
+            // Modification of desolvation potential in map in the positions around an atom
+            asolpar=sas.spheres[list_asa[i]][4];
+            for(int posV=0; posV <= num_valid_pos_probe; posV++)
+            {
+            	cont_in++;
+            	if(value_pos_probe[posV]!=0.0 )
+            	{
+            		// Addition of ASA atom over the position of the probe
+            		Total_value=-1.0*asolpar*( value_pos_probe[posV]/100.0);
+            		volS->getVoxel(vlPoint3ui(valid_pos_probe[posV*3],valid_pos_probe[posV*3+1],valid_pos_probe[posV*3+2]),value1);
+            		Total_value+=value1;
+            		volS->setVoxel(vlPoint3ui(valid_pos_probe[posV*3],valid_pos_probe[posV*3+1],valid_pos_probe[posV*3+2]),Total_value);
+            	}
+            	else
+            		cont_void++;
+            }
+		}
+
+		if(debug_mpi)
+		{
+			fprintf(stdout,"ASA computations in process %d: %d ASA computations skipped: %d \n",pid,cont_in,cont_void);
+			fflush(stdout);
+		}
+
+#ifdef MPI_RELEASE
+		// Send results from workers to master:  volS
+		float value = 0.0;
+		int cont = 0;
+		int index = 0;
+		int nzv = 0; // Number of Non-Zero-Voxels
+		int dummy = 0;
+		float *values = (float *) malloc( sizeof(float) * volS->voxelCount() ); // Allocating more memory than required...
+		int *indices = (int *) malloc( sizeof(int) * volS->voxelCount() ); // Allocating more memory than required...
+	    vlVolIter<float, vlLayout::Linear> iterV(volS);
+
+		if(pid==0) // I'm the Master of puppets
+		{
+			// Use doubles to minimize accumulation errors
+			double *valuesd = (double *) malloc( sizeof(double) * volS->voxelCount() ); // Allocating more memory than required...
+			for(unsigned int i=0; i<volS->voxelCount(); i++)
+				valuesd[i] = 0.0; // Double array initialization
+
+			// Translate back the contiguous array into the Volume object... (Fucking shit...)
+			for(int id = 1; id < np; id++)
+			{
+				// Get raw map
+				MPI_Recv( &nzv, 1, MPI_INT, MPI_ANY_SOURCE, 1, MPI_COMM_WORLD, &status);
+				if(debug_mpi)
+				{
+					fprintf(stdout,"Master recived %d as number of non-zero values from worker %d\n", nzv, status.MPI_SOURCE);
+					fflush(stdout);
+				}
+				MPI_Recv( values, nzv, MPI_FLOAT, status.MPI_SOURCE, 2, MPI_COMM_WORLD, &status);
+				if(debug_mpi)
+				{
+					fprintf(stdout,"Master received %d non-zero values from worker %d\n", nzv, status.MPI_SOURCE);
+					fflush(stdout);
+				}
+				MPI_Recv( indices, nzv, MPI_INT, status.MPI_SOURCE, 3, MPI_COMM_WORLD, &status);
+				if(debug_mpi)
+				{
+					fprintf(stdout,"Master recived %d indices of non-zero values from worker %d\n", nzv, status.MPI_SOURCE);
+					fflush(stdout);
+				}
+				MPI_Recv( &dummy, 1, MPI_INT, status.MPI_SOURCE, 4, MPI_COMM_WORLD, &status); // get "cont_in"
+				cont_in += dummy;
+				MPI_Recv( &dummy, 1, MPI_INT, status.MPI_SOURCE, 5, MPI_COMM_WORLD, &status); // get "cont_void"
+				cont_void += dummy;
+				MPI_Recv( &dummy, 1, MPI_INT, status.MPI_SOURCE, 6, MPI_COMM_WORLD, &status); // get "cont_out"
+				cont_out += dummy;
+				// Accumulate current output chunk
+				for(int x = 0; x < nzv; x++) // screen all atoms for current coordinates chunk
+					valuesd[ indices[x] ] += values[ x ];
+			}
+
+			// Cast double array directly into float map
+			iterV.begin();
+			cont = 0;
+			do{
+				// Load Master's map into double-array
+				volS->getVoxel(iterV.pos(), value);
+				valuesd[cont] += value;
+				// Store the merged map...
+        		volS->setVoxel(iterV.pos(),(float)valuesd[cont]);
+				cont++;
+			}while(iterV.next());
+
+			free(valuesd); // free double-array memory
+		}
+		else // I'm a Worker
+		{
+			cont = 0;
+			index = 0;
+			iterV.begin();
+			do{
+				volS->getVoxel(iterV.pos(), value);
+				if(value != 0.0) // Only non-zero values are sent...
+				{
+					values[cont] = value; // Map value
+					indices[cont] = index; // Map index
+					cont++;
+				}
+				index++;
+			}while(iterV.next());
+
+			// Send data chunk to master process (pid=0) from current worker (pid)
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending %d non-zero values for atoms from %d to %d\n",pid,cont,startasa,endasa);
+				fflush(stdout);
+			}
+			MPI_Send( &cont, 1, MPI_INT, 0, 1, MPI_COMM_WORLD); // Sending data chunk...
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending Solvation map for atoms from %d to %d\n",pid,startasa,endasa);
+				fflush(stdout);
+			}
+			MPI_Send( values, cont, MPI_FLOAT, 0, 2, MPI_COMM_WORLD); // Sending data chunk...
+			if(debug_mpi)
+			{
+				fprintf(stdout,"Worker %d sending Solvation indices for atoms from %d to %d\n",pid,startasa,endasa);
+				fflush(stdout);
+			}
+			MPI_Send( indices, cont, MPI_INT, 0, 3, MPI_COMM_WORLD); // Sending data chunk...
+			MPI_Send( &cont_in, 1, MPI_INT, 0, 4, MPI_COMM_WORLD); // Sending data chunk...
+			MPI_Send( &cont_void, 1, MPI_INT, 0, 5, MPI_COMM_WORLD); // Sending data chunk...
+			MPI_Send( &cont_out, 1, MPI_INT, 0, 6, MPI_COMM_WORLD); // Sending data chunk...
+			if(debug_mpi)
+			{
+				fprintf(stdout,"ASA computations in process %d: %d ASA computations skipped: %d \n",pid,cont_in,cont_void);
+				fflush(stdout);
+			}
+		}
+		free(values); // release memory
+		free(indices); // release memory
+//		sprintf(output_vol2,"myvol%02d.ccp4",pid);
+//		FOPS::writeFile(volS,output_vol2);
+		MPI_Finalize();
+#endif
+
+		if(pid==0) // I'm the Master of puppets
+		{
+			printf("Total ASA computations: %d  (skipped: %d  out: %d)\n",cont_in,cont_void,cont_out);
+			FOPS::writeFile(volS,output_vol);
+	    	fprintf(stdout,"Written ASA potential map: %s\n",output_vol);
+
+		}
+	}
+
+	//hydrophobic projection
+	if(in_option==4)
+	{
+		fprintf(stdout,"Option: Hydrophobic proyection.\n");
+		vol=in_pdb->project_Hydrophoby(grid_size,conv,conv_atom,1.5,7.1,0.1,0,false);
+		FOPS::writeFile(vol,output_vol);
+		exit(1);
+	}
+ }
+
+
+void parseOptions(int argc, char** argv)
+{
+        string temp;
+       CmdLine cmd(argv[0],"   ", "2.1" );
+
+        try {
+
+
+
+        //
+        // Define required arguments no labeled
+        //
+
+
+        UnlabeledValueArg<string> pdb("pdb","pdb input file","default","pdb");
+        cmd.add( pdb );
+
+        //
+        // Define labeled arguments
+        //
+
+
+		ValueArg<int> nc("","nc", " H name convention:\n\t0: iupac (default).\n\t1: pdb.",false,0,"int");
+        cmd.add( nc );
+
+        ValueArg<int> ac("","fp", "Forcefield parameters:\n\t0: Rosseta (default) \n\t1: ICM.\n\t2: EEF1 \n\t3 Sybil.",false,0,"int");
+        cmd.add( ac );
+
+		ValueArg<string> ovol2("","av", "Asa projection Volume filename. To be used only when -m=3 (default: Not created)",false,"","string");
+        cmd.add( ovol2 );
+
+		SwitchArg hyd( "", "hyd", "Use hydrogens to create potential map", true );
+    	cmd.add( hyd );
+
+    	SwitchArg pdbf( "p", "pf", "Use charges from PDB file (fact)", true );
+    	cmd.add( pdbf );
+
+	    ValueArg<float> vdwradprobe("","vr","Vdw generic probe radius in amstrongs. To be used only when -m=1} (default:2.0)",false,2.0,"float");
+        cmd.add( vdwradprobe );
+
+        ValueArg<float> radprobe("","sr", "Desolvation generic atom probe radius in amstrongs. To be used only when -m={0,3} (default:1.95)",false,1.95,"float");
+        cmd.add( radprobe );
+
+		ValueArg<float> wradprobe("","wr","Water probe radius in amstrongs. To be used only when -m={0,3} (default:1.4)",false,1.4,"float");
+        cmd.add( wradprobe );
+
+        ValueArg<float> radiusmod("","rm","Atom radius modification",false,1,"float");
+        cmd.add( radiusmod );
+
+        ValueArg<char> type("t","type", "Type of interaction. To be used only when -m={1}:\n\tE: Enzyme/Inhibitor or Enzyme/substrate.\n\tA: Antobody/Antigen.\n\tO: Others.\n\tNone: Original version (Default)\n",false,'Z',"char");
+        cmd.add(type);
+
+		ValueArg<float> grids("","gs", "Volume output grid size in amstrongs (default: 1.0)",false,1,"float");
+        cmd.add( grids );
+
+		ValueArg<string> ovol("o","output", "Volume output filename (default: frodockgrid.ccp4)",false,"frodockgrid.ccp4","string");
+        cmd.add( ovol );
+
+        ValueArg<int> option("m","map", "Type map to generate: \n\t0: van der Waals potential map (default).\n\t1: Electrostatic potential map.\n\t2: Charge projection map.\n\t3: Desolvation potential map + ASA pdb + ASA projection file (MPI)\n\t4: Hyfrophobic potential",false,0,"int");
+        cmd.add( option );
+
+        ValueArg<float> f1("","f1", "f1 (default: 1.0)",false,1,"float");
+        cmd.add( f1 );
+
+        ValueArg<float> f2("","f2", "f2 (default: 1.0)",false,1,"float");
+        cmd.add( f2 );
+
+
+        // Parse the command line.
+        cmd.parse(argc,argv);
+
+
+        strcpy(input_pdb,((temp=pdb.getValue()).c_str()));
+        // esto no debia estar aqui...
+        FILE *f;
+        if ( (f=fopen(input_pdb, "r"))==NULL) {
+        fprintf(stderr, "\n  Error->Cannot open file '%s'\n\n", input_pdb);
+        exit(1);
+        } fclose(f);
+
+
+		// Manage of arguments
+		strcpy(output_vol,((temp=ovol.getValue()).c_str()));
+      	strcpy(output_vol2,((temp=ovol2.getValue()).c_str()));
+      	grid_size=grids.getValue();
+        name_convention=nc.getValue();
+        atom_convention=ac.getValue();
+
+
+        if(hyd.isSet())
+						in_hyd=true;
+				else
+						in_hyd=false;
+
+        if(pdbf.isSet())
+        						in_pdbf=true;
+        				else
+        						in_pdbf=false;
+
+
+
+				if(grid_size<=0)
+					{
+        		fprintf(stderr, "\n  Error->Option incorrect '-gs %f'\n\n", grid_size);
+        		exit(1);
+        	}
+			switch(type.getValue())
+			{
+			case 'E':
+			case 'e':
+					in_type=0;
+				break;
+			case 'A':
+			case 'a':
+					in_type=1;
+			 	break;
+			case 'O':
+			case 'o':
+					in_type=2;
+			 	break;
+			case '1':  // Frodock v1.0 (old version)
+					in_type=-1;
+					break;
+			default:
+					in_type=1;
+				 	break;
+
+
+
+			}
+
+			in_option=option.getValue();
+				/*switch(SC_option.getValue())
+					{
+						case 1:
+							in_SC_option=ASA::VP1;
+							break;
+						case 2:
+							in_SC_option=ASA::VP2;
+							break;
+						case 3:
+							in_SC_option=ASA::VP3;
+							break;
+
+						default:
+							in_SC_option=ASA::VOLD;
+							break;
+					}*/
+					in_SC_option=ASA::VOLD;
+
+				in_wradprobe=wradprobe.getValue();
+				in_vdwradprobe=vdwradprobe.getValue();
+				in_radprobe=radprobe.getValue();
+				in_radiusmod=radiusmod.getValue();
+				//fprintf(stdout,"Probes %f %f %f\n",in_vdwradprobe, in_wradprobe, in_radprobe);
+
+				in_f1=f1.getValue();
+				in_f2=f2.getValue();
+
+        } catch ( ArgException& e )
+        { cout << "  Error->" << e.error() << " " << e.argId() << endl; }
+
+        //cmd.~CmdLine();
+
+}
+
+
+/**
+ * Sets in a volume the positions where a probe cannot be set because it will collide for a SAS structure
+ *
+ *@param vol: preallocated Volume where the mask is projected
+ *@param num: Number of atoms in SAS structure
+ *@param sas: SAS structure
+ *@param wrad_prove: Water radius
+ *@param map_pos: Positions of the atom in the volume (precomputed)
+ *@param option_VP: Fixes the water radius convention employed. ATENTION: It is always used convention VOLD (0).
+ */
+void mask_invalid(vlVolume *vol, int num,ASA::SAS_t sas,float wrad_prove,float **map_pos,ASA::VP_type option_VP)
+{
+	int i,j,k;
+	float rad,rad2,rad_max,value=1.0, valuein;
+	int x_low,x_high,y_low,y_high,z_low,z_high;
+	Tcoor pos_voxel;
+	float dist;
+	bool voxel_invalid;
+//	vlVolume *vol2=new vlVolume(vol);
+	int cont=0,cont1=0;
+	Atom *at;
+	char Aminoacid[4],name_atom[5];
+	int aminoacid,index_vp;
+	bool contA;
+
+
+	for(i=0;i<num;i++)
+	{
+
+     		rad2=sas.spheres[i][3]-wrad_prove;
+			rad_max=rad2*rad2;
+
+				x_low= (int)ceil(map_pos[i][0]-rad2);
+				x_high= (int)floor(map_pos[i][0]+rad2);
+				y_low= (int)ceil(map_pos[i][1]-rad2);
+				y_high= (int)floor(map_pos[i][1]+rad2);
+				z_low= (int)ceil(map_pos[i][2]-rad2);
+				z_high= (int)floor(map_pos[i][2]+rad2);
+
+				for(pos_voxel[0]=x_low;pos_voxel[0]<=x_high;pos_voxel[0]++)
+				{
+					for(pos_voxel[1]=y_low;pos_voxel[1]<=y_high;pos_voxel[1]++)
+					{
+						for(pos_voxel[2]=z_low;pos_voxel[2]<=z_high;pos_voxel[2]++)
+						{
+							//point in the surface layer
+							vol->getVoxel(vlPoint3ui(pos_voxel[0],pos_voxel[1],pos_voxel[2]),valuein);
+							if(valuein!=1)
+													{
+							dist=(map_pos[i][0]-(float)pos_voxel[0])*(map_pos[i][0]-(float)pos_voxel[0]);
+							dist+=(map_pos[i][1]-(float)pos_voxel[1])*(map_pos[i][1]-(float)pos_voxel[1]);
+							dist+=(map_pos[i][2]-(float)pos_voxel[2])*(map_pos[i][2]-(float)pos_voxel[2]);
+
+							if((dist<rad_max))
+								 vol->setVoxel(vlPoint3ui(pos_voxel[0],pos_voxel[1],pos_voxel[2]),value);
+													}
+						}
+					}
+				}
+
+
+   }
+
+}
