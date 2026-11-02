@@ -1,0 +1,168 @@
+{
+  "answers": {
+    "Q1": {
+      "answer": "The source card asks, “Does feeding many GPUs to the block-tridiagonal Newton solve shorten its depth from T ordered steps to log2(T)?” (../20261019-2344-tree/out/agents/0008-R1_physical_top_producer/reply.txt). This run narrows that question to scalar tridiagonal solves on a single graphics processor, comparing Thomas elimination with parallel cyclic reduction (QUESTION.md). Its declared answer requires at least twofold median speedup at 16,777,216 equations, greater speedup than at the smallest size, and positive logarithmic regression slope (QUESTION.md). Correctness checks must pass before that decision can be read (QUESTION.md).",
+      "citations": [
+        "../20261019-2344-tree/out/agents/0008-R1_physical_top_producer/reply.txt",
+        "QUESTION.md"
+      ]
+    },
+    "Q2": {
+      "answer": "Measured implementations comprised hand-written Thomas and parallel cyclic reduction, batched Thomas, NVIDIA cuSPARSE, and the processor library's tridiagonal solver (run_m2.py). Sizes were 1,024, 16,384, 262,144, 4,194,304, and 16,777,216 equations, with five seeded systems per implementation and size (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). Hardware was one NVIDIA A100 SXM4 graphics processor with 40 gigabytes; processor-library threading was restricted to one thread (results_m2/out/env.json). Recorded software included CUDA 12.8, Python 3.10.12, NumPy 1.26.4, SciPy 1.8.0, and OpenBLAS 0.3.20 (results_m2/out/env.json). Each system received two warmups followed by a timed block of repeated solves (run_m2.py).",
+      "citations": [
+        "run_m2.py",
+        "results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+        "results_m2/out/env.json"
+      ]
+    },
+    "Q3": {
+      "answer": "The headline baseline was hand-written Thomas elimination using a single graphics-processor thread per system; its source specifies no unrolling or variant search (run_m2.py). The intended application was Newton correction inside parallel-in-time calculations; the card identifies no actual user population (../20261019-2344-tree/out/agents/0008-R1_physical_top_producer/reply.txt). The run's question document explicitly challenges this baseline's practical relevance and names processor-library Thomas as the practical sequential alternative (QUESTION.md). Expert preference was not established; the historical 28-fold comparison used a processor-library baseline on different hardware and remained an unreproduced proxy (../20261019-2344-tree/out/agents/0008-R1_physical_top_producer/reply.txt).",
+      "citations": [
+        "run_m2.py",
+        "../20261019-2344-tree/out/agents/0008-R1_physical_top_producer/reply.txt",
+        "QUESTION.md"
+      ]
+    },
+    "Q4": {
+      "answer": "At 16,777,216 equations, median Thomas and parallel cyclic reduction times were 7,598.50 and 21.8156 milliseconds, yielding 348.305-fold speedup (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). Paired-seed speedup ratios had interquartile width 1.089 and lower quartile 348.289 (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). The declared rule passed: speedup exceeded twofold, exceeded smallest-size speedup, and had positive logarithmic regression slope, 0.25565 (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). Speedup nevertheless decreased across the largest sizes, so the recorded result does not establish monotonic growth (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). These repeats varied generated systems on the same machine, rather than measuring variation across machines (results_m2/out/m2_summary.json).",
+      "citations": [
+        "results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+        "results_m2/out/m2_summary.json"
+      ]
+    },
+    "Q5": {
+      "answer": "At 1,024 and 16,384 equations, seed zero, both hand-written solvers were compared with cuSPARSE and SciPy's banded solver (results_m2/out/records/id-E1_kind-endpoint_run-m2.json). Required relative equation residual was at most 1e-10; solution differences against each reference had to remain below 1e-8 (results_m2/out/records/id-E1_kind-endpoint_run-m2.json). The harness divides equation-error norm by right-hand-side norm, and solution-difference norm by reference-solution norm (run_m2.py). Maximum hand-written residual was 3.111e-16; all solution comparisons and reference-to-reference comparisons passed their tolerances (results_m2/out/records/id-E1_kind-endpoint_run-m2.json). Residual instrumentation also passed checks using a known exact solution and a deliberately perturbed solution (results_m2/out/records/id-I1_exact_kind-control_run-m2.json) (results_m2/out/records/id-I1_perturbed_kind-control_run-m2.json).",
+      "citations": [
+        "results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+        "run_m2.py",
+        "results_m2/out/records/id-I1_exact_kind-control_run-m2.json",
+        "results_m2/out/records/id-I1_perturbed_kind-control_run-m2.json"
+      ]
+    },
+    "Q6": {
+      "answer": "Forecasts were sealed before agents or rented hardware ran (SEALED_PREDICTIONS.md). Ten forecast events occurred: compilation, correctness, smaller residuals, favorable decision, minimum speedup, earliest crossover, processor comparison, scaling, short duration, and completion (out/PREDICTIONS_SCORED.md). Two forecast events did not occur (out/PREDICTIONS_SCORED.md). At 16,777,216 equations, parallel cyclic reduction's 19.103-fold processor-library speedup exceeded the below-twofold forecast ceiling by 17.103, computed by subtraction (SEALED_PREDICTIONS.md) (results_m2/out/records/id-E7_kind-endpoint_run-m2.json). At that size, its time was 7.412 times cuSPARSE's, exceeding the forecast ceiling of three by 4.412, computed by subtraction (SEALED_PREDICTIONS.md) (results_m2/out/records/id-E9_kind-endpoint_run-m2.json).",
+      "citations": [
+        "SEALED_PREDICTIONS.md",
+        "out/PREDICTIONS_SCORED.md",
+        "results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
+        "results_m2/out/records/id-E9_kind-endpoint_run-m2.json"
+      ]
+    },
+    "Q7": {
+      "answer": "The summary records no voids, missing records, or failed scheduled measurement stages (results_m2/out/m2_summary.json). Optional block-system and multiple-graphics-processor phases were omitted, while isolated document-reader agents failed to run (RUN.md). Counting saved rows gives 15 of 25 parallel cyclic reduction timing blocks below the intended 50 milliseconds; none occurred at the largest size (results_m2/out/rows/pcr_gpu.jsonl). Those short blocks depart from the timing plan, although the measurement summary retains its valid verdict (QUESTION.md) (results_m2/out/m2_summary.json). The omissions leave the declared scalar comparison answerable, while the card's broader block-system and multiple-device question remains untested (QUESTION.md).",
+      "citations": [
+        "results_m2/out/m2_summary.json",
+        "RUN.md",
+        "results_m2/out/rows/pcr_gpu.jsonl",
+        "QUESTION.md"
+      ]
+    },
+    "Q8": {
+      "answer": "Coverage is restricted to the specified sizes on a single A100 machine, using five generated systems per size and a single right-hand side (QUESTION.md). Inputs used diagonal entries of three, random unit-magnitude off-diagonals, standard-normal right-hand sides, and 64-bit floating-point arithmetic (QUESTION.md). Graphics-processor input transfers, allocation, and required input copies occur outside timed solver blocks, so these timings describe data already on device (run_m2.py). The design excludes ill-conditioned matrices, other precisions, multiple right-hand sides, block systems, multiple graphics processors, and the surrounding Newton iteration (QUESTION.md). It therefore establishes neither performance on those populations nor application-level acceleration (QUESTION.md).",
+      "citations": [
+        "QUESTION.md",
+        "run_m2.py"
+      ]
+    },
+    "Q9": {
+      "answer": "The operator log reports rental cost of $0.48 for 0.239 hours; it provides no total model or human cost (RUN.md). The measurement record gives 0.119105 hours from the first reference-check solve to the last sweep row (results_m2/out/records/id-E10_kind-endpoint_run-m2.json). From 08:55 directory creation to 10:16 postprocessing completion, the logged workflow spanned 81 minutes, computed by subtraction (RUN.md). Repetition requires the saved runner, provenance helper, batch script, compatible installed software, and configured price, budget, and timeout variables (onbox_m2.sh). The recorded software and graphics-processor configuration provide the environment to reproduce (results_m2/out/env.json).",
+      "citations": [
+        "RUN.md",
+        "results_m2/out/records/id-E10_kind-endpoint_run-m2.json",
+        "onbox_m2.sh",
+        "results_m2/out/env.json"
+      ]
+    },
+    "Q10": {
+      "answer": "At 16,777,216 equations, cuSPARSE took 2.943 milliseconds versus 21.816 for hand-written parallel cyclic reduction (results_m2/out/records/id-E9_kind-endpoint_run-m2.json). This supplies a measured implementation comparison for the tested input family, supporting solver selection within that scope (results_m2/out/records/id-E9_kind-endpoint_run-m2.json). It does not establish acceleration of the surrounding scientific calculation, which was outside the design (QUESTION.md). The run write-up proposes comparing data-resident solves with solves that include transfers to the graphics processor (TAKEAWAYS_m2.md). That next measurement would address transfer costs excluded by the current timing harness (run_m2.py).",
+      "citations": [
+        "results_m2/out/records/id-E9_kind-endpoint_run-m2.json",
+        "QUESTION.md",
+        "TAKEAWAYS_m2.md",
+        "run_m2.py"
+      ]
+    }
+  },
+  "citations": [
+    {
+      "path": "../20261019-2344-tree/out/agents/0008-R1_physical_top_producer/reply.txt",
+      "supports": "Original question, decision rule, baseline, historical proxy, and intended application"
+    },
+    {
+      "path": "QUESTION.md",
+      "supports": "Operational question, declared rules, inputs, timing plan, and scope"
+    },
+    {
+      "path": "run_m2.py",
+      "supports": "Solver implementations, correctness calculations, timing harness, and excluded transfers"
+    },
+    {
+      "path": "results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+      "supports": "Measured sizes, median times, speedup spread, growth rule, and decision"
+    },
+    {
+      "path": "results_m2/out/env.json",
+      "supports": "Recorded hardware, software versions, threading, and library linkage"
+    },
+    {
+      "path": "results_m2/out/m2_summary.json",
+      "supports": "Completion, validity, missing records, voids, and repeat interpretation"
+    },
+    {
+      "path": "results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+      "supports": "Correctness references, tolerances, residuals, and solution comparisons"
+    },
+    {
+      "path": "results_m2/out/records/id-I1_exact_kind-control_run-m2.json",
+      "supports": "Known exact-solution residual instrumentation check"
+    },
+    {
+      "path": "results_m2/out/records/id-I1_perturbed_kind-control_run-m2.json",
+      "supports": "Deliberately perturbed-solution residual instrumentation check"
+    },
+    {
+      "path": "SEALED_PREDICTIONS.md",
+      "supports": "Forecasts recorded before measurement"
+    },
+    {
+      "path": "out/PREDICTIONS_SCORED.md",
+      "supports": "Scoring of sealed forecast events"
+    },
+    {
+      "path": "results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
+      "supports": "Measured comparison against processor-library tridiagonal solver"
+    },
+    {
+      "path": "results_m2/out/records/id-E9_kind-endpoint_run-m2.json",
+      "supports": "Measured cuSPARSE times and comparison against hand-written parallel solver"
+    },
+    {
+      "path": "RUN.md",
+      "supports": "Operator timeline, rental accounting, omitted phases, and reader failures"
+    },
+    {
+      "path": "results_m2/out/rows/pcr_gpu.jsonl",
+      "supports": "Saved parallel-solver timing blocks and short-block count"
+    },
+    {
+      "path": "results_m2/out/records/id-E10_kind-endpoint_run-m2.json",
+      "supports": "Measured first-anchor-to-last-sweep duration"
+    },
+    {
+      "path": "onbox_m2.sh",
+      "supports": "Batch execution sequence, required files, and runtime configuration"
+    },
+    {
+      "path": "TAKEAWAYS_m2.md",
+      "supports": "Proposed measurement including graphics-processor transfers"
+    }
+  ],
+  "enums": {
+    "headline_kind": "speedup",
+    "baseline_kind": "one_thread",
+    "equivalence": "within_tolerance",
+    "prediction_hit": "partly",
+    "evidence": "measured",
+    "anchor": "page_value_only"
+  }
+}

@@ -1,0 +1,412 @@
+{
+  "sentences": {
+    "S1": {
+      "question": "Q1",
+      "sentence": "The card asks: “Does GPU parallelism change how many of the 671 CAMELS catchments can get full Bayesian calibration instead of point optimization?” (../20261019-2345-tree/out/RESULT.md).",
+      "verdict": "supported",
+      "quote": "**Question.** Does GPU parallelism change how many of the 671 CAMELS catchments can get full Bayesian calibration instead of point optimization?",
+      "path": "../20261019-2345-tree/out/RESULT.md",
+      "reason": "Card question matches exactly."
+    },
+    "S2": {
+      "question": "Q1",
+      "sentence": "This concerns graphics-card acceleration of parameter sampling for rainfall–runoff models; this phase measures simulation times and sampler overhead (QUESTION.md).",
+      "verdict": "supported",
+      "quote": "  `main_run_hours = 100000 * batched_forward_ms / 1000 / 3600 * overhead` and `overhead` MEASURED by a 1,000-iteration",
+      "path": "QUESTION.md",
+      "reason": "Brief specifies GPU and CPU GR4J timing, with overhead measured through batched Metropolis probe."
+    },
+    "S3": {
+      "question": "Q1",
+      "sentence": "The rule requires projected graphics-card completion below one hour and at least twentyfold acceleration over vectorized processor execution (QUESTION.md).",
+      "verdict": "supported",
+      "quote": "- Claim C (card `expected: if_not`): refuted if `main_run_hours < 1` AND `cpu_hours / main_run_hours >= 20`, with",
+      "path": "QUESTION.md",
+      "reason": "Both thresholds stated explicitly."
+    },
+    "S4": {
+      "question": "Q1",
+      "sentence": "Otherwise, the card records its predicted negative answer; completed scientific calibrations are outside this measurement phase (QUESTION.md).",
+      "verdict": "supported",
+      "quote": "pilot (replaced by the 268-chain timing level); any posterior, R-hat, or point-optimization baseline; the A6000 (no",
+      "path": "QUESTION.md",
+      "reason": "Claim C defines condition refuting expected if_not; scope excludes posterior and convergence work."
+    },
+    "S5": {
+      "question": "Q2",
+      "sentence": "GR4J, a four-parameter daily rainfall–runoff model, ran through the JAX numerical library, scanning days sequentially across parallel parameter sequences called chains (run_m1.py).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "run_m1.py",
+      "reason": "Visible script identifies model, parameters and JAX, but omits implementation showing sequential day scan; truncated remainder might establish it."
+    },
+    "S6": {
+      "question": "Q2",
+      "sentence": "Measurements covered 268, 1,340 and 2,684 chains over 7,300 days, with one basin’s rainfall and evaporation repeated across chains (run_m1.py) (results_m1/out/raw/timing_rows.jsonl).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "run_m1.py",
+      "reason": "Script constants establish sizes and days, but forcing construction is absent from shown portion; both cited files are truncated and might contain remaining support."
+    },
+    "S7": {
+      "question": "Q2",
+      "sentence": "Hardware comprised one NVIDIA A10 graphics card and 30 virtual processors; JAX and its compiled library were version 0.6.0, using 32-bit floating point (results_m1/out/hardware_labels.json).",
+      "verdict": "supported",
+      "quote": " \"gpu_name\": \"NVIDIA A10\",",
+      "path": "results_m1/out/hardware_labels.json",
+      "reason": "Fields record one A10, 30 vCPUs, JAX and jaxlib 0.6.0, and float32."
+    },
+    "S8": {
+      "question": "Q2",
+      "sentence": "Each size and backend had ten timed passes at three forcing offsets after compilation warmup (results_m1/out/raw/timing_rows.jsonl).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "results_m1/out/raw/timing_rows.jsonl",
+      "reason": "Shown rows establish ten repeats at three offsets for 268-chain GPU arm; truncated remainder might establish every size and backend."
+    },
+    "S9": {
+      "question": "Q2",
+      "sentence": "Sampler probes used 1,000 iterations for each of three seeds on each backend (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "      \"iterations\": 1000,",
+      "path": "results_m1/out/records/id-E5_kind-endpoint_tag-m1.json",
+      "reason": "CPU and GPU per-seed arrays each contain seeds 1, 2 and 3 with 1,000 iterations."
+    },
+    "S10": {
+      "question": "Q3",
+      "sentence": "The baseline was the same custom, vectorized JAX model and Metropolis sampler executed through the rented machine’s processor backend (run_m1.py).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "run_m1.py",
+      "reason": "Visible script describes vectorized CPU comparison and JAX anchors, but omits sampler implementation; truncated remainder might establish identical Metropolis execution on both backends."
+    },
+    "S11": {
+      "question": "Q3",
+      "sentence": "Its intended comparison concerns researchers choosing computing resources for Bayesian catchment calibration rather than point optimization (../20261019-2345-tree/out/RESULT.md).",
+      "verdict": "supported",
+      "quote": "- stakes 5: Choice to buy cloud GPUs for all catchments' full Bayesian treatment turns on whether conclusions change.",
+      "path": "../20261019-2345-tree/out/RESULT.md",
+      "reason": "Card frames resource choice around full Bayesian treatment versus point optimization."
+    },
+    "S12": {
+      "question": "Q3",
+      "sentence": "The run does not establish expert preference: its scope excludes alternative implementations, and its write-up identifies missing processor thread settings (QUESTION.md) (TAKEAWAYS_m1.md).",
+      "verdict": "supported",
+      "quote": "No file records how many threads the library used.",
+      "path": "TAKEAWAYS_m1.md",
+      "reason": "Write-up identifies missing thread settings; QUESTION excludes second implementation as control."
+    },
+    "S13": {
+      "question": "Q3",
+      "sentence": "Consequently, acceleration is relative to this implementation and machine configuration, without evidence that the processor baseline represents expert tuning (QUESTION.md) (TAKEAWAYS_m1.md).",
+      "verdict": "supported",
+      "quote": "  control here; the result is \"GR4J as a scan on this GPU\", stated as such.",
+      "path": "QUESTION.md",
+      "reason": "Brief restricts result to implementation and hardware; write-up records missing CPU thread and compiler settings."
+    },
+    "S14": {
+      "question": "Q4",
+      "sentence": "At 2,684 chains, graphics-card passes had median 88.361 milliseconds and range 88.282–88.777 milliseconds (results_m1/out/records/id-E3_kind-endpoint_tag-m1.json).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "results_m1/out/records/id-E3_kind-endpoint_tag-m1.json",
+      "reason": "Cited record is truncated before complete 30-row sample and summary; omitted portion might establish median and full range."
+    },
+    "S15": {
+      "question": "Q4",
+      "sentence": "Processor passes had median 1,037.500 milliseconds and range 998.255–1,088.137 milliseconds at the same size (results_m1/out/records/id-E4_kind-endpoint_tag-m1.json).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "results_m1/out/records/id-E4_kind-endpoint_tag-m1.json",
+      "reason": "Cited record is truncated before complete CPU sample and summary; omitted portion might establish median and full range."
+    },
+    "S16": {
+      "question": "Q4",
+      "sentence": "Multiplying pass medians by 100,000 iterations and measured sampler overhead produced projected graphics-card and processor times of 2.463 and 29.841 hours (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "    \"main_run_hours\": 2.463161632694446,",
+      "path": "results_m1/out/records/id-E5_kind-endpoint_tag-m1.json",
+      "reason": "Record supplies projection formula, measured medians and overheads, and CPU projection 29.840626419333343 hours."
+    },
+    "S17": {
+      "question": "Q4",
+      "sentence": "Their ratio, 12.115, misses the required twentyfold acceleration, while projected graphics-card completion exceeds the one-hour limit (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "    \"speedup\": 12.11476584534599",
+      "path": "results_m1/out/records/id-E5_kind-endpoint_tag-m1.json",
+      "reason": "Recorded speedup rounds to 12.115; 2.463-hour GPU projection and thresholds establish both misses."
+    },
+    "S18": {
+      "question": "Q4",
+      "sentence": "Full-run uncertainty intervals were not recorded; the separate six-hour planning gate was met (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (results_m1/out/records/id-E6_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "    \"gate_reading\": \"pass\",",
+      "path": "results_m1/out/records/id-E6_kind-endpoint_tag-m1.json",
+      "reason": "Complete E5 and E6 records contain no full-run uncertainty intervals; E6 records pass against six-hour threshold."
+    },
+    "S19": {
+      "question": "Q5",
+      "sentence": "On the 59-day example, graphics-card and processor runs achieved Nash–Sutcliffe efficiency scores of 0.494775 and 0.494774, respectively (results_m1/out/records/id-E2_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "      \"nse\": 0.4947751841761373,",
+      "path": "results_m1/out/records/id-E2_kind-endpoint_tag-m1.json",
+      "reason": "GPU and CPU rows record 59 days and NSE values rounding to stated scores."
+    },
+    "S20": {
+      "question": "Q5",
+      "sentence": "This flow-fit score was compared with published 0.495, allowing an absolute difference of 0.02 (results_m1/out/records/id-E2_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "    \"nse_tolerance\": 0.02",
+      "path": "results_m1/out/records/id-E2_kind-endpoint_tag-m1.json",
+      "reason": "Threshold center is 0.495; decision rule explicitly uses absolute NSE difference."
+    },
+    "S21": {
+      "question": "Q5",
+      "sentence": "Additional cases reproduced published scores 0.336 and 0.570 as approximately 0.335984 and 0.569931 on both backends, within the same tolerance (results_m1/out/records/id-I2_kind-control_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "      \"nse\": 0.5699305023305035,",
+      "path": "results_m1/out/records/id-I2_kind-control_tag-m1.json",
+      "reason": "Both backends' generalist and validation rows round to stated scores; threshold remains 0.02."
+    },
+    "S22": {
+      "question": "Q5",
+      "sentence": "Independent airGR reference code never ran, so daily-flow agreement below one percent mean absolute relative error remained unchecked (results_m1/out/records/id-E2_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "    \"airgr_ran\": false,",
+      "path": "results_m1/out/records/id-E2_kind-endpoint_tag-m1.json",
+      "reason": "Reference execution is false and both daily-flow MARE fields are null."
+    },
+    "S23": {
+      "question": "Q5",
+      "sentence": "Planted zero-rain, response-weight and water-balance checks passed their recorded thresholds using the scalar model implementation (results_m1/out/records/id-I2_kind-control_tag-m1.json) (run_m1.py).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "run_m1.py",
+      "reason": "I2 confirms planted checks passed, but shown script does not establish scalar implementation used; truncated remainder might contain that implementation."
+    },
+    "S24": {
+      "question": "Q6",
+      "sentence": "Forecasts were sealed before measurement (RUN.md) (SEALED_PREDICTIONS.md).",
+      "verdict": "supported",
+      "quote": "1. `SEALED_PREDICTIONS.md` written and hashed before any agent runs (`out/SEALS.txt`).",
+      "path": "RUN.md",
+      "reason": "Run sequence explicitly records sealing before agents and measurement launches."
+    },
+    "S25": {
+      "question": "Q6",
+      "sentence": "For 2,684 chains, graphics-card time 88.36 milliseconds held the predicted 20–200 range (results_m1/out/records/id-E3_kind-endpoint_tag-m1.json) (SEALED_PREDICTIONS.md).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "results_m1/out/records/id-E3_kind-endpoint_tag-m1.json",
+      "reason": "Sealed prediction states range, but cited E3 excerpt cuts off before complete sample and median summary; truncated portion might establish 88.36 milliseconds."
+    },
+    "S26": {
+      "question": "Q6",
+      "sentence": "Acceleration was 12.11-fold, contradicting the below-five forecast; the twentyfold event did not occur (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (SEALED_PREDICTIONS.md).",
+      "verdict": "supported",
+      "quote": "    \"speedup\": 12.11476584534599",
+      "path": "results_m1/out/records/id-E5_kind-endpoint_tag-m1.json",
+      "reason": "Recorded ratio rounds to 12.11, exceeds sealed below-five prediction, and falls below twentyfold event."
+    },
+    "S27": {
+      "question": "Q6",
+      "sentence": "Overhead 1.0035 missed the 1.5–3 interval but remained below four; projected 2.46 hours contradicted above-six expectations (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (SEALED_PREDICTIONS.md).",
+      "verdict": "supported",
+      "quote": "    \"overhead_gpu\": 1.0035422687732294,",
+      "path": "results_m1/out/records/id-E5_kind-endpoint_tag-m1.json",
+      "reason": "E5 records overhead and 2.463-hour projection; sealed P5 and P7 supply stated interval and above-six prediction."
+    },
+    "S28": {
+      "question": "Q6",
+      "sentence": "The negative decision held; throughput from 268 to 2,684 chains increased 8.76-fold, within the predicted band (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (results_m1/out/records/id-E7_kind-endpoint_tag-m1.json) (SEALED_PREDICTIONS.md).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "results_m1/out/records/id-E7_kind-endpoint_tag-m1.json",
+      "reason": "E5 confirms negative decision and sealed P8 defines band, but cited E7 excerpt omits throughput summary; truncated remainder might establish 8.76 ratio."
+    },
+    "S29": {
+      "question": "Q6",
+      "sentence": "First-launch completion failed, and independent reproduction remained unresolved (out/launch1/results_m1/out/RUN_VALID.json) (results_m1/out/records/id-E1_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": " \"incomplete\": true,",
+      "path": "out/launch1/results_m1/out/RUN_VALID.json",
+      "reason": "First launch marked incomplete and invalid; E1 records independent reference NOT_RUN."
+    },
+    "S30": {
+      "question": "Q6",
+      "sentence": "The scorer counted the flow-agreement forecast as held despite its untested daily-flow component (out/PREDICTIONS_SCORED.md).",
+      "verdict": "supported",
+      "quote": "| P2 | 0.75 | held | NSE part held on both backends (0.4948/0.3360/0.5699); MARE untestable without airGR; scored as held |",
+      "path": "out/PREDICTIONS_SCORED.md",
+      "reason": "Scorer explicitly records held despite untestable MARE."
+    },
+    "S31": {
+      "question": "Q7",
+      "sentence": "The completed attempt was marked valid and complete, with no void reasons and the qualification “anchor by page value” (results_m1/out/RUN_VALID.json).",
+      "verdict": "supported",
+      "quote": " \"run_valid\": true,",
+      "path": "results_m1/out/RUN_VALID.json",
+      "reason": "Record also sets incomplete false, empty void reasons, and anchor-by-page-value label."
+    },
+    "S32": {
+      "question": "Q7",
+      "sentence": "The initial attempt was marked invalid after dependency installation timed out before measurement stages ran (out/launch1/results_m1/out/RUN_VALID.json) (RUN.md).",
+      "verdict": "supported",
+      "quote": "  the 766 MB cuDNN wheel (exit 124); `onbox_m1.sh` stopped cleanly, rc=2, run_valid false, no stage run.",
+      "path": "RUN.md",
+      "reason": "Log identifies installation timeout; archived validity record confirms invalid, incomplete attempt."
+    },
+    "S33": {
+      "question": "Q7",
+      "sentence": "Independent reference execution was skipped after operating-system package installation failed, leaving daily-flow comparison unavailable (results_m1/out/records/id-E1_kind-endpoint_tag-m1.json) (results_m1/out/records/id-E2_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "  \"decision\": \"NOT_RUN\",",
+      "path": "results_m1/out/records/id-E1_kind-endpoint_tag-m1.json",
+      "reason": "E1 records apt-get failure and reference NOT_RUN; E2 records unavailable airGR and null daily-flow comparisons."
+    },
+    "S34": {
+      "question": "Q7",
+      "sentence": "The original brief required independent agreement, but a gate decision before measurement permitted comparison with published scores alone after installation failure (QUESTION.md) (GATE_COMMIT.md).",
+      "verdict": "supported",
+      "quote": "  either fails, E1 is written NOT_RUN with the error text, E2 reduces to the NSE check against 0.495 alone and is",
+      "path": "GATE_COMMIT.md",
+      "reason": "Gate D4 authorizes fallback before measurement; original QUESTION requires reference execution and daily-flow agreement."
+    },
+    "S35": {
+      "question": "Q7",
+      "sentence": "Thus the recorded timing decision follows the amended rule, while independent output equivalence remains unestablished (GATE_COMMIT.md) (results_m1/out/records/id-E2_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "  labelled \"page value only; no independent code ran\", and the timing endpoints proceed.",
+      "path": "GATE_COMMIT.md",
+      "reason": "Gate permits timing under page-only fallback; E2 records that fallback and absent independent daily-flow comparison."
+    },
+    "S36": {
+      "question": "Q8",
+      "sentence": "Evidence covers this compiled scan implementation on one A10 graphics card and its host processor, using single-precision arithmetic (run_m1.py) (results_m1/out/hardware_labels.json).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "run_m1.py",
+      "reason": "Hardware file supports A10 and float32, but visible script omits compiled scan implementation; truncated remainder might establish it."
+    },
+    "S37": {
+      "question": "Q8",
+      "sentence": "Graphics-card scaling was measured at 268, 1,340 and 2,684 chains; larger ensembles were not measured (results_m1/out/records/id-E7_kind-endpoint_tag-m1.json).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "results_m1/out/records/id-E7_kind-endpoint_tag-m1.json",
+      "reason": "Metric names three sizes, but shown excerpt neither contains complete measurements nor states larger ensembles were never measured; truncated remainder might address this."
+    },
+    "S38": {
+      "question": "Q8",
+      "sentence": "Inputs repeat one example basin’s forcing across uniformly drawn parameter vectors rather than representing distinct catchments (run_m1.py).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "run_m1.py",
+      "reason": "Visible constants identify basin and fixed parameter-draw seed, but omit forcing tiling and uniform-draw implementation; truncated remainder might establish both."
+    },
+    "S39": {
+      "question": "Q8",
+      "sentence": "The scope excludes the intended catchment dataset, posterior quality, convergence checks, point-optimization comparisons and alternative implementations (QUESTION.md).",
+      "verdict": "supported",
+      "quote": "One phase of the card: `gpu_bench`.",
+      "path": "QUESTION.md",
+      "reason": "Scope excludes CAMELS, posterior, R-hat and point-optimization baseline; construct risks exclude second implementation as control."
+    },
+    "S40": {
+      "question": "Q8",
+      "sentence": "Accordingly, these timings support implementation-specific cost estimates, without establishing calibration quality, realistic data-loading costs or performance on other hardware (QUESTION.md).",
+      "verdict": "supported",
+      "quote": "- Tiled forcing cannot reveal data-loading or memory-traffic costs that real CAMELS forcing would add.",
+      "path": "QUESTION.md",
+      "reason": "Brief limits evidence to one scan implementation and one box, excludes posterior work, and explicitly disclaims realistic data-loading validation."
+    },
+    "S41": {
+      "question": "Q9",
+      "sentence": "RUN.md reports cloud rental charges of $2.12: the failed attempt occupied 0.54 hours and the completed attempt 1.10 hours (RUN.md).",
+      "verdict": "supported",
+      "quote": "  **Lambda total for the run: USD 2.12** (launch 1 0.70 + launch 2 1.42) of the USD 5 cap; project USD 2.12 of 500.",
+      "path": "RUN.md",
+      "reason": "Launch logs separately report failed attempt 0.54 hours and completed attempt 1.10 hours."
+    },
+    "S42": {
+      "question": "Q9",
+      "sentence": "The recorded machine rate was $1.29 per hour (results_m1/out/hardware_labels.json).",
+      "verdict": "supported",
+      "quote": " \"price_usd_per_hour\": 1.29,",
+      "path": "results_m1/out/hardware_labels.json",
+      "reason": "Rate matches exactly."
+    },
+    "S43": {
+      "question": "Q9",
+      "sentence": "Subtracting the recorded 01:45 sealing time from the 05:35 finish gives three hours fifty minutes for the overall pipeline (RUN.md).",
+      "verdict": "supported",
+      "quote": "- 01:45Z sealed predictions, design, diff hashed (`out/SEALS.txt`).",
+      "path": "RUN.md",
+      "reason": "Log also records post completion at 05:35Z; subtraction gives 3 hours 50 minutes."
+    },
+    "S44": {
+      "question": "Q9",
+      "sentence": "Closing accounting supplies agent counts but no model-call charges or measured human labor total (RUN.md).",
+      "verdict": "supported",
+      "quote": "Claude usage: triage 4 agents, build 2+2, post 39.",
+      "path": "RUN.md",
+      "reason": "Closing accounting lists cloud charges and agent counts, with no model-call charges or measured human labor total."
+    },
+    "S45": {
+      "question": "Q9",
+      "sentence": "Repetition requires the preserved measurement script, shell driver, basin data and airGR archive, plus a compatible JAX graphics-card environment (onbox_m1.sh).",
+      "verdict": "supported",
+      "quote": "RUN=\"python3 -u run_m1.py\"",
+      "path": "onbox_m1.sh",
+      "reason": "Driver invokes preserved runner, extraction and archive installation; preflight requires existing JAX environment exposing GPU."
+    },
+    "S46": {
+      "question": "Q9",
+      "sentence": "Independent reference checking additionally requires successful installation of R and a Fortran compiler (onbox_m1.sh).",
+      "verdict": "supported",
+      "quote": "timeout 900 sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y r-base-core gfortran > \"$LOG/apt_r.log\" 2>&1",
+      "path": "onbox_m1.sh",
+      "reason": "Driver installs R and gfortran before compiling committed airGR archive."
+    },
+    "S47": {
+      "question": "Q10",
+      "sentence": "The records replace the card’s timing guesses with saved measurements and expose the calculation behind its negative decision (results_m1/out/records/id-E3_kind-endpoint_tag-m1.json) (results_m1/out/records/id-E4_kind-endpoint_tag-m1.json) (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json).",
+      "verdict": "supported",
+      "quote": "  \"decision\": \"if_not\",",
+      "path": "results_m1/out/records/id-E5_kind-endpoint_tag-m1.json",
+      "reason": "E3 and E4 contain saved timing rows; complete E5 supplies measured inputs, projection formula and negative decision."
+    },
+    "S48": {
+      "question": "Q10",
+      "sentence": "A scientist can now budget this implementation’s fixed iteration count, while successful Bayesian calibration remains untested (results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (QUESTION.md).",
+      "verdict": "supported",
+      "quote": "    \"main_run_hours\": 2.463161632694446,",
+      "path": "results_m1/out/records/id-E5_kind-endpoint_tag-m1.json",
+      "reason": "E5 projects cost for 100,000 iterations; QUESTION excludes posterior and convergence testing."
+    },
+    "S49": {
+      "question": "Q10",
+      "sentence": "The next measurement should establish independent daily-flow agreement, because the reference implementation never ran (results_m1/out/records/id-E2_kind-endpoint_tag-m1.json).",
+      "verdict": "not_addressed",
+      "quote": "",
+      "path": "results_m1/out/records/id-E2_kind-endpoint_tag-m1.json",
+      "reason": "E2 establishes missing reference execution and daily-flow comparison, but does not state which measurement should come next."
+    },
+    "S50": {
+      "question": "Q10",
+      "sentence": "Subsequently, timing with actual catchment inputs, stored samples and convergence checks would address the declared gaps in the projected calibration cost (QUESTION.md) (TAKEAWAYS_m1.md).",
+      "verdict": "supported",
+      "quote": "The real job also stores samples, checks convergence and may need careful proposals.",
+      "path": "TAKEAWAYS_m1.md",
+      "reason": "Write-up identifies missing sample storage and convergence costs; QUESTION explicitly identifies unvalidated costs from real CAMELS forcing."
+    }
+  },
+  "enums": {
+    "headline_kind": "negative",
+    "baseline_kind": "other",
+    "equivalence": "not_checked",
+    "prediction_hit": "partly",
+    "evidence": "inferred",
+    "anchor": "page_value_only"
+  }
+}

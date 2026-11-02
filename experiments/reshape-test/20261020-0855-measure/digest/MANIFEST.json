@@ -1,0 +1,145 @@
+{
+ "run_root": "experiments/reshape-test/20261020-0855-measure",
+ "run_name": "20261020-0855-measure",
+ "created_utc": "2026-11-02T15:05:13.874Z",
+ "pipeline": {
+  "commit": "3b070f79676badf647eb82aeabe890d0554e7a01",
+  "dirty": true,
+  "script_sha256": "e550dedad578933d486140cc70bb8ff6caa6511a6e09b5839794251bd93bd8c0"
+ },
+ "models": {
+  "reader": "codex/default@high",
+  "verify": "codex/default@high",
+  "writer": "codex/default@high",
+  "notebook": "codex/default@medium",
+  "notebook-repair": null
+ },
+ "files": [
+  {
+   "original": "../20261019-2344-tree/out/agents/0008-R1_physical_top_producer/reply.txt",
+   "copied": "evidence/_source/reply.txt",
+   "sha256": "5edcb633490ee446d7a77a8f32cf246efae31aab79919fe6b21ac4f6aa411b33",
+   "bytes": 13524,
+   "supports": "Original question, decision rule, baseline, historical proxy, and intended application"
+  },
+  {
+   "original": "QUESTION.md",
+   "copied": "evidence/QUESTION.md",
+   "sha256": "ea54a9182df53f3e3fe6e7f5844a4e36d72a6b103d0c0f3d99425bfc79ec4810",
+   "bytes": 9043,
+   "supports": "Operational question, declared rules, inputs, timing plan, and scope"
+  },
+  {
+   "original": "run_m2.py",
+   "copied": "evidence/run_m2.py",
+   "sha256": "46faee5d4265b7cabb92166ae3da9e88d18b5a2f084ce4146aae7a671c661af1",
+   "bytes": 138132,
+   "supports": "Solver implementations, correctness calculations, timing harness, and excluded transfers"
+  },
+  {
+   "original": "results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+   "copied": "evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+   "sha256": "10455a00abfd2fced26df3ab07b879678ade9f07986cb1f7aab20728b2130c1c",
+   "bytes": 7586,
+   "supports": "Measured sizes, median times, speedup spread, growth rule, and decision"
+  },
+  {
+   "original": "results_m2/out/env.json",
+   "copied": "evidence/results_m2/out/env.json",
+   "sha256": "904741ef0261c0d69f0bd76e717210a9d6568468071d2bf1e946832be00b81fd",
+   "bytes": 1960,
+   "supports": "Recorded hardware, software versions, threading, and library linkage"
+  },
+  {
+   "original": "results_m2/out/m2_summary.json",
+   "copied": "evidence/results_m2/out/m2_summary.json",
+   "sha256": "2ce06d98b7fc147a7dc24f0a291f8e42a77a76b918a7b80543bed900676c575f",
+   "bytes": 10927,
+   "supports": "Completion, validity, missing records, voids, and repeat interpretation"
+  },
+  {
+   "original": "results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+   "copied": "evidence/results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+   "sha256": "6caefc8106d8d239fc38db4025cd4f5282a348faaab2ce6b7420c75e861e3b7c",
+   "bytes": 10390,
+   "supports": "Correctness references, tolerances, residuals, and solution comparisons"
+  },
+  {
+   "original": "results_m2/out/records/id-I1_exact_kind-control_run-m2.json",
+   "copied": "evidence/results_m2/out/records/id-I1_exact_kind-control_run-m2.json",
+   "sha256": "9cfb35718c0e69659c35b2bbec6b893b23c894d9b409cd854e4636fd7f6ee88f",
+   "bytes": 3183,
+   "supports": "Known exact-solution residual instrumentation check"
+  },
+  {
+   "original": "results_m2/out/records/id-I1_perturbed_kind-control_run-m2.json",
+   "copied": "evidence/results_m2/out/records/id-I1_perturbed_kind-control_run-m2.json",
+   "sha256": "b1440c79273ae7c493185584e713bc2a20cb0e368d909864b561b06a5d7e3a9a",
+   "bytes": 3228,
+   "supports": "Deliberately perturbed-solution residual instrumentation check"
+  },
+  {
+   "original": "SEALED_PREDICTIONS.md",
+   "copied": "evidence/SEALED_PREDICTIONS.md",
+   "sha256": "169bb51e31dc9c25d2ae76a6c21e153f8c2522b9b46edceb8dde4df15c58032e",
+   "bytes": 3207,
+   "supports": "Forecasts recorded before measurement"
+  },
+  {
+   "original": "out/PREDICTIONS_SCORED.md",
+   "copied": "evidence/out/PREDICTIONS_SCORED.md",
+   "sha256": "82741fdb26752e5eb614b0d1412338bc11ec7cee9e83538e2ad391663ccb15cb",
+   "bytes": 2716,
+   "supports": "Scoring of sealed forecast events"
+  },
+  {
+   "original": "results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
+   "copied": "evidence/results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
+   "sha256": "044600bfb4aed31dd2e3e8d7326c1d5967bfa6cbdb02bab6a56a3c2df1a92e6e",
+   "bytes": 7279,
+   "supports": "Measured comparison against processor-library tridiagonal solver"
+  },
+  {
+   "original": "results_m2/out/records/id-E9_kind-endpoint_run-m2.json",
+   "copied": "evidence/results_m2/out/records/id-E9_kind-endpoint_run-m2.json",
+   "sha256": "af01f12cf6dfb7ad089f16047ff7be8deb9c6ba0865f98c75a86f9e2049ff526",
+   "bytes": 4733,
+   "supports": "Measured cuSPARSE times and comparison against hand-written parallel solver"
+  },
+  {
+   "original": "RUN.md",
+   "copied": "evidence/RUN.md",
+   "sha256": "fc44a6305dcff96e8a2ac7eaf22355d9926b5a24e8d19d9fe5b2289a8eb7fde8",
+   "bytes": 10627,
+   "supports": "Operator timeline, rental accounting, omitted phases, and reader failures"
+  },
+  {
+   "original": "results_m2/out/rows/pcr_gpu.jsonl",
+   "copied": "evidence/results_m2/out/rows/pcr_gpu.jsonl",
+   "sha256": "f73af1752f6073f9d187026a202bfb8a69e8971b93acb92065704eb53fd44c7a",
+   "bytes": 70936,
+   "supports": "Saved parallel-solver timing blocks and short-block count"
+  },
+  {
+   "original": "results_m2/out/records/id-E10_kind-endpoint_run-m2.json",
+   "copied": "evidence/results_m2/out/records/id-E10_kind-endpoint_run-m2.json",
+   "sha256": "190693c1474d10e921a878d9d007cb0f9ab392ed8bdf362edc36e102d033ffcb",
+   "bytes": 4834,
+   "supports": "Measured first-anchor-to-last-sweep duration"
+  },
+  {
+   "original": "onbox_m2.sh",
+   "copied": "evidence/onbox_m2.sh",
+   "sha256": "3cfe0f6da24a0ba1ed46b4b17dec4ea8b91f34db27b7d2bdd20ce5ee408f5453",
+   "bytes": 3710,
+   "supports": "Batch execution sequence, required files, and runtime configuration"
+  },
+  {
+   "original": "TAKEAWAYS_m2.md",
+   "copied": "evidence/TAKEAWAYS_m2.md",
+   "sha256": "9efcbde683d596d1b7a4d4f75b2ceed9e494fe5c303c865e834938d43ea5ce96",
+   "bytes": 28264,
+   "supports": "Proposed measurement including graphics-processor transfers"
+  }
+ ]
+}

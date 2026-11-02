@@ -1,0 +1,196 @@
+{
+  "cell": {
+    "id": "E5",
+    "kind": "endpoint",
+    "tag": "m1"
+  },
+  "decision": "if_not",
+  "decision_rule": "main_run_hours = 100000 * GPU median ms / 1000 / 3600 * measured GPU overhead; speedup = cpu_671_hours / main_run_hours. Decision if_not if main_run_hours >= 1 OR speedup < 20, else if_lever (the card's expected outcome is refuted). A sensitivity line repeats this with the design overhead 4 on both backends; it does not decide.",
+  "env": {
+    "git_rev": null,
+    "host": "129-159-79-123",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T04:26:00+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 122119,
+      "n_items": 192,
+      "path": "results_m1/out/raw/timing_rows.jsonl",
+      "present": true,
+      "sha256": "6fa1ccb1cbe8"
+    },
+    {
+      "bytes": 47686,
+      "n_items": 66,
+      "path": "results_m1/out/raw/probe_blocks.jsonl",
+      "present": true,
+      "sha256": "be0ce7f7ab45"
+    },
+    {
+      "bytes": 263387,
+      "n_items": 2684,
+      "path": "results_m1/out/extract/params_distinct.json",
+      "present": true,
+      "sha256": "6e2d1c3b07b9"
+    },
+    {
+      "bytes": 793,
+      "n_items": null,
+      "path": "results_m1/out/extract/param_ranges.json",
+      "present": true,
+      "sha256": "a55eddd47ac6"
+    },
+    {
+      "bytes": 478016,
+      "n_items": 10593,
+      "path": "results_m1/out/extract/basin.json",
+      "present": true,
+      "sha256": "c5e301f7403f"
+    }
+  ],
+  "metric": "card decision: main_run_hours and GPU-over-CPU speedup",
+  "notes": "",
+  "rows": [
+    {
+      "acceptance_rate": 0.02884538002980626,
+      "iterations": 1000,
+      "ms_per_iteration": 88.62087484099999,
+      "overhead": 1.0029430899131768,
+      "seed": 1,
+      "total_ms": 88620.87484099998
+    },
+    {
+      "acceptance_rate": 0.028527570789865873,
+      "iterations": 1000,
+      "ms_per_iteration": 88.68313002600009,
+      "overhead": 1.0036476463477544,
+      "seed": 2,
+      "total_ms": 88683.13002600009
+    },
+    {
+      "acceptance_rate": 0.028874441132637853,
+      "iterations": 1000,
+      "ms_per_iteration": 88.67381877700006,
+      "overhead": 1.0035422687732294,
+      "seed": 3,
+      "total_ms": 88673.81877700007
+    },
+    {
+      "acceptance_rate": 0.0288301043219076,
+      "iterations": 1000,
+      "ms_per_iteration": 1080.2866559499998,
+      "overhead": 1.0412404508930337,
+      "seed": 1,
+      "total_ms": 1080286.6559499998
+    },
+    {
+      "acceptance_rate": 0.028534277198211624,
+      "iterations": 1000,
+      "ms_per_iteration": 1071.0032800120007,
+      "overhead": 1.0322926160806234,
+      "seed": 2,
+      "total_ms": 1071003.2800120006
+    },
+    {
+      "acceptance_rate": 0.0288871087928465,
+      "iterations": 1000,
+      "ms_per_iteration": 1074.2625510960006,
+      "overhead": 1.0354340830925455,
+      "seed": 3,
+      "total_ms": 1074262.5510960007
+    }
+  ],
+  "threshold": {
+    "main_run_hours_min_for_if_not": 1.0,
+    "speedup_min_for_if_lever": 20.0
+  },
+  "values": {
+    "batched_forward_ms": 88.36082099999487,
+    "card_expected": "if_not",
+    "cpu_671_hours": 29.840626419333343,
+    "cpu_forward_ms": 1037.4997004999927,
+    "hardware": {
+      "driver_version": "570.148.08",
+      "dtype": "float32 (JAX default)",
+      "gpu_count": 1,
+      "gpu_name": "NVIDIA A10",
+      "instance_type": "gpu_1x_a10",
+      "jax_version": "0.6.0",
+      "jaxlib_version": "0.6.0",
+      "lambda_instance_id": "d607a8f8da3249d0ac3cb985100b7458",
+      "price_usd_per_hour": 1.29,
+      "vcpu_count": 30
+    },
+    "hardware_consistent": true,
+    "main_run_hours": 2.463161632694446,
+    "overhead_cpu": 1.0354340830925455,
+    "overhead_cpu_per_seed": [
+      {
+        "acceptance_rate": 0.0288301043219076,
+        "iterations": 1000,
+        "ms_per_iteration": 1080.2866559499998,
+        "overhead": 1.0412404508930337,
+        "seed": 1,
+        "total_ms": 1080286.6559499998
+      },
+      {
+        "acceptance_rate": 0.028534277198211624,
+        "iterations": 1000,
+        "ms_per_iteration": 1071.0032800120007,
+        "overhead": 1.0322926160806234,
+        "seed": 2,
+        "total_ms": 1071003.2800120006
+      },
+      {
+        "acceptance_rate": 0.0288871087928465,
+        "iterations": 1000,
+        "ms_per_iteration": 1074.2625510960006,
+        "overhead": 1.0354340830925455,
+        "seed": 3,
+        "total_ms": 1074262.5510960007
+      }
+    ],
+    "overhead_gpu": 1.0035422687732294,
+    "overhead_gpu_per_seed": [
+      {
+        "acceptance_rate": 0.02884538002980626,
+        "iterations": 1000,
+        "ms_per_iteration": 88.62087484099999,
+        "overhead": 1.0029430899131768,
+        "seed": 1,
+        "total_ms": 88620.87484099998
+      },
+      {
+        "acceptance_rate": 0.028527570789865873,
+        "iterations": 1000,
+        "ms_per_iteration": 88.68313002600009,
+        "overhead": 1.0036476463477544,
+        "seed": 2,
+        "total_ms": 88683.13002600009
+      },
+      {
+        "acceptance_rate": 0.028874441132637853,
+        "iterations": 1000,
+        "ms_per_iteration": 88.67381877700006,
+        "overhead": 1.0035422687732294,
+        "seed": 3,
+        "total_ms": 88673.81877700007
+      }
+    ],
+    "run_labels": [
+      "anchor by page value"
+    ],
+    "run_valid": true,
+    "run_void_reasons": [],
+    "sensitivity_overhead_4": {
+      "cpu_671_hours": 115.27774449999917,
+      "label": "sensitivity line: design overhead 4 on both backends; does not decide",
+      "main_run_hours": 9.81786899999943,
+      "overhead": 4.0,
+      "reading": "if_not",
+      "speedup": 11.741625855876247
+    },
+    "speedup": 12.11476584534599
+  }
+}

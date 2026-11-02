@@ -1,0 +1,223 @@
+{
+  "cell": {
+    "id": "E7",
+    "kind": "endpoint",
+    "run": "m2"
+  },
+  "decision": "if_lever under the CPU baseline",
+  "decision_rule": "E3's rule with median scipy dgtsv ms on one CPU core in place of the one-thread GPU Thomas ms. if_lever or if_not under that baseline, speedup at every level. Report only.",
+  "env": {
+    "git_rev": null,
+    "host": "150-136-47-224",
+    "python": "3.10.12",
+    "timestamp_utc": "2026-10-20T09:58:53+00:00"
+  },
+  "inputs": [
+    {
+      "bytes": 65392,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/thomas_gpu.jsonl",
+      "present": true,
+      "sha256": "9d1b8fc1136d"
+    },
+    {
+      "bytes": 70936,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/pcr_gpu.jsonl",
+      "present": true,
+      "sha256": "f73af1752f60"
+    },
+    {
+      "bytes": 68537,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/cusparse_gpu.jsonl",
+      "present": true,
+      "sha256": "2ef01011a680"
+    },
+    {
+      "bytes": 68177,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/thomas_batched_gpu.jsonl",
+      "present": true,
+      "sha256": "39e4178392db"
+    },
+    {
+      "bytes": 62652,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/launch_probe.jsonl",
+      "present": true,
+      "sha256": "6f8826ec206a"
+    },
+    {
+      "bytes": 70403,
+      "n_items": 25,
+      "path": "/home/ubuntu/m2_run/results_m2/out/rows/cpu_dgtsv.jsonl",
+      "present": true,
+      "sha256": "68cbcae8d816"
+    }
+  ],
+  "metric": "CPU floor: the card's rule with median one-core scipy dgtsv ms in place of Thomas ms",
+  "notes": "",
+  "threshold": {
+    "speedup_top_min": 2.0
+  },
+  "values": {
+    "adjacent_decreases": [
+      {
+        "from_N": 262144,
+        "from_speedup": 30.708453671787385,
+        "to_N": 4194304,
+        "to_speedup": 18.411710053908486
+      }
+    ],
+    "anchor_failed": [],
+    "decision": "if_lever",
+    "label": null,
+    "labels": {
+      "baseline": "baseline: one CUDA thread per system, this build's kernel",
+      "blas_lapack_vendor": "unnamed in scipy.show_config (generic blas/lapack names); see scipy_lapack_libraries",
+      "budget_left_usd": 6.0,
+      "card_dramaturg": "card dramaturg: REJECT (3 blocking, citations)",
+      "compile_command": "/usr/bin/nvcc -O3 -shared -Xcompiler -fPIC -o results_m2/build/libm2.so results_m2/build/m2_kernels.cu -lcusparse -lcudart -arch=sm_80",
+      "cuda_driver_api_version": "12.8",
+      "cuda_runtime_version": "12.8",
+      "cuda_runtime_version_runner_library": "12.8",
+      "cuda_runtime_version_via": "cudaRuntimeGetVersion via ctypes on /lib/x86_64-linux-gnu/libcudart.so.12",
+      "cusparse_available": true,
+      "cusparse_note": null,
+      "git_commit": "e7acf90c84dff22d16d35714cdddda98ad75506e",
+      "gpu_device_count": 1,
+      "gpu_driver": "570.148.08",
+      "gpu_memory": "40960 MiB",
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "instance_type": "gpu_1x_a100_sxm4",
+      "kernel_source_sha256": "bb768a4721c5af56d50446cea6f5289af1ae25f8f339ded20fd7143c233d5354",
+      "lambda_instance_id": "3be4cd7175024dcd8ffa23e50d300409",
+      "libcudart_path": "/lib/x86_64-linux-gnu/libcudart.so.12",
+      "mkl_num_threads": "1",
+      "numpy_version": "1.26.4",
+      "nvcc_arch_flag": "-arch=sm_80",
+      "nvcc_path": "/usr/bin/nvcc",
+      "nvcc_version": "12.8 (V12.8.93)",
+      "omp_num_threads": "1",
+      "openblas_num_threads": "1",
+      "price_usd_per_hour": 1.99,
+      "python_version": "3.10.12",
+      "runner_sha256": "46faee5d4265b7cabb92166ae3da9e88d18b5a2f084ce4146aae7a671c661af1",
+      "scipy_lapack_libraries": {
+        "libblas.so.3": {
+          "path": "/lib/x86_64-linux-gnu/libblas.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libblas.so.3"
+        },
+        "liblapack.so.3": {
+          "path": "/lib/x86_64-linux-gnu/liblapack.so.3",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/liblapack.so.3"
+        },
+        "libopenblas.so.0": {
+          "path": "/lib/x86_64-linux-gnu/libopenblas.so.0",
+          "resolved": "/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so"
+        }
+      },
+      "scipy_version": "1.8.0",
+      "vcpu_count": 30
+    },
+    "lower_quartile_top": 17.152781190036713,
+    "one_reference_only": false,
+    "pcr_anchor_status": "anchor passed",
+    "role": "report-only; does not decide the card",
+    "run_valid": true,
+    "slope_ln_speedup_per_log2N": 0.23437177893098576,
+    "slope_positive": true,
+    "speedup_top_above_bottom": true,
+    "speedup_top_at_least_2": true,
+    "speedups": [
+      0.5907048648185403,
+      5.782147180309478,
+      30.708453671787385,
+      18.411710053908486,
+      19.102597490644076
+    ],
+    "table": [
+      {
+        "N": 1024,
+        "iqr_ratio": 0.0008974235938574715,
+        "log2_N": 10,
+        "lower_quartile_ratio": 0.5903024254890288,
+        "median_denominator_ms": 0.03477456059437318,
+        "median_numerator_ms": 0.020541502115023348,
+        "per_seed_ratio": [
+          0.5924345157147046,
+          0.5903024254890288,
+          0.5911998490828863,
+          0.5907228023954774,
+          0.5901755907826257
+        ],
+        "speedup": 0.5907048648185403
+      },
+      {
+        "N": 16384,
+        "iqr_ratio": 0.002074014488173681,
+        "log2_N": 14,
+        "lower_quartile_ratio": 5.782941717505204,
+        "median_denominator_ms": 0.05360068278188094,
+        "median_numerator_ms": 0.3099270368099156,
+        "per_seed_ratio": [
+          5.783399710225969,
+          5.834085208857459,
+          5.7850157319933775,
+          5.781277244249244,
+          5.782941717505204
+        ],
+        "speedup": 5.782147180309478
+      },
+      {
+        "N": 262144,
+        "iqr_ratio": 0.017610273806958787,
+        "log2_N": 18,
+        "lower_quartile_ratio": 30.705671938280837,
+        "median_denominator_ms": 0.16082188957615903,
+        "median_numerator_ms": 4.938591545458786,
+        "per_seed_ratio": [
+          31.156825542946027,
+          30.716092118011897,
+          30.723282212087796,
+          30.705671938280837,
+          30.696690852162988
+        ],
+        "speedup": 30.708453671787385
+      },
+      {
+        "N": 4194304,
+        "iqr_ratio": 2.4453102624551484,
+        "log2_N": 22,
+        "lower_quartile_ratio": 17.41310421801345,
+        "median_denominator_ms": 4.785245028409091,
+        "median_numerator_ms": 88.10454399997525,
+        "per_seed_ratio": [
+          18.422461541792234,
+          17.080793275367494,
+          19.8584144804686,
+          20.458618820726315,
+          17.41310421801345
+        ],
+        "speedup": 18.411710053908486
+      },
+      {
+        "N": 16777216,
+        "iqr_ratio": 2.0088788109779827,
+        "log2_N": 24,
+        "lower_quartile_ratio": 17.152781190036713,
+        "median_denominator_ms": 21.815638224283855,
+        "median_numerator_ms": 416.7353560000038,
+        "per_seed_ratio": [
+          19.161660001014695,
+          19.14123688278103,
+          22.214444717473377,
+          17.152781190036713,
+          16.970509588819247
+        ],
+        "speedup": 19.102597490644076
+      }
+    ]
+  }
+}

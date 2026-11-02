@@ -1,0 +1,442 @@
+{
+ "summary": {
+  "sentences": 48,
+  "supported": 43,
+  "contradicted": 0,
+  "not_addressed": 5
+ },
+ "sentences": [
+  {
+   "id": "S1",
+   "question": "Q1",
+   "sentence": "The source card asks, “Does feeding many GPUs to the block-tridiagonal Newton solve shorten its depth from T ordered steps to log2(T)?” (evidence/_source/reply.txt).",
+   "verdict": "supported",
+   "quote": "\"question\":\"Does feeding many GPUs to the block-tridiagonal Newton solve shorten its depth from T ordered steps to log2(T)?\"",
+   "path": "evidence/_source/reply.txt",
+   "reason": "Card question matches quotation exactly."
+  },
+  {
+   "id": "S2",
+   "question": "Q1",
+   "sentence": "This run narrows that question to scalar tridiagonal solves on a single graphics processor, comparing Thomas elimination with parallel cyclic reduction (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "one right-hand side, scalar tridiagonal systems with the generated structure.",
+   "path": "evidence/QUESTION.md",
+   "reason": "Question names Thomas and PCR, specifies one A100, and restricts scope to scalar tridiagonal systems."
+  },
+  {
+   "id": "S3",
+   "question": "Q1",
+   "sentence": "Its declared answer requires at least twofold median speedup at 16,777,216 equations, greater speedup than at the smallest size, and positive logarithmic regression slope (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "\"Grows with N\" is read as: speedup at 2^24 > speedup at 2^10 AND the least-squares slope of log(speedup) against log2(N) over the five levels is positive.",
+   "path": "evidence/QUESTION.md",
+   "reason": "Claim C specifies median speedup threshold 2 at 2^24 and both stated growth conditions."
+  },
+  {
+   "id": "S4",
+   "question": "Q1",
+   "sentence": "Correctness checks must pass before that decision can be read (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "Out of band on either solver: that solver's timing rows are \"descriptive only; anchor failed\" and the card's rule is not read (the card's own gate text applies: \"Fix the kernels and re-run the anchor before starting the sweep\"; no kernel is fixed mid-run).",
+   "path": "evidence/QUESTION.md",
+   "reason": "Anchor failure explicitly prevents reading decision rule."
+  },
+  {
+   "id": "S5",
+   "question": "Q2",
+   "sentence": "Measured implementations comprised hand-written Thomas and parallel cyclic reduction, batched Thomas, NVIDIA cuSPARSE, and the processor library's tridiagonal solver (evidence/run_m2.py).",
+   "verdict": "supported",
+   "quote": "TIMING_ARMS = [\"thomas_gpu\", \"pcr_gpu\", \"cusparse_gpu\", \"thomas_batched_gpu\", \"launch_probe\", \"cpu_dgtsv\"]",
+   "path": "evidence/run_m2.py",
+   "reason": "Timing arms include every named implementation; ARM_TEXT identifies CPU routine as LAPACK dgtsv through SciPy."
+  },
+  {
+   "id": "S6",
+   "question": "Q2",
+   "sentence": "Sizes were 1,024, 16,384, 262,144, 4,194,304, and 16,777,216 equations, with five seeded systems per implementation and size (evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"n_items\": 25,",
+   "path": "evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+   "reason": "Record lists 25 rows per timing arm and five table levels, each with five paired seed ratios."
+  },
+  {
+   "id": "S7",
+   "question": "Q2",
+   "sentence": "Hardware was one NVIDIA A100 SXM4 graphics processor with 40 gigabytes; processor-library threading was restricted to one thread (evidence/results_m2/out/env.json).",
+   "verdict": "supported",
+   "quote": "\"gpu_name\": \"NVIDIA A100-SXM4-40GB\",",
+   "path": "evidence/results_m2/out/env.json",
+   "reason": "Device count is 1; memory is 40960 MiB; OMP, OpenBLAS, and MKL thread settings are all 1."
+  },
+  {
+   "id": "S8",
+   "question": "Q2",
+   "sentence": "Recorded software included CUDA 12.8, Python 3.10.12, NumPy 1.26.4, SciPy 1.8.0, and OpenBLAS 0.3.20 (evidence/results_m2/out/env.json).",
+   "verdict": "supported",
+   "quote": "\"resolved\": \"/usr/lib/x86_64-linux-gnu/openblas-pthread/libopenblasp-r0.3.20.so\"",
+   "path": "evidence/results_m2/out/env.json",
+   "reason": "Environment fields state all listed versions; resolved library path identifies OpenBLAS 0.3.20."
+  },
+  {
+   "id": "S9",
+   "question": "Q2",
+   "sentence": "Each system received two warmups followed by a timed block of repeated solves (evidence/run_m2.py).",
+   "verdict": "supported",
+   "quote": "WARMUPS = 2 # warm-up solves before each timed block",
+   "path": "evidence/run_m2.py",
+   "reason": "Warmup constant specifies two solves; visible timing functions loop over R solves per block."
+  },
+  {
+   "id": "S10",
+   "question": "Q3",
+   "sentence": "The headline baseline was hand-written Thomas elimination using a single graphics-processor thread per system; its source specifies no unrolling or variant search (evidence/run_m2.py).",
+   "verdict": "supported",
+   "quote": "// Thomas: one CUDA thread per system, recurrence carried in registers; plain, no unroll, no variant search.",
+   "path": "evidence/run_m2.py",
+   "reason": "Source comment explicitly states baseline implementation and absence of unrolling or variant search."
+  },
+  {
+   "id": "S11",
+   "question": "Q3",
+   "sentence": "The intended application was Newton correction inside parallel-in-time calculations; the card identifies no actual user population (evidence/_source/reply.txt).",
+   "verdict": "supported",
+   "quote": "The full parallel-in-time Newton loop: this plan times the tridiagonal solve alone, not the k-iteration Parareal/MGRIT correction whose count the forgetting rate sets.",
+   "path": "evidence/_source/reply.txt",
+   "reason": "Card locates solve within parallel-in-time Newton correction and names no actual users."
+  },
+  {
+   "id": "S12",
+   "question": "Q3",
+   "sentence": "The run's question document explicitly challenges this baseline's practical relevance and names processor-library Thomas as the practical sequential alternative (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "the rule tests whether PCR is slower than the slowest arrangement of the sequential algorithm, not whether it is faster than the sequential algorithm as anyone would run it.",
+   "path": "evidence/QUESTION.md",
+   "reason": "Construct risks explicitly challenge one-thread baseline; CPU-floor reading names LAPACK dgtsv on one CPU core."
+  },
+  {
+   "id": "S13",
+   "question": "Q3",
+   "sentence": "Expert preference was not established; the historical 28-fold comparison used a processor-library baseline on different hardware and remained an unreproduced proxy (evidence/_source/reply.txt).",
+   "verdict": "supported",
+   "quote": "\"page_setting\":\"2009 NVIDIA GTX 280 vs sequential LAPACK dgtsv (CPU), at their largest N\"",
+   "path": "evidence/_source/reply.txt",
+   "reason": "Card labels 28 as PROXY, specifies historical hardware and CPU LAPACK baseline, and establishes no expert preference or reproduction."
+  },
+  {
+   "id": "S14",
+   "question": "Q4",
+   "sentence": "At 16,777,216 equations, median Thomas and parallel cyclic reduction times were 7,598.50 and 21.8156 milliseconds, yielding 348.305-fold speedup (evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"median_numerator_ms\": 7598.49560546875,",
+   "path": "evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+   "reason": "Largest-size row records denominator 21.815638224283855 and speedup 348.3049877958905; reported numbers round correctly."
+  },
+  {
+   "id": "S15",
+   "question": "Q4",
+   "sentence": "Paired-seed speedup ratios had interquartile width 1.089 and lower quartile 348.289 (evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"iqr_ratio\": 1.0888978870281676,",
+   "path": "evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+   "reason": "Largest-size row also gives lower quartile 348.28862129983; both values round correctly."
+  },
+  {
+   "id": "S16",
+   "question": "Q4",
+   "sentence": "The declared rule passed: speedup exceeded twofold, exceeded smallest-size speedup, and had positive logarithmic regression slope, 0.25565 (evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"slope_ln_speedup_per_log2N\": 0.255653691157889,",
+   "path": "evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+   "reason": "Decision is if_lever; threshold, endpoint-growth, and positive-slope flags are all true."
+  },
+  {
+   "id": "S17",
+   "question": "Q4",
+   "sentence": "Speedup nevertheless decreased across the largest sizes, so the recorded result does not establish monotonic growth (evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"to_speedup\": 348.3049877958905",
+   "path": "evidence/results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+   "reason": "Adjacent-decrease records show 517.527 to 395.385, then 395.385 to 348.305."
+  },
+  {
+   "id": "S18",
+   "question": "Q4",
+   "sentence": "These repeats varied generated systems on the same machine, rather than measuring variation across machines (evidence/results_m2/out/m2_summary.json).",
+   "verdict": "supported",
+   "quote": "The five seeds are five different generated systems timed on one box, not separate boxes.",
+   "path": "evidence/results_m2/out/m2_summary.json",
+   "reason": "Summary explicitly identifies variance source."
+  },
+  {
+   "id": "S19",
+   "question": "Q5",
+   "sentence": "At 1,024 and 16,384 equations, seed zero, both hand-written solvers were compared with cuSPARSE and SciPy's banded solver (evidence/results_m2/out/records/id-E1_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"metric\": \"anchor: relative residuals of Thomas and PCR at N = 2^10 and 2^14 (seed 0); relative differences against cuSPARSE gtsv2_nopivot and scipy solve_banded; difference between the two references\",",
+   "path": "evidence/results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+   "reason": "Metric and recorded rows identify both sizes, seed, solvers, and references."
+  },
+  {
+   "id": "S20",
+   "question": "Q5",
+   "sentence": "Required relative equation residual was at most 1e-10; solution differences against each reference had to remain below 1e-8 (evidence/results_m2/out/records/id-E1_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "Thomas and PCR at N = 2^10 and 2^14, seed 0: each relative residual <= 1e-10 AND each relative difference against cuSPARSE and against scipy < 1e-8.",
+   "path": "evidence/results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+   "reason": "Decision rule states both tolerances and inequalities exactly."
+  },
+  {
+   "id": "S21",
+   "question": "Q5",
+   "sentence": "The harness divides equation-error norm by right-hand-side norm, and solution-difference norm by reference-solution norm (evidence/run_m2.py).",
+   "verdict": "not_addressed",
+   "quote": "",
+   "path": "evidence/run_m2.py",
+   "reason": "Visible runner excerpt does not define normalization denominators. Truncated portion might contain relevant functions."
+  },
+  {
+   "id": "S22",
+   "question": "Q5",
+   "sentence": "Maximum hand-written residual was 3.111e-16; all solution comparisons and reference-to-reference comparisons passed their tolerances (evidence/results_m2/out/records/id-E1_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"rel_residual\": 3.1109912540540033e-16,",
+   "path": "evidence/results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+   "reason": "Maximum among hand-written anchor rows rounds to 3.111e-16; decision PASS, solver flags, and reference agreement confirm remaining claims."
+  },
+  {
+   "id": "S23",
+   "question": "Q5",
+   "sentence": "Residual instrumentation also passed checks using a known exact solution and a deliberately perturbed solution (evidence/results_m2/out/records/id-I1_exact_kind-control_run-m2.json) (evidence/results_m2/out/records/id-I1_perturbed_kind-control_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"decision\": \"PASS\",",
+   "path": "evidence/results_m2/out/records/id-I1_exact_kind-control_run-m2.json",
+   "reason": "Both cited controls report PASS; exact residual is 0 and perturbed residual is 9.571824604348377e-07."
+  },
+  {
+   "id": "S24",
+   "question": "Q6",
+   "sentence": "Forecasts were sealed before agents or rented hardware ran (evidence/SEALED_PREDICTIONS.md).",
+   "verdict": "supported",
+   "quote": "# Sealed predictions, measure run m2 (written 2026-10-20 08:5x UTC, before any agent or box ran)",
+   "path": "evidence/SEALED_PREDICTIONS.md",
+   "reason": "Header explicitly states sealing preceded agents and box execution."
+  },
+  {
+   "id": "S25",
+   "question": "Q6",
+   "sentence": "Ten forecast events occurred: compilation, correctness, smaller residuals, favorable decision, minimum speedup, earliest crossover, processor comparison, scaling, short duration, and completion (evidence/out/PREDICTIONS_SCORED.md).",
+   "verdict": "supported",
+   "quote": "| P11 | first launch completes with no halt | 0.50 | held | rc=0, 12 stages, 35 records, run_valid true | 0.2500 |",
+   "path": "evidence/out/PREDICTIONS_SCORED.md",
+   "reason": "Complete scoring table marks P1–P9 and P11 held, including P7 but excluding P7b: ten events matching listed categories."
+  },
+  {
+   "id": "S26",
+   "question": "Q6",
+   "sentence": "Two forecast events did not occur (evidence/out/PREDICTIONS_SCORED.md).",
+   "verdict": "supported",
+   "quote": "| P7b | ... below 2x | 0.20 | did not occur | 19.1x | 0.0400 |",
+   "path": "evidence/out/PREDICTIONS_SCORED.md",
+   "reason": "P7b and P10 are exactly two rows marked did not occur."
+  },
+  {
+   "id": "S27",
+   "question": "Q6",
+   "sentence": "At 16,777,216 equations, parallel cyclic reduction's 19.103-fold processor-library speedup exceeded the below-twofold forecast ceiling by 17.103, computed by subtraction (evidence/SEALED_PREDICTIONS.md) (evidence/results_m2/out/records/id-E7_kind-endpoint_run-m2.json).",
+   "verdict": "not_addressed",
+   "quote": "",
+   "path": "evidence/results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
+   "reason": "Files give speedup 19.102597490644076 and forecast below 2, but neither states nor computes claimed difference 17.103."
+  },
+  {
+   "id": "S28",
+   "question": "Q6",
+   "sentence": "At that size, its time was 7.412 times cuSPARSE's, exceeding the forecast ceiling of three by 4.412, computed by subtraction (evidence/SEALED_PREDICTIONS.md) (evidence/results_m2/out/records/id-E9_kind-endpoint_run-m2.json).",
+   "verdict": "not_addressed",
+   "quote": "",
+   "path": "evidence/results_m2/out/records/id-E9_kind-endpoint_run-m2.json",
+   "reason": "Files give ratio 7.412174867802461 and forecast ceiling 3, but neither states nor computes claimed difference 4.412."
+  },
+  {
+   "id": "S29",
+   "question": "Q7",
+   "sentence": "The summary records no voids, missing records, or failed scheduled measurement stages (evidence/results_m2/out/m2_summary.json).",
+   "verdict": "supported",
+   "quote": "\"voids\": [],",
+   "path": "evidence/results_m2/out/m2_summary.json",
+   "reason": "Missing-record list is empty, every scheduled stage has rc 0, and stop reason says all stages ran."
+  },
+  {
+   "id": "S30",
+   "question": "Q7",
+   "sentence": "Optional block-system and multiple-graphics-processor phases were omitted, while isolated document-reader agents failed to run (evidence/RUN.md).",
+   "verdict": "supported",
+   "quote": "4. **Phases p3 (block) and p4 (multi-GPU) are not run** (optional in the card).",
+   "path": "evidence/RUN.md",
+   "reason": "Adjustment omits optional phases; triage and post logs record isolated readers failing because agent type was unavailable."
+  },
+  {
+   "id": "S31",
+   "question": "Q7",
+   "sentence": "Counting saved rows gives 15 of 25 parallel cyclic reduction timing blocks below the intended 50 milliseconds; none occurred at the largest size (evidence/results_m2/out/rows/pcr_gpu.jsonl).",
+   "verdict": "not_addressed",
+   "quote": "",
+   "path": "evidence/results_m2/out/rows/pcr_gpu.jsonl",
+   "reason": "Timing file is truncated before all 25 rows and largest-size rows. Missing portion might establish count and largest-size claim; visible rows cannot."
+  },
+  {
+   "id": "S32",
+   "question": "Q7",
+   "sentence": "Those short blocks depart from the timing plan, although the measurement summary retains its valid verdict (evidence/QUESTION.md) (evidence/results_m2/out/m2_summary.json).",
+   "verdict": "supported",
+   "quote": "Blocks are sized so each timed block is at least 50 ms; the block size is recorded per row.",
+   "path": "evidence/QUESTION.md",
+   "reason": "Plan requires at least 50 ms; summary nevertheless records run_valid true."
+  },
+  {
+   "id": "S33",
+   "question": "Q7",
+   "sentence": "The omissions leave the declared scalar comparison answerable, while the card's broader block-system and multiple-device question remains untested (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "| `phases[p3_block]`, `phases[p4_multi]` | not run |",
+   "path": "evidence/QUESTION.md",
+   "reason": "Declared comparison concerns scalar systems on one GPU; block and multi-GPU phases lie outside scope and are explicitly not run."
+  },
+  {
+   "id": "S34",
+   "question": "Q8",
+   "sentence": "Coverage is restricted to the specified sizes on a single A100 machine, using five generated systems per size and a single right-hand side (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "One GPU (A100 SXM4 40 GB, the card's hardware, at the card's rate of USD 1.99/h), one CPU core for the floor, float64, one right-hand side, scalar tridiagonal systems with the generated structure.",
+   "path": "evidence/QUESTION.md",
+   "reason": "Scope specifies hardware and right-hand side; question and generator table specify five sizes and seeds 0–4."
+  },
+  {
+   "id": "S35",
+   "question": "Q8",
+   "sentence": "Inputs used diagonal entries of three, random unit-magnitude off-diagonals, standard-normal right-hand sides, and 64-bit floating-point arithmetic (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "| Matrix | tridiagonal, N equations; off-diagonals a_i, c_i of unit magnitude with seed-fixed random signs; diagonal b_i = 3 (so |b| - |a| - |c| = 1, the card's \"diagonal dominance margin 1.0\"); float64 |",
+   "path": "evidence/QUESTION.md",
+   "reason": "Matrix row states coefficients and precision; adjacent right-hand-side row specifies standard normal, float64."
+  },
+  {
+   "id": "S36",
+   "question": "Q8",
+   "sentence": "Graphics-processor input transfers, allocation, and required input copies occur outside timed solver blocks, so these timings describe data already on device (evidence/run_m2.py).",
+   "verdict": "supported",
+   "quote": "for (int r = 0; r < R; ++r) m2_thomas_kernel<<<K, 1>>>(a, b, c, d, bp, dp, x, n);",
+   "path": "evidence/run_m2.py",
+   "reason": "Visible CUDA timing functions enclose solver launches only, using existing device pointers; allocation and transfer wrappers are separate, and cuSPARSE receives existing RHS copies."
+  },
+  {
+   "id": "S37",
+   "question": "Q8",
+   "sentence": "The design excludes ill-conditioned matrices, other precisions, multiple right-hand sides, block systems, multiple graphics processors, and the surrounding Newton iteration (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "Out of scope: block-tridiagonal systems (`p3_block`), multi-GPU PCR (`p4_multi`), the parallel-in-time Newton loop the solve would sit inside, non-dominant or ill-conditioned matrices, float32, multiple right-hand sides, any tuning of the Thomas kernel beyond the card's \"one thread per system\" with the recurrence kept in registers.",
+   "path": "evidence/QUESTION.md",
+   "reason": "Scope restricts precision to float64 and explicitly lists remaining exclusions."
+  },
+  {
+   "id": "S38",
+   "question": "Q8",
+   "sentence": "It therefore establishes neither performance on those populations nor application-level acceleration (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "The card's phases `p1_anchor` and `p2_sweep` only.",
+   "path": "evidence/QUESTION.md",
+   "reason": "Declared scope covers scalar anchor and sweep only; excluded populations and surrounding Newton loop receive no performance measurement."
+  },
+  {
+   "id": "S39",
+   "question": "Q9",
+   "sentence": "The operator log reports rental cost of $0.48 for 0.239 hours; it provides no total model or human cost (evidence/RUN.md).",
+   "verdict": "supported",
+   "quote": "full fetch (try 1), teardown accepted; API: launch 09:46:22Z, terminate 10:00:43Z, 0.239 h, **USD 0.48**.",
+   "path": "evidence/RUN.md",
+   "reason": "Rental figures match; log counts model agents but supplies no total model or human cost."
+  },
+  {
+   "id": "S40",
+   "question": "Q9",
+   "sentence": "The measurement record gives 0.119105 hours from the first reference-check solve to the last sweep row (evidence/results_m2/out/records/id-E10_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"hours\": 0.11910545163684422,",
+   "path": "evidence/results_m2/out/records/id-E10_kind-endpoint_run-m2.json",
+   "reason": "Metric specifies first anchor solve to last sweep row; recorded hours round to stated value."
+  },
+  {
+   "id": "S41",
+   "question": "Q9",
+   "sentence": "From 08:55 directory creation to 10:16 postprocessing completion, the logged workflow spanned 81 minutes, computed by subtraction (evidence/RUN.md).",
+   "verdict": "not_addressed",
+   "quote": "",
+   "path": "evidence/RUN.md",
+   "reason": "Log supplies 08:55Z creation and 10:16Z completion, but does not state or compute 81-minute duration."
+  },
+  {
+   "id": "S42",
+   "question": "Q9",
+   "sentence": "Repetition requires the saved runner, provenance helper, batch script, compatible installed software, and configured price, budget, and timeout variables (evidence/onbox_m2.sh).",
+   "verdict": "supported",
+   "quote": "for f in run_m2.py frozen/provenance.py; do",
+   "path": "evidence/onbox_m2.sh",
+   "reason": "Batch script checks payload files, uses installed Python/software, and passes price, budget, and configured or default timeout to guard."
+  },
+  {
+   "id": "S43",
+   "question": "Q9",
+   "sentence": "The recorded software and graphics-processor configuration provide the environment to reproduce (evidence/results_m2/out/env.json).",
+   "verdict": "supported",
+   "quote": "\"compile_command\": \"/usr/bin/nvcc -O3 -shared -Xcompiler -fPIC -o results_m2/build/libm2.so results_m2/build/m2_kernels.cu -lcusparse -lcudart -arch=sm_80\",",
+   "path": "evidence/results_m2/out/env.json",
+   "reason": "Environment records GPU, driver, CUDA, software versions, resolved numerical libraries, thread settings, and compilation command."
+  },
+  {
+   "id": "S44",
+   "question": "Q10",
+   "sentence": "At 16,777,216 equations, cuSPARSE took 2.943 milliseconds versus 21.816 for hand-written parallel cyclic reduction (evidence/results_m2/out/records/id-E9_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "2.943216884837431",
+   "path": "evidence/results_m2/out/records/id-E9_kind-endpoint_run-m2.json",
+   "reason": "Last entries for largest level give cuSPARSE 2.943216884837431 and PCR 21.815638224283855 milliseconds; rounding matches."
+  },
+  {
+   "id": "S45",
+   "question": "Q10",
+   "sentence": "This supplies a measured implementation comparison for the tested input family, supporting solver selection within that scope (evidence/results_m2/out/records/id-E9_kind-endpoint_run-m2.json).",
+   "verdict": "supported",
+   "quote": "\"metric\": \"cuSPARSE: median gtsv2_nopivot ms at each level and median PCR ms / median cuSPARSE ms\",",
+   "path": "evidence/results_m2/out/records/id-E9_kind-endpoint_run-m2.json",
+   "reason": "Record supplies measured timings and implementation ratios across tested levels, permitting comparison within tested scope."
+  },
+  {
+   "id": "S46",
+   "question": "Q10",
+   "sentence": "It does not establish acceleration of the surrounding scientific calculation, which was outside the design (evidence/QUESTION.md).",
+   "verdict": "supported",
+   "quote": "Newton loop the solve would sit inside, non-dominant or ill-conditioned matrices, float32, multiple right-hand sides,",
+   "path": "evidence/QUESTION.md",
+   "reason": "Scope explicitly excludes surrounding parallel-in-time Newton loop."
+  },
+  {
+   "id": "S47",
+   "question": "Q10",
+   "sentence": "The run write-up proposes comparing data-resident solves with solves that include transfers to the graphics processor (evidence/TAKEAWAYS_m2.md).",
+   "verdict": "supported",
+   "quote": "The design needs a case with data resident and a case with data copied.",
+   "path": "evidence/TAKEAWAYS_m2.md",
+   "reason": "Open question about moving data to GPU explicitly proposes both cases."
+  },
+  {
+   "id": "S48",
+   "question": "Q10",
+   "sentence": "That next measurement would address transfer costs excluded by the current timing harness (evidence/run_m2.py).",
+   "verdict": "supported",
+   "quote": "for (int r = 0; r < R; ++r) m2_pcr_launch(n, a, b, c, d, buf, x);",
+   "path": "evidence/run_m2.py",
+   "reason": "Visible PCR timed block launches solves on existing device pointers; host-to-device transfer uses separate wrapper outside block."
+  }
+ ]
+}

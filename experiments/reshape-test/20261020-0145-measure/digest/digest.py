@@ -1,0 +1,248 @@
+import marimo
+
+app = marimo.App(width="medium")
+
+with app.setup:
+    DIGEST_DIR = ""  # empty: this notebook's own directory
+    import json
+    from pathlib import Path
+    import marimo as mo
+    ROOT = Path(DIGEST_DIR) if DIGEST_DIR else mo.notebook_dir()
+    import statistics
+
+
+@app.cell
+def _(mo):
+    mo.md("""# 20261020-0145-measure
+
+The digest records a negative answer: the projected GPU calibration cost missed both the one-hour limit and the required twentyfold acceleration over the CPU baseline.""")
+    return
+
+
+@app.cell
+def _(mo):
+    mo.md("""## Question
+
+The card asks: “Does GPU parallelism change how many of the 671 CAMELS catchments can get full Bayesian calibration instead of point optimization?” (evidence/_source/RESULT.md). This concerns graphics-card acceleration of parameter sampling for rainfall–runoff models, with this phase measuring simulation times and sampler overhead (evidence/QUESTION.md). An affirmative answer requires projected graphics-card completion below one hour and at least twentyfold acceleration over vectorized processor execution (evidence/QUESTION.md). Otherwise, the card records its predicted negative answer; completed scientific calibrations fall outside this measurement phase (evidence/QUESTION.md).
+
+## Answer
+
+Projected graphics-card completion was 2.463 hours, compared with 29.841 hours for processor execution (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json). Their ratio, 12.115, misses the required twentyfold acceleration, while graphics-card completion exceeds the one-hour limit (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json). The verdict is therefore negative under the timing rule, although the separate six-hour planning gate passed (evidence/results_m1/out/records/id-E6_kind-endpoint_tag-m1.json). Acceleration is relative to this implementation and machine configuration; expert tuning of the processor baseline was not established (evidence/TAKEAWAYS_m1.md). Correctness checking compared Nash–Sutcliffe efficiency scores of 0.494775 and 0.494774 with published 0.495, allowing absolute difference 0.02 (evidence/results_m1/out/records/id-E2_kind-endpoint_tag-m1.json). Independent output equivalence remains unestablished because reference code never ran (evidence/results_m1/out/records/id-E2_kind-endpoint_tag-m1.json).
+
+## Problem and constraints
+
+Hardware comprised one NVIDIA A10 graphics card and 30 virtual processors; JAX and its compiled library were version 0.6.0, using 32-bit floating point (evidence/results_m1/out/hardware_labels.json). Forecasts were sealed before measurement (evidence/RUN.md) (evidence/SEALED_PREDICTIONS.md). Scope excluded the intended catchment dataset, posterior quality, convergence checks, point-optimization comparisons and alternative implementations (evidence/QUESTION.md). Missing processor thread settings further limit interpretation of the baseline (evidence/TAKEAWAYS_m1.md). These constraints make the result an implementation-specific cost estimate, without establishing calibration quality, realistic data-loading costs or performance on other hardware (evidence/QUESTION.md).
+
+## Method and assumptions
+
+The calculation multiplied pass medians by 100,000 iterations and measured sampler overhead to obtain projected completion times (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json). Sampler probes used 1,000 iterations for each of three seeds on each backend (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json). Full-run uncertainty intervals were not recorded (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json). Validation anchored results to published flow-fit scores, leaving daily-flow agreement below one percent mean absolute relative error unchecked (evidence/results_m1/out/records/id-E2_kind-endpoint_tag-m1.json). The original brief required independent agreement, but a decision before measurement permitted published-score comparison after installation failure (evidence/QUESTION.md) (evidence/GATE_COMMIT.md). The recorded timing decision follows that amended rule (evidence/GATE_COMMIT.md).
+
+## Analysis
+
+Sealed predictions were partly successful. Acceleration reached 12.11-fold, contradicting the below-five forecast; the twentyfold event did not occur (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (evidence/SEALED_PREDICTIONS.md). Overhead was 1.0035, missing the 1.5–3 interval but remaining below four (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (evidence/SEALED_PREDICTIONS.md). Projected completion of 2.46 hours contradicted above-six expectations (evidence/results_m1/out/records/id-E5_kind-endpoint_tag-m1.json) (evidence/SEALED_PREDICTIONS.md). The scorer counted the flow-agreement forecast as held despite its untested daily-flow component (evidence/out/PREDICTIONS_SCORED.md). The initial attempt was invalid after dependency installation timed out before measurement; independent reproduction remained unresolved (evidence/out/launch1/results_m1/out/RUN_VALID.json) (evidence/results_m1/out/records/id-E1_kind-endpoint_tag-m1.json). The completed attempt was valid and complete, with no void reasons and qualification “anchor by page value” (evidence/results_m1/out/RUN_VALID.json). Cloud rental cost $2.12; failed and completed attempts occupied 0.54 hours and 1.10 hours, respectively (evidence/RUN.md). Overall pipeline duration was three hours fifty minutes; accounting omitted model-call charges and measured human labor (evidence/RUN.md). Repetition requires preserved scripts, basin data, reference archive and compatible JAX graphics-card environment (evidence/onbox_m1.sh). Independent checking additionally requires successful installation of R and a Fortran compiler (evidence/onbox_m1.sh). Subsequent timing with actual catchment inputs, stored samples and convergence checks would address declared gaps in projected calibration cost (evidence/QUESTION.md) (evidence/TAKEAWAYS_m1.md).""")
+    return
+
+
+@app.cell
+def _(ROOT, json):
+    record_files = {
+        _id: f"evidence/results_m1/out/records/id-{_id}_kind-endpoint_tag-m1.json"
+        for _id in ("E1", "E2", "E3", "E4", "E5", "E6", "E7")
+    }
+    records = {
+        _id: json.loads((ROOT / _file).read_text(encoding="utf-8"))
+        for _id, _file in record_files.items()
+    }
+    timing_rows = [
+        json.loads(_line)
+        for _line in (ROOT / "evidence/results_m1/out/raw/timing_rows.jsonl").read_text(encoding="utf-8").splitlines()
+        if _line.strip()
+    ]
+    first_attempt = json.loads((ROOT / "evidence/out/launch1/results_m1/out/RUN_VALID.json").read_text(encoding="utf-8"))
+    completed_attempt = json.loads((ROOT / "evidence/results_m1/out/RUN_VALID.json").read_text(encoding="utf-8"))
+    sealed_text = (ROOT / "evidence/SEALED_PREDICTIONS.md").read_text(encoding="utf-8")
+    scored_text = (ROOT / "evidence/out/PREDICTIONS_SCORED.md").read_text(encoding="utf-8")
+    script_texts = {
+        _file: (ROOT / "evidence" / _file).read_text(encoding="utf-8")
+        for _file in ("run_m1.py", "onbox_m1.sh")
+    }
+    return completed_attempt, first_attempt, record_files, records, scored_text, script_texts, sealed_text, timing_rows
+
+
+@app.cell
+def _(completed_attempt, mo, record_files, records):
+    _v = records["E5"]["values"]
+    _t = records["E5"]["threshold"]
+    _eq = records["E2"]
+    _gpu = records["E3"]["values"]["spread_ms"]
+    _cpu = records["E4"]["values"]["cpu_spread_ms"]
+    _rows = [
+        {"Item": "Projected GPU completion", "Value": f"{_v['main_run_hours']:.6f} hours", "Interpretation": f"An affirmative answer requires less than {_t['main_run_hours_min_for_if_not']:g} hour.", "Evidence": record_files["E5"]},
+        {"Item": "CPU baseline completion", "Value": f"{_v['cpu_671_hours']:.6f} hours", "Interpretation": "The same vectorized JAX implementation runs on the CPU backend.", "Evidence": record_files["E5"] + "; evidence/run_m1.py"},
+        {"Item": "GPU acceleration over CPU", "Value": f"{_v['speedup']:.6f} times", "Interpretation": f"An affirmative answer requires at least {_t['speedup_min_for_if_lever']:g} times.", "Evidence": record_files["E5"]},
+        {"Item": "GPU pass median and range", "Value": f"{_gpu['median']:.6f} ms; {_gpu['min']:.6f}–{_gpu['max']:.6f} ms; n={_gpu['n']}", "Interpretation": "These are repeated forward passes at 2,684 chains, rather than repeated full calibrations.", "Evidence": record_files["E3"]},
+        {"Item": "CPU pass median and range", "Value": f"{_cpu['median']:.6f} ms; {_cpu['min']:.6f}–{_cpu['max']:.6f} ms; n={_cpu['n']}", "Interpretation": "These passes use the same size as the GPU comparison.", "Evidence": record_files["E4"]},
+        {"Item": "Measured sampler overhead", "Value": f"GPU {_v['overhead_gpu']:.6f}; CPU {_v['overhead_cpu']:.6f}", "Interpretation": "Each multiplier is the median over the three seed probes.", "Evidence": record_files["E5"]},
+        {"Item": "Published-score check", "Value": "; ".join(f"{_backend}: NSE {_result['nse']:.9f}" for _backend, _result in _eq['values']['per_backend'].items()), "Interpretation": f"The published score is {_eq['threshold']['nse_center']}; the absolute tolerance is {_eq['threshold']['nse_tolerance']}.", "Evidence": record_files["E2"]},
+        {"Item": "Independent daily-flow equivalence", "Value": json.dumps({"airgr_ran": _eq['values']['airgr_ran'], "MARE": {_b: _r['mare_vs_airgr'] for _b, _r in _eq['values']['per_backend'].items()}}), "Interpretation": f"Null means unmeasured. The required MARE was below {_eq['threshold']['mare_max']:g}; published-score agreement cannot establish daily-flow equivalence.", "Evidence": record_files["E2"]},
+        {"Item": "Separate planning gate", "Value": records['E6']['decision'], "Interpretation": f"This gate permits up to {records['E6']['threshold']['max_main_run_hours']:g} hours and differs from the headline rule.", "Evidence": record_files["E6"]},
+        {"Item": "Completed attempt validity", "Value": json.dumps(completed_attempt), "Interpretation": "The completed attempt retains the published-value qualification.", "Evidence": "evidence/results_m1/out/RUN_VALID.json"},
+    ]
+    _labels = [
+        ("headline_kind", "negative", record_files["E5"], "The recorded decision is " + records['E5']['decision'] + "."),
+        ("baseline_kind", "other", "evidence/run_m1.py; evidence/TAKEAWAYS_m1.md", "The comparison uses a custom vectorized CPU implementation; expert baseline tuning was not established."),
+        ("equivalence", "not_checked", record_files["E2"], _eq['values']['e2_label'] + "."),
+        ("prediction_hit", "partly", "evidence/SEALED_PREDICTIONS.md; evidence/out/PREDICTIONS_SCORED.md", "The next table distinguishes held, failed and unresolved forecasts."),
+        ("evidence", "inferred", record_files["E5"], "Completion times extrapolate short measurements; completed Bayesian calibrations were not observed."),
+        ("anchor", "page_value_only", record_files["E2"], "The reference code did not run."),
+    ]
+    _rows.extend({"Item": "digest.json: " + _key, "Value": _value, "Interpretation": _why, "Evidence": _file} for _key, _value, _file, _why in _labels)
+    mo.vstack([
+        mo.md("""## Headline evidence
+
+The six categorical labels below reproduce the supplied digest.json. Their evidence column names the underlying copied records, while all measured numbers come directly from those records. Hours are projections for a fixed iteration count; the records provide no uncertainty interval for a full calibration."""),
+        mo.ui.table(_rows, selection=None, pagination=False),
+    ])
+    return
+
+
+@app.cell
+def _(first_attempt, mo, record_files, records, scored_text, sealed_text):
+    _predictions = {}
+    for _line in sealed_text.splitlines():
+        _parts = [_part.strip() for _part in _line.strip().strip('|').split('|')]
+        if len(_parts) == 3 and _parts[0].startswith('P') and _parts[0][1:].replace('b', '').isdigit():
+            _predictions[_parts[0]] = (_parts[1], float(_parts[2]))
+    _scores = {}
+    for _line in scored_text.splitlines():
+        _parts = [_part.strip() for _part in _line.strip().strip('|').split('|')]
+        if len(_parts) == 4 and _parts[0] in _predictions:
+            _scores[_parts[0]] = (_parts[2], _parts[3])
+    _v = records['E5']['values']
+    _eq = records['E2']['values']
+    _measured = {
+        'P1': (records['E1']['decision'] + '; no independent NSE measurement exists.', record_files['E1']),
+        'P2': (json.dumps(_eq['per_backend']) + '; airgr_ran=' + str(_eq['airgr_ran']), record_files['E2']),
+        'P3': (f"{records['E3']['values']['batched_forward_ms']:.6f} ms", record_files['E3']),
+        'P4': (f"{_v['speedup']:.6f} times", record_files['E5']),
+        'P4b': (f"{_v['speedup']:.6f} times", record_files['E5']),
+        'P5': (f"{_v['overhead_gpu']:.6f} times", record_files['E5']),
+        'P6': (records['E5']['decision'], record_files['E5']),
+        'P7': (f"{_v['main_run_hours']:.6f} hours; gate: {records['E6']['decision']}", record_files['E5'] + '; ' + record_files['E6']),
+        'P8': (f"{records['E7']['values']['ratio_2684_over_268']:.6f} times the throughput", record_files['E7']),
+        'P9': (json.dumps({'incomplete': first_attempt['incomplete'], 'run_valid': first_attempt['run_valid'], 'void_reasons': first_attempt['void_reasons']}), 'evidence/out/launch1/results_m1/out/RUN_VALID.json'),
+    }
+    _rows = []
+    for _id, (_statement, _probability) in _predictions.items():
+        _outcome, _note = _scores[_id]
+        if _id == 'P2':
+            _outcome = 'Unresolved as written; the scorer marked it held.'
+            _note = 'Published NSE scores passed. Daily-flow MARE and independent reference execution remain untested.'
+        if _id == 'P5':
+            _note += ' The below-four part held; the stated 1.5–3 interval failed.'
+        _rows.append({
+            'Prediction': _id + ': ' + _statement,
+            'Sealed probability': _probability,
+            'Measured value': _measured[_id][0],
+            'Outcome': _outcome,
+            'Explanation': _note,
+            'Evidence': 'evidence/SEALED_PREDICTIONS.md; ' + _measured[_id][1] + '; evidence/out/PREDICTIONS_SCORED.md',
+        })
+    _rows.extend([
+        {'Prediction': 'Original card GPU pass guess', 'Sealed probability': None, 'Measured value': f"{records['E3']['values']['batched_forward_ms']:.6f} ms", 'Outcome': records['E3']['decision'], 'Explanation': f"The guess was {records['E3']['values']['card_guess_ms']:g} ms. The recorded acceptance band is given in the endpoint decision rule: {records['E3']['decision_rule']}", 'Evidence': record_files['E3']},
+        {'Prediction': 'Original card CPU completion guess', 'Sealed probability': None, 'Measured value': f"{records['E4']['values']['cpu_671_hours']:.6f} hours", 'Outcome': records['E4']['decision'], 'Explanation': f"The guess was {records['E4']['values']['card_guess_hours']:g} hours. {records['E4']['decision_rule']}", 'Evidence': record_files['E4']},
+    ])
+    mo.vstack([
+        mo.md("""## Predictions against measurements
+
+The prediction text and probabilities are read from SEALED_PREDICTIONS.md, and the recorded scoring is read from out/PREDICTIONS_SCORED.md. A probability describes a forecast event, so an event that did not occur is not automatically a bad low-probability forecast. The flow-agreement prediction remains unresolved as written because its daily-flow requirement was never measured.
+
+The final two rows retain the original planning card's numerical guesses as recorded in the measurement endpoints. They are separate from the later sealed forecasts."""),
+        mo.ui.table(_rows, selection=None, pagination=False),
+        mo.accordion({'Read the complete sealed predictions': mo.md(sealed_text), 'Read the complete recorded scoring': mo.md(scored_text)}),
+    ])
+    return
+
+
+@app.cell
+def _(mo, record_files, records, statistics, timing_rows):
+    _groups = {}
+    for _row in timing_rows:
+        if _row['backend'] == 'gpu' and _row['params_mode'] == 'distinct' and not _row['warmup'] and _row['n_days'] == 7300:
+            _groups.setdefault(_row['n_chains'], []).append(_row['ms'])
+    _points = []
+    _summary = []
+    for _n in sorted(_groups):
+        _times = _groups[_n]
+        _median = statistics.median(_times)
+        assert abs(_median - records['E7']['values']['median_ms'][str(_n)]) < 1e-8
+        _points.append((_n, _median, min(_times), max(_times)))
+        _summary.append({'Chains': _n, 'Timed passes': len(_times), 'Median ms': _median, 'Minimum ms': min(_times), 'Maximum ms': max(_times), 'Evidence': 'evidence/results_m1/out/raw/timing_rows.jsonl; ' + record_files['E7']})
+    _svg = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 280" role="img" aria-label="GPU forward pass times by chain count. Dots show medians and bars show observed ranges.">', '<rect width="600" height="280" fill="white"/>', '<text x="65" y="22" fill="#17212b" font-size="15">GPU forward pass over 7,300 days</text>']
+    for _tick in (0, 25, 50, 75, 100):
+        _y = 220 - 1.8 * _tick
+        _svg.append(f'<line x1="65" x2="565" y1="{_y}" y2="{_y}" stroke="#d9dee3"/><text x="55" y="{_y + 4}" text-anchor="end" font-size="12">{_tick}</text>')
+    _svg.extend(['<text x="12" y="35" font-size="12">ms</text>', '<line x1="65" x2="565" y1="220" y2="220" stroke="#17212b"/>', '<text x="310" y="270" text-anchor="middle" font-size="13">Parallel chains</text>'])
+    _polyline = ' '.join(f'{65 + _n / 2800 * 500},{220 - _med * 1.8}' for _n, _med, _lo, _hi in _points)
+    _svg.append(f'<polyline points="{_polyline}" fill="none" stroke="#1767a6" stroke-width="2"/>')
+    for _n, _med, _lo, _hi in _points:
+        _x = 65 + _n / 2800 * 500
+        _y = 220 - _med * 1.8
+        _svg.append(f'<line x1="{_x}" x2="{_x}" y1="{220 - _hi * 1.8}" y2="{220 - _lo * 1.8}" stroke="#17212b" stroke-width="3"/><circle cx="{_x}" cy="{_y}" r="4" fill="#1767a6"/><text x="{_x}" y="{_y - 12}" text-anchor="middle" font-size="12">{_med:.2f}</text><text x="{_x}" y="240" text-anchor="middle" font-size="12">{_n:,}</text>')
+    _svg.append('</svg>')
+    mo.vstack([
+        mo.md("""### Measured GPU scaling
+
+Dots show medians, and vertical bars show the observed minimum and maximum across timed passes. The table and chart are recomputed from saved raw rows, excluding compilation warmups and the identical-parameter control. An assertion checks each median against the saved scaling endpoint; these ranges describe pass variability rather than full-run uncertainty."""),
+        mo.Html(''.join(_svg)),
+        mo.ui.table(_summary, selection=None, pagination=False),
+    ])
+    return
+
+
+@app.cell
+def _(mo, script_texts):
+    _runner = script_texts['run_m1.py']
+    _driver = script_texts['onbox_m1.sh']
+    _runner_lines = _runner.splitlines()
+    _driver_lines = _driver.splitlines()
+    _constant_start = next(_i for _i, _line in enumerate(_runner_lines) if _line.startswith('SIZES ='))
+    _formula_start = next(_i for _i, _line in enumerate(_runner_lines) if _line.startswith('def main_run_hours('))
+    _stats_start = next(_i for _i, _line in enumerate(_runner_lines) if _line.startswith('def forward_stats('))
+    _stats_end = next(_i for _i in range(_stats_start + 1, len(_runner_lines)) if _runner_lines[_i].startswith('def _reading('))
+    _timer_start = next(_i for _i, _line in enumerate(_runner_lines) if _line.startswith('def _timed('))
+    _timing_start = next(_i for _i, _line in enumerate(_runner_lines) if _line.startswith('def gen_timing('))
+    _timing_end = next(_i for _i in range(_timing_start + 1, len(_runner_lines)) if _runner_lines[_i].startswith('def make_probe('))
+    _driver_start = next(_i for _i, _line in enumerate(_driver_lines) if _line.startswith('# ---- 2. R toolchain'))
+    _driver_end = next(_i for _i in range(_driver_start + 1, len(_driver_lines)) if _driver_lines[_i].startswith('# ---- 3. Environment'))
+    _stages_start = next(_i for _i, _line in enumerate(_driver_lines) if _line.startswith('# ---- 4. Stages'))
+    _runner_excerpt = '\n\n'.join([
+        f'# Original lines {_constant_start + 1}–{_constant_start + 20}\n' + '\n'.join(_runner_lines[_constant_start:_constant_start + 20]),
+        f'# Original lines {_formula_start + 1}–{_formula_start + 12}\n' + '\n'.join(_runner_lines[_formula_start:_formula_start + 12]),
+        f'# Original lines {_stats_start + 1}–{_stats_end}\n' + '\n'.join(_runner_lines[_stats_start:_stats_end]),
+        f'# Original lines {_timer_start + 1}–{_timer_start + 5}\n' + '\n'.join(_runner_lines[_timer_start:_timer_start + 5]),
+        f'# Original lines {_timing_start + 1}–{_timing_end}\n' + '\n'.join(_runner_lines[_timing_start:_timing_end]),
+    ])
+    _driver_excerpt = '\n\n'.join([
+        f'# Original lines {_driver_start + 1}–{_driver_end}\n' + '\n'.join(_driver_lines[_driver_start:_driver_end]),
+        f'# Original lines {_stages_start + 1}–{len(_driver_lines)}\n' + '\n'.join(_driver_lines[_stages_start:]),
+    ])
+    mo.vstack([
+        mo.md("""## Code to inspect
+
+### Measurement harness and model: evidence/run_m1.py
+
+Inspect `ITERATIONS_MAIN`, `main_run_hours`, and `card_decision`: they turn pass medians and sampler overhead into projected hours and the negative headline. The excerpts also show how `forward_stats` excludes warmups and controls, how `overhead_stats` aggregates probes, and how `_timed` waits for device completion; the complete file contains `gr4j_step`, `make_forward`, `make_probe`, and `stage_endpoints` for tracing the model, sampler, and saved records. The displayed source is read as text and is never executed by this notebook."""),
+        mo.ui.code_editor(value=_runner_excerpt, language='python', disabled=True),
+        mo.accordion({'Complete evidence/run_m1.py': mo.ui.code_editor(value=_runner, language='python', disabled=True)}),
+        mo.md("""### Execution driver: evidence/onbox_m1.sh
+
+Inspect the R installation block: a failed installation records its status and permits the published-score fallback, which explains why the valid timing run did not establish independent equivalence. The final stage list shows the order of reference checking, JAX checking, GPU and CPU timing, sampler probes, and endpoint calculation. Open the complete file to inspect the version checks and cost and time guards that can halt an attempt."""),
+        mo.ui.code_editor(value=_driver_excerpt, language='shell', disabled=True),
+        mo.accordion({'Complete evidence/onbox_m1.sh': mo.ui.code_editor(value=_driver, language='shell', disabled=True)}),
+    ])
+    return
+
+
+if __name__ == "__main__":
+    app.run()
