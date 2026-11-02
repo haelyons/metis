@@ -627,6 +627,42 @@ def main():
         check("reject host_only on a non-profile stage",
               lambda: rejected(invalid, stage="reproduce",
                                facts=dict(FACTS["reproduce"], host_only=True)))
+        # SCHEMAS.md "Unit equivalence check (U51)": reproduce facts add optional `units_match`
+        # and `units_full_match`, each a boolean or null; null outside units-check mode and on
+        # SKIPPED/stub records; records without them stay valid.
+        units = root / "units"
+        for match in (True, False, None):
+            for full in (True, False, None):
+                check("accept reproduce units_match=%r units_full_match=%r" % (match, full),
+                      lambda m=match, f=full: accepted(units, "reproduce",
+                                                       facts=dict(FACTS["reproduce"], units_match=m,
+                                                                  units_full_match=f)))
+        for key, value in (("units_match", True), ("units_match", None),
+                           ("units_full_match", False), ("units_full_match", None)):
+            check("accept reproduce with only %s=%r" % (key, value),
+                  lambda k=key, v=value: accepted(units, "reproduce",
+                                                  facts=dict(FACTS["reproduce"], **{k: v})))
+        check("accept reproduce without optional units facts",
+              lambda: accepted(units, "reproduce", facts=FACTS["reproduce"]))
+        check("accept FAIL reproduce with units_match=false and null counts",
+              lambda: accepted(units, "reproduce", "FAIL",
+                               facts=dict(FACTS["reproduce"], anchors_passed=None,
+                                          anchors_total=None, units_match=False,
+                                          units_full_match=None),
+                               v1=dict(exit_code=4, exit_kind="guard", error_class="anchor")))
+        check("accept SKIPPED reproduce with null units facts",
+              lambda: accepted(units, "reproduce", "SKIPPED",
+                               facts=dict.fromkeys(list(FACTS["reproduce"])
+                                                   + ["units_match", "units_full_match"])))
+        for key in ("units_match", "units_full_match"):
+            for value in ("true", "false", "True", "", "null", SENTINEL, 1, 0, 1.0, 0.0,
+                          math.nan, math.inf, [], [True], {key: True}):
+                check("reject reproduce %s=%r" % (key, value),
+                      lambda k=key, v=value: rejected(invalid, stage="reproduce",
+                                                      facts=dict(FACTS["reproduce"], **{k: v})))
+            check("reject %s on a non-reproduce stage" % key,
+                  lambda k=key: rejected(invalid, stage="profile",
+                                         facts=dict(FACTS["profile"], **{k: True})))
         # SCHEMAS.md A/intake/: optional intake `anchored` (boolean); null on stub records.
         anchored = root / "anchored"
         for value in (True, False, None):

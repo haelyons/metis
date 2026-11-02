@@ -829,7 +829,7 @@ function freezeChecks(name, root, config, stage, stoppedAt) {
     // Scoring had passed: the anchor counts and stock verification stand.
     const { timed_out, budget_s, overrun, ...facts } = stage('reproduce').facts
     assert.deepEqual(facts, { anchors_passed: 2, anchors_total: 2, stock_verified: true,
-      tuned_control_valid: null, tokens_known: true, gpu_busy_known: false })
+      tuned_control_valid: null, tokens_known: true, gpu_busy_known: false, units_match: null, units_full_match: null })
     if (timeout) assert.deepEqual({ timed_out, budget_s, overrun }, { timed_out: true, budget_s: config.setupBudget, overrun: true })
     else assert.deepEqual([timed_out, budget_s, overrun], [undefined, undefined, undefined], 'timeout fields without a timeout')
     const receipt = freezeReceipt()
@@ -944,8 +944,10 @@ function concurrencyChecks(name, root, config, stage, stoppedAt) {
 function reproduceFacts(name, run, passed, total, stock = true, tokensKnown = true) {
   check(`${name}: reproduce facts and validity`, () => {
     const row = run.stage('reproduce')
+    // U51: units_match and units_full_match are null outside units-check mode (SCHEMAS.md
+    // "Unit equivalence check (U51)"); no case here sets args.units_check.
     assert.deepEqual(row.facts, { anchors_passed: passed, anchors_total: total, stock_verified: stock,
-      tuned_control_valid: null, tokens_known: tokensKnown, gpu_busy_known: false })
+      tuned_control_valid: null, tokens_known: tokensKnown, gpu_busy_known: false, units_match: null, units_full_match: null })
     assert.equal(row.signature.gpu_s, 0)
     // run_valid: true/false with at least one anchor; null when there are no anchors.
     if (total === 0) assert.equal(row.signature.run_valid ?? null, null, 'run_valid must be null without anchors')
