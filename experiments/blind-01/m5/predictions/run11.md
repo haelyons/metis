@@ -49,3 +49,28 @@ Outcome distribution behind 4 and 10: measured 0.72, failed 0.10, outputs_mismat
 
 - **Would:** for four typical (median-cost) units on this box type, whether running them at once yields more work per wall hour than the baseline's own serial mode, with byte-identical outputs; and whether the shared run directory changes while they run.
 - **Would not:** anything about the shortest or longest units, other box types, the full published scale, method quality, or the scientific outcome. Provenance stays unverified. A factor is a throughput claim only (more work within budget), kept separate from any better-outcome claim.
+
+## Outcome (added after the run; the sections above are unchanged since the seal 8c6113ac)
+
+run11 (pushed 7ccd08f8): `gpu_1x_h100_pcie`, pipeline wall 8127 s (2.26 h), run box USD 7.43. Intake PASS (259 s). Reproduce PASS: setup rc 0 first attempt (388 s), `concurrency` rc 0 (6988 s with fetch, budget 42,061 s). Facts: `units_outcome` = `measured`, `units_factor_2` = 1.558, `units_factor_4` = 2.298, `units_shared_writes` = true. Later stages SKIPPED as designed.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.93 | yes | 0.0049 |
+| 2 | 0.75 | yes | 0.0625 |
+| 3 | 0.85 | yes | 0.0225 |
+| 4 | 0.72 | yes | 0.0784 |
+| 5 | 0.70 | yes (2.298) | 0.0900 |
+| 6 | 0.40 | yes | 0.3600 |
+| 7 | 0.08 | yes | 0.8464 |
+| 8 | 0.45 | yes (2.298 > 1.558) | 0.3025 |
+| 9 | 0.65 | yes | 0.1225 |
+| 10 | n/a | not applicable (measured) | n/a |
+| 11 | 0.75 | yes (2.26 h, USD 7.43) | 0.0625 |
+| 12 | 0.90 | yes | 0.0100 |
+
+Mean Brier 0.178 over 11 scored. The size of the gain was badly underpredicted (predictions 6 to 8): the operator expected little headroom because the baseline's own threads already use at least half the logical CPUs.
+
+Decision row: `measured`, largest factor ≥ 1.05. On this box type, for four median-cost units, running them four at once did the same work in 1/2.30 of the serial mode's wall time (two at once: 1/1.56), with every compared output byte-identical to run9's recorded files and to the serial invocation. This is a claim of more work within budget only, not a better outcome, and it is specific to this box's CPU count. The shared run directory changed during at least one arm (`units_shared_writes` true); the byte checks passed regardless. Next per the rule: report to the owner; any further stage needs a new owner decision.
+
+Interpretation (after the result; the criterion is unchanged). Deterministic content-free summary of `concurrency.json` (`run11_post` check, c471cf62), on 26 logical CPUs: every arm counted with all exit codes 0; wall relative to `a-1`: b-1 1.16, c2-1 0.64, c4-1 0.43, c4-2 0.44, c2-2 0.64, b-2 1.18, a-2 1.00; per-replicate factors a-1/c2-1 1.56, a-2/c2-2 1.56, a-1/c4-1 2.32, a-2/c4-2 2.27; separate/serial 1.17 (per-invocation start-up cost); effective cores per CPU 0.28 serial, 0.25 separate, 0.47 for two at once, 0.73 to 0.75 for four at once, busy fraction alike; `shared_changes` exactly 1 in every arm, serial arms included. Authorized reader `run11_post` (c471cf62, enums only): gain source `idle_cpu_in_serial_mode`; factor holds against the nearest serial arm; order effect `later_arms_slower` (small: b-2 1.18 against b-1 1.16); no sign of less work in later invocations; but `concurrent_log_problems` = `new_in_concurrent` (the concurrent invocations' logs show errors or warnings the serial ones do not) and `outputs_cover_all_results` = `partly` (the compared paths are only some of each unit's result files); what the shared entry is and whether invocations read each other's writes stay `unknown`. So the byte-identity holds for the compared files only, and the new log messages are not yet characterised; a follow-up reader (`run11_post2`) characterises both before any claim beyond the measured factors.
