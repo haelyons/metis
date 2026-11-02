@@ -38,3 +38,25 @@ Probabilities are the operator's, written before launch. Rows 1 to 13 as in `run
 | 14 | The first box command gets a receipt with an integer rc | 0.90 |
 
 All predictions are read from signatures, receipts and box metadata.
+
+## Outcome (added after the run; the sections above are unchanged since the seal 988466cc)
+
+run2 (pushed 3bb34c48): `gpu_1x_h100_pcie` (us-west-3), pipeline wall 11,518 s (3.2 h), run box USD 10.53; two files over 95 MB left uncommitted on disk. Intake PASS (226 s; same facts as run1). Reproduce PASS (3,473 s): setup rc 0 first attempt (145 s), anchors rc 0 (1,571 s), freeze rc 0 (1,402 s); no published anchors (0 of 0), `stock_verified` true, 49.6 GPU s. Profile PASS (7,703 s): `profile_complete` true, `timed_fraction` 1, `gpu_telemetry` true, `host_only` false, `headroom` 1.047 (concurrency probe rc 0, 3,448 s). Seal PASS (116 s): verified, `prediction_count` 0. Propose PASS with `outcome` `no_feasible_method` (no model calls); implement and evaluate SKIPPED; takeaways PASS with the fixed line "Finding: negative. No menu method has measured headroom of at least 1.05 on this hardware." Bounds (`blind_read.py`, fixed menu names and numbers only): data-parallel over inputs, batching and ensembles 1.047 (k = concurrency factor, p 1); multi-GPU 1.0 (one GPU; p 0.113); pipelining 1.001 (k 2, p 0.0025); none feasible. The negative therefore rests on the measured bounds, not on the seal's zero predictions.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.85 | yes | 0.0225 |
+| 2 | 0.30 | no (`none`) | 0.0900 |
+| 3 | 0.70 | yes | 0.0900 |
+| 4 | 0.55 | yes | 0.2025 |
+| 5 | 0.45 | yes | 0.3025 |
+| 6 | 0.45 | no (`host_only` false) | 0.2025 |
+| 7 | 0.45 | no (`no_feasible_method`) | 0.2025 |
+| 8, 9 | | not run | n/a |
+| 10 | 0.06 | no (stop point propose) | 0.0036 |
+| 11 | 0.65 | yes | 0.1225 |
+| 12 | 0.75 | yes | 0.0625 |
+| 13 | 0.85 | yes | 0.0225 |
+| 14 | 0.90 | yes | 0.0100 |
+
+Mean Brier 0.111 over 12 scored. Decision row: neither a failure nor an end-to-end PASS; the run stopped at propose on the contract's measured negative finding, so the rows above do not prescribe a next step: report to the owner. Bounded reading: on this box, the fixed menu's best measured headroom is 1.047 (plain concurrent copies of the baseline command), just under the 1.05 gate, from one probe measurement; GPU kernels occupy about 11% of the baseline's wall time. This says nothing about the seed's own comparisons, which the m5 stages do not express in full (reader `run2_progress2`: `seed_comparisons_in_pipeline` `some`). The progress reader's ceiling projection did not apply: with no method, no implement or evaluate box commands ran.
