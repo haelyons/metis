@@ -1,6 +1,6 @@
 {
  "20261020-0855-measure": {
-  "why": "m2: its takeaway says three of the card's five checked predictions were refuted, and the CPU library floor (one core, LAPACK dgtsv through scipy) took 416.7 ms at 2^24, a 19.1x speedup",
+  "why": "m2: of its twelve sealed predictions ten held and two did not occur, one of them a miss (P10: within 3x of cuSPARSE, measured 7.4x), so partly; the CPU library floor (one core, LAPACK dgtsv through scipy) took 416.7 ms at 2^24, a 19.1x speedup",
   "enums": {"prediction_hit": "partly"},
   "qa": [{"terms": ["CPU library", "dgtsv", "LAPACK", "CPU core", "CPU floor"], "figures": ["416.7", "19.1"]}]
  },

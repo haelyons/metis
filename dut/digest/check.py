@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """The mechanical checks on one digest directory (dut/digest/README.txt, CHECKS). Standard library only.
 
-Usage: python3 -I check.py <digest dir>
-Writes <digest dir>/CHECK.json, runs the marimo export (writes digest.html), exits 1 if any check fails.
-Env: MARIMO (the marimo binary, default "marimo"); DIGEST_GATES (the latent_skeptic gate directory).
+Usage: python3 -I check.py <digest dir>            every check; writes CHECK.json and digest.html; exit 1 on a failure
+       python3 -I check.py --export <digest dir>   the sandboxed marimo export only; prints its output; its exit code
+Env: MARIMO (the marimo binary, default "marimo"); DIGEST_GATES (the latent_skeptic gate directory);
+     BWRAP (default /usr/bin/bwrap; the export runs inside it, and falls back to no sandbox only if bwrap refuses).
 """
 import ast, hashlib, importlib.util, json, os, re, shutil, subprocess, sys
 
@@ -18,9 +19,12 @@ ENUMS = {   # keep in step with pipeline.js
     "anchor": ["measured", "page_value_only", "not_run", "none", "unknown"],
 }
 CITE = re.compile(r"\(evidence/[^()\s]+\)")
+EVPATH = re.compile(r"\(?evidence/[^()\s]+\)?")   # a citation or a bare evidence/ path: its digits are not numbers
+NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
 SPLIT = re.compile(r"(?<=[.!?])\s+")   # the sentence rule of gate_scope.py
 LIST = re.compile(r"^\s*(?:[-*+]|\d+[.)])\s")
 QUOTE = re.compile(r'^Quote \((evidence/[^()\s]+)\): "(.*)"\s*$')
+NOTE = ("Sources:", "Checked:", "Contradicted:", "Not addressed:", "Quote")   # QA.md lines the script adds under an answer
 OUTSIDE = re.compile(r"(?:^|[\s(`\"'])(?:\.\./|~/|/(?:home|tmp|root|Users|mnt|data|var|etc|opt|usr)/)")
 DOTDOT = re.compile(r"(?:^|[/\\])\.\.(?:[/\\]|$)")
 ABS = re.compile(r"^(?:/[\w.~-]|~[/\\]|[A-Za-z]:[\\/])|(?<![\w.])/(?:home|tmp|root|Users|mnt|data|var|etc|opt|usr|proc|dev)/")
@@ -49,11 +53,38 @@ def words(s):
     return len(CITE.sub(" ", s).split())
 
 
+def numbers(s):
+    return {n.replace(",", "") for n in NUMBER.findall(EVPATH.sub(" ", s))}
+
+
+def flat(s):
+    return " ".join(s.replace("*", "").replace("`", "").split())   # whitespace and markdown emphasis do not count
+
+
 def gate(name):
     spec = importlib.util.spec_from_file_location("digest_" + name, os.path.join(GATES, name + ".py"))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
+
+
+def export(d):
+    """marimo export inside bwrap: / read-only, the digest read-write, no network, a fresh /tmp."""
+    d, marimo, bwrap = os.path.realpath(d), os.environ.get("MARIMO", "marimo"), os.environ.get("BWRAP", "/usr/bin/bwrap")
+    cmd = [marimo, "export", "html", "digest.py", "-o", "digest.html", "-f"]
+    jail = [bwrap, "--ro-bind", "/", "/", "--dev", "/dev", "--proc", "/proc", "--tmpfs", "/tmp", "--bind", d, d,
+            "--unshare-net", "--die-with-parent", "--chdir", d]
+    cache, sandbox = os.path.join(d, "__marimo__"), "bwrap"
+    fresh = not os.path.exists(cache)
+    probe = subprocess.run(jail + ["/bin/true"], capture_output=True, text=True) if os.path.exists(bwrap) else None
+    if probe is None or probe.returncode != 0:
+        why = "not found" if probe is None else f"exit {probe.returncode}" + (f": {probe.stderr.strip()[:200]}" if probe.stderr.strip() else "")
+        sandbox = f"none: bwrap refused ({why}); export ran unsandboxed"
+        jail = []
+    r = subprocess.run(jail + cmd, cwd=d, capture_output=True, text=True, timeout=600)
+    if fresh and os.path.isdir(cache):
+        shutil.rmtree(cache)   # the export's session cache is not part of the digest
+    return r, sandbox
 
 
 def run(d):
@@ -76,14 +107,16 @@ def run(d):
         return 500 <= n <= 700, n
 
     def qa_answer_words():
-        blocks, head, cur = [], None, []
-        for line in qa.splitlines() + ["#"]:
-            if line.startswith("#"):
+        blocks, head, n = [], None, 0
+        for p in [l for l in qa.split("\n\n")] + ["#"]:
+            p = p.strip()
+            if p.startswith("#"):
                 if head:
-                    blocks.append((head, words(" ".join(cur))))
-                head, cur = (line if line.startswith("### ") else None), []
-            else:
-                cur.append(line)
+                    blocks.append((head, n))
+                head, n, note = (p if re.match(r"^#{2,3} ", p) else None), 0, False
+            elif head and not note:
+                note = p.startswith(NOTE)
+                n += 0 if note else words(p)
         over = [b for b in blocks if b[1] > 150]
         return bool(blocks) and not over, {"answers": len(blocks), "over_150": over}
 
@@ -103,8 +136,15 @@ def run(d):
                 rel = c[1:-1]
                 if ".." in rel.split("/") or not os.path.isfile(os.path.join(d, rel)):
                     missing.append(rel)
-            uncited += [f"{name}: {s[:120]}" for s in sentences(body) if re.search(r"\d", CITE.sub(" ", s)) and not CITE.search(s)]
+            claims = "\n\n".join(p for p in paragraphs(body) if not p.startswith("Checked:"))   # the check tally is not a claim
+            uncited += [f"{name}: {s[:120]}" for s in sentences(claims) if re.search(r"\d", CITE.sub(" ", s)) and not CITE.search(s)]
         return bool(digest) and not uncited and not missing, {"uncited": uncited[:10], "missing": sorted(set(missing))[:10]}
+
+    def digest_numbers_verified():
+        v = json.loads(text("VERIFY.json"))
+        ok = set().union(*[numbers(s["sentence"]) for s in v["sentences"] if s["verdict"] == "supported"])
+        unverified = sorted(set().union(*[numbers(p) for p in paragraphs(digest)]) - ok)
+        return bool(digest) and not unverified, {"supported_numbers": len(ok), "not_in_a_supported_sentence": unverified[:20]}
 
     def no_outside_paths():
         hits = [f"{n}: {l[:120]}" for n, body in (("DIGEST.md", digest), ("QA.md", qa)) for l in body.splitlines() if OUTSIDE.search(CITE.sub(" ", l))]
@@ -128,14 +168,13 @@ def run(d):
         return not bad and not extra, {"bad": bad, "extra": extra}
 
     def quotes_verbatim():
-        bad, n = [], 0
-        for line in qa.splitlines():
-            m = QUOTE.match(line)
-            if m:
-                n += 1
-                if " ".join(m[2].split()) not in " ".join(text(m[1]).split()):
-                    bad.append(line[:120])
-        return not bad, {"quotes": n, "not_found": bad}
+        quotes = [(m[1], m[2], "QA.md") for m in map(QUOTE.match, qa.splitlines()) if m]
+        for s in json.loads(text("VERIFY.json"))["sentences"]:
+            if s["verdict"] != "not_addressed":
+                quotes.append((s["path"], s["quote"], s["id"]))
+        bad = [f"{where}: {path} {q[:80]!r}" for path, q, where in quotes
+               if not flat(q) or not path.startswith("evidence/") or flat(q) not in flat(text(path))]
+        return not bad, {"quotes": len(quotes), "not_found_or_empty": bad[:10]}
 
     source = text("digest.py")
 
@@ -176,25 +215,25 @@ def run(d):
         return bool(listed) and not bad and not unlisted, {"files": len(listed), "bad": bad[:10], "unlisted": unlisted[:10]}
 
     def notebook_export():
-        marimo, cache = os.environ.get("MARIMO", "marimo"), os.path.join(d, "__marimo__")
-        fresh = not os.path.exists(cache)
-        r = subprocess.run([marimo, "export", "html", "digest.py", "-o", "digest.html", "-f"], cwd=d, capture_output=True, text=True, timeout=600)
-        if fresh and os.path.isdir(cache):
-            shutil.rmtree(cache)   # the export's session cache is not part of the digest
+        r, sandbox = export(d)
         tail = (r.stderr or r.stdout).strip().splitlines()[-3:]
-        return r.returncode == 0 and os.path.isfile(os.path.join(d, "digest.html")), {"exit": r.returncode, "tail": tail}
+        return r.returncode == 0 and os.path.isfile(os.path.join(d, "digest.html")), {"exit": r.returncode, "sandbox": sandbox, "tail": tail}
 
     for name, fn in [("headings", headings), ("digest_words", digest_words), ("qa_answer_words", qa_answer_words),
-                     ("sentences", sentence_rule), ("numbers_cited", numbers_cited), ("no_outside_paths", no_outside_paths),
-                     ("gate_density", gate_density), ("gate_scope", gate_scope), ("enums", enums), ("quotes_verbatim", quotes_verbatim),
-                     ("manifest", manifest), ("notebook_imports", notebook_imports), ("notebook_paths", notebook_paths),
-                     ("notebook_export", notebook_export)]:
+                     ("sentences", sentence_rule), ("numbers_cited", numbers_cited), ("digest_numbers_verified", digest_numbers_verified),
+                     ("no_outside_paths", no_outside_paths), ("gate_density", gate_density), ("gate_scope", gate_scope),
+                     ("enums", enums), ("quotes_verbatim", quotes_verbatim), ("manifest", manifest),
+                     ("notebook_imports", notebook_imports), ("notebook_paths", notebook_paths), ("notebook_export", notebook_export)]:
         check(name, fn)
     failed = [k for k, v in checks.items() if not v["pass"]]
     return {"pass": not failed, "failed": failed, "checks": checks}
 
 
 if __name__ == "__main__":
+    if len(sys.argv) == 3 and sys.argv[1] == "--export" and os.path.isdir(sys.argv[2]):
+        r, sandbox = export(sys.argv[2])
+        print(f"sandbox: {sandbox}\n{r.stdout}{r.stderr}".rstrip())
+        sys.exit(r.returncode)
     if len(sys.argv) != 2 or not os.path.isdir(sys.argv[1]):
         sys.exit(__doc__)
     result = run(sys.argv[1])

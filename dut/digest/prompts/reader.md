@@ -12,26 +12,21 @@ A run's RUN.md may name files outside the run, usually the source card that the 
 
 ## What to return
 
-First the observations: one answer per standing question below, at most 120 words each, saying what the files show and where. When the files do not establish something, say so and name what is missing. Do not guess to fill a gap.
+Answer each standing question below in at most 120 words, saying what the files show and where. Write in neutral words: describe what was measured and what the files record, not what you hope or fear it means. When the files do not establish something, say so and name what is missing. Do not guess to fill a gap.
 
 {{questions}}
 
-Then the five sections of the digest, written from the observations:
-- question: the question the brief or card asked, in its own words where you can quote them, and what would count as an answer.
-- answer: the number that answers it, the baseline it is measured against, the equivalence check, and the verdict under the run's own rule.
-- constraints: the problem and its constraints, such as hardware, budget, what was fixed in advance and what the run could not change.
-- method: what was run and measured, and the assumptions the numbers rest on.
-- analysis: which predictions held and which failed, by how much, what was voided or not run, what it cost, and what a second run would change.
+Write full sentences of about 20 words, with no lists, headings or tables. Spell terms out: a reader who has never seen the project must follow every sentence, so do not use the run's own codes for endpoints, predictions or stages unless you say what each one is.
 
-The five sections together run 500 to 700 words; aim for 600. Write full sentences of about 20 words, none over 45 words. Use no lists, headings or tables. A blank line between paragraphs is fine. Spell terms out: a reader who has never seen the project must follow every sentence, so do not use the run's own codes for endpoints, predictions or stages unless you say what each one is.
+A second reader will check every sentence that carries a citation against the file it cites, and will mark it supported only when a line in that file states or computes it. So cite, in each sentence, the file that states what that sentence says.
 
 ## Citations
 
-Every number in every answer and section carries a citation in the same sentence, before its full stop: the path of the file that holds the number, in parentheses, relative to the run root, for example (agent/results/evaluate/performance.json). Put one path in each pair of parentheses and nothing else in it. A parenthesis that holds only a path is a citation, and the tool copies that file into the digest. Cite a file outside the run by the path RUN.md gives it.
+Every number in every answer carries a citation in the same sentence, before its full stop: the path of the file that holds the number, in parentheses, relative to the run root, for example (agent/results/evaluate/performance.json). Put one path in each pair of parentheses and nothing else in it. A parenthesis that holds only a path is a citation, and the tool copies that file into the digest. Cite a file outside the run by the path RUN.md gives it.
 
-Cite the primary record that holds a number, not a write-up that repeats it, whenever the record exists. A number you computed yourself cites the files it came from, and the sentence says how you computed it. Name what each number measured: which solver, model, arm or baseline, at which size. Cite the code a scientist should read to trust the numbers: the harness, the method and the measurement scripts. Cite files, not directories, and no file over {{max_mb}} MB.
+Cite the primary record that holds a number, not a write-up that repeats it, whenever the record exists. A number you computed yourself cites the files it came from, and the sentence says how you computed it. Name what each number measured: which solver, model, arm or baseline, at which size. Cite the code a scientist should read to trust the numbers: the harness, the method and the measurement scripts. Cite files, not directories, and no file over {{max_mb}} MB. Never cite a hidden file or a file in a hidden directory (a name that starts with a dot); the tool refuses them.
 
-List every file you cite in `citations`, with a few words in `supports` saying what it holds, such as "speedup table at five sizes" or "measurement harness". In each observation, `citations` lists the paths that answer relies on.
+List every file you cite in `citations`, with a few words in `supports` saying what it holds, such as "speedup table at five sizes" or "measurement harness". In each answer, `citations` lists the paths that answer relies on.
 
 ## Rules of evidence
 
@@ -43,6 +38,6 @@ Give your draft of these values from the files:
 - headline_kind: speedup (the method beat the baseline under the run's own rule), negative (it did not), void (the run was voided or produced no valid headline), partial (only part of the rule could be applied), unknown.
 - baseline_kind: stock (the published code as shipped), tuned (a baseline tuned for this hardware), one_thread (one thread, or one GPU thread, per problem), cpu_library (a CPU library routine), other, unknown.
 - equivalence: bit_identical, within_tolerance (outputs compared with a reference and matched within a stated tolerance), not_checked, failed, unknown.
-- prediction_hit: yes (every prediction written before measuring held), partly, no, not_sealed (nothing was written before measuring), unknown. Count both the sealed predictions and the brief's or card's own predictions.
+- prediction_hit: yes (every sealed prediction held), partly, no, not_sealed (nothing was sealed before measuring), unknown. Count only the predictions sealed before this run measured. The brief's or card's own guesses are context for the prose, not for this value.
 - evidence: measured (the headline number was measured in this run), inferred (computed from other numbers or quoted, not measured here), unknown.
 - anchor: measured (an independent reference implementation ran and reproduced its published value), page_value_only (the published value was compared, but the reference code did not run), not_run (an anchor was planned and did not run), none (the run had no anchor), unknown.

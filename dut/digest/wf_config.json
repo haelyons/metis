@@ -5,7 +5,7 @@
     "max_concurrency": 1,
     "timeouts_min": {
       "ls-general": 30,
-      "qt-bare": 15
+      "qt-bare": 30
     },
     "runs_dir": "/home/hal/dev/interp/metis/experiments/_scratch/wf"
   },
@@ -14,11 +14,11 @@
     "mode": "fallback",
     "on_refusal": "halt",
     "disabled_families": [
-      "claude",
       "cursor"
     ],
     "chain": {
       "codex": [
+        "claude",
         "opencode"
       ]
     },

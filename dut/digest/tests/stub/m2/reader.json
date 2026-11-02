@@ -1,67 +1,84 @@
 {
- "observations": {
+ "answers": {
   "Q1": {
-   "answer": "The card asked: \"Does feeding many GPUs to the block-tridiagonal Newton solve shorten its depth from T ordered steps to log2(T)?\" (../20261019-2344-tree/out/RESULT.md). The run's question file restates it as whether the card's decision rule resolves to lever on its own hardware, and whether its measured-later numbers hold (QUESTION.md).",
+   "answer": "The source card asked: \"Does feeding many GPUs to the block-tridiagonal Newton solve shorten its depth from T ordered steps to log2(T)?\" (../20261019-2344-tree/out/RESULT.md). The run turns this into the card's own decision rule: lever only if parallel cyclic reduction beats one-thread Thomas by at least 2 times at 2^24 equations, and the speedup grows with size (QUESTION.md). An answer is the verdict of that rule, together with the numbers the card promised to measure later (RUN.md).",
    "citations": [
     "../20261019-2344-tree/out/RESULT.md",
-    "QUESTION.md"
-   ]
-  },
-  "Q2": {
-   "answer": "The deciding baseline is the card's own: a hand-written Thomas kernel with one GPU thread per system (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). The operator added one CPU core running the scipy LAPACK routine as a report-only floor, because the card names that floor but gives it no endpoint (RUN.md). At 2^24 equations the CPU library took a median 416.7 ms and the one-thread kernel 7598.5 ms (results_m2/out/records/id-E7_kind-endpoint_run-m2.json) (results_m2/out/records/id-E3_kind-endpoint_run-m2.json).",
-   "citations": [
-    "results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
-    "results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
+    "QUESTION.md",
     "RUN.md"
    ]
   },
-  "Q3": {
-   "answer": "Twelve predictions with probabilities were written and hashed before any agent or box ran (SEALED_PREDICTIONS.md). They assumed that the baseline is the slowest sequential arrangement, so the card's rule would almost surely say lever, and that the parallel solver's time grows about linearly at the top sizes (SEALED_PREDICTIONS.md).",
+  "Q2": {
+   "answer": "The runner generated tridiagonal systems from fixed seeds, with a diagonal of 3 and off-diagonals of plus or minus 1, in double precision (QUESTION.md). It timed five sizes from 2^10 to 2^24 equations, on five seeds each (QUESTION.md). The box was one rented 40 GB data-centre GPU at 1.99 dollars an hour (RUN.md). The measurement code is one Python runner and one shell script that runs its stages on the box (run_m2.py) (onbox_m2.sh).",
    "citations": [
-    "SEALED_PREDICTIONS.md",
-    "out/SEALS.txt"
+    "QUESTION.md",
+    "RUN.md",
+    "run_m2.py",
+    "onbox_m2.sh"
    ]
   },
-  "Q4": {
-   "answer": "The answering number is the median speedup at 2^24 equations, 348.3 against one GPU thread, with a lower quartile of 348.29 (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). Against one CPU core it is 19.1 (results_m2/out/records/id-E7_kind-endpoint_run-m2.json). The equivalence check is the anchor: residuals at most 1e-10 and differences under 1e-8 against the vendor library and scipy, which both solvers passed (results_m2/out/records/id-E1_kind-endpoint_run-m2.json).",
+  "Q3": {
+   "answer": "The deciding baseline is the card's own: a hand-written Thomas kernel with one GPU thread per system (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). The run's write-up calls that the slowest sensible way to run Thomas (TAKEAWAYS_m2.md). In practice a scientist would use a CPU library routine or the vendor's GPU solver. The operator added one CPU core running the LAPACK routine through scipy as a report-only floor, which took a median 416.7 ms at 2^24 equations (results_m2/out/records/id-E7_kind-endpoint_run-m2.json).",
    "citations": [
     "results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
     "results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
-    "results_m2/out/records/id-E1_kind-endpoint_run-m2.json"
+    "TAKEAWAYS_m2.md"
+   ]
+  },
+  "Q4": {
+   "answer": "At 2^24 equations the parallel solver took a median 21.8 ms against 7598.5 ms for one GPU thread, a speedup of 348.3 (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). The speedups at the five sizes were 8.54, 95.90, 517.53, 395.38 and 348.30, with a fitted slope of 0.256 (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). The lower quartile across seeds at 2^24 was 348.29, so the spread is small (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). Against one CPU core the speedup at 2^24 was 19.1 (results_m2/out/records/id-E7_kind-endpoint_run-m2.json). The number counts under the card's rule of at least 2 times with growth (QUESTION.md).",
+   "citations": [
+    "results_m2/out/records/id-E3_kind-endpoint_run-m2.json",
+    "results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
+    "QUESTION.md"
    ]
   },
   "Q5": {
-   "answer": "Of twelve sealed predictions, ten held and two did not occur; the failed forecast was that the parallel solver would be within 3 times of the vendor library, where it was 7.4 times slower (out/PREDICTIONS_SCORED.md). Of the five card predictions the write-up checks, three were refuted: the residual guess was off by a factor of 321.4, the speedup proxy by 12.44 times and the time need by 16.8 times (TAKEAWAYS_m2.md).",
+   "answer": "Before timing, both hand-written solvers had to reach a relative residual of at most 1e-10 and agree within 1e-8 with the vendor GPU solver and with scipy, at 2^10 and 2^14 equations (results_m2/out/records/id-E1_kind-endpoint_run-m2.json). Both passed (results_m2/out/records/id-E1_kind-endpoint_run-m2.json). The largest relative residual of either solver was 3.11e-16 (results_m2/out/records/id-E2_kind-endpoint_run-m2.json).",
    "citations": [
-    "out/PREDICTIONS_SCORED.md",
-    "TAKEAWAYS_m2.md"
+    "results_m2/out/records/id-E1_kind-endpoint_run-m2.json",
+    "results_m2/out/records/id-E2_kind-endpoint_run-m2.json"
    ]
   },
   "Q6": {
-   "answer": "Nothing was voided, and every planted control passed (TAKEAWAYS_m2.md). The optional block and multi-GPU phases were not run, by an operator decision before launch (RUN.md). The isolated reader in triage did not run because its agent type was not found (RUN.md).",
+   "answer": "Twelve predictions with probabilities were sealed and hashed before any agent or box ran (SEALED_PREDICTIONS.md). Ten held and two did not occur, for a Brier score of 0.090 (out/PREDICTIONS_SCORED.md). The forecast that the parallel solver would come within 3 times of the vendor solver failed: it was 7.4 times slower (out/PREDICTIONS_SCORED.md). Among the card's own guesses, the measured speedup was 12.44 times its proxy of 28 (results_m2/out/records/id-E5_kind-endpoint_run-m2.json).",
    "citations": [
-    "RUN.md",
-    "TAKEAWAYS_m2.md"
+    "SEALED_PREDICTIONS.md",
+    "out/SEALS.txt",
+    "out/PREDICTIONS_SCORED.md",
+    "results_m2/out/records/id-E5_kind-endpoint_run-m2.json"
    ]
   },
   "Q7": {
-   "answer": "The box ran for 0.239 hours at 1.99 dollars an hour, 0.48 dollars in total, on one launch (RUN.md). Compute on the box took about 7.1 minutes (RUN.md). Model usage was recorded as call counts only, with no dollar figure for the agents (RUN.md).",
+   "answer": "Nothing was voided, and every planted control passed (TAKEAWAYS_m2.md). The optional block and multi-GPU phases of the card were not run, by an operator decision before launch (RUN.md). The isolated reader in triage did not run because its agent type was not found (RUN.md). None of these touches the timed comparison that answers the question.",
    "citations": [
+    "TAKEAWAYS_m2.md",
     "RUN.md"
    ]
   },
   "Q8": {
-   "answer": "The run's write-up asks for a case with data copied to the GPU, since the records never say whether copies are timed (TAKEAWAYS_m2.md). It also notes that 52 of 125 timing rows fell under the 50 ms block rule, so a second run would lengthen the small timed blocks (TAKEAWAYS_m2.md).",
+   "answer": "The answer covers one GPU model, double precision, the generated diagonally dominant systems, and sizes from 2^10 to 2^24 equations (QUESTION.md). The timed blocks repeat solves on data already on the GPU, so copies from the host are not in the times (TAKEAWAYS_m2.md). Nothing above 2^24 equations, no other GPU and no real Newton system was measured (QUESTION.md).",
    "citations": [
+    "QUESTION.md",
+    "TAKEAWAYS_m2.md"
+   ]
+  },
+  "Q9": {
+   "answer": "The box ran one launch of 0.239 hours at 1.99 dollars an hour, 0.48 dollars in total (RUN.md). The box was billed 4.80 dollars for the launch (RUN.md). The sweep itself took 0.119 hours against the card's planned need of 2 hours (results_m2/out/records/id-E10_kind-endpoint_run-m2.json). The run had a hard cap of 8 dollars and at most two launches (RUN.md). Running it again needs the same rented GPU, the runner and the on-box script (onbox_m2.sh).",
+   "citations": [
+    "RUN.md",
+    "results_m2/out/records/id-E10_kind-endpoint_run-m2.json",
+    "onbox_m2.sh"
+   ]
+  },
+  "Q10": {
+   "answer": "On this GPU the parallel solver is about 19.1 times faster than one CPU core at 2^24 equations, which is the comparison a practitioner needs (results_m2/out/records/id-E7_kind-endpoint_run-m2.json). The write-up asks next for a case with the data copied to the GPU as well as one with the data resident (TAKEAWAYS_m2.md). A second run on a newer GPU would double the speedup (TAKEAWAYS_m2.md).",
+   "citations": [
+    "results_m2/out/records/id-E7_kind-endpoint_run-m2.json",
     "TAKEAWAYS_m2.md"
    ]
   }
  },
- "question": "This run measured one plan card produced by an earlier question-tree run (../20261019-2344-tree/out/RESULT.md). The card asked whether feeding many GPUs to a block-tridiagonal Newton solve shortens its depth from T ordered steps to log2(T) (../20261019-2344-tree/out/RESULT.md). It proposed parallel cyclic reduction, which halves the system each round, against the Thomas algorithm, which walks the equations one after another. The card's own rule says lever only if the parallel solver beats one-thread Thomas by at least 2 times at 2^24 equations, and the speedup grows with size (QUESTION.md). The run also checked four numbers the card promised to measure later: a residual guess, a crossover size, a speedup proxy and a time estimate.",
- "answer": "By the card's own rule the answer is lever. The parallel solver took a median 21.8 ms at 2^24 equations against 7598.5 ms for one GPU thread running Thomas, a speedup of 348.3 (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). The speedups at the five sizes were 8.54, 95.90, 517.53, 395.38 and 348.30, and the slope of log speedup against log size was 0.256, so the growth test passed (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). Against one CPU core running the LAPACK routine through scipy, the speedup at 2^24 was 19.1, from a median of 416.7 ms (results_m2/out/records/id-E7_kind-endpoint_run-m2.json). Both hand-written solvers first matched two independent references, with a largest relative residual of 3.11e-16 against a limit of 1e-10 (results_m2/out/records/id-E2_kind-endpoint_run-m2.json) (results_m2/out/records/id-E1_kind-endpoint_run-m2.json).",
- "constraints": "The problem is a chain of equations in which each equation links only its two neighbours, solved in double precision. The card fixed the hardware as one rented 40 GB data-centre GPU at 1.99 dollars an hour, and the run used that machine (RUN.md). The operator fixed six adjustments before any agent ran, among them no rewrite of the card, no optional phases, and a CPU floor that is reported but does not decide (RUN.md). The run had a hard cap of 8 dollars and at most two launches (RUN.md). Nothing was to be installed on the box unless missing, and a missing compiler would halt the run cleanly rather than fall back. The card itself had been rejected by its citation reviewer, and the run measured it anyway, as committed.",
- "method": "The runner generated tridiagonal systems from fixed seeds, with a diagonal of 3 and off-diagonals of plus or minus 1, at five sizes from 2^10 to 2^24 equations (QUESTION.md). Each size was timed on five seeds, and the speedup is the median Thomas time over the median parallel time (results_m2/out/records/id-E3_kind-endpoint_run-m2.json). An anchor check at the two smallest sizes compared both hand-written solvers with the vendor library on the GPU and with scipy on the CPU. The measurement code is one Python runner and one shell script that runs its stages in order on the box (run_m2.py) (onbox_m2.sh). The timed blocks repeat solves on data already on the GPU, so copies from the host are not in the times (TAKEAWAYS_m2.md). The baseline is one GPU thread per system, which the write-up calls the slowest sensible way to run Thomas (TAKEAWAYS_m2.md).",
- "analysis": "The operator sealed twelve predictions before any agent ran; ten held and two did not occur, for a Brier score of 0.090 (out/PREDICTIONS_SCORED.md). The forecast that the parallel solver would come within 3 times of the vendor library failed, at 7.4 times slower (out/PREDICTIONS_SCORED.md). Of the card's own numbers, the residual guess, the speedup proxy of 28 and the time need of 2 hours were refuted, while the crossover guess held (TAKEAWAYS_m2.md). The measured speedup was 12.44 times the proxy (results_m2/out/records/id-E5_kind-endpoint_run-m2.json). The sweep took 0.119 hours against the planned need of 2 hours (results_m2/out/records/id-E10_kind-endpoint_run-m2.json). Nothing was voided, and the optional phases were skipped by design. The box cost 0.48 dollars for 0.239 hours (RUN.md). A second run would make the CPU library the deciding baseline and time the copies to the GPU as well.",
  "citations": [
   {
    "path": "../20261019-2344-tree/out/RESULT.md",

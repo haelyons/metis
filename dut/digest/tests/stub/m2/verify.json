@@ -1,0 +1,26 @@
+{
+ "overrides": [
+  {
+   "match": "billed 4.80 dollars",
+   "verdict": "contradicted",
+   "quote": "terminate 10:00:43Z, 0.239 h, **USD 0.48**",
+   "path": "RUN.md",
+   "reason": "the launch cost is recorded as 0.48 dollars, not 4.80"
+  },
+  {
+   "match": "newer GPU would double",
+   "verdict": "not_addressed",
+   "quote": "",
+   "path": "TAKEAWAYS_m2.md",
+   "reason": "the write-up says nothing about a newer GPU"
+  }
+ ],
+ "enums": {
+  "headline_kind": "speedup",
+  "baseline_kind": "one_thread",
+  "equivalence": "within_tolerance",
+  "prediction_hit": "partly",
+  "evidence": "measured",
+  "anchor": "measured"
+ }
+}
