@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 'use strict'
-// reframe: a separate stage, outside the pipeline. For each case (a problem as first written down, with its root
+// reframe: a separate stage, run before the card pipeline. For each case (a problem as first written down, with its root
 // question) and each lens (a short brief in lenses/), one model proposes up to three reframings, each ending in a
 // question someone could investigate. A judge on another model then classifies every question as reframe, copies or
 // other, and checks it against the case's criterion when the case has one. Every call is logged as in the pipeline.
 //
-// usage: node reframe/reframe.js --cases <cases.json> --out <run dir> [--model m] [--judge m] [--lenses harry,independent]
-//        node reframe/reframe.js --cases <cases.json> --judge-only <proposals.json> --out <run dir> [--judge m]
+// usage: node dut/reframe/reframe.js --cases <cases.json> --out <run dir> [--model m] [--judge m] [--lenses harry,independent]
+//        node dut/reframe/reframe.js --cases <cases.json> --judge-only <proposals.json> --out <run dir> [--judge m]
 //          proposals.json: [{case, label, reframes: [...]}]; judges each list as given (planted tests, other judges' input)
 const fs = require('node:fs')
 const path = require('node:path')
 const crypto = require('node:crypto')
 const { execFileSync } = require('node:child_process')
-const oc = require('../dut/pipeline/idea/oc.js')
-const { validate, promptSuffix } = require('../dut/pipeline/idea/schema.js')
+const oc = require('../pipeline/idea/oc.js')
+const { validate, promptSuffix } = require('../pipeline/idea/schema.js')
 
 const argv = process.argv.slice(2)
 const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d }
@@ -61,7 +61,7 @@ async function call(name, model, prompt, schema) {
 ;(async () => {
   const sha = s => crypto.createHash('sha256').update(s).digest('hex').slice(0, 12)
   const commit = (() => { try { return execFileSync('git', ['-C', __dirname, 'rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim() } catch { return '?' } })()
-  fs.writeFileSync(path.join(OUT, 'RUN.md'), [`# reframe run`, '', `Code: reframe/ at commit ${commit}. Reframer ${MODEL}; judge ${JUDGE}.`,
+  fs.writeFileSync(path.join(OUT, 'RUN.md'), [`# reframe run`, '', `Code: dut/reframe/ at commit ${commit}. Reframer ${MODEL}; judge ${JUDGE}.`,
     `Lenses: ${Object.entries(LENSES).map(([n, t]) => `${n} (sha ${sha(t)})`).join(', ')}; copies in ./lenses.`, `Cases: ./cases.json.`, ''].join('\n'))
   fs.mkdirSync(path.join(OUT, 'lenses'), { recursive: true })
   for (const [n, t] of Object.entries(LENSES)) fs.writeFileSync(path.join(OUT, 'lenses', `${n}.md`), t + '\n')

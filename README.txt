@@ -44,7 +44,9 @@ its result would feed. A loop proposes close variants and keeps a better one.
     launch.js          starts a run (below)
   dut/latent_skeptic/  submodule at ff9a63c: the pipeline that designs, gates,
                        runs and writes up one GPU experiment (the coolant pilot ran on it)
-  reframe/             a separate stage: from a problem to investigable reframings
+  dut/reframe/         a stage before the pipeline: from a problem as first written
+                       down to investigable reframings, one model proposing per lens
+                       (lenses/), another judging reframe / copies / other
   experiments/<name>/  one project: QUESTION.md, seed.json, one folder per run
   experiments/_meta/   notes across projects (COMPARE.md, idea memos)
 
