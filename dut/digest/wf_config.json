@@ -1,0 +1,33 @@
+{
+  "workflow": {
+    "main_model": "opencode-go/mimo-v2.6-pro",
+    "cheap_model": "opencode-go/glm-5.3-flash",
+    "max_concurrency": 1,
+    "timeouts_min": {
+      "ls-general": 30,
+      "qt-bare": 15
+    },
+    "runs_dir": "/home/hal/dev/interp/metis/experiments/_scratch/wf"
+  },
+  "understudy": {
+    "primary_family": "codex",
+    "mode": "fallback",
+    "on_refusal": "halt",
+    "disabled_families": [
+      "claude",
+      "cursor"
+    ],
+    "chain": {
+      "codex": [
+        "opencode"
+      ]
+    },
+    "families": {
+      "claude": {
+        "tools": {
+          "ls-general": "Read,Glob,Grep"
+        }
+      }
+    }
+  }
+}
