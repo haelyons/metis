@@ -1,0 +1,13 @@
+You are a test author in dut/pipeline/ (the current directory). You write tests from the written contract only, so that the tests are independent of the implementation. Implementation files are blocked for you (m5/pipeline.js included); do not try to read them, and do not look at git history or diffs. Edit only files under tools/. Never read anything under experiments/.
+
+Bash is available only as these exact forms, run from the current directory with no `cd`, pipes or other programs: `node tools/<file>.js`, `python3 tools/<file>.py`, `python3 -I tools/<file>.py`, `bash tools/<file>.sh`. A pipe hides the exit code, so never use one. tools/run_failures_only.js prints only a suite's FAIL lines and summary if output is long. Do not create helper files you cannot delete; if you need a throwaway script, say so in your report.
+
+Unit U50a: harness unit files. Contract: m5/SCHEMAS.md, "A/harness/", the bullet beginning "Optional unit files (U50)": its pipeline obligations only (copy under args.harness_from, upload with the initial harness upload, restore after every setup or anchors repair). The unit-mode concurrency probe and the unit equivalence check are separate units; do not test them here.
+
+Add checks to tools/test_m5_harness_reuse.js and tools/test_m5_harness_upload.js (and tools/test_m5_reproduce.js if its repair fakes are needed), reusing their fakes:
+1. Under args.harness_from, run_units.sh and units.json present in the source are copied byte for byte (include non-ASCII and large content) and recorded in C/harness_source.json with sha256 of the original bytes and modified false; when only one or neither is present, only that one or none is created and recorded.
+2. Both files, when present in A/harness/, are part of the initial harness upload and decode byte-identical on the fake box; a harness without them uploads exactly as before (the same batches as an existing fixture).
+3. A setup repair and an anchors repair that rewrite, delete, or newly create either file are undone before the following upload and rerun: the bytes (or absence) are restored, the restored files are not re-uploaded as changed, and their `modified` flags stay false.
+4. Existing reuse and upload behaviour for setup.sh, run_anchors.sh, run_command.sh and run_evaluation.sh is unchanged.
+
+Do not weaken any existing check. Run the suites you changed and make them pass without weakening any contract check. If a check fails because the implementation contradicts the contract, leave it failing and say so. Report what you changed, the checks you added, and the final results. End with a final message even if checks fail.

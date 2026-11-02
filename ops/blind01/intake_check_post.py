@@ -2,12 +2,12 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2|run8_family|run8_diag|run8_diag2|run9_obs|run9_diag|run9_diag2|run9_diag3|run9_diag4|run9_replay|run9_par|run9_scale|run9_scale2|run9_replay2] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2|run8_family|run8_diag|run8_diag2|run9_obs|run9_diag|run9_diag2|run9_diag3|run9_diag4|run9_replay|run9_par|run9_scale|run9_scale2|run9_replay2|run9_units|run9_outputs|run10_harness|run10_review|run10_harness2|run10_review2|run10_why|run10_mech|run10_inputs|run10_diff|run10_harness3|run10_review3] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -242,6 +242,143 @@ if a.dir == "run9_replay2":
         "gpu_telemetry": {"true", "false", "unknown"},
         "gate_after_fix": {"pass", "numeric", "parse", "unknown"},
     }
+if a.dir == "run9_units":
+    ENUMS = {
+        "unit_kind": {"distinct_inputs", "repeated_trials", "candidates_same_input", "parameter_points", "chains_or_walkers", "mixed", "other", "unknown"},
+        "reduced_dimension": {"inputs", "trials_per_input", "candidates_per_input", "parameter_points", "unit_length", "several", "unknown"},
+        "expansion_effect": {"coverage", "precision", "per_input_outcome", "mixed", "none", "unknown"},
+        "expansion_effect_basis": {"published_text", "code", "inferred", "none"},
+        "combination": {"average_or_pooled", "best_or_max", "per_unit", "other", "unknown"},
+        "unit_wall": {"under_1min", "1_to_10min", "10_to_60min", "over_60min", "unknown"},
+        "unit_cost_cv": {"under_10pct", "10_to_50pct", "over_50pct", "unknown"},
+        "subset_selectable": {"published_option", "config_edit", "code_change", "unknown"},
+        "unit_output_repeatable": {"bitwise", "within_tolerance", "not_repeatable", "unknown"},
+        "random_state": {"per_unit_independent", "sequence_dependent", "no_randomness", "unknown"},
+        "thread_setting": {"all_cores_default", "fixed_number", "environment_variable", "unknown"},
+        "threads_vs_cpus": {"under_half", "half_or_more", "unknown"},
+        "writes_outside_out": {"no", "yes", "unknown"},
+        "earlier_categories_merged": {"yes", "no"},
+    }
+if a.dir == "run9_outputs":
+    ENUMS = {
+        "per_unit_outputs": {"separate", "combined", "both", "unknown"},
+        "unit_paths_stable": {"yes", "no", "not_applicable", "unknown"},
+        "run_specific_content": {"no", "yes", "unknown"},
+        "per_unit_costs_recorded": {"all_units", "some_units", "none", "unknown"},
+        "subset_ids": {"args_safe", "args_unsafe_chars", "needs_file", "other", "unknown"},
+        "units_count": {"under_4", "4_to_7", "8_to_15", "16_to_63", "64_or_more", "unknown"},
+        "cuda_rows_zero": {"yes", "no", "unknown"},
+        "telemetry_samples": {"none", "some", "unknown"},
+        "telemetry_all_zero": {"yes", "no", "unknown"},
+        "other_host_within_2pct": {"yes", "no", "unknown"},
+        "cross_unit_state": {"no", "yes", "unknown"},
+    }
+if a.dir == "run10_harness":
+    ENUMS = {
+        "copies_written": {"yes", "no"},
+        "units_listed": {"all_units", "some_units", "none"},
+        "outputs_exist_in_reproduce": {"all", "some", "none"},
+        "outputs_per_unit_only": {"yes", "no", "unknown"},
+        "cost_source": {"reproduce_logs", "reproduce_outputs", "mixed", "unknown"},
+        "subset_mechanism": {"published_option", "other", "unknown"},
+        "command_differs_only_in_subset": {"yes", "no", "unknown"},
+        "bash_syntax_ok": {"yes", "no"},
+    }
+if a.dir in ("run10_review", "run10_review2", "run10_review3"):
+    ENUMS = {
+        "diff_argument_handling": {"yes", "no"},
+        "diff_subset_selection": {"yes", "no"},
+        "diff_messages_or_log_paths": {"yes", "no"},
+        "diff_output_locations": {"yes", "no"},
+        "diff_environment": {"yes", "no"},
+        "diff_thread_setting": {"yes", "no"},
+        "diff_configuration_or_scale": {"yes", "no"},
+        "diff_binary_or_entry": {"yes", "no"},
+        "diff_working_directory": {"yes", "no"},
+        "diff_other": {"yes", "no"},
+        "same_computation_per_unit": {"yes", "no", "unknown"},
+        "writes_only_out_or_temp": {"yes", "no", "unknown"},
+        "mps_untouched": {"yes", "no"},
+        "units_complete_and_ordered": {"yes", "no", "unknown"},
+        "outputs_own_files_only": {"yes", "no", "unknown"},
+        "costs_match_records": {"yes", "no", "unknown"},
+        "contract_met": {"yes", "no", "unknown"},
+        "verdict": {"usable", "needs_fix", "unknown"},
+    }
+if a.dir == "run10_harness2":
+    ENUMS = {
+        "copies_written": {"yes", "no"},
+        "review_findings_resolved": {"all", "some", "none"},
+        "units_json_changed": {"yes", "no"},
+        "subset_mechanism": {"published_option", "other", "unknown"},
+        "command_differs_only_in_subset": {"yes", "no", "unknown"},
+        "same_computation_per_unit": {"yes", "no", "unknown"},
+        "writes_only_out_or_temp": {"yes", "no", "unknown"},
+        "bash_syntax_ok": {"yes", "no"},
+    }
+if a.dir == "run10_why":
+    ENUMS = {
+        "failed_requirement": {"subset_not_published_option", "computation_may_differ", "may_write_outside_out", "exit_status", "id_check", "output_paths", "units_json", "other", "none"},
+        "entry_point_has_subset_option": {"yes", "no", "unknown"},
+        "other_published_entry_same_computation": {"yes", "no", "not_needed", "unknown"},
+        "fixable_in_unit_files": {"yes", "no", "unknown"},
+        "probe_check_catches_wrong_computation": {"yes", "no", "partly", "unknown"},
+        "risk_if_used_as_is": {"none", "wasted_run", "misleading_result", "unknown"},
+        "unknowns_reason": {"static_reading_limit", "concrete_problem", "both", "unknown"},
+    }
+if a.dir == "run10_mech":
+    ENUMS = {
+        "mechanism": {"internal_same_code", "lower_level_published_tool", "modified_entry_copy", "reimplementation", "other", "unknown"},
+        "per_unit_code_unmodified": {"yes", "no", "unknown"},
+        "non_unit_share": {"none", "under_5pct", "5_to_25pct", "over_25pct", "unknown"},
+        "skipped_steps_affect_unit_files": {"yes", "no", "no_steps_skipped", "unknown"},
+        "partial_catch_reason": {"files_incomplete", "cost_can_change_silently", "both", "other", "unknown"},
+        "cost_check_possible": {"yes", "no", "unknown"},
+    }
+if a.dir == "run10_inputs":
+    ENUMS = {
+        "restriction_possible": {"yes", "no", "unknown"},
+        "restriction_kind": {"config_input_list", "scanned_directory", "command_line_inputs", "other", "none"},
+        "published_code_unmodified": {"yes", "no", "not_applicable"},
+        "same_paths": {"yes", "no", "not_applicable", "unknown"},
+        "restriction_changes_computation": {"no", "yes", "not_applicable", "unknown"},
+        "harness_rules_satisfiable": {"yes", "no", "not_applicable", "unknown"},
+        "config_differs_only_in_units": {"yes", "no", "not_applicable", "unknown"},
+    }
+if a.dir == "run10_diff":
+    ENUMS = {
+        "baseline_vs_upstream": {"none", "config_or_environment", "source_patches", "both", "unknown"},
+        "harness2_change_origin": {"inherited", "new_for_subsetting", "both", "unknown"},
+        "inputs_change_origin": {"inherited", "new_for_subsetting", "both", "unknown"},
+        "cli_selector": {"effective", "present_ineffective", "absent", "unknown"},
+        "prepared_list_read": {"yes", "no", "unknown"},
+        "list_redirectable": {"yes", "no_fixed_path", "not_applicable", "unknown"},
+        "restricted_list_original_records": {"yes", "no", "not_applicable", "unknown"},
+        "inherited_path_conflict": {"yes", "no", "unknown"},
+        "route_adds_path_conflict": {"yes", "no", "not_applicable", "unknown"},
+        "selection_affects_unit_results": {"no", "yes", "unknown"},
+        "selection_effect_basis": {"code", "inferred", "none"},
+        "full_run_repeatability_basis": {"two_runs_compared", "code_reading", "none"},
+        "narrow_route_exists": {"yes", "no", "unknown"},
+    }
+if a.dir == "run10_harness3":
+    ENUMS = {
+        "copies_written": {"yes", "no"},
+        "selection_route": {"restricted_prepared_list", "published_selector", "other"},
+        "list_records_original": {"yes", "no", "unknown"},
+        "list_passed_via_existing_input": {"yes", "no", "unknown"},
+        "new_code_change": {"no", "yes"},
+        "command_differs_only_in_selection": {"yes", "no", "unknown"},
+        "adds_writes_outside_out": {"no", "yes", "unknown"},
+        "inherited_path_conflict": {"yes", "no", "unknown"},
+        "units_json_reused": {"yes", "no"},
+        "bash_syntax_ok": {"yes", "no"},
+    }
+if a.dir == "run10_review3":
+    ENUMS = dict(ENUMS)
+    ENUMS["restricted_list_faithful"] = {"yes", "no", "not_applicable", "unknown"}
+    ENUMS["inherited_path_conflict"] = {"yes", "no", "unknown"}
+    ENUMS["unit_files_add_path_conflict"] = {"no", "yes", "unknown"}
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
     ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
@@ -263,6 +400,37 @@ def load(name):
 
 status = load("status.json")
 print("STATUS " + json.dumps(status, sort_keys=True) if status else "STATUS_INVALID")
+if a.dir in ("run10_harness", "run10_harness2", "run10_harness3"):
+    # Content-free checks of the written harness source against the U50 contract; prints booleans and buckets only.
+    import hashlib, math
+    source = os.path.join(os.path.dirname(P), "run9", "agent", "harness")
+    digest = lambda f: hashlib.sha256(open(f, "rb").read()).hexdigest()
+    names = sorted(os.listdir(source))
+    print("copies identical:", all(os.path.isfile(os.path.join(P, n)) and digest(os.path.join(P, n)) == digest(os.path.join(source, n)) for n in names),
+          "; source files", len(names))
+    unit_id = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:+=-]{0,127}")
+    component = re.compile(r"[A-Za-z0-9._+=-]+")
+    good_path = lambda q: isinstance(q, str) and all(component.fullmatch(c) and c not in (".", "..") for c in q.split("/"))
+    try:
+        u = json.load(open(os.path.join(P, "units.json")))["units"]
+        valid = (isinstance(u, list) and len(u) >= 4 and len({r["id"] for r in u}) == len(u) and all(
+            isinstance(r, dict) and set(r) == {"id", "outputs", "cost_s"} and isinstance(r["id"], str) and unit_id.fullmatch(r["id"])
+            and isinstance(r["outputs"], list) and r["outputs"] and len(set(r["outputs"])) == len(r["outputs"])
+            and all(good_path(q) for q in r["outputs"])
+            and type(r["cost_s"]) in (int, float) and math.isfinite(r["cost_s"]) and r["cost_s"] > 0 for r in u))
+        paths = [q for r in u for q in r["outputs"]] if valid else []
+        out = os.path.join(os.path.dirname(P), "run9", "agent", "results", "reproduce", "out")
+        found = sum(os.path.isfile(os.path.join(out, q)) for q in paths)
+        n = len(u)
+        print("units.json valid:", bool(valid), "; units", "under_4" if n < 4 else "4_to_7" if n < 8 else "8_to_15" if n < 16 else "16_to_63" if n < 64 else "64_or_more",
+              "; output paths shared between units:", len(set(paths)) != len(paths),
+              "; outputs in reproduce:", "none" if not paths or not found else "all" if found == len(paths) else "some")
+    except Exception:
+        print("units.json valid: False")
+    script = os.path.join(P, "run_units.sh")
+    print("run_units.sh present:", os.path.isfile(script), "; bash -n ok:",
+          os.path.isfile(script) and subprocess.run(["bash", "-n", script], capture_output=True).returncode == 0)
+
 if a.check_only:
     raise SystemExit(0)
 if a.dir == "intake_check_codex":
@@ -270,7 +438,7 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2"):
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()
