@@ -1,0 +1,111 @@
+{
+  "repo": "https://github.com/pinder-org/pinder",
+  "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "pin": {
+    "source_git_tree": "adc153de2eef1ac428c1136d609b30728c88cc7b",
+    "frodock_mirror_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+    "source": "brief.md: Materials"
+  },
+  "method": "FroDock 3.12 as labeled by supplied mirror README; original study version identity unresolved",
+  "build_commands": [
+    "apt-get --allow-releaseinfo-change update \\\n    && apt-get -y install --no-install-recommends \\\n    apt-utils \\\n    dialog 2>&1 \\\n    && apt-get install -y --no-install-recommends \\\n    git \\\n    rsync \\\n    ssh \\\n    gpg \\\n    wget \\\n    man-db \\\n    procps \\\n    tree \\\n    unzip \\\n    gcc \\\n    build-essential \\\n    lsb-release \\\n    curl \\\n    vim \\\n    exuberant-ctags \\\n    apt-transport-https \\\n    ca-certificates \\\n    gnupg \\\n    libgl1-mesa-glx  \\\n    libopenblas-base \\\n    libopenmpi-dev openmpi-common openmpi-bin libopenmpi3 \\\n    libfftw3-3 libfftw3-dev libfftw3-mpi-dev \\\n    libhdf5-openmpi-dev \\\n    && apt-get autoclean \\\n    && apt-get autoremove \\\n    && rm -rf /var/lib/apt/lists/*",
+    "micromamba install -y -n base -c conda-forge \\\n    pyopenssl=23.2.0 \\\n    python=${MAMBA_PYTHON_VERSION} \\\n    requests=2.25.1 \\\n    google-cloud-storage \\\n    gcsfs \\\n    keyrings.google-artifactregistry-auth \\\n    && micromamba clean --all --yes",
+    "echo \"deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main\" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-cli -y",
+    "gcloud config set project ${MAMBA_PYTHON_VERSION}",
+    "python -m pip install \\\n    simple-gcp-object-downloader \\\n    kubernetes \\\n    pandas==1.5.3",
+    "git clone https://github.com/pinder-org/pinder.git; \\\n    cd pinder && pip install .",
+    "tar -xf frodock.tar.gz && \\\n    mv frodock3_linux64 frodock && \\\n    rm frodock.tar.gz",
+    "./compile_frodock.sh"
+  ],
+  "build_commands_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+  "build_context": {
+    "dockerfile_verbatim": "ARG BASE_TAG=1.5-jammy\nARG BASE_IMAGE=mambaorg/micromamba\nARG RUNTIME_USER=root\nARG MAMBA_PYTHON_VERSION=3.10\nARG GCP_PROJECT\n# Required to pass at build time. Points to local location of FroDock software archive.\nARG FRODOCK_SOURCE_ARCHIVE=./frodock.tar.gz\n\nFROM --platform=linux/amd64 ${BASE_IMAGE}:${BASE_TAG}\n\nARG MAMBA_PYTHON_VERSION\nARG RUNTIME_USER\nENV DEBIAN_FRONTEND=noninteractive\n\nUSER root\n\n# Install OS dependencies\nRUN apt-get --allow-releaseinfo-change update \\\n    && apt-get -y install --no-install-recommends \\\n    apt-utils \\\n    dialog 2>&1 \\\n    && apt-get install -y --no-install-recommends \\\n    git \\\n    rsync \\\n    ssh \\\n    gpg \\\n    wget \\\n    man-db \\\n    procps \\\n    tree \\\n    unzip \\\n    gcc \\\n    build-essential \\\n    lsb-release \\\n    curl \\\n    vim \\\n    exuberant-ctags \\\n    apt-transport-https \\\n    ca-certificates \\\n    gnupg \\\n    libgl1-mesa-glx  \\\n    libopenblas-base \\\n    libopenmpi-dev openmpi-common openmpi-bin libopenmpi3 \\\n    libfftw3-3 libfftw3-dev libfftw3-mpi-dev \\\n    libhdf5-openmpi-dev \\\n    && apt-get autoclean \\\n    && apt-get autoremove \\\n    && rm -rf /var/lib/apt/lists/*\n\n\n# Install conda env\nRUN micromamba install -y -n base -c conda-forge \\\n    pyopenssl=23.2.0 \\\n    python=${MAMBA_PYTHON_VERSION} \\\n    requests=2.25.1 \\\n    google-cloud-storage \\\n    gcsfs \\\n    keyrings.google-artifactregistry-auth \\\n    && micromamba clean --all --yes\n\n\nARG MAMBA_DOCKERFILE_ACTIVATE=1  # (otherwise python will not be found)\nENV CLOUDSDK_PYTHON /opt/conda/bin/python\nENV BASH_ENV=/usr/local/bin/_activate_current_env.sh\nENV LD_LIBRARY_PATH=/opt/conda/lib/\n\n# Install gsutil without full gcloud sdk\nRUN echo \"deb [signed-by=/usr/share/keyrings/cloud.google.gpg] http://packages.cloud.google.com/apt cloud-sdk main\" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key --keyring /usr/share/keyrings/cloud.google.gpg  add - && apt-get update -y && apt-get install google-cloud-cli -y\nRUN gcloud config set project ${MAMBA_PYTHON_VERSION}\n\n# GCP/GKE specifics\nRUN python -m pip install \\\n    simple-gcp-object-downloader \\\n    kubernetes \\\n    pandas==1.5.3\n\nWORKDIR /root/workspace\n\n# Install pinder\nRUN git clone https://github.com/pinder-org/pinder.git; \\\n    cd pinder && pip install .\n\n# Copy the FroDock tool into the Docker image\nCOPY ${FRODOCK_SOURCE_ARCHIVE} /workspace/\n\nRUN tar -xf frodock.tar.gz && \\\n    mv frodock3_linux64 frodock && \\\n    rm frodock.tar.gz\n\nWORKDIR /workspace/frodock\nRUN ./compile_frodock.sh\n\n# Update PATH to include Frodock binaries\nENV PATH=\"/app/frodock/bin:${PATH}\"\n\n# Prepare user (could be $MAMBA_USER)\nUSER ${RUNTIME_USER}\n\nWORKDIR /root/workspace\n\nENTRYPOINT [\"/usr/local/bin/_entrypoint.sh\"]\nCMD [\"/bin/bash\"]\n",
+    "reason": "Preserve published installation commands and required environment/COPY context exactly. Published recipe has unresolved path defects; not claimed verified."
+  },
+  "run_commands": [
+    "{run} {pre}frodockgrid{suff} {receptor}.pdb -o {receptor}_W.mrc",
+    "{run} {pre}frodockgrid{suff} {receptor}.pdb -o {receptor}_E.mrc -m 1 -t A",
+    "{run} {pre}frodockgrid{suff} {receptor}.pdb -o {receptor}_DS.mrc -m 3",
+    "{run} {pre}frodockgrid{suff} {ligand}.pdb -o {ligand}_DS.mrc -m 3",
+    "{run} {pre}frodock{suff} {receptor}_ASA.pdb {ligand}_ASA.pdb -w {receptor}_W.mrc -e {receptor}_E.mrc --th 10 -d {receptor}_DS.mrc,{ligand}_DS.mrc -t A -o dock.dat -s {pre}soap.bin",
+    "{pre}frodockcluster{suff2} dock.dat {ligand}.pdb --nc {n_solutions} -o clust_dock.dat",
+    "{pre}frodockview{suff2} clust_dock.dat -r 1-{n_solutions}",
+    "{pre}frodockview{suff2} clust_dock.dat -r 1-{n_solutions} -p {ligand}.pdb",
+    "pinder_eval --help"
+  ],
+  "run_commands_sources": [
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  ],
+  "run_command_interface": {
+    "kind": "Published Python f-string templates, not ready-expanded shell commands",
+    "run": "mpirun -np {mpi_np} --use-hwthread-cpus ",
+    "pre": "Path(dock_path).parent in published adapter; missing separator must be resolved before use",
+    "suff": "_mpi_gcc",
+    "suff2": "_gcc",
+    "evaluator": "pinder_eval CLI requires --eval_dir, supports --serial, --allow_missing, --custom_index, --max_workers; see published run.py.",
+    "evaluator_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py"
+  },
+  "published_configuration": {
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py"
+    ],
+    "base_image": "mambaorg/micromamba:1.5-jammy",
+    "platform": "linux/amd64",
+    "python_default": "3.10",
+    "mpi_np_default": 8,
+    "docking_th": 10,
+    "scoring_file": "bin/soap.bin",
+    "n_solutions": null,
+    "n_solutions_reason": "Required adapter argument; no published default established.",
+    "force": null,
+    "force_reason": "Required adapter parameter without default in inspected code.",
+    "random_seed": null,
+    "random_seed_reason": "No seed parameter in adapter.",
+    "historical_study_configuration": null,
+    "historical_study_configuration_reason": "No exact study command, seed set or authenticated software/scoring hash established."
+  },
+  "execution_status": "Not built or run; source inspection only. Known adapter/recipe defects listed in benchmark.json.",
+  "source_licences": [
+    {
+      "item": "PINDER code",
+      "licence": "Apache-2.0",
+      "intended_use": "local scientific docking evaluation",
+      "permission": "permitted",
+      "basis": "explicit",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE"
+    },
+    {
+      "item": "PINDER 2024-02 dataset, index, metadata and mappings",
+      "licence": null,
+      "permission": "unknown",
+      "basis": "distribution",
+      "source": [
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE"
+      ],
+      "reason": "Repository advertises Apache-2.0; no fetched statement explicitly extends that licence to separately hosted dataset and all derived inputs."
+    },
+    {
+      "item": "FroDock mirror software and bin/soap.bin scoring input",
+      "licence": null,
+      "permission": "unknown",
+      "basis": "unreachable",
+      "source": [
+        "https://chaconlab.org/modeling/frodock/frodock-donwload",
+        "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz",
+        "brief.md: Materials"
+      ],
+      "reason": "Official download/licence route returns HTTP 404. Mirror README requests citations but does not establish a grant covering software and scoring input. Owner authorizes mirror use; this does not establish upstream rights."
+    },
+    {
+      "item": "AAV RCSB structures 6IHB, 6JCQ, 6JCS",
+      "licence": "CC0-1.0",
+      "permission": "permitted",
+      "basis": "explicit",
+      "source": "https://www.rcsb.org/pages/policies",
+      "reason": "RCSB Usage Policies explicitly cover data files in PDB archive under CC0 1.0; local scientific redocking permitted."
+    }
+  ]
+}

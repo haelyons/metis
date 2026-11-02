@@ -1,0 +1,116 @@
+{
+  "representative_scale": {
+    "fixed_cases": 93,
+    "selection": "All official PINDER-S cases with both primary apo monomers; one fixed cohort, no scale search.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "brief.md"
+    ],
+    "separate_challenge_cases": [
+      "6IHB",
+      "6JCQ",
+      "6JCS"
+    ],
+    "candidate_count": null,
+    "reason": "Fixed candidate count and repeat seeds must be preregistered; absent evidence retained as unavailable, not assigned a published value."
+  },
+  "inputs": [
+    {
+      "name": "PINDER index and metadata",
+      "release": "2024-02",
+      "access": "Exact URLs in inventory; filter pinder_s and both primary apo monomers."
+    },
+    {
+      "name": "Primary paired apo receptor and ligand for all 93 cases, native holo dimers, matching mapping files",
+      "access": "Official individual pdbs/ and mappings/ URLs in inventory; use primary apo assignments from index."
+    },
+    {
+      "name": "Separated test structures",
+      "access": "Official test_set_pdbs.zip and individual URLs in inventory."
+    },
+    {
+      "name": "FroDock software and bin/soap.bin",
+      "access": "Use owner-authorized unverified mirror in inventory; bin/soap.bin SHA-256 791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc. Do not substitute distinct src/frodockonstraint/Release_intel/soap.bin."
+    },
+    {
+      "name": "Separate AAV challenge coordinates",
+      "access": "RCSB 6IHB.cif, 6JCQ.cif, 6JCS.cif, exact URLs and hashes in inventory."
+    }
+  ],
+  "outputs": {
+    "poses": "{results_dir}/frodock/{complex_id}/apo_decoys/model_{i}.pdb; full receptor-ligand complexes in predicted rank order",
+    "metrics": "Per-pose DockQ, iRMSD, LRMSD and Fnat; per-case top-ranked and best-of-preregistered-candidate scores and success indicators.",
+    "evaluator_files": "{eval_dir}/{method_name}_metrics.csv and {eval_dir}/{method_name}_leaderboard.csv",
+    "performance": [
+      "wall-clock time",
+      "search throughput",
+      "time to first acceptable pose",
+      "compute cost"
+    ],
+    "sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py"
+    ]
+  },
+  "timing_scope": {
+    "end_to_end": "Report input preparation, potential-grid construction, docking search, clustering/ranking, coordinate generation and scoring separately, plus complete elapsed run.",
+    "search": "Docking stage wall time; retain MPI process count and hardware. Include grids in end-to-end; distinguish downloads/builds as setup.",
+    "time_to_acceptable": "Elapsed time to first generated pose subsequently verified DockQ >=0.23; unavailable when implementation only exposes final batch, rather than inventing event timestamps.",
+    "cost": "Use observed resource duration and actual price; no tariff supplied.",
+    "source": [
+      "brief.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py"
+    ]
+  },
+  "scoring_interface": {
+    "entrypoint": "pinder_eval",
+    "required_argument": "--eval_dir",
+    "scope": "Directory of method/complex_id/apo_decoys/model_<rank>.pdb against official native structures.",
+    "source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/run.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ],
+    "rules": {
+      "metrics": [
+        "DockQ",
+        "interface RMSD (angstrom)",
+        "native-contact recovery (Fnat)"
+      ],
+      "acceptable_pose": {
+        "quantity": "DockQ",
+        "comparison": ">=",
+        "threshold": 0.23,
+        "source": "https://github.com/wallnerlab/DockQ#quick-start"
+      },
+      "ranking": "Report top-ranked pose separately from best DockQ among a fixed preregistered candidate count; retain failures in case accounting.",
+      "candidate_count": null,
+      "candidate_count_reason": "Brief requires a fixed number but supplies no number; inspected adapter requires n_solutions without a default. Must preregister before execution.",
+      "formula": "DockQ = (Fnat + 1/(1+(iRMSD/1.5)^2) + 1/(1+(LRMSD/8.5)^2))/3",
+      "formula_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/metrics.py",
+      "scientific_limits": [
+        "AAV separated components support redocking only, not independently unbound docking.",
+        "Docking accuracy does not establish BBB transcytosis, binding affinity or therapeutic relevance.",
+        "Published-value checks cannot authenticate FroDock mirror against original study bytes."
+      ]
+    },
+    "missing_system_policy": "Do not silently drop missing or failed cases. Default evaluator validates completeness; report selected 93-case cohort explicitly."
+  },
+  "budgets": {
+    "supplied_args": {},
+    "run_ceiling_s_default": 43200,
+    "method_setup_default_s": 1200,
+    "method_run_default_s": 1200,
+    "tests_default_s": 900,
+    "evaluate_default_s": 2400,
+    "estimates_s": null,
+    "reason": "No timings measured; no estimates or overrides invented. Setup/anchors/profile inherit remaining ceiling when args budgets absent.",
+    "feasibility": "Completion within budgets remains unknown before calibration; no builds/workloads authorized for intake."
+  },
+  "unavailable_protocol_details": {
+    "candidate_count": null,
+    "seed_values": null,
+    "repeat_count": null,
+    "AAV_chain_domain_extraction": null,
+    "reason": "Brief supplies no fixed candidate count, numerical seeds, repeat count or exact extraction specification. Must resolve before scientific execution."
+  }
+}

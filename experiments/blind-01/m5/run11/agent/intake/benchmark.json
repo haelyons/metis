@@ -1,0 +1,176 @@
+{
+  "identity": {
+    "name": "PINDER-S",
+    "repo": "https://github.com/pinder-org/pinder",
+    "dataset_release": "2024-02",
+    "source_commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "primary_workload": "93 PINDER-S complexes with both primary apo monomers",
+    "full_test_cases": 250,
+    "separate_challenge": [
+      "6IHB: AAV2-PKD2",
+      "6JCQ: AAV1-PKD2",
+      "6JCS: AAV5-PKD1"
+    ]
+  },
+  "found": true,
+  "found_basis": "Public source includes baseline adapter, executable docking stage commands and evaluator; required material URLs and completed retrieval inventory supplied in readable brief. Execution not tested.",
+  "outcome_definition": "Recovery of experimentally observed protein-protein interfaces from apo docking; measure top-ranked and best-of-fixed-candidate quality separately, with throughput, wall time, cost and time to acceptable pose.",
+  "citations": [
+    {
+      "title": "PINDER: The Protein INteraction Dataset and Evaluation Resource",
+      "url": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "title": "FRODOCK 2.0: Fast Protein-Protein docking server",
+      "url": "https://doi.org/10.1093/bioinformatics/btw141",
+      "source": "Mirror README"
+    },
+    {
+      "title": "FRODOCK: a new approach for fast rotational protein-protein docking",
+      "url": "https://doi.org/10.1093/bioinformatics/btp447",
+      "source": "Mirror README"
+    },
+    {
+      "title": "DockQ published quality convention",
+      "url": "https://github.com/wallnerlab/DockQ#quick-start"
+    }
+  ],
+  "source_licences": [
+    {
+      "item": "PINDER code",
+      "licence": "Apache-2.0",
+      "intended_use": "local scientific docking evaluation",
+      "permission": "permitted",
+      "basis": "explicit",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE"
+    },
+    {
+      "item": "PINDER 2024-02 dataset, index, metadata and mappings",
+      "licence": null,
+      "permission": "unknown",
+      "basis": "distribution",
+      "source": [
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE"
+      ],
+      "reason": "Repository advertises Apache-2.0; no fetched statement explicitly extends that licence to separately hosted dataset and all derived inputs."
+    },
+    {
+      "item": "FroDock mirror software and bin/soap.bin scoring input",
+      "licence": null,
+      "permission": "unknown",
+      "basis": "unreachable",
+      "source": [
+        "https://chaconlab.org/modeling/frodock/frodock-donwload",
+        "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz",
+        "brief.md: Materials"
+      ],
+      "reason": "Official download/licence route returns HTTP 404. Mirror README requests citations but does not establish a grant covering software and scoring input. Owner authorizes mirror use; this does not establish upstream rights."
+    },
+    {
+      "item": "AAV RCSB structures 6IHB, 6JCQ, 6JCS",
+      "licence": "CC0-1.0",
+      "permission": "permitted",
+      "basis": "explicit",
+      "source": "https://www.rcsb.org/pages/policies",
+      "reason": "RCSB Usage Policies explicitly cover data files in PDB archive under CC0 1.0; local scientific redocking permitted."
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "unreachable",
+  "stock_cuda_image": {
+    "feasible": null,
+    "reason": "Stock image specification absent; no build or workload run. Linux amd64 GNU/MPI/FFTW baseline appears portable but compatibility remains untested.",
+    "evidence": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/pyproject.toml"
+    ],
+    "requirements": [
+      "Python >=3.10",
+      "fastpdb wheels require Linux glibc >=2.34; otherwise Rust build",
+      "GNU compilers, OpenMPI, FFTW",
+      "FroDock CPU/MPI baseline; CUDA acceleration is experimental scope, not published baseline requirement"
+    ],
+    "source_issues": [
+      "Dockerfile WORKDIR and archive extraction paths differ; PATH points to /app/frodock/bin although tool workdir is /workspace/frodock.",
+      "Adapter concatenates Path directory with binary filenames without slash.",
+      "Adapter changes into empty temporary directory without copying inputs.",
+      "Adapter uses shutil.copy on literal wildcard and does not check subprocess return codes.",
+      "Method CLI uses pd.from_csv and compares string enum values with enum members."
+    ],
+    "issues_source": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/main.py"
+    ]
+  },
+  "size": {
+    "category": "unknown",
+    "data_gib": null,
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "reason": "Inventory byte sizes available, but selected-case resident structures, docking grids, per-process working set and output storage unmeasured. Complete training dataset size does not describe selected benchmark.",
+    "inventoried_download_bytes": 1068926514,
+    "inventoried_download_gib": 0.9955153930932283,
+    "inventory_scope": "All supplied inventory rows, including optional auxiliary files and archives; not required resident working set.",
+    "test_zip_uncompressed_bytes": 730945215
+  },
+  "scoring": {
+    "metrics": [
+      "DockQ",
+      "interface RMSD (angstrom)",
+      "native-contact recovery (Fnat)"
+    ],
+    "acceptable_pose": {
+      "quantity": "DockQ",
+      "comparison": ">=",
+      "threshold": 0.23,
+      "source": "https://github.com/wallnerlab/DockQ#quick-start"
+    },
+    "ranking": "Report top-ranked pose separately from best DockQ among a fixed preregistered candidate count; retain failures in case accounting.",
+    "candidate_count": null,
+    "candidate_count_reason": "Brief requires a fixed number but supplies no number; inspected adapter requires n_solutions without a default. Must preregister before execution.",
+    "formula": "DockQ = (Fnat + 1/(1+(iRMSD/1.5)^2) + 1/(1+(LRMSD/8.5)^2))/3",
+    "formula_source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-eval/pinder/eval/dockq/metrics.py",
+    "scientific_limits": [
+      "AAV separated components support redocking only, not independently unbound docking.",
+      "Docking accuracy does not establish BBB transcytosis, binding affinity or therapeutic relevance.",
+      "Published-value checks cannot authenticate FroDock mirror against original study bytes."
+    ]
+  },
+  "repeatability": {
+    "case_selection": "Fixed complete set of 93 paired-primary-apo PINDER-S cases, not a random smaller subset; retain official IDs.",
+    "seeds": null,
+    "reason": "Independent seeds requested by brief, but values and repeated-run count unspecified; FroDock adapter exposes no seed argument.",
+    "material_pins": "data.json includes complete brief inventory and recorded hashes. Dependencies not fully pinned; historical-study equivalence unresolved."
+  },
+  "search_candidates": [
+    {
+      "benchmark": "PINDER-S",
+      "selected": true,
+      "source": "https://github.com/pinder-org/pinder"
+    },
+    {
+      "resource": "FroDock distribution/licence",
+      "selected_as_benchmark": false,
+      "sources": [
+        "https://chaconlab.org/downloads",
+        "https://chaconlab.org/modeling/frodock/frodock-donwload"
+      ]
+    },
+    {
+      "resource": "DockQ scoring criterion",
+      "selected_as_benchmark": false,
+      "source": "https://github.com/wallnerlab/DockQ"
+    }
+  ],
+  "search_queries": [
+    "site.chaconlab.org FRODOCK license academic SOAP",
+    "site.pinder-org.github.io pinder license dataset DockQ 0.23 93"
+  ],
+  "gate_scripts": {
+    "commands": null,
+    "reason": "Prompt names no gate scripts; validate required JSON keys, anchor schema and consistency locally."
+  }
+}
