@@ -1,4 +1,4 @@
-"""Blind-safe metadata reader for one blind-01 run. Prints only allowlisted fields.
+"""Blind-safe metadata reader for one run of a blind experiment (blind-01, blind-02, ...). Prints only allowlisted fields.
 
 Usage: python3 ~/.cache/blind01/blind_read.py <run_root>
 Prints: signature rows (numbers, booleans, pipeline enums), OPERATOR_TAKEAWAY.md,
@@ -8,7 +8,7 @@ region, start), the raid name and the tail of the launcher log. Nothing else.
 import json, os, re, sys
 
 ROOT = os.path.abspath(sys.argv[1])
-assert re.search(r"/experiments/blind-01/m5/run\d+$", ROOT), "not a blind-01 run root"
+assert re.search(r"/experiments/blind-\d\d/m5/run\d+$", ROOT), "not a blind m5 run root"
 SIG_KEYS = ("stage", "n", "status", "exit_code", "exit_kind", "error_class", "depth", "wall_s",
             "gpu_s", "usd", "tokens_in", "tokens_out", "model_family", "blockers", "run_valid",
             "calibration_valid")
