@@ -1,0 +1,12 @@
+{
+  "cases_identified": "yes",
+  "seed_matches_records": "yes",
+  "prepared_inputs_pinned": "yes",
+  "references_pinned": "yes",
+  "software_pins_recorded": "partly",
+  "alternative": "unverified_mirror",
+  "hashes_recorded": true,
+  "reachability": "reachable",
+  "run1_brief": "addendum",
+  "owner_action": "none"
+}
