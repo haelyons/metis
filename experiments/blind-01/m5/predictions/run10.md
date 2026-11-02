@@ -45,3 +45,21 @@ Predictions 1 to 5, 7 and 9 are read from signatures (`units_match`, `units_full
 
 - **Would:** for four typical (median-cost) units, selecting their original records reproduces the measured baseline's per-unit result files on a fresh box. That is the prerequisite for a valid serial-versus-concurrent comparison.
 - **Would not:** anything about throughput, the shortest or longest units, the other units, or the scientific outcome. Provenance stays unverified.
+
+## Outcome (added after the run; the sections above are unchanged since the seal)
+
+run10 (pushed 555cc348): `gpu_1x_h100_pcie`, wall 2442 s, run box USD 2.23. Reproduce PASS: setup rc 0 first attempt (388 s), `units-check` rc 0 (1382 s with fetch), `units_match` true, `units_full_match` null (control not run). Later stages SKIPPED as designed.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.92 | yes | 0.0064 |
+| 2 | 0.60 | yes | 0.1600 |
+| 3 | 0.90 | yes | 0.0100 |
+| 4 | 0.80 | yes | 0.0400 |
+| 5 | 0.60 | yes | 0.1600 |
+| 6 | 0.65 | yes (reader `run10_post` a8b00b63 `0_7_to_1_3`; deterministic recount of `units_check.json` agrees) | 0.1225 |
+| 7 | 0.50 | not applicable (no mismatch) | n/a |
+| 8 | 0.75 | yes (0.68 h, USD 2.23) | 0.0625 |
+| 9 | 0.90 | yes | 0.0100 |
+
+Mean Brier 0.071 over 8 scored. Decision row: `units_match` true. `run10_post` also found every compared file non-empty, but errors in the subset's log despite exit 0, a possible collision between concurrent invocations in the shared run directory (byte check detects it only partly), avoidable without code change by per-invocation directories. Follow-up reader `run10_post2` (4580973d): the subset log's errors also appear in run9's full-run logs, have several sources, and do not affect the compared files; all four units were computed and the compared files were written by the subset invocation. Which paths are written outside `out/`, their naming and purpose, whether later units read them, and whether private copies would preserve the computation could not be established by reading. The criterion is not changed by either reader. Owner decision 2026-11-02: stage 2 runs standalone (U52); the probe counts shared-directory changes per arm because the writes could not be characterised by reading.
