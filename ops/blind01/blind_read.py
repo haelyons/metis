@@ -89,3 +89,38 @@ try:
     print("".join(open(os.path.join(ROOT, "devbox_up.log")).readlines()[-4:]).rstrip())
 except FileNotFoundError:
     print("(none)")
+
+print("== infra patterns (pipeline.log; counts of fixed phrases only)")
+PATTERNS = ("Remote launch failed", "Connection timed out", "Connection refused", "No route to host",
+            "Connection reset", "Connection closed", "kex_exchange_identification", "Permission denied (publickey",
+            "Host key verification failed", "Could not resolve hostname", "Argument list too long", "Broken pipe")
+try:
+    text = open(os.path.join(ROOT, "pipeline.log"), errors="replace").read()
+    print({p: text.count(p) for p in PATTERNS if text.count(p)} or "none of the fixed phrases")
+except FileNotFoundError:
+    print("(no pipeline.log)")
+
+print("== fetched output sizes (bytes and file counts per stage folder only)")
+res = os.path.join(ROOT, "agent", "results")
+for stage in sorted(os.listdir(res)) if os.path.isdir(res) else []:
+    if not re.fullmatch(r"[a-z_-]{1,24}", stage):
+        continue
+    n = size = 0
+    for d, _, files in os.walk(os.path.join(res, stage)):
+        for f in files:
+            n += 1
+            try:
+                size += os.path.getsize(os.path.join(d, f))
+            except OSError:
+                pass
+    print(stage, {"files": n, "MB": round(size / 1e6, 1)})
+
+print("== bounds (fixed menu methods: bound, feasible, k only)")
+MENU = ("data-parallel over inputs", "batching", "multi-GPU", "ensembles", "pipelining")
+bounds = load(os.path.join(ROOT, "agent", "bounds.json"))
+if isinstance(bounds, dict):
+    for m in MENU:
+        v = bounds.get(m) if isinstance(bounds.get(m), dict) else {}
+        print(m, {k: v.get(k) for k in ("bound", "feasible", "k", "p") if safe(v.get(k))})
+else:
+    print("(none)")

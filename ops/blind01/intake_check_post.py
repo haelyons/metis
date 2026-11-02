@@ -8,11 +8,12 @@ import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--exp", default="blind-01", choices=["blind-01", "blind-02"])
-ap.add_argument("--dir", default="intake_check", choices=["b01_materials", "intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"])
+ap.add_argument("--dir", default="intake_check", choices=["b01_materials", "run2_progress", "run2_progress2", "intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
-assert (a.dir == "b01_materials") == (a.exp == "blind-02"), "b01_materials is the only blind-02 reader"
+B02 = ("b01_materials", "run2_progress", "run2_progress2")
+assert (a.dir in B02) == (a.exp == "blind-02"), "reader does not belong to that experiment"
 
 M = "/home/hal/dev/interp/metis"
 D = "experiments/" + a.exp + "/m5/" + a.dir
@@ -473,6 +474,18 @@ if a.dir == "b01_materials":
         "run1_brief": {"addendum", "original"},
         "owner_action": {"none", "supply_materials", "obtain_access", "decide"},
     }
+if a.dir in ("run2_progress", "run2_progress2"):
+    ENUMS = {
+        "current_step": {"profile_command", "concurrency_probe", "seal", "propose", "implement", "evaluate",
+                         "takeaways_or_done", "unknown"},
+        "baseline_configuration": {"cpu_standard", "gpu_standard", "gpu_denser", "several", "other", "unknown"},
+        "reproduce_covers_cases": {"all_four", "some", "none", "unknown"},
+        "box_time_dominated_by": {"workload", "output_fetch", "setup", "other", "unknown"},
+        "fetch_resends_unchanged_outputs": {"yes", "no", "unknown"},
+        "projected_finish": {"within_ceiling", "at_risk", "exceeds_ceiling", "unknown"},
+        "seed_comparisons_in_pipeline": {"all", "some", "none", "unknown"},
+        "problems_seen": {"none", "warnings_only", "errors", "unknown"},
+    }
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
     ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
@@ -533,7 +546,7 @@ if a.dir == "intake_check_codex":
 
 addendum = os.path.join(P, "BRIEF_run1.md" if a.dir == "b01_materials" else "BRIEF_run5.md")
 brief_key = "run1_brief" if a.dir == "b01_materials" else "run5_brief"
-if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"):
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2", "run2_progress", "run2_progress2"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments", a.exp, "m5/BRIEF.md"), "rb").read()
