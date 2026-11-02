@@ -7,7 +7,7 @@ Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -374,6 +374,39 @@ if a.dir == "run10_harness3":
         "units_json_reused": {"yes", "no"},
         "bash_syntax_ok": {"yes", "no"},
     }
+if a.dir == "run10_post":
+    ENUMS = {
+        "compared_files_nonempty": {"all", "some_empty", "unknown"},
+        "subset_log_problems": {"none", "warnings_only", "errors", "unknown"},
+        "cost_ratio_bucket": {"below_0_7", "0_7_to_1_3", "above_1_3", "null"},
+        "outside_out_writes": {"none_found", "fixed_paths", "per_unit_paths", "per_invocation_paths", "mixed", "unknown"},
+        "outside_out_location": {"temp_dir", "shared_run_directory", "home_or_cache", "multiple", "none", "unknown"},
+        "concurrent_collision": {"none", "possible", "likely", "unknown"},
+        "collision_detected_by_byte_check": {"yes", "partly", "no", "not_applicable", "unknown"},
+        "avoidable_without_code_change": {"yes", "no", "not_needed", "unknown"},
+        "avoidance_kind": {"existing_env_or_argument", "per_invocation_directory", "other", "none", "not_applicable"},
+    }
+    try:
+        u = json.load(open(os.path.join(os.path.dirname(P), "run10", "agent", "results", "reproduce", "units_check.json")))
+        r = u.get("cost_ratio")
+        b = "null" if r is None else "below_0_7" if r < 0.7 else "0_7_to_1_3" if r <= 1.3 else "above_1_3"
+        print("deterministic cost_ratio bucket:", b, "; files_total >= 4:", isinstance(u.get("files_total"), int) and u["files_total"] >= 4,
+              "; files_matched == files_total:", u.get("files_matched") == u.get("files_total"))
+    except Exception as e:
+        print("deterministic check failed:", type(e).__name__)
+if a.dir == "run10_post2":
+    ENUMS = {
+        "subset_errors_vs_run9": {"also_in_run9", "only_in_subset", "mixed", "no_errors", "unknown"},
+        "subset_error_source": {"program_nonfatal", "environment_or_setup", "selection_or_restricted_list", "working_directory_or_links",
+                                "path_conflict", "multiple", "other", "unknown"},
+        "errors_affect_compared_outputs": {"no", "yes", "unknown"},
+        "units_all_computed": {"yes", "no", "unknown"},
+        "outputs_written_by_subset": {"yes", "no", "unknown"},
+        "outside_out_naming": {"fixed", "per_unit", "per_invocation", "mixed", "none", "unknown"},
+        "outside_out_purpose": {"scratch", "cache_reused_across_units", "intermediate_results", "logs", "multiple", "none", "unknown"},
+        "later_units_read_earlier_writes": {"no", "yes", "unknown"},
+        "private_copies_preserve_computation": {"yes", "no", "not_applicable", "unknown"},
+    }
 if a.dir == "run10_review3":
     ENUMS = dict(ENUMS)
     ENUMS["restricted_list_faithful"] = {"yes", "no", "not_applicable", "unknown"}
@@ -438,7 +471,7 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3"):
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()

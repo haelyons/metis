@@ -4,10 +4,11 @@ brief: a reader agent's BRIEF_run5.md, in intake_check/ or, with --addendum=inta
 --harness-from=<folder> reuses the harness in that folder of blind-01/m5/ (args.harness_from; it must hold setup.sh,
 run_anchors.sh and run_command.sh). --stop-after-profile stubs seal as SKIPPED (the pipeline's existing stub input),
 so every later stage is skipped and takeaways still runs. --units-check=<run> sets args.units_check (U51) with that
-earlier run's recorded baseline outputs (<run>/agent/results/reproduce/out) as the reference.
+earlier run's recorded baseline outputs (<run>/agent/results/reproduce/out) as the reference. --units-probe=<run> sets
+args.units_probe (U52, standalone unit probe) with the same reference.
 
 Usage: python3 ~/.cache/blind01/new_run.py <run_root> [--addendum[=intake_check_codex|=intake_acquire|=intake_mirror]]
-           [--harness-from=<folder>] [--stop-after-profile] [--units-check=<run>]
+           [--harness-from=<folder>] [--stop-after-profile] [--units-check=<run> | --units-probe=<run>]
 """
 import json, os, re, sys
 
@@ -17,11 +18,12 @@ addenda = {"--addendum": "intake_check", "--addendum=intake_check_codex": "intak
            "--addendum=intake_acquire": "intake_acquire", "--addendum=intake_mirror": "intake_mirror"}
 harness = [o.split("=", 1)[1] for o in options if o.startswith("--harness-from=")]
 check = [o.split("=", 1)[1] for o in options if o.startswith("--units-check=")]
+probe = [o.split("=", 1)[1] for o in options if o.startswith("--units-probe=")]
 stop = "--stop-after-profile" in options
-assert len(options) == len(set(options)) and all(o in addenda or o.startswith("--harness-from=") or o.startswith("--units-check=") or o == "--stop-after-profile"
+assert len(options) == len(set(options)) and all(o in addenda or o.startswith("--harness-from=") or o.startswith("--units-check=") or o.startswith("--units-probe=") or o == "--stop-after-profile"
                                                   for o in options), "unknown option"
-assert sum(o in addenda for o in options) <= 1 and len(harness) <= 1 and len(check) <= 1, "repeated option"
-assert all(re.fullmatch(r"run\d+", c) for c in check), "units check reference must be a run folder name"
+assert sum(o in addenda for o in options) <= 1 and len(harness) <= 1 and len(check) + len(probe) <= 1, "repeated option"
+assert all(re.fullmatch(r"run\d+", c) for c in check + probe), "units check reference must be a run folder name"
 assert all(re.fullmatch(r"[A-Za-z0-9_]+", h) for h in harness), "harness folder must be a plain folder name"
 addendum = next((addenda[o] for o in options if o in addenda), None)
 m = re.fullmatch(r"(/home/hal/dev/interp/metis/experiments/blind-01/m5)/run(\d+)", root)
@@ -38,9 +40,12 @@ if harness:
 if check:
     args["units_check"] = {"reference": m.group(1) + "/" + check[0] + "/agent/results/reproduce/out"}
     assert os.path.isdir(args["units_check"]["reference"]), "no recorded baseline outputs in that run"
+if probe:
+    args["units_probe"] = {"reference": m.group(1) + "/" + probe[0] + "/agent/results/reproduce/out"}
+    assert os.path.isdir(args["units_probe"]["reference"]), "no recorded baseline outputs in that run"
 if stop:
     args["stub"] = {"seal": "SKIPPED"}
 os.makedirs(root)
 json.dump(args, open(root + "/args.json", "w"), indent=2)
 print("created", "run" + m.group(2), sorted(args), "addendum brief" if addendum else "original brief",
-      "harness reused" if harness else "fresh harness", "stops after profile" if stop else "units check" if check else "full chain")
+      "harness reused" if harness else "fresh harness", "stops after profile" if stop else "units check" if check else "units probe" if probe else "full chain")
