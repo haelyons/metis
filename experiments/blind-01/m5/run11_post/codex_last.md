@@ -1,0 +1,10 @@
+{
+  "concurrent_log_problems": "new_in_concurrent",
+  "outputs_cover_all_results": "partly",
+  "shared_writes_purpose": "unknown",
+  "cross_invocation_reads": "unknown",
+  "less_work_in_later_invocations": "no",
+  "order_effect": "later_arms_slower",
+  "factor_holds_against_nearest_serial": "yes",
+  "gain_source": "idle_cpu_in_serial_mode"
+}
