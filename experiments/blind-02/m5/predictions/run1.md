@@ -41,3 +41,21 @@ Probabilities are the operator's, written before launch.
 | 13 | No ceiling timeout and no infrastructure failure | 0.85 |
 
 All predictions are read from signatures, receipts and box metadata.
+
+## Outcome (added after the run; the sections above are unchanged since the seal 5cdbb04d)
+
+run1 (pushed 30c6662a): `gpu_1x_h100_pcie` (us-west-3), pipeline wall 196 s, run box USD 0.18. Intake PASS (181 s): `found` true, `data` available, `licence` unknown, `licence_basis` none, `anchors_count` 0, `stock_environment` null, `size` unknown. Reproduce FAIL `infra` (15 s): the first box command (`0001-upload`) has a receipt with rc null, not timed out, not fetched, wall 15 s; no harness agent ran. Later stages SKIPPED; takeaways PASS.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.80 | yes | 0.0400 |
+| 2 | 0.60 | no (`none`) | 0.3600 |
+| 3 | 0.70 | not run | n/a |
+| 4 | 0.55 | no | 0.3025 |
+| 5 to 9 | | not run (conditional) | n/a |
+| 10 | 0.06 | no | 0.0036 |
+| 11 | 0.65 | yes | 0.1225 |
+| 12 | 0.75 | yes | 0.0625 |
+| 13 | 0.85 | no (infra) | 0.7225 |
+
+Mean Brier 0.231 over 7 scored. Decision row: infrastructure failure, so diagnose. In `m5/boxrun.sh` an empty rc with this shape is the remote launch failing; 15 s equals ssh's `ConnectTimeout=15`, about 3 min after the box answered its readiness check. `pipeline.js` discards boxrun's stderr, and `pipeline.log` holds none of the fixed ssh error phrases (`blind_read.py` count). The reading is a transient loss of ssh reachability, tested by an unchanged relaunch (`run2.md`).
