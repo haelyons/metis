@@ -607,7 +607,9 @@ async function main() {
       const { tokens_known, ...facts } = plain.stage('reproduce').facts
       assert.equal(typeof tokens_known === 'boolean' || tokens_known === null, true)
       assert.deepEqual(facts, { anchors_passed: 2, anchors_total: 2, stock_verified: true,
-        tuned_control_valid: null, gpu_busy_known: false, units_match: null, units_full_match: null })
+        tuned_control_valid: null, gpu_busy_known: false, units_match: null, units_full_match: null,
+        // SCHEMAS.md U52: the four unit-probe facts are null outside unit-probe mode.
+        units_outcome: null, units_factor_2: null, units_factor_4: null, units_shared_writes: null })
       assert.equal(plain.stage('reproduce').run_valid, true)
     })
   } catch (error) { failures++; console.log(`FAIL test harness: ${error.stack}`) }

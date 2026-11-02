@@ -67,9 +67,13 @@ def validate(value):
     if stage == "profile" and type(facts) is dict and "host_only" in facts:
         schema["host_only"] = bool
     if stage == "reproduce" and type(facts) is dict:
-        for key in ("units_match", "units_full_match"):
+        for key, spec in {"units_match": bool, "units_full_match": bool,
+                          "units_outcome": ("invalid_units", "failed", "baseline_mismatch",
+                                            "outputs_mismatch", "skipped", "measured"),
+                          "units_factor_2": float, "units_factor_4": float,
+                          "units_shared_writes": bool}.items():
             if key in facts:
-                schema[key] = bool
+                schema[key] = spec
     if stage == "propose" and type(facts) is dict:
         for key, spec in {"votes_reject": int, "votes_abstain": int,
                           "outcome": ("approved", "rejected", "conditions_unmet", "no_feasible_method")}.items():
@@ -97,8 +101,8 @@ def validate(value):
             errors.append("votes_total: must be five")
         elif key == "run_box_usd" and item < 0:
             errors.append("run_box_usd: must be nonnegative")
-        elif key == "headroom" and item <= 0:
-            errors.append("headroom: must be positive")
+        elif key in ("headroom", "units_factor_2", "units_factor_4") and item <= 0:
+            errors.append(f"{key}: must be positive")
     if record["status"] == "SKIPPED" and any(v is not None for v in facts.values()):
         errors.append("SKIPPED facts must be null")
     return errors

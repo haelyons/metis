@@ -53,6 +53,9 @@ FINDING = ("Finding: negative. No menu method has measured headroom of at least 
            "on this hardware.")
 # SCHEMAS.md A/intake/ (U40): optional intake enum fact `licence_basis`, null when omitted.
 LICENCE_BASES = ("unreachable", "none", "owner", "distribution", "explicit")
+# SCHEMAS.md Concurrency probe, unit mode: the six `outcome` values (U52 `units_outcome`).
+UNITS_OUTCOMES = ("invalid_units", "failed", "baseline_mismatch", "outputs_mismatch", "skipped",
+                  "measured")
 BALLOT_LABELS = {
     "approve": r"(?:votes_)?approv(?:e|es|ed|als?)",
     "reject": r"(?:votes_)?reject(?:s|ed|ions?)?",
@@ -663,6 +666,73 @@ def main():
             check("reject %s on a non-reproduce stage" % key,
                   lambda k=key: rejected(invalid, stage="profile",
                                          facts=dict(FACTS["profile"], **{k: True})))
+        # SCHEMAS.md "Standalone unit probe (U52)": reproduce facts add optional `units_outcome`
+        # (one of the six unit-mode outcomes), `units_factor_2` and `units_factor_4` (finite
+        # positive numbers or null) and `units_shared_writes` (boolean or null); all null outside
+        # unit-probe mode and on SKIPPED/stub records; records without them stay valid.
+        probe = root / "units-probe"
+        for value in UNITS_OUTCOMES + (None,):
+            check("accept reproduce units_outcome=%r" % (value,),
+                  lambda v=value: accepted(probe, "reproduce",
+                                           facts=dict(FACTS["reproduce"], units_outcome=v)))
+        for key in ("units_factor_2", "units_factor_4"):
+            # Numeric ratio facts accept integer spellings (SCHEMAS.md C/receipts/).
+            for value in (2.5, 0.8, 1, 3, 1e-9, None):
+                check("accept reproduce %s=%r" % (key, value),
+                      lambda k=key, v=value: accepted(probe, "reproduce",
+                                                      facts=dict(FACTS["reproduce"], **{k: v})))
+        for value in (True, False, None):
+            check("accept reproduce units_shared_writes=%r" % (value,),
+                  lambda v=value: accepted(probe, "reproduce",
+                                           facts=dict(FACTS["reproduce"], units_shared_writes=v)))
+        check("accept reproduce with all four unit-probe facts (measured)",
+              lambda: accepted(probe, "reproduce",
+                               facts=dict(FACTS["reproduce"], anchors_passed=None, anchors_total=None,
+                                          units_outcome="measured", units_factor_2=1.7,
+                                          units_factor_4=2.4, units_shared_writes=True)))
+        check("accept reproduce with all four unit-probe facts (skipped, nulls)",
+              lambda: accepted(probe, "reproduce",
+                               facts=dict(FACTS["reproduce"], units_outcome="skipped", units_factor_2=None,
+                                          units_factor_4=None, units_shared_writes=None)))
+        check("accept reproduce with unit-probe and units-check facts all null",
+              lambda: accepted(probe, "reproduce",
+                               facts=dict(FACTS["reproduce"], units_match=None, units_full_match=None,
+                                          units_outcome=None, units_factor_2=None,
+                                          units_factor_4=None, units_shared_writes=None)))
+        check("accept reproduce without the unit-probe facts",
+              lambda: accepted(probe, "reproduce", facts=FACTS["reproduce"]))
+        check("accept FAIL reproduce (parse) with null unit-probe facts",
+              lambda: accepted(probe, "reproduce", "FAIL",
+                               facts=dict(FACTS["reproduce"], anchors_passed=None, anchors_total=None,
+                                          units_outcome=None, units_factor_2=None,
+                                          units_factor_4=None, units_shared_writes=None),
+                               v1=dict(exit_code=2, exit_kind="guard", error_class="parse")))
+        check("accept SKIPPED reproduce with null unit-probe facts",
+              lambda: accepted(probe, "reproduce", "SKIPPED",
+                               facts=dict.fromkeys(list(FACTS["reproduce"])
+                                                   + ["units_outcome", "units_factor_2",
+                                                      "units_factor_4", "units_shared_writes"])))
+        for value in ("unknown", "", "MEASURED", "Measured", "measured ", "invalid-units",
+                      SENTINEL, True, False, 0, 1, 1.0, [], ["measured"], {"outcome": "measured"}):
+            check("reject reproduce units_outcome=%r" % (value,),
+                  lambda v=value: rejected(invalid, stage="reproduce",
+                                           facts=dict(FACTS["reproduce"], units_outcome=v)))
+        for key in ("units_factor_2", "units_factor_4"):
+            for value in (True, False, 0, 0.0, -0.0, -1, -2.5, math.nan, math.inf, -math.inf,
+                          "2.5", "", SENTINEL, [2.5], {"factor": 2.5}):
+                check("reject reproduce %s=%r" % (key, value),
+                      lambda k=key, v=value: rejected(invalid, stage="reproduce",
+                                                      facts=dict(FACTS["reproduce"], **{k: v})))
+        for value in ("true", "false", "True", "", "null", SENTINEL, 1, 0, 1.0, 0.0,
+                      math.nan, math.inf, [], [True], {"units_shared_writes": True}):
+            check("reject reproduce units_shared_writes=%r" % (value,),
+                  lambda v=value: rejected(invalid, stage="reproduce",
+                                           facts=dict(FACTS["reproduce"], units_shared_writes=v)))
+        for key, value in (("units_outcome", "measured"), ("units_factor_2", 2.0),
+                           ("units_factor_4", 2.0), ("units_shared_writes", False)):
+            check("reject %s on a non-reproduce stage" % key,
+                  lambda k=key, v=value: rejected(invalid, stage="profile",
+                                                  facts=dict(FACTS["profile"], **{k: v})))
         # SCHEMAS.md A/intake/: optional intake `anchored` (boolean); null on stub records.
         anchored = root / "anchored"
         for value in (True, False, None):
