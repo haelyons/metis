@@ -7,7 +7,7 @@ Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2"])
+ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
@@ -407,6 +407,51 @@ if a.dir == "run10_post2":
         "later_units_read_earlier_writes": {"no", "yes", "unknown"},
         "private_copies_preserve_computation": {"yes", "no", "not_applicable", "unknown"},
     }
+if a.dir == "run11_post":
+    ENUMS = {
+        "concurrent_log_problems": {"none", "same_as_serial", "new_in_concurrent", "unknown"},
+        "outputs_cover_all_results": {"yes", "partly", "unknown"},
+        "shared_writes_purpose": {"logs", "scratch", "cache_reused_across_invocations", "intermediate_results", "multiple", "none", "unknown"},
+        "cross_invocation_reads": {"no", "yes", "unknown"},
+        "less_work_in_later_invocations": {"no", "yes", "unknown"},
+        "order_effect": {"none", "later_arms_faster", "later_arms_slower", "mixed", "unknown"},
+        "factor_holds_against_nearest_serial": {"yes", "no", "unknown"},
+        "gain_source": {"idle_cpu_in_serial_mode", "memory_or_io_overlap", "startup_or_serial_sections", "multiple", "other", "unknown"},
+    }
+    # Deterministic, content-free: concurrency.json holds no unit identifiers or paths (SCHEMAS.md, unit mode);
+    # only fixed labels, booleans, ratios and counts are printed.
+    try:
+        c = json.load(open(os.path.join(os.path.dirname(P), "run11", "agent", "results", "reproduce", "out", "concurrency", "concurrency.json")))
+        labels = ["a-1", "b-1", "c2-1", "c4-1", "c4-2", "c2-2", "b-2", "a-2"]
+        arms = {arm["label"]: arm for arm in c["arms"] if arm.get("label") in labels}
+        n = c["nproc"] if isinstance(c.get("nproc"), int) and c["nproc"] > 0 else None
+        print("deterministic: mode units", c.get("mode") == "units", "; baseline_match", c.get("baseline_match") is True,
+              "; outputs_match", c.get("outputs_match") is True, "; arms in order", [arm.get("label") for arm in c["arms"]] == labels)
+        r = lambda x, y: round(x / y, 2) if isinstance(x, (int, float)) and isinstance(y, (int, float)) and y > 0 else None
+        base = arms["a-1"]["wall_s"]
+        for label in labels:
+            arm = arms[label]
+            print(" arm", label, "ok", arm["all_ok"] is True, "rc0", all(row.get("rc") == 0 for row in arm["invocations"]),
+                  "wall/a-1", r(arm["wall_s"], base), "cores/nproc", r(arm["effective_cores"], n),
+                  "busy", r(arm["busy_fraction"], 1), "threads/nproc", r(arm["threads_max"], n),
+                  "shared_changes", arm["shared_changes"] if isinstance(arm["shared_changes"], int) else None)
+        print(" replicate factors: a-1/c2-1", r(base, arms["c2-1"]["wall_s"]), "a-2/c2-2", r(arms["a-2"]["wall_s"], arms["c2-2"]["wall_s"]),
+              "a-1/c4-1", r(base, arms["c4-1"]["wall_s"]), "a-2/c4-2", r(arms["a-2"]["wall_s"], arms["c4-2"]["wall_s"]),
+              "; separate/serial", r(c["separate_wall_s"], c["serial_wall_s"]), "; nproc", n)
+    except Exception as e:
+        print("deterministic check failed:", type(e).__name__)
+if a.dir == "run11_post2":
+    ENUMS = {
+        "concurrent_message_kind": {"resource_or_thread_limits", "shared_path_collision", "numerical_or_convergence", "timing_or_progress",
+                                    "library_warning", "multiple", "other", "unknown"},
+        "concurrent_messages_affect_results": {"no", "yes", "unknown"},
+        "concurrent_messages_seen_before": {"yes", "partly", "no", "unknown"},
+        "uncompared_files_kind": {"logs_or_timing", "run_metadata", "scientific_results", "multiple", "none", "unknown"},
+        "uncompared_files_used_in_analysis": {"no", "yes", "unknown"},
+        "uncompared_files_run_specific": {"yes", "no", "partly", "unknown"},
+        "compared_files_hold_all_scientific_results": {"yes", "no", "unknown"},
+        "coverage_extendable_without_code_change": {"yes", "no", "not_needed", "unknown"},
+    }
 if a.dir == "run10_review3":
     ENUMS = dict(ENUMS)
     ENUMS["restricted_list_faithful"] = {"yes", "no", "not_applicable", "unknown"}
@@ -471,7 +516,7 @@ if a.dir == "intake_check_codex":
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
 addendum = os.path.join(P, "BRIEF_run5.md")
-if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2"):
+if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"):
     pass
 elif os.path.exists(addendum):
     original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()

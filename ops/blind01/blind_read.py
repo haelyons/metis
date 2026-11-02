@@ -16,7 +16,9 @@ ENUM_FACTS = {"data": {"available", "partial", "unavailable", "unknown"},
               "licence": {"permitted", "restricted", "unknown"},
               "licence_basis": {"unreachable", "none", "owner", "distribution", "explicit"},
               "size": {"tiny", "small", "medium", "large", "unknown"},
-              "outcome": {"approved", "no_feasible_method", "rejected"}}
+              "outcome": {"approved", "no_feasible_method", "rejected"},
+              "units_outcome": {"invalid_units", "failed", "baseline_mismatch", "outputs_mismatch", "skipped",
+                                "measured"}}
 BLOCKERS = {"data_unavailable", "licence", "env_irreproducible", "files_local_only", "compute_cap",
             "capacity", "none"}
 
@@ -52,7 +54,7 @@ for r in rows:
         out[k] = v
     facts = {}
     for k, v in (r.get("facts") or {}).items():
-        if not re.fullmatch(r"[a-z_]{1,32}", k):
+        if not re.fullmatch(r"[a-z_][a-z0-9_]{0,31}", k):
             continue
         if safe(v):
             facts[k] = v
