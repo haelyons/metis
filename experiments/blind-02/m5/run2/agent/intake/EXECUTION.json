@@ -1,0 +1,112 @@
+{
+  "representative_scale": {
+    "cases": [
+      "1aua__A1_P24280--1aua__A2_P24280:apo",
+      "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+      "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+      "1nr5__A1_P07547--1nr5__A2_P07547:apo"
+    ],
+    "configurations": [
+      "CPU standard 3600 rotations",
+      "GPU standard 3600 rotations",
+      "GPU dense 54000 rotations"
+    ],
+    "predictions_per_case_per_configuration": 50,
+    "docking_jobs_per_complete_comparison": 12,
+    "decoys_per_complete_comparison": 600,
+    "timing_repetitions": null,
+    "reason": "Fixed actual four-case workload; no toy extrapolation or scale doubling. Repetition count requires brief-requested calibration before sealing."
+  },
+  "inputs": {
+    "data_manifest": "data.json",
+    "prepared_inputs": [
+      {
+        "id": "1aua__A1_P24280--1aua__A2_P24280",
+        "kind": "apo",
+        "receptor": "1aua__A1_P24280--1aua__A2_P24280/inputs/apo/1aua_apo_R.pdb",
+        "ligand": "1aua__A1_P24280--1aua__A2_P24280/inputs/apo/1aua_apo_L.pdb"
+      },
+      {
+        "id": "1ax2__A1_P16404--1ax2__A2_P16404",
+        "kind": "apo",
+        "receptor": "1ax2__A1_P16404--1ax2__A2_P16404/inputs/apo/1ax2_apo_R.pdb",
+        "ligand": "1ax2__A1_P16404--1ax2__A2_P16404/inputs/apo/1ax2_apo_L.pdb"
+      },
+      {
+        "id": "1dv1__A1_P24182--1dv1__B1_P24182",
+        "kind": "apo",
+        "receptor": "1dv1__A1_P24182--1dv1__B1_P24182/inputs/apo/1dv1_apo_R.pdb",
+        "ligand": "1dv1__A1_P24182--1dv1__B1_P24182/inputs/apo/1dv1_apo_L.pdb"
+      },
+      {
+        "id": "1nr5__A1_P07547--1nr5__A2_P07547",
+        "kind": "apo",
+        "receptor": "1nr5__A1_P07547--1nr5__A2_P07547/inputs/apo/1nr5_apo_R.pdb",
+        "ligand": "1nr5__A1_P07547--1nr5__A2_P07547/inputs/apo/1nr5_apo_L.pdb"
+      }
+    ],
+    "native_references": [
+      "pdbs/1aua__A1_P24280--1aua__A2_P24280.pdb",
+      "pdbs/1ax2__A1_P16404--1ax2__A2_P16404.pdb",
+      "pdbs/1dv1__A1_P24182--1dv1__B1_P24182.pdb",
+      "pdbs/1nr5__A1_P07547--1nr5__A2_P07547.pdb"
+    ],
+    "evaluation_only_references": true,
+    "configuration": "baseline.json, published_configuration",
+    "prepared_input_hashes": null,
+    "reason": "Source hashes established; generated prepared PDB hashes must be sealed before execution."
+  },
+  "outputs": {
+    "docking": "Separate MEGADOCK ranked score/transform file for each case and configuration.",
+    "pose_files": "eval_dir/<configuration>/<system_id>/apo_decoys/model_<rank>.pdb, ranks 1..50, exactly receptor R and ligand L.",
+    "scoring_interface": {
+      "published_command_help": "pinder_eval --help",
+      "published_arguments": "--eval_dir eval_dir [--serial] [--method_name method_name] [--allow_missing] [--custom_index CUSTOM_INDEX] [--max_workers MAX_WORKERS]",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "selection": "Evaluate only exact four systems; custom index, if needed, must preserve required PINDER schema and explicit holdout definitions. Do not aggregate missing remainder of PINDER-S as failures of this pilot.",
+      "adapter_command": null,
+      "reason": "Published evaluator exists; no four-case adapter command or patched historical wrapper provided.",
+      "metrics": "Per-pose DockQ; rank-1 and best-of-50 per case/configuration; paired dense-standard differences reported separately."
+    },
+    "other": [
+      "CPU/GPU numerical agreement report with predeclared tolerance",
+      "workflow stage times and complete end-to-end time",
+      "GPU activity trace",
+      "billed allocation seconds, rate and cost",
+      "budget overruns and failures"
+    ],
+    "aggregate_published_target": null,
+    "reason": "No published aggregate value for these four pairs; no scalar substituted for requested comparison."
+  },
+  "timing_scope": {
+    "complete_workflow": "Include acquisition/preparation, baseline setup, docking, decoy generation, evaluation and reporting; report setup separately as well as total.",
+    "steady_state_comparison": "CPU/GPU standard docking and pose-generation times at identical inputs/scientific settings; synchronization/process completion required.",
+    "GPU_activity": "Observe GPU activity during workflow; GPU-capable binary alone does not establish GPU execution.",
+    "billed_cost": "Use actual allocated time and applicable billing rate, including idle/setup allocations.",
+    "calibration": "Small runtime calibration on fixed selected workload, without consulting native quality; then seal repetition count, comparison rules, total cap before evaluation.",
+    "source": "brief.md",
+    "calibrated_runtime_s": null,
+    "repetitions": null,
+    "cost_rate": null,
+    "total_spending_cap": null,
+    "unavailable_reason": "No builds, calibration or workloads authorized during intake; brief supplies no timings or billing price."
+  },
+  "budgets": {
+    "supplied_args_budgets": {},
+    "run_ceiling_s": 43200,
+    "default_script_seconds": {
+      "method_setup": 1200,
+      "method_run": 1200,
+      "tests": 900,
+      "evaluate": 2400
+    },
+    "stage_budgets_s": null,
+    "reason": "No empirical stage-duration estimates; no overrides invented. Setup/anchors/profile use remaining run-ceiling time when args budgets absent. Defaults are ceilings, not evidence workload finishes within them.",
+    "source": "Intake prompt"
+  },
+  "limitations": [
+    "Supplied scalar intake gate does not express three paired configuration comparisons, two separate quality outcomes, pre-result numerical agreement rules, calibrated spending cap, GPU activity and billed allocation cost. Execution adapter must preserve these outputs separately.",
+    "No calibration, sealed repetition count, numerical tolerance, pricing or spending cap available during this bounded intake. No scripts executed or run-duration guarantee inferred."
+  ],
+  "executed": false
+}

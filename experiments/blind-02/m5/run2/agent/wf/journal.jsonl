@@ -1,0 +1,22 @@
+{"ts":"2026-11-02T16:33:44.160Z","type":"phase","t":"intake"}
+{"ts":"2026-11-02T16:33:44.163Z","type":"started","n":1,"label":"intake","role":"ls-writer","model":"codex/default@medium","understudy":"claude/opus","chain":["claude/opus","opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":"^(intake|harness|[a-z]+-repair|seal|propose|tests|implement)$","key":"07a2c2ca154f678e25e2021783698b859f59883416e354d5d8081e7bbae3b3cd"}
+{"ts":"2026-11-02T16:37:30.135Z","type":"result","n":1,"label":"intake","key":"07a2c2ca154f678e25e2021783698b859f59883416e354d5d8081e7bbae3b3cd","model":"codex/default@medium","substituted":false,"value":{"found":true,"anchors_count":0,"anchored":false,"data":"available","licence":"unknown","licence_basis":"none","stock_environment":null,"size":"unknown"}}
+{"ts":"2026-11-02T16:37:30.227Z","type":"log","m":"intake: PASS"}
+{"ts":"2026-11-02T16:37:30.227Z","type":"phase","t":"reproduce"}
+{"ts":"2026-11-02T16:38:13.869Z","type":"started","n":2,"label":"harness","role":"ls-writer","model":"codex/default@medium","understudy":"claude/opus","chain":["claude/opus","opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":"^(intake|harness|[a-z]+-repair|seal|propose|tests|implement)$","key":"4d0b9311331e77736088ce4d9404609b28ef49bd45b434eb6672baff6ad88a13"}
+{"ts":"2026-11-02T16:42:50.652Z","type":"result","n":2,"label":"harness","key":"4d0b9311331e77736088ce4d9404609b28ef49bd45b434eb6672baff6ad88a13","model":"codex/default@medium","substituted":false,"value":"Reading intake. Will write harness scripts, then check shell syntax locally. Pipeline runs builds and workloads.\nFixed workload: four apo pairs, three configurations, 50 poses each. Anchors empty; harness still runs all 12 docking jobs. Intake leaves repetitions, tolerances and cost cap unsealed; scripts will preserve separate measured outputs.\nBuild and run scripts written. CUDA selection prefers complete probed toolkit, falls back to distro layout. Canonical command runs all 12 jobs and generates 600 poses; adapter scores actual poses with pinned PINDER DockQ code. Adding sealed evaluation handling next.\nCreated four harness scripts under `harness/`. Shell and embedded Python syntax checks passed. No local builds or workloads run."}
+{"ts":"2026-11-02T17:35:22.921Z","type":"log","m":"reproduce: PASS"}
+{"ts":"2026-11-02T17:35:22.922Z","type":"phase","t":"profile"}
+{"ts":"2026-11-02T19:43:46.269Z","type":"log","m":"profile: PASS"}
+{"ts":"2026-11-02T19:43:46.270Z","type":"phase","t":"seal"}
+{"ts":"2026-11-02T19:43:46.317Z","type":"started","n":3,"label":"seal","role":"ls-writer","model":"codex/default@medium","understudy":"claude/opus","chain":["claude/opus","opencode-go/mimo-v2.6-pro"],"mode":"fallback","tier":"main","route":"^(intake|harness|[a-z]+-repair|seal|propose|tests|implement)$","key":"f6eb171ee2d934ed4669855b12f524c93a7a9858705e1f6635d64e466eefa79e"}
+{"ts":"2026-11-02T19:45:42.581Z","type":"result","n":3,"label":"seal","key":"f6eb171ee2d934ed4669855b12f524c93a7a9858705e1f6635d64e466eefa79e","model":"codex/default@medium","substituted":false,"value":"Read permitted evidence. Write sealed protocol; no workloads or method code.\n\nAll five bounds below 1.05. Protocol records negative result: predictions empty, each exclusion justified. Fixed rotational grids support deterministic output checks; no calibrated quality curve available.\n\nWrote PREDICTIONS.json. Checks passed. Negative result: no feasible methods; predictions empty."}
+{"ts":"2026-11-02T19:45:42.665Z","type":"log","m":"seal: PASS"}
+{"ts":"2026-11-02T19:45:42.666Z","type":"phase","t":"propose"}
+{"ts":"2026-11-02T19:45:42.754Z","type":"log","m":"propose: PASS"}
+{"ts":"2026-11-02T19:45:42.754Z","type":"phase","t":"implement"}
+{"ts":"2026-11-02T19:45:42.839Z","type":"log","m":"implement: SKIPPED"}
+{"ts":"2026-11-02T19:45:42.839Z","type":"phase","t":"evaluate"}
+{"ts":"2026-11-02T19:45:42.923Z","type":"log","m":"evaluate: SKIPPED"}
+{"ts":"2026-11-02T19:45:42.923Z","type":"phase","t":"takeaways"}
+{"ts":"2026-11-02T19:45:43.011Z","type":"log","m":"takeaways: PASS"}

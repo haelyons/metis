@@ -1,0 +1,4 @@
+Reading intake. Will write harness scripts, then check shell syntax locally. Pipeline runs builds and workloads.
+Fixed workload: four apo pairs, three configurations, 50 poses each. Anchors empty; harness still runs all 12 docking jobs. Intake leaves repetitions, tolerances and cost cap unsealed; scripts will preserve separate measured outputs.
+Build and run scripts written. CUDA selection prefers complete probed toolkit, falls back to distro layout. Canonical command runs all 12 jobs and generates 600 poses; adapter scores actual poses with pinned PINDER DockQ code. Adding sealed evaluation handling next.
+Created four harness scripts under `harness/`. Shell and embedded Python syntax checks passed. No local builds or workloads run.

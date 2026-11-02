@@ -1,0 +1,180 @@
+{
+  "identity": {
+    "name": "MEGADOCK CPU/GPU standard sampling and GPU denser sampling on four fixed PINDER 2024-02 apo pairs",
+    "found": true,
+    "scope": "Owner-defined four-case pilot using executable published MEGADOCK implementation; not a published four-case results table.",
+    "implementation_commit": "9575280c875732553266e26adc607dd892b02616",
+    "cases": [
+      "1aua__A1_P24280--1aua__A2_P24280:apo",
+      "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+      "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+      "1nr5__A1_P07547--1nr5__A2_P07547:apo"
+    ],
+    "brief_sha256": "156d2b6b2fb8762692eaf67b6ebcf5da5072dcfb4222897ced5dad7904bd5032"
+  },
+  "outcome_definition": {
+    "execution_acceleration": "Compare CPU standard and GPU standard complete workflow wall time at identical scientific settings.",
+    "scientific_agreement": "Compare CPU/GPU standard ranked poses, scores and per-pose DockQ separately from acceleration.",
+    "additional_search_quality": "Report paired GPU dense minus GPU standard DockQ for rank 1 and maximum across ranks 1..50 separately, within calibrated sealed budget.",
+    "other_outcomes": [
+      "GPU activity",
+      "billed allocation cost",
+      "budget overruns and negative results"
+    ],
+    "inference_limit": "Only these four systems; no biological efficacy inference."
+  },
+  "citations": [
+    {
+      "citation": "Ohue et al. MEGADOCK 4.0: an ultra-high-performance protein-protein docking software for heterogeneous supercomputers. Bioinformatics 30(22), 3281–3283 (2014).",
+      "url": "https://doi.org/10.1093/bioinformatics/btu532"
+    },
+    {
+      "citation": "MEGADOCK pinned source, build and command documentation",
+      "url": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/README.md"
+    },
+    {
+      "citation": "PINDER pinned README and evaluation implementation",
+      "url": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "citation": "Owner brief, including authorized historical materials addendum",
+      "path": "brief.md"
+    }
+  ],
+  "source_licences_and_intended_use_permissions": [
+    {
+      "item": "MEGADOCK code",
+      "licence": "CC BY-NC 4.0",
+      "basis": "explicit",
+      "source": [
+        "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/README.md",
+        "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/LICENSE"
+      ],
+      "intended_use": "Local scientific docking pilot. Noncommercial use allowed with attribution; brief does not establish commercial status or separate commercial authorization.",
+      "permission": "unknown"
+    },
+    {
+      "item": "PINDER evaluation code",
+      "licence": "Apache-2.0",
+      "basis": "explicit",
+      "source": [
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+      ],
+      "permission": "permitted"
+    },
+    {
+      "item": "PINDER 2024-02 structural inputs, references, index and mappings",
+      "licence": null,
+      "basis": "none",
+      "permission": "unknown",
+      "source": [
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+        "https://pinderdata.org/2024-02/",
+        "brief.md"
+      ],
+      "reason": "No dataset-specific licence or terms covering remotely hosted required inputs established. Repository Apache licence does not establish coverage of external dataset. FroDock mirror owner permission does not cover MEGADOCK or establish PINDER rights."
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "none",
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "evidence": [
+      "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+      "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/Makefile",
+      "brief.md, historical environment only"
+    ],
+    "requirements": [
+      "g++ with OpenMP",
+      "single-precision FFTW3",
+      "CUDA toolkit >=5.0 for GPU",
+      "matching CUDA samples headers",
+      "GPU architecture accepted by installed nvcc"
+    ],
+    "reason": "Published CPU-node and GPU-node implementations exist. Exact stock image, GPU model, installed libraries and CUDA compatibility not supplied or reproduced. Makefile defaults to sm_60, CUDA /usr/local/cuda and fast math; target architecture and paths may require documented configuration. Historical FroDock CPU build is not MEGADOCK feasibility evidence.",
+    "build_or_workload_run": false
+  },
+  "size": {
+    "data_gib": 0.21540922299027443,
+    "data_scope": "Unique selected source PDBs, references, index, metadata and eight holo mapping tables; excludes generated prepared copies and outputs.",
+    "peak_working_set_gib": null,
+    "total_data_plus_peak_working_set_gib": null,
+    "classification": "unknown",
+    "reason": "No published peak working set for these four inputs and selected FFT grids; no workload run."
+  },
+  "scoring": {
+    "interface": "MEGADOCK ranked transform/score output -> decoygen -> R/L complex PDBs -> pinned PINDER DockQ evaluation.",
+    "reported_values": [
+      "DockQ(model_1)",
+      "max DockQ(model_1..model_50)"
+    ],
+    "published_four_case_values": null,
+    "published_acceptance_criteria": null,
+    "agreement_tolerance": null,
+    "reason": "No published four-case DockQ values or CPU/GPU acceptance tolerance established. Numerical tolerance must be justified and sealed before comparison; do not turn uncertainty into tolerance.",
+    "anchors_file": "anchors.json"
+  },
+  "repeatability_rules": {
+    "fixed_scale": "All four apo pairs; three configurations; 50 retained poses per case/configuration. No scale search.",
+    "reference_use": "Evaluation only; no docking, calibration or configuration selection from native references.",
+    "sampling_and_scoring": {
+      "rotations_standard": 3600,
+      "rotations_dense": 54000,
+      "retained_predictions": 50,
+      "predictions_per_rotation": 1,
+      "voxel_pitch_angstrom": 1.2,
+      "electrostatics_ratio": 1.0,
+      "hydrophobic_ratio": 1.0,
+      "receptor_core_penalty": -45.0,
+      "ligand_core_penalty": 1.0,
+      "score_function": 3,
+      "fft_points": null,
+      "fft_points_reason": "Published default selects from input dimensions; record actual selected grid, keep identical between CPU/GPU for each case.",
+      "source": [
+        "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+        "brief.md"
+      ]
+    },
+    "seeds": null,
+    "seeds_reason": "No randomized seed specified by brief or docking command guide; do not invent one.",
+    "timing_repetitions": null,
+    "total_spending_cap": null,
+    "budget_calibration": "Brief requests small runtime calibration, then sealing configurations, repetitions, comparison rules and total spending cap before evaluation. Intake does not run calibration.",
+    "required_records": [
+      "exact compiler, dependencies, GPU/CPU and resource allocation",
+      "actual FFT dimensions and thread count",
+      "raw logs and all 50 predictions",
+      "workflow timing boundaries and GPU activity trace",
+      "allocation billing rate and billed time",
+      "failures and overruns"
+    ]
+  },
+  "search_candidates": [
+    {
+      "name": "MEGADOCK",
+      "url": "https://github.com/akiyamalab/MEGADOCK",
+      "selected": true,
+      "reason": "Only benchmark implementation requested by brief; 4.1.4 public release resolves to recorded commit."
+    },
+    {
+      "name": "PINDER",
+      "url": "https://github.com/pinder-org/pinder",
+      "selected": false,
+      "role": "Required inputs and DockQ evaluator, not substitute docking benchmark."
+    }
+  ],
+  "contract_limitations": [
+    "Supplied scalar intake gate does not express three paired configuration comparisons, two separate quality outcomes, pre-result numerical agreement rules, calibrated spending cap, GPU activity and billed allocation cost. Execution adapter must preserve these outputs separately.",
+    "No calibration, sealed repetition count, numerical tolerance, pricing or spending cap available during this bounded intake. No scripts executed or run-duration guarantee inferred."
+  ],
+  "gate": {
+    "found": true,
+    "required_data": "available",
+    "licence": "unknown",
+    "stock_environment": null,
+    "missing_tolerances_block": false,
+    "external_gate_script": null,
+    "reason": "No gate script named in supplied prompt. JSON syntax and required completeness keys checked locally."
+  }
+}

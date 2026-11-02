@@ -1,0 +1,56 @@
+ MEGADOCK ver. 4.1.3 for CPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.QxKYR5zO/cpu_standard/1dv1__A1_P24182--1dv1__B1_P24182/docking.out
+# Using  26 CPU cores, 0 GPUs
+
+Receptor = data/inputs/1dv1_R.pdb
+Receptor max size = 64.737
+Required voxel size = 80.737
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1dv1_L.pdb
+Ligand max size = 62.4549
+Required voxel size = 68.4549
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.8 GB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1dv1_L.pdb
+Target receptors:
+ data/inputs/1dv1_R.pdb
+
+   >Ligand rotation =   360 /  3600 (22)
+   >Ligand rotation =   720 /  3600 (22)
+   >Ligand rotation =  1080 /  3600 ( 2)
+   >Ligand rotation =  1440 /  3600 (23)
+   >Ligand rotation =  1800 /  3600 ( 7)
+   >Ligand rotation =  2160 /  3600 ( 2)
+   >Ligand rotation =  2520 /  3600 (19)
+   >Ligand rotation =  2880 /  3600 (25)
+   >Ligand rotation =  3240 /  3600 (19)
+   >Ligand rotation =  3600 /  3600 ( 6)
+
+CPU time (initialize)         =     0.08 sec. ( 0.6%)
+CPU time (receptor process)   =     0.32 sec. ( 2.4%)
+CPU time (docking)            =    13.08 sec. (97.0%)
+  | Ligand voxelization       =     0.89 sec. ( 6.6%)
+  | Ligand FFT                =     5.37 sec. (39.8%)
+  | Convolution               =     0.70 sec. ( 5.2%)
+  | Inverse FFT               =     5.40 sec. (40.1%)
+  | Sort score (each core)    =     0.68 sec. ( 5.1%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    13.54 sec.

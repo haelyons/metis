@@ -1,0 +1,771 @@
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+Working directory: .
+CUDA_VISIBLE_DEVICES=0
+GPU count: 1
+OMP_NUM_THREADS=26
+ MEGADOCK ver. 4.1.3 for CPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/cpu_standard/1aua__A1_P24280--1aua__A2_P24280/docking.out
+# Using  26 CPU cores, 0 GPUs
+
+Receptor = data/inputs/1aua_R.pdb
+Receptor max size = 58.394
+Required voxel size = 74.394
+Number of grid = 63
+FFT N = 126
+
+Ligand = data/inputs/1aua_L.pdb
+Ligand max size = 60.897
+Required voxel size = 66.897
+Number of grid = 56
+FFT N = 112
+Memory requirement (/node)  = 1.3 GB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1aua_L.pdb
+Target receptors:
+ data/inputs/1aua_R.pdb
+
+   >Ligand rotation =   360 /  3600 (17)
+   >Ligand rotation =   720 /  3600 (17)
+   >Ligand rotation =  1080 /  3600 (21)
+   >Ligand rotation =  1440 /  3600 (13)
+   >Ligand rotation =  1800 /  3600 ( 1)
+   >Ligand rotation =  2160 /  3600 ( 4)
+   >Ligand rotation =  2520 /  3600 (23)
+   >Ligand rotation =  2880 /  3600 ( 3)
+   >Ligand rotation =  3240 /  3600 (20)
+   >Ligand rotation =  3600 /  3600 (13)
+
+CPU time (initialize)         =     0.06 sec. ( 0.7%)
+CPU time (receptor process)   =     0.16 sec. ( 2.0%)
+CPU time (docking)            =     7.75 sec. (97.2%)
+  | Ligand voxelization       =     0.64 sec. ( 8.0%)
+  | Ligand FFT                =     3.02 sec. (37.9%)
+  | Convolution               =     0.49 sec. ( 6.1%)
+  | Inverse FFT               =     3.03 sec. (38.1%)
+  | Sort score (each core)    =     0.52 sec. ( 6.5%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =     8.01 sec.
+ MEGADOCK ver. 4.1.3 for CPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/cpu_standard/1ax2__A1_P16404--1ax2__A2_P16404/docking.out
+# Using  26 CPU cores, 0 GPUs
+
+Receptor = data/inputs/1ax2_R.pdb
+Receptor max size = 54.49
+Required voxel size = 70.49
+Number of grid = 60
+FFT N = 120
+
+Ligand = data/inputs/1ax2_L.pdb
+Ligand max size = 65.0543
+Required voxel size = 71.0543
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.1 GB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1ax2_L.pdb
+Target receptors:
+ data/inputs/1ax2_R.pdb
+
+   >Ligand rotation =   360 /  3600 ( 4)
+   >Ligand rotation =   720 /  3600 (22)
+   >Ligand rotation =  1080 /  3600 (25)
+   >Ligand rotation =  1440 /  3600 (10)
+   >Ligand rotation =  1800 /  3600 ( 3)
+   >Ligand rotation =  2160 /  3600 (12)
+   >Ligand rotation =  2520 /  3600 ( 0)
+   >Ligand rotation =  2880 /  3600 (13)
+   >Ligand rotation =  3240 /  3600 (24)
+   >Ligand rotation =  3600 /  3600 (15)
+
+CPU time (initialize)         =     0.05 sec. ( 0.7%)
+CPU time (receptor process)   =     0.14 sec. ( 2.0%)
+CPU time (docking)            =     6.91 sec. (97.3%)
+  | Ligand voxelization       =     0.75 sec. (10.6%)
+  | Ligand FFT                =     2.19 sec. (30.9%)
+  | Convolution               =     0.63 sec. ( 8.9%)
+  | Inverse FFT               =     2.91 sec. (41.0%)
+  | Sort score (each core)    =     0.39 sec. ( 5.4%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =     7.13 sec.
+ MEGADOCK ver. 4.1.3 for CPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/cpu_standard/1dv1__A1_P24182--1dv1__B1_P24182/docking.out
+# Using  26 CPU cores, 0 GPUs
+
+Receptor = data/inputs/1dv1_R.pdb
+Receptor max size = 64.737
+Required voxel size = 80.737
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1dv1_L.pdb
+Ligand max size = 62.4549
+Required voxel size = 68.4549
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.8 GB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1dv1_L.pdb
+Target receptors:
+ data/inputs/1dv1_R.pdb
+
+   >Ligand rotation =   360 /  3600 (17)
+   >Ligand rotation =   720 /  3600 (17)
+   >Ligand rotation =  1080 /  3600 ( 7)
+   >Ligand rotation =  1440 /  3600 ( 2)
+   >Ligand rotation =  1800 /  3600 ( 1)
+   >Ligand rotation =  2160 /  3600 (15)
+   >Ligand rotation =  2520 /  3600 (13)
+   >Ligand rotation =  2880 /  3600 ( 8)
+   >Ligand rotation =  3240 /  3600 ( 8)
+   >Ligand rotation =  3600 /  3600 (10)
+
+CPU time (initialize)         =     0.07 sec. ( 0.6%)
+CPU time (receptor process)   =     0.23 sec. ( 2.0%)
+CPU time (docking)            =    11.48 sec. (97.4%)
+  | Ligand voxelization       =     0.99 sec. ( 8.4%)
+  | Ligand FFT                =     4.55 sec. (38.6%)
+  | Convolution               =     0.84 sec. ( 7.1%)
+  | Inverse FFT               =     4.49 sec. (38.1%)
+  | Sort score (each core)    =     0.60 sec. ( 5.1%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    11.83 sec.
+ MEGADOCK ver. 4.1.3 for CPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/cpu_standard/1nr5__A1_P07547--1nr5__A2_P07547/docking.out
+# Using  26 CPU cores, 0 GPUs
+
+Receptor = data/inputs/1nr5_R.pdb
+Receptor max size = 63.517
+Required voxel size = 79.517
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1nr5_L.pdb
+Ligand max size = 74.2472
+Required voxel size = 80.2472
+Number of grid = 70
+FFT N = 140
+Memory requirement (/node)  = 1.8 GB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1nr5_L.pdb
+Target receptors:
+ data/inputs/1nr5_R.pdb
+
+   >Ligand rotation =   360 /  3600 (21)
+   >Ligand rotation =   720 /  3600 ( 8)
+   >Ligand rotation =  1080 /  3600 (20)
+   >Ligand rotation =  1440 /  3600 (17)
+   >Ligand rotation =  1800 /  3600 ( 6)
+   >Ligand rotation =  2160 /  3600 (10)
+   >Ligand rotation =  2520 /  3600 (12)
+   >Ligand rotation =  2880 /  3600 ( 5)
+   >Ligand rotation =  3240 /  3600 (25)
+   >Ligand rotation =  3600 /  3600 (23)
+
+CPU time (initialize)         =     0.07 sec. ( 0.6%)
+CPU time (receptor process)   =     0.21 sec. ( 1.8%)
+CPU time (docking)            =    11.52 sec. (97.6%)
+  | Ligand voxelization       =     0.90 sec. ( 7.6%)
+  | Ligand FFT                =     4.59 sec. (38.8%)
+  | Convolution               =     0.74 sec. ( 6.3%)
+  | Inverse FFT               =     4.57 sec. (38.7%)
+  | Sort score (each core)    =     0.66 sec. ( 5.6%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    11.85 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/gpu_standard/1aua__A1_P24280--1aua__A2_P24280/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1aua_R.pdb
+Receptor max size = 58.394
+Required voxel size = 74.394
+Number of grid = 63
+FFT N = 126
+
+Ligand = data/inputs/1aua_L.pdb
+Ligand max size = 60.897
+Required voxel size = 66.897
+Number of grid = 56
+FFT N = 112
+Memory requirement (/node)  = 1.3 GB
+# GPU Memory : Use 574.9 MB ( 0.0%), Free 80515.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1aua_L.pdb
+Target receptors:
+ data/inputs/1aua_R.pdb
+
+   >Ligand rotation =   360 /  3600 ( 0)
+   >Ligand rotation =   720 /  3600 (11)
+   >Ligand rotation =  1080 /  3600 (23)
+   >Ligand rotation =  1440 /  3600 ( 0)
+   >Ligand rotation =  1800 /  3600 ( 0)
+   >Ligand rotation =  2160 /  3600 ( 0)
+   >Ligand rotation =  2520 /  3600 ( 0)
+   >Ligand rotation =  2880 /  3600 ( 0)
+   >Ligand rotation =  3240 /  3600 (12)
+   >Ligand rotation =  3600 /  3600 ( 0)
+
+CPU time (initialize)         =     0.18 sec. (12.5%)
+CPU time (receptor process)   =     0.15 sec. (10.4%)
+CPU time (docking)            =     1.12 sec. (77.1%)
+  | Ligand voxelization       =     0.42 sec. (28.5%)
+    | ligvox_copy_htod        =     0.05 sec. ( 3.6%)
+    | ligvox_kernel_init      =     0.06 sec. ( 4.1%)
+    | ligvox_kernel_fill_core =     0.11 sec. ( 7.7%)
+    | ligvox_kernel_cut_surf  =     0.04 sec. ( 2.5%)
+    | ligvox_kernel_fill_surf =     0.09 sec. ( 6.2%)
+    | ligvox_kernel_elec      =     0.03 sec. ( 2.2%)
+    | ligvox_kernel_set_array =     0.03 sec. ( 2.3%)
+  | Ligand FFT                =     0.20 sec. (13.6%)
+  | Convolution               =     0.09 sec. ( 6.0%)
+  | Inverse FFT               =     0.20 sec. (13.6%)
+  | Sort score (each core)    =     0.18 sec. (12.3%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =     1.49 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/gpu_standard/1ax2__A1_P16404--1ax2__A2_P16404/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1ax2_R.pdb
+Receptor max size = 54.49
+Required voxel size = 70.49
+Number of grid = 60
+FFT N = 120
+
+Ligand = data/inputs/1ax2_L.pdb
+Ligand max size = 65.0543
+Required voxel size = 71.0543
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.1 GB
+# GPU Memory : Use 570.9 MB ( 0.0%), Free 80519.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1ax2_L.pdb
+Target receptors:
+ data/inputs/1ax2_R.pdb
+
+   >Ligand rotation =   360 /  3600 ( 0)
+   >Ligand rotation =   720 /  3600 ( 0)
+   >Ligand rotation =  1080 /  3600 ( 0)
+   >Ligand rotation =  1440 /  3600 ( 0)
+   >Ligand rotation =  1800 /  3600 ( 0)
+   >Ligand rotation =  2160 /  3600 ( 0)
+   >Ligand rotation =  2520 /  3600 ( 0)
+   >Ligand rotation =  2880 /  3600 ( 0)
+   >Ligand rotation =  3240 /  3600 ( 0)
+   >Ligand rotation =  3600 /  3600 ( 5)
+
+CPU time (initialize)         =     0.19 sec. (14.6%)
+CPU time (receptor process)   =     0.11 sec. ( 9.0%)
+CPU time (docking)            =     0.97 sec. (76.4%)
+  | Ligand voxelization       =     0.42 sec. (32.7%)
+    | ligvox_copy_htod        =     0.05 sec. ( 4.1%)
+    | ligvox_kernel_init      =     0.06 sec. ( 4.4%)
+    | ligvox_kernel_fill_core =     0.12 sec. ( 9.2%)
+    | ligvox_kernel_cut_surf  =     0.04 sec. ( 2.8%)
+    | ligvox_kernel_fill_surf =     0.09 sec. ( 7.1%)
+    | ligvox_kernel_elec      =     0.03 sec. ( 2.6%)
+    | ligvox_kernel_set_array =     0.03 sec. ( 2.6%)
+  | Ligand FFT                =     0.13 sec. (10.4%)
+  | Convolution               =     0.08 sec. ( 6.1%)
+  | Inverse FFT               =     0.14 sec. (10.7%)
+  | Sort score (each core)    =     0.17 sec. (13.2%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =     1.31 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/gpu_standard/1dv1__A1_P24182--1dv1__B1_P24182/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1dv1_R.pdb
+Receptor max size = 64.737
+Required voxel size = 80.737
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1dv1_L.pdb
+Ligand max size = 62.4549
+Required voxel size = 68.4549
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.8 GB
+# GPU Memory : Use 598.9 MB ( 0.0%), Free 80491.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1dv1_L.pdb
+Target receptors:
+ data/inputs/1dv1_R.pdb
+
+   >Ligand rotation =   360 /  3600 ( 0)
+   >Ligand rotation =   720 /  3600 ( 0)
+   >Ligand rotation =  1080 /  3600 ( 0)
+   >Ligand rotation =  1440 /  3600 (23)
+   >Ligand rotation =  1800 /  3600 ( 0)
+   >Ligand rotation =  2160 /  3600 ( 0)
+   >Ligand rotation =  2520 /  3600 ( 0)
+   >Ligand rotation =  2880 /  3600 ( 0)
+   >Ligand rotation =  3240 /  3600 ( 0)
+   >Ligand rotation =  3600 /  3600 ( 0)
+
+CPU time (initialize)         =     0.19 sec. (10.8%)
+CPU time (receptor process)   =     0.20 sec. (11.5%)
+CPU time (docking)            =     1.35 sec. (77.7%)
+  | Ligand voxelization       =     0.46 sec. (26.5%)
+    | ligvox_copy_htod        =     0.05 sec. ( 3.1%)
+    | ligvox_kernel_init      =     0.08 sec. ( 4.4%)
+    | ligvox_kernel_fill_core =     0.13 sec. ( 7.3%)
+    | ligvox_kernel_cut_surf  =     0.04 sec. ( 2.2%)
+    | ligvox_kernel_fill_surf =     0.10 sec. ( 5.5%)
+    | ligvox_kernel_elec      =     0.03 sec. ( 1.8%)
+    | ligvox_kernel_set_array =     0.04 sec. ( 2.1%)
+  | Ligand FFT                =     0.24 sec. (13.8%)
+  | Convolution               =     0.13 sec. ( 7.3%)
+  | Inverse FFT               =     0.24 sec. (13.7%)
+  | Sort score (each core)    =     0.22 sec. (12.5%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =     1.79 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/runs/run.01Wr0WzP/gpu_standard/1nr5__A1_P07547--1nr5__A2_P07547/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1nr5_R.pdb
+Receptor max size = 63.517
+Required voxel size = 79.517
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1nr5_L.pdb
+Ligand max size = 74.2472
+Required voxel size = 80.2472
+Number of grid = 70
+FFT N = 140
+Memory requirement (/node)  = 1.8 GB
+# GPU Memory : Use 598.9 MB ( 0.0%), Free 80491.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1nr5_L.pdb
+Target receptors:
+ data/inputs/1nr5_R.pdb
+
+   >Ligand rotation =   360 /  3600 ( 0)
+   >Ligand rotation =   720 /  3600 ( 0)
+   >Ligand rotation =  1080 /  3600 ( 0)
+   >Ligand rotation =  1440 /  3600 ( 0)
+   >Ligand rotation =  1800 /  3600 ( 0)
+   >Ligand rotation =  2160 /  3600 ( 0)
+   >Ligand rotation =  2520 /  3600 (24)
+   >Ligand rotation =  2880 /  3600 ( 0)
+   >Ligand rotation =  3240 /  3600 ( 0)
+   >Ligand rotation =  3600 /  3600 ( 0)
+
+CPU time (initialize)         =     0.20 sec. (10.5%)
+CPU time (receptor process)   =     0.25 sec. (13.1%)
+CPU time (docking)            =     1.44 sec. (76.4%)
+  | Ligand voxelization       =     0.50 sec. (26.3%)
+    | ligvox_copy_htod        =     0.06 sec. ( 3.4%)
+    | ligvox_kernel_init      =     0.08 sec. ( 4.3%)
+    | ligvox_kernel_fill_core =     0.13 sec. ( 7.1%)
+    | ligvox_kernel_cut_surf  =     0.04 sec. ( 2.2%)
+    | ligvox_kernel_fill_surf =     0.10 sec. ( 5.2%)
+    | ligvox_kernel_elec      =     0.04 sec. ( 1.9%)
+    | ligvox_kernel_set_array =     0.04 sec. ( 2.1%)
+  | Ligand FFT                =     0.24 sec. (12.9%)
+  | Convolution               =     0.13 sec. ( 6.9%)
+  | Inverse FFT               =     0.24 sec. (12.8%)
+  | Sort score (each core)    =     0.25 sec. (13.5%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =     1.97 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Set 54,000 rotational angles (6 degree)
+# Output file = out/runs/run.01Wr0WzP/gpu_dense/1aua__A1_P24280--1aua__A2_P24280/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1aua_R.pdb
+Receptor max size = 58.394
+Required voxel size = 74.394
+Number of grid = 63
+FFT N = 126
+
+Ligand = data/inputs/1aua_L.pdb
+Ligand max size = 60.897
+Required voxel size = 66.897
+Number of grid = 56
+FFT N = 112
+Memory requirement (/node)  = 1.3 GB
+# GPU Memory : Use 574.9 MB ( 0.0%), Free 80515.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1aua_L.pdb
+Target receptors:
+ data/inputs/1aua_R.pdb
+
+   >Ligand rotation =  5400 / 54000 ( 0)
+   >Ligand rotation = 10800 / 54000 ( 0)
+   >Ligand rotation = 16200 / 54000 ( 0)
+   >Ligand rotation = 21600 / 54000 (16)
+   >Ligand rotation = 27000 / 54000 ( 0)
+   >Ligand rotation = 32400 / 54000 (25)
+   >Ligand rotation = 37800 / 54000 (16)
+   >Ligand rotation = 43200 / 54000 ( 0)
+   >Ligand rotation = 48600 / 54000 ( 0)
+   >Ligand rotation = 54000 / 54000 ( 0)
+
+CPU time (initialize)         =     0.19 sec. ( 1.1%)
+CPU time (receptor process)   =     0.13 sec. ( 0.8%)
+CPU time (docking)            =    16.13 sec. (98.1%)
+  | Ligand voxelization       =     6.24 sec. (37.9%)
+    | ligvox_copy_htod        =     0.79 sec. ( 4.8%)
+    | ligvox_kernel_init      =     0.90 sec. ( 5.5%)
+    | ligvox_kernel_fill_core =     1.68 sec. (10.2%)
+    | ligvox_kernel_cut_surf  =     0.53 sec. ( 3.2%)
+    | ligvox_kernel_fill_surf =     1.36 sec. ( 8.3%)
+    | ligvox_kernel_elec      =     0.48 sec. ( 2.9%)
+    | ligvox_kernel_set_array =     0.50 sec. ( 3.0%)
+  | Ligand FFT                =     2.98 sec. (18.1%)
+  | Convolution               =     1.31 sec. ( 8.0%)
+  | Inverse FFT               =     2.98 sec. (18.1%)
+  | Sort score (each core)    =     2.63 sec. (16.0%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    16.49 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Set 54,000 rotational angles (6 degree)
+# Output file = out/runs/run.01Wr0WzP/gpu_dense/1ax2__A1_P16404--1ax2__A2_P16404/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1ax2_R.pdb
+Receptor max size = 54.49
+Required voxel size = 70.49
+Number of grid = 60
+FFT N = 120
+
+Ligand = data/inputs/1ax2_L.pdb
+Ligand max size = 65.0543
+Required voxel size = 71.0543
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.1 GB
+# GPU Memory : Use 570.9 MB ( 0.0%), Free 80519.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1ax2_L.pdb
+Target receptors:
+ data/inputs/1ax2_R.pdb
+
+   >Ligand rotation =  5400 / 54000 ( 0)
+   >Ligand rotation = 10800 / 54000 ( 0)
+   >Ligand rotation = 16200 / 54000 ( 0)
+   >Ligand rotation = 21600 / 54000 ( 0)
+   >Ligand rotation = 27000 / 54000 ( 0)
+   >Ligand rotation = 32400 / 54000 ( 0)
+   >Ligand rotation = 37800 / 54000 ( 0)
+   >Ligand rotation = 43200 / 54000 ( 0)
+   >Ligand rotation = 48600 / 54000 (17)
+   >Ligand rotation = 54000 / 54000 ( 0)
+
+CPU time (initialize)         =     0.18 sec. ( 1.3%)
+CPU time (receptor process)   =     0.13 sec. ( 0.9%)
+CPU time (docking)            =    13.86 sec. (97.8%)
+  | Ligand voxelization       =     6.18 sec. (43.6%)
+    | ligvox_copy_htod        =     0.77 sec. ( 5.4%)
+    | ligvox_kernel_init      =     0.82 sec. ( 5.8%)
+    | ligvox_kernel_fill_core =     1.74 sec. (12.3%)
+    | ligvox_kernel_cut_surf  =     0.53 sec. ( 3.7%)
+    | ligvox_kernel_fill_surf =     1.35 sec. ( 9.6%)
+    | ligvox_kernel_elec      =     0.48 sec. ( 3.4%)
+    | ligvox_kernel_set_array =     0.49 sec. ( 3.5%)
+  | Ligand FFT                =     1.96 sec. (13.8%)
+  | Convolution               =     1.15 sec. ( 8.1%)
+  | Inverse FFT               =     2.02 sec. (14.2%)
+  | Sort score (each core)    =     2.56 sec. (18.1%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    14.19 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Set 54,000 rotational angles (6 degree)
+# Output file = out/runs/run.01Wr0WzP/gpu_dense/1dv1__A1_P24182--1dv1__B1_P24182/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1dv1_R.pdb
+Receptor max size = 64.737
+Required voxel size = 80.737
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1dv1_L.pdb
+Ligand max size = 62.4549
+Required voxel size = 68.4549
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.8 GB
+# GPU Memory : Use 598.9 MB ( 0.0%), Free 80491.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1dv1_L.pdb
+Target receptors:
+ data/inputs/1dv1_R.pdb
+
+   >Ligand rotation =  5400 / 54000 ( 0)
+   >Ligand rotation = 10800 / 54000 ( 0)
+   >Ligand rotation = 16200 / 54000 ( 8)
+   >Ligand rotation = 21600 / 54000 ( 0)
+   >Ligand rotation = 27000 / 54000 ( 0)
+   >Ligand rotation = 32400 / 54000 (17)
+   >Ligand rotation = 37800 / 54000 ( 0)
+   >Ligand rotation = 43200 / 54000 ( 0)
+   >Ligand rotation = 48600 / 54000 ( 0)
+   >Ligand rotation = 54000 / 54000 ( 0)
+
+CPU time (initialize)         =     0.19 sec. ( 1.0%)
+CPU time (receptor process)   =     0.19 sec. ( 1.0%)
+CPU time (docking)            =    19.18 sec. (98.1%)
+  | Ligand voxelization       =     6.91 sec. (35.3%)
+    | ligvox_copy_htod        =     0.82 sec. ( 4.2%)
+    | ligvox_kernel_init      =     1.15 sec. ( 5.9%)
+    | ligvox_kernel_fill_core =     1.91 sec. ( 9.8%)
+    | ligvox_kernel_cut_surf  =     0.57 sec. ( 2.9%)
+    | ligvox_kernel_fill_surf =     1.43 sec. ( 7.3%)
+    | ligvox_kernel_elec      =     0.48 sec. ( 2.5%)
+    | ligvox_kernel_set_array =     0.55 sec. ( 2.8%)
+  | Ligand FFT                =     3.60 sec. (18.4%)
+  | Convolution               =     1.90 sec. ( 9.7%)
+  | Inverse FFT               =     3.57 sec. (18.2%)
+  | Sort score (each core)    =     3.20 sec. (16.3%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    19.61 sec.
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA H100 PCIe
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Set 54,000 rotational angles (6 degree)
+# Output file = out/runs/run.01Wr0WzP/gpu_dense/1nr5__A1_P07547--1nr5__A2_P07547/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1nr5_R.pdb
+Receptor max size = 63.517
+Required voxel size = 79.517
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1nr5_L.pdb
+Ligand max size = 74.2472
+Required voxel size = 80.2472
+Number of grid = 70
+FFT N = 140
+Memory requirement (/node)  = 1.8 GB
+# GPU Memory : Use 598.9 MB ( 0.0%), Free 80491.0 MB (99.0%), Total 81089.9 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1nr5_L.pdb
+Target receptors:
+ data/inputs/1nr5_R.pdb
+
+   >Ligand rotation =  5400 / 54000 ( 0)
+   >Ligand rotation = 10800 / 54000 ( 0)
+   >Ligand rotation = 16200 / 54000 ( 0)
+   >Ligand rotation = 21600 / 54000 ( 0)
+   >Ligand rotation = 27000 / 54000 ( 0)
+   >Ligand rotation = 32400 / 54000 ( 0)
+   >Ligand rotation = 37800 / 54000 ( 0)
+   >Ligand rotation = 43200 / 54000 ( 0)
+   >Ligand rotation = 48600 / 54000 ( 0)
+   >Ligand rotation = 54000 / 54000 ( 0)
+
+CPU time (initialize)         =     0.20 sec. ( 1.0%)
+CPU time (receptor process)   =     0.16 sec. ( 0.8%)
+CPU time (docking)            =    19.18 sec. (98.1%)
+  | Ligand voxelization       =     6.86 sec. (35.1%)
+    | ligvox_copy_htod        =     0.81 sec. ( 4.1%)
+    | ligvox_kernel_init      =     1.14 sec. ( 5.8%)
+    | ligvox_kernel_fill_core =     1.91 sec. ( 9.8%)
+    | ligvox_kernel_cut_surf  =     0.57 sec. ( 2.9%)
+    | ligvox_kernel_fill_surf =     1.42 sec. ( 7.3%)
+    | ligvox_kernel_elec      =     0.48 sec. ( 2.5%)
+    | ligvox_kernel_set_array =     0.54 sec. ( 2.8%)
+  | Ligand FFT                =     3.58 sec. (18.3%)
+  | Convolution               =     1.89 sec. ( 9.7%)
+  | Inverse FFT               =     3.55 sec. (18.2%)
+  | Sort score (each core)    =     3.29 sec. (16.8%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    19.60 sec.
