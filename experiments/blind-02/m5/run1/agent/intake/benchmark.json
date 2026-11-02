@@ -1,0 +1,149 @@
+{
+  "identity": {
+    "name": "MEGADOCK CPU/GPU rotational-search four-case PINDER apo pilot",
+    "software": "MEGADOCK 4.1.4",
+    "brief": "brief.md",
+    "scope": "Exactly four named cases; no biological-efficacy inference.",
+    "found": true,
+    "found_basis": "Public executable CPU/GPU source, build and run commands verified; exact public apo inputs and reference structures accessible."
+  },
+  "outcome_definition": {
+    "docking": "Per case and configuration, ranked transform/score output and exactly 50 ranked complex PDBs; 600 PDBs per complete three-configuration pass, excluding repetitions.",
+    "evaluation": "Per-decoy DockQ; per-case DockQ at rank 1 and maximum over ranks 1..50, reported separately. Also per-case speed, CPU/GPU agreement, workflow time, GPU activity, billed allocation cost, errors and overruns.",
+    "scoring_interface": {
+      "published_cli": "pinder_eval --eval_dir eval_dir",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "layout": "eval_dir/<configuration>/<system_id>/apo_decoys/model_<rank>.pdb; exactly R and L chains. Evaluate only four selected cases, not entire test set.",
+      "subset_handling": "Published --custom_index requires full PINDER index schema with test holdout fields. Preserve original selected rows and scope evaluation to four-case subset. Do not penalize absent unselected cases.",
+      "pose_generation_command": "./decoygen [decoy_filename] [used_ligand.pdb] [.outfile] [decoy no.]",
+      "pose_generation_source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+      "complex_assembly": "Published decoygen produces transformed ligand; combine with unchanged receptor and preserve R/L labels."
+    }
+  },
+  "citations": [
+    {
+      "title": "MEGADOCK 4.0: an ultra-high-performance protein-protein docking software for heterogeneous supercomputers",
+      "authors": "Ohue et al.",
+      "year": 2014,
+      "doi": "10.1093/bioinformatics/btu532",
+      "url": "https://doi.org/10.1093/bioinformatics/btu532",
+      "basis": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/README.md"
+    },
+    {
+      "title": "MEGADOCK 4.1.4 build instructions",
+      "url": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md"
+    },
+    {
+      "title": "MEGADOCK 4.1.4 command and scoring defaults",
+      "url": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+    },
+    {
+      "title": "PINDER pinned dataset/evaluation documentation",
+      "url": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    }
+  ],
+  "source_licences": [
+    {
+      "item": "MEGADOCK 4.1.4 code",
+      "licence": "CC BY-NC 4.0",
+      "basis": "explicit",
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/README.md",
+      "terms_source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/LICENSE",
+      "intended_use_permission": "Noncommercial use allowed with attribution; commercial use requires prior authorization. Brief describes local scientific pilot but does not establish noncommercial status or separate commercial authorization.",
+      "permission_status": "unknown"
+    },
+    {
+      "item": "PINDER evaluator code",
+      "licence": "Apache-2.0",
+      "basis": "explicit",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+      "intended_use_permission": "Scientific evaluation allowed subject to licence conditions.",
+      "permission_status": "permitted"
+    },
+    {
+      "item": "PINDER 2024-02 structural inputs, references, index and metadata",
+      "licence": null,
+      "basis": "none",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "intended_use_permission": null,
+      "permission_status": "unknown",
+      "reason": "Repository licence and badge found for software; bounded search found no statement extending licence to externally hosted dataset. Owner mirror-use authorization addresses FroDock provenance, not a licence grant covering these inputs."
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "none",
+  "licence_reason": "Required external PINDER dataset licence coverage not established; MEGADOCK noncommercial status of intended use also not expressly established. No known prohibited use established. Unknown permission remains unknown.",
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "evidence": [
+      "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+      "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/Makefile",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ],
+    "reason": "CPU/GPU implementations exist, but stock CUDA image identity, GPU architecture, compiler, FFTW and CUDA-samples inventory not supplied. Makefile defaults sm_60 and CUDA fast math. Must inspect and reproduce before compatibility is confirmed; no known incompatibility proved.",
+    "builds_or_workloads_run": false
+  },
+  "size": {
+    "class": "unknown",
+    "unique_structural_input_bytes": 2801142,
+    "structural_input_GiB": 0.0026087667793035507,
+    "index_plus_metadata_plus_structures_GiB": 0.21527424827218056,
+    "generated_prepared_input_GiB": null,
+    "peak_working_set_GiB": null,
+    "data_plus_peak_working_set_GiB": null,
+    "reason": "Known input bytes are small; FFT grids, concurrent jobs, temporary decoys, evaluator memory and peak CPU/GPU working set unmeasured. Cannot classify total size from source-file size alone."
+  },
+  "scoring_rules": {
+    "endpoints": [
+      "DockQ rank 1",
+      "maximum DockQ among exactly 50 retained predictions"
+    ],
+    "scope": "Per case and configuration; no substitution of global leaderboard or FroDock results.",
+    "published_values_for_selected_cases": null,
+    "anchors_count": 0,
+    "anchors_reason": "Bounded sources establish implementation and settings, not independently published measured outcomes for these four MEGADOCK cases. No applicable published acceptance tolerance found; local validation is not a published anchor.",
+    "tolerance": null,
+    "uncertainty": null
+  },
+  "repeatability_rules": {
+    "timing_repetitions": null,
+    "timing_repetitions_reason": "Brief requires calibration then sealing; intake does not run workloads.",
+    "scientific_agreement_tolerance": null,
+    "tolerance_reason": "No published tolerance established for this comparison. Must justify and seal numerical tolerances before comparative results; not an anchor gate.",
+    "comparison_rules": "Separate CPU/GPU equal-sampling execution speed and agreement from GPU dense-versus-standard DockQ changes; report top-ranked and best of 50 separately for every case. Preserve failures and budget overruns.",
+    "total_spending_cap": null,
+    "spending_cap_reason": "Brief requires calibration and sealed cap; no allocation price or calibrated runtime supplied.",
+    "seeds": null,
+    "seeds_reason": "No seed or randomized trial policy supplied; published fixed rotational enumeration used.",
+    "thread_count": null,
+    "thread_count_reason": "Must seal after environment inspection; do not import FroDock run9 eight-rank configuration."
+  },
+  "search_candidates": [
+    {
+      "query": "MEGADOCK github README rotation 54000 3600 CPU GPU license",
+      "selected": "https://github.com/akiyamalab/MEGADOCK",
+      "reason": "Exact requested existing CPU/GPU implementation with documented standard and dense search."
+    },
+    {
+      "query": "site.pinder.org license dataset CC BY 4.0; site.github.com/pinder-org/pinder dataset license data license",
+      "selected": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "reason": "Bounded licence search did not establish external structural-data coverage."
+    }
+  ],
+  "unavailable_evidence": [
+    "Prepared PDB payload hashes",
+    "Peak working set",
+    "Runtime calibration and sealed repetitions, numerical tolerances, spending cap",
+    "GPU activity collector, provider allocation price and billing granularity",
+    "Historical PINDER repair patch payload"
+  ],
+  "pipeline_contract_limitations": [
+    "Intake summary exposes availability, licence and feasibility, not three separate scientific conclusions or per-case two-endpoint quality comparisons. Rich execution/evaluation artifacts are required.",
+    "anchors.json supports independently published scalar criteria or references; it cannot represent an uncalibrated paired CPU/GPU agreement rule or dense-search improvement hypothesis for these four cases. Do not convert local agreement checks into published anchors.",
+    "Fixed workload is pinned, but repetition count, justified numerical agreement tolerances and total spending cap remain unsealed pending authorized later calibration. No scientific evaluation should precede sealing."
+  ],
+  "gate_scripts": {
+    "named": [],
+    "reason": "Prompt names no gate script paths. Validate required JSON keys and anchors schema locally; do not invent external gate commands."
+  }
+}

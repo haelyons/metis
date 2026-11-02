@@ -1,0 +1,114 @@
+{
+  "repo": "https://github.com/akiyamalab/MEGADOCK",
+  "commit": "9575280c875732553266e26adc607dd892b02616",
+  "pin": "4.1.4",
+  "pin_source": "https://api.github.com/repos/akiyamalab/MEGADOCK/git/tags/1ced00d37672c03d3014da4307b920fdeff4d0ca",
+  "build_commands": [
+    {
+      "command": "make",
+      "configuration": "CPU single node",
+      "required_makefile_settings": {
+        "USE_GPU": 0,
+        "USE_MPI": 0
+      },
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md"
+    },
+    {
+      "command": "make",
+      "configuration": "GPU single node",
+      "required_makefile_settings": {
+        "USE_GPU": 1,
+        "USE_MPI": 0
+      },
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md"
+    }
+  ],
+  "build_prerequisites": {
+    "requirements": [
+      "C++ compiler and OpenMP",
+      "FFTW3 single precision (--enable-float)",
+      "CUDA toolkit >=5.0 and matching CUDA samples for GPU build"
+    ],
+    "paths": "Set FFTW_INSTALL_PATH, CUDA_INSTALL_PATH and CUDA_SAMPLES_PATH to actual installations per BUILD.md. GPU architecture must match device; published default sm_60 is not assumed compatible.",
+    "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+    "dependency_install_commands": null,
+    "reason": "No actual stock-image package inventory supplied; no package-manager installation commands invented. MEGADOCK commands above assume required libraries already installed; environment provisioning unresolved."
+  },
+  "run_commands": [
+    {
+      "configuration": "cpu_standard",
+      "command": "./megadock -R receptor.pdb -L ligand.pdb -o receptor-ligand.out",
+      "option_bindings": {
+        "-N": 50,
+        "-r": 3600
+      },
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+    },
+    {
+      "configuration": "gpu_standard",
+      "command": "./megadock-gpu -R receptor.pdb -L ligand.pdb -o receptor-ligand.out",
+      "option_bindings": {
+        "-N": 50,
+        "-r": 3600
+      },
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+    },
+    {
+      "configuration": "gpu_dense",
+      "command": "./megadock-gpu -R receptor.pdb -L ligand.pdb -o receptor-ligand.out",
+      "option_bindings": {
+        "-N": 50,
+        "-D": true
+      },
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+    }
+  ],
+  "command_binding_note": "Commands are published templates; bind input/output placeholders per case and append documented option_bindings. Values are brief requirements or documented defaults, not invented flags.",
+  "published_configuration": {
+    "scale": "Exactly four apo cases from brief, each run in all three configurations; no scale search.",
+    "standard_rotations": 3600,
+    "dense_rotations": 54000,
+    "retained_predictions": 50,
+    "predictions_per_rotation": 1,
+    "voxel_pitch_angstrom": 1.2,
+    "scoring_function": 3,
+    "electrostatics_ratio": 1.0,
+    "hydrophobic_ratio": 1.0,
+    "rPSC_receptor_core_penalty": -45.0,
+    "rPSC_ligand_core_penalty": 1.0,
+    "fft_points": "Automatic published default, identical procedure for all configurations; actual grids must be recorded.",
+    "sources": [
+      "brief.md",
+      "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+    ],
+    "note": "Published implementation defaults instantiated for requested pilot; no claim of published four-case results."
+  },
+  "postprocessing": {
+    "command": "./decoygen [decoy_filename] [used_ligand.pdb] [.outfile] [decoy no.]",
+    "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+  },
+  "evaluator": {
+    "repo": "https://github.com/pinder-org/pinder",
+    "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "build_commands": [
+      {
+        "command": "python3 -m venv venv",
+        "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+      },
+      {
+        "command": "source venv/bin/activate",
+        "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+      },
+      {
+        "command": "pip install pinder[eval]",
+        "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+      }
+    ],
+    "pin_caveat": "Published package install command does not enforce historical commit. Pinned archive installation command is present in brief using run9 logical variables, but historical repair patch payload is absent. Do not claim historical repaired evaluator reproduced.",
+    "historical_install_command": "SETUPTOOLS_SCM_PRETEND_VERSION=\"$PINDER_SCM_VERSION\" SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PINDER=\"$PINDER_SCM_VERSION\" \"$VPY\" -m pip install --no-cache-dir --no-build-isolation \"$WORK/$BP/pinder-src\"",
+    "historical_source": "brief.md",
+    "run_command": "pinder_eval --eval_dir eval_dir",
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  },
+  "executed": false
+}
