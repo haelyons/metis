@@ -1,0 +1,794 @@
+== setup.sh start 2026-11-02T00:57:09Z in /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96
+ls: cannot access '/usr/local/cuda/include/cuda_runtime.h': No such file or directory
+ls: cannot access '/usr/local/cuda/lib64/libcudart.so': No such file or directory
+lrwxrwxrwx 1 root root 34 Mar 20  2025 /usr/local/cuda/bin/nvcc -> ../../nvidia-cuda-toolkit/bin/nvcc
+ls: cannot access '/usr/lib/cuda/include/cuda_runtime.h': No such file or directory
+ls: cannot access '/usr/lib/cuda/lib64/libcudart.so': No such file or directory
+lrwxrwxrwx 1 root root 34 Mar 20  2025 /usr/lib/cuda/bin/nvcc -> ../../nvidia-cuda-toolkit/bin/nvcc
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+== CUDA layout: distro nvcc=/usr/bin/nvcc include=/usr/include lib=/usr/lib/x86_64-linux-gnu (not used by the CPU/MPI FroDock build)
+== apt: missing packages: libgl1-mesa-glx libopenblas-base libopenmpi-dev openmpi-common openmpi-bin libopenmpi3 libfftw3-3 libfftw3-dev libfftw3-mpi-dev libhdf5-openmpi-dev
+Ign:1 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ InRelease
+Get:2 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  InRelease [1477 B]
+Get:3 http://security.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+Hit:4 http://linux.mellanox.com/public/repo/doca/2.9.2/ubuntu22.04/x86_64 ./ Release
+Get:5 http://archive.lambdalabs.com/ubuntu jammy InRelease [3911 B]
+Get:6 https://download.docker.com/linux/ubuntu jammy InRelease [48.5 kB]
+Get:7 https://packages.microsoft.com/repos/azure-cli jammy InRelease [3596 B]
+Hit:8 http://archive.ubuntu.com/ubuntu jammy InRelease
+Get:9 https://nvidia.github.io/libnvidia-container/stable/deb/amd64  Packages [28.0 kB]
+Get:10 http://archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+Get:11 https://pkg.cloudflare.com/cloudflared jammy InRelease [5043 B]
+Get:12 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease [18.1 kB]
+Get:14 http://archive.lambdalabs.com/ubuntu jammy/main amd64 Packages [120 kB]
+Hit:15 https://ppa.launchpadcontent.net/flexiondotorg/nvtop/ubuntu jammy InRelease
+Get:16 https://packages.microsoft.com/repos/azure-cli jammy/main all Packages [1099 B]
+Get:17 https://packages.microsoft.com/repos/azure-cli jammy/main amd64 Packages [3679 B]
+Get:18 http://archive.ubuntu.com/ubuntu jammy-backports InRelease [127 kB]
+Get:19 https://download.docker.com/linux/ubuntu jammy/stable amd64 Packages [92.3 kB]
+Get:20 http://security.ubuntu.com/ubuntu jammy-security/main amd64 Packages [3670 kB]
+Get:21 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy/main amd64 Packages [42.0 kB]
+Get:22 https://pkg.cloudflare.com/cloudflared jammy/main amd64 Packages [375 B]
+Get:23 http://security.ubuntu.com/ubuntu jammy-security/main Translation-en [511 kB]
+Get:24 http://security.ubuntu.com/ubuntu jammy-security/main amd64 c-n-f Metadata [14.7 kB]
+Get:25 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 Packages [6545 kB]
+Get:26 http://security.ubuntu.com/ubuntu jammy-security/restricted Translation-en [1260 kB]
+Get:27 http://security.ubuntu.com/ubuntu jammy-security/restricted amd64 c-n-f Metadata [600 B]
+Get:28 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 Packages [1055 kB]
+Get:29 http://security.ubuntu.com/ubuntu jammy-security/universe Translation-en [238 kB]
+Get:30 http://security.ubuntu.com/ubuntu jammy-security/universe amd64 c-n-f Metadata [23.2 kB]
+Get:31 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 Packages [79.6 kB]
+Get:32 http://security.ubuntu.com/ubuntu jammy-security/multiverse Translation-en [13.7 kB]
+Get:33 http://security.ubuntu.com/ubuntu jammy-security/multiverse amd64 c-n-f Metadata [544 B]
+Get:34 http://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy/main Translation-en [5680 B]
+Get:35 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [3939 kB]
+Get:36 http://archive.ubuntu.com/ubuntu jammy-updates/main Translation-en [579 kB]
+Get:37 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 c-n-f Metadata [20.1 kB]
+Get:38 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 Packages [6778 kB]
+Get:39 http://archive.ubuntu.com/ubuntu jammy-updates/restricted Translation-en [1303 kB]
+Get:40 http://archive.ubuntu.com/ubuntu jammy-updates/restricted amd64 c-n-f Metadata [584 B]
+Get:41 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1290 kB]
+Get:42 http://archive.ubuntu.com/ubuntu jammy-updates/universe Translation-en [326 kB]
+Get:43 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 c-n-f Metadata [30.8 kB]
+Get:44 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 Packages [86.1 kB]
+Get:45 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse Translation-en [16.6 kB]
+Get:46 http://archive.ubuntu.com/ubuntu jammy-updates/multiverse amd64 c-n-f Metadata [756 B]
+Get:47 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 Packages [70.2 kB]
+Get:48 http://archive.ubuntu.com/ubuntu jammy-backports/main Translation-en [11.4 kB]
+Get:49 http://archive.ubuntu.com/ubuntu jammy-backports/main amd64 c-n-f Metadata [412 B]
+Get:50 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 Packages [30.8 kB]
+Get:51 http://archive.ubuntu.com/ubuntu jammy-backports/universe Translation-en [16.9 kB]
+Get:52 http://archive.ubuntu.com/ubuntu jammy-backports/universe amd64 c-n-f Metadata [676 B]
+Fetched 28.7 MB in 7s (4113 kB/s)
+Reading package lists...
+   libgl1-mesa-glx candidate 23.0.4-0ubuntu1~22.04.1
+   libopenblas-base candidate 0.3.20+ds-1
+   libopenmpi-dev candidate 4.1.2-2ubuntu1
+   openmpi-common candidate 4.1.2-2ubuntu1
+   openmpi-bin candidate 4.1.2-2ubuntu1
+   libopenmpi3 candidate 4.1.2-2ubuntu1
+   libfftw3-3 candidate 3.3.8-2ubuntu8
+   libfftw3-dev candidate 3.3.8-2ubuntu8
+   libfftw3-mpi-dev candidate 3.3.8-2ubuntu8
+   libhdf5-openmpi-dev candidate 1.10.7+repack-4ubuntu2
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following packages were automatically installed and are no longer required:
+  dpcp ibacm ibarr ibdump ibsim ibsim-doc ibutils2 ibverbs-utils
+  infiniband-diags iser-dkms isert-dkms kernel-mft-dkms knem knem-dkms
+  libibnetdisc5 libopensm libopensm-devel librdmacm-dev libxpmem-dev libxpmem0
+  mft mlnx-ethtool mlnx-iproute2 mlnx-ofed-kernel-dkms mlnx-ofed-kernel-utils
+  mlnx-tools mpitests ofed-scripts opensm opensm-doc perftest rdma-core
+  rdmacm-utils rshim srp-dkms srptools xpmem xpmem-dkms
+Use 'sudo apt autoremove' to remove them.
+The following additional packages will be installed:
+  autoconf automake autotools-dev curl libaec-dev libcurl4
+  libcurl4-openssl-dev libevent-2.1-7 libevent-core-2.1-7 libevent-dev
+  libevent-extra-2.1-7 libevent-openssl-2.1-7 libevent-pthreads-2.1-7
+  libfftw3-bin libfftw3-double3 libfftw3-long3 libfftw3-mpi3 libfftw3-quad3
+  libfftw3-single3 libhdf5-openmpi-103-1 libhdf5-openmpi-cpp-103-1
+  libhdf5-openmpi-fortran-102 libhdf5-openmpi-hl-100
+  libhdf5-openmpi-hl-cpp-100 libhdf5-openmpi-hl-fortran-100 libhwloc-dev
+  libhwloc-plugins libhwloc15 libjpeg-dev libjpeg-turbo8-dev libjpeg8-dev
+  libltdl-dev libnuma-dev libpmix-dev libpmix2 libssl-dev libssl3 libucx0
+  libxnvctrl0 m4
+Suggested packages:
+  autoconf-archive gnu-standards autoconf-doc libtool gettext libcurl4-doc
+  libidn11-dev libkrb5-dev libldap2-dev librtmp-dev libssh2-1-dev libfftw3-doc
+  libhdf5-doc libhwloc-contrib-plugins libtool-doc openmpi-doc libssl-doc
+  m4-doc
+Recommended packages:
+  libtool libcoarrays-openmpi-dev
+The following packages will be REMOVED:
+  doca-ofed hcoll sharp ucx
+The following NEW packages will be installed:
+  autoconf automake autotools-dev libaec-dev libcurl4-openssl-dev
+  libevent-2.1-7 libevent-dev libevent-extra-2.1-7 libevent-openssl-2.1-7
+  libevent-pthreads-2.1-7 libfftw3-3 libfftw3-bin libfftw3-dev
+  libfftw3-double3 libfftw3-long3 libfftw3-mpi-dev libfftw3-mpi3
+  libfftw3-quad3 libfftw3-single3 libgl1-mesa-glx libhdf5-openmpi-103-1
+  libhdf5-openmpi-cpp-103-1 libhdf5-openmpi-dev libhdf5-openmpi-fortran-102
+  libhdf5-openmpi-hl-100 libhdf5-openmpi-hl-cpp-100
+  libhdf5-openmpi-hl-fortran-100 libhwloc-dev libhwloc-plugins libhwloc15
+  libjpeg-dev libjpeg-turbo8-dev libjpeg8-dev libltdl-dev libnuma-dev
+  libopenblas-base libopenmpi-dev libopenmpi3 libpmix-dev libpmix2 libssl-dev
+  libucx0 libxnvctrl0 m4 openmpi-bin openmpi-common
+The following packages will be upgraded:
+  curl libcurl4 libevent-core-2.1-7 libssl3
+4 upgraded, 46 newly installed, 4 to remove and 320 not upgraded.
+Need to get 23.1 MB of archives.
+After this operation, 69.3 MB of additional disk space will be used.
+Get:1 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libssl3 amd64 3.0.2-0ubuntu1.30 [1907 kB]
+Get:2 http://archive.lambdalabs.com/ubuntu jammy/main amd64 libxnvctrl0 amd64 570.207-0lambda1 [10.6 kB]
+Get:3 http://archive.ubuntu.com/ubuntu jammy/main amd64 m4 amd64 1.4.18-5ubuntu2 [199 kB]
+Get:4 http://archive.ubuntu.com/ubuntu jammy/main amd64 autoconf all 2.71-2 [338 kB]
+Get:5 http://archive.ubuntu.com/ubuntu jammy/main amd64 autotools-dev all 20220109.1 [44.9 kB]
+Get:6 http://archive.ubuntu.com/ubuntu jammy/main amd64 automake all 1:1.16.5-1.3 [558 kB]
+Get:7 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 curl amd64 7.81.0-1ubuntu1.30 [194 kB]
+Get:8 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcurl4 amd64 7.81.0-1ubuntu1.30 [293 kB]
+Get:9 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libcurl4-openssl-dev amd64 7.81.0-1ubuntu1.30 [387 kB]
+Get:10 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [149 kB]
+Get:11 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-core-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [94.8 kB]
+Get:12 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-extra-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [65.7 kB]
+Get:13 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-pthreads-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [7644 B]
+Get:14 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-openssl-2.1-7 amd64 2.1.12-stable-1ubuntu0.2 [15.7 kB]
+Get:15 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libevent-dev amd64 2.1.12-stable-1ubuntu0.2 [279 kB]
+Get:16 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-double3 amd64 3.3.8-2ubuntu8 [770 kB]
+Get:17 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-long3 amd64 3.3.8-2ubuntu8 [335 kB]
+Get:18 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-single3 amd64 3.3.8-2ubuntu8 [800 kB]
+Get:19 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libfftw3-3 amd64 3.3.8-2ubuntu8 [1756 B]
+Get:20 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-quad3 amd64 3.3.8-2ubuntu8 [614 kB]
+Get:21 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-bin amd64 3.3.8-2ubuntu8 [35.5 kB]
+Get:22 http://archive.ubuntu.com/ubuntu jammy/main amd64 libfftw3-dev amd64 3.3.8-2ubuntu8 [2101 kB]
+Get:23 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 libhwloc15 amd64 2.7.0-2ubuntu1 [159 kB]
+Get:24 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 libhwloc-plugins amd64 2.7.0-2ubuntu1 [15.6 kB]
+Get:25 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libpmix2 amd64 4.1.2-2ubuntu1 [604 kB]
+Get:26 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libucx0 amd64 1.12.1~rc2-1 [891 kB]
+Get:27 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libopenmpi3 amd64 4.1.2-2ubuntu1 [2594 kB]
+Get:28 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libfftw3-mpi3 amd64 3.3.8-2ubuntu8 [48.9 kB]
+Get:29 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libfftw3-mpi-dev amd64 3.3.8-2ubuntu8 [53.3 kB]
+Get:30 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 libgl1-mesa-glx amd64 23.0.4-0ubuntu1~22.04.1 [5584 B]
+Get:31 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libhdf5-openmpi-103-1 amd64 1.10.7+repack-4ubuntu2 [1344 kB]
+Get:32 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libhdf5-openmpi-cpp-103-1 amd64 1.10.7+repack-4ubuntu2 [129 kB]
+Get:33 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libhdf5-openmpi-fortran-102 amd64 1.10.7+repack-4ubuntu2 [90.6 kB]
+Get:34 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libhdf5-openmpi-hl-100 amd64 1.10.7+repack-4ubuntu2 [59.2 kB]
+Get:35 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libhdf5-openmpi-hl-cpp-100 amd64 1.10.7+repack-4ubuntu2 [10.7 kB]
+Get:36 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libhdf5-openmpi-hl-fortran-100 amd64 1.10.7+repack-4ubuntu2 [33.5 kB]
+Get:37 http://archive.ubuntu.com/ubuntu jammy/main amd64 libjpeg-turbo8-dev amd64 2.1.2-0ubuntu1 [257 kB]
+Get:38 http://archive.ubuntu.com/ubuntu jammy/main amd64 libjpeg8-dev amd64 8c-2ubuntu10 [1476 B]
+Get:39 http://archive.ubuntu.com/ubuntu jammy/main amd64 libjpeg-dev amd64 8c-2ubuntu10 [1472 B]
+Get:40 http://archive.ubuntu.com/ubuntu jammy/main amd64 libltdl-dev amd64 2.4.6-15build2 [169 kB]
+Get:41 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libopenblas-base amd64 0.3.20+ds-1 [4858 B]
+Get:42 http://archive.ubuntu.com/ubuntu jammy/main amd64 libnuma-dev amd64 2.0.14-3ubuntu2 [35.9 kB]
+Get:43 http://archive.ubuntu.com/ubuntu jammy-updates/universe amd64 libhwloc-dev amd64 2.7.0-2ubuntu1 [256 kB]
+Get:44 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libpmix-dev amd64 4.1.2-2ubuntu1 [805 kB]
+Get:45 http://archive.ubuntu.com/ubuntu jammy-updates/main amd64 libssl-dev amd64 3.0.2-0ubuntu1.30 [2377 kB]
+Get:46 http://archive.ubuntu.com/ubuntu jammy/universe amd64 openmpi-common all 4.1.2-2ubuntu1 [162 kB]
+Get:47 http://archive.ubuntu.com/ubuntu jammy/universe amd64 openmpi-bin amd64 4.1.2-2ubuntu1 [116 kB]
+Get:48 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libaec-dev amd64 1.0.6-1 [17.9 kB]
+Get:49 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libopenmpi-dev amd64 4.1.2-2ubuntu1 [867 kB]
+Get:50 http://archive.ubuntu.com/ubuntu jammy/universe amd64 libhdf5-openmpi-dev amd64 1.10.7+repack-4ubuntu2 [2750 kB]
+Preconfiguring packages ...
+Fetched 23.1 MB in 3s (7463 kB/s)
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 214076 files and directories currently installed.)
+Removing doca-ofed (2.9.2-0.1.5) ...
+Removing hcoll (4.8.3230-1.2410068) ...
+Removing sharp (3.9.0.MLNX20241029.7a20b607-1.2410068) ...
+Removing ucx (1.18.0-1.2410068) ...
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 213587 files and directories currently installed.)
+Preparing to unpack .../libssl3_3.0.2-0ubuntu1.30_amd64.deb ...
+Unpacking libssl3:amd64 (3.0.2-0ubuntu1.30) over (3.0.2-0ubuntu1.19) ...
+Setting up libssl3:amd64 (3.0.2-0ubuntu1.30) ...
+Selecting previously unselected package m4.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%Service sharp_am is removed
+(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 213587 files and directories currently installed.)
+Preparing to unpack .../00-m4_1.4.18-5ubuntu2_amd64.deb ...
+Unpacking m4 (1.4.18-5ubuntu2) ...
+Selecting previously unselected package autoconf.
+Preparing to unpack .../01-autoconf_2.71-2_all.deb ...
+Unpacking autoconf (2.71-2) ...
+Selecting previously unselected package autotools-dev.
+Preparing to unpack .../02-autotools-dev_20220109.1_all.deb ...
+Unpacking autotools-dev (20220109.1) ...
+Selecting previously unselected package automake.
+Preparing to unpack .../03-automake_1%3a1.16.5-1.3_all.deb ...
+Unpacking automake (1:1.16.5-1.3) ...
+Preparing to unpack .../04-curl_7.81.0-1ubuntu1.30_amd64.deb ...
+Unpacking curl (7.81.0-1ubuntu1.30) over (7.81.0-1ubuntu1.20) ...
+Preparing to unpack .../05-libcurl4_7.81.0-1ubuntu1.30_amd64.deb ...
+Unpacking libcurl4:amd64 (7.81.0-1ubuntu1.30) over (7.81.0-1ubuntu1.20) ...
+Selecting previously unselected package libcurl4-openssl-dev:amd64.
+Preparing to unpack .../06-libcurl4-openssl-dev_7.81.0-1ubuntu1.30_amd64.deb ...
+Unpacking libcurl4-openssl-dev:amd64 (7.81.0-1ubuntu1.30) ...
+Selecting previously unselected package libevent-2.1-7:amd64.
+Preparing to unpack .../07-libevent-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Preparing to unpack .../08-libevent-core-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-core-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) over (2.1.12-stable-1build3) ...
+Selecting previously unselected package libevent-extra-2.1-7:amd64.
+Preparing to unpack .../09-libevent-extra-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-extra-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libevent-pthreads-2.1-7:amd64.
+Preparing to unpack .../10-libevent-pthreads-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-pthreads-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libevent-openssl-2.1-7:amd64.
+Preparing to unpack .../11-libevent-openssl-2.1-7_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-openssl-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libevent-dev.
+Preparing to unpack .../12-libevent-dev_2.1.12-stable-1ubuntu0.2_amd64.deb ...
+Unpacking libevent-dev (2.1.12-stable-1ubuntu0.2) ...
+Selecting previously unselected package libfftw3-double3:amd64.
+Preparing to unpack .../13-libfftw3-double3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-double3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-long3:amd64.
+Preparing to unpack .../14-libfftw3-long3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-long3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-single3:amd64.
+Preparing to unpack .../15-libfftw3-single3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-single3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-3:amd64.
+Preparing to unpack .../16-libfftw3-3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-quad3:amd64.
+Preparing to unpack .../17-libfftw3-quad3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-quad3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-bin.
+Preparing to unpack .../18-libfftw3-bin_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-bin (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-dev:amd64.
+Preparing to unpack .../19-libfftw3-dev_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-dev:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libhwloc15:amd64.
+Preparing to unpack .../20-libhwloc15_2.7.0-2ubuntu1_amd64.deb ...
+Unpacking libhwloc15:amd64 (2.7.0-2ubuntu1) ...
+Selecting previously unselected package libxnvctrl0:amd64.
+Preparing to unpack .../21-libxnvctrl0_570.207-0lambda1_amd64.deb ...
+Unpacking libxnvctrl0:amd64 (570.207-0lambda1) ...
+Selecting previously unselected package libhwloc-plugins:amd64.
+Preparing to unpack .../22-libhwloc-plugins_2.7.0-2ubuntu1_amd64.deb ...
+Unpacking libhwloc-plugins:amd64 (2.7.0-2ubuntu1) ...
+Selecting previously unselected package libpmix2:amd64.
+Preparing to unpack .../23-libpmix2_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libpmix2:amd64 (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libucx0:amd64.
+Preparing to unpack .../24-libucx0_1.12.1~rc2-1_amd64.deb ...
+Unpacking libucx0:amd64 (1.12.1~rc2-1) ...
+Selecting previously unselected package libopenmpi3:amd64.
+Preparing to unpack .../25-libopenmpi3_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libopenmpi3:amd64 (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libfftw3-mpi3:amd64.
+Preparing to unpack .../26-libfftw3-mpi3_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-mpi3:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libfftw3-mpi-dev:amd64.
+Preparing to unpack .../27-libfftw3-mpi-dev_3.3.8-2ubuntu8_amd64.deb ...
+Unpacking libfftw3-mpi-dev:amd64 (3.3.8-2ubuntu8) ...
+Selecting previously unselected package libgl1-mesa-glx:amd64.
+Preparing to unpack .../28-libgl1-mesa-glx_23.0.4-0ubuntu1~22.04.1_amd64.deb ...
+Unpacking libgl1-mesa-glx:amd64 (23.0.4-0ubuntu1~22.04.1) ...
+Selecting previously unselected package libhdf5-openmpi-103-1:amd64.
+Preparing to unpack .../29-libhdf5-openmpi-103-1_1.10.7+repack-4ubuntu2_amd64.deb ...
+Unpacking libhdf5-openmpi-103-1:amd64 (1.10.7+repack-4ubuntu2) ...
+Selecting previously unselected package libhdf5-openmpi-cpp-103-1:amd64.
+Preparing to unpack .../30-libhdf5-openmpi-cpp-103-1_1.10.7+repack-4ubuntu2_amd64.deb ...
+Unpacking libhdf5-openmpi-cpp-103-1:amd64 (1.10.7+repack-4ubuntu2) ...
+Selecting previously unselected package libhdf5-openmpi-fortran-102:amd64.
+Preparing to unpack .../31-libhdf5-openmpi-fortran-102_1.10.7+repack-4ubuntu2_amd64.deb ...
+Unpacking libhdf5-openmpi-fortran-102:amd64 (1.10.7+repack-4ubuntu2) ...
+Selecting previously unselected package libhdf5-openmpi-hl-100:amd64.
+Preparing to unpack .../32-libhdf5-openmpi-hl-100_1.10.7+repack-4ubuntu2_amd64.deb ...
+Unpacking libhdf5-openmpi-hl-100:amd64 (1.10.7+repack-4ubuntu2) ...
+Selecting previously unselected package libhdf5-openmpi-hl-cpp-100:amd64.
+Preparing to unpack .../33-libhdf5-openmpi-hl-cpp-100_1.10.7+repack-4ubuntu2_amd64.deb ...
+Unpacking libhdf5-openmpi-hl-cpp-100:amd64 (1.10.7+repack-4ubuntu2) ...
+Selecting previously unselected package libhdf5-openmpi-hl-fortran-100:amd64.
+Preparing to unpack .../34-libhdf5-openmpi-hl-fortran-100_1.10.7+repack-4ubuntu2_amd64.deb ...
+Unpacking libhdf5-openmpi-hl-fortran-100:amd64 (1.10.7+repack-4ubuntu2) ...
+Selecting previously unselected package libjpeg-turbo8-dev:amd64.
+Preparing to unpack .../35-libjpeg-turbo8-dev_2.1.2-0ubuntu1_amd64.deb ...
+Unpacking libjpeg-turbo8-dev:amd64 (2.1.2-0ubuntu1) ...
+Selecting previously unselected package libjpeg8-dev:amd64.
+Preparing to unpack .../36-libjpeg8-dev_8c-2ubuntu10_amd64.deb ...
+Unpacking libjpeg8-dev:amd64 (8c-2ubuntu10) ...
+Selecting previously unselected package libjpeg-dev:amd64.
+Preparing to unpack .../37-libjpeg-dev_8c-2ubuntu10_amd64.deb ...
+Unpacking libjpeg-dev:amd64 (8c-2ubuntu10) ...
+Selecting previously unselected package libltdl-dev:amd64.
+Preparing to unpack .../38-libltdl-dev_2.4.6-15build2_amd64.deb ...
+Unpacking libltdl-dev:amd64 (2.4.6-15build2) ...
+Selecting previously unselected package libopenblas-base:amd64.
+Preparing to unpack .../39-libopenblas-base_0.3.20+ds-1_amd64.deb ...
+Unpacking libopenblas-base:amd64 (0.3.20+ds-1) ...
+Selecting previously unselected package libnuma-dev:amd64.
+Preparing to unpack .../40-libnuma-dev_2.0.14-3ubuntu2_amd64.deb ...
+Unpacking libnuma-dev:amd64 (2.0.14-3ubuntu2) ...
+Selecting previously unselected package libhwloc-dev:amd64.
+Preparing to unpack .../41-libhwloc-dev_2.7.0-2ubuntu1_amd64.deb ...
+Unpacking libhwloc-dev:amd64 (2.7.0-2ubuntu1) ...
+Selecting previously unselected package libpmix-dev:amd64.
+Preparing to unpack .../42-libpmix-dev_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libpmix-dev:amd64 (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libssl-dev:amd64.
+Preparing to unpack .../43-libssl-dev_3.0.2-0ubuntu1.30_amd64.deb ...
+Unpacking libssl-dev:amd64 (3.0.2-0ubuntu1.30) ...
+Selecting previously unselected package openmpi-common.
+Preparing to unpack .../44-openmpi-common_4.1.2-2ubuntu1_all.deb ...
+Unpacking openmpi-common (4.1.2-2ubuntu1) ...
+Selecting previously unselected package openmpi-bin.
+Preparing to unpack .../45-openmpi-bin_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking openmpi-bin (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libaec-dev:amd64.
+Preparing to unpack .../46-libaec-dev_1.0.6-1_amd64.deb ...
+Unpacking libaec-dev:amd64 (1.0.6-1) ...
+Selecting previously unselected package libopenmpi-dev:amd64.
+Preparing to unpack .../47-libopenmpi-dev_4.1.2-2ubuntu1_amd64.deb ...
+Unpacking libopenmpi-dev:amd64 (4.1.2-2ubuntu1) ...
+Selecting previously unselected package libhdf5-openmpi-dev.
+Preparing to unpack .../48-libhdf5-openmpi-dev_1.10.7+repack-4ubuntu2_amd64.deb ...
+Unpacking libhdf5-openmpi-dev (1.10.7+repack-4ubuntu2) ...
+Setting up libopenblas-base:amd64 (0.3.20+ds-1) ...
+Setting up libjpeg-turbo8-dev:amd64 (2.1.2-0ubuntu1) ...
+Setting up libucx0:amd64 (1.12.1~rc2-1) ...
+Setting up libfftw3-single3:amd64 (3.3.8-2ubuntu8) ...
+Setting up libaec-dev:amd64 (1.0.6-1) ...
+Setting up libfftw3-long3:amd64 (3.3.8-2ubuntu8) ...
+Setting up m4 (1.4.18-5ubuntu2) ...
+Setting up libnuma-dev:amd64 (2.0.14-3ubuntu2) ...
+Setting up libxnvctrl0:amd64 (570.207-0lambda1) ...
+Setting up autotools-dev (20220109.1) ...
+Setting up libfftw3-quad3:amd64 (3.3.8-2ubuntu8) ...
+Setting up libssl-dev:amd64 (3.0.2-0ubuntu1.30) ...
+Setting up libhwloc15:amd64 (2.7.0-2ubuntu1) ...
+Setting up libevent-core-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up libevent-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up libfftw3-double3:amd64 (3.3.8-2ubuntu8) ...
+Setting up autoconf (2.71-2) ...
+Setting up libgl1-mesa-glx:amd64 (23.0.4-0ubuntu1~22.04.1) ...
+Setting up libfftw3-3:amd64 (3.3.8-2ubuntu8) ...
+Setting up openmpi-common (4.1.2-2ubuntu1) ...
+Setting up libcurl4:amd64 (7.81.0-1ubuntu1.30) ...
+Setting up curl (7.81.0-1ubuntu1.30) ...
+Setting up libjpeg8-dev:amd64 (8c-2ubuntu10) ...
+Setting up libevent-pthreads-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up automake (1:1.16.5-1.3) ...
+update-alternatives: using /usr/bin/automake-1.16 to provide /usr/bin/automake (automake) in auto mode
+Setting up libevent-extra-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up libfftw3-bin (3.3.8-2ubuntu8) ...
+Setting up libjpeg-dev:amd64 (8c-2ubuntu10) ...
+Setting up libevent-openssl-2.1-7:amd64 (2.1.12-stable-1ubuntu0.2) ...
+Setting up libhwloc-plugins:amd64 (2.7.0-2ubuntu1) ...
+Setting up libltdl-dev:amd64 (2.4.6-15build2) ...
+Setting up libcurl4-openssl-dev:amd64 (7.81.0-1ubuntu1.30) ...
+Setting up libevent-dev (2.1.12-stable-1ubuntu0.2) ...
+Setting up libhwloc-dev:amd64 (2.7.0-2ubuntu1) ...
+Setting up libfftw3-dev:amd64 (3.3.8-2ubuntu8) ...
+Setting up libpmix2:amd64 (4.1.2-2ubuntu1) ...
+Setting up libopenmpi3:amd64 (4.1.2-2ubuntu1) ...
+Setting up libfftw3-mpi3:amd64 (3.3.8-2ubuntu8) ...
+Setting up libpmix-dev:amd64 (4.1.2-2ubuntu1) ...
+Setting up openmpi-bin (4.1.2-2ubuntu1) ...
+update-alternatives: using /usr/bin/mpirun.openmpi to provide /usr/bin/mpirun (mpirun) in auto mode
+update-alternatives: using /usr/bin/mpicc.openmpi to provide /usr/bin/mpicc (mpi) in auto mode
+Setting up libhdf5-openmpi-103-1:amd64 (1.10.7+repack-4ubuntu2) ...
+Setting up libfftw3-mpi-dev:amd64 (3.3.8-2ubuntu8) ...
+Setting up libhdf5-openmpi-fortran-102:amd64 (1.10.7+repack-4ubuntu2) ...
+Setting up libhdf5-openmpi-hl-100:amd64 (1.10.7+repack-4ubuntu2) ...
+Setting up libopenmpi-dev:amd64 (4.1.2-2ubuntu1) ...
+update-alternatives: using /usr/lib/x86_64-linux-gnu/openmpi/include to provide /usr/include/x86_64-linux-gnu/mpi (mpi-x86_64-linux-gnu) in auto mode
+Setting up libhdf5-openmpi-cpp-103-1:amd64 (1.10.7+repack-4ubuntu2) ...
+Setting up libhdf5-openmpi-hl-cpp-100:amd64 (1.10.7+repack-4ubuntu2) ...
+Setting up libhdf5-openmpi-hl-fortran-100:amd64 (1.10.7+repack-4ubuntu2) ...
+Setting up libhdf5-openmpi-dev (1.10.7+repack-4ubuntu2) ...
+update-alternatives: using /usr/bin/h5pcc.openmpi to provide /usr/bin/h5pcc (h5pcc) in auto mode
+update-alternatives: using /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5-openmpi.pc to provide /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5.pc (hdf5.pc) in auto mode
+update-alternatives: updating alternative /usr/bin/mpicc.openmpi because link group mpi has changed slave links
+update-alternatives: using /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5-mpi.pc to provide /usr/lib/x86_64-linux-gnu/pkgconfig/hdf5.pc (hdf5.pc) in auto mode
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for install-info (6.8-4build1) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.10) ...
+NEEDRESTART-VER: 3.5
+NEEDRESTART-KCUR: 6.8.0-60-generic
+NEEDRESTART-KEXP: 6.8.0-60-generic
+NEEDRESTART-KSTA: 1
+NEEDRESTART-SVC: glances.service
+NEEDRESTART-SVC: lambda-jupyter.service
+NEEDRESTART-SVC: packagekit.service
+NEEDRESTART-SVC: ssh.service
+NEEDRESTART-SVC: systemd-journald.service
+NEEDRESTART-SVC: systemd-logind.service
+NEEDRESTART-SVC: systemd-manager
+NEEDRESTART-SVC: systemd-networkd.service
+NEEDRESTART-SVC: systemd-resolved.service
+NEEDRESTART-SVC: systemd-udevd.service
+NEEDRESTART-SVC: user@1000.service
+   installed: libgl1-mesa-glx:amd64	23.0.4-0ubuntu1~22.04.1
+   installed: libopenblas-base:amd64	0.3.20+ds-1
+   installed: libopenmpi-dev:amd64	4.1.2-2ubuntu1
+   installed: openmpi-common	4.1.2-2ubuntu1
+   installed: openmpi-bin	4.1.2-2ubuntu1
+   installed: libopenmpi3:amd64	4.1.2-2ubuntu1
+   installed: libfftw3-3:amd64	3.3.8-2ubuntu8
+   installed: libfftw3-dev:amd64	3.3.8-2ubuntu8
+   installed: libfftw3-mpi-dev:amd64	3.3.8-2ubuntu8
+   installed: libhdf5-openmpi-dev	1.10.7+repack-4ubuntu2
+   mpirun: mpirun (Open MPI) 4.1.2
+== pinder source ebeb28a2f8411363cef722b7d293c978f7442672
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0100 12944    0 12944    0     0  30845      0 --:--:-- --:--:-- --:--:-- 30819100 7812k    0 7812k    0     0  6143k      0 --:--:--  0:00:01 --:--:-- 6141k100 17.5M    0 17.5M    0     0  7771k      0 --:--:--  0:00:02 --:--:-- 7770k100 21.7M    0 21.7M    0     0  7646k      0 --:--:--  0:00:02 --:--:-- 7644k
+   fetched and verified: baseline-published/downloads/pinder/pinder-src.tar.gz
+   recorded fixes patch: baseline-published/records/pinder_frodock_fixes.patch (sha256 295af03d22550b21c1e0852f723f324c35e9f5caa75e1759ba82bee5ed0259c3)
+patching file src/pinder-methods/pinder/methods/main.py
+patching file src/pinder-methods/pinder/methods/run/frodock/predict.py
+== FroDock 3.12
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0 25.4M    0 31662    0     0  57710      0  0:07:41 --:--:--  0:07:41 57672 89 25.4M   89 22.8M    0     0  14.7M      0  0:00:01  0:00:01 --:--:-- 14.7M100 25.4M  100 25.4M    0     0  15.9M      0  0:00:01  0:00:01 --:--:-- 15.9M
+   fetched and verified: baseline-published/downloads/frodock/frodock.tar.gz
+   running published ./compile_frodock.sh (log: out/setup/compile_frodock.log)
+   frodockgrid_mpi_gcc: compiled sha256 e05a7b0e50287eacad35ef0f68ab974ec8ba90548307c96b5f52d0f83633251d
+   frodock_mpi_gcc: compiled sha256 d3ab37a374b509e655c40bf0620b4ba8d6bcc2814de2b6736e6724d9c93c4753
+   frodockcluster_gcc: compiled sha256 177eaa6f8bf537426279105b6dd74af48821579eb64431a3584a81c0f28ea701
+   frodockview_gcc: compiled sha256 27577445db1f276203aae16e348ea6e7ef601bcc5a215a782792796738f26fb7
+   soap.bin verified (7536604 bytes, 791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc)
+== python venv
+   stock torch: 2.7.0 @ /usr/lib/python3/dist-packages/torch/__init__.py
+pip 22.0.2 from /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/pip (python 3.10)
+Collecting setuptools>=64
+  Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 KB 4.5 MB/s eta 0:00:00
+Collecting setuptools_scm>=8
+  Downloading setuptools_scm-10.3.4-py3-none-any.whl (33 kB)
+Requirement already satisfied: packaging in /usr/lib/python3/dist-packages (21.3)
+Collecting packaging
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 KB 174.1 MB/s eta 0:00:00
+Requirement already satisfied: wheel in /usr/lib/python3/dist-packages (0.37.1)
+Collecting wheel
+  Downloading wheel-0.48.0-py3-none-any.whl (33 kB)
+Requirement already satisfied: typing-extensions>=4.1 in /usr/lib/python3/dist-packages (from setuptools_scm>=8) (4.10.0)
+Collecting vcs-versioning<3,>=2.5.0.dev0
+  Downloading vcs_versioning-2.6.0-py3-none-any.whl (123 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 123.2/123.2 KB 174.9 MB/s eta 0:00:00
+Collecting tomli>=1
+  Downloading tomli-2.5.0-py3-none-any.whl (14 kB)
+Installing collected packages: tomli, setuptools, packaging, wheel, vcs-versioning, setuptools_scm
+  Attempting uninstall: setuptools
+    Found existing installation: setuptools 59.6.0
+    Uninstalling setuptools-59.6.0:
+      Successfully uninstalled setuptools-59.6.0
+  Attempting uninstall: packaging
+    Found existing installation: packaging 21.3
+    Not uninstalling packaging at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'packaging'. No files were found to uninstall.
+  Attempting uninstall: wheel
+    Found existing installation: wheel 0.37.1
+    Not uninstalling wheel at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'wheel'. No files were found to uninstall.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+pipx 1.0.0 requires argcomplete>=1.9.4, but you have argcomplete 1.8.1 which is incompatible.
+Successfully installed packaging-26.3 setuptools-84.2.1 setuptools_scm-10.3.4 tomli-2.5.0 vcs-versioning-2.6.0 wheel-0.48.0
+   build tool setuptools 84.2.1 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/setuptools/__init__.py
+   build tool setuptools_scm 10.3.4 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/setuptools_scm/__init__.py
+   build tool packaging 26.3 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/packaging/__init__.py
+   build tool wheel 0.48.0 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/wheel/__init__.py
+Processing ./baseline-published/pinder-src
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting fastpdb
+  Downloading fastpdb-1.3.3-cp310-cp310-manylinux_2_34_x86_64.whl (373 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 373.3/373.3 KB 3.2 MB/s eta 0:00:00
+Collecting tabulate
+  Downloading tabulate-0.10.0-py3-none-any.whl (39 kB)
+Requirement already satisfied: typing_extensions in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (4.10.0)
+Collecting torch_geometric
+  Downloading torch_geometric-2.8.1-py3-none-any.whl (1.3 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 22.6 MB/s eta 0:00:00
+Requirement already satisfied: torch in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (2.7.0)
+Requirement already satisfied: pandas in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (1.3.5)
+Collecting pydantic>=2.0
+  Downloading pydantic-2.14.2-py3-none-any.whl (490 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 490.4/490.4 KB 217.7 MB/s eta 0:00:00
+Requirement already satisfied: numpy<2 in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (1.21.5)
+Collecting plotly
+  Downloading plotly-7.1.0-py3-none-any.whl (9.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.7/9.7 MB 103.1 MB/s eta 0:00:00
+Requirement already satisfied: PyYAML in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (5.4.1)
+Collecting typeguard==2.13.3
+  Downloading typeguard-2.13.3-py3-none-any.whl (17 kB)
+Collecting torchtyping
+  Downloading torchtyping-0.1.5-py3-none-any.whl (17 kB)
+Collecting tqdm
+  Downloading tqdm-4.70.1-py3-none-any.whl (80 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 80.2/80.2 KB 305.9 MB/s eta 0:00:00
+Requirement already satisfied: scikit-learn in /usr/lib/python3/dist-packages (from pinder==0.0.0+gebeb28a2) (0.23.2)
+Collecting nbformat
+  Downloading nbformat-5.11.1-py3-none-any.whl (79 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 79.8/79.8 KB 233.2 MB/s eta 0:00:00
+Collecting pyarrow>=12.0
+  Downloading pyarrow-25.0.1-cp310-cp310-manylinux_2_28_x86_64.whl (50.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 50.1/50.1 MB 131.2 MB/s eta 0:00:00
+Collecting biotite<1.7,>=1.0
+  Downloading biotite-1.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (52.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 52.8/52.8 MB 124.7 MB/s eta 0:00:00
+Requirement already satisfied: requests>=2.12 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (2.25.1)
+Requirement already satisfied: networkx>=2.0 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (2.4)
+Collecting biotraj<2.0,>=1.0
+  Downloading biotraj-1.2.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 153.9 MB/s eta 0:00:00
+Collecting numpy<2
+  Downloading numpy-1.26.4-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 18.2/18.2 MB 127.9 MB/s eta 0:00:00
+Requirement already satisfied: msgpack>=0.5.6 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (1.0.3)
+Requirement already satisfied: packaging>=24.0 in ./baseline-published/venv/lib/python3.10/site-packages (from biotite<1.7,>=1.0->pinder==0.0.0+gebeb28a2) (26.3)
+Collecting pydantic-core==2.50.2
+  Downloading pydantic_core-2.50.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.2 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.2/2.2 MB 262.2 MB/s eta 0:00:00
+Collecting typing_extensions
+  Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 45.6/45.6 KB 137.2 MB/s eta 0:00:00
+Collecting typing-inspection>=0.4.4
+  Downloading typing_inspection-0.4.4-py3-none-any.whl (14 kB)
+Collecting annotated-types>=0.6.0
+  Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+Collecting jupyter-core!=5.0.*,>=4.12
+  Downloading jupyter_core-5.9.1-py3-none-any.whl (29 kB)
+Requirement already satisfied: traitlets>=5.1 in /usr/lib/python3/dist-packages (from nbformat->pinder==0.0.0+gebeb28a2) (5.1.1)
+Collecting fastjsonschema>=2.15
+  Downloading fastjsonschema-2.22.3-py3-none-any.whl (28 kB)
+Requirement already satisfied: jsonschema>=2.6 in /usr/lib/python3/dist-packages (from nbformat->pinder==0.0.0+gebeb28a2) (3.2.0)
+Collecting narwhals>=1.15.1
+  Downloading narwhals-2.28.0-py3-none-any.whl (490 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 490.6/490.6 KB 369.8 MB/s eta 0:00:00
+Collecting xxhash
+  Downloading xxhash-4.0.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (249 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 249.5/249.5 KB 346.0 MB/s eta 0:00:00
+Requirement already satisfied: psutil>=5.8.0 in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (5.9.0)
+Requirement already satisfied: jinja2 in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (3.0.3)
+Requirement already satisfied: fsspec in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (2024.3.1)
+Requirement already satisfied: pyparsing in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.0.0+gebeb28a2) (2.4.7)
+Collecting aiohttp
+  Downloading aiohttp-3.14.5-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.9 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.9/1.9 MB 375.1 MB/s eta 0:00:00
+Collecting scipy>=1.13
+  Downloading scipy-1.15.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (37.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 37.7/37.7 MB 108.8 MB/s eta 0:00:00
+Requirement already satisfied: platformdirs>=2.5 in /usr/lib/python3/dist-packages (from jupyter-core!=5.0.*,>=4.12->nbformat->pinder==0.0.0+gebeb28a2) (2.5.1)
+Collecting traitlets>=5.1
+  Downloading traitlets-5.16.1-py3-none-any.whl (86 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 86.2/86.2 KB 286.9 MB/s eta 0:00:00
+Collecting propcache>=0.2.0
+  Downloading propcache-0.5.4-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (224 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 224.3/224.3 KB 353.8 MB/s eta 0:00:00
+Requirement already satisfied: attrs>=17.3.0 in /usr/lib/python3/dist-packages (from aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (21.2.0)
+Collecting async-timeout<6.0,>=4.0
+  Downloading async_timeout-5.0.1-py3-none-any.whl (6.2 kB)
+Collecting aiosignal>=1.4.0
+  Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+Collecting multidict<8.0,>=4.5
+  Downloading multidict-7.1.0-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (464 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 464.4/464.4 KB 376.0 MB/s eta 0:00:00
+Collecting yarl<2.0,>=1.25.1
+  Downloading yarl-1.25.1-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (118 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 118.1/118.1 KB 324.2 MB/s eta 0:00:00
+Collecting aiohappyeyeballs>=2.5.0
+  Downloading aiohappyeyeballs-2.7.1-py3-none-any.whl (15 kB)
+Collecting frozenlist>=1.1.1
+  Downloading frozenlist-1.8.0-cp310-cp310-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (219 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 219.5/219.5 KB 265.7 MB/s eta 0:00:00
+Requirement already satisfied: idna>=2.0 in /usr/lib/python3/dist-packages (from yarl<2.0,>=1.25.1->aiohttp->torch_geometric->pinder==0.0.0+gebeb28a2) (3.3)
+Building wheels for collected packages: pinder
+  Building wheel for pinder (pyproject.toml): started
+  Building wheel for pinder (pyproject.toml): finished with status 'done'
+  Created wheel for pinder: filename=pinder-0.0.0+gebeb28a2-py3-none-any.whl size=344128 sha256=e63f60a9a5ebaa69b107f7a2a781e69a04bc85f4bbe9c43f6491d72ecc1ccd5c
+  Stored in directory: /tmp/pip-ephem-wheel-cache-4f1fuzd8/wheels/a5/7d/8e/2bd3f954d2b6e3ab165f88dbc60a36581809f2f89f007170d9
+Successfully built pinder
+Installing collected packages: xxhash, typing_extensions, typeguard, traitlets, tqdm, tabulate, pyarrow, propcache, numpy, narwhals, frozenlist, fastjsonschema, async-timeout, annotated-types, aiohappyeyeballs, typing-inspection, torchtyping, scipy, pydantic-core, plotly, multidict, jupyter-core, aiosignal, yarl, pydantic, nbformat, biotraj, biotite, aiohttp, torch_geometric, fastpdb, pinder
+  Attempting uninstall: typing_extensions
+    Found existing installation: typing_extensions 4.10.0
+    Not uninstalling typing-extensions at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'typing_extensions'. No files were found to uninstall.
+  Attempting uninstall: traitlets
+    Found existing installation: traitlets 5.1.1
+    Not uninstalling traitlets at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'traitlets'. No files were found to uninstall.
+  Attempting uninstall: numpy
+    Found existing installation: numpy 1.21.5
+    Not uninstalling numpy at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'numpy'. No files were found to uninstall.
+  Attempting uninstall: scipy
+    Found existing installation: scipy 1.8.0
+    Not uninstalling scipy at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'scipy'. No files were found to uninstall.
+  Attempting uninstall: jupyter-core
+    Found existing installation: jupyter-core 4.9.1
+    Not uninstalling jupyter-core at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'jupyter-core'. No files were found to uninstall.
+Successfully installed aiohappyeyeballs-2.7.1 aiohttp-3.14.5 aiosignal-1.4.0 annotated-types-0.8.0 async-timeout-5.0.1 biotite-1.2.0 biotraj-1.2.2 fastjsonschema-2.22.3 fastpdb-1.3.3 frozenlist-1.8.0 jupyter-core-5.9.1 multidict-7.1.0 narwhals-2.28.0 nbformat-5.11.1 numpy-1.26.4 pinder-0.0.0+gebeb28a2 plotly-7.1.0 propcache-0.5.4 pyarrow-25.0.1 pydantic-2.14.2 pydantic-core-2.50.2 scipy-1.15.3 tabulate-0.10.0 torch_geometric-2.8.1 torchtyping-0.1.5 tqdm-4.70.1 traitlets-5.16.1 typeguard-2.13.3 typing-inspection-0.4.4 typing_extensions-4.16.0 xxhash-4.0.2 yarl-1.25.1
+Collecting fire
+  Downloading fire-0.7.1-py3-none-any.whl (115 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 115.9/115.9 KB 2.1 MB/s eta 0:00:00
+Requirement already satisfied: termcolor in /usr/lib/python3/dist-packages (from fire) (1.1.0)
+Installing collected packages: fire
+Successfully installed fire-0.7.1
+Requirement already satisfied: networkx in /usr/lib/python3/dist-packages (2.4)
+Collecting networkx
+  Downloading networkx-3.4.2-py3-none-any.whl (1.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 12.9 MB/s eta 0:00:00
+Requirement already satisfied: pandas in /usr/lib/python3/dist-packages (1.3.5)
+Collecting pandas
+  Downloading pandas-2.3.3-cp310-cp310-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.8 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.8/12.8 MB 190.1 MB/s eta 0:00:00
+Requirement already satisfied: scikit-learn in /usr/lib/python3/dist-packages (0.23.2)
+Collecting scikit-learn
+  Downloading scikit_learn-1.7.2-cp310-cp310-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (9.7 MB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.7/9.7 MB 132.6 MB/s eta 0:00:00
+Collecting python-dateutil>=2.8.2
+  Downloading python_dateutil-3.0.0-py2.py3-none-any.whl (94 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 94.7/94.7 KB 302.4 MB/s eta 0:00:00
+Collecting tzdata>=2022.7
+  Downloading tzdata-2026.6-py2.py3-none-any.whl (348 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 348.2/348.2 KB 237.9 MB/s eta 0:00:00
+Requirement already satisfied: numpy>=1.22.4 in ./baseline-published/venv/lib/python3.10/site-packages (from pandas) (1.26.4)
+Requirement already satisfied: pytz>=2020.1 in /usr/lib/python3/dist-packages (from pandas) (2022.1)
+Collecting joblib>=1.2.0
+  Downloading joblib-1.6.0-py3-none-any.whl (306 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 306.1/306.1 KB 294.6 MB/s eta 0:00:00
+Requirement already satisfied: threadpoolctl>=3.1.0 in /usr/lib/python3/dist-packages (from scikit-learn) (3.1.0)
+Requirement already satisfied: scipy>=1.8.0 in ./baseline-published/venv/lib/python3.10/site-packages (from scikit-learn) (1.15.3)
+Collecting cloudpickle>=3.0
+  Downloading cloudpickle-3.1.2-py3-none-any.whl (22 kB)
+Requirement already satisfied: six>=1.6 in /usr/lib/python3/dist-packages (from python-dateutil>=2.8.2->pandas) (1.16.0)
+Installing collected packages: tzdata, networkx, cloudpickle, python-dateutil, joblib, scikit-learn, pandas
+  Attempting uninstall: networkx
+    Found existing installation: networkx 2.4
+    Not uninstalling networkx at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'networkx'. No files were found to uninstall.
+  Attempting uninstall: python-dateutil
+    Found existing installation: python-dateutil 2.8.1
+    Not uninstalling python-dateutil at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'python-dateutil'. No files were found to uninstall.
+  Attempting uninstall: joblib
+    Found existing installation: joblib 0.17.0
+    Not uninstalling joblib at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'joblib'. No files were found to uninstall.
+  Attempting uninstall: scikit-learn
+    Found existing installation: scikit-learn 0.23.2
+    Not uninstalling scikit-learn at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'scikit-learn'. No files were found to uninstall.
+  Attempting uninstall: pandas
+    Found existing installation: pandas 1.3.5
+    Not uninstalling pandas at /usr/lib/python3/dist-packages, outside environment /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv
+    Can't uninstall 'pandas'. No files were found to uninstall.
+Successfully installed cloudpickle-3.1.2 joblib-1.6.0 networkx-3.4.2 pandas-2.3.3 python-dateutil-3.0.0 scikit-learn-1.7.2 tzdata-2026.6
+   venv dependency numpy 1.26.4 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/numpy/__init__.py
+   venv dependency scipy 1.15.3 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/scipy/__init__.py
+   venv dependency networkx 3.4.2 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/networkx/__init__.py
+   venv dependency pandas 2.3.3 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/pandas/__init__.py
+   venv dependency scikit-learn 1.7.2 @ /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/baseline-published/venv/lib/python3.10/site-packages/sklearn/__init__.py
+   torch seen by the baseline venv: 2.7.0 @ /usr/lib/python3/dist-packages/torch/__init__.py
+   pinder imports OK
+== PINDER data
+   input inventory: baseline-published/records/pinder_inputs.tsv (3593 entries, sha256 0bf8878fc67eb4fd8eece475f05a76e189f7a086529d7c1616d54db572219645)
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  2  118M    2 2688k    0     0  3257k      0  0:00:37 --:--:--  0:00:37 3258k 15  118M   15 18.1M    0     0   9.9M      0  0:00:11  0:00:01  0:00:10  9.9M 63  118M   63 75.2M    0     0  26.6M      0  0:00:04  0:00:02  0:00:02 26.6M100  118M  100  118M    0     0  34.0M      0  0:00:03  0:00:03 --:--:-- 34.0M
+   fetched and verified: data/pinder/2024-02/index.parquet
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0 99.0M    0 12303    0     0  28287      0  1:01:10 --:--:--  1:01:10 28282 70 99.0M   70 69.7M    0     0  51.8M      0  0:00:01  0:00:01 --:--:-- 51.8M100 99.0M  100 99.0M    0     0  58.1M      0  0:00:01  0:00:01 --:--:-- 58.1M
+   fetched and verified: data/pinder/2024-02/metadata.parquet
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  1  173M    1 2047k    0     0  2386k      0  0:01:14 --:--:--  0:01:14 2386k  2  173M    2 3776k    0     0  2084k      0  0:01:25  0:00:01  0:01:24 2085k  3  173M    3 5504k    0     0  1949k      0  0:01:31  0:00:02  0:01:29 1949k  4  173M    4 8128k    0     0  2133k      0  0:01:23  0:00:03  0:01:20 2132k  5  173M    5 10.1M    0     0  2167k      0  0:01:21  0:00:04  0:01:17 2167k 12  173M   12 21.6M    0     0  3829k      0  0:00:46  0:00:05  0:00:41 4080k 74  173M   74  129M    0     0  18.9M      0  0:00:09  0:00:06  0:00:03 25.1M100  173M  100  173M    0     0  24.1M      0  0:00:07  0:00:07 --:--:-- 38.5M
+   fetched and verified: data/downloads/test_set_pdbs.zip
+   test_set_pdbs files: 3914
+   inventoried inputs: 3590 total, 500 already verified, 3090 fetched, 0 failed
+== case selection (first 8 sorted PINDER-S IDs with paired apo receptor and ligand)
+{
+  "rule": "first N PINDER IDs in ascending lexicographic order among PINDER-S systems with apo_R and apo_L",
+  "n": 8,
+  "ids": [
+    "1a19__A1_P11540--1a19__B1_P11540",
+    "1aua__A1_P24280--1aua__A2_P24280",
+    "1ax2__A1_P16404--1ax2__A2_P16404",
+    "1dtd__A1_P48052--1dtd__B1_P81511",
+    "1dv1__A1_P24182--1dv1__B1_P24182",
+    "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+    "1ht8__A1_P05979--1ht8__B1_P05979",
+    "1nr5__A1_P07547--1nr5__A2_P07547"
+  ],
+  "pinder_s_count": 250,
+  "pinder_s_apo_paired_count": 93
+}
+== pinder_methods preprocess (setup time)
+  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:00<00:05,  1.24it/s] 25%|██▌       | 2/8 [00:00<00:02,  2.50it/s] 38%|███▊      | 3/8 [00:01<00:01,  3.54it/s] 50%|█████     | 4/8 [00:01<00:01,  3.67it/s] 62%|██████▎   | 5/8 [00:01<00:00,  3.60it/s] 75%|███████▌  | 6/8 [00:01<00:00,  4.20it/s] 88%|████████▊ | 7/8 [00:01<00:00,  4.25it/s]100%|██████████| 8/8 [00:02<00:00,  4.25it/s]100%|██████████| 8/8 [00:02<00:00,  3.58it/s]
+2026-11-02 01:02:53,594 | pinder.methods.preprocess:58 | INFO : Created inference input directory at /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/data/frodock containing 8 systems
+  0%|          | 0/8 [00:00<?, ?it/s] 12%|█▎        | 1/8 [00:00<00:05,  1.34it/s] 25%|██▌       | 2/8 [00:00<00:02,  2.25it/s] 38%|███▊      | 3/8 [00:01<00:01,  2.88it/s] 50%|█████     | 4/8 [00:01<00:01,  3.21it/s] 62%|██████▎   | 5/8 [00:01<00:00,  3.86it/s] 75%|███████▌  | 6/8 [00:01<00:00,  3.74it/s] 88%|████████▊ | 7/8 [00:02<00:00,  4.30it/s]100%|██████████| 8/8 [00:02<00:00,  5.22it/s]100%|██████████| 8/8 [00:02<00:00,  3.67it/s]
+2026-11-02 01:02:59,345 | pinder.methods.preprocess:58 | INFO : Created inference input directory at /tmp/m5-a3e31127-1e00-48ca-9d4a-e4514bd0cf96/data/frodock containing 8 systems
+   frodock_setup.csv: 16 docking jobs
+                                  id  kind                                                      receptor                                                        ligand
+0   1a19__A1_P11540--1a19__B1_P11540  holo  1a19__A1_P11540--1a19__B1_P11540/inputs/holo/1a19_holo_R.pdb  1a19__A1_P11540--1a19__B1_P11540/inputs/holo/1a19_holo_L.pdb
+1   1a19__A1_P11540--1a19__B1_P11540   apo    1a19__A1_P11540--1a19__B1_P11540/inputs/apo/1a19_apo_R.pdb    1a19__A1_P11540--1a19__B1_P11540/inputs/apo/1a19_apo_L.pdb
+2   1aua__A1_P24280--1aua__A2_P24280  holo  1aua__A1_P24280--1aua__A2_P24280/inputs/holo/1aua_holo_R.pdb  1aua__A1_P24280--1aua__A2_P24280/inputs/holo/1aua_holo_L.pdb
+3   1aua__A1_P24280--1aua__A2_P24280   apo    1aua__A1_P24280--1aua__A2_P24280/inputs/apo/1aua_apo_R.pdb    1aua__A1_P24280--1aua__A2_P24280/inputs/apo/1aua_apo_L.pdb
+4   1ax2__A1_P16404--1ax2__A2_P16404  holo  1ax2__A1_P16404--1ax2__A2_P16404/inputs/holo/1ax2_holo_R.pdb  1ax2__A1_P16404--1ax2__A2_P16404/inputs/holo/1ax2_holo_L.pdb
+5   1ax2__A1_P16404--1ax2__A2_P16404   apo    1ax2__A1_P16404--1ax2__A2_P16404/inputs/apo/1ax2_apo_R.pdb    1ax2__A1_P16404--1ax2__A2_P16404/inputs/apo/1ax2_apo_L.pdb
+6   1dtd__A1_P48052--1dtd__B1_P81511  holo  1dtd__A1_P48052--1dtd__B1_P81511/inputs/holo/1dtd_holo_R.pdb  1dtd__A1_P48052--1dtd__B1_P81511/inputs/holo/1dtd_holo_L.pdb
+7   1dtd__A1_P48052--1dtd__B1_P81511   apo    1dtd__A1_P48052--1dtd__B1_P81511/inputs/apo/1dtd_apo_R.pdb    1dtd__A1_P48052--1dtd__B1_P81511/inputs/apo/1dtd_apo_L.pdb
+8   1dv1__A1_P24182--1dv1__B1_P24182  holo  1dv1__A1_P24182--1dv1__B1_P24182/inputs/holo/1dv1_holo_R.pdb  1dv1__A1_P24182--1dv1__B1_P24182/inputs/holo/1dv1_holo_L.pdb
+9   1dv1__A1_P24182--1dv1__B1_P24182   apo    1dv1__A1_P24182--1dv1__B1_P24182/inputs/apo/1dv1_apo_R.pdb    1dv1__A1_P24182--1dv1__B1_P24182/inputs/apo/1dv1_apo_L.pdb
+10  1glj__A1_P0A6F3--1glj__B1_P0A6F3  holo  1glj__A1_P0A6F3--1glj__B1_P0A6F3/inputs/holo/1glj_holo_R.pdb  1glj__A1_P0A6F3--1glj__B1_P0A6F3/inputs/holo/1glj_holo_L.pdb
+11  1glj__A1_P0A6F3--1glj__B1_P0A6F3   apo    1glj__A1_P0A6F3--1glj__B1_P0A6F3/inputs/apo/1glj_apo_R.pdb    1glj__A1_P0A6F3--1glj__B1_P0A6F3/inputs/apo/1glj_apo_L.pdb
+12  1ht8__A1_P05979--1ht8__B1_P05979  holo  1ht8__A1_P05979--1ht8__B1_P05979/inputs/holo/1ht8_holo_R.pdb  1ht8__A1_P05979--1ht8__B1_P05979/inputs/holo/1ht8_holo_L.pdb
+13  1ht8__A1_P05979--1ht8__B1_P05979   apo    1ht8__A1_P05979--1ht8__B1_P05979/inputs/apo/1ht8_apo_R.pdb    1ht8__A1_P05979--1ht8__B1_P05979/inputs/apo/1ht8_apo_L.pdb
+14  1nr5__A1_P07547--1nr5__A2_P07547  holo  1nr5__A1_P07547--1nr5__A2_P07547/inputs/holo/1nr5_holo_R.pdb  1nr5__A1_P07547--1nr5__A2_P07547/inputs/holo/1nr5_holo_L.pdb
+15  1nr5__A1_P07547--1nr5__A2_P07547   apo    1nr5__A1_P07547--1nr5__A2_P07547/inputs/apo/1nr5_apo_R.pdb    1nr5__A1_P07547--1nr5__A2_P07547/inputs/apo/1nr5_apo_L.pdb
+{
+  "pinder_commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "pinder_tree": "adc153de2eef1ac428c1136d609b30728c88cc7b",
+  "pinder_archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+  "pinder_scm_pretend_version": "0.0.0+gebeb28a2",
+  "frodock_archive_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+  "frodock_archive_provenance": "unverified_mirror (owner-approved)",
+  "frodock_binaries": {
+    "frodockgrid_mpi_gcc": "compiled",
+    "frodock_mpi_gcc": "compiled",
+    "frodockcluster_gcc": "compiled",
+    "frodockview_gcc": "compiled"
+  },
+  "soap_bin_sha256": "791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc",
+  "frodock_readme_header": "###############################################\n#  --- FRODOCK 3.12                       ---  #\n#  --- Chacon's lab - February  8th, 2020 ---  #",
+  "recorded_source_fixes": "baseline-published/records/pinder_frodock_fixes.patch",
+  "deviations": [
+    "pip install fire (undeclared dependency of pinder.methods.main)",
+    "recorded source fixes patch (see recorded_source_fixes)",
+    "SETUPTOOLS_SCM_PRETEND_VERSION for the git-less source archive",
+    "pinder built with --no-build-isolation against setuptools/setuptools_scm/packaging/wheel installed in the venv (stock dist-packages shadowed pip's isolated build env)",
+    "networkx/pandas/scikit-learn resolved fresh into the venv (numpy<2 constraint) because the stock copies are incompatible with the numpy 1.26 pinder resolves"
+  ],
+  "apt_installed": [
+    "libgl1-mesa-glx=23.0.4-0ubuntu1~22.04.1",
+    "libopenblas-base=0.3.20+ds-1",
+    "libopenmpi-dev=4.1.2-2ubuntu1",
+    "openmpi-common=4.1.2-2ubuntu1",
+    "openmpi-bin=4.1.2-2ubuntu1",
+    "libopenmpi3=4.1.2-2ubuntu1",
+    "libfftw3-3=3.3.8-2ubuntu8",
+    "libfftw3-dev=3.3.8-2ubuntu8",
+    "libfftw3-mpi-dev=3.3.8-2ubuntu8",
+    "libhdf5-openmpi-dev=1.10.7+repack-4ubuntu2"
+  ],
+  "stock_torch": "2.7.0 @ /usr/lib/python3/dist-packages/torch/__init__.py",
+  "venv_torch": "2.7.0 @ /usr/lib/python3/dist-packages/torch/__init__.py",
+  "cuda_layout": "distro",
+  "cuda_nvcc": "/usr/bin/nvcc",
+  "cuda_include": "/usr/include",
+  "cuda_libdir": "/usr/lib/x86_64-linux-gnu",
+  "mpirun_version": "mpirun (Open MPI) 4.1.2",
+  "host_cpu_model": "Intel(R) Xeon(R) Platinum 8480+",
+  "host_nproc": 26,
+  "python": "3.10.12",
+  "pinder_version": "0.0.0+gebeb28a2",
+  "selection": {
+    "rule": "first N PINDER IDs in ascending lexicographic order among PINDER-S systems with apo_R and apo_L",
+    "n": 8,
+    "ids": [
+      "1a19__A1_P11540--1a19__B1_P11540",
+      "1aua__A1_P24280--1aua__A2_P24280",
+      "1ax2__A1_P16404--1ax2__A2_P16404",
+      "1dtd__A1_P48052--1dtd__B1_P81511",
+      "1dv1__A1_P24182--1dv1__B1_P24182",
+      "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+      "1ht8__A1_P05979--1ht8__B1_P05979",
+      "1nr5__A1_P07547--1nr5__A2_P07547"
+    ],
+    "pinder_s_count": 250,
+    "pinder_s_apo_paired_count": 93
+  },
+  "preprocess_wall_s": 12,
+  "setup_wall_s": 351
+}
+== setup.sh done 2026-11-02T01:03:00Z (351 s)

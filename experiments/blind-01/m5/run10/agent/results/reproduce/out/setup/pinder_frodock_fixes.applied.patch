@@ -1,0 +1,64 @@
+--- a/src/pinder-methods/pinder/methods/main.py
++++ b/src/pinder-methods/pinder/methods/main.py
+@@ -116,7 +116,7 @@
+ 
+     if (
+         method in SUPPORTED_METHODS
+-        and SUPPORTED_ACTIONS.PREDICT.value in SUPPORTED_METHODS[method]
++        and SUPPORTED_ACTIONS.PREDICT in SUPPORTED_METHODS[method]
+     ):
+         # Call the predict function of the method
+         import_module = __import__(
+@@ -130,7 +130,7 @@
+         config_dict["data_dir"] = data_dir
+         config_dict["results_dir"] = results_dir
+ 
+-        inference_config = pd.from_csv(results_dir / f"{method}_setup.csv")
++        inference_config = pd.read_csv(Path(results_dir) / f"{method}_setup.csv")
+ 
+         for complex_config in inference_config.to_dict("records"):
+             predict_method(complex_config, config_dict)
+--- a/src/pinder-methods/pinder/methods/run/frodock/predict.py
++++ b/src/pinder-methods/pinder/methods/run/frodock/predict.py
+@@ -54,6 +54,9 @@
+     current_dir = os.getcwd()
+     output_dir = Path(tempfile.mkdtemp())
+     log.info("OUT", output_dir)
++    # stage the pre-transformed inputs into the working directory used by the stages
++    for _src in (complex_receptor, complex_ligand):
++        shutil.copy(Path(_src).absolute(), output_dir / Path(_src).name)
+     os.chdir(output_dir)
+ 
+     mpi_path = shutil.which("mpirun")
+@@ -84,7 +87,7 @@
+     # mpi_np = 45
+     run = f"mpirun -np {mpi_np} --use-hwthread-cpus "
+     frodock_bin_dir = Path(dock_path).parent
+-    pre = frodock_bin_dir
++    pre = f"{frodock_bin_dir}/"
+     suff = "_mpi_gcc"
+     suff2 = "_gcc"
+     # Define the stages
+@@ -169,7 +172,8 @@
+     results_path_complete = results_dir / f"frodock/{complex_id}/{complex_kind}_decoys/"
+     log.info(f"Copying the results to {results_path_complete}")
+     results_path_complete.mkdir(parents=True, exist_ok=True)
+-    shutil.copy(str(output_dir) + "/*.pdb", results_path_complete)
++    for _model in sorted(output_dir.glob("*.pdb")):
++        shutil.copy(_model, results_path_complete)
+ 
+ 
+ def predict_frodock(
+@@ -210,6 +214,12 @@
+     complex_kind = str(complex_config["kind"])
+     complex_receptor = Path(complex_config["receptor"])
+     complex_ligand = Path(complex_config["ligand"])
++    # setup csv paths are written relative to data_dir by preprocess
++    if params.get("data_dir") is not None:
++        if not complex_receptor.is_absolute():
++            complex_receptor = Path(params["data_dir"]) / complex_receptor
++        if not complex_ligand.is_absolute():
++            complex_ligand = Path(params["data_dir"]) / complex_ligand
+     results_dir = Path(params["results_dir"])
+     n_solutions = int(params["n_solutions"])
+     mpi_np = int(params.get("mpi_np", 8))

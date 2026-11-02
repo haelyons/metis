@@ -1,0 +1,65 @@
+{
+  "pinder_commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+  "pinder_tree": "adc153de2eef1ac428c1136d609b30728c88cc7b",
+  "pinder_archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+  "pinder_scm_pretend_version": "0.0.0+gebeb28a2",
+  "frodock_archive_sha256": "91b9aeff747346046c7f8c4c92fa5749c9f082d8122ee9d2d4769855d35368f4",
+  "frodock_archive_provenance": "unverified_mirror (owner-approved)",
+  "frodock_binaries": {
+    "frodockgrid_mpi_gcc": "compiled",
+    "frodock_mpi_gcc": "compiled",
+    "frodockcluster_gcc": "compiled",
+    "frodockview_gcc": "compiled"
+  },
+  "soap_bin_sha256": "791f31ec8ef1ef1466092b425638e926755519c9626f5678ca675ef6c76234fc",
+  "frodock_readme_header": "###############################################\n#  --- FRODOCK 3.12                       ---  #\n#  --- Chacon's lab - February  8th, 2020 ---  #",
+  "recorded_source_fixes": "baseline-published/records/pinder_frodock_fixes.patch",
+  "deviations": [
+    "pip install fire (undeclared dependency of pinder.methods.main)",
+    "recorded source fixes patch (see recorded_source_fixes)",
+    "SETUPTOOLS_SCM_PRETEND_VERSION for the git-less source archive",
+    "pinder built with --no-build-isolation against setuptools/setuptools_scm/packaging/wheel installed in the venv (stock dist-packages shadowed pip's isolated build env)",
+    "networkx/pandas/scikit-learn resolved fresh into the venv (numpy<2 constraint) because the stock copies are incompatible with the numpy 1.26 pinder resolves"
+  ],
+  "apt_installed": [
+    "libgl1-mesa-glx=23.0.4-0ubuntu1~22.04.1",
+    "libopenblas-base=0.3.20+ds-1",
+    "libopenmpi-dev=4.1.2-2ubuntu1",
+    "openmpi-common=4.1.2-2ubuntu1",
+    "openmpi-bin=4.1.2-2ubuntu1",
+    "libopenmpi3=4.1.2-2ubuntu1",
+    "libfftw3-3=3.3.8-2ubuntu8",
+    "libfftw3-dev=3.3.8-2ubuntu8",
+    "libfftw3-mpi-dev=3.3.8-2ubuntu8",
+    "libhdf5-openmpi-dev=1.10.7+repack-4ubuntu2"
+  ],
+  "stock_torch": "2.7.0 @ /usr/lib/python3/dist-packages/torch/__init__.py",
+  "venv_torch": "2.7.0 @ /usr/lib/python3/dist-packages/torch/__init__.py",
+  "cuda_layout": "distro",
+  "cuda_nvcc": "/usr/bin/nvcc",
+  "cuda_include": "/usr/include",
+  "cuda_libdir": "/usr/lib/x86_64-linux-gnu",
+  "mpirun_version": "mpirun (Open MPI) 4.1.2",
+  "host_cpu_model": "Intel(R) Xeon(R) Platinum 8480+",
+  "host_nproc": 26,
+  "python": "3.10.12",
+  "pinder_version": "0.0.0+gebeb28a2",
+  "selection": {
+    "rule": "first N PINDER IDs in ascending lexicographic order among PINDER-S systems with apo_R and apo_L",
+    "n": 8,
+    "ids": [
+      "1a19__A1_P11540--1a19__B1_P11540",
+      "1aua__A1_P24280--1aua__A2_P24280",
+      "1ax2__A1_P16404--1ax2__A2_P16404",
+      "1dtd__A1_P48052--1dtd__B1_P81511",
+      "1dv1__A1_P24182--1dv1__B1_P24182",
+      "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+      "1ht8__A1_P05979--1ht8__B1_P05979",
+      "1nr5__A1_P07547--1nr5__A2_P07547"
+    ],
+    "pinder_s_count": 250,
+    "pinder_s_apo_paired_count": 93
+  },
+  "preprocess_wall_s": 12,
+  "setup_wall_s": 351
+}

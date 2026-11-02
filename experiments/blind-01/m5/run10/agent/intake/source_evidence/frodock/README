@@ -1,0 +1,132 @@
+
+###############################################
+#  --- FRODOCK 3.12                       ---  #
+#  --- Chacon's lab - February  8th, 2020 ---  # 
+###############################################
+
+We provide  executables generated with Intel and GNU compilers to minimize 
+library dependence problems. Dynamic linking was used for MPI parallelized 
+versions (both GNU and Intel).
+
+You can directly use FRODOCK 3.12 in our web server as well:
+
+  http://frodock.chaconlab.org 
+
+Please, cite our work if any of our tools become useful for your research.
+
+> E. Ramírez-Aportela, J.R. López-Blanco & P. Chacón (2015). FRODOCK 2.0: Fast
+Protein-Protein docking server. Bioinformatics,  2016 Aug 1;32(15):2386-8. 
+doi: 10.1093/bioinformatics/btw141
+
+> J.I. Garzón, J.R. López-Blanco, C. Pons, J. Kovacs, R. Abagyan, J.
+Fernández-Recio, P. Chacón (2009). FRODOCK: a new approach for fast rotational
+protein-protein docking. 2009 Oct 1;25(19):2544-51. 
+doi: 10.1093/bioinformatics/btp447. 
+
+---------------------
+ Programs provided
+---------------------
+
+frodock            v3.12 -> Protein-Protein docking tool.
+frodockgrid        v2.1 --> Potential maps generation.
+frodockcluster     v3.0 --> Clustering of solutions.
+frodockview        v2.0 --> Solution poses visualization.
+frodockonstraints  v2.3 --> Apply distance constraints to solutions.
+frodockcheck       v2.1 --> Benchmarking.
+
+*All the programs show a basic help text using the --help option.
+
+Pre-compiled binaries are available in the corresponding bin/ directory. You 
+can choose the appropriate release for your system:
+
+ [Program]        Compiler    Libraries              
+ ------------------------------------------------
+*<TOOL>           Intel icpc  mkl                  
+ <TOOL>_gcc       GNU gcc     -                    
+*<TOOL>_mpi       Intel icpc  fftw3f & OpenMPI    
+ <TOOL>_mpi_gcc   GNU gcc     fftw3f & OpenMPI   
+
+* <TOOL> corresponds to the name of the program.
+
+------------
+REQUIREMENTS
+------------
+
+This software release has been only tested with 64-bit Intel "icpc" 
+(v. 18) and GNU "gcc" (7.3.0) compilers. Requirements:
+
+-------For Intel releases-----> 
+
+- Math Kernel Library be obtained for free from Intel's web site:
+http://software.intel.com/en-us/articles/non-commercial-software-download/
+
+- MPI parallelized programs also require a MPI library 
+
+------For GNU releases -----> 
+
+- FFTW libraries (single precision) are required by frodock. Please, use your favorite package
+manager (eg. synaptic) to install "libfftw3f" properly. Alternative get it from here http://www.fftw.org
+and do not forget ./configure --enable-float
+
+- OpenMPI libraries (good luck..;)
+
+------------------------
+TESTING FRODOCK 3.0 
+-----------------------
+
+We have included a simple shell script (run_frodock_tests.sh) to test the 
+basic docking procedure for an antigen/antibody complex. Please, edit the 
+script to select the appropriate release according to the instructions you can
+find therein. Then run:
+
+  $ ./run_test_1WEJ.sh
+
+The complete test takes around 10 minutes for gcc/intel binaries using 
+the 4 cores of an Intel(R) Core(TM) i7 CPU 950 running at 3.07GHz. The 
+sequential version takes around 40 minutes in the same machine.
+
+-------------------------
+RUNNING FRODOCK 3.0 
+-------------------------
+
+The run_frodock.sh includes all the runing steps in a single script. Usage:
+
+run_frodock.sh receptor.pdb ligand.pdb #ofprocessors 
+
+ Go to the test directory
+  $ cd test_1WEJ
+  
+ And for run the frodock in paralle in 4 cores just run the generic runing shell 
+ script with the following options:
+  
+  $  ../run_frodock.sh 1WEJ_r_u.pdb 1WEJ_l_u.pdb 4 
+
+ To run the single processor version:
+
+  $  ../run_frodock.sh 1WEJ_r_u.pdb 1WEJ_l_u.pdb 1
+
+ For use the Intel version you must edit the shell and replace comp="_gcc" by comp=""
+
+
+-------------------------
+COMPILING FRODOCK 3.0 
+-------------------------
+
+Just run ./compile_frodock.sh. Remeber that fftw, openmpi are mandatory.   
+
+-------
+CONTACT
+-------
+
+Please, feel free to contact with us!
+(Any suggestion or bug report is welcome)
+
+Pablo Chacon (PhD.)
+pablo(at)chaconlab.org
+
+
+Structural Bioinformatics Group
+IQFR-CSIC - Madrid (Spain)
+(http://chaconlab.org)
+
+

@@ -1,0 +1,171 @@
+{
+  "identity": {
+    "name": "PINDER-S",
+    "release": "2024-02",
+    "url": "https://github.com/pinder-org/pinder",
+    "primary_scale": "All 93 PINDER-S cases with both primary apo monomers; parent benchmark has 250 cases",
+    "separate_challenge": [
+      "6IHB",
+      "6JCQ",
+      "6JCS"
+    ]
+  },
+  "found": true,
+  "found_basis": "Public source supplies PINDER evaluator, FroDock adapter, documented commands, and accessible required input inventory. Found does not assert successful reproduction.",
+  "outcome_definition": {
+    "scientific": "Recovery of experimentally observed protein-protein interfaces from paired apo inputs. Report top-ranked pose and best of fixed candidate set separately.",
+    "metrics": [
+      "DockQ",
+      "interface RMSD (iRMS, angstrom)",
+      "native-contact recovery (Fnat)"
+    ],
+    "acceptable": "DockQ >= 0.23 per prediction",
+    "performance": [
+      "wall-clock time",
+      "cost",
+      "search throughput",
+      "time to acceptable pose"
+    ],
+    "limitations": [
+      "AAV inputs are separated bound components for redocking, not independent apo structures.",
+      "Docking accuracy alone cannot establish BBB transcytosis, affinity, or therapeutic relevance.",
+      "FroDock mirror identity with original study software and SOAP scores remains unverified. Published-value agreement cannot establish byte identity."
+    ]
+  },
+  "citations": [
+    {
+      "title": "PINDER: The Protein INteraction Dataset and Evaluation Resource",
+      "url": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "title": "PINDER Methods Runner",
+      "url": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/README.md"
+    },
+    {
+      "title": "DockQ: A Quality Measure for Protein-Protein Docking Models",
+      "url": "https://doi.org/10.1371/journal.pone.0161879"
+    },
+    {
+      "title": "RCSB PDB 6IHB",
+      "url": "https://www.rcsb.org/structure/6IHB"
+    },
+    {
+      "title": "RCSB PDB 6JCQ",
+      "url": "https://www.rcsb.org/structure/6JCQ"
+    },
+    {
+      "title": "RCSB PDB 6JCS",
+      "url": "https://www.rcsb.org/structure/6JCS"
+    }
+  ],
+  "source_licences_and_intended_use": [
+    {
+      "item": "PINDER source including evaluator and adapter",
+      "licence": "Apache-2.0",
+      "intended_use": "permitted subject to licence conditions",
+      "basis": "explicit",
+      "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE"
+    },
+    {
+      "item": "PINDER 2024-02 structural inputs, index, metadata and mappings",
+      "licence": null,
+      "intended_use": "unknown",
+      "basis": "none",
+      "reason": "Repository Apache-2.0 licence found; explicit coverage of separately hosted derived dataset and annotations not established. Original PDB coordinate CC0 terms do not establish terms for every derived input.",
+      "sources": [
+        "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+        "https://pinderdata.org/2024-02/",
+        "https://www.rcsb.org/pages/policies"
+      ]
+    },
+    {
+      "item": "FroDock mirror software and required bin/soap.bin",
+      "licence": null,
+      "intended_use": "unknown",
+      "basis": "unreachable",
+      "reason": "Original distribution route returns HTTP 404. Mirror README and archive member names inspected; no package licence or explicit scoring-input coverage established. Owner authorizes local experiment with mirror but that does not establish upstream rights.",
+      "sources": [
+        "https://chaconlab.org/modeling/frodock/frodock-donwload",
+        "https://storage.googleapis.com/gke-dja-demo_static_assets/frodock3_linux64.tgz",
+        "brief.md#materials"
+      ]
+    },
+    {
+      "item": "AAV RCSB mmCIF entries 6IHB, 6JCQ, 6JCS",
+      "licence": "CC0-1.0",
+      "intended_use": "permitted",
+      "basis": "explicit",
+      "source": "https://www.rcsb.org/pages/policies"
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "unreachable",
+  "stock_cuda_image": {
+    "stock_environment": null,
+    "reason": "Exact stock image tag, OS libraries and CPU/RAM inventory not supplied; no build or workload run. CPU/MPI FroDock has no demonstrated CUDA requirement, but source adapter and build issues require reproduction.",
+    "evidence": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/docker/frodock/Dockerfile.frodock",
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "intake/source_evidence/frodock/README"
+    ],
+    "requirements": [
+      "linux/amd64",
+      "GNU C++ build tools",
+      "OpenMPI",
+      "FFTW single precision and MPI libraries",
+      "Python with PINDER evaluation and methods dependencies"
+    ],
+    "source_inspection_issues": [
+      "Adapter concatenates binary directory Path with executable filename without slash.",
+      "Adapter changes to temporary directory without copying receptor and ligand there.",
+      "Adapter calls shutil.copy on literal *.pdb path.",
+      "Runner uses pandas.from_csv and inconsistent setup CSV locations.",
+      "Dockerfile copies archive to /workspace but extracts from /root/workspace; final PATH /app/frodock/bin differs from /workspace/frodock/bin."
+    ],
+    "compatibility_conclusion": "Unknown pending correction and reproduction; these are software defects, not evidence of stock CUDA hardware incompatibility."
+  },
+  "size": {
+    "data_gib": null,
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "class": "unknown",
+    "reason": "Exact required subset residency and peak FFT/MPI working set not measured. Inventory byte totals include optional auxiliaries, duplicate representations and compressed archives; cannot equate their sum to data plus peak working set.",
+    "inventory_all_download_bytes": 1068926514,
+    "inventory_individual_structural_mapping_bytes": 491044791,
+    "test_zip_uncompressed_bytes": 730945215
+  },
+  "scoring": {
+    "interface": "pinder_eval CLI; ranked two-chain R/L PDB models; metrics and leaderboard CSV",
+    "threshold": "DockQ >= 0.23",
+    "published_tolerances": null,
+    "reason": "No published numerical reproduction tolerance located; case counts are references only.",
+    "missing_predictions": "Published harness uses iRMS=100, LRMS=100, Fnat=0, DockQ=0 and CAPRI=Incorrect; retain denominator.",
+    "source": "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md#3--evaluation-harness"
+  },
+  "repeatability": {
+    "case_selection": "All 93 paired-primary-apo PINDER-S cases, frozen from pinned index; no case-scale search.",
+    "candidate_count": 100,
+    "candidate_count_basis": "Intake preregistration choice for fixed best-of-N comparison, not a published baseline result or configuration.",
+    "seeds": null,
+    "reason": "Brief requires independent random seeds but supplies none; published FroDock adapter exposes no seed parameter. Do not claim seeded stochastic repeats until method supports it.",
+    "record": [
+      "input SHA-256",
+      "source commit",
+      "mirror SHA-256",
+      "resolved dependencies",
+      "thread/MPI settings",
+      "candidate ranks",
+      "raw timings",
+      "all failures"
+    ]
+  },
+  "search_candidates": [
+    {
+      "name": "PINDER-S",
+      "url": "https://github.com/pinder-org/pinder",
+      "selected": true,
+      "reason": "Explicit benchmark in brief; no substitute searched or selected."
+    }
+  ],
+  "evidence_limits": "Material retrieval and hashes are owner-provided evidence from 2026-10-31 inventory. This intake fetched source and mirror metadata but did not re-download every structural input or run correctness checks."
+}

@@ -1,0 +1,60 @@
+{
+  "representative_scale": {
+    "benchmark": "PINDER-S 2024-02",
+    "fixed_case_count": 93,
+    "selection": "All PINDER-S cases with paired primary apo monomers in pinned index, no scale search.",
+    "candidates_per_case": 100,
+    "total_expected_candidates": 9300,
+    "candidate_count_basis": "Fixed intake experimental choice, not published configuration.",
+    "separate_challenge": "Three AAV redocking entries, reported separately; no pooling with apo benchmark."
+  },
+  "inputs": {
+    "published_downloads": "data.json required_inputs and pins_and_hashes",
+    "prepared_inputs": "Transformed primary apo receptor/ligand pairs plus native holo dimer per case and mapping files; fixed case list materialized before execution.",
+    "method": "baseline.json pinned source and FroDock mirror, SOAP file hash",
+    "configuration": "Record n_solutions=100 and actual MPI/threads and dependency versions; seed control unavailable in adapter.",
+    "aav": "6IHB AAV2-PKD2, 6JCQ AAV1-PKD2, 6JCS AAV5-PKD1; biological chain/domain extraction remains unresolved."
+  },
+  "outputs": {
+    "poses": "results_dir/frodock/{pinder_id}/apo_decoys/model_{rank}.pdb; exactly R and L chains",
+    "scoring_command": "Published pinder_eval --eval_dir interface; see baseline.json for source template.",
+    "score_files": [
+      "{method_name}_metrics.csv",
+      "{method_name}_leaderboard.csv"
+    ],
+    "metrics": [
+      "per-pose DockQ, iRMS, LRMS, Fnat, CAPRI",
+      "top-1 acceptable fraction",
+      "best-of-100 acceptable fraction",
+      "per-case and aggregate wall seconds",
+      "poses/second",
+      "time to first DockQ>=0.23 pose",
+      "actual compute cost"
+    ],
+    "failures": "Retain failed cases in denominator; report missing poses and errors explicitly.",
+    "aav": "Separate redocking scores with declared chain/domain mapping; no claim about independent unbound docking."
+  },
+  "timing_scope": {
+    "workload": "End-to-end prepared-pair grid generation, docking, clustering and writing 100 complete candidate poses, across fixed 93 cases; report per-stage times and total.",
+    "setup": "Record downloads, extraction, dependency installation and compilation separately from workload time.",
+    "scoring": "Record evaluator runtime separately; time-to-acceptable requires pose availability timestamps plus offline quality classification, not rank alone.",
+    "parallelism": "Record actual CPUs, MPI ranks, concurrent cases and accelerator use; compare same fixed inputs/candidate count at declared compute budget.",
+    "repeatability": "No reproducibility measured during intake. Runtime and cost estimates unavailable.",
+    "sources": [
+      "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/src/pinder-methods/pinder/methods/run/frodock/predict.py",
+      "brief.md"
+    ]
+  },
+  "stage_budgets_s": null,
+  "stage_budgets_reason": "No measured setup/runtime estimates; no overrides invented. Supplied args budgets empty; pipeline defaults and run ceiling apply.",
+  "runtime_feasibility": null,
+  "runtime_feasibility_reason": "No workloads permitted during intake; cannot certify completion times before reproduction.",
+  "unresolved": [
+    "Exact installed stock environment",
+    "Adapter/build repairs needed before end-to-end reproduction",
+    "Historical published candidate count and seeds unavailable",
+    "AAV assembly/chain/domain extraction",
+    "Peak working set and measured runtime",
+    "FroDock upstream material identity and permission coverage"
+  ]
+}
