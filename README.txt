@@ -13,7 +13,7 @@ either outcome. Fresh model contexts then check every cited claim against its
 page, score the card, and name the existing research or industrial programmes
 its result would feed. A loop proposes close variants and keeps a better one.
 
-  dut/                 the designers under test
+  dut/                 the designs under test
   dut/pipeline/        this tool, the copy we edit
     src/               modules, built by build.js into dist/
     tests/             node dut/pipeline/tests/run.js
