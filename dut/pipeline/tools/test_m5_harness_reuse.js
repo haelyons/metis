@@ -46,6 +46,7 @@ module.exports = {
     const result = await fixture.run(options)
     // A repair that rewrites run_anchors.sh with its exact original bytes changes nothing.
     const config = JSON.parse(process.env.M5_REPRODUCE_CONFIG)
+    if (result && config.unitRepair && ['harness-repair', 'anchors-repair'].includes(options.title)) unitRepair(options.title, config.unitRepair)
     if (options.title === 'anchors-repair' && config.rewriteAnchorsUnchanged) {
       const harness = path.join(process.env.M5_REPRODUCE_ROOT, 'agent/harness')
       fs.writeFileSync(path.join(harness, 'run_anchors.sh'), fs.readFileSync(path.join(process.env.M5_REPRODUCE_ROOT, 'pre-anchors-repair/run_anchors.sh')))
@@ -53,6 +54,47 @@ module.exports = {
     return result
   },
   exportSession: fixture.exportSession,
+}
+// SCHEMAS.md "A/harness/", "Optional unit files (U50)": no repair changes run_units.sh or units.json;
+// after every setup or anchors repair the pipeline restores their bytes (or their absence), and they are
+// uploaded with the initial harness upload, never later. `actions` maps a unit file to rewrite/delete/create.
+const UNIT_FILES = ['run_units.sh', 'units.json']
+const OLD_MTIME = new Date('2001-02-03T04:05:06Z')
+function unitRepair(title, actions) {
+  const root = process.env.M5_REPRODUCE_ROOT
+  const harness = path.join(root, 'agent/harness')
+  // Tripwire: date the remote unit files back; any later upload of them sets a current mtime.
+  const box = path.join(root, 'box')
+  for (const entry of fs.readdirSync(box).filter(entry => entry.startsWith('m5-')))
+    for (const file of UNIT_FILES) {
+      const remote = path.join(box, entry, 'harness', file)
+      if (fs.existsSync(remote)) fs.utimesSync(remote, OLD_MTIME, OLD_MTIME)
+    }
+  const n = rows(path.join(root, 'unit-repairs.jsonl')).length + 1
+  for (const [file, action] of Object.entries(actions)) {
+    const target = path.join(harness, file)
+    if (action === 'delete') fs.rmSync(target, { force: true })
+    else fs.writeFileSync(target, file === 'units.json' ? `{"units":[{"id":"${title}-${n}","outputs":["x"],"cost_s":1}]}\n` : `#!/usr/bin/env bash\n# ${action} by ${title} ${n}\nexit 9\n`)
+  }
+  const state = Object.fromEntries(UNIT_FILES.map(file => [file, fs.existsSync(path.join(harness, file)) ? sha(fs.readFileSync(path.join(harness, file))) : null]))
+  fs.appendFileSync(path.join(root, 'unit-repairs.jsonl'), JSON.stringify({ title, n, state }) + '\n')
+  // From now on every box command must see the local unit files restored (checked by bin/box).
+  fs.writeFileSync(path.join(root, 'unit-armed'), '')
+}
+// Large run_units.sh with UTF-8 text and raw non-ASCII bytes after `exit 0`; a large valid units.json.
+function unitBytes(file) {
+  if (file === 'units.json') return Buffer.from(JSON.stringify({ units: Array.from({ length: 3000 }, (_, i) => ({
+    id: `unit-${i}.v1:a+b=c`, outputs: [`units/${i}/result.txt`, `units/${i}/log.txt`], cost_s: 1 + (i % 97) / 7 })) }, null, 2) + '\n')
+  const parts = [Buffer.from('#!/usr/bin/env bash\nset -eu\n# λ ü 日本 — 🙂 "quoted" $HOME `tick` \\\nexit 0\n')]
+  let state = 99, size = 0
+  while (size < 200000) {
+    const text = Buffer.from(`# ${size} 'single' "double" \${PATH} λ ü 日本 — 🙂\n`)
+    const raw = Buffer.alloc(80)
+    for (let i = 0; i < raw.length; i++) raw[i] = (state = (Math.imul(state, 1664525) + 1013904223) >>> 0) & 0xff
+    parts.push(text, raw, Buffer.from('\n'))
+    size += text.length + raw.length + 1
+  }
+  return Buffer.concat(parts)
 }
 // Fake agents for the recorded positive-openmm run5 regression: intake copies the recorded intake;
 // the anchors repair removes the openmm version assertion from run_command.sh and nothing else.
@@ -158,6 +200,7 @@ async function execute(name, config = {}) {
   // Unrelated files must not enter the copy or provenance manifest.
   fs.writeFileSync(path.join(source, 'unrelated.txt'), 'do not copy\n')
   if (config.missing) fs.unlinkSync(path.join(source, config.missing))
+  for (const file of config.units ?? []) fs.writeFileSync(path.join(source, file), unitBytes(file))
   const originals = Object.fromEntries(fs.readdirSync(source).map(file => [file, fs.readFileSync(path.join(source, file))]))
   const args = { run_root: root, tag: name, stub: { profile: 'PASS', seal: 'PASS', propose: 'PASS', implement: 'PASS', evaluate: 'PASS' } }
   if (!config.generated) args.harness_from = config.relative ? path.relative(pipeline, source) : source
@@ -189,9 +232,27 @@ function visit(directory) {
 visit(process.env.BOX_ROOT)
 `)
   script(path.join(root, 'box-bin/nvidia-smi'), 'exit 1')
-  script(path.join(root, 'bin/box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi')
+  // U50: once a fake repair has touched the unit files, every box command (re-upload, rerun, freeze)
+  // records whether the local A/harness/ unit files are back to their source bytes or absence.
+  const unitCheck = path.join(root, 'check-units.js')
+  fs.writeFileSync(unitCheck, `
+const fs = require('node:fs'), path = require('node:path')
+const root = ${JSON.stringify(root)}, source = ${JSON.stringify(source)}
+if (fs.existsSync(path.join(root, 'unit-armed'))) {
+  const bad = []
+  for (const file of ${JSON.stringify(UNIT_FILES)}) {
+    const local = path.join(root, 'agent/harness', file), original = path.join(source, file)
+    const want = fs.existsSync(original) ? fs.readFileSync(original) : null
+    const have = fs.existsSync(local) ? fs.readFileSync(local) : null
+    if (want === null ? have !== null : have === null || !want.equals(have)) bad.push(file)
+  }
+  fs.appendFileSync(path.join(root, 'unit-checks.jsonl'), JSON.stringify({ bad }) + '\\n')
+}
+`)
+  script(path.join(root, 'bin/box'), `"$M5_TEST_NODE" ${JSON.stringify(unitCheck)}\n` + 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi')
   script(path.join(root, 'bin/fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nexec cp -r -- "$source" "$2"')
   const fixtureConfig = {
+    ...(config.unitRepair ? { unitRepair: config.unitRepair } : {}),
     anchors: [{ id: 'first', published_value: 100, tolerance: 1, quantity: 'fixture', source: 'fixture' },
       { id: 'second', published_value: 0, tolerance: 0, quantity: 'fixture', source: 'fixture' }],
     measured: { first: 100, second: 0 },
@@ -338,6 +399,68 @@ visit(process.env.BOX_ROOT)
   })
   check(`${name}: ${failed ? 'no freeze after a failed reproduce' : 'reproduce-freeze copies the anchor outputs to reproduce-out'}`, () => {
     assertFreeze(root, !failed, fixtureConfig.measured)
+  })
+  if (config.units) unitChecks(name, { root, agent, box, source, originals, present: config.units, unitRepair: config.unitRepair, repairCount })
+}
+
+// SCHEMAS.md "A/harness/", "Optional unit files (U50)", pipeline obligations under args.harness_from.
+function unitChecks(name, { root, agent, box, source, originals, present, unitRepair, repairCount }) {
+  const absent = UNIT_FILES.filter(file => !present.includes(file))
+  check(`${name}: unit files ${present.join(', ') || 'none'} copied byte for byte and recorded unmodified; ${absent.join(', ') || 'none'} not created`, () => {
+    const manifest = read(path.join(root, 'control/harness_source.json'))
+    assert.equal(manifest.source, path.resolve(source))
+    for (const file of present) {
+      assert.deepEqual(manifest.files[file], { sha256: sha(originals[file]), modified: false }, `${file}: manifest entry`)
+      const local = path.join(agent, 'harness', file)
+      assert.ok(fs.existsSync(local), `${file}: not copied`)
+      assert.ok(fs.readFileSync(local).equals(originals[file]), `${file}: copy differs from source bytes`)
+      assert.ok(fs.readFileSync(path.join(source, file)).equals(originals[file]), `${file}: source mutated`)
+    }
+    for (const file of absent) {
+      assert.equal(file in manifest.files, false, `${file}: recorded though absent from the source`)
+      assert.equal(fs.existsSync(path.join(agent, 'harness', file)), false, `${file}: created though absent from the source`)
+    }
+  })
+  const remotes = () => fs.readdirSync(box).filter(entry => entry.startsWith('m5-')).map(entry => path.join(box, entry, 'harness'))
+    .filter(directory => fs.existsSync(directory))
+  check(`${name}: unit files reach the box with the initial upload, byte-identical`, () => {
+    const remote = remotes()
+    assert.equal(remote.length, 1, 'expected one remote run directory')
+    for (const file of present) {
+      const uploaded = path.join(remote[0], file)
+      assert.ok(fs.existsSync(uploaded), `${file}: not uploaded`)
+      assert.ok(fs.readFileSync(uploaded).equals(originals[file]), `${file}: box copy differs (${fs.statSync(uploaded).size} vs ${originals[file].length} bytes)`)
+    }
+    for (const file of absent) assert.equal(fs.existsSync(path.join(remote[0], file)), false, `${file}: on the box though absent from the source`)
+  })
+  if (!unitRepair) return
+  check(`${name}: every repair's unit-file changes are undone before the next box command, and never uploaded`, () => {
+    const repairs = rows(path.join(root, 'unit-repairs.jsonl'))
+    assert.equal(repairs.length, repairCount, 'fake repairs that touched unit files')
+    // The fixture really changed the unit files each time.
+    for (const repair of repairs) for (const [file, action] of Object.entries(unitRepair))
+      assert.notEqual(repair.state[file], originals[file] ? sha(originals[file]) : null, `${file}: fake ${action} by ${repair.title} ${repair.n} changed nothing`)
+    const seen = rows(path.join(root, 'unit-checks.jsonl'))
+    assert.ok(seen.length >= repairCount, `${seen.length} box command(s) after the first repair`)
+    seen.forEach((row, i) => assert.deepEqual(row.bad, [], `box command ${i + 1} after a repair ran with unrestored unit files`))
+    // Restored bytes (or absence) in A/harness/ at the end, and modified false.
+    const manifest = read(path.join(root, 'control/harness_source.json'))
+    for (const file of UNIT_FILES) {
+      const local = path.join(agent, 'harness', file)
+      if (present.includes(file)) {
+        assert.ok(fs.existsSync(local) && fs.readFileSync(local).equals(originals[file]), `${file}: bytes not restored`)
+        assert.equal(manifest.files[file]?.modified, false, `${file}: modified flag`)
+      } else assert.equal(fs.existsSync(local), false, `${file}: absence not restored`)
+    }
+    // Not re-uploaded: the remote copies keep the original bytes and the mtime set when the repair ran.
+    const remote = remotes()
+    assert.equal(remote.length, 1, 'expected one remote run directory')
+    for (const file of UNIT_FILES) {
+      const uploaded = path.join(remote[0], file)
+      if (!present.includes(file)) { assert.equal(fs.existsSync(uploaded), false, `${file}: uploaded after a repair created it`); continue }
+      assert.ok(fs.readFileSync(uploaded).equals(originals[file]), `${file}: box copy changed`)
+      assert.equal(fs.statSync(uploaded).mtimeMs, OLD_MTIME.getTime(), `${file}: re-uploaded after a repair`)
+    }
   })
 }
 
@@ -506,6 +629,15 @@ async function main() {
     await execute('both-repair-stray', { failure: 'both', stray: true })
     // Rewriting run_anchors.sh with identical bytes is not a change.
     await execute('command-repair-anchors-unchanged', { failure: 'command', unchangedAnchors: true })
+    // U50a: optional unit files under args.harness_from (copy, initial upload, restore after repairs).
+    await execute('units-both', { units: UNIT_FILES })
+    await execute('units-only-run-units', { units: ['run_units.sh'], relative: true })
+    await execute('units-only-units-json', { units: ['units.json'], optional: false })
+    await execute('units-none', { units: [] })
+    await execute('units-setup-repair-rewrite-delete', { units: UNIT_FILES, failure: 'setup', failures: 2, unitRepair: { 'run_units.sh': 'rewrite', 'units.json': 'delete' } })
+    await execute('units-setup-repair-create', { units: [], failure: 'setup', unitRepair: { 'run_units.sh': 'create', 'units.json': 'create' } })
+    await execute('units-anchors-repair-rewrite-delete', { units: UNIT_FILES, failure: 'both', failures: 2, unitRepair: { 'units.json': 'rewrite', 'run_units.sh': 'delete' } })
+    await execute('units-anchors-repair-create-rewrite', { units: ['units.json'], failure: 'command', unitRepair: { 'run_units.sh': 'create', 'units.json': 'rewrite' } })
     await recordedRun5()
     for (const missing of REQUIRED) await execute(`missing-${missing}`, { missing })
     await execute('generated', { generated: true })

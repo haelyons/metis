@@ -4,7 +4,7 @@ const meta = { name: 'm5', description: 'Explicit-run-root scientific pipeline s
 return (async () => {
   const runStarted = Date.now()
   const { default: path } = await import('node:path')
-  const { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync } = await import('node:fs')
+  const { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, cpSync, renameSync } = await import('node:fs')
   const { createHash, randomUUID } = await import('node:crypto')
   const { execFile } = await import('node:child_process')
   const { promisify } = await import('node:util')
@@ -23,8 +23,8 @@ return (async () => {
 
   const fields = {
     intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size', 'anchored', 'licence_basis'],
-    reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid'],
-    profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom'],
+    reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid', 'units_match', 'units_full_match'],
+    profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom', 'host_only'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
     propose: ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass',
       'votes_reject', 'votes_abstain', 'outcome'],
@@ -203,7 +203,7 @@ Gate: complete files, found, available required data, licence is not "restricted
     receipt.overrun = receipt.rc === 124 || receipt.timed_out === true || receipt.wall_s > seconds
     stageReceipts.push(receipt)
     // Transport and integrity commands have no authored script to change. Repair by one identical retry.
-    const authored = ['setup', 'anchors', 'profile', 'concurrency', 'adapter-smoke', 'setup-method', 'run-method', 'run-tests']
+    const authored = ['setup', 'anchors', 'units-check', 'profile', 'concurrency', 'adapter-smoke', 'setup-method', 'run-method', 'run-tests']
     if (!retry && !authored.includes(name) && (receipt.rc === 124 || receipt.timed_out === true)) {
       return boxCommand(name, command, destination, timeout, true)
     }
@@ -273,7 +273,8 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
       }
       const names = name === 'setup.sh' ? [name] : ['run_anchors.sh', 'run_command.sh']
       const before = new Map(name === 'setup.sh' ? [] : names.map(file => [file, readFileSync(path.join(harnessDirectory, file))]))
-      const protectedScripts = new Map(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh'].map(file =>
+      const protectedScripts = new Map([...(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh']),
+        'run_units.sh', 'units.json'].map(file =>
         [file, existsSync(path.join(harnessDirectory, file)) ? readFileSync(path.join(harnessDirectory, file)) : null]))
       const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(harnessDirectory, name))}`
         : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(harnessDirectory)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
@@ -299,6 +300,67 @@ Log tail (at most 200 lines):\n${tail}`,
     }
     return result
   }
+  function unitSample() {
+    readFileSync(path.join(harnessDirectory, 'run_units.sh'))
+    const manifest = readJSON(path.join(harnessDirectory, 'units.json'))
+    const exactKeys = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
+      && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key))
+    if (!exactKeys(manifest, ['units']) || !Array.isArray(manifest.units) || manifest.units.length < 4
+      || new Set(manifest.units.map(unit => unit?.id)).size !== manifest.units.length
+      || !manifest.units.every(unit => exactKeys(unit, ['id', 'outputs', 'cost_s'])
+        && typeof unit.id === 'string' && /^[A-Za-z0-9][A-Za-z0-9._:+=-]{0,127}$/.test(unit.id) && !unit.id.includes('\n')
+        && Number.isFinite(unit.cost_s) && unit.cost_s > 0
+        && Array.isArray(unit.outputs) && unit.outputs.length > 0 && new Set(unit.outputs).size === unit.outputs.length
+        && unit.outputs.every(file => typeof file === 'string' && file.split('/').every(part => part.length > 0
+          && !/[^A-Za-z0-9._+=-]/.test(part) && part !== '.' && part !== '..')))) throw new Error('invalid units')
+    const sorted = manifest.units.map((unit, index) => ({ ...unit, index }))
+      .sort((a, b) => a.cost_s - b.cost_s || a.index - b.index)
+    const start = Math.floor((sorted.length - 4) / 2)
+    return sorted.slice(start, start + 4)
+  }
+  function unitsCheckCommand(sample) {
+    return `python3 - <<'PY'
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import time
+
+root = Path.cwd()
+work = root / "units-check"
+output = root / "out" / "units-check"
+for directory in (work, output):
+    if directory.exists():
+        shutil.rmtree(directory)
+work.mkdir()
+output.mkdir(parents=True)
+for entry in root.iterdir():
+    if entry.name not in ("out", "profiler", "concurrency-work", "evaluation-work", "units-check"):
+        (work / entry.name).symlink_to(entry)
+(work / "out").mkdir()
+with (output / "run.log").open("wb") as log:
+    start = time.monotonic()
+    result = subprocess.run(["bash", "harness/run_units.sh", ${sample.map(unit => quote(unit.id)).join(', ')}],
+                            cwd=work, stdout=log, stderr=subprocess.STDOUT)
+    wall = time.monotonic() - start
+(output / "wall.json").write_text(json.dumps({"wall_s": wall}) + "\\n")
+shutil.copytree(work / "out", output / "files")
+sys.exit(result.returncode if result.returncode >= 0 else 128 - result.returncode)
+PY`
+  }
+  function matchedUnitFiles(sample, left, right) {
+    let total = 0, matched = 0
+    for (const unit of sample) {
+      for (const file of unit.outputs) {
+        total++
+        try {
+          if (readFileSync(path.join(left, file)).equals(readFileSync(path.join(right, file)))) matched++
+        } catch { /* Missing or unreadable files are mismatches. */ }
+      }
+    }
+    return { total, matched, match: matched === total }
+  }
   async function reproduce() {
     // Snapshot only the current allocation; never reuse a prior run's box record.
     rmSync(path.join(C, 'box.json'), { force: true })
@@ -309,7 +371,16 @@ Log tail (at most 200 lines):\n${tail}`,
     if (input.stub?.reproduce != null) return stub('reproduce')
     const facts = { ...nullFacts('reproduce'), stock_verified: false, tokens_known: false, gpu_busy_known: false }
     const destination = path.join(A, 'results', 'reproduce')
+    const unitsMode = Object.hasOwn(input, 'units_check')
+    let reference
     try {
+      if (unitsMode) {
+        const value = input.units_check
+        if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 1
+          || !Object.hasOwn(value, 'reference') || typeof value.reference !== 'string' || !value.reference.trim()) return failure(facts, 'parse')
+        reference = path.resolve(value.reference)
+        if (!statSync(reference).isDirectory()) return failure(facts, 'parse')
+      }
       executionTimeout('setup')
       executionTimeout('anchors')
     } catch { return failure(facts, 'parse') }
@@ -335,7 +406,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         if (typeof input.harness_from !== 'string' || !input.harness_from.trim()) return failure(facts, 'parse')
         const source = path.resolve(input.harness_from)
         const names = ['setup.sh', 'run_anchors.sh', 'run_command.sh',
-          ...(existsSync(path.join(source, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])]
+          ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(source, name)))]
         const scripts = names.map(name => [name, readFileSync(path.join(source, name))])
         harnessSource = { source, files: {} }
         for (const [name, bytes] of scripts) {
@@ -347,8 +418,9 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
         if (reply == null) return failure(facts, 'parse')
       }
+      const sample = unitsMode ? unitSample() : null
       const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'run_command.sh',
-        ...(existsSync(path.join(harnessDirectory, 'run_evaluation.sh')) ? ['run_evaluation.sh'] : [])], destination, 'setup')
+        ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(harnessDirectory, name)))], destination, 'setup')
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
       const setup = await runHarness('setup.sh', 'setup', destination, 'setup')
       if (setup.error) {
@@ -357,7 +429,46 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       }
       facts.stock_verified = setup.rc === 0
       if (!facts.stock_verified) return failure(facts, 'install')
+      let unitsCheck
+      const subsetDirectory = path.join(destination, 'units-check')
+      const writeUnitsCheck = () => {
+        const file = path.join(destination, 'units_check.json')
+        const temporary = `${file}.${randomUUID()}.tmp`
+        writeFileSync(temporary, JSON.stringify(unitsCheck, null, 2) + '\n')
+        renameSync(temporary, file)
+        facts.units_match = unitsCheck.subset_match
+        facts.units_full_match = unitsCheck.full_match
+      }
+      if (unitsMode) {
+        const subset = await boxCommand('units-check', unitsCheckCommand(sample), destination, 'anchors')
+        if (subset.error) return failure(facts, subset.error)
+        if (subset.fetched !== true) return failure(facts, 'infra')
+        rmSync(subsetDirectory, { recursive: true, force: true })
+        cpSync(path.join(destination, 'out', 'units-check'), subsetDirectory, { recursive: true })
+        const files = matchedUnitFiles(sample, path.join(subsetDirectory, 'files'), reference)
+        let wall = null
+        try {
+          const value = readJSON(path.join(subsetDirectory, 'wall.json')).wall_s
+          if (Number.isFinite(value) && value > 0) wall = value
+        } catch { /* Timing is optional evidence. */ }
+        const cost = sample.reduce((sum, unit) => sum + unit.cost_s, 0)
+        unitsCheck = { sample: sample.map(({ index, cost_s }) => ({ index, cost_s })), subset_rc: subset.rc,
+          subset_wall_s: wall, cost_sum_s: cost, cost_ratio: wall === null ? null : wall / cost,
+          files_total: files.total, files_matched: files.matched, subset_match: subset.rc === 0 && files.match,
+          full_ran: false, full_match: null, subset_vs_full_match: null }
+        writeUnitsCheck()
+        if (subset.rc !== 0 || unitsCheck.subset_match) return { status: 'PASS', facts }
+      }
       const anchors = await runHarness('run_anchors.sh', 'anchors', destination, 'anchors')
+      if (unitsMode) {
+        unitsCheck.full_ran = anchors.budget_s !== 0
+        if (anchors.rc === 0 && !anchors.error) {
+          const full = path.join(destination, 'out')
+          unitsCheck.full_match = matchedUnitFiles(sample, full, reference).match
+          unitsCheck.subset_vs_full_match = matchedUnitFiles(sample, path.join(subsetDirectory, 'files'), full).match
+        }
+        writeUnitsCheck()
+      }
       if (anchors.error) return failure(facts, anchors.error)
       if (anchors.rc !== 0) return failure(facts, 'anchor')
       const scorePath = path.join(destination, 'anchors_scored.json')
@@ -372,7 +483,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       facts.anchors_total = score.anchors_total
       const passed = score.all_passed && facts.stock_verified
       const run_valid = score.anchors_total === 0 ? null : score.all_passed
-      if (passed) {
+      if (passed && !unitsMode) {
         // A timeout may leave a partial snapshot; fail without retrying the freeze.
         const frozen = await boxCommand('reproduce-freeze', 'set -e\ntest ! -e reproduce-out\ncp -a out reproduce-out',
           destination, 'setup', true)
@@ -392,6 +503,7 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       facts.profile_complete = false
       facts.timed_fraction = null
       facts.gpu_telemetry = null
+      facts.host_only = null
       rmSync(path.join(A, 'profile-packet.json'), { force: true })
       try {
         const directory = path.join(destination, 'out', 'profile')
@@ -423,14 +535,21 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         facts.profile_complete = true
         facts.timed_fraction = Math.min(1, timedWall / total_wall_s)
         facts.gpu_telemetry = gpuUtil.length > 0
+        const hostOnly = gpuUtil.length > 0 && gpuUtil.every(item => item.util === 0)
+          && ['kernels', 'memcpy H2D', 'memcpy D2H', 'CUDA API host time'].every(name => {
+            const rows = stages.filter(item => item.stage === name)
+            return rows.length > 0 && rows.every(item => item.wall_s === 0 && (item.gpu_s === 0 || item.gpu_s === null))
+          })
         writeFileSync(path.join(A, 'profile-packet.json'), JSON.stringify({
-          stages: measuredStages, total_wall_s, concurrency: null,
+          stages: measuredStages, total_wall_s, concurrency: null, host_only: hostOnly,
           timed_fraction: facts.timed_fraction, gpu_telemetry: facts.gpu_telemetry,
           gpu_count: Number.isInteger(allocationCount) && allocationCount >= 0 ? allocationCount
             : Array.isArray(boxProbe?.nvidia?.gpus) ? boxProbe.nvidia.gpus.length : 1,
         }, null, 2) + '\n')
+        facts.host_only = hostOnly
         const processWrapper = stages.some(item => /(?:^|[\s_-])(?:process|wrapper|telemetry|total|overall)(?:$|[\s_-])/i.test(item.stage)
-          || (item.wall_s >= total_wall_s * 0.98 && item.wall_s <= total_wall_s * 1.02))
+          || (!(hostOnly && item.stage === 'other host time')
+            && item.wall_s >= total_wall_s * 0.98 && item.wall_s <= total_wall_s * 1.02))
         return stages.length >= 3 && !processWrapper && facts.timed_fraction >= 0.9 && facts.gpu_telemetry
           ? null : 'numeric'
       } catch {
@@ -813,7 +932,8 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
       '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(v1)])
     stages.push({ stage, status: result.status })
     log(`${stage}: ${result.status}`)
-    if (!stopped_at && (result.status !== 'PASS' || result.facts.outcome === 'no_feasible_method')) stopped_at = stage
+    if (!stopped_at && (result.status !== 'PASS' || result.facts.outcome === 'no_feasible_method'
+      || (stage === 'reproduce' && Object.hasOwn(input, 'units_check')))) stopped_at = stage
   }
   await exec('python3', ['m5/operator_takeaway.py', S, '--raid', raid])
   return { stages, stopped_at }

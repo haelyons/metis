@@ -20,9 +20,16 @@ const VALID_CONCURRENCY = { mps: false, mps_failed: false, single_wall_s: [1, 1.
 const NULL_CONCURRENCY = { mps: true, mps_failed: true, single_wall_s: [0.5, null, null],
   batches: [{ n: 2, wall_s: null, all_ok: false, skipped: false, factor: null },
     { n: 4, wall_s: null, all_ok: false, skipped: false, factor: null }], factor: null }
+// T1 = 1; factor_2 = 2 / 1.25 = 1.6, factor_4 = 4 / 0.8 = 5. With factor 5 the whole-workload bounds
+// differ (batching capped at 4, the others 5), so a host-only profile, whose only feasible methods are
+// the whole-workload ones, does not give the fake seal agent identical intervals.
+const WIDE_CONCURRENCY = { mps: false, mps_failed: false, single_wall_s: [1, 1, 1],
+  batches: [{ n: 2, wall_s: 1.25, all_ok: true, skipped: false, factor: 1.6 },
+    { n: 4, wall_s: 0.8, all_ok: true, skipped: false, factor: 5 }], factor: 5 }
 // Raw file contents written by the fake probe for each mode.
 const PROBE_OUTPUTS = {
   valid: JSON.stringify(VALID_CONCURRENCY),
+  'valid-wide': JSON.stringify(WIDE_CONCURRENCY),
   'valid-null': JSON.stringify(NULL_CONCURRENCY),
   rc: JSON.stringify(VALID_CONCURRENCY),
   'invalid-json': '{"mps": false,',
@@ -97,5 +104,5 @@ function assertConcurrencyShape(value) {
   nullablePositive(value.factor, 'factor')
 }
 module.exports = { profiler, replace, concurrencyProbe, assertConcurrencyShape,
-  STALE_CONCURRENCY, VALID_CONCURRENCY, NULL_CONCURRENCY, PROBE_OUTPUTS }
+  STALE_CONCURRENCY, VALID_CONCURRENCY, NULL_CONCURRENCY, WIDE_CONCURRENCY, PROBE_OUTPUTS }
 if (require.main === module) replace(process.argv[2], JSON.parse(process.argv[3] || '{}'))

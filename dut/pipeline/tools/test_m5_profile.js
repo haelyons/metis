@@ -407,11 +407,14 @@ esac`)
     }
   })
 }
+let profileOnly = null
 try {
   summariserTests()
   profilerTests()
   check('pipeline coverage/gate and shared command contracts; no profile agent or repair', () => {
-    const result = execute(process.execPath, [path.join(__dirname, 'test_m5_reproduce.js'), '--profile-only'], { timeout: 600000 })
+    // The U49 host-only cases below run in the same --profile-only pass.
+    const result = execute(process.execPath, [path.join(__dirname, 'test_m5_reproduce.js'), '--profile-only'], { timeout: 1500000 })
+    profileOnly = result
     assert.equal(result.status, 0, result.stdout + result.stderr)
     assert.match(result.stdout, /low-coverage/)
     assert.match(result.stdout, /empty-gpu-util/)
@@ -419,6 +422,41 @@ try {
     for (const mode of ['real', 'valid', 'valid-null', 'timeout', 'rc', 'missing', 'invalid-json'])
       assert.match(result.stdout, new RegExp(`ok concurrency-${mode}: packet concurrency and headroom fact`))
   })
+  // U49, SCHEMAS.md "In a host-only profile (packet `host_only` true) ...": each named check must have
+  // run and passed in the --profile-only pass (fake box, fixed-profiler fixture rows).
+  const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const u49 = (label, lines) => check(`U49: ${label}`, () => {
+    assert.ok(profileOnly, '--profile-only pass did not run')
+    for (const line of lines) {
+      const ok = new RegExp(`^ok ${escape(line)}$`, 'm').test(profileOnly.stdout)
+      const failed = new RegExp(`^FAIL ${escape(line)}:.*$`, 'm').exec(profileOnly.stdout)
+      assert.ok(ok, failed ? failed[0].slice(0, 2000) : `check not run: ${line}`)
+    }
+  })
+  const caseLines = (name, extra) => [`${name}: workflow completes`, `${name}: ordered statuses and takeaways`,
+    `${name}: profile packet and facts derived from files`, `${name}: concurrency probe runs only after a passing profile gate`, ...extra]
+  for (const name of ['u49-host-only', 'u49-host-only-within-2pct']) u49(`${name}: host-only profile passes, host_only true, probe runs`, caseLines(name, [
+    `${name}: gate passes despite other host time within 2% of total wall; probe ran`,
+    `${name}: every stage after profile proceeds (diagnostic)`,
+    `${name}: probe log, fetched results, stage unaffected (valid-wide)`,
+    `${name}: packet concurrency and headroom fact (valid-wide)`,
+    `${name}: pipelining and multi-GPU see no transfer or compute time`]))
+  for (const label of ['util-positive', 'kernels-wall', 'h2d-gpu', 'd2h-wall', 'api-wall', 'api-gpu', 'empty-telemetry', 'missing-kernels-row', 'missing-api-row']) {
+    const name = `u49-not-host-only-${label}`
+    u49(`${name}: host_only false, gated as before (numeric), probe not run`, caseLines(name, [`${name}: failure signature`,
+      `${name}: host_only false, 2% wrapper test fails the gate, probe not run`]))
+  }
+  for (const label of ['named-wrapper', 'named-wrapper-underscore', 'low-coverage']) {
+    const name = `u49-host-only-${label}`
+    u49(`${name}: exemption covers only the 2% test`, caseLines(name, [`${name}: failure signature`,
+      `${name}: host-only profile still fails the other gate conditions; probe not run`]))
+  }
+  u49('GPU profiles unchanged: passing GPU profile has host_only false', ['concurrency-valid: profile packet and facts derived from files',
+    'concurrency-valid: ordered statuses and takeaways', 'concurrency-real: profile packet and facts derived from files'])
+  u49('GPU profiles unchanged: row within 2% of total still fails numeric', [9.8, 10, 10.2].flatMap(wall => [
+    `duration-wrapper-${wall}: failure signature`, `duration-wrapper-${wall}: profile packet and facts derived from files`]))
+  u49('parse failure: no packet, host_only null', ['missing-gpu-util: parse failure writes no packet and emits host_only null'])
+  u49('SKIPPED profile record: host_only null', ['u49-profile-skipped: SKIPPED profile record has host_only null'])
 } finally { fs.rmSync(scratch, { recursive: true, force: true }) }
 console.log(`${checks} checks, ${failures} failures`)
 if (!failures) console.log('all checks passed')
