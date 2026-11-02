@@ -50,8 +50,17 @@ done
 [[ $LIMIT =~ ^[1-9][0-9]*$ && ${#LIMIT} -le 9 ]] || die 'Timeout must be a positive integer (at most 9 digits).'
 fetch() {
   if [[ -n ${FETCH:-} ]]; then "$FETCH" "$1" "$2"; return; fi
-  local ip
+  local ip mirror ssh
   ip=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["ip"])' "$HOME/.cache/metis-serve/state.json") || return
+  if [[ $1 == "$DIR/$SUBDIR" ]]; then
+    mirror="${BOXRUN_MIRROR_ROOT-$HOME/.cache/metis-serve/fetch-mirror}/$(basename -- "$DIR")/$SUBDIR"
+    mkdir -p -- "$mirror" || return
+    printf -v ssh 'ssh -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30 -o BatchMode=yes -o ExitOnForwardFailure=yes -i %q' "$HOME/.ssh/lambda_ed25519"
+    if rsync -rLt --delete -z -e "$ssh" "ubuntu@$ip:$1/" "$mirror/"; then
+      rm -rf -- "$2/$SUBDIR" && mkdir -p -- "$2/$SUBDIR" && cp -a -- "$mirror/." "$2/$SUBDIR/"
+      return
+    fi
+  fi
   scp -r -o StrictHostKeyChecking=accept-new -o ConnectTimeout=15 -o ServerAliveInterval=30 \
     -o BatchMode=yes -o ExitOnForwardFailure=yes -i "$HOME/.ssh/lambda_ed25519" "ubuntu@$ip:$1" "$2"
 }
