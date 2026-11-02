@@ -2,18 +2,20 @@
 validated enum statuses, an addendum prefix check, an independence-order check, counts, the agent's cost or tokens,
 and push status; never file names or agent text.
 
-Usage: python3 ~/.cache/blind01/intake_check_post.py [--dir intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2|run8_family|run8_diag|run8_diag2|run9_obs|run9_diag|run9_diag2|run9_diag3|run9_diag4|run9_replay|run9_par|run9_scale|run9_scale2|run9_replay2|run9_units|run9_outputs|run10_harness|run10_review|run10_harness2|run10_review2|run10_why|run10_mech|run10_inputs|run10_diff|run10_harness3|run10_review3] [--transcript NAME] [--check-only]
+Usage: python3 ~/.cache/blind01/intake_check_post.py [--exp blind-01|blind-02] [--dir b01_materials|intake_check|intake_check_codex|intake_acquire|intake_mirror|run5_diag|run6_diag|run6_diag2|run6_diag3|run7_diag|run7_diag2|run8_family|run8_diag|run8_diag2|run9_obs|run9_diag|run9_diag2|run9_diag3|run9_diag4|run9_replay|run9_par|run9_scale|run9_scale2|run9_replay2|run9_units|run9_outputs|run10_harness|run10_review|run10_harness2|run10_review2|run10_why|run10_mech|run10_inputs|run10_diff|run10_harness3|run10_review3] [--transcript NAME] [--check-only]
 """
 import argparse, json, os, re, subprocess
 
 ap = argparse.ArgumentParser()
-ap.add_argument("--dir", default="intake_check", choices=["intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"])
+ap.add_argument("--exp", default="blind-01", choices=["blind-01", "blind-02"])
+ap.add_argument("--dir", default="intake_check", choices=["b01_materials", "intake_check", "intake_check_codex", "intake_acquire", "intake_mirror", "run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"])
 ap.add_argument("--transcript", default="transcript.jsonl", choices=["transcript.jsonl", "codex.jsonl"])
 ap.add_argument("--check-only", action="store_true")
 a = ap.parse_args()
+assert (a.dir == "b01_materials") == (a.exp == "blind-02"), "b01_materials is the only blind-02 reader"
 
 M = "/home/hal/dev/interp/metis"
-D = "experiments/blind-01/m5/" + a.dir
+D = "experiments/" + a.exp + "/m5/" + a.dir
 P = os.path.join(M, D)
 ENUMS = {
     "prerequisite": {"data", "licence_evidence", "data_and_licence_evidence", "other", "none_found"},
@@ -457,6 +459,20 @@ if a.dir == "run10_review3":
     ENUMS["restricted_list_faithful"] = {"yes", "no", "not_applicable", "unknown"}
     ENUMS["inherited_path_conflict"] = {"yes", "no", "unknown"}
     ENUMS["unit_files_add_path_conflict"] = {"no", "yes", "unknown"}
+if a.dir == "b01_materials":
+    ENUMS = {
+        "cases_identified": {"yes", "partly", "no"},
+        "seed_matches_records": {"yes", "no", "unknown"},
+        "prepared_inputs_pinned": {"yes", "partly", "no"},
+        "references_pinned": {"yes", "partly", "no"},
+        "software_pins_recorded": {"yes", "partly", "no"},
+        "alternative": {"none", "official_new_location", "archive_snapshot", "author_deposit", "verified_mirror",
+                        "regenerated_official", "unverified_mirror"},
+        "hashes_recorded": {True, False},
+        "reachability": {"reachable", "partly", "unreachable", "not_done"},
+        "run1_brief": {"addendum", "original"},
+        "owner_action": {"none", "supply_materials", "obtain_access", "decide"},
+    }
 if a.dir == "intake_mirror":
     ENUMS["hashes_recorded"] = {True, False}
     ENUMS["refetch"] = {"match", "mismatch", "unreachable", "not_done"}
@@ -515,21 +531,28 @@ if a.dir == "intake_check_codex":
     independent = load("status_independent.json")
     print("INDEPENDENT " + json.dumps(independent, sort_keys=True) if independent else "INDEPENDENT_INVALID")
 
-addendum = os.path.join(P, "BRIEF_run5.md")
+addendum = os.path.join(P, "BRIEF_run1.md" if a.dir == "b01_materials" else "BRIEF_run5.md")
+brief_key = "run1_brief" if a.dir == "b01_materials" else "run5_brief"
 if a.dir in ("run5_diag", "run6_diag", "run6_diag2", "run6_diag3", "run7_diag", "run7_diag2", "run8_family", "run8_diag", "run8_diag2", "run9_obs", "run9_diag", "run9_diag2", "run9_diag3", "run9_diag4", "run9_replay", "run9_par", "run9_scale", "run9_scale2", "run9_replay2", "run9_units", "run9_outputs", "run10_harness", "run10_review", "run10_harness2", "run10_review2", "run10_why", "run10_mech", "run10_inputs", "run10_diff", "run10_harness3", "run10_review3", "run10_post", "run10_post2", "run11_post", "run11_post2"):
     pass
 elif os.path.exists(addendum):
-    original = open(os.path.join(M, "experiments/blind-01/m5/BRIEF.md"), "rb").read()
+    original = open(os.path.join(M, "experiments", a.exp, "m5/BRIEF.md"), "rb").read()
     text = open(addendum, "rb").read()
     print("addendum present; starts with original brief:", text.startswith(original) and len(text) > len(original),
-          "; status agrees:", bool(status) and status["run5_brief"] == "addendum")
+          "; status agrees:", bool(status) and status[brief_key] == "addendum")
     if a.dir == "intake_mirror":
         extra = text[len(original):]
         print("addendum section heading:", b"## Materials (owner decision 2026-10-31; recorded by an authorized reader agent)" in extra,
               "; names unverified_mirror:", b"unverified_mirror" in extra,
               "; sha256 values:", len(set(re.findall(rb"\b[0-9a-f]{64}\b", extra))))
+    if a.dir == "b01_materials":
+        extra = text[len(original):]
+        print("addendum section heading:", b"## Materials from blind-01 records (owner decisions 2026-11-02; recorded by an authorized reader agent)" in extra,
+              "; names unverified_mirror:", b"unverified_mirror" in extra,
+              "; points at experiments/:", b"experiments/" in extra,
+              "; sha256 values:", len(set(re.findall(rb"\b[0-9a-f]{64}\b", extra))))
 else:
-    print("addendum absent; status agrees:", bool(status) and status["run5_brief"] == "original")
+    print("addendum absent; status agrees:", bool(status) and status[brief_key] == "original")
 
 try:
     rows = [json.loads(line) for line in open(os.path.join(P, a.transcript)) if line.strip()]
@@ -575,7 +598,7 @@ for root, _, names in os.walk(P):
 print("files to commit", len(keep), "held back (secret pattern or >95 MB)", held)
 if keep:
     git("add", "-f", "--", *keep)
-    c = git("commit", "-q", "-m", f"blind-01 m5: authorized {a.dir.replace('_', ' ')} (reader agent; operator sees enum status only)\n\n"
+    c = git("commit", "-q", "-m", f"{a.exp} m5: authorized {a.dir.replace('_', ' ')} (reader agent; operator sees enum status only)\n\n"
             "Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>\n"
             "Claude-Session: https://claude.ai/code/session_01R9EPikyZNGLiuyGF2iw3X3")
     git("push", "-q", "origin", "main")

@@ -1,6 +1,7 @@
 """Create args.json for a new m5 run of a blind experiment (blind-01, blind-02, ...) from that experiment's
 run1, changing only run_root and tag (and, with --addendum, the
-brief: a reader agent's BRIEF_run5.md, in intake_check/ or, with --addendum=intake_check_codex, there). Prints nothing else.
+brief: a reader agent's BRIEF_run5.md, in intake_check/ or, with --addendum=intake_check_codex, there;
+blind-02's --addendum=b01_materials uses b01_materials/BRIEF_run1.md). Prints nothing else.
 
 --harness-from=<folder> reuses the harness in that folder of blind-01/m5/ (args.harness_from; it must hold setup.sh,
 run_anchors.sh and run_command.sh). --stop-after-profile stubs seal as SKIPPED (the pipeline's existing stub input),
@@ -12,7 +13,7 @@ A new experiment's run1 has no run1 to copy: it gets run1's keys (blind true, re
 <experiment>/m5/BRIEF.md, which must exist and differ from the template the operator wrote
 (~/.cache/blind01/brief_template_<experiment>.sha256); the brief is checked by size and hash only, never read.
 
-Usage: python3 ~/.cache/blind01/new_run.py <run_root> [--addendum[=intake_check_codex|=intake_acquire|=intake_mirror]]
+Usage: python3 ~/.cache/blind01/new_run.py <run_root> [--addendum[=intake_check_codex|=intake_acquire|=intake_mirror|=b01_materials]]
            [--harness-from=<folder>] [--stop-after-profile] [--units-check=<run> | --units-probe=<run>]
 """
 import hashlib, json, os, re, sys
@@ -20,7 +21,8 @@ import hashlib, json, os, re, sys
 root = os.path.abspath(sys.argv[1])
 options = sys.argv[2:]
 addenda = {"--addendum": "intake_check", "--addendum=intake_check_codex": "intake_check_codex",
-           "--addendum=intake_acquire": "intake_acquire", "--addendum=intake_mirror": "intake_mirror"}
+           "--addendum=intake_acquire": "intake_acquire", "--addendum=intake_mirror": "intake_mirror",
+           "--addendum=b01_materials": "b01_materials"}
 harness = [o.split("=", 1)[1] for o in options if o.startswith("--harness-from=")]
 check = [o.split("=", 1)[1] for o in options if o.startswith("--units-check=")]
 probe = [o.split("=", 1)[1] for o in options if o.startswith("--units-probe=")]
@@ -44,7 +46,7 @@ else:
     args = {"run_root": None, "brief": brief, "tag": None, "blind": True, "record_raid": True}
 args["run_root"], args["tag"] = root, "b" + m.group(2) + "m5r" + m.group(3)
 if addendum:
-    args["brief"] = m.group(1) + "/" + addendum + "/BRIEF_run5.md"
+    args["brief"] = m.group(1) + "/" + addendum + ("/BRIEF_run1.md" if addendum == "b01_materials" else "/BRIEF_run5.md")
     assert os.path.isfile(args["brief"]), "no addendum brief"
 if harness:
     args["harness_from"] = m.group(1) + "/" + harness[0]
