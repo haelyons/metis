@@ -1,0 +1,184 @@
+#include <stdio.h>
+#include <cmdl/CmdLine.h>
+#include <libfrodockcluster/include/frodockcluster.h>
+
+#define SWAP(a,b) temp=(a);(a)=(b);(b)=temp;
+#define NAMESIZE 300
+
+using namespace TCLAP;
+using namespace std;
+
+char in_input[NAMESIZE],in_pdb[NAMESIZE],in_output[NAMESIZE],in_output2[NAMESIZE];
+float in_limit,in_limit2;
+bool in_eval, is_sort, in_old;
+int num_elem;
+int in_num,in_numc;
+void parseOptions(int argc, char** argv);
+int rampi;
+float rampd;
+
+
+int main(int argc, char *argv[])
+{
+
+	int i,npeaksTotal = 0,num_clusters;
+	float *buffer,*output_buffer, *output_buffer2;
+	float center[3];
+	bool output2=false;
+	parseOptions(argc, argv);
+	FILE *f=fopen(in_input,"rb");
+	fread(&npeaksTotal,  sizeof(int),  1, f);
+    fprintf(stderr,"Number of peaks %d\n", npeaksTotal);
+
+    fprintf(stderr,"Number of clusters %d\n", in_numc);
+
+	if (in_old) {fread(&center[0],  sizeof(float),  3, f);
+	    fprintf(stderr,"Center Lig %f %f %f\n", center[0],center[1],center[2]);
+		}
+
+	buffer=(float*)malloc(sizeof(float)*num_elem*npeaksTotal);
+	fread(buffer,sizeof(float),num_elem*npeaksTotal,f);
+	fclose(f);
+
+	if(strcmp(in_output2,"")!=0)
+	{
+		output2=true;
+	}
+
+
+	num_clusters=calcule_cluster(buffer, npeaksTotal, in_pdb,
+			&output_buffer, &output_buffer2,rampi,rampd,
+			in_num, in_numc, in_limit, in_limit2, output2,
+			num_elem,is_sort,in_eval);
+
+
+	f=fopen(in_output,"wb");
+	fwrite(&num_clusters,sizeof(int),1,f);
+	if (in_old) fwrite(&center[0],  sizeof(float),  3, f);
+
+
+	for (i=0; i<num_clusters; i++)
+	{
+
+		fwrite(&(output_buffer[i*num_elem]),sizeof(float),num_elem,f);
+	}
+	fclose(f);
+
+
+	if(output2)
+	{
+		f=fopen(in_output2,"wb");
+		fwrite(&num_clusters,sizeof(int),1,f);
+		if (in_old) fwrite(&center[0],  sizeof(float),  3, f);
+		for (i=0; i<num_clusters; i++)
+		{
+			fwrite(&(output_buffer2[i*num_elem]),sizeof(float),num_elem,f);
+
+		}
+		fclose(f);
+	}
+
+}
+
+
+void parseOptions(int argc, char** argv)
+{
+	string temp;
+	CmdLine cmd(argv[0],"   ", "2.0" );
+
+	try {
+		//
+		// Define required arguments no labeled
+		//
+		UnlabeledValueArg<string> input("data","Frodock solutions data filename.","default","data");
+		cmd.add( input );
+
+		UnlabeledValueArg<string> pdb("pdb","Ligand pdb filename.","default","pdb");
+		cmd.add( pdb );
+
+		SwitchArg old( "", "old", "Old format", false );
+		cmd.add( old );
+
+		ValueArg < float > Rampd( "","rampd", "ramp distance", false,1.0, "float" );
+		cmd.add( Rampd );
+
+		ValueArg < int > Rampi( "","rampi", "ramp int", false,1.0, "float" );
+		cmd.add( Rampi );
+
+
+		ValueArg < float > limit2( "c","distance_correlation", "Ratio of maximal correlation used to define correlation interval in clusters (default: 1.0).", false,1.0, "float" );
+		cmd.add( limit2 );
+
+		//ValueArg < string > output_pdb( "", "o_pdb", "pdb file with the position of each cluster (correlation for the cluster: alpha value)", false, "", "string" );
+		//cmd.add( output_pdb );
+
+		//ValueArg < string > output_num( "", "o_num", "binary file with number of solutions for all the clusters)", false, "", "string" );
+		//cmd.add( output_num );
+
+		SwitchArg sort( "s", "sorted", "The solutions in input file are sorted by correlation (Skip sort operation).", false );
+		cmd.add( sort );
+
+		SwitchArg eval( "e", "evaluated", "input solution file is a evaluated Frodock file.", false );
+		cmd.add( eval );
+
+		ValueArg < int > num( "", "ns", "Maximum number of solutions to employ (default: unlimited).", false, -1, "int" );
+		cmd.add( num );
+
+		ValueArg < int > numc( "", "nc", "Maximum number of clusters to generate (default: unlimited).", false, -1, "int" );
+		cmd.add( numc );
+
+		ValueArg < float > limit( "d","distance_rmsd", "RMSD distance between clusters (default: 5.0).", false,5.0, "float" );
+		cmd.add( limit );
+
+		ValueArg < string > output( "o", "output", "Clustered solution output Frodock filename (default: frodockcluster.dat).", false, "frodockcluster.dat", "string" );
+		cmd.add( output );
+
+		ValueArg < string > output2( "", "stat", "Calculation of # solutions per cluster and store in a filename (default: none).", false, "", "string" );
+		cmd.add( output2 );
+
+		// Parse the command line.
+		cmd.parse(argc,argv);
+
+		is_sort=sort.getValue();
+
+		in_eval=eval.getValue();
+
+		if(in_eval)
+			num_elem=11;
+		else
+		{
+			num_elem=7;
+		}
+		strcpy(in_input,((temp=input.getValue()).c_str()));
+		strcpy(in_output,((temp=output.getValue()).c_str()));
+		strcpy(in_output2,((temp=output2.getValue()).c_str()));
+		//strcpy(in_output_pdb,((temp=output_pdb.getValue()).c_str()));
+		//strcpy(in_output_num,((temp=output_num.getValue()).c_str()));
+
+		in_num=num.getValue();
+		in_numc=numc.getValue();
+		strcpy(in_pdb,((temp=pdb.getValue()).c_str()));
+		in_limit=limit.getValue();
+		in_limit2=limit2.getValue();
+
+		if(Rampi.isSet())
+			rampi=Rampi.getValue();
+		else rampi=10000000;
+
+		if(Rampd.isSet())
+		   rampd=Rampd.getValue();
+		else rampd=in_limit;
+
+
+		if(old.isSet()) in_old=false;
+		        else in_old=true;
+
+
+	} catch ( ArgException& e )
+	{
+		cout << "  Error->" << e.error() << " " << e.argId() << endl;
+	}
+	//cmd.~CmdLine();
+
+}
+

@@ -1,0 +1,564 @@
+#define prog "frodock" // Program name
+#define VERSION "3.12"// Version code
+
+#ifdef HAVE_CONFIG_H
+  #include <config.h>
+#endif
+
+#define NUM_POT 50
+#ifdef MPI_RELEASE
+#include <mpi.h>
+#endif
+
+
+#include "libfrodock/include/frodock.h"
+
+#include <cmdl/CmdLine.h>
+
+using namespace TCLAP;
+
+//Global variable for input in frodock
+extern FrodockInput frodock_input;
+
+//Parameters
+
+	//input pdbs
+	char in_lig_pdb[NAMESIZE];
+	char in_rec_pdb[NAMESIZE];
+
+	//input potentiials
+	char in_maps[NUM_POT] [NAMESIZE];
+	char in_sol_lig[NAMESIZE];
+	char in_acc_lig[NAMESIZE];
+	char soap_file[NAMESIZE]="soap.bin";
+
+	//SH Bandwidth
+	int in_bw;
+
+	// Intection
+	char in_type;
+
+	//Translational search parameters
+	float in_stepsize; //Translational stepsize
+	float in_tcut; //Translational threshold between solutions
+	int in_total; //Number of total solutions
+
+	float in_limitMinMask,in_limitMaxMask; //Percentage reduction of the search mask
+
+	//Rotational search parameters
+	float in_width; //layer width in SH representation
+	float in_rcut; //Translational theshold between solutions in the same point
+	int in_point; //Number of solutions per point
+
+	char in_ref[NAMESIZE]; //File with reference solution
+	bool is_ref = false;
+
+	bool in_maskf =false;
+
+	char in_output[NAMESIZE];//output file
+
+	char in_points[NAMESIZE];//translational points file to explore
+
+
+	float in_threshold; // Threshold over the electrostatic potential
+
+	float in_region[3];//Region where the translational search is limited
+	bool dock_in_region;
+
+	bool in_show; //Show solutions in standard output
+
+
+	//Use of potentials
+
+	bool in_acc_A,in_acc_B;
+	int in_max_pot; //Maximum number of potentials employed
+	//Potential weights
+	float in_energy[NUM_POT];
+	//Potential types
+	int pot_type[NUM_POT];
+
+	//potential weights
+	float in_ww,in_ew,in_sw, in_wT, in_wS;
+
+	//show messages
+	bool in_ver;
+
+	//Time variables
+	timer time_point_computation, time_total;
+	Htimer t1,t2,t3;
+
+void parseOptions( int argc, char * * argv );
+
+int main( int argc, char * argv[] )
+{
+ int i;
+ int id=0,numprocs=0; //process identifier
+ int flag;
+ char message[NAMESIZE];
+
+ default_frodock_input();
+ parseOptions( argc, argv );
+
+ //PDB FILES. MANDATORY
+ strcpy(frodock_input.receptor,in_rec_pdb); // Must be set
+ strcpy(frodock_input.ligand,in_lig_pdb); // Must be set
+ strcpy(frodock_input.soap,soap_file); // Must be set
+ frodock_input.in_type=in_type;
+
+ //MAIN POTENTIALS. OPTIONALS
+ // Van der Waals potential
+ strcpy(frodock_input.vdw,in_maps[0]);
+ frodock_input.vdw_weight=in_ww;
+ frodock_input.tobi_weight=in_wT;
+ frodock_input.soap_weight=in_wS;
+
+ //Electrostatic potentials
+ strcpy(frodock_input.ele,in_maps[3]);
+ //fprintf(stderr,"peso Elect %f\n",in_ew);
+ frodock_input.ele_weight=in_ew;
+ //Desolvation potential
+ strcpy(frodock_input.desol_rec,in_maps[4]);
+ strcpy(frodock_input.desol_lig,in_sol_lig);
+ strcpy(frodock_input.asa_rec,in_maps[5]);
+ strcpy(frodock_input.asa_lig,in_acc_lig);
+ frodock_input.desol_weight=in_sw;
+
+ //EXTRA POTENTIALS. OPTIONALS
+ frodock_input.num_pot=in_max_pot;
+ frodock_input.potentials=(Potential_FI*)malloc(sizeof(Potential_FI)*frodock_input.num_pot);
+ // fprintf(stderr,"num_pot=%d\n",frodock_input.num_pot);
+
+ for(i=0;i<frodock_input.num_pot;i++)
+ {
+	 strcpy(frodock_input.potentials[i].name,in_maps[6+i]);
+	 frodock_input.potentials[i].weight=in_energy[6+i];
+	 frodock_input.potentials[i].type=pot_type[6+i];
+	 //fprintf(stderr,"%s -- %s\n",frodock_input.potentials[i].name,in_maps[6+i]);
+
+ }
+
+ //SEARCH PARAMETERS
+ frodock_input.bw=in_bw;
+ frodock_input.lmax=in_limitMaxMask;
+ frodock_input.lmin=in_limitMinMask;
+ frodock_input.th=in_threshold;
+ frodock_input.lw=in_width;
+ frodock_input.st=in_stepsize;
+ frodock_input.np=in_point;
+ frodock_input.rd=in_rcut;
+ frodock_input.nt=in_total;
+ frodock_input.td=in_tcut;
+
+ frodock_input.use_around=dock_in_region;
+ frodock_input.maskf=in_maskf;
+ frodock_input.around_point[0]=in_region[0];
+ frodock_input.around_point[1]=in_region[1];
+ frodock_input.around_point[2]=in_region[2];
+
+ strcpy(frodock_input.points,in_points);
+
+#ifdef MPI_RELEASE
+/********************************************/
+	MPI_Init (NULL ,NULL );
+	int token=1;
+	//Process identifier
+	MPI_Comm_rank(MPI_COMM_WORLD,&id ) ;
+	//Number of processes
+	MPI_Comm_size(MPI_COMM_WORLD, &numprocs ) ;
+
+/********************************************/
+//	fprintf(stderr,"%d MPI process\n",numprocs);
+
+#endif
+
+
+if(id==0)
+{
+	FILE *f;
+	if ( (f=fopen(in_output,"wb"))==NULL)
+	{
+		fprintf(stdout, "%s\n  Error->Cannot open file\n\n",in_output);
+		exit(1);
+	}
+
+
+	fclose(f);
+}
+
+SCollection* solutions= frodock_function(&flag,message,true,id,numprocs,in_type);
+//SCollection* solutions= frodock_function(&flag,message,true,id,numprocs);
+if(flag==0)
+{
+	if(id==0)
+	fprintf(stderr,"ERROR: %s\n",message);
+	return -1;
+}
+
+
+ /********************************************/
+ #ifdef MPI_RELEASE
+ 	if(id!=numprocs-1)
+   		MPI_Recv(&token,1,MPI_DOUBLE,id+1,MPI_ANY_TAG,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+ #endif
+
+
+ 	//write solutions on input file
+ #ifdef MPI_RELEASE
+ 	solutions->write_solutions(in_output,true);
+ 	if(id!=0)
+   		MPI_Send(&token,1,MPI_INT,id-1,27,MPI_COMM_WORLD);
+ 	MPI_Finalize() ;
+ #else
+ 	  solutions->write_solutions(in_output);
+ #endif
+
+}
+
+void parseOptions( int argc, char * * argv )
+{
+  string temp;
+  char pot_name[NAMESIZE];
+
+  CmdLine cmd(prog,"SH based rigid-body 6D protein-protein docking tool", VERSION );
+
+
+  for(int i=0;i<NUM_POT;i++)
+  {
+	  strcpy(in_maps[i],"");
+  }
+
+	strcpy(in_sol_lig,"");
+	strcpy(in_acc_lig,"");
+  try
+  {
+
+    // Define required arguments no labeled
+    //
+		UnlabeledValueArg < string > rec_pdb( "recept_pdb", "receptor pdb input filename", "default", "recept_pdb" );
+    cmd.add( rec_pdb );
+
+		UnlabeledValueArg < string > lig_pdb( "ligand_pdb", "ligand pdb input filename", "default", "ligand_pdb" );
+    cmd.add( lig_pdb );
+    //
+    // Define labeled arguments
+    //
+	SwitchArg nover( "", "nover", "Show no messages.", false );
+    cmd.add( nover );
+
+	SwitchArg maskf( "", "maskf", "Search space in PDB format", false );
+    cmd.add( maskf );
+
+    ValueArg < string > pot( "p", "pot", "Potentials file", false, "", "string" );
+    cmd.add( pot );
+
+	ValueArg < string > soap( "s", "soap", "SOAP potential file (knowledge-based)", false, "soap.bin", "string" );
+	cmd.add( soap );
+
+    ValueArg < float > wS( "", "Sw", "Soap-PP potential weight", false, -1.0, "float" );
+    	cmd.add( wS );
+
+    ValueArg < float > wT( "", "Tw", "Tobi potential weight", false, -1.0, "float" );
+    	cmd.add( wT );
+
+    ValueArg <int> nc("","nc", " H name convention:\n\t0: iupac (default).\n\t1: pdb.",false,0,"int");
+                cmd.add( nc );
+
+    ValueArg<int> ac("","fp", "Forcefield parameters:\n\t0: Rosseta (default) \n\t1: ICM.\n\t2: EEF1 \n\t3 Sybil.",false,0,"int");
+                cmd.add( ac );
+
+    ValueArg < string > points( "P", "points", "File with points to explore", false, "", "string" );
+        cmd.add( points );
+    ValueArg < string >  region( "", "around", "Translational search restricted to a region around a point defined in \"x,y,z\" format.",false,"", "string" );
+    	cmd.add( region );
+     ValueArg < float > tcut( "", "td", "Maximal translational distance to consider close solutions in grid units. (default: 0)", false, 0.0, "float" );
+     	cmd.add( tcut );
+    ValueArg < int > np_total( "", "nt", "Number of solutions stored in the search (default: 1000 (-1 for unlimited)).", false, -1, "int" );
+    	cmd.add( np_total );
+    ValueArg < float > rcut( "", "rd", "Minimal rotational distance allowed between close solutions in degrees (default: 12.0)", false, 12.0, "float" );
+    	cmd.add( rcut );
+    ValueArg < int > np_point( "", "np", "Number of solutions stored per translational position. (default: 4)", false, 4, "int" );
+    	cmd.add( np_point );
+   	ValueArg < string > asa( "a", "asa", "Receptor and ligand ASA maps (Default: created from pdb files. Syntax: -a recep_map.ccp4,ligand_map.ccp4).", false,"", "string" );
+    	cmd.add( asa );
+    ValueArg < float > stepSize( "", "st", "Translational search step size in amstrongs (default: 2.0).", false, 2.0, "float" );
+    	cmd.add( stepSize );
+   	ValueArg < float > layerWidth( "", "lw", "Width between spherical layers in amstrongs (default: 1.0).", false, 1.0, "float" );
+    	cmd.add( layerWidth );
+  	ValueArg < float > threshold( "", "th", "Electrostatic map threshold (default: 10.0)", false, 10.0, "float" );
+    	cmd.add( threshold );
+    ValueArg < float > limitMinMask( "", "lmin", "Internal Mask reduction ratio (default: 0.26).", false, 0.26, "float" );
+    	cmd.add( limitMinMask );
+	ValueArg < float > limitMaxMask( "", "lmax", "External Mask reduction ratio (default: 0.25).", false,0.25 , "float" );
+	  cmd.add( limitMaxMask );
+    ValueArg < int > bw( "","bw", "Bandwitdh in spherical harmonic representation. Define rotational stepsize (default: 32. Rotational stepsize ~11º) ",false, 32, "int" );
+    	cmd.add( bw );
+	ValueArg < float > sw( "D", "dw", "Desolvation term weight (default: 0.5).", false, 0.5, "float" );
+    	cmd.add( sw );
+	ValueArg < string > desol( "d", "desolv", "Desolvation potential maps for receptor and ligand (syntax: -d recep_map.ccp4,ligand_map.ccp4).", false,"", "string" );
+    	cmd.add( desol );
+    ValueArg<char> type("t","type", "Type of interaction. To be used only when -m={1}:\n\tE: Enzyme/Inhibitor or Enzyme/substrate.\n\tA: Antobody/Antigen.\n\tO: Others.\n\tNone: Original version (Default)\n",false,'Z',"char");
+         cmd.add(type);
+	ValueArg < float > ew( "E", "ew", "Electrostatic term weight (default: 0.6).", false, 0.6, "float" );
+		cmd.add( ew );
+	ValueArg < string > Elec( "e", "Elec", "Electrostatic receptor map (default: Created from receptor pdb if Electrostatic potential used). ", false, "", "string" );
+    	cmd.add( Elec );
+	ValueArg < float > ww( "W", "ww", "Van der Waals term weight (default: 1.0).", false, 1.0, "float" );
+		cmd.add( ww );
+	ValueArg < string > vdwC( "w", "vdw", "vdw potential file (default: Created from receptor pdb file).", false, "", "string" );
+    	cmd.add( vdwC );
+    ValueArg < string > output( "o", "out", "Solutions output filename (default: frodock_output.dat).", false, "frodock_output.dat", "string" );
+        cmd.add( output );
+
+
+    // Parse the command line.
+    cmd.parse( argc, argv );
+
+
+	//copy parameters to global variables
+    strcpy( in_lig_pdb, ( ( temp = lig_pdb.getValue() ).c_str() ) );
+	strcpy(in_rec_pdb, ( ( temp = rec_pdb.getValue() ).c_str() ) );
+
+	in_bw=bw.getValue();
+
+	in_stepsize = stepSize.getValue();
+	in_limitMinMask=limitMinMask.getValue();
+	in_limitMaxMask=limitMaxMask.getValue();
+	in_tcut = tcut.getValue();
+	in_total = np_total.getValue();
+
+	in_width = layerWidth.getValue();
+    in_rcut = rcut.getValue();
+    in_point = np_point.getValue();
+    in_ver=!nover.getValue();
+
+   	char aux[200];
+		char aux2[2]=",";
+		char *aux3;
+		if(region.isSet())
+		{
+			strcpy( aux, ( ( temp = region.getValue() ).c_str() ) );
+			aux3 = strtok( aux, aux2 );
+			if(aux3==NULL)
+			{
+				fprintf(stderr,"Error: --around argument is not correct. Ejem -d 23.4,-56.4,6.7\n");
+				exit(1);
+			}
+			in_region[0]=atof(aux3);
+			aux3 = strtok( NULL, aux2 );
+			if(aux3==NULL)
+			{
+				fprintf(stderr,"Error: --around argument is not correct. Ejem -d 23.4,-56.4,6.7\n");
+				exit(1);
+			}
+			in_region[1]=atof(aux3);
+			aux3 = strtok( NULL, aux2 );
+			if(aux3==NULL)
+			{
+				fprintf(stderr,"Error: --around argument is not correct. Ejem -d 23.4,-56.4,6.7\n");
+				exit(1);
+			}
+			in_region[2]=atof(aux3);
+			dock_in_region=true;
+			// fprintf(stdout,"--around %f %f %f\n",in_region[0], in_region[1],in_region[2]);
+
+		}
+		else dock_in_region=false;
+
+
+
+		in_show=false;
+
+    strcpy( in_maps[0], ( ( temp = vdwC.getValue() ).c_str() ) );
+
+
+
+    if ( Elec.isSet() )
+    {
+      strcpy( in_maps[3], ( ( temp = Elec.getValue() ).c_str() ) );
+    }
+
+		if(desol.isSet())
+		{
+			strcpy( aux, ( ( temp = desol.getValue() ).c_str() ) );
+			aux3 = strtok( aux, aux2 );
+			if(aux3==NULL)
+			{
+				fprintf(stderr,"Error: -d argument is not correct. Ejem -d recep_map.ccp4,ligand_map.ccp4.\n");
+				exit(1);
+			}
+			strcpy( in_maps[4],aux3);
+			aux3 = strtok( NULL, aux2 );
+			if(aux3==NULL)
+			{
+				fprintf(stderr,"Error: -d argument is not correct. Ejem -d recep_map.ccp4,ligand_map.ccp4.\n");
+				exit(1);
+			}
+			strcpy( in_sol_lig,aux3);
+			//fprintf(stdout,"-d %s %s\n",in_maps[4], in_sol_lig);
+
+		}
+
+		if(asa.isSet())
+		{
+			strcpy( aux, ( ( temp = asa.getValue() ).c_str() ) );
+			aux3 = strtok( aux, aux2 );
+			if(aux3==NULL)
+			{
+				fprintf(stderr,"Error: --asa argument is not correct. Ejem --asa recep_map.ccp4,ligand_map.ccp4.\n");
+				exit(1);
+			}
+			strcpy( in_maps[5],aux3);
+			aux3 = strtok( NULL, aux2 );
+			if(aux3==NULL)
+			{
+				fprintf(stderr,"Error: -asa argument is not correct. Ejem --asa recep_map.ccp4,ligand_map.ccp4.\n");
+				exit(1);
+			}
+			strcpy( in_acc_lig,aux3);
+			in_acc_A=in_acc_B=true;
+		}
+
+		in_ww= ww.getValue();
+		if(wS.isSet()) 	in_wS= wS.getValue();
+		else in_wS=-1.0;
+		if(wT.isSet())  in_wT= wT.getValue();
+		else in_wT=-1.0;
+
+//		in_ew= 30.0; //using --ew.getValue()=1.0--- in equation--- in_ew= ew.getValue()*(9.0/0.3);
+		in_ew = 30 * ew.getValue()/0.6;
+		in_sw= sw.getValue()*(2800.0/0.5);
+
+		switch(type.getValue())
+							{
+
+							case 'E':
+							case 'e':
+									in_type=0;
+								break;
+							case 'A':
+							case 'a':
+									in_type=1;
+							 	break;
+							case 'O':
+							case 'o':
+									in_type=2;
+							 	break;
+							case '1':  // Frodock v1.0 (old version)
+									in_type=-1;
+									in_ew= ew.getValue()*(9.0/0.3)/2.0; // considering default 0.6
+									break;
+							default: // by default 'A'
+									in_type=1;
+								 	break;
+							}
+
+		in_threshold=threshold.getValue();
+
+		in_max_pot=0;
+		if(pot.isSet())
+		{
+
+			strcpy(pot_name,( ( temp = pot.getValue() ).c_str() ) );
+			FILE *faux;
+			int i;
+			bool end_pot=false;
+			faux=fopen(pot_name,"rt");
+
+			if(faux==NULL)
+			{
+				fprintf(stderr,"Error: -p file argument cannot be read: %s\n",pot_name);
+				exit(1);
+			}
+
+			i=6;
+			do{
+
+				if( fscanf(faux,"%s %f %d\n",&(in_maps[i]),&(in_energy[i]), &(pot_type[i])) != EOF)
+				{
+					//fprintf(stderr,"%s \n%f %d\n",in_maps[i],energy[i], pot_type[i]);
+
+					i++;
+				}
+				else
+					end_pot=true;
+
+				if(feof(faux))
+					end_pot=true;
+
+
+			}while(!end_pot);
+			in_max_pot=i-6;
+			fclose(faux);
+		}
+
+		if(soap.isSet())
+			strcpy(soap_file,( ( temp = soap.getValue() ).c_str() ) );
+
+
+		strcpy(in_output,(temp=output.getValue()).c_str());
+
+		if(ac.isSet()) {
+		int in_ac=ac.getValue();
+		switch(in_ac)
+		{
+		case 0:
+					frodock_input.conv=Rosseta;
+					break;
+		case 1:
+					frodock_input.conv=ICM;
+					break;
+		case 2:
+					frodock_input.conv=EEF1;
+					break;
+		case 3:
+					frodock_input.conv=Sybil;
+					break;
+		default:
+					fprintf(stdout,"Invalid convention set to CHARMM\n");
+					frodock_input.conv=Rosseta;
+		}
+		}
+
+		if(nc.isSet()) {
+		int in_nc=nc.getValue();
+
+		switch(in_nc)
+		{
+		case 0:
+			fprintf(stdout,"Name H convention: iupac\n");
+			frodock_input.nameconv=iupac;
+			break;
+		case 1:
+			fprintf(stdout,"Name H convention: pdb\n");
+			frodock_input.nameconv=pdb;
+			break;
+		case 2:
+			fprintf(stdout,"Name H convention: Sybil\n");
+			frodock_input.nameconv=sybil;
+			break;
+		default:
+			fprintf(stdout,"Invalid H name convention set to PDB 3.0\n");
+			frodock_input.nameconv=pdb;
+		}
+		}
+
+
+
+		strcpy( in_points, ( ( temp = points.getValue() ).c_str() ) );
+
+		if(maskf.isSet()) in_maskf=true;
+
+  }
+  catch ( ArgException & e )
+  {
+    cout << "  Error->" << e.error() << " " << e.argId() << endl;
+  }
+
+  //cmd.~CmdLine();
+
+}
+
+
+
+
+

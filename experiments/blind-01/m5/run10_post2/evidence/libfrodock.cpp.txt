@@ -1,0 +1,1651 @@
+// version 3.1
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+#define NUM_POT 50
+
+#ifdef MPI_RELEASE
+#include <mpi.h>
+#endif
+
+#include <iostream>
+#include "frodock.h"
+#include <stdio.h>
+#include <math.h>
+//#define PPFF true // include pairwise potential
+bool PPFF=true;
+
+float **energy_soap;
+int Npts;
+
+
+
+float const tobi2_one[19][19]={ // Table S3a  (r <= 4)
+		{-1.02,  1.31,	-2.88,	 0.57,	 5.54,	-0.20,	 0.16,	 1.66,	-1.27,	 0.08,	 0.19,	 3.23,	 1.37,	 0.94,	-0.08,	-0.12,	 0.58,	-2.59,  0.0},
+		{ 1.31,	 2.97,	 1.67,	-1.70,	 0.91,	 1.04,	 1.70,	 1.66,	 1.22,	 2.50,	-0.54,	 0.55,	 0.60,	-0.23,	-0.68,	 0.56,	 2.10,	 2.73,  0.0},
+		{-2.88,	 1.67,	 2.97,	 0.41,	 3.28,	 1.19,	 0.69,	 1.15,	 0.14,	-0.44,	 1.53,	 1.04,	 0.22,	 0.60,	 3.51,	 0.86,	 0.26,	 3.90,  0.0},
+		{ 0.57,	-1.70,	 0.41,	 1.53,	-4.17,	 0.19,	-2.09,	-1.04,	 1.30,	-0.87,	-1.03,	-0.33,	-0.34,	-0.11,	-0.52,	 0.57,	-0.32,	 1.06,  0.0},
+		{ 5.54,	 0.91,	 3.28,	-4.17,	-5.90,	 1.12,	 4.10,	 4.68,	 0.39,	 1.99,	-0.52,	-1.48,	 1.69,	 0.26,	-2.30,	-0.57,	 1.36,	 0.76,  0.0},
+		{-0.20,	 1.04,	 1.19,	 0.19,	 1.12,	 1.27,	 0.61,	 0.06,	 0.06,	 0.19,	 0.67,	 1.10,	 0.49,	 0.80,	 0.31,	 0.19,	 0.52,	-0.43,  0.0},
+		{ 0.16,	 1.70,	 0.69,	-2.09,	 4.10,	 0.61,	 2.63,	 0.67,	-0.68,	 0.21,	 1.77,	 2.75,	 0.30,	 1.22,	-0.01,	 1.45,	 1.26,	 5.73,  0.0},
+		{ 1.66,	 1.66,	 1.15,	-1.04,	 4.68,	 0.06,	 0.67,	-1.02,	 1.07,	-0.71,	-1.43,	-0.08,	 0.96,	-1.25,	 0.89,	 0.63,	-1.38,	 9.84,  0.0},
+		{-1.27,	 1.22,	 0.14,	 1.30,	 0.39,	 0.06,	-0.68,	 1.07,	 0.11,	-0.51,	 0.08,	 0.59,	-0.56,	-0.09,	 0.31,	 0.35,	 0.49,	10.00,  0.0},
+		{ 0.08,	 2.50,	-0.44,	-0.87,	 1.99,	 0.19,	 0.21,	-0.71,	-0.51,	-0.45,	 0.11,	 1.53,	 0.54,	 0.11,	-0.12,	 0.29,	 0.50,	-1.09,  0.0},
+		{ 0.19,	-0.54,	 1.53,	-1.03,	-0.52,	 0.67,	 1.77,	-1.43,	 0.08,	 0.11,	-0.12,	 2.15,	 0.49,	 0.02,	 0.84,	 0.51,	-0.08,	 0.57,  0.0},
+		{ 3.23,	 0.55,	 1.04,	-0.33,	-1.48,	 1.10,	 2.75,	-0.08,	 0.59,	 1.53,	 2.15,	-2.54,	-0.05,	 0.32,	 0.33,	-0.13,	 0.82,	 4.87,  0.0},
+		{ 1.37,	 0.60,	 0.22,	-0.34,	 1.69,	 0.49,	 0.30,	 0.96,	-0.56,	 0.54,	 0.49,	-0.05,	 0.36,	 0.60,	 0.49,	 0.49,	 0.34,	 1.26,  0.0},
+		{ 0.94,	-0.23,	 0.60,	-0.11,	 0.26,	 0.80,	 1.22,	-1.25,	-0.09,	 0.11,	 0.02,	 0.32,	 0.60,	 1.34,	 0.39,	 1.01,	 0.13,	-0.59,  0.0},
+		{-0.08,	-0.68,	 3.51,	-0.52,	-2.30,	 0.31,	-0.01,	 0.89,	 0.31,	-0.12,	 0.84,	 0.33,	 0.49,	 0.39,	 3.61,	 0.66,	 2.03,	 2.90,  0.0},
+		{-0.12,	 0.56,	 0.86,	 0.57,	-0.57,	 0.19,	 1.45,	 0.63,	 0.35,	 0.29,	 0.51,	-0.13,	 0.49,	 1.01,	 0.66,	 0.60,	 0.73,	 2.94,  0.0},
+		{ 0.58,	 2.10,	 0.26,	-0.32,	 1.36,	 0.52,	 1.26,	-1.38,	 0.49,	 0.50,	-0.08,	 0.82,	 0.34,	 0.13,	 2.03,	 0.73,	 0.74,	-2.03,  0.0},
+		{-2.59,	 2.73,	 3.90,	 1.06,	 0.76,	-0.43,	 5.73,	 9.84,	10.00,	-1.09,	 0.57,	 4.87,	 1.26,	-0.59,	 2.90,	 2.94,	-2.03,	10.00,  0.0},
+		{ 0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0}};
+
+float const tobi2_two[19][19]={  // Table S3b  (4 < r <= 6)
+		{ 0.10,	-0.34,	 0.31,	 0.25,	-0.60,	 0.00,	 0.07,	-0.18,	 0.22,	 0.04,	 0.47,	 0.03,	 0.15,	-0.48,	 0.45,	 0.26,	-0.07,	 0.47,  0.0},
+		{-0.34,	 0.04,	-0.31,	 0.03,	-0.60,	-0.52,	-0.19,	 0.20,	 0.51,	 0.33,	-0.33,	-0.24,	 0.07,	 0.19,	-1.38,	-0.34,	-0.27,	-0.97,  0.0},
+		{ 0.31,	-0.31,	-0.16,	-0.39,	 0.68,	 0.07,	 0.19,	 0.30,	-0.48,	-0.38,	-0.28,	 0.08,	-0.22,	-0.28,	 0.39,	-0.29,	 0.02,	-0.64,  0.0},
+		{ 0.25,	 0.03,	-0.39,	 0.45,	 0.29,	 0.36,	-0.13,	-0.10,	-0.09,	-0.17,	 0.11,	-0.30,	-0.32,	 0.23,	 0.13,	-0.01,	 0.00,	 1.66,  0.0},
+		{-0.60,	-0.60,	 0.68,	 0.29,	-0.13,	 0.01,	-0.39,	 0.84,	 0.45,	 0.42,	-0.09,	-0.27,	 0.29,	 0.53,	-1.42,	-0.37,	-1.19,	-2.88,  0.0},
+		{ 0.00,	-0.52,	 0.07,	 0.36,	 0.01,	-0.29,	 0.17,	 1.08,	 0.10,	-0.19,	-0.07,	 0.12,	-0.26,	-0.14,	-0.16,	-0.24,	-0.16,	-0.72,  0.0},
+		{ 0.07,	-0.19,	 0.19,	-0.13,	-0.39,	 0.17,	-0.91,	 1.23,	-0.43,	 0.52,	-0.23,	 0.72,	 0.66,	 0.56,	-0.49,	-0.05,	-0.12,	-0.13,  0.0},
+		{-0.18,	 0.20,	 0.30,	-0.10,	 0.84,	 1.08,	 1.23,	 1.05,	-0.23,	-0.43,	-0.55,	 0.46,	-0.48,	-0.57,	-0.57,	-0.35,	-0.93,	 2.73,  0.0},
+		{ 0.22,	 0.51,	-0.48,	-0.09,	 0.45,	 0.10,	-0.43,	-0.23,	-0.02,	-0.05,	-0.03,	-0.30,	 0.01,	-0.06,	 0.23,	-0.09,	-0.06,	-0.24,  0.0},
+		{ 0.04,	 0.33,	-0.38,	-0.17,	 0.42,	-0.19,	 0.52,	-0.43,	-0.05,	-0.01,	-0.30,	 0.23,	 0.13,	 0.48,	-0.07,	-0.06,	 0.15,	-0.07,  0.0},
+		{ 0.47,	-0.33,	-0.28,	 0.11,	-0.09,	-0.07,	-0.23,	-0.55,	-0.03,	-0.30,	-0.05,	 0.16,	-0.09,	 0.24,	-0.21,	-0.03,	 0.41,	-0.04,  0.0},
+		{ 0.03,	-0.24,	 0.08,	-0.30,	-0.27,	 0.12,	 0.72,	 0.46,	-0.30,	 0.23,	 0.16,	-0.60,	-0.53,	-0.36,	-0.17,	-0.01,	-0.48,	 1.10,  0.0},
+		{ 0.15,	 0.07,	-0.22,	-0.32,	 0.29,	-0.26,	 0.66,	-0.48,	 0.01,	 0.13,	-0.09,	-0.53,	 0.29,	-0.28,	-0.11,	-0.10,	 0.01,	-0.49,  0.0},
+		{-0.48,	 0.19,	-0.28,	 0.23,	 0.53,	-0.14,	 0.56,	-0.57,	-0.06,	 0.48,	 0.24,	-0.36,	-0.28,	 0.25,	-0.15,	-0.24,	-0.16,	 1.98,  0.0},
+		{ 0.45,	-1.38,	 0.39,	 0.13,	-1.42,	-0.16,	-0.49,	-0.57,	 0.23,	-0.07,	-0.21,	-0.17,	-0.11,	-0.15,	-0.49,	-0.15,	-0.19,	 0.52,  0.0},
+		{ 0.26,	-0.34,	-0.29,	-0.01,	-0.37,	-0.24,	-0.05,	-0.35,	-0.09,	-0.06,	-0.03,	-0.01,	-0.10,	-0.24,	-0.15,	-0.21,	-0.28,	-0.55,  0.0},
+		{-0.07,	-0.27,	 0.02,	 0.00,	-1.19,	-0.16,	-0.12,	-0.93,	-0.06,	 0.15,	 0.41,	-0.48,	 0.01,	-0.16,	-0.19,	-0.28,	-0.65,	 1.17,  0.0},
+		{ 0.47,	-0.97,	-0.64,	 1.66,	-2.88,	-0.72,	-0.13,	 2.73,	-0.24,	-0.07,	-0.04,	 1.10,	-0.49,	 1.98,	 0.52,	-0.55,	 1.17,	10.00,  0.0},
+		{ 0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0}};
+
+
+
+//Auxiliar Functions
+void section(string text,bool show,int deep);
+void show_error(string text);
+void show_error(string text,char *message,int *flag);
+void end_section(int deep,bool show);
+
+//Global variable for input in frodock
+FrodockInput frodock_input;
+
+void default_frodock_input ()
+{
+	//PDB FILES. MANDATORY
+	strcpy(frodock_input.receptor,""); // Must be set
+	strcpy(frodock_input.ligand,""); // Must be set
+	strcpy(frodock_input.soap,"soap30_0.bin"); // Must be set
+	frodock_input.in_type=-1;
+	//MAIN POTENTIALS. OPTIONALS
+	// Van der Waals potential
+	strcpy(frodock_input.vdw,"");
+	frodock_input.vdw_weight=1.0;
+	//Electrostatic potentials
+	frodock_input.tobi_weight=-1.0;
+	frodock_input.soap_weight=-1.0;
+
+	//Electrostatic potentials
+	frodock_input.vdw_weight=1.0;
+	//Electrostatic potentials
+	strcpy(frodock_input.ele,"");
+	frodock_input.ele_weight=0;
+	//Desolvation potential
+	strcpy(frodock_input.desol_rec,"");
+	strcpy(frodock_input.desol_lig,"");
+	strcpy(frodock_input.asa_rec,"");
+	strcpy(frodock_input.asa_lig,"");
+	frodock_input.desol_weight=0;
+
+	//EXTRA POTENTIALS. OPTIONALS
+	//Up to 50 potentials can be added
+	frodock_input.num_pot=0;
+	frodock_input.potentials=NULL;
+
+	//SEARCH PARAMETERS
+	frodock_input.bw=32;
+	frodock_input.lmax=0.25;
+	frodock_input.lmin=0.26;
+	frodock_input.th=10.0;
+	frodock_input.lw=1.0;
+	frodock_input.st=2.0;
+	frodock_input.np=10;
+	frodock_input.rd=180.0/frodock_input.bw;
+	frodock_input.nt=-1;
+	frodock_input.td=0;
+
+	frodock_input.use_around=false;
+	frodock_input.maskf=false;
+
+	frodock_input.around_point[0]=0.0;
+	frodock_input.around_point[1]=0.0;
+	frodock_input.around_point[2]=0.0;
+
+	frodock_input.conv=Rosseta;
+	frodock_input.nameconv=pdb;
+
+
+}
+
+
+
+SCollection* frodock_function(int *flag, char *message, bool verbose,int id, int numprocs, int type)
+//SCollection* frodock_function(int *flag, char *message, bool verbose,int id, int numprocs)
+{
+	float wT;
+	float wS;
+
+
+	switch(type)
+	{
+	case 0:
+		wT=0.5;
+		wS=0.7;
+		break;
+	case 1:
+		wT=15.0;
+		wS=0.7;
+		break;
+	case 2:
+		wT=15.0;
+		wS=0.7;
+		break;
+	case -1:  // old frodock option (now: -t 1)
+		wT=0.0;
+		wS=0.0;
+		PPFF=false;
+		break;
+	default:  //
+		wT=15.0;
+		wS=0.7;
+		break;
+	}
+
+	if (frodock_input.soap_weight>=0)
+		wS=frodock_input.soap_weight;
+
+	if (frodock_input.tobi_weight>=0)
+		wT=frodock_input.tobi_weight;
+
+
+	int contx=0;
+	int conty=0;
+	int contz=0;
+	int contxx=0;
+	int contyy=0;
+	int contzz=0;
+	float Lpx_mov[7];
+	float Lpy_mov[7];
+	float Lpz_mov[7];
+
+
+	float pot_mov[6][7][7][7];
+	//	float ****pot_mov;
+	//	pot_mov = (float ****)malloc( sizeof(float ***) * frodock_input.np+2);
+	//
+	//	for (int p=0; p<frodock_input.np+2; p++)
+	//
+	//	{
+	//		pot_mov[p]=(float ***)malloc( sizeof(float **) * 3);
+	//
+	//		for (int q=0; q<3; q++)
+	//		{
+	//
+	//			pot_mov[p][q]=(float **)malloc( sizeof(float *) * 3);
+	//
+	//			for (int r=0; r<3; r++)
+	//			{
+	//				pot_mov[p][q][r]=(float *)malloc( sizeof(float) * 3);
+	//			}
+	//
+	//		}
+	//
+	//	}
+	//////////////////////////////////////////////////////////
+
+	//Local Variables
+	//Potential maps
+	EVolumes *evol=new EVolumes();
+	vlVolume * vol_sol_lig=NULL,* vol_acc_lig=NULL;
+	int *extra_pot_id;
+
+	//PDBs
+	Macromolecule * ligand,*recept;
+
+	Mask *mask;//Search Mask
+
+	SH_Object *sh;//SH representation of the ligand
+
+	PCollection *pc,*pc_aux;//Collection of translational points
+
+	Tcoor original_center, invert_original_center, original_centerPDB; //Origin of PDBs
+	vlPoint3f origin_receptor;//Origin of maps
+
+	//Ligand radius
+	float radiusMax_lig_amstrongs, radiusMax_lig_layers;
+	float radiusMax_lig_amstrongs_backbone, radiusMax_lig_layers_backbone;
+	float radius_aux,radius_lig_vol_amstrongs,radius_lig_vol_layers;
+	float radiusMax_amstrongs, radiusMax_layers;
+	float radius_potentials[NUM_POT];
+	//Receptor radius
+	float radiusMax_vol_amstrongs, radiusMax_vol_layers;
+	float radiusMax_recept_amstrongs;
+	//Translational search
+	float stepsize_voxel;
+	Tcoor point;
+	Tcoor point2;
+	//SH search
+	float rho_voxel; //SH stepsize
+	int limit_layer_high, limit_layer_low; //limits in the SH of a receptor map
+	int newSolutions;
+	int npoint;
+	int size = 2 * frodock_input.bw;
+	int bw2 = frodock_input.bw * frodock_input.bw;
+	int correlation_buffer_size; //Buffer correlation sizes
+	int correlation_buffer_size_aux;
+	float * associatedC; //d Coefficients buffer
+	float * *rcoeffsV_old, * *icoeffsV_old; //SH ligand buffers
+	SCollection *solutions=NULL;
+
+	//evaluation potential
+	bool eval[NUM_POT];
+	float energy[NUM_POT];
+	//auxiliars
+	int contValid;
+	int i,j,k;
+	timer t_total;
+	bool in_all;
+	vlVolume * vol_aux;
+
+	float sin_psi;
+	float cos_psi;
+	float sin_theta;
+	float cos_theta;
+	float sin_phi;
+	float cos_phi;
+	float Lx, Ly, Lz, px,py,pz, rx,ry,rz, Rpx, Rpy, Rpz, Lpx, Lpy, Lpz, px2,py2,pz2;
+	float matrix[3][3],dist,distLx, distLy, distLpx, distLpy, buffer[3], dlimit=6*6+2, dlimitCA=24*24+1;
+	int coll1, coll3, coll2;
+	double pot;
+	int dist_int;
+
+
+
+
+	if(frodock_input.nt==-1)
+		in_all=true;
+	else
+		in_all=false;
+	for(i=0;i<NUM_POT;i++)
+		eval[i]=false;
+
+	if(frodock_input.vdw_weight!=0)
+		eval[0]=true;
+
+	if(frodock_input.ele_weight!=0 )
+		eval[3]=true;
+
+	if(frodock_input.desol_weight!=0 && strcmp(frodock_input.desol_rec,"")!=0 &&  strcmp(frodock_input.desol_lig,"")!=0)
+	{
+		eval[4]=true;
+		eval[5]=true;
+	}
+
+	for(i=0;i<frodock_input.num_pot;i++)
+	{
+		if(frodock_input.potentials[i].weight!=0)
+			eval[6+i]=true;
+	}
+
+	switch(frodock_input.nameconv)
+	{
+	case 0:
+		fprintf(stdout,"frodock> Name H convention: iupac\n");
+		//conv=iupac;
+		break;
+	case 1:
+		fprintf(stdout,"frodock> Name H convention: pdb\n");
+		//conv=pdb;
+		break;
+	case 2:
+		fprintf(stdout,"frodock> Name H convention: Sybil\n");
+		//conv=sybil;
+		break;
+	default:
+		fprintf(stdout,"frodock> Invalid H name convention\n");
+		//conv=pdb;
+	}
+
+	switch(frodock_input.conv)
+	{
+	case 0:
+		fprintf(stdout,"frodock> Force Field: CHARMM\n");
+		//conv_atom=Rosseta;
+		break;
+	case 1:
+		fprintf(stdout,"frodock> Force Field: ICM\n");
+		//conv_atom=ICM;
+		break;
+	case 2:
+		fprintf(stdout,"frodock> Force Field: EEF1\n");
+		//conv_atom=EEF1;
+		break;
+	case 3:
+		fprintf(stdout,"frodock> Force Field: Sybil\n");
+		//conv_atom=Sybil;
+		break;
+	default:
+		fprintf(stdout,"frodock> Invalid convention\n");
+		//conv_atom=Rosseta;
+	}
+
+	init_aminoacids(frodock_input.conv,frodock_input.nameconv);
+
+
+
+	t_total.restart();
+
+
+	/********************************************/
+	//STEP 1. READING RECEPTOR PDB IF PASSED
+	if (verbose)
+		fprintf( stderr, "frodock>\nfrodock> Reading receptor PDB\n");
+
+
+	if(strcmp(frodock_input.receptor,"")==0)
+	{
+		section(" There is no receptor PDB",verbose,1);
+
+		if(strcmp (frodock_input.vdw,"")==0)
+		{
+			//show_error("receptor PDB needed for vdw potential\n");
+			show_error("receptor PDB for vdw potential is missing\n",message,flag);
+			return NULL;
+		}
+
+		if(eval[5] && strcmp(frodock_input.asa_lig,"")==0 )
+		{
+			//show_error("receptor PDB needed for solvatation potential\n");
+			show_error("receptor PDB for solvatation potential is missing",message,flag);
+			return NULL;
+		}
+
+	}
+	else
+	{
+		recept = new Macromolecule( "Receptor" );
+		recept->readPDB( frodock_input.receptor );
+		recept->deleteHYDS();
+		recept->geoCenter( original_centerPDB );
+		//ligand->delete_hyd();
+		if(verbose) fprintf(stderr,"frodock>  Receptor PDB center: %f %f %f\n",original_centerPDB[0],original_centerPDB[1],original_centerPDB[2]);
+
+
+		if( eval[5] && strcmp(frodock_input.asa_rec,"")==0)
+		{
+			section(" Receptor accessibility read from receptor PDB",verbose,1);
+			if(recept->check_asa())
+			{
+				section("  ...occupancy column seems to have ASA values",verbose,2);
+			}
+			else
+			{
+				//show_error("Occupancy column does not appear to contain ASA values. Use frodockgrid to set ASA values in receptor PDB.");
+				show_error("...use frodockgrid to set ASA values in receptor PDB.",message,flag);
+				return NULL;
+
+			}
+			section(" Creating Accessibility map from receptor PDB...",verbose,1);
+			evol->get_volume(recept->createVolumeCentered(1.0),5);
+			recept->projectASA(evol->vol_lo[5],0);
+			FOPS::mul(evol->vol_lo[5],-1.0);
+			//FOPS::writeFile(evol->vol_lo[5],"acc_rec4.sit");
+			section(" Accessibility map created from receptor PDB",verbose,1);
+		}
+
+
+
+		if( eval[3] && strcmp (frodock_input.ele,"")==0)
+		{
+			section(" Creating Electrostatic map from receptor PDB...",verbose,1);
+			evol->get_volume(recept->createELE(1.0,-1,0,0),3);
+			section(" Electrostatic map created from receptor PDB",verbose,1);
+			//FOPS::writeFile(evol->vol_lo[3],"kk_elec.ccp4");
+		}
+
+		if(strcmp (frodock_input.vdw,"")==0)
+		{
+			section(" Creating Vdw map from receptor PDB...",verbose,1);
+			evol->get_volume(recept->createVDW(1.0, 0,iupac,frodock_input.conv,2.0,1.0,1),0);
+			section(" Vdw map created from receptor PDB",verbose,1);
+			// FOPS::writeFile(evol->vol_lo[0],"kk_vdw.ccp4");
+		}
+
+
+	}
+
+
+	// potentials 2017
+	int Rnumres, *Rtpatom, *Rtpatom_tobi, *Rpfirst, *Rcas, *Rnres;
+	float *Rcoord;
+	if (PPFF)
+	{
+		// SOAP POTENTIAL
+		char atm1[7], atm2[7];
+		float ene;
+		fprintf(stdout, "frodock> Weights SOAP %f Tobi %f\n",wS,wT);
+		fprintf(stdout, "frodock> Reading SOAP-potential file: %s \n",frodock_input.soap);
+
+
+
+		//		FILE * f = fopen(frodock_input.soap, "r");
+		//
+		//		if(f==NULL)
+		//		{
+		//			//show_error("Receptor VDW map cannot be read\n");
+		//			show_error(" SOAP-potential file not found",message,flag);
+		//			return NULL;
+		//
+		//		}
+		//        i=0;
+		//		while (!feof(f))
+		//		{
+		//			fscanf(f, "%s", atm1);
+		//			fscanf(f, "%s", atm2);
+		//			for (j=0; j<30; j++){
+		//				fscanf(f, "%f", &ene);
+		//				energy_soap[i][j]=ene;
+		//			}
+		//			i++;
+		//		}
+		//		fclose(f);
+		//
+		//		fprintf(stdout, "frodock> Reading %d x 30 \n",i);
+		//
+		//
+		//        double dumpD;
+		//
+		//		f=fopen("soap.bin", "wb");
+		//
+		//		for (int k=0; k<158; k++)
+		//					for (int i=k; i<158; i++)
+		//								for (int j=0; j<30; j++) {
+		//  			    fwrite(&energy_soap[i+k*158][j],sizeof(double),1,f);
+		//			}
+		//		fclose(f);
+
+
+
+		FILE * f = fopen(frodock_input.soap, "rb");
+
+
+		if(f==NULL)
+		{
+			//show_error("Receptor VDW map cannot be read\n");
+			show_error(" SOAP-potential file not found",message,flag);
+			return NULL;
+
+		}
+
+
+		fread(&Npts,sizeof(int),1,f);
+		fprintf(stdout, "frodock> Reading %s Points %d\n",frodock_input.soap, Npts );
+
+		energy_soap = (float **) malloc(sizeof(float *) * 24965 );
+		for(int n = 0; n < 24965; n++ )
+		{
+			energy_soap[n] = (float *) malloc(sizeof(float)*Npts );
+		}
+
+
+		for (int k=0; k<158; k++)
+			for (int i=k; i<158; i++)
+				for (int j=0; j<Npts; j++) {
+					fread(&energy_soap[k+i*158][j],sizeof(float),1,f);
+					energy_soap[i+k*158][j]=energy_soap[k+i*158][j];
+				}
+
+		fclose(f);
+
+
+		Rnumres=recept->ppimatrices(&Rcoord, &Rtpatom_tobi, &Rtpatom, &Rpfirst, &Rcas, &Rnres);
+		//fprintf(stderr,"  Rnumres=%d\n",Rnumres);
+
+	}
+
+	/********************************************/
+
+	/********************************************/
+	//STEP 2. READING POTENTIALS
+
+	//VDW
+	//if there is no vdw map as input it is created from receptor
+	fprintf( stderr, "frodock>\n");
+	section("Receptor VDW map information:",verbose,0);
+	if(strcmp (frodock_input.vdw,"")!=0)
+	{
+		evol->read_volume(frodock_input.vdw,0);
+		if(evol->vol_lo[0]==NULL)
+		{
+			//show_error("Receptor VDW map cannot be read\n");
+			show_error(" Receptor VDW map cannot be read",message,flag);
+			return NULL;
+
+		}
+
+		section(" Receptor VDW map read from file",verbose,1);
+	}
+	evol->compute_center_masses();
+	evol->vol_lo[0]->getPosition(& origin_receptor);
+	if(verbose) fprintf(stderr,"frodock>   Map  origin: %f %f %f\n",origin_receptor.x(),origin_receptor.y(),origin_receptor.z());
+	if(verbose) fprintf(stderr,"frodock>   Map  size: %d %d %d\n",evol->vol_lo[0]->dim().x(),evol->vol_lo[0]->dim().y(),evol->vol_lo[0]->dim().z());
+	float Opx, Opy, Opz;
+	Opx=(float)(evol->vol_lo[0]->dim().x())/2.0 - 0.5 +origin_receptor.x();
+	Opy=(float)(evol->vol_lo[0]->dim().y())/2.0 - 0.5 +origin_receptor.y();
+	Opz=(float)(evol->vol_lo[0]->dim().z())/2.0 - 0.5 +origin_receptor.z();
+
+	if(verbose) fprintf(stderr,"frodock>   Map  center: %f %f %f\n",Opx,Opy,Opz);
+
+	//if(verbose) fprintf(stderr,"frodock>   Grid size X: %.2f \n",evol->vol_lo[0]->units().x());
+	if(verbose) fprintf(stderr,"frodock>   Grid size: %.2f \n",evol->get_voxSize());
+
+
+	end_section(1,verbose);
+
+	//ELECTROSTATIC
+	//if there is no Electrostatic map as input it is created from receptor
+	if( eval[3])
+	{
+		section("Receptor electrostatic map information:",verbose,0);
+
+		if(strcmp (frodock_input.ele,"")!=0)
+		{
+			evol->read_volume(frodock_input.ele,3);
+			if(evol->vol_lo[3]==NULL)
+			{
+				//show_error("Receptor electrostic map cannot be read\n");
+				show_error("Receptor electrostic map cannot be read",message,flag);
+				return NULL;
+
+			}
+
+			section(" Receptor electrostatic map read from file",verbose,1);
+		}
+
+		if(frodock_input.th> 0)
+		{
+			FOPS::thresholdUp(evol->vol_lo[3],frodock_input.th);
+			FOPS::thresholdDown(evol->vol_lo[3],frodock_input.th*(-1.0));
+			if(verbose) fprintf(stderr,"frodock>   Map modification. Threshold applied: %f\n",frodock_input.th);
+		}
+
+
+		evol->vol_lo[3]->getPosition(& origin_receptor);
+		if(verbose) fprintf(stderr,"frodock>   Map origin: %f %f %f\n",origin_receptor.x(),origin_receptor.y(),origin_receptor.z());
+		if(verbose) fprintf(stderr,"frodock>   Map size: %d %d %d\n",evol->vol_lo[3]->dim().x(),evol->vol_lo[3]->dim().y(),evol->vol_lo[3]->dim().z());
+		evol->vol_lo[3]=FOPS::resize(evol->vol_lo[3],evol->vol_lo[0]->dim(),true);
+		end_section(1,verbose);
+	}
+
+	//Desolvation
+	if(eval[4])
+	{
+		section("Receptor desolvation map information:",verbose,0);
+
+		evol->read_volume(frodock_input.desol_rec,4);
+		if(evol->vol_lo[4]==NULL)
+		{
+			//show_error("Receptor desolvation map cannot be read\n");
+			show_error("Receptor desolvation map cannot be read",message,flag);
+			return NULL;
+
+		}
+		section(" Receptor electrostatic map read from file",verbose,1);
+
+		evol->vol_lo[4]->getPosition(& origin_receptor);
+		if(verbose) fprintf(stderr,"frodock>   Map origin: %f %f %f\n",origin_receptor.x(),origin_receptor.y(),origin_receptor.z());
+		if(verbose) fprintf(stderr,"frodock>   Map size: %d %d %d\n",evol->vol_lo[4]->dim().x(),evol->vol_lo[4]->dim().y(),evol->vol_lo[4]->dim().z());
+		evol->vol_lo[4]=FOPS::resize(evol->vol_lo[4],evol->vol_lo[0]->dim(),true);
+		end_section(1,verbose);
+	}
+
+	//Accesibility
+	if(eval[5])
+	{
+		if(strcmp(frodock_input.asa_rec,"")!=0)
+		{
+			evol->read_volume(frodock_input.asa_rec,5);
+			if(evol->vol_lo[5]==NULL)
+			{
+				//show_error("Receptor accesibility map cannot be read\n");
+				show_error("Receptor accesibility map cannot be read",message,flag);
+				return NULL;
+
+			}
+
+
+			section(" Receptor accessibility map read from file",verbose,1);
+			end_section(1,verbose);
+		}
+		evol->vol_lo[5]=FOPS::resize(evol->vol_lo[5],evol->vol_lo[0]->dim(),true);
+	}
+
+	/********************************************/
+
+	/********************************************/
+	//STEP 2.5. READING MULTIPLE POTENTIALS
+	if (frodock_input.num_pot>0) {
+		section(" Extra potential receptor maps",verbose,1);
+		extra_pot_id=(int*)malloc(sizeof(int)*frodock_input.num_pot);
+		for(i=0;i<frodock_input.num_pot;i++)
+		{
+
+			if(eval[i+6])
+			{
+
+				vol_aux=FOPS::readFile(frodock_input.potentials[i].name);
+				evol->get_volume(new vlVolume(evol->vol_lo[0]),i+6);
+				(evol->vol_lo[i+6])->clear(0.0);
+				FOPS::projectVolume(vol_aux,evol->vol_lo[i+6]);
+				delete vol_aux;
+				//char kk_vol[50];
+				//sprintf(kk_vol,"kk_%d.sit",i+6);
+				//FOPS::writeFile(evol->vol_lo[i+6],kk_vol);
+				//evol->vol_lo[i+6]=FOPS::resize(evol->vol_lo[i+6],evol->vol_lo[0]->dim(),true);
+
+				if(evol->vol_lo[i+6]==NULL)
+				{
+					show_error("Extra potential map cannot be read",message,flag);
+					return NULL;
+				}
+				if(verbose) fprintf(stderr,"frodock>   Map : %s weight: %f type %d\n",frodock_input.potentials[i].name,frodock_input.potentials[i].weight,frodock_input.potentials[i].type);
+				extra_pot_id[i]=frodock_input.potentials[i].type;
+			}
+		}
+		if(verbose) fprintf(stderr,"frodock>   Number of read potentials: %d\n",frodock_input.num_pot);
+	}
+
+	//exit(1);
+	/*********************************************/
+
+	/********************************************/
+	//STEP 3. READING LIGAND
+	section("Reading ligand pdb",verbose,0);
+
+	ligand = new Macromolecule( "macromolecula" );
+	ligand->readPDB( frodock_input.ligand );
+	if(ligand==NULL)
+	{
+		//show_error("Ligand pdb cannot be read\n");
+		show_error("Ligand pdb cannot be read",message,flag);
+		return NULL;
+
+	}
+	ligand->deleteHYDS();
+	ligand->geoCenter( original_center );
+	//ligand->delete_hyd();
+	if(verbose) fprintf(stderr,"frodock>  Ligand center: %f %f %f\n",original_center[0],original_center[1],original_center[2]);
+
+
+	//Read accesibility ligand map
+	if(eval[4])
+	{
+		if(strcmp(frodock_input.asa_lig,"")!=0)
+		{
+			vol_acc_lig=FOPS::readFile(frodock_input.asa_lig);
+			if(vol_acc_lig==NULL)
+			{
+				//show_error("Ligand accesibility map cannot be read\n");
+				show_error("Ligand accesibility map cannot be read",message,flag);
+				return NULL;
+
+			}
+			section(" Ligand accessibility map read from file",verbose,1);
+		}
+		else
+		{
+			section(" Ligand accesilibility read from Ligand PDB",verbose,1);
+			if(ligand->check_asa())
+			{
+				section("  ....occupancy column seems to have ASA values",verbose,2);
+			}
+			else
+			{
+				//show_error("Occupancy column does not appear to contain ASA values. Use frodockgrid to set ASA values in Ligand PDB.\n");
+				show_error("Occupancy column does not appear to contain ASA values. Use frodockgrid to set ASA values in Ligand PDB.",message,flag);
+				return NULL;
+
+			}
+		}
+	}
+
+
+
+
+
+	//Ligand Desolvatation map
+	if(eval[5])
+	{
+		vol_sol_lig=FOPS::readFile(frodock_input.desol_lig);
+		if(vol_sol_lig==NULL)
+		{
+			//show_error("Ligand desolvation map cannot be read \n");
+			show_error("Ligand desolvation map cannot be read.",message,flag);
+			return NULL;
+		}
+		section(" Ligand desolvation map read from file",verbose,1);
+		//fprintf(stderr,"frodock_input.desol_lig=%s\n",frodock_input.desol_lig);
+	}
+
+	//Movement of the ligand pdb to be centered over the origin of coordinates
+	invert_original_center[0] = original_center[0] * ( -1.0 );
+	invert_original_center[1] = original_center[1] * ( -1.0 );
+	invert_original_center[2] = original_center[2] * ( -1.0 );
+	ligand->moveAll( invert_original_center );
+	end_section(1,verbose);
+
+
+	// potentials 2017
+	int Lnumres, *Ltpatom, *Ltpatom_tobi, *Lpfirst, *Lcas, *Lnres;
+	float *Lcoord, *moved_atomL;
+	int **Pneighbors, *Nneighbors, Neigh_cont, indexR;
+	float *LDistRes,*RDistRes, Disres_max;
+
+	if (PPFF) {
+		Lnumres=ligand->ppimatrices(&Lcoord, &Ltpatom_tobi, &Ltpatom, &Lpfirst, &Lcas, &Lnres);
+		moved_atomL=(float*)malloc(sizeof(float)*3*Lnumres);
+
+		//	    fprintf(stderr,"  Lnumres=%d %d %f %f\n", Lnumres, Rnumres,  round(sqrt(225.0)*2.0-0.5), round(sqrt(0.24)*2.0-0.5) );
+		//	    ligand->writePDB("kk_ligand.pdb");
+		//		for (int i2=0; i2< Lnumres ; i2++) {
+		//			fprintf(stdout, "residue %d atoms %d Lpfirst %d CA %d X coord %f\n",i2, Lnres[i2], Lpfirst[i2], Lcas[i2], *(Lcoord+Lcas[i2]) );
+		//			for (int i4 = 0; i4 < Lnres[i2]; i4++ ) {
+		//				float px22 = *(Lcoord+(Lpfirst[i2]*3+i4*3));
+		//				float py22 = *(Lcoord+(Lpfirst[i2]*3+1+i4*3));
+		//				float pz22 = *(Lcoord+(Lpfirst[i2]*3+2+i4*3));
+		//				px = *(Lcoord+Lpfirst[i2]*3+i4*3)   - *(Lcoord+Lcas[i2]*3);
+		//				py = *(Lcoord+Lpfirst[i2]*3+1+i4*3) - *(Lcoord+Lcas[i2]*3+1);
+		//				pz = *(Lcoord+Lpfirst[i2]*3+2+i4*3) - *(Lcoord+Lcas[i2]*3+2);
+		//				dist=px*px+py*py+pz*pz;
+		//
+		//				fprintf(stdout,"XYZ %f %f %f CA dist %f \n",px22,py22,pz22, dist);
+		//
+		//			}
+		//		}
+
+
+
+
+		Nneighbors=(int*)malloc(sizeof(int)*Lnumres);
+		Pneighbors=(int**)malloc(sizeof(int*)*Lnumres);
+		LDistRes=(float*)malloc(sizeof(float)*Lnumres);
+		RDistRes=(float*)malloc(sizeof(float)*Rnumres);
+
+		for (int i2 = 0; i2 < Lnumres; i2++)
+			Pneighbors[i2]=(int*)malloc(sizeof(int)*(Rnumres));
+
+		// compute max distance from CA to any atom of the residue
+		// handy for check neighboorhood
+		for (int i2=0; i2< Lnumres ; i2++) {
+			Disres_max=0;
+			for (int i4 = 0; i4 < Lnres[i2]; i4++ ) {
+				px = *(Lcoord+Lcas[i2]*3) -   *(Lcoord+Lpfirst[i2]*3+i4*3);
+				py = *(Lcoord+Lcas[i2]*3+1) - *(Lcoord+Lpfirst[i2]*3+1+i4*3);
+				pz = *(Lcoord+Lcas[i2]*3+2) - *(Lcoord+Lpfirst[i2]*3+2+i4*3) ;
+				dist=px*px+py*py+pz*pz;
+				if (dist>Disres_max) Disres_max=dist;
+			}
+			LDistRes[i2]=sqrt(Disres_max);
+			// fprintf(stdout,"YYY %d %f %d\n",i2, LDistRes[i2],Lnres[i2]);
+
+		}
+		for (int i2=0; i2< Rnumres ; i2++) {
+			Disres_max=0;
+			for (int i4 = 0; i4 < Rnres[i2]; i4++ ) {
+				px = *(Rcoord+Rcas[i2]*3) -   *(Rcoord+Rpfirst[i2]*3+i4*3);
+				py = *(Rcoord+Rcas[i2]*3+1) - *(Rcoord+Rpfirst[i2]*3+1+i4*3);
+				pz = *(Rcoord+Rcas[i2]*3+2) - *(Rcoord+Rpfirst[i2]*3+2+i4*3);
+				dist=px*px+py*py+pz*pz;
+				if (dist>Disres_max) Disres_max=dist;
+			}
+			RDistRes[i2]=sqrt(Disres_max);
+			//   fprintf(stdout,"XXX %f %d\n",RDistRes[i2],Rnres[i2]);
+
+		}
+
+	}
+	/********************************************/
+
+
+	/********************************************/
+
+	// STEP 4 DIMENSIONAL CALCULUS
+	section("Spherical Harmonic setup",verbose,0);
+
+	//maximun vdw radius
+	radiusMax_vol_amstrongs = evol->getMaxRadius();
+	radiusMax_vol_layers = ceil( radiusMax_vol_amstrongs / frodock_input.lw );
+	if(verbose) fprintf(stderr,"frodock>  Receptor vdw radius in A: %f (%d spherical layers)\n",
+			radiusMax_vol_amstrongs,(int)radiusMax_vol_layers );
+
+	//Maximum ligand radius
+	radiusMax_lig_amstrongs = ( float )( ( ligand->maxLength() / 2.0 ) + 2.0 );
+	radiusMax_lig_layers = ceil( radiusMax_lig_amstrongs / frodock_input.lw );
+	radiusMax_lig_amstrongs_backbone = ( float )( ( ligand->maxLength_backbone()/ 2.0 ) + 3.0 );
+	radiusMax_lig_layers_backbone = ceil( radiusMax_lig_amstrongs_backbone / frodock_input.lw);
+	rho_voxel = frodock_input.lw / evol->get_voxSize();
+	if(verbose) fprintf(stderr,"frodock>  Ligand vdw radius in A: %f (%d spherical layers)\n",
+			radiusMax_lig_amstrongs,(int)radiusMax_lig_layers );
+
+	Tcoor	cen1;
+
+	recept->geoCenter( cen1 );
+	for (int p=0;p<3;p++)
+		cen1[p] *= -1;
+	recept->moveAll( cen1 );
+	radiusMax_recept_amstrongs=( float )( ( recept->maxLength() / 2.0 ) + 2.0 );
+	if(verbose) fprintf(stderr,"frodock>  Receptor max radius in A %f  %f\n",radiusMax_recept_amstrongs, recept->maxLength());
+
+
+	if (1.05*radiusMax_lig_amstrongs > radiusMax_recept_amstrongs ) {
+		fprintf(stderr,"frodock>  -> WARNING!! Ligand should be smaller than Receptor\n");
+		fprintf(stderr,"frodock>  ->           now ligand is %1.2f times bigger\n", radiusMax_lig_amstrongs/radiusMax_recept_amstrongs );
+	}
+
+
+
+	//Maximum Radius for ligand potentials
+	radius_lig_vol_amstrongs=0;
+	//vdw
+	radius_potentials[0]=radiusMax_lig_layers;
+	//Electrostatic
+	if(eval[3])
+	{
+		radius_lig_vol_amstrongs=radiusMax_lig_amstrongs;
+		radius_potentials[3]=radiusMax_lig_layers;
+		if(verbose) fprintf(stderr,"frodock>  Ligand electrostatic radius in A: %f (%d spherical layers)\n", radius_lig_vol_amstrongs,(int)radius_potentials[3] );
+	}
+	//Accesibility
+	if(eval[4])
+	{
+		if(strcmp(frodock_input.asa_lig,"")!=0) //Determination of radius by map
+		{
+			//radius_aux=( int )ceil( sqrt( ( double )( vol_acc_lig->dim().x() * vol_acc_lig->dim().x() + vol_acc_lig->dim().y()
+			// * vol_acc_lig->dim().y() + vol_acc_lig->dim().z() * vol_acc_lig->dim().z() ) ) / 2.0 );
+			radius_aux=radiusMax_lig_amstrongs+4.0;
+			if(radius_aux>radius_lig_vol_amstrongs)
+				radius_lig_vol_amstrongs=radius_aux;
+			radius_potentials[4]=ceil( radius_aux / frodock_input.lw );
+
+		}
+		else//Determination of radius by ligand PDB
+		{
+			radius_potentials[4]=radiusMax_lig_layers+0.0;
+			radius_aux=radiusMax_lig_amstrongs+(0.0/ frodock_input.lw );
+			if(radius_aux>radius_lig_vol_amstrongs)
+				radius_lig_vol_amstrongs=radius_aux;
+		}
+
+		if(verbose) fprintf(stderr,"frodock>  Ligand accessibility radius in A: %f (%d spherical layers)\n", radius_aux,(int)radius_potentials[4] );
+	}
+	//Desolvatation
+	if( vol_sol_lig!=NULL)
+	{
+
+		//radius_aux=( int )ceil( sqrt( ( double )( vol_sol_lig->dim().x() * vol_sol_lig->dim().x() + vol_sol_lig->dim().y()
+		//   * vol_sol_lig->dim().y() + vol_sol_lig->dim().z() * vol_sol_lig->dim().z() ) ) / 2.0 );
+		radius_aux=radiusMax_lig_amstrongs+5.0;
+		if(radius_aux>radius_lig_vol_amstrongs)
+			radius_lig_vol_amstrongs=radius_aux;
+		radius_potentials[5]=ceil( radius_aux / frodock_input.lw );
+
+		if(verbose) fprintf(stderr,"frodock>  Ligand desolvation radius in A: %f (%d spherical layers)\n", radius_aux,(int)radius_potentials[5] );
+	}
+	//others
+	for(i=6;i<NUM_POT;i++)
+		if(eval[i])
+			radius_potentials[i]=radiusMax_lig_layers;
+
+	radius_lig_vol_layers=ceil(radius_lig_vol_amstrongs/ frodock_input.lw);
+	if ( radiusMax_lig_amstrongs > radius_lig_vol_amstrongs )
+	{
+		radiusMax_amstrongs = radiusMax_lig_amstrongs;
+		radiusMax_layers = radiusMax_lig_layers;
+
+	}
+	else
+	{
+		radiusMax_amstrongs = radius_lig_vol_amstrongs;
+		radiusMax_layers = radius_lig_vol_layers;
+	}
+
+	if(verbose) fprintf(stderr,"frodock>  Maximum ligand desolvation radius in A: %f (%d spherical layers)\n", radiusMax_amstrongs,(int)radiusMax_layers );
+
+	/********************************************/
+
+
+	/********************************************/
+	//STEP 4. LIGAND SPHERICAL REPRESENTATION
+
+	if(verbose)
+		fprintf(stderr,"frodock>  Precomputation of Ligand spherical representation");
+	//vlSpherical *newvl=pdb_atom_sampling(ligand, frodock_input.bw,  (int)radiusMax_layers,0,0,0,frodock_input.lw*3);
+	//potential weights
+	energy[0]=frodock_input.vdw_weight;
+	energy[1]=0;
+	energy[2]=0;
+	if(frodock_input.ele_weight!=0) energy[3]=frodock_input.ele_weight; else energy[3]=0;
+	if(frodock_input.desol_weight!=0) energy[4]=frodock_input.desol_weight; else energy[4]=0;
+	if(frodock_input.desol_weight!=0) energy[5]=frodock_input.desol_weight; else energy[5]=0;
+	for(i=0;i<frodock_input.num_pot;i++)
+	{
+		energy[6+i]=frodock_input.potentials[i].weight;
+	}
+
+	change_charges_withoutH();
+
+	sh=new SH_Object(ligand, frodock_input.bw,  (int)radiusMax_layers, frodock_input.lw,eval,vol_sol_lig,vol_acc_lig,NULL,extra_pot_id);
+	/*QUITAR ESTO**/
+	//vlVolume *vkk=ligand->createVolumeCentered(0.5);
+	//ligand->writePDB("kk_ligand.pdb");
+
+	//writeSH(vkk,sh->SH_layerr[0],sh->SH_layeri[0],sh->radius_layer[0],frodock_input.lw,(int)radiusMax_layers,frodock_input.bw,sh->associatedC);
+	//FOPS::writeFile(vkk,"kk_ligand.sit");
+	//exit(1);
+	/*****/
+	if (frodock_input.num_pot>0) free(extra_pot_id);
+
+	int limit_aux=(frodock_input.bw*frodock_input.bw+frodock_input.bw)/2;
+	for(i=0;i<NUM_POT;i++)
+		if(eval[i])
+			for(j=0;j<radiusMax_layers;j++)
+				for(k=0;k<limit_aux;k++)
+				{
+					sh->SH_layeri[i][j][k]*=energy[i];
+					sh->SH_layerr[i][j][k]*=energy[i];
+				}
+
+	if(verbose)
+		fprintf(stderr,"frodock>  Time: %s\n",t_total.print_time());
+
+	end_section(1,verbose);
+
+	/********************************************/
+
+	//t_total.restart();
+	//STEP 5. DETERMINING TRANSLATIONAL POINTS OF SEARCH
+	/********************************************/
+	section("Determination of translational points to explore",verbose,0);
+	vlPoint3f origin_mask;
+	float c_mask[3];;
+	if(strcmp(frodock_input.points,"")==0)
+	{
+		if(true) //it has not been provided a points file
+		{
+
+			mask=new Mask(ligand, radiusMax_lig_amstrongs_backbone, frodock_input.bw,evol,frodock_input.lmin,frodock_input.lmax);
+			// FOPS::writeFile(mask->msk,"mask.sit");
+
+
+			(mask->msk)->getPosition(&origin_mask);
+			fprintf(stderr,"frodock>   Mask  origin: %f %f %f\n",origin_mask.x(),origin_mask.y(),origin_mask.z());
+			FOPS::center_vol(mask->msk, c_mask);
+			fprintf(stderr,"frodock>   Mask  center: %f %f %f\n",c_mask[0],c_mask[1],c_mask[2]);
+
+			section(" Mask created",verbose,1);
+			if(frodock_input.use_around)
+			{
+				mask->around(frodock_input.around_point,1.0-radiusMax_lig_amstrongs);
+				section(" Mask limited to region",verbose,1);
+			}
+			stepsize_voxel = frodock_input.st/ evol->get_voxSize();
+			pc=mask->find_points(stepsize_voxel, evol->c_lo_voxel);
+		}
+	}
+	else
+	{
+		if(verbose)  	fprintf(stderr,"frodock>  Translational points read from file: %s\n",frodock_input.points);
+		pc_aux = new PCollection(frodock_input.st);
+		pc = new PCollection(frodock_input.st);
+		pc_aux->readFile(frodock_input.points);
+		fprintf(stderr,"frodock>   Map  origin: %f %f %f size %f\n",origin_receptor.x(),origin_receptor.y(),origin_receptor.z(), evol->get_voxSize());
+		fprintf(stderr,"frodock>   PDB  origin: %f %f %f \n",original_center[0],original_center[1],original_center[2]);
+
+		for(i=0;i<pc_aux->num;i++)
+		{
+			evol->get_position(origin_receptor);
+			pc_aux->return_point(i,point);
+
+			point[0]=(point[0]-origin_receptor.x()-(evol->get_voxSize()/2.0) )/evol->get_voxSize();
+			point[1]=(point[1]-origin_receptor.y()-(evol->get_voxSize()/2.0) )/evol->get_voxSize();
+			point[2]=(point[2]-origin_receptor.z()-(evol->get_voxSize()/2.0) )/evol->get_voxSize();
+
+
+			pc->Insert_point(point);
+
+		}
+		delete pc_aux;
+
+	}
+	// pc->num=100;
+	if(verbose)
+		if(in_all==false)
+			fprintf(stderr,"frodock>   Number of points to explore: %d  saving %d best solutions\n",pc->num, frodock_input.nt);
+		else
+			fprintf(stderr,"frodock>   Number of points to explore: %d  saving all best solutions\n",pc->num);
+
+
+#ifdef MPI_RELEASE
+	PCollection *pc2=pc->split(numprocs,id);
+	if(id==0)
+	{
+		if(verbose) fprintf(stderr,"frodock>    Number of points per process: %d \n",pc2->num);
+	}
+#endif
+	end_section(1,verbose);
+	/********************************************/
+
+
+	//STEP 6. EXPLORING
+	/********************************************/
+
+	vlSpherical **sphV2=(vlSpherical **)malloc(sizeof(vlSpherical*)*NUM_POT);
+	int limit_layer_highM[NUM_POT],limit_layer_lowM[NUM_POT];
+	int radius_potentials_int[NUM_POT];
+	bool limit_valid;
+
+	float * sp[7];
+
+	for ( i = 0; i < 7; i++ )
+		sp[i] = ( float * ) malloc( sizeof( float ) * 1000 );
+
+
+
+	for(i=0;i<NUM_POT; i++ )
+		if(eval[i])
+		{
+			sphV2[i]  = new vlSpherical( frodock_input.bw, radiusMax_layers );
+			sphV2[i]->preComputation();
+			radius_potentials_int[i]=(int)radius_potentials[i];
+		}
+
+	vld = new vlDCoef( frodock_input.bw, 0.5 * M_PI );
+	contValid=0;
+
+	//Buffer memory allocation
+
+	//Correlation buffer
+	correlation_buffer_size = 2 * size * size * size;
+	correlation_buffer_size_aux =  size * size * (size+2);
+	coef_corr = ( float * ) malloc( sizeof( float ) * correlation_buffer_size );
+	//Integral
+	sizeIntegral = frodock_input.bw * ( 4 * frodock_input.bw * frodock_input.bw - 1 ) / 3;
+	integralr = ( float * ) malloc( sizeof( float ) * sizeIntegral );
+	integrali = ( float * ) malloc( sizeof( float ) * sizeIntegral );
+	//FFTW operation
+	plan = fftwf_plan_dft_c2r_3d( size, size, size, ( fftwf_complex * ) coef_corr, ( float * ) coef_corr, FFTW_ESTIMATE );
+	//Receptor spherical coefficients
+
+	rcoeffsV_old = ( float * *) malloc( sizeof( float * ) * ( int )radiusMax_layers );
+	icoeffsV_old = ( float * *) malloc( sizeof( float * ) * ( int )radiusMax_layers );
+
+	for ( i = 1; i < ( int )radiusMax_layers; i++ )
+	{
+		rcoeffsV_old[i] = ( float * ) malloc( sizeof( float ) * ( bw2 + frodock_input.bw ) / 2 );
+		icoeffsV_old[i] = ( float * ) malloc( sizeof( float ) * ( bw2 + frodock_input.bw ) / 2 );
+	}
+
+
+
+
+	//Allocation of solutions
+	evol->get_position(origin_receptor);
+	if(in_all==false) //If number of solutions limited
+	{
+		solutions= new SCollection(frodock_input.np, frodock_input.nt ,frodock_input.rd,frodock_input.td, frodock_input.bw,evol->get_voxSize(),origin_receptor);
+
+	}
+	else //Otherwise, number of solutions unlimited
+	{
+		solutions= new SCollection(frodock_input.np, pc->num*frodock_input.np, frodock_input.rd,frodock_input.td, frodock_input.bw,evol->get_voxSize(),origin_receptor);
+	}
+
+	solutions->Lorigin[0]=original_center[0];
+	solutions->Lorigin[1]=original_center[1];
+	solutions->Lorigin[2]=original_center[2];
+
+
+
+
+	npoint=0;
+	spherical_point *sps;
+	int num_sps=pre_volumetric_sampling(frodock_input.bw,(int)radiusMax_layers,rho_voxel,&sps);
+
+#ifdef MPI_RELEASE
+	free(pc);
+	pc=pc2;
+#endif
+
+	//QUITAR ESTO
+	//pc->num=100;
+	//t_total.restart()
+
+	int contp,onepercent;
+
+	onepercent=int (pc->num/100);
+	contp = onepercent;
+	// fprintf(stdout,"frodock> ");
+
+
+	float Sfactor, sqrtdlimit;
+	Sfactor=0.0;
+	dlimit =225; // 15 SOAP
+	sqrtdlimit=sqrt(dlimit);
+
+	int Lat, Rat;
+
+
+	double pot2;
+	float sX,sY,sZ;
+
+
+	sX=evol->c_lo_voxel[0]+origin_receptor.x()-c_mask[0]-origin_mask.x();
+	sY=evol->c_lo_voxel[1]+origin_receptor.y()-c_mask[1]-origin_mask.y();
+	sZ=evol->c_lo_voxel[2]+origin_receptor.z()-c_mask[2]-origin_mask.z();
+
+
+	fprintf(stderr,"frodock>   Map  shift: %f %f %f size\nfrodock>\n",sX,sY,sZ);
+
+
+
+	Opx=origin_receptor.x()-sX;
+	Opy=origin_receptor.y()-sY;
+	Opz=origin_receptor.z()-sZ;
+
+
+	if (frodock_input.maskf) {
+		FILE * fout = fopen("search.pdb", "w");
+		if(fout==NULL)
+		{
+			show_error("Fail to open search.pdb",message,flag);
+			return NULL;
+		}
+		while(pc->return_point(npoint,point)==1)
+		{
+			fprintf(fout, "ATOM%7d  H   WAT A 735    %8.2f%8.2f%8.2f  1.00 1.00           N\n",
+					npoint, (point[0]+Opx),(point[1]+Opy),(point[2]+Opz));
+			npoint++;
+		}
+		npoint=0;
+		fclose(fout);
+	}
+
+	while(pc->return_point(npoint,point)==1)
+	{
+		point[0]-=sX;
+		point[1]-=sY;
+		point[2]-=sZ;
+
+
+#ifndef MPI_RELEASE
+		fprintf(stdout,"frodock> Searching %6.2f                                    \r", 100.0*npoint/pc->num);
+		if(verbose) {
+			if (contp==onepercent) {
+				//loadBar(npoint, pc->num, 50);
+				contp=0;
+				// fprintf(stdout,"frodock> Searching %f \r", 100.0*npoint/pc->num);
+			} else  contp++;
+		}
+#endif
+
+		newSolutions=false;
+		memset( integrali, 0, sizeof( float ) * sizeIntegral );
+		memset( integralr, 0, sizeof( float ) * sizeIntegral );
+
+
+		/**********NNN********/
+		for(i=0;i<NUM_POT; i++ )
+			if(eval[i])
+			{
+
+				sphV2[i]->clear();
+			}
+
+
+
+		sphV2 = volumetric_samplingN2( evol->vol_lo,eval, limit_layer_highM, limit_layer_lowM, frodock_input.bw,
+				radius_potentials_int, point[0], point[1], point[2],  sphV2, sps,num_sps);
+
+
+		/*************************/
+		//Computation of integral for each potential available
+
+		for ( i = 0; i < NUM_POT; i++ )
+		{
+			if ( eval[i])
+			{
+
+
+				memset( coef_corr, 0, sizeof( float ) * correlation_buffer_size );
+				for ( j = 1; j < ( int )radiusMax_layers; j++ )
+				{
+					memset(rcoeffsV_old[j],0, sizeof( float ) * ( bw2 + frodock_input.bw ) / 2 );
+					memset(icoeffsV_old[j],0, sizeof( float ) * ( bw2 + frodock_input.bw ) / 2 );
+				}
+
+				//Spherical representation of the receptor potential centered in the ligand position
+
+
+				if ( limit_layer_highM[i] > 0 )
+				{
+
+					createIntegral( integrali, integralr, sphV2[i], rcoeffsV_old, icoeffsV_old, frodock_input.bw, limit_layer_highM[i],
+							limit_layer_lowM[i], frodock_input.lw, sh->SH_layerr[i],sh->SH_layeri[i], sh->radius_layer[i] );
+					newSolutions=true;
+				}
+
+
+			}//if
+		}//for
+
+
+
+
+		//Correlation computation
+		if ( newSolutions )
+		{
+
+			fourier_corr( frodock_input.bw, integralr, integrali, vld, coef_corr );
+			fftwf_execute( plan );
+			int npeaks_found2, npeaks_temp;
+
+			npeaks_found2=0; npeaks_temp=0;
+
+			if(in_all==false) //Introduction of solutions in limited list
+			{
+				npeaks_found2 = best_angles_wI( coef_corr, frodock_input.bw, 2 * frodock_input.bw, frodock_input.rd * 1.0,
+						sp, 1, frodock_input.np );
+
+				//fprintf(stderr,"                                in_all       npeaks=%d\n",npeaks_found2);
+
+
+				solutions->insert(coef_corr,point);
+			}
+			else //Introduction of solutions in unlimited list
+			{
+				//for (int i = 0; i < frodock_input.np + 10; i++ )
+				//	sp[0][i]=-1000;
+
+				npeaks_found2 = best_angles_wI( coef_corr, frodock_input.bw, 2 * frodock_input.bw, frodock_input.rd * 1.0,
+						sp, 1,  frodock_input.np );
+
+				//				npeaks_temp=npeaks_found2;
+				//				for (int i = 1; i < npeaks_found2; i++ ) {
+				//					if (sp[0][i]/sp[0][0]<0.60) { npeaks_temp=i; break;}
+				//                }
+				//				npeaks_temp--;
+				//				fprintf(stderr,"%d %d %7.3f %7.3f  %7.3f %7.3f\n",
+				//						npeaks_found2, npeaks_temp, sp[0][0], sp[0][npeaks_temp],
+				//										sp[0][npeaks_temp]/sp[0][0]*100, sp[0][npeaks_temp-1]/sp[0][0]*100);
+				//				npeaks_found2=npeaks_temp;
+
+				//fprintf(stderr,"                             limited npeaks=%d\n",npeaks_found2);
+
+				//				for (int i = 0; i < npeaks_found2; i++ ) {
+				//	    			fprintf(stderr,"%d %7.3f  %7.3f %7.3f %7.3f\n", i,
+				//	    					sp[0][i],
+				//	    					sp[1][i],
+				//	    					sp[2][i],
+				//	    					sp[3][i]);
+				//	    		}
+
+				//				fprintf(stderr,"%7.3f  10 %7.3f 20 %7.3f 30 %7.3f 50 %7.3f\n",
+				//						sp[0][0],
+				//						sp[0][9]/sp[0][0]*100,
+				//						sp[0][19]/sp[0][0]*100,
+				//						sp[0][29]/sp[0][0]*100,
+				//						sp[0][49]/sp[0][0]*100);
+				//
+
+				// point[0]+=0.5;
+				// point[1]+=0.5;
+				// point[2]+=0.5;
+
+				//
+				// new code for pairwise potential
+				//
+				if (PPFF) {
+
+					float dumpD;
+
+					Opx=point[0]+origin_receptor.x();
+					Opy=point[1]+origin_receptor.y();
+					Opz=point[2]+origin_receptor.z();
+
+
+					for (int i = 0; i < npeaks_found2; i++ ) {
+
+						pot=0.0;
+						// fprintf(stderr,"  numres=%d %d\n",Lnumres, Rnumres);
+
+						// ROTATE
+						sin_psi = sin(sp[1][i]);
+						cos_psi = cos(sp[1][i]);
+						sin_theta= sin(sp[2][i]);
+						cos_theta= cos(sp[2][i]);
+						sin_phi=sin(sp[3][i]);
+						cos_phi=cos(sp[3][i]);
+
+					//	sincosf(sp[1][i],&sin_psi,&cos_psi);
+					//	sincosf(sp[2][i],&sin_theta,&cos_theta);
+					//	sincosf(sp[3][i],&sin_phi,&cos_phi);
+
+
+						matrix[0][0]= cos_psi*cos_phi - cos_theta*sin_phi*sin_psi;
+						matrix[0][1]= cos_psi*sin_phi + cos_theta*cos_phi*sin_psi;
+						matrix[0][2]= sin_psi*sin_theta;
+						matrix[1][0]= -sin_psi*cos_phi - cos_theta*sin_phi*cos_psi;
+						matrix[1][1]= -sin_psi*sin_phi + cos_theta*cos_phi*cos_psi;
+						matrix[1][2]= cos_psi*sin_theta;
+						matrix[2][0]= sin_theta*sin_phi;
+						matrix[2][1]= -sin_theta*cos_phi;
+						matrix[2][2]= cos_theta;
+
+
+
+//						for (int i2=0; i2< Lnumres ; i2++)
+//							for (int i1 = 0; i1 < Rnumres; i1++ )
+//								Pneighbors[i2][i1]=0;
+//
+//						for (int i2=0; i2< Lnumres ; i2++)
+//							Nneighbors[i2]=0;
+
+						// detect CA neighbours...
+						for (int i2=0; i2< Lnumres ; i2++)
+						{
+							// Pos CA ligando
+							Nneighbors[i2]=0;
+							px = *(Lcoord+Lcas[i2]*3);
+							py = *(Lcoord+Lcas[i2]*3+1);
+							pz = *(Lcoord+Lcas[i2]*3+2);
+							Lx = px*matrix[0][0] + py*matrix[0][1] + pz*matrix[0][2]+Opx;
+							Ly = px*matrix[1][0] + py*matrix[1][1] + pz*matrix[1][2]+Opy;
+							Lz = px*matrix[2][0] + py*matrix[2][1] + pz*matrix[2][2]+Opz;
+
+
+							Neigh_cont=0;
+							for (int i1 = 0; i1 < Rnumres; i1++ )	{
+								// pos CA receptor
+								rx = Lx - *(Rcoord+Rcas[i1]*3);
+								ry = Ly - *(Rcoord+Rcas[i1]*3+1);
+								rz = Lz - *(Rcoord+Rcas[i1]*3+2);
+								dist=sqrt(rx*rx + ry*ry +rz*rz);
+								//		                        float Dr1, Dr2, sqrtdlimit;
+								//		                        Dr1= sqrt((dist- LDistRes[i2])*(dist- LDistRes[i2]));
+								//		                        Dr2= sqrt((dist- RDistRes[i1])*(dist- RDistRes[i1]));
+								//		                        if ((dist<Dr1)&&(dist<Dr2)) dlimitCA=dist;
+								//		                        else if (Dr1<Dr2) dlimitCA=Dr1;
+								//		                        else  dlimitCA=Dr2;
+                                // dist >> 15 more simple
+								if (LDistRes[i2]>RDistRes[i1]) dlimitCA=dist-LDistRes[i2];
+								else  dlimitCA=dist-RDistRes[i1];
+
+								if ( dlimitCA < sqrtdlimit )
+
+								{
+									Pneighbors[i2][Neigh_cont]=i1;
+									// fprintf(stdout, " L i2 %d R %d count %d %d dist %f %f %f   %f\n", i2, i1, Neigh_cont,  Pneighbors[i2][Neigh_cont], dist, Pneighbors[i2][Neigh_cont], LDistRes[i2], RDistRes[i1], dlimitCA  );
+									Neigh_cont++;
+								}
+
+
+
+								// dlimitCA=(LDistRes[i2]+RDistRes[i1])+dlimit;
+
+								//								if ( (dist= rx*rx)  <= dlimitCA) {
+								//									ry = Ly - *(Rcoord+Rcas[i1]*3+1);
+								//									if ( (dist += ry*ry)  <= dlimitCA) {
+								//										rz = Lz - *(Rcoord+Rcas[i1]*3+2);
+								//										if ( (dist += rz*rz)  <= dlimitCA)
+								//											// dist= (Lx-rx)*(Lx-rx)+ (Ly-ry)*(Ly-ry) + (Lz-rz)*(Lz-rz);
+								//											//if (dist < dlimitCA)
+								//										{
+								//											Pneighbors[i2][Neigh_cont]=i1;
+								//											 fprintf(stdout, " L i2 %d R %d count %d %d dist %f %f %f   %f\n", i2, i1, Neigh_cont,  Pneighbors[i2][Neigh_cont], dist, Pneighbors[i2][Neigh_cont], LDistRes[i2], RDistRes[i1], dlimitCA  );
+								//											Neigh_cont++;
+								//										}
+								//									}
+								//								}
+							}
+							Nneighbors[i2]=Neigh_cont;
+
+						}
+
+						/*
+						for (int i2=0; i2< Lnumres ; i2++) {
+					   fprintf(stdout, "residue %d Neig %d\n", i2, Nneighbors[i2] );
+						for (int i3=0; i3 < Nneighbors[i2] ; i3++)
+							 fprintf(stdout, "Neig %d %d\n", i3, Pneighbors[i2][i3] );
+						} */
+						// fprintf(stderr,"  numres2=%d %d\n",Lnumres, Rnumres);
+
+
+						// getchar();
+						pot=0.0;
+						for (int i2=0; i2 < Lnumres; i2++) {
+
+							//							// CA ligando
+							//							px = *(Lcoord+Lcas[i2]*3);
+							//							py = *(Lcoord+Lcas[i2]*3+1);
+							//							pz = *(Lcoord+Lcas[i2]*3+2);
+							//							Lx = px*matrix[0][0] + py*matrix[0][1] + pz*matrix[0][2]+Opx;
+							//							Ly = px*matrix[1][0] + py*matrix[1][1] + pz*matrix[1][2]+Opy;
+							//							Lz = px*matrix[2][0] + py*matrix[2][1] + pz*matrix[2][2]+Opz;
+
+
+
+							if (Nneighbors[i2]>0)
+								for (int i4 = 0; i4 < Lnres[i2]; i4++ ) // loop atoms Ligando
+								{
+
+									Lat=Lpfirst[i2]+i4;
+
+									// Ligand atoms
+									px2 = *(Lcoord+Lat*3);
+									py2 = *(Lcoord+Lat*3+1);
+									pz2 = *(Lcoord+Lat*3+2);
+
+									Lpx= px2*matrix[0][0] + py2*matrix[0][1] + pz2*matrix[0][2] + Opx;
+									Lpy= px2*matrix[1][0] + py2*matrix[1][1] + pz2*matrix[1][2] + Opy;
+									Lpz= px2*matrix[2][0] + py2*matrix[2][1] + pz2*matrix[2][2] + Opz;
+
+									for (int i3 = 0; i3 < Nneighbors[i2]; i3++) {
+										// receptor residue
+										indexR=Pneighbors[i2][i3];
+
+										//										rx = Lx - *(Rcoord+Rcas[indexR]*3);
+										//										ry = Ly - *(Rcoord+Rcas[indexR]*3 +1);
+										//										rz = Lz - *(Rcoord+Rcas[indexR]*3 +2);
+
+
+
+
+										// loop atomos receptor...
+										for (int i1 = 0; i1 < Rnres[indexR]; i1++ )
+										{
+											Rat=Rpfirst[indexR]+i1;
+											// receptor atoms
+											Rpx = Lpx - *(Rcoord+Rat*3);
+											if ( (dist=Rpx*Rpx) < dlimit) {
+												Rpy = Lpy- *(Rcoord+Rat*3+1);
+												if ( (dist += Rpy*Rpy)  < dlimit) {
+													Rpz = Lpz - *(Rcoord+Rat*3+2);
+													if ( (dist += Rpz*Rpz) < dlimit)
+													{
+
+														dist_int = (int) (sqrt(dist)*Npts/15);
+														pot+=wS*energy_soap[158*Rtpatom[Rat]+Ltpatom[Lat]][dist_int];
+
+														if (dist <= 16.0)
+															pot += wT*tobi2_one[Rtpatom_tobi[Rat]][Ltpatom_tobi[Lat]];
+														else if (dist <= 36.0) // 36=6*6
+															pot += wT*tobi2_two[Rtpatom_tobi[Rat]][Ltpatom_tobi[Lat]];
+
+													}
+
+												}
+											}
+										}
+
+									}
+
+								} // atoms Lig
+
+						} // end Numres
+
+						//                                             if (sp[0][i]-pot>3500.0)
+						//											 fprintf(stderr,"Peak %d- %7.3f pot %7.3f  %7.3f   %7.3f %7.3f %7.3f  %7.3f %7.3f %7.3f  %7.3f %7.3f %7.3f    %7.3f\n",
+						//											    						i, sp[0][i], pot, sp[0][i]-pot,
+						//											    						sp[1][i]*180/3.1415297,
+						//											    						sp[2][i]*180/3.1415297,
+						//											    						sp[3][i]*180/3.1415297,
+						//											    						point[0], point[1], point[2], Lpx, Lpy, Lpz, evol->get_voxSize());
+						sp[0][i] -= pot;
+						// getchar();
+
+					}
+
+
+					// sort
+					//					float swaps;
+					//					for (int i = 0; i < npeaks_found2; i++ ) {
+					//						for (int j = i; j < npeaks_found2; j++ )
+					//							if (sp[0][j]>sp[0][i])
+					//								for (int k = 0; k < 4; k++ ){
+					//									swaps=sp[k][i];
+					//									sp[k][i]=sp[k][j];
+					//									sp[k][j]=swaps;
+					//								}
+					//					}
+
+					//					for (int i = 0; i < npeaks_found2; i++ ) {
+					//		    			fprintf(stderr,"-%d %7.3f  %7.3f %7.3f %7.3f %7.3f %7.3f %7.3f\n", i,
+					//				    					sp[0][i],
+					//				    					sp[1][i],
+					//				    					sp[2][i],
+					//				    					sp[3][i],
+					//				    					sp[4][i],
+					//				    					sp[5][i],
+					//				    					sp[6][i]);
+					//				    		}
+
+
+
+					//  if (npeaks_found2>frodock_input.np)  npeaks_found2=frodock_input.np;
+
+					solutions->insert_all2(sp,point,npeaks_found2, 0);
+				}
+				else solutions->insert_all(coef_corr,point,0);
+			}
+			//}
+			//printf("\tTime in store solutions: %s\n",t2.print_time());
+
+		}
+
+		npoint++;
+
+		//printf("Time in 1 point: %s\n",t1.print_time());
+		//getchar();
+	}//Translational exploration
+
+	// section(" Translational search finished",verbose,1);
+	if(verbose)
+	{
+		fprintf(stdout,"\nfrodock> Number of solutions: %d \n",solutions->totalPeaks);
+		fprintf(stdout,"frodock> Total time: %s\nfrodock>\n",t_total.print_time());
+
+	}
+	//end_section(3,verbose);
+	/********************************************/
+
+	/**************************FREE MEMORY*******************/
+	delete recept;
+	delete ligand;
+	delete evol;
+	if(strcmp(frodock_input.asa_lig,"")!=0)
+		delete vol_acc_lig;
+	if(eval[5])
+		delete vol_sol_lig;
+	delete sh;
+	delete mask;
+	delete pc;
+	delete vld;
+	fftwf_destroy_plan(plan);
+	free(sps);
+	for(i=0;i<NUM_POT; i++ )
+		if(eval[i])
+		{
+			sphV2[i]->free_preComputation();
+			delete sphV2[i];
+		}
+	free(sphV2);
+
+	free(coef_corr);
+	free(integralr);
+	free(integrali);
+	for ( i = 1; i < ( int )radiusMax_layers; i++ )
+	{
+		free(rcoeffsV_old[i]);
+		free(icoeffsV_old[i]);
+	}
+	free(rcoeffsV_old);
+	free(icoeffsV_old);
+	/**************************************************************/
+	*flag=1;
+	return solutions;
+
+
+}
+
+
+
+
+
+void section(string text,bool show,int deep)
+{
+	int i;
+
+	if(show)
+	{
+		// for(i=0;i<deep;i++)
+		// printf("\t");
+
+		cout << "frodock> "<< text << endl;
+	}
+}
+
+void show_error(string text)
+{
+	cout << "frodock>  Error: "<< text << endl;
+	exit(1);
+
+}
+
+void show_error(string text,char *message,int *flag)
+{
+	cout << "frodock> "<< message << " " << text << endl;
+	//sprintf(message,"%s\n",text);
+	*flag=0;
+}
+
+void end_section(int deep,bool show)
+{
+	int i;
+	if(show)
+		for(i=0;i<deep;i++)
+			cout << "frodock>" << endl;
+}
+

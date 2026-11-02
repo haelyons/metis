@@ -1,0 +1,556 @@
+#include <stdio.h>
+#include <cmdl/CmdLine.h>
+
+
+
+#include <libpdb/include/Macromolecule.h>
+
+
+using namespace TCLAP;
+using namespace std;
+
+
+char in_input[200], in_pdb[200], in_set[200], in_ref[200], *aux, *ext_in, *ext_out ;
+bool in_interface=false;
+bool in_files=false,in_reference=false,in_hy=true;
+bool in_sorted,in_size,in_disable, in_old;
+float in_limit=-1;
+char outname[100];
+float in_savesol;
+int type_in=0; int type_out=0;
+
+void parseOptions(int argc, char** argv);
+int *  setlist(char set[200]);
+
+int main(int argc, char *argv[])
+{
+  int i,line;
+  int npeaksTotal = 0;
+  float buffer[11], max_value;
+  char output[200];
+  Macromolecule *mol1,*mol2,*ref_pdb, *mol2_ca, *mol1_ref_ca, *ref_pdb_ca ;
+  float invert_original_center[3],original_center[3];
+  EulerRot *rot;
+
+
+  Condition *ncond= new Condition(-1,-1,-1,-1,-1,-1,-1,-1,-1,-1);
+   	    Conditions *nconds= new Conditions();
+   	    ncond->add(" CA ");
+   	    nconds->add(ncond);
+
+  	char ext2[6];
+   float rmsd, rmsd_ca;
+
+  init_aminoacids(Rosseta,pdb);
+  parseOptions(argc, argv);
+  FILE* p_file;
+
+  float center[3];
+
+  FILE *f=fopen(in_input,"rb");
+
+  if ( f==NULL) {
+  fprintf(stderr, "\n  Error->Cannot open file '%s'\n\n", in_input);
+  exit(1);
+  }
+	fread(&npeaksTotal,  sizeof(int),  1, f);
+	if (in_old) {fread(&center[0],  sizeof(float),  3, f);
+    // fprintf(stderr,"Center Lig %f %f %f\n", center[0],center[1],center[2]);
+	}
+	if(in_size)
+	{
+		printf("%d\n",npeaksTotal);
+		exit(1);
+	}
+	//int max_list;
+	int *list=setlist(in_set);
+	if(list[1]>npeaksTotal) // If more solutions requested than available...
+	{
+		printf("More solutions requested than available, forcing the maximum: %d\n",npeaksTotal);
+		list[1] = npeaksTotal; // then, set it to the maximum number of solutions available.
+	}
+	if(list[0] <= 0)
+	{
+		printf("First solution requested is not valid: %d, forcing: 1\n",list[0]);
+		list[0] = 1;
+	}
+
+	if(in_files)
+	{
+		mol1=new Macromolecule();
+		mol1->readPDB(in_pdb);
+		if (!in_hy) {
+			mol1->deleteHYDS();
+			// fprintf(stdout," Delete H\n");
+		}
+		mol1->geoCenter( original_center );
+		invert_original_center[0] = original_center[0] * ( -1.0 );
+		invert_original_center[1] = original_center[1] * ( -1.0 );
+		invert_original_center[2] = original_center[2] * ( -1.0 );
+		mol1->moveAll( invert_original_center );
+	    fprintf(stderr,"frodockview>  Ligand center: %f %f %f\n",original_center[0],original_center[1],original_center[2]);
+	    mol1_ref_ca=mol1->select(nconds);
+
+
+	}
+
+	if(in_reference && in_files==false)
+	{
+		fprintf(stderr,"Warning: Cannot compute RMSD. Set file with option -p\n");
+		in_reference=false;
+	}
+
+	if(in_reference)
+	{
+		ref_pdb=new Macromolecule();
+		ref_pdb->readPDB(in_ref);
+		if (!in_hy) ref_pdb->deleteHYDS();
+	    ref_pdb_ca=ref_pdb->select(nconds);
+
+	}
+
+	if(in_limit==-1)
+	{
+		if(!in_sorted)
+				line=7;
+			else
+				line=11;
+
+		// read first line & get max value
+		if (in_old)
+		fseek(f, sizeof(int)+3*sizeof(float)+(-1)*line*sizeof(float), SEEK_SET);
+		else
+		fseek(f, sizeof(int)+(-1)*line*sizeof(float), SEEK_SET);
+
+
+		if(!in_sorted)
+		{
+			fread(buffer,sizeof(float),7,f); max_value=buffer[6];
+
+		}
+		else
+		{
+			fread(buffer,sizeof(float),11,f); max_value=buffer[6];
+
+		}
+		if (in_old)
+		fseek(f, sizeof(int)+3*sizeof(float)+(list[0]-1)*line*sizeof(float), SEEK_SET);
+		else
+		fseek(f, sizeof(int)+(list[0]-1)*line*sizeof(float), SEEK_SET);
+
+		char *format = "%-6s%5d %4s %3s %1s%4d%4s%8.3lf%8.3lf%8.3lf%6.2lf%6.2lf\n";		//:REMARK:	PDB format---exact format
+		if (in_savesol>0) {
+	    p_file = fopen("solutions.pdb","w");
+		if (p_file == NULL) {
+		        printf("opening failed\n");
+		}
+		}
+		int indice=1;
+		for ( i = list[0]; (i <= npeaksTotal) && ((list[1]==-1) || (i<=list[1])); i++)
+		  {
+
+
+
+			if(!in_sorted)
+			{
+				fread(buffer,sizeof(float),7,f);
+
+				if (((in_savesol>0)&&(in_savesol<1)&&(buffer[6]/max_value>in_savesol)) ||
+					 ((in_savesol>0)&&(in_savesol>=1)&&(indice<in_savesol)) )
+					fprintf(p_file,format,"HETATM",indice++,"O  ","H2O","A",i," ",
+							buffer[3],buffer[4],buffer[5],0.0,buffer[6]/max_value*99.9);
+
+				fprintf(stdout,"\t%d \t%6.2f  %6.2f  %6.2f   \t%6.2f  %6.2f  %6.2f    %9.3f",i,
+						buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5],buffer[6]);
+			}
+			else
+			{
+				fread(buffer,sizeof(float),11,f);
+				if (((in_savesol>0)&&(in_savesol<1)&&(buffer[6]/max_value>in_savesol)) ||
+								 ((in_savesol>0)&&(in_savesol>=1)&&(indice<in_savesol)) )
+					fprintf(p_file,format,"HETATM",indice++,"O  ","H2O","A",i," ",
+							buffer[3],buffer[4],buffer[5],0.0,buffer[6]/max_value*99.99,0.00);
+
+				fprintf(stdout,"%7d  %6.2f %6.2f %6.2f  %6.2f %6.2f %6.2f  %9.2f  %6.2f %6.2f %6.2f %6.2f",i,
+						buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5],buffer[6],buffer[7],buffer[8],buffer[9],buffer[10]);
+			}
+
+				buffer[0]*=3.1415297/180.0;
+				buffer[1]*=3.1415297/180.0;
+				buffer[2]*=3.1415297/180.0;
+
+				if(in_files)
+				{
+					sprintf( output, "%s_%d%s",outname,i,ext_out );
+
+					mol2= new Macromolecule(mol1);
+					mol2_ca= new Macromolecule(mol1_ref_ca);
+					rot=new EulerRot(buffer[0],buffer[1],buffer[2],0);
+					mol2->applyAtoms(rot);
+					mol2->moveAll(&(buffer[3]));
+					mol2_ca->applyAtoms(rot);
+					mol2_ca->moveAll(&(buffer[3]));
+
+					if(in_disable==false)
+					{
+						switch(type_out)
+						{
+						case 0:
+							mol2->writePDB(output);
+							break;
+						case 1:
+							mol2->writeMol2(output);
+							break;
+						case 2:
+							mol2->writeSDF(output);
+							break;
+						 }
+						fprintf(stdout, " => %s", output);
+					}
+
+					if(in_reference)
+					{
+						//if (!in_hy) mol2->deleteHYDS();
+						rmsd=mol2->rmsd(ref_pdb);
+						rmsd_ca=mol2_ca->rmsd(ref_pdb_ca);
+						fprintf(stdout, "\t%7.3f %7.3f", rmsd, rmsd_ca);
+					}
+
+
+					delete rot;
+					delete mol2;
+				}
+				fprintf( stdout, "\n");
+		  }
+	}
+	else
+	{
+		if(!in_sorted) {
+
+
+			if (!in_reference)
+			{
+				fprintf(stderr,"Error: Need a reference PDB (-f)\n");
+				exit(1);
+			}
+
+
+
+			line=7;
+
+		}
+		else
+			line=11;
+
+		fseek(f, sizeof(int), SEEK_SET);
+
+		for ( i = 1; (i <= npeaksTotal) ; i++)
+		{
+			fread(buffer,sizeof(float),line,f);
+
+			if(in_sorted)
+			{
+               if (in_interface)
+            	   rmsd= buffer[8];
+               else rmsd= buffer[7];
+
+				if(rmsd<in_limit) {
+
+				fprintf(stdout,"%7d %6.2f %6.2f %6.2f  %6.2f %6.2f %6.2f %9.2f %6.2f%6.2f%6.2f%6.2f",i,
+			    buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5],buffer[6],buffer[7],buffer[8],buffer[9],buffer[10]);
+
+				if(!in_disable)
+				{
+
+					mol2= new Macromolecule(mol1);
+					//mol2->moveAll( invert_original_center );
+					rot=new EulerRot((buffer[0]*3.1415297)/180.0,(buffer[1]*3.1415297)/180.0,(buffer[2]*3.1415297)/180.0,0);
+					mol2->applyAtoms(rot);
+					mol2->moveAll(&(buffer[3]));
+					sprintf( output, "%s_%d%s",outname,i,ext_out);
+					fprintf(stdout, " => %s", output);
+					switch(type_out)
+					{
+					case 0:
+						mol2->writePDB(output);
+						break;
+					case 1:
+						mol2->writeMol2(output);
+						break;
+					case 2:
+						mol2->writeSDF(output);
+						break;
+					}
+				}
+				fprintf(stdout,"\n");
+				}
+			} else {
+
+				mol2= new Macromolecule(mol1);
+				//mol2->moveAll( invert_original_center );
+				rot=new EulerRot((buffer[0]*3.1415297)/180.0,(buffer[1]*3.1415297)/180.0,(buffer[2]*3.1415297)/180.0,0);
+				mol2->applyAtoms(rot);
+				mol2->moveAll(&(buffer[3]));
+
+				if (!in_hy) mol2->deleteHYDS();
+				rmsd=mol2->rmsd(ref_pdb);
+
+				if(rmsd<in_limit)
+				{
+					if(!in_sorted)
+					{
+						fprintf(stdout,"\t%d \t%6.2f  %6.2f  %6.2f   \t%6.2f  %6.2f  %6.2f    %9.6f",i,
+							buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5],buffer[6]);
+					}
+					else
+					{
+						fprintf(stdout,"\t%d \t%6.2f  %6.2f  %6.2f   \t%6.2f  %6.2f  %6.2f    %9.6f %9.6f %9.6f %9.6f %9.6f",i,
+							buffer[0],buffer[1],buffer[2],buffer[3],buffer[4],buffer[5],buffer[6],buffer[7],buffer[8],buffer[9],buffer[10]);
+					}
+
+					if(in_disable==false)
+					{
+						sprintf( output, "%s_%d%s",outname,i,ext_out);
+						switch(type_out)
+						{
+							case 0:
+								mol2->writePDB(output);
+								break;
+							case 1:
+								mol2->writeMol2(output);
+								break;
+							case 2:
+								mol2->writeSDF(output);
+								break;
+						}
+
+						fprintf(stdout, " => %s", output);
+					}
+					fprintf(stdout, "\t%f\n", rmsd);
+					i=npeaksTotal+3;
+
+				}
+
+			}
+		}
+		//if(i==npeaksTotal+1)
+		//	fprintf(stdout, "\n");
+	}
+
+//	if(in_reference)
+//		free(ref_pdb);
+
+	fclose(f);
+	if (in_savesol>0) fclose(p_file);
+}
+
+void parseOptions(int argc, char** argv)
+{
+       string temp;
+       char basename[50];
+       CmdLine cmd(argv[0],"   ", "2.0" );
+
+        try {
+        //
+        // Define required arguments no labeled
+        //
+
+        SwitchArg hy("","hyd", "Erase hydrogens", true);
+        cmd.add( hy );
+
+		ValueArg<std::string> pdbout("o","output","output pdb file (mobile onto reference)",false,"","string");
+		cmd.add(pdbout);
+
+        UnlabeledValueArg<string> input("input","Frodock solutions input filename","default","input");
+        cmd.add( input );
+
+		SwitchArg sorted( "e", "evaluated", "Input file is an Frodock evaluated file.", false );
+    	cmd.add( sorted );
+
+		SwitchArg size( "", "size", "Show the total number of solution in file", false );
+    	cmd.add( size );
+
+		SwitchArg old( "", "old", "Old format", false );
+    	cmd.add( old );
+
+    	SwitchArg disable( "d", "disable", "Disable solution creation", false );
+    	cmd.add( disable );
+
+    	ValueArg<string> pdb("p","pdb", "PDB file used to create solutions  (default: No files created).",false,"","string");
+        cmd.add( pdb );
+
+		ValueArg<string> ref("f","ref", "Reference pdb file to compute RMSD.",false,"","string");
+        cmd.add( ref );
+
+        ValueArg<string> set("r","range", "Range of solutions showed (default: all solutions).\nExamples\n\t-r 5: Show 5th solution\n\t-r 6-19: Show solutions in range [6:19]",false,"","string");
+        cmd.add( set );
+
+        ValueArg<float> limit("l","limit", "Returns first solution below the RMSD limit",false,-1.0,"float");
+        cmd.add( limit );
+
+        SwitchArg interface( "i", "interface", "Reference to RMSD interface ", false );
+        cmd.add( interface );
+
+        ValueArg<float> savesol("s","savesol", "Save docking scores in pdb format\n -s 0.5 saving scores >50 of the top \n -s 100 save first 100 scores",false,-1.0,"float");
+        cmd.add( savesol );
+
+
+        // Parse the command line.
+        cmd.parse(argc,argv);
+
+
+        if(old.isSet()) in_old=false;
+        else in_old=true;
+
+				strcpy(in_input,((temp=input.getValue()).c_str()));
+				in_sorted=sorted.getValue();
+				in_size=size.getValue();
+
+				strcpy(in_set,((temp=set.getValue()).c_str()));
+
+        	if(pdb.isSet())
+        	{
+        		in_files=true;
+        		strcpy(in_pdb,((temp=pdb.getValue()).c_str()));
+
+
+        		   ext_in=strrchr(in_input,'.');
+        		   ext_out=strrchr(in_pdb,'.');
+        		   strcpy(basename,in_pdb);
+        		   aux=strstr(basename, ext_out);
+        		   strncpy (outname,basename,aux-basename);
+        		   outname[aux-basename]='\0';
+
+        		   if(ext_in!=NULL)
+        		   {
+        		 	  if((pdb_strcasecmp(ext_in,".pdb")==0)||(pdb_strcasecmp(ext_in,".ent")==0))
+        		 	  {
+        		 		  type_in=0;
+        		 	  }
+        		 	  if(pdb_strcasecmp(ext_in,".mol2")==0)
+        		 	  {
+        		 		  type_in=1;
+        		 	  }
+        		 	  if(pdb_strcasecmp(ext_in,".sdf")==0)
+        		 	  {
+        		 		  type_in=2;
+        		 	  }
+        		   }
+                   type_out=type_in;
+                   //strcpy(ext_out,ext_in);
+                   // strcpy(outname,aux);
+        	}
+
+			//fprintf( stdout, "%s %s\n",outname,ext_out);
+
+        	if(ref.isSet())
+        	{
+        		if(pdb.isSet())
+        		{
+        			in_reference=true;
+        			strcpy(in_ref,((temp=ref.getValue()).c_str()));
+        			ext_out=strrchr(in_ref,'.');
+        			strcpy(basename,in_pdb);
+        			aux=strstr(basename, ext_out);
+        			strncpy (outname,basename,aux-basename);
+        			outname[aux-basename]='\0';
+
+        			if(ext_out!=NULL)
+        			{
+        				if((pdb_strcasecmp(ext_out,".pdb")==0)||(pdb_strcasecmp(ext_out,".ent")==0))
+        				{
+        				type_out=0;
+        				}
+        				if(pdb_strcasecmp(ext_out,".mol2")==0)
+        				{
+        				type_out=1;
+        				}
+        				if(pdb_strcasecmp(ext_out,".sdf")==0)
+        				{
+        				type_out=2;
+        				}
+        			}
+
+
+        		}
+        		else
+        		{
+        			fprintf(stderr,"Error: Reference file cannot be set without PDB file for creation of solutions. Introduce -p optiom\n");
+        			exit(1);
+        		}
+        	}
+
+        	if (hy.isSet())
+        				in_hy=true;
+        			else
+        				in_hy=false;
+
+        	if (interface.isSet())
+        	       in_interface=true;
+            else
+        	   	in_interface=false;
+
+
+        	if(pdb.isSet())
+        		in_disable=false;
+        	else
+        		in_disable=true;
+
+
+
+            if(disable.isSet())
+               		in_disable=true;
+
+            in_limit=limit.getValue();
+
+            in_savesol=savesol.getValue();
+
+
+        } catch ( ArgException& e )
+        {
+        	cout << "  Error->" << e.error() << " " << e.argId() << endl;
+        }
+
+
+
+        //cmd.~CmdLine();
+
+}
+
+int *  setlist(char set[200])
+{
+	char *aux;
+	int init,end,*list;
+	int i,j;
+
+	list=(int*)malloc(sizeof(int)*2);
+
+	if(strcmp(set,"")==0)
+	{
+		list[0]=1;
+		list[1]=-1;
+
+		return list;
+	}
+
+	aux=strrchr(set,'-');
+	if(aux!=NULL)
+	{
+		sscanf(set,"%d-%d",&init,&end);
+
+		list[0]=init;
+		list[1]=end;
+
+		return list;
+	}
+	else
+	{
+		sscanf(set,"%d",&init);
+
+		list[0]=init;
+		list[1]=init;
+		return list;
+	}
+
+
+}

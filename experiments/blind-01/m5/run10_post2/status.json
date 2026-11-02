@@ -1,0 +1,11 @@
+{
+  "subset_errors_vs_run9": "also_in_run9",
+  "subset_error_source": "multiple",
+  "errors_affect_compared_outputs": "no",
+  "units_all_computed": "yes",
+  "outputs_written_by_subset": "yes",
+  "outside_out_naming": "unknown",
+  "outside_out_purpose": "unknown",
+  "later_units_read_earlier_writes": "unknown",
+  "private_copies_preserve_computation": "unknown"
+}
