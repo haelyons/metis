@@ -23,7 +23,8 @@ return (async () => {
 
   const fields = {
     intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size', 'anchored', 'licence_basis'],
-    reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid', 'units_match', 'units_full_match'],
+    reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid', 'units_match', 'units_full_match',
+      'units_outcome', 'units_factor_2', 'units_factor_4', 'units_shared_writes'],
     profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom', 'host_only'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
     propose: ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass',
@@ -372,10 +373,12 @@ PY`
     const facts = { ...nullFacts('reproduce'), stock_verified: false, tokens_known: false, gpu_busy_known: false }
     const destination = path.join(A, 'results', 'reproduce')
     const unitsMode = Object.hasOwn(input, 'units_check')
+    const unitsProbe = Object.hasOwn(input, 'units_probe')
     let reference
     try {
-      if (unitsMode) {
-        const value = input.units_check
+      if (unitsMode && unitsProbe) return failure(facts, 'parse')
+      if (unitsMode || unitsProbe) {
+        const value = unitsProbe ? input.units_probe : input.units_check
         if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== 1
           || !Object.hasOwn(value, 'reference') || typeof value.reference !== 'string' || !value.reference.trim()) return failure(facts, 'parse')
         reference = path.resolve(value.reference)
@@ -418,7 +421,14 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
         const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
         if (reply == null) return failure(facts, 'parse')
       }
-      const sample = unitsMode ? unitSample() : null
+      const sample = unitsMode || unitsProbe ? unitSample() : null
+      const referenceFile = path.join(destination, 'units_reference.json')
+      if (unitsProbe) {
+        const sha256 = Object.fromEntries(sample.flatMap(unit => unit.outputs.map(file =>
+          [file, createHash('sha256').update(readFileSync(path.join(reference, file))).digest('hex')])))
+        mkdirSync(destination, { recursive: true })
+        writeFileSync(referenceFile, JSON.stringify({ sha256 }, null, 2) + '\n')
+      }
       const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'run_command.sh',
         ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(harnessDirectory, name)))], destination, 'setup')
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
@@ -429,6 +439,27 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       }
       facts.stock_verified = setup.rc === 0
       if (!facts.stock_verified) return failure(facts, 'install')
+      if (unitsProbe) {
+        const bytes = readFileSync('m5/concurrency_probe.py').toString('base64')
+        const referenceBytes = readFileSync(referenceFile).toString('base64')
+        const probe = await boxCommand('concurrency', seconds => `set -e
+mkdir -p profiler
+printf %s ${quote(bytes)} | base64 -d > profiler/concurrency_probe.py
+printf %s ${quote(referenceBytes)} | base64 -d > profiler/units_reference.json
+rm -rf out/concurrency concurrency-work
+python3 -I profiler/concurrency_probe.py --units harness/run_units.sh harness/units.json out/concurrency ${seconds} profiler/units_reference.json`, destination, 'anchors')
+        if (probe.error) return failure(facts, probe.error)
+        if (probe.fetched !== true) return failure(facts, 'infra')
+        if (probe.rc !== 0) return failure(facts, 'parse')
+        const value = readJSON(path.join(destination, 'out', 'concurrency', 'concurrency.json'))
+        if (!validUnitConcurrency(value)) return failure(facts, 'parse')
+        facts.units_outcome = value.outcome
+        facts.units_factor_2 = value.batches[0].factor
+        facts.units_factor_4 = value.batches[1].factor
+        const ran = value.arms.filter(arm => !arm.skipped)
+        facts.units_shared_writes = ran.length ? ran.some(arm => arm.shared_changes > 0) : null
+        return { status: 'PASS', facts }
+      }
       let unitsCheck
       const subsetDirectory = path.join(destination, 'units-check')
       const writeUnitsCheck = () => {
@@ -618,6 +649,77 @@ python3 -I profiler/concurrency_probe.py harness/run_command.sh out/concurrency 
     })) return false
     const factors = value.batches.filter(batch => batch.factor !== null).map(batch => batch.factor)
     return value.factor === (singlesOK && factors.length ? Math.max(...factors) : null)
+  }
+  function validUnitConcurrency(value) {
+    const keys = (item, expected) => item && typeof item === 'object' && !Array.isArray(item)
+      && Object.keys(item).length === expected.length && expected.every(key => Object.hasOwn(item, key))
+    const positive = item => Number.isFinite(item) && item > 0
+    const nullable = item => item === null || positive(item)
+    const nonnegative = item => Number.isFinite(item) && item >= 0
+    const boolean = item => item === null || typeof item === 'boolean'
+    if (!keys(value, ['mode', 'mps', 'mps_failed', 'outcome', 'units_total', 'sample', 'baseline_match',
+      'outputs_match', 'serial_wall_s', 'separate_wall_s', 'batches', 'arms', 'nproc', 'mem_total_kb', 'factor'])
+      || value.mode !== 'units' || value.mps !== false || value.mps_failed !== false
+      || !['invalid_units', 'failed', 'baseline_mismatch', 'outputs_mismatch', 'skipped', 'measured'].includes(value.outcome)
+      || !boolean(value.baseline_match) || !boolean(value.outputs_match)
+      || !nullable(value.serial_wall_s) || !nullable(value.separate_wall_s) || !nullable(value.factor)
+      || !(value.nproc === null || Number.isInteger(value.nproc) && value.nproc > 0)
+      || !(value.mem_total_kb === null || Number.isInteger(value.mem_total_kb) && value.mem_total_kb >= 0)
+      || !Array.isArray(value.sample) || !Array.isArray(value.batches) || value.batches.length !== 2
+      || !Array.isArray(value.arms) || value.arms.length !== 8) return false
+    const invalid = value.outcome === 'invalid_units'
+    if (invalid ? value.units_total !== null || value.sample.length !== 0
+      : !Number.isInteger(value.units_total) || value.units_total < 4 || value.sample.length !== 4) return false
+    if (!value.sample.every((unit, index) => keys(unit, ['index', 'cost_s'])
+      && Number.isInteger(unit.index) && unit.index >= 0 && unit.index < value.units_total && positive(unit.cost_s)
+      && (index === 0 || value.sample[index - 1].cost_s < unit.cost_s
+        || value.sample[index - 1].cost_s === unit.cost_s && value.sample[index - 1].index < unit.index))
+      || new Set(value.sample.map(unit => unit.index)).size !== value.sample.length) return false
+    const labels = ['a-1', 'b-1', 'c2-1', 'c4-1', 'c4-2', 'c2-2', 'b-2', 'a-2']
+    const numbers = ['wall_s', 'cpu_s', 'effective_cores', 'busy_fraction', 'mem_available_min_kb', 'threads_max', 'shared_changes']
+    if (!value.arms.every((arm, index) => {
+      if (!keys(arm, ['label', 'all_ok', 'skipped', ...numbers, 'invocations']) || arm.label !== labels[index]
+        || typeof arm.all_ok !== 'boolean' || typeof arm.skipped !== 'boolean'
+        || !numbers.every(key => arm[key] === null || nonnegative(arm[key]))
+        || !(arm.shared_changes === null || Number.isInteger(arm.shared_changes))
+        || !Array.isArray(arm.invocations)) return false
+      if (arm.skipped) return !arm.all_ok && numbers.every(key => arm[key] === null) && arm.invocations.length === 0
+      if (invalid || (index > 0 && value.arms[index - 1].skipped)
+        || !positive(arm.wall_s) || !numbers.every(key => nonnegative(arm[key]))) return false
+      const serial = arm.label.startsWith('a')
+      return arm.invocations.length === (serial ? 1 : 4) && arm.invocations.every((row, position) =>
+        keys(row, ['units', 'rc', 'wall_s', 'cpu_s', 'max_rss_kb', 'nivcsw', 'inblock', 'oublock'])
+        && Array.isArray(row.units) && row.units.length === (serial ? 4 : 1)
+        && row.units.every((unit, i) => unit === (serial ? i : position)) && Number.isInteger(row.rc)
+        && ['wall_s', 'cpu_s', 'max_rss_kb', 'nivcsw', 'inblock', 'oublock'].every(key => nonnegative(row[key]))
+        && (!arm.all_ok || row.rc === 0))
+    })) return false
+    const ran = value.arms.filter(arm => !arm.skipped)
+    if ((value.baseline_match === null) !== (ran.length === 0)
+      || (value.outputs_match === null) !== (ran.length < 2)
+      || ran.length > 1 && !ran[0].all_ok
+      || ran.length > 0 && ran[0].all_ok !== (value.baseline_match === true
+        && ran[0].invocations.every(row => row.rc === 0))) return false
+    const outcome = invalid ? 'invalid_units' : ran.some(arm => arm.invocations.some(row => row.rc !== 0)) ? 'failed'
+      : value.baseline_match === false ? 'baseline_mismatch' : value.outputs_match === false ? 'outputs_mismatch'
+        : ran.some(arm => arm.label.startsWith('c') && arm.all_ok) ? 'measured' : 'skipped'
+    if (value.outcome !== outcome) return false
+    const mean = arms => arms.length ? arms.reduce((sum, arm) => sum + arm.wall_s / arms.length, 0) : null
+    for (const [prefix, key] of [['a', 'serial_wall_s'], ['b', 'separate_wall_s']]) {
+      if (value[key] !== mean(ran.filter(arm => arm.label.startsWith(prefix) && arm.all_ok))) return false
+    }
+    if (!value.batches.every((batch, index) => {
+      if (!keys(batch, ['n', 'wall_s', 'all_ok', 'skipped', 'factor']) || batch.n !== [2, 4][index]
+        || typeof batch.all_ok !== 'boolean' || typeof batch.skipped !== 'boolean'
+        || !nullable(batch.wall_s) || !nullable(batch.factor)) return false
+      const arms = ran.filter(arm => arm.label.startsWith(`c${batch.n}`))
+      if (batch.skipped !== (arms.length === 0) || batch.all_ok !== (arms.length > 0 && arms.every(arm => arm.all_ok))
+        || batch.wall_s !== mean(arms)) return false
+      return batch.factor === (batch.all_ok && value.outcome === 'measured'
+        ? value.serial_wall_s / batch.wall_s : null)
+    })) return false
+    const factors = value.batches.filter(batch => batch.factor !== null).map(batch => batch.factor)
+    return value.factor === (factors.length ? Math.max(...factors) : null)
   }
   async function seal() {
     if (input.stub?.seal != null) return stub('seal')
@@ -933,7 +1035,7 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     stages.push({ stage, status: result.status })
     log(`${stage}: ${result.status}`)
     if (!stopped_at && (result.status !== 'PASS' || result.facts.outcome === 'no_feasible_method'
-      || (stage === 'reproduce' && Object.hasOwn(input, 'units_check')))) stopped_at = stage
+      || (stage === 'reproduce' && (Object.hasOwn(input, 'units_check') || Object.hasOwn(input, 'units_probe'))))) stopped_at = stage
   }
   await exec('python3', ['m5/operator_takeaway.py', S, '--raid', raid])
   return { stages, stopped_at }

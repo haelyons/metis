@@ -827,9 +827,12 @@ function freezeChecks(name, root, config, stage, stoppedAt) {
     assert.equal(signature.error_class, timeout ? 'timeout' : 'infra')
     assert.equal(signature.exit_code, timeout ? 3 : 2)
     // Scoring had passed: the anchor counts and stock verification stand.
+    // U52: the four units_* probe facts are null outside unit-probe mode (SCHEMAS.md
+    // "Standalone unit probe (U52)", Status); no case here sets args.units_probe.
     const { timed_out, budget_s, overrun, ...facts } = stage('reproduce').facts
     assert.deepEqual(facts, { anchors_passed: 2, anchors_total: 2, stock_verified: true,
-      tuned_control_valid: null, tokens_known: true, gpu_busy_known: false, units_match: null, units_full_match: null })
+      tuned_control_valid: null, tokens_known: true, gpu_busy_known: false, units_match: null, units_full_match: null,
+      units_outcome: null, units_factor_2: null, units_factor_4: null, units_shared_writes: null })
     if (timeout) assert.deepEqual({ timed_out, budget_s, overrun }, { timed_out: true, budget_s: config.setupBudget, overrun: true })
     else assert.deepEqual([timed_out, budget_s, overrun], [undefined, undefined, undefined], 'timeout fields without a timeout')
     const receipt = freezeReceipt()
@@ -946,8 +949,11 @@ function reproduceFacts(name, run, passed, total, stock = true, tokensKnown = tr
     const row = run.stage('reproduce')
     // U51: units_match and units_full_match are null outside units-check mode (SCHEMAS.md
     // "Unit equivalence check (U51)"); no case here sets args.units_check.
+    // U52: units_outcome, units_factor_2, units_factor_4 and units_shared_writes are null outside
+    // unit-probe mode (SCHEMAS.md "Standalone unit probe (U52)", Status); no case here sets args.units_probe.
     assert.deepEqual(row.facts, { anchors_passed: passed, anchors_total: total, stock_verified: stock,
-      tuned_control_valid: null, tokens_known: tokensKnown, gpu_busy_known: false, units_match: null, units_full_match: null })
+      tuned_control_valid: null, tokens_known: tokensKnown, gpu_busy_known: false, units_match: null, units_full_match: null,
+      units_outcome: null, units_factor_2: null, units_factor_4: null, units_shared_writes: null })
     assert.equal(row.signature.gpu_s, 0)
     // run_valid: true/false with at least one anchor; null when there are no anchors.
     if (total === 0) assert.equal(row.signature.run_valid ?? null, null, 'run_valid must be null without anchors')
