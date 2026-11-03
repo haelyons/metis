@@ -34,3 +34,25 @@ Run: `new_run.py .../m5/run4 --brief-from=s03 --stop-after-reproduce`, `retry53.
 | 11 | Pipeline wall under 3 h | 0.65 |
 | 12 | Run box USD under 10 | 0.75 |
 | 13 | Run box USD under 19.74 (the cap) | 0.97 |
+
+## Outcome (added after the run; the sections above are unchanged since the seal 8895ed3d)
+
+run4 (pushed c419729c): `gpu_1x_h100_pcie` (us-west-3), pipeline wall 885 s, run box USD 0.81. Intake PASS (121 s, Codex): `data` available, `stock_environment` true, `licence` unknown, `anchors_count` 0. Reproduce PASS (764 s): setup rc 255 at 154 s, then after one repair rc 0 at 32 s; anchors rc 0 at 121 s (0 of 0 published anchors); reproduce-freeze rc 0 at 10 s; every receipt fetched; `stock_verified` true; reproduce GPU-seconds 0 (run2: 49.6). Fetched reproduce outputs 340 MB, 600 files. Profile and later SKIPPED as designed. U53, first live run: the freeze receipt took 10 s against run2's 1,402 s (fetch no longer resends unchanged outputs).
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.65 | yes | 0.1225 |
+| 2 | 0.70 | yes | 0.0900 |
+| 3 | 0.60 | yes (one repair) | 0.1600 |
+| 4 | 0.50 | yes | 0.2500 |
+| 5 | 0.60 | not resolved (no anchors) | n/a |
+| 6 | 0.97 | yes | 0.0009 |
+| 7 | 0.90 | yes | 0.0100 |
+| 8 | 0.85 | yes | 0.0225 |
+| 9 | 0.90 | yes | 0.0100 |
+| 10 | 0.70 | yes (10 s) | 0.0900 |
+| 11 | 0.65 | yes (885 s) | 0.1225 |
+| 12 | 0.75 | yes | 0.0625 |
+| 13 | 0.97 | yes | 0.0009 |
+
+Mean Brier 0.078 over 12. Decision row: reproduce PASS, so science step s04 reads the measurement. Points for s04 from metadata: the reproduce stage recorded zero GPU-seconds, and the setup's first rc was 255.
