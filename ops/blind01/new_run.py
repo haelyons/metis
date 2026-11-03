@@ -15,6 +15,7 @@ A new experiment's run1 has no run1 to copy: it gets run1's keys (blind true, re
 
 --brief-from=sNN takes the brief a science step wrote (<experiment>/science/sNN/, the file its NEXT.json names, action
 m5); the step folder must be committed unchanged, and the other options must equal NEXT.json's new_run_flags.
+Such a run is a calibration: args.run_ceiling_s 19800, to be launched with retry53.sh (6 h box, USD 20 cap).
 
 Usage: python3 ~/.cache/blind01/new_run.py <run_root> [--addendum[=intake_check_codex|=intake_acquire|=intake_mirror|=b01_materials] | --brief-from=sNN]
            [--harness-from=<folder>] [--stop-after-profile | --stop-after-reproduce] [--units-check=<run> | --units-probe=<run>]
@@ -63,6 +64,7 @@ if science:
     git = lambda *a: subprocess.run(["git", "-C", "/home/hal/dev/interp/metis", *a], capture_output=True, text=True)
     assert git("ls-files", "--error-unmatch", "--", rel + "/" + nxt["brief"]).returncode == 0 and not git("status", "--porcelain", "--", rel).stdout, "step not committed"
     args["brief"] = step + "/" + nxt["brief"]
+    args["run_ceiling_s"] = 19800   # calibration runs (retry53.sh): box budgets end inside its 6 h lifetime
 if harness:
     args["harness_from"] = m.group(1) + "/" + harness[0]
     assert all(os.path.isfile(os.path.join(args["harness_from"], n)) for n in ("setup.sh", "run_anchors.sh", "run_command.sh")), \

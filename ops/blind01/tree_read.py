@@ -1,6 +1,6 @@
 """Metadata of one tree run for the blind operator: run totals, call states and stage names, and the calibration
 records' enums and numbers. Never titles, questions, card text, table rows, quantity ids, errors or log text.
-Usage: python3 ~/.cache/blind01/tree_read.py <NN> <stamp>-tree   (experiments/blind-NN/<stamp>-tree)
+Usage: python3 ~/.cache/blind01/tree_read.py <NN> <stamp>-tree|latest   (experiments/blind-NN/<stamp>-tree)
        python3 ~/.cache/blind01/tree_read.py --path <run out dir>  (a public run, for testing)
 """
 import json, os, re, sys
@@ -9,8 +9,11 @@ from collections import Counter
 if sys.argv[1] == "--path":
     O = sys.argv[2]
 else:
-    assert re.fullmatch(r"\d\d", sys.argv[1]) and re.fullmatch(r"\d{8}-\d{4}-tree(-\d+)?", sys.argv[2])
-    O = f"/home/hal/dev/interp/metis/experiments/blind-{sys.argv[1]}/{sys.argv[2]}/out"
+    assert re.fullmatch(r"\d\d", sys.argv[1]) and re.fullmatch(r"\d{8}-\d{4}-tree(-\d+)?|latest", sys.argv[2])
+    X = f"/home/hal/dev/interp/metis/experiments/blind-{sys.argv[1]}"
+    name = sys.argv[2] if sys.argv[2] != "latest" else max(n for n in os.listdir(X) if re.fullmatch(r"\d{8}-\d{4}-tree(-\d+)?", n))
+    print("run folder", name)
+    O = f"{X}/{name}/out"
 
 
 def load(name):
