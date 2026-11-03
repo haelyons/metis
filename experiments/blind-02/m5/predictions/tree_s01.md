@@ -31,3 +31,24 @@ Run: `launch.js blind-02 tree --seed science/s01/tree_args.json --family codex -
 | 10 | Recorded `cost_usd` under USD 5 (Codex records 0) | 0.85 |
 | 11 | Some `calibration_required` record has an input whose spend through its measuring phase is at most USD 20 (given 3) | 0.70 |
 | 12 | Some record's `plan_usd` exceeds the USD 100 budget | 0.15 |
+
+## Outcome (added after the run; the sections above are unchanged since the seal 32130ec6)
+
+Tree run `20261103-0124-tree` (committed c135c4e5; launch log 6cae75fa): 01:24 to 01:45 UTC (21 min), 51 calls all `ok`, 26 with more than one attempt, no refusals, recorded cost USD 0 (Codex records none), 6.74M tokens. Every one of the 25 calls the config routes to OpenCode (the critic panel of three models and the second dramaturg) failed and was answered by Codex instead (25 substitutions, OpenCode tokens 0), so every producer, dramaturg and critic call was Codex `default@medium`: the judges were not a different family from the producers. Calibration records (one per pick): 2 `no_unmeasured_input` (plan USD 49.48 and 6.58), 1 `calibration_required` (plan USD 100, at the budget, k_budget 1; one GUESS input, measured in a phase whose line is 3 h at USD 9.87, spend through that phase USD 19.74, gated), 2 `rejected` (plan USD 39.61 and 25), 1 `not_judged` (a halted pick; two GUESS inputs). Every record has an anchor; every producer's `expected` is `unsure`. One transcript file (the widener's) matched the generic AWS key-ID pattern once and none of the project's keys; it stays uncommitted on disk.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.75 | yes | 0.0625 |
+| 2 | 0.55 | yes (6) | 0.2025 |
+| 3 | 0.55 | yes (1) | 0.2025 |
+| 4 | 0.20 | no | 0.0400 |
+| 5 | 0.65 | yes (2) | 0.1225 |
+| 6 | 0.40 | yes (1) | 0.3600 |
+| 7 | 0.45 | yes (21 min) | 0.3025 |
+| 8 | 0.50 | yes | 0.2500 |
+| 9 | 0.80 | no (all 25 OpenCode calls substituted) | 0.6400 |
+| 10 | 0.85 | yes (0) | 0.0225 |
+| 11 | 0.70 | yes (19.74) | 0.0900 |
+| 12 | 0.15 | no | 0.0225 |
+
+Mean Brier 0.193 over 12. Decision row: result.json with calibration records, so science step s02 assesses them. Caveat for s02 and the owner: the tree's judges (dramaturg, critic panel) ran on the producers' own model family, so the PASS and REJECT decisions are not cross-family checks.
