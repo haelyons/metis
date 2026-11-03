@@ -1,0 +1,319 @@
+{
+  "protocol": "CPU-standard PINDER evaluator calibration s03",
+  "protocol_sha256": "d0418f5fa82f3c7498fb802d249895b3f24ab347ed4ac45e5afacd3b8838eaab",
+  "cases": [
+    "1aua__A1_P24280--1aua__A2_P24280:apo",
+    "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+    "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+    "1nr5__A1_P07547--1nr5__A2_P07547:apo"
+  ],
+  "configuration": {
+    "implementation": "Published CPU-node OpenMP build, USE_GPU=0 USE_MPI=0; no CUDA or MPI docking.",
+    "rotation_angles": 3600,
+    "voxel_angstrom": 1.2,
+    "predictions": 50,
+    "predictions_per_rotation": 1,
+    "electrostatics_ratio": 1.0,
+    "hydrophobic_ratio": 1.0,
+    "receptor_core_penalty": -45.0,
+    "ligand_core_penalty": 1.0,
+    "function": 3,
+    "source": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+    "selection_source": {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    }
+  },
+  "pins": {
+    "megadock": "9575280c875732553266e26adc607dd892b02616",
+    "pinder": "ebeb28a2f8411363cef722b7d293c978f7442672"
+  },
+  "setup_checks": {
+    "pins": {
+      "megadock": "9575280c875732553266e26adc607dd892b02616",
+      "pinder": "ebeb28a2f8411363cef722b7d293c978f7442672"
+    },
+    "versions": {
+      "torch": "2.7.0",
+      "numpy": "1.26.4",
+      "biotite": "1.2.0",
+      "networkx": "3.4.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.7.2",
+      "pinder": "0.6.0"
+    },
+    "stock_torch_preserved": true,
+    "prepared_hashes_valid": true,
+    "cuda": {
+      "CUDACXX": "/usr/bin/nvcc",
+      "CUDA_INCLUDE_DIR": "/usr/include",
+      "CUDA_LIBRARY_DIR": "/usr/lib/x86_64-linux-gnu"
+    },
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "allocation_identity": {
+      "HOSTNAME": null,
+      "SLURM_JOB_ID": null
+    },
+    "historical_torch_changed": false
+  },
+  "native_self_smoke": {
+    "1aua__A1_P24280--1aua__A2_P24280:apo": {
+      "status": "complete",
+      "wall_s": 1.5207737800000132,
+      "lower_bound_s": null,
+      "n_scored": 1,
+      "measured": {
+        "calculation_wall_s": 0.6568292709999923,
+        "n_scored": 1,
+        "DockQ": [
+          1.0
+        ],
+        "check": "DESIGN native-self identity"
+      }
+    },
+    "1ax2__A1_P16404--1ax2__A2_P16404:apo": {
+      "status": "complete",
+      "wall_s": 1.3195484529999248,
+      "lower_bound_s": null,
+      "n_scored": 1,
+      "measured": {
+        "calculation_wall_s": 0.5329245970000329,
+        "n_scored": 1,
+        "DockQ": [
+          1.0
+        ],
+        "check": "DESIGN native-self identity"
+      }
+    },
+    "1dv1__A1_P24182--1dv1__B1_P24182:apo": {
+      "status": "complete",
+      "wall_s": 2.073365418000094,
+      "lower_bound_s": null,
+      "n_scored": 1,
+      "measured": {
+        "calculation_wall_s": 1.210018170000012,
+        "n_scored": 1,
+        "DockQ": [
+          1.0
+        ],
+        "check": "DESIGN native-self identity"
+      }
+    },
+    "1nr5__A1_P07547--1nr5__A2_P07547:apo": {
+      "status": "complete",
+      "wall_s": 1.8726917349999894,
+      "lower_bound_s": null,
+      "n_scored": 1,
+      "measured": {
+        "calculation_wall_s": 1.0705965790000391,
+        "n_scored": 1,
+        "DockQ": [
+          1.0
+        ],
+        "check": "DESIGN native-self identity"
+      }
+    }
+  },
+  "records": [
+    {
+      "case_id": "1aua__A1_P24280--1aua__A2_P24280:apo",
+      "block": 1,
+      "status": "complete",
+      "wall_s": 1.9228613379999615,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+      "block": 1,
+      "status": "complete",
+      "wall_s": 1.7721286510000027,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+      "block": 1,
+      "status": "complete",
+      "wall_s": 2.523940244000073,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1nr5__A1_P07547--1nr5__A2_P07547:apo",
+      "block": 1,
+      "status": "complete",
+      "wall_s": 2.4241988290000336,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1aua__A1_P24280--1aua__A2_P24280:apo",
+      "block": 2,
+      "status": "complete",
+      "wall_s": 1.9728683570000385,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+      "block": 2,
+      "status": "complete",
+      "wall_s": 1.6716432839999698,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+      "block": 2,
+      "status": "complete",
+      "wall_s": 2.4744124039999633,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1nr5__A1_P07547--1nr5__A2_P07547:apo",
+      "block": 2,
+      "status": "complete",
+      "wall_s": 2.4245986219999622,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1aua__A1_P24280--1aua__A2_P24280:apo",
+      "block": 3,
+      "status": "complete",
+      "wall_s": 1.9727401970000074,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+      "block": 3,
+      "status": "complete",
+      "wall_s": 1.6709842010000102,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+      "block": 3,
+      "status": "complete",
+      "wall_s": 2.5732721009999295,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1nr5__A1_P07547--1nr5__A2_P07547:apo",
+      "block": 3,
+      "status": "complete",
+      "wall_s": 2.3737846799999716,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1aua__A1_P24280--1aua__A2_P24280:apo",
+      "block": 4,
+      "status": "complete",
+      "wall_s": 1.9727056419999371,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+      "block": 4,
+      "status": "complete",
+      "wall_s": 1.7226896569999326,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+      "block": 4,
+      "status": "complete",
+      "wall_s": 2.475002398000015,
+      "lower_bound_s": null,
+      "n_scored": 50
+    },
+    {
+      "case_id": "1nr5__A1_P07547--1nr5__A2_P07547:apo",
+      "block": 4,
+      "status": "complete",
+      "wall_s": 2.4244725789999393,
+      "lower_bound_s": null,
+      "n_scored": 50
+    }
+  ],
+  "T_s": 2.5732721009999295,
+  "per_case_maxima": {
+    "1aua__A1_P24280--1aua__A2_P24280:apo": 1.9728683570000385,
+    "1ax2__A1_P16404--1ax2__A2_P16404:apo": 1.7721286510000027,
+    "1dv1__A1_P24182--1dv1__B1_P24182:apo": 2.5732721009999295,
+    "1nr5__A1_P07547--1nr5__A2_P07547:apo": 2.4245986219999622
+  },
+  "allowance60_screen": "pass",
+  "scope": "CPU-standard-only",
+  "stage_walls": {
+    "docking_and_reconstruction_s": 45.19964612500007,
+    "anchors_elapsed_s": 92.87927559499997
+  },
+  "allocation_projection": {
+    "allocation_limit_s": 7200,
+    "stop_new_science_at_s": 5400,
+    "export_termination_reserve_s": 1800,
+    "hard_spend_USD": 10,
+    "historical_tariff_USD_per_h": 3.29,
+    "historical_tariff_is_current": false,
+    "current_tariff": null,
+    "current_tariff_reason": "Must verify compatible current allocation tariff/taxes/termination projection before launch.",
+    "projected_all_in_USD": 8,
+    "projection_source": {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    },
+    "launch_gate": "Verify watchdog, stop wrapper and bounded termination; no launch if projection > USD10 or cannot remain strictly below USD20. Stop at 2 allocated hours or USD10, whichever first. No paid persistent filesystem or replacement rental.",
+    "invoice": null,
+    "invoice_reason": "No allocation performed during intake."
+  },
+  "allocation_receipts": null,
+  "current_tariff": null,
+  "invoice": null,
+  "lifecycle_assurance": "External operator obligation; not verified by harness",
+  "primary_timing_scope": "Parent monotonic immediately before fresh child creation through successful child exit and CSV existence/size check. Includes interpreter/import, reading all 50 poses plus native, calculate(), validate 50 unique model_1..model_50 and finite DockQ, serialize and flush full CSV.",
+  "script_hashes": {
+    "harness/box_probe.sh": "1de4ea9b0fcda2cc00a9c577b4d97115459dc182a29ddd01116f955792c7ce6b",
+    "harness/run_evaluation.sh": "e30f267190721fff012aaf474ca1df561847ad6c2aafe192166b4c18f6b389c8",
+    "harness/run_anchors.sh": "9ee60aa2179e471a2b1cd0f4fb8b485e6158ba4f6165e001b276408f630cded7",
+    "harness/setup.sh": "bd1cdda6761b73ff7536b7be04c17e856c69df4bb79769471eaa42c5770af84d",
+    "harness/run_command.sh": "cb9c1c7027a83c79f9b6928ba65d2f48b018b17a644918e5374dcbe842c846fc"
+  }
+}

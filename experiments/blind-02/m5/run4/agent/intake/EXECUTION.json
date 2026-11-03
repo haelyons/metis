@@ -1,0 +1,95 @@
+{
+  "representative_scale": {
+    "cases": [
+      "1aua__A1_P24280--1aua__A2_P24280:apo",
+      "1ax2__A1_P16404--1ax2__A2_P16404:apo",
+      "1dv1__A1_P24182--1dv1__B1_P24182:apo",
+      "1nr5__A1_P07547--1nr5__A2_P07547:apo"
+    ],
+    "configuration": "CPU standard, fixed 3600 rotations, 26 OpenMP threads; one serial docking run per case retaining 50 predictions. Four serial evaluator blocks visiting all cases in listed order, one fresh Python subprocess each: exactly 16 evaluations of 50 poses.",
+    "hardware_target": "One H100 PCIe 80GB allocation, 26-logical-CPU host entitlement; GPU remains idle during CPU docking.",
+    "scale_search": false
+  },
+  "inputs": {
+    "manifest": "data.json cases, required_inputs, historical_prepared_sha256",
+    "pins": "baseline.json",
+    "evaluation_only": "Native bound references never accessed by docking command harness. Fixed native and decoy receptor R / ligand L; parallel_io=False.",
+    "environment": {
+      "OMP_NUM_THREADS": "26",
+      "OMP_DYNAMIC": "FALSE",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "LC_ALL": "C",
+      "LANG": "C"
+    },
+    "CUDA_MPS": "Preserve inherited CUDA_MPS_* unchanged; no daemon management."
+  },
+  "outputs": {
+    "primary": "out/calibration.json",
+    "fields": [
+      "protocol identity/hash",
+      "cases/configuration",
+      "pins",
+      "setup checks",
+      "native-self smoke values",
+      "16 records {case_id,block,status,wall_s or null,lower_bound_s or null,n_scored}",
+      "T_s or null",
+      "per-case maxima",
+      "allowance60_screen pass|fail|unknown",
+      "CPU-standard-only scope",
+      "stage walls",
+      "allocation projection and receipts"
+    ],
+    "retained": "All 200 ranked PDB complexes, docking output/logs, 16 full evaluator CSVs, raw timings, failures, manifests and source/input/native/script/binary/dependency hashes. Preserve endpoint values without quality verdicts."
+  },
+  "timing_scope": {
+    "primary": "Parent monotonic immediately before fresh child creation through successful child exit and CSV existence/size check. Includes interpreter/import, reading all 50 poses plus native, calculate(), validate 50 unique model_1..model_50 and finite DockQ, serialize and flush full CSV.",
+    "excluded": "Setup/install, docking/reconstruction, operator retrieval/export; separately time and charge allocation wall.",
+    "secondary": "Calculation-only wall, docking printed timers, invocation-to-last-pose wall; never replace complete child wall.",
+    "child_timeout_s": 180,
+    "timeout_rule": "Process-group cleanup; preserve partial artifacts. Timeout is right-censored lower bound, T unknown, allowance failed if evaluator lower bound exceeds 60; never replace completed wall with 180. Continue fixed remaining attempts only within lifecycle budget.",
+    "scoring": "T=max(all 16 complete child walls); any valid >60 witness falsifies allowance despite later failure. All 16 <=60 passes provisionally only with valid setup/pins/smokes. Invalid/missing rows, nonfinite values, bad identity or timing means inconclusive without valid falsifying witness."
+  },
+  "checks_before_timing": [
+    "Verify raw and all eight generated prepared hashes; capture actual binary/dependency identities and fixed reference correspondence.",
+    "Four header lines plus 50 finite seven-field ranked rows; positive actual grid, voxel 1.2 and standard sampling; 50 readable nonempty complexes with expected R/L chains and atom inventory.",
+    "Native-self evaluator smoke per case: DockQ 1 within 1e-6, fixed DESIGN criterion, failure stops benchmark."
+  ],
+  "harness_contract": {
+    "run_command.sh": "Only four serial CPU-standard docking jobs once each, reconstruct all 50 complexes per case; no evaluator import/native access.",
+    "run_anchors.sh": "Invoke bash harness/run_command.sh exactly once, then checks and evaluator calibration. Empty published anchors remain empty.",
+    "stop": "External --stop-after-reproduce wrapper must stop after setup/anchors/freeze; no later scientific pipeline stages.",
+    "source": {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    }
+  },
+  "budget": {
+    "allocation_limit_s": 7200,
+    "stop_new_science_at_s": 5400,
+    "export_termination_reserve_s": 1800,
+    "hard_spend_USD": 10,
+    "historical_tariff_USD_per_h": 3.29,
+    "historical_tariff_is_current": false,
+    "current_tariff": null,
+    "current_tariff_reason": "Must verify compatible current allocation tariff/taxes/termination projection before launch.",
+    "projected_all_in_USD": 8,
+    "projection_source": {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    },
+    "launch_gate": "Verify watchdog, stop wrapper and bounded termination; no launch if projection > USD10 or cannot remain strictly below USD20. Stop at 2 allocated hours or USD10, whichever first. No paid persistent filesystem or replacement rental.",
+    "invoice": null,
+    "invoice_reason": "No allocation performed during intake."
+  },
+  "stage_budgets_s": null,
+  "stage_budgets_reason": "No new per-script estimates or overrides invented; owner lifecycle and 180-second child limits apply. Supplied argument budgets empty; defaults remain unless harness explicitly enforces tighter lifecycle.",
+  "source": {
+    "path": "brief.md",
+    "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+    "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+  }
+}

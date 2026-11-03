@@ -1,0 +1,98 @@
+{
+  "identity": {
+    "name": "MEGADOCK CPU-standard / pinned PINDER evaluator runtime calibration s03",
+    "brief": {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    },
+    "scope": "Four-case pilot; only CPU standard. Fresh descriptive calibration using published docking code/commands and public pinned inputs; not an independently published evaluator timing benchmark."
+  },
+  "found": true,
+  "outcome_definition": {
+    "primary": "T=max of 16 complete evaluator child-process wall times, four fixed serial blocks x four cases.",
+    "criterion": "All 16 valid complete timings <=60 seconds retains candidate provisionally. Any valid complete wall or confirmed evaluator-only elapsed lower bound >60 rejects unchanged allowance. Otherwise unknown.",
+    "threshold_provenance": "Owner-defined screen in brief, not published anchor.",
+    "limitations": "CPU-standard outputs only. No CPU/GPU agreement verdict, dense-search quality inference, biological efficacy claim, or full card_number_resolved."
+  },
+  "citations": [
+    {
+      "citation": "Ohue et al. MEGADOCK 4.0, Bioinformatics 30(22):3281-3283 (2014)",
+      "url": "https://doi.org/10.1093/bioinformatics/btu532",
+      "source": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/README.md"
+    },
+    {
+      "citation": "Pinned PINDER source README and evaluator; release 2024-02",
+      "url": "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    },
+    {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    }
+  ],
+  "source_licences": [
+    {
+      "item": "MEGADOCK code",
+      "licence": "CC-BY-NC-4.0",
+      "basis": "explicit",
+      "source": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/README.md",
+      "intended_use": "Local scientific runtime calibration; noncommercial use permitted subject to attribution. Commercial authorization not established; brief does not establish commercial status."
+    },
+    {
+      "item": "PINDER evaluator code",
+      "licence": "Apache-2.0",
+      "basis": "explicit",
+      "source": "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+      "intended_use": "Execution and modification permitted under Apache-2.0 conditions."
+    },
+    {
+      "item": "PINDER release 2024-02 index and selected PDB inputs/native references",
+      "licence": null,
+      "basis": "none",
+      "source": [
+        "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+        "https://pinderdata.org/2024-02/"
+      ],
+      "reason": "Retrieved repository README and LICENSE establish code licence but do not explicitly establish coverage of externally hosted index and structures. No applicable input terms found in bounded inspection. Owner mirror authorization is not a licence grant from input rights holders."
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "none",
+  "stock_CUDA_image": {
+    "stock_environment": true,
+    "evidence": [
+      "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+      {
+        "path": "brief.md",
+        "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+        "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+      }
+    ],
+    "reason": "Provisionally feasible: published CPU/OpenMP backend requires GNU compiler and float FFTW, not GPU build; supplied historical stock setup succeeded with CPU MEGADOCK and same pinned evaluator. Actual compatibility, entitlement and dependency identities require reproduction.",
+    "actual_image_digest": null,
+    "actual_image_digest_reason": "No immutable stock image digest supplied."
+  },
+  "memory": {
+    "required_source_bytes": 127312981,
+    "data_GiB": 0.1185694532468915,
+    "peak_working_set_GiB": null,
+    "data_plus_peak_working_set_GiB": null,
+    "size": "unknown",
+    "reason": "Source bytes known; preparation, output storage and peak host working set unmeasured. H100 80GB capacity is not workload memory measurement."
+  },
+  "scoring_and_repeatability": {
+    "independent_anchors": 0,
+    "published_values": null,
+    "reason": "No independently published result for these four cases at this endpoint in supplied evidence. No substitute benchmarks searched. Design smoke and 60-second owner screen are not anchors.",
+    "protocol": "See EXECUTION.json. Retain all 16 timings including first block, no warmup exclusions, cache flushing, added repeats or retries beyond bounded infrastructure rules.",
+    "smoke": "Per-case native-self DockQ 1 within 1e-6; DESIGN identity check prescribed in brief, not independent validation."
+  },
+  "search_candidates": [],
+  "contract_gaps": [
+    "Fresh harness must place descriptive calibration artifacts under out/ without synthetic anchors. Intake anchors remain empty.",
+    "External stop-after-reproduce wrapper, watchdog, compatible tariff and bounded termination not verified by intake; verify before paid work. No profile, seal, propose, implement or evaluate continuation."
+  ],
+  "current_results": null,
+  "current_results_reason": "Intake performs no build or scientific workload."
+}

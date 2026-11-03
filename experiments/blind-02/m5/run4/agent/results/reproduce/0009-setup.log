@@ -1,0 +1,288 @@
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+HEAD is now at 9575280 upgrade FFTW version
+HEAD is now at ebeb28a Migrate dataset hosting to R2 (#48)
+make: Entering directory '/tmp/m5-e160ec2e-0f04-4a5b-9698-3b87de9bbb7a/baseline-published/megadock'
+mkdir -p obj_cs
+--------------------------
+make megadock start
+--------------------------
+/usr/bin/g++ -fPIC -fopenmp -o ./megadock obj_cs/control.cpp.o obj_cs/cpu_time.cpp.o obj_cs/docking.cpp.o obj_cs/parameter.cpp.o obj_cs/pdb_entry.cpp.o obj_cs/protein.cpp.o obj_cs/receptor.cpp.o obj_cs/ligand.cpp.o obj_cs/fft_process.cpp.o obj_cs/main.cpp.o -lm -L/usr/lib/x86_64-linux-gnu -lfftw3f
+make: Leaving directory '/tmp/m5-e160ec2e-0f04-4a5b-9698-3b87de9bbb7a/baseline-published/megadock'
+Requirement already satisfied: setuptools>=65.4 in ./baseline-published/venv/lib/python3.10/site-packages (84.2.1)
+Requirement already satisfied: setuptools_scm>=8 in ./baseline-published/venv/lib/python3.10/site-packages (10.3.4)
+Requirement already satisfied: packaging in ./baseline-published/venv/lib/python3.10/site-packages (26.3)
+Requirement already satisfied: wheel in /usr/lib/python3/dist-packages (0.37.1)
+Requirement already satisfied: build==0.10.0 in ./baseline-published/venv/lib/python3.10/site-packages (0.10.0)
+Requirement already satisfied: tomli>=1.1.0 in ./baseline-published/venv/lib/python3.10/site-packages (from build==0.10.0) (2.5.0)
+Requirement already satisfied: pyproject_hooks in ./baseline-published/venv/lib/python3.10/site-packages (from build==0.10.0) (1.3.3)
+Requirement already satisfied: typing-extensions>=4.1 in ./baseline-published/venv/lib/python3.10/site-packages (from setuptools_scm>=8) (4.16.0)
+Requirement already satisfied: vcs-versioning<3,>=2.5.0.dev0 in ./baseline-published/venv/lib/python3.10/site-packages (from setuptools_scm>=8) (2.6.0)
+Processing ./baseline-published/pinder
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: fire in ./baseline-published/venv/lib/python3.10/site-packages (0.7.1)
+Requirement already satisfied: networkx in ./baseline-published/venv/lib/python3.10/site-packages (3.4.2)
+Requirement already satisfied: numpy<2 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (1.26.4)
+Requirement already satisfied: typing_extensions in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (4.16.0)
+Requirement already satisfied: torch in /usr/lib/python3/dist-packages (from pinder==0.6.0) (2.7.0)
+Requirement already satisfied: torchtyping in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (0.1.5)
+Requirement already satisfied: tqdm in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (4.70.1)
+Requirement already satisfied: fastpdb in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (1.3.3)
+Requirement already satisfied: biotite<1.7,>=1.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (1.2.0)
+Requirement already satisfied: pandas in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (2.3.3)
+Requirement already satisfied: torch_geometric in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (2.8.1)
+Requirement already satisfied: nbformat in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (5.11.1)
+Requirement already satisfied: scikit-learn in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (1.7.2)
+Requirement already satisfied: pyarrow>=12.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (25.0.1)
+Requirement already satisfied: typeguard==2.13.3 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (2.13.3)
+Requirement already satisfied: PyYAML in /usr/lib/python3/dist-packages (from pinder==0.6.0) (5.4.1)
+Requirement already satisfied: pydantic>=2.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (2.14.2)
+Requirement already satisfied: plotly in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (7.1.0)
+Requirement already satisfied: tabulate in ./baseline-published/venv/lib/python3.10/site-packages (from pinder==0.6.0) (0.10.0)
+Requirement already satisfied: termcolor in /usr/lib/python3/dist-packages (from fire) (1.1.0)
+Requirement already satisfied: requests>=2.12 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.6.0) (2.25.1)
+Requirement already satisfied: biotraj<2.0,>=1.0 in ./baseline-published/venv/lib/python3.10/site-packages (from biotite<1.7,>=1.0->pinder==0.6.0) (1.2.2)
+Requirement already satisfied: packaging>=24.0 in ./baseline-published/venv/lib/python3.10/site-packages (from biotite<1.7,>=1.0->pinder==0.6.0) (26.3)
+Requirement already satisfied: msgpack>=0.5.6 in /usr/lib/python3/dist-packages (from biotite<1.7,>=1.0->pinder==0.6.0) (1.0.3)
+Requirement already satisfied: annotated-types>=0.6.0 in ./baseline-published/venv/lib/python3.10/site-packages (from pydantic>=2.0->pinder==0.6.0) (0.8.0)
+Requirement already satisfied: typing-inspection>=0.4.4 in ./baseline-published/venv/lib/python3.10/site-packages (from pydantic>=2.0->pinder==0.6.0) (0.4.4)
+Requirement already satisfied: pydantic-core==2.50.2 in ./baseline-published/venv/lib/python3.10/site-packages (from pydantic>=2.0->pinder==0.6.0) (2.50.2)
+Requirement already satisfied: jupyter-core!=5.0.*,>=4.12 in ./baseline-published/venv/lib/python3.10/site-packages (from nbformat->pinder==0.6.0) (5.9.1)
+Requirement already satisfied: jsonschema>=2.6 in /usr/lib/python3/dist-packages (from nbformat->pinder==0.6.0) (3.2.0)
+Requirement already satisfied: fastjsonschema>=2.15 in ./baseline-published/venv/lib/python3.10/site-packages (from nbformat->pinder==0.6.0) (2.22.3)
+Requirement already satisfied: traitlets>=5.1 in ./baseline-published/venv/lib/python3.10/site-packages (from nbformat->pinder==0.6.0) (5.16.1)
+Requirement already satisfied: python-dateutil>=2.8.2 in ./baseline-published/venv/lib/python3.10/site-packages (from pandas->pinder==0.6.0) (3.0.0)
+Requirement already satisfied: tzdata>=2022.7 in ./baseline-published/venv/lib/python3.10/site-packages (from pandas->pinder==0.6.0) (2026.6)
+Requirement already satisfied: pytz>=2020.1 in /usr/lib/python3/dist-packages (from pandas->pinder==0.6.0) (2022.1)
+Requirement already satisfied: narwhals>=1.15.1 in ./baseline-published/venv/lib/python3.10/site-packages (from plotly->pinder==0.6.0) (2.28.0)
+Requirement already satisfied: joblib>=1.2.0 in ./baseline-published/venv/lib/python3.10/site-packages (from scikit-learn->pinder==0.6.0) (1.6.0)
+Requirement already satisfied: threadpoolctl>=3.1.0 in /usr/lib/python3/dist-packages (from scikit-learn->pinder==0.6.0) (3.1.0)
+Requirement already satisfied: scipy>=1.8.0 in ./baseline-published/venv/lib/python3.10/site-packages (from scikit-learn->pinder==0.6.0) (1.15.3)
+Requirement already satisfied: xxhash in ./baseline-published/venv/lib/python3.10/site-packages (from torch_geometric->pinder==0.6.0) (4.0.2)
+Requirement already satisfied: jinja2 in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.6.0) (3.0.3)
+Requirement already satisfied: psutil>=5.8.0 in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.6.0) (5.9.0)
+Requirement already satisfied: fsspec in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.6.0) (2024.3.1)
+Requirement already satisfied: aiohttp in ./baseline-published/venv/lib/python3.10/site-packages (from torch_geometric->pinder==0.6.0) (3.14.5)
+Requirement already satisfied: pyparsing in /usr/lib/python3/dist-packages (from torch_geometric->pinder==0.6.0) (2.4.7)
+Requirement already satisfied: cloudpickle>=3.0 in ./baseline-published/venv/lib/python3.10/site-packages (from joblib>=1.2.0->scikit-learn->pinder==0.6.0) (3.1.2)
+Requirement already satisfied: platformdirs>=2.5 in /usr/lib/python3/dist-packages (from jupyter-core!=5.0.*,>=4.12->nbformat->pinder==0.6.0) (2.5.1)
+Requirement already satisfied: six>=1.6 in /usr/lib/python3/dist-packages (from python-dateutil>=2.8.2->pandas->pinder==0.6.0) (1.16.0)
+Requirement already satisfied: frozenlist>=1.1.1 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.6.0) (1.8.0)
+Requirement already satisfied: async-timeout<6.0,>=4.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.6.0) (5.0.1)
+Requirement already satisfied: multidict<8.0,>=4.5 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.6.0) (7.1.0)
+Requirement already satisfied: yarl<2.0,>=1.25.1 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.6.0) (1.25.1)
+Requirement already satisfied: attrs>=17.3.0 in /usr/lib/python3/dist-packages (from aiohttp->torch_geometric->pinder==0.6.0) (21.2.0)
+Requirement already satisfied: propcache>=0.2.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.6.0) (0.5.4)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.6.0) (2.7.1)
+Requirement already satisfied: aiosignal>=1.4.0 in ./baseline-published/venv/lib/python3.10/site-packages (from aiohttp->torch_geometric->pinder==0.6.0) (1.4.0)
+Requirement already satisfied: idna>=2.0 in /usr/lib/python3/dist-packages (from yarl<2.0,>=1.25.1->aiohttp->torch_geometric->pinder==0.6.0) (3.3)
+Building wheels for collected packages: pinder
+  Building wheel for pinder (pyproject.toml): started
+  Building wheel for pinder (pyproject.toml): finished with status 'done'
+  Created wheel for pinder: filename=pinder-0.6.0-py3-none-any.whl size=350642 sha256=e0d6f9c0e420783ffa60adc6913c69ff5114ebb1924d2ccac01f8c56165fab7d
+  Stored in directory: /tmp/pip-ephem-wheel-cache-rm8i37y_/wheels/c6/0f/1f/7807a0c7fc814e31415862234adfc3289e384d6f6b42f3e631
+Successfully built pinder
+Installing collected packages: pinder
+  Attempting uninstall: pinder
+    Found existing installation: pinder 0.6.0
+    Uninstalling pinder-0.6.0:
+      Successfully uninstalled pinder-0.6.0
+Successfully installed pinder-0.6.0
+{
+  "pins": {
+    "megadock": "9575280c875732553266e26adc607dd892b02616",
+    "pinder": "ebeb28a2f8411363cef722b7d293c978f7442672"
+  },
+  "versions": {
+    "torch": "2.7.0",
+    "numpy": "1.26.4",
+    "biotite": "1.2.0",
+    "networkx": "3.4.2",
+    "pandas": "2.3.3",
+    "scikit-learn": "1.7.2",
+    "pinder": "0.6.0"
+  },
+  "stock_torch_preserved": true,
+  "prepared_hashes_valid": true,
+  "cuda": {
+    "CUDACXX": "/usr/bin/nvcc",
+    "CUDA_INCLUDE_DIR": "/usr/include",
+    "CUDA_LIBRARY_DIR": "/usr/lib/x86_64-linux-gnu"
+  },
+  "affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25
+  ],
+  "allocation_identity": {
+    "HOSTNAME": null,
+    "SLURM_JOB_ID": null
+  },
+  "historical_torch_changed": false
+}
+g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0
+Copyright (C) 2021 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2025 NVIDIA Corporation
+Built on Fri_Feb_21_20:23:50_PST_2025
+Cuda compilation tools, release 12.8, V12.8.93
+Build cuda_12.8.r12.8/compiler.35583870_0
+Architecture:                         x86_64
+CPU op-mode(s):                       32-bit, 64-bit
+Address sizes:                        46 bits physical, 57 bits virtual
+Byte Order:                           Little Endian
+CPU(s):                               26
+On-line CPU(s) list:                  0-25
+Vendor ID:                            GenuineIntel
+Model name:                           Intel(R) Xeon(R) Platinum 8480+
+CPU family:                           6
+Model:                                143
+Thread(s) per core:                   1
+Core(s) per socket:                   1
+Socket(s):                            26
+Stepping:                             8
+BogoMIPS:                             4000.00
+Flags:                                fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ss syscall nx pdpe1gb rdtscp lm constant_tsc arch_perfmon rep_good nopl xtopology cpuid tsc_known_freq pni pclmulqdq vmx ssse3 fma cx16 pdcm pcid sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand hypervisor lahf_lm abm 3dnowprefetch cpuid_fault ssbd ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves avx_vnni avx512_bf16 wbnoinvd arat vnmi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b fsrm md_clear serialize tsxldtrk avx512_fp16 arch_capabilities
+Virtualization:                       VT-x
+Hypervisor vendor:                    KVM
+Virtualization type:                  full
+L1d cache:                            832 KiB (26 instances)
+L1i cache:                            832 KiB (26 instances)
+L2 cache:                             104 MiB (26 instances)
+L3 cache:                             416 MiB (26 instances)
+NUMA node(s):                         1
+NUMA node0 CPU(s):                    0-25
+Vulnerability Gather data sampling:   Not affected
+Vulnerability Itlb multihit:          Not affected
+Vulnerability L1tf:                   Not affected
+Vulnerability Mds:                    Not affected
+Vulnerability Meltdown:               Not affected
+Vulnerability Mmio stale data:        Unknown: No mitigations
+Vulnerability Reg file data sampling: Not affected
+Vulnerability Retbleed:               Not affected
+Vulnerability Spec rstack overflow:   Not affected
+Vulnerability Spec store bypass:      Mitigation; Speculative Store Bypass disabled via prctl
+Vulnerability Spectre v1:             Mitigation; usercopy/swapgs barriers and __user pointer sanitization
+Vulnerability Spectre v2:             Mitigation; Enhanced / Automatic IBRS; IBPB conditional; RSB filling; PBRSB-eIBRS SW sequence; BHI SW loop, KVM SW loop
+Vulnerability Srbds:                  Not affected
+Vulnerability Tsx async abort:        Mitigation; TSX disabled
+MemTotal:       231924760 kB
+MemFree:        227390164 kB
+MemAvailable:   228839120 kB
+Buffers:          143392 kB
+Cached:          2981876 kB
+SwapCached:            0 kB
+Active:           993220 kB
+Inactive:        2326724 kB
+Active(anon):     209216 kB
+Inactive(anon):        0 kB
+Active(file):     784004 kB
+Inactive(file):  2326724 kB
+Unevictable:       31616 kB
+Mlocked:           27616 kB
+SwapTotal:             0 kB
+SwapFree:              0 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:              3172 kB
+Writeback:             0 kB
+AnonPages:        226320 kB
+Mapped:           191224 kB
+Shmem:              5468 kB
+KReclaimable:     163928 kB
+Slab:             342832 kB
+SReclaimable:     163928 kB
+SUnreclaim:       178904 kB
+KernelStack:        9552 kB
+PageTables:         4524 kB
+SecPageTables:         0 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    115962380 kB
+Committed_AS:    1113188 kB
+VmallocTotal:   13743895347199 kB
+VmallocUsed:       53332 kB
+VmallocChunk:          0 kB
+Percpu:            19376 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+Unaccepted:            0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:      259952 kB
+DirectMap2M:     3934208 kB
+DirectMap1G:    233832448 kB
+	linux-vdso.so.1 (0x00007fffa09ae000)
+	libfftw3f.so.3 => /lib/x86_64-linux-gnu/libfftw3f.so.3 (0x00007727b1e00000)
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007727b1a00000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007727b20ea000)
+	libgomp.so.1 => /lib/x86_64-linux-gnu/libgomp.so.1 (0x00007727b20a0000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007727b2080000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007727b1600000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007727b2313000)
+4b85db6e261aad86d5069e8ea8eb77c079fef61ba5cf3556fc07d1756405e600  baseline-published/megadock/megadock
+74264710f22404c3817e589392a3b22bbc609bb7cb642c0b2daa389f76222187  baseline-published/megadock/decoygen
+ MEGADOCK ver. 4.1.3 for CPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+
+ Usage: megadock -R [receptor.pdb] -L [ligand.pdb] [more options]
+
+ Available options:
+  -o filename    : set the output filename (default to "$R-$L.out")
+  -O             : output docking detail files
+  -N integer     : set the number of output predictions (default to 2000)
+  -t integer     : set the number of predictions per each rotation (default to 1)
+  -F integer     : set the number of FFT point (default to none)
+  -v float       : set the voxel size (default to 1.2)
+  -D             : set the 6 deg. (54000 angles) of rotational sampling
+                   (default to none, 15 deg. (3600 angles) of rotational sampling)
+  -r integer     : set the number of rotational sampling angles 
+                   (54000: 54000 angles, 1: 1 angles, 24: 24 angles, default to 3600 angles)
+  -e float       : set the electrostatics term ratio (default to 1.0)
+  -d float       : set the hydrophobic term ratio (default to 1.0)
+  -a float       : set the rPSC receptor core penalty (default to -45.0)
+  -b float       : set the rPSC ligand core penalty (default to 1.0)
+  -f 1/2/3       : set function 
+                   (1: rPSC, 2: rPSC+Elec, 3: rPSC+Elec+RDE, default to 3)
+  -h             : show this message
+
+MEGADOCK help exit status: 255

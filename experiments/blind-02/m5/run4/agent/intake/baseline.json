@@ -1,0 +1,98 @@
+{
+  "repo": "https://github.com/akiyamalab/MEGADOCK",
+  "commit": "9575280c875732553266e26adc607dd892b02616",
+  "build_commands": [
+    "make -C baseline-published/megadock -j 8 USE_GPU=0 USE_MPI=0 \\\n    CPPCOMPILER=/usr/bin/g++ FFTW_INSTALL_PATH=/usr \\\n    FFTW_CFLAGS=-I/usr/include FFTW_LDFLAGS='-lm -L/usr/lib/x86_64-linux-gnu -lfftw3f'\npython3 -m venv --system-site-packages baseline-published/venv\nvpy=baseline-published/venv/bin/python\npython3 - <<'PY' > out/setup/constraints.txt\nimport torch\nprint('torch=='+torch.__version__)\nprint('numpy==1.26.4\\nbiotite==1.2.0\\nnetworkx==3.4.2\\npandas==2.3.3\\nscikit-learn==1.7.2')\nPY\n\"$vpy\" -m pip install 'setuptools>=65.4' 'setuptools_scm>=8' packaging wheel 'build==0.10.0'\n\"$vpy\" -m pip install --no-build-isolation -c out/setup/constraints.txt ./baseline-published/pinder fire networkx\n\"$vpy\" -m pip freeze > out/setup/pip-freeze.txt\n\"$vpy\" - <<'PY'\nimport torch\nfrom pinder.eval.dockq import BiotiteDockQ\nprint('Stock torch preserved:', torch.__version__)\nPY"
+  ],
+  "build_commands_source": {
+    "path": "brief.md",
+    "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+    "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+  },
+  "run_commands": [
+    "baseline-published/megadock/megadock -R data/inputs/<prefix>_R.pdb -L data/inputs/<prefix>_L.pdb -o out/<case>/docking.out -N 50 -t 1 -v 1.2 -e 1.0 -d 1.0 -a -45.0 -b 1.0 -f 3 -r 3600",
+    "./decoygen [decoy_filename] [used_ligand.pdb] [.outfile] [decoy no.]"
+  ],
+  "run_commands_sources": [
+    {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    },
+    "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+  ],
+  "published_configuration": {
+    "implementation": "Published CPU-node OpenMP build, USE_GPU=0 USE_MPI=0; no CUDA or MPI docking.",
+    "rotation_angles": 3600,
+    "voxel_angstrom": 1.2,
+    "predictions": 50,
+    "predictions_per_rotation": 1,
+    "electrostatics_ratio": 1.0,
+    "hydrophobic_ratio": 1.0,
+    "receptor_core_penalty": -45.0,
+    "ligand_core_penalty": 1.0,
+    "function": 3,
+    "source": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+    "selection_source": {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    }
+  },
+  "evaluator": {
+    "repo": "https://github.com/pinder-org/pinder",
+    "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "interface": "pinder.eval.dockq.BiotiteDockQ(...).calculate()",
+    "dependencies": {
+      "torch": "2.7.0",
+      "numpy": "1.26.4",
+      "biotite": "1.2.0",
+      "networkx": "3.4.2",
+      "pandas": "2.3.3",
+      "scikit-learn": "1.7.2"
+    },
+    "source": {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    },
+    "dependency_lock": "Historical freeze supplied in brief is evidence, not universally installable lock; setup records actual versions and byte hashes, reports changes and does not pool incompatible timings."
+  },
+  "build_status": "not run; actual stock paths and dependencies must be discovered during setup",
+  "version_uncertainty": "Historical executable printed 4.1.3 versus source tag 4.1.4; preserve exact source and measured binary identities.",
+  "licences": [
+    {
+      "item": "MEGADOCK code",
+      "licence": "CC-BY-NC-4.0",
+      "basis": "explicit",
+      "source": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/README.md",
+      "intended_use": "Local scientific runtime calibration; noncommercial use permitted subject to attribution. Commercial authorization not established; brief does not establish commercial status."
+    },
+    {
+      "item": "PINDER evaluator code",
+      "licence": "Apache-2.0",
+      "basis": "explicit",
+      "source": "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE",
+      "intended_use": "Execution and modification permitted under Apache-2.0 conditions."
+    },
+    {
+      "item": "PINDER release 2024-02 index and selected PDB inputs/native references",
+      "licence": null,
+      "basis": "none",
+      "source": [
+        "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+        "https://pinderdata.org/2024-02/"
+      ],
+      "reason": "Retrieved repository README and LICENSE establish code licence but do not explicitly establish coverage of externally hosted index and structures. No applicable input terms found in bounded inspection. Owner mirror authorization is not a licence grant from input rights holders."
+    }
+  ],
+  "sources": [
+    {
+      "path": "brief.md",
+      "sha256": "e597bbae4693f25fe0fbc7cd29704d14046694662f4e5cb0edde80c0ca5b0791",
+      "section": "Calibration request (science step s03) and Historical evidence supplied to close run3 intake failure"
+    },
+    "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+    "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+  ]
+}
