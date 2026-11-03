@@ -860,6 +860,39 @@ def main():
         check("takeaway without propose outcome has no Finding line",
               lambda: require(not finding_lines(anchored_text(root / "takeaway-plain")),
                               "Finding line without no_feasible_method"))
+        # SCHEMAS.md "Card calibration (U54)": reproduce facts add optional `card_inputs`,
+        # `card_measured`, `card_holds` and `card_refuted`, nonnegative integers; all four null
+        # outside card mode, on SKIPPED/stub records and without card_scored.json; records
+        # without them stay valid.
+        card_keys = ("card_inputs", "card_measured", "card_holds", "card_refuted")
+        cards = root / "card-totals"
+        check("accept reproduce without the four card totals",
+              lambda: accepted(cards, "reproduce", facts=FACTS["reproduce"]))
+        check("accept reproduce with the four card totals null",
+              lambda: accepted(cards, "reproduce",
+                               facts=dict(FACTS["reproduce"], **dict.fromkeys(card_keys))))
+        check("accept reproduce with the four card totals (3, 2, 1, 1)",
+              lambda: accepted(cards, "reproduce", facts=dict(
+                  FACTS["reproduce"], card_inputs=3, card_measured=2, card_holds=1, card_refuted=1)))
+        check("accept reproduce with the four card totals zero",
+              lambda: accepted(cards, "reproduce",
+                               facts=dict(FACTS["reproduce"], **dict.fromkeys(card_keys, 0))))
+        check("accept SKIPPED reproduce with null card totals",
+              lambda: accepted(cards, "reproduce", "SKIPPED",
+                               facts=dict.fromkeys(list(FACTS["reproduce"]) + list(card_keys))))
+        for key in card_keys:
+            for value in (0, 7, None):
+                check("accept reproduce %s=%r" % (key, value),
+                      lambda k=key, v=value: accepted(cards, "reproduce",
+                                                      facts=dict(FACTS["reproduce"], **{k: v})))
+            for value in (-1, -7, 1.5, 0.5, -0.5, True, False, math.nan, math.inf, "3", "",
+                          SENTINEL, [3], {key: 3}):
+                check("reject reproduce %s=%r" % (key, value),
+                      lambda k=key, v=value: rejected(invalid, stage="reproduce",
+                                                      facts=dict(FACTS["reproduce"], **{k: v})))
+            check("reject reproduce %s negative alongside valid totals" % key,
+                  lambda k=key: rejected(invalid, stage="reproduce", facts=dict(
+                      FACTS["reproduce"], **dict(dict.fromkeys(card_keys, 1), **{k: -1}))))
         check("reject unknown stage", lambda: rejected(
             invalid, stage=SENTINEL, facts=FACTS["intake"]))
         check("reject unknown status", lambda: rejected(

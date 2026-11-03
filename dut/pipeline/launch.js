@@ -134,7 +134,8 @@ if (M5) {
   const bi = rest.indexOf('--brief'), brief = bi >= 0 ? path.resolve(rest[bi + 1]) : undefined
   const tag = path.basename(ROOT)
   const raid = JSON.parse(fs.readFileSync(path.join(ROOT, 'control', 'raid.json'), 'utf8'))
-  fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify({ run_root: ROOT, brief, tag, raid: raid.raid, blind: raid.blind }, null, 1))
+  // pipeline_commit: the short commit RUN.md records, or null when unknown (U54); it changes no behaviour
+  fs.writeFileSync(path.join(RUN, 'args.json'), JSON.stringify({ run_root: ROOT, brief, tag, raid: raid.raid, blind: raid.blind, pipeline_commit: git(['rev-parse', '--short', 'HEAD']) || null }, null, 1))
   const flags = extra.filter((x, i, xs) => x !== '--blind' && !['--stage', '--run-root', '--brief', '--raid'].includes(x) && !['--stage', '--run-root', '--brief', '--raid'].includes(xs[i - 1]))
   cmd = node('wf.js', ['--config', 'm5/wf_config.json', '--script', path.join(COPY, 'm5', 'pipeline.js'), '--args', path.join(RUN, 'args.json'), '--name', `${tag}-m5`, '--out', RUN, '--profile', 'latent_skeptic', '--family', 'codex', '--mode', 'fallback', '--on-refusal', 'halt', ...flags])
 }
