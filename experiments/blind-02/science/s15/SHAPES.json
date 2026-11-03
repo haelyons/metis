@@ -1,0 +1,16 @@
+{"comparisons": [
+  {"id": "K1", "metric_origin": "cross_arm_outputs", "comparator": "elementwise_abs", "decision_unit": "per_input_all", "pairing": "paired_replicate", "interval": "all_pairs", "margin_form": "abs", "rel_base": "none", "reference_origin": "baseline_arm", "ratio_form": "none"},
+  {"id": "K2", "metric_origin": "cross_arm_outputs", "comparator": "other", "decision_unit": "per_input_all", "pairing": "paired_replicate", "interval": "all_pairs", "margin_form": "abs_plus_rel", "rel_base": "per_element", "reference_origin": "baseline_arm", "ratio_form": "none"},
+  {"id": "K3", "metric_origin": "cross_arm_outputs", "comparator": "elementwise_abs", "decision_unit": "per_input_all", "pairing": "paired_replicate", "interval": "all_pairs", "margin_form": "abs", "rel_base": "none", "reference_origin": "baseline_arm", "ratio_form": "none"},
+  {"id": "K4", "metric_origin": "trusted_wall", "comparator": "none", "decision_unit": "pooled_mean", "pairing": "paired_replicate", "interval": "bootstrap", "margin_form": "rel", "rel_base": "against_value", "reference_origin": "baseline_arm", "ratio_form": "ratio_of_means"},
+  {"id": "K5", "metric_origin": "trusted_wall", "comparator": "none", "decision_unit": "per_input_each", "pairing": "unpaired", "interval": "all_pairs", "margin_form": "none", "rel_base": "none", "reference_origin": "previous_run", "ratio_form": "none"},
+  {"id": "K6", "metric_origin": "sealed_extraction", "comparator": "none", "decision_unit": "per_input_each", "pairing": "unpaired", "interval": "all_pairs", "margin_form": "abs", "rel_base": "none", "reference_origin": "none", "ratio_form": "none"},
+  {"id": "K7", "metric_origin": "sealed_extraction", "comparator": "none", "decision_unit": "per_input_each", "pairing": "unpaired", "interval": "all_pairs", "margin_form": "abs", "rel_base": "none", "reference_origin": "none", "ratio_form": "none"}
+],
+"fixes": {
+  "inputs": ["one_input_per_invocation"],
+  "budget": ["design_sets_budget", "split_into_runs"],
+  "compute": ["per_invocation_rows", "exclude_overhead", "software_versions", "cpu_identity", "other"],
+  "leaks": ["adapter_no_metrics", "view_text_screened", "other"]
+}
+}
