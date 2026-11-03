@@ -19,8 +19,8 @@ WRITE_OK = [r"/m5/predictions/[\w.-]+\.md"]
 BASH_OK = [
     r"^bash ~/\.cache/blind01/retry\d+\.sh " + BLIND + r"/m5/run\d+ ",
     r"^python3 (~|/home/hal)/\.cache/blind01/blind_read\.py " + BLIND + r"/m5/run\d+$",
-    r"^python3 (~|/home/hal)/\.cache/blind01/new_run\.py " + BLIND + r"/m5/run\d+( --addendum(=intake_check_codex|=intake_acquire|=intake_mirror|=b01_materials)?)?"
-    r"( --harness-from=[A-Za-z0-9_]+)?( --stop-after-profile)?( --units-(check|probe)=run\d+)?$",
+    r"^python3 (~|/home/hal)/\.cache/blind01/new_run\.py " + BLIND + r"/m5/run\d+( --addendum(=intake_check_codex|=intake_acquire|=intake_mirror|=b01_materials)?| --brief-from=s\d\d)?"
+    r"( --harness-from=[A-Za-z0-9_]+)?( --stop-after-(profile|reproduce))?( --units-(check|probe)=run\d+)?$",
     r"^bash ~/\.cache/blind01/commit_run\.sh " + BLIND + r"/m5/run\d+ ",
 ]
 TOKEN = re.compile(r"[^\s'\"=;|&()<>]*" + NAME + r"[^\s'\"=;|&()<>]*")
