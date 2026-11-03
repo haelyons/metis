@@ -80,11 +80,52 @@ elif action == "measure":
 elif action == "m5":
     flags = n.get("new_run_flags", [])
     okf = isinstance(flags, list) and all(re.fullmatch(r"--(stop-after-(profile|reproduce)|units-(check|probe)=run\d+|harness-from=[A-Za-z0-9_]+)", f) for f in flags)
-    if set(n) != {"action", "brief", "new_run_flags"} or not re.fullmatch(r"[\w.-]+\.md", str(n.get("brief"))) \
-            or not os.path.isfile(os.path.join(D, str(n.get("brief")))) or not okf:
+    card, okc = n.get("card"), True
+    if card is not None:
+        # card calibration (m5 U54): the record must exist and need calibration; bands only on its required ids. Nothing of it prints.
+        try:
+            assert isinstance(card, dict) and set(card) <= {"tree_run", "key", "bands"} and {"tree_run", "key"} <= set(card)
+            assert re.fullmatch(r"\d{8}-\d{4}-tree", card["tree_run"]) and isinstance(card["key"], str) and card["key"]
+            res = json.load(open(os.path.join(os.path.dirname(os.path.dirname(D)), card["tree_run"], "out", "result.json")))
+            rec = [r for r in res.get("calibration", []) if r.get("key") == card["key"]]
+            assert len(rec) == 1 and rec[0].get("state") == "calibration_required"
+            ids = {u.get("id") for u in rec[0].get("required", [])}
+            b = card.get("bands", {})
+            assert isinstance(b, dict) and set(b) <= ids and all(isinstance(v, dict) and set(v) == {"abs"} and isinstance(v["abs"], (int, float))
+                                                                 and not isinstance(v["abs"], bool) and v["abs"] > 0 for v in b.values())
+            # U54: card mode never with units_check/units_probe; a reused harness must carry its card_extract.json.
+            assert isinstance(flags, list) and not any(str(f).startswith("--units-") for f in flags)
+            assert all(os.path.isfile(f"{X}/m5/{str(f).split('=', 1)[1]}/card_extract.json") for f in flags if str(f).startswith("--harness-from="))
+            # Agents never see the card's numbers (U54): the brief's calibration section must carry none of the record's
+            # numbers (values, bands, gates, predictions, anchor, cost). Integers 0..10 cannot be screened; counted only.
+            sec = open(os.path.join(D, str(n.get("brief")))).read().split("## Calibration request (science step", 1)
+            assert len(sec) == 2
+            nums = []
+            walk = lambda o: [walk(v) for v in (o.values() if isinstance(o, dict) else o)] if isinstance(o, (dict, list)) else \
+                nums.append(float(o)) if isinstance(o, (int, float)) and not isinstance(o, bool) and abs(o) < float("inf") else None
+            walk(rec[0]); walk(b)
+            hits = small = 0
+            for tok in re.findall(r"-?\d[\d,]*(?:\.\d+)?(?:[eE][-+]?\d+)?", sec[1]):
+                tok = tok.replace(",", "")
+                try:
+                    x = float(tok)
+                except ValueError:
+                    continue
+                d = len(tok.split(".")[1].split("e")[0].split("E")[0]) if "." in tok else 0
+                for v in nums:
+                    if abs(v) <= 10 and v == int(v) and d == 0:
+                        small += x == v
+                    elif abs(x - v) <= 0.5 * 10 ** -d and (d > 0 or abs(x) > 10):
+                        hits += 1
+            print("BRIEF_CARD_NUMBERS", hits, "small_int_unscreened", small)
+            assert hits == 0
+        except Exception:
+            okc = False
+    if set(n) - {"card"} != {"action", "brief", "new_run_flags"} or not re.fullmatch(r"[\w.-]+\.md", str(n.get("brief"))) \
+            or not os.path.isfile(os.path.join(D, str(n.get("brief")))) or not okf or not okc:
         bad("m5 next")
     else:
-        print("M5 flags", flags)
+        print("M5 flags", flags, "card" if card is not None else "no card", f"bands {len(card.get('bands', {}))}" if card is not None else "")
 elif action == "stop":
     if n.get("reason") not in ("no_justified_test", "needs_owner", "contract_gap", "limits") or set(n) != {"action", "reason"}:
         bad("stop reason")

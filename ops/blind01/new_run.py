@@ -14,7 +14,8 @@ A new experiment's run1 has no run1 to copy: it gets run1's keys (blind true, re
 (~/.cache/blind01/brief_template_<experiment>.sha256); the brief is checked by size and hash only, never read.
 
 --brief-from=sNN takes the brief a science step wrote (<experiment>/science/sNN/, the file its NEXT.json names, action
-m5); the step folder must be committed unchanged, and the other options must equal NEXT.json's new_run_flags.
+m5); the step folder must be committed unchanged, and the other options must equal NEXT.json's new_run_flags. When NEXT.json
+also names a tree card (`card`: tree_run, key, optional bands), the run calibrates it (args.card, m5 U54).
 Such a run is a calibration: args.run_ceiling_s 19800, to be launched with retry53.sh (6 h box, USD 20 cap). The brief is
 copied into <run_root>/brief/ and that folder is passed in args.add_dirs, so a Claude understudy can read it.
 
@@ -71,6 +72,14 @@ if science:
     open(root + "/brief/" + nxt["brief"], "wb").write(data)
     args["brief"], args["add_dirs"] = root + "/brief/" + nxt["brief"], [root + "/brief"]
     args["run_ceiling_s"] = 19800   # calibration runs (retry53.sh): box budgets end inside its 6 h lifetime
+    # Card calibration (U54): NEXT.json may name a tree card record; the key and bands pass through unprinted.
+    card = nxt.get("card")
+    if card is not None:
+        assert isinstance(card, dict) and set(card) <= {"tree_run", "key", "bands"} and {"tree_run", "key"} <= set(card), "card"
+        assert re.fullmatch(r"\d{8}-\d{4}-tree", card["tree_run"]) and isinstance(card["key"], str) and card["key"], "card"
+        result = m.group(1)[:-len("/m5")] + "/" + card["tree_run"] + "/out/result.json"
+        assert os.path.isfile(result) and git("ls-files", "--error-unmatch", "--", os.path.relpath(result, "/home/hal/dev/interp/metis")).returncode == 0, "card result not committed"
+        args["card"] = {"result": result, "key": card["key"], **({"bands": card["bands"]} if "bands" in card else {})}
 if harness:
     args["harness_from"] = m.group(1) + "/" + harness[0]
     assert all(os.path.isfile(os.path.join(args["harness_from"], n)) for n in ("setup.sh", "run_anchors.sh", "run_command.sh")), \
@@ -87,5 +96,5 @@ if stop_r:
     args["stub"] = {"profile": "SKIPPED"}
 os.makedirs(root, exist_ok=bool(science))
 json.dump(args, open(root + "/args.json", "w"), indent=2)
-print("created", "run" + m.group(3), sorted(args), "addendum brief" if addendum else "science step brief" if science else "original brief",
+print("created", "run" + m.group(3), sorted(args), "addendum brief" if addendum else ("science step brief" + (" + card" if "card" in args else "")) if science else "original brief",
       "harness reused" if harness else "fresh harness", "stops after profile" if stop else "stops after reproduce" if stop_r else "units check" if check else "units probe" if probe else "full chain")
