@@ -1,0 +1,19 @@
+{
+  "impression": "supported",
+  "run2_workload_finding": "workload_measured_and_menu_negative",
+  "question_open": "yes",
+  "parts_count": "four_or_more",
+  "parts_open": "most",
+  "candidates_count": "four_or_more",
+  "candidates_tree_expressible": "all",
+  "candidates_calibratable_existing": "some",
+  "cheapest_measurement_usd": "under_5",
+  "narrowing": "none",
+  "contract_gaps": "two_or_more",
+  "gap_blocks": "both",
+  "gap_location": "multiple",
+  "next_action": "tree",
+  "tree_roots": "one",
+  "seed_ideas": "four",
+  "prediction_count": "6_to_10"
+}
