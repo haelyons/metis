@@ -1,0 +1,1 @@
+{"seed_content": "none", "verdict": "sufficient", "next_action": "stop", "stop_reason": "contract_gap", "narrowing": "none", "prediction_count": "none"}
