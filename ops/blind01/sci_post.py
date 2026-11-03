@@ -121,8 +121,53 @@ elif action == "m5":
             assert hits == 0
         except Exception:
             okc = False
-    if set(n) - {"card"} != {"action", "brief", "new_run_flags"} or not re.fullmatch(r"[\w.-]+\.md", str(n.get("brief"))) \
-            or not os.path.isfile(os.path.join(D, str(n.get("brief")))) or not okf or not okc:
+    cmp, okd = n.get("comparison"), True
+    if cmp is not None:
+        # sealed comparison (m5 U57): the design file must be in the step folder, structurally a design; nothing of it
+        # prints but counts. The brief's comparison section and the agents' view text carry none of the sealed numbers.
+        try:
+            assert card is None and isinstance(cmp, dict) and set(cmp) == {"design"} and re.fullmatch(r"[\w.-]+\.json", str(cmp["design"]))
+            assert isinstance(flags, list) and not any(str(f).startswith("--units-") for f in flags)
+            d = json.load(open(os.path.join(D, cmp["design"])))
+            assert set(d) == {"arms", "inputs", "outputs", "metrics", "evaluator", "replicates", "warmup", "order_seed", "timeout_s",
+                              "budget_s", "bootstrap_seed", "bootstrap_resamples", "comparisons"}
+            assert 2 <= len(d["arms"]) <= 5 and [a.get("id") for a in d["arms"]] == [f"A{i}" for i in range(len(d["arms"]))]
+            assert 1 <= len(d["inputs"]) <= 10 and 1 <= len(d["metrics"]) <= 10 and len(d["comparisons"]) <= 12
+            assert isinstance(d["budget_s"], int) and not isinstance(d["budget_s"], bool) and 0 < d["budget_s"] < 19800
+            sealed = []
+            walk2 = lambda o: [walk2(v) for v in (o.values() if isinstance(o, dict) else o)] if isinstance(o, (dict, list)) else \
+                sealed.append(float(o)) if isinstance(o, (int, float)) and not isinstance(o, bool) and abs(o) < float("inf") else None
+            for c in d["comparisons"]:
+                walk2([c.get("margin"), c.get("threshold"), c.get("confidence"), c.get("reference")])
+            text = []
+            tw = lambda o: [tw(v) for v in (o.values() if isinstance(o, dict) else o)] if isinstance(o, (dict, list)) else \
+                text.append(str(o)) if isinstance(o, (str, int, float)) and not isinstance(o, bool) else None
+            for part in ("arms", "inputs", "outputs", "metrics"):
+                tw([{k: v for k, v in x.items() if k in ("what", "spec", "select", "commands", "env")} for x in d[part]])
+            tw(d["evaluator"] and {k: d["evaluator"].get(k) for k in ("what", "spec")})
+            sec = open(os.path.join(D, str(n.get("brief")))).read().split("## Comparison request (science step", 1)
+            assert len(sec) == 2
+            hits = small = 0
+            for where in (sec[1], "\n".join(text)):
+                for tok in re.findall(r"-?\d[\d,]*(?:\.\d+)?(?:[eE][-+]?\d+)?", where):
+                    tok = tok.replace(",", "")
+                    try:
+                        x = float(tok)
+                    except ValueError:
+                        continue
+                    dp = len(tok.split(".")[1].split("e")[0].split("E")[0]) if "." in tok else 0
+                    for v in sealed:
+                        if abs(v) <= 10 and v == int(v) and dp == 0:
+                            small += x == v
+                        elif abs(x - v) <= 0.5 * 10 ** -dp and (dp > 0 or abs(x) > 10):
+                            hits += 1
+            print("COMPARISON arms", len(d["arms"]), "inputs", len(d["inputs"]), "comparisons", len(d["comparisons"]),
+                  "replicates", d["replicates"], "budget_s", d["budget_s"], "| SEALED_NUMBERS_IN_VIEW_OR_BRIEF", hits, "small_int_unscreened", small)
+            assert hits == 0
+        except Exception:
+            okd = False
+    if set(n) - {"card", "comparison"} != {"action", "brief", "new_run_flags"} or not re.fullmatch(r"[\w.-]+\.md", str(n.get("brief"))) \
+            or not os.path.isfile(os.path.join(D, str(n.get("brief")))) or not okf or not okc or not okd:
         bad("m5 next")
     else:
         print("M5 flags", flags, "card" if card is not None else "no card", f"bands {len(card.get('bands', {}))}" if card is not None else "")

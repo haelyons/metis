@@ -15,7 +15,8 @@ A new experiment's run1 has no run1 to copy: it gets run1's keys (blind true, re
 
 --brief-from=sNN takes the brief a science step wrote (<experiment>/science/sNN/, the file its NEXT.json names, action
 m5); the step folder must be committed unchanged, and the other options must equal NEXT.json's new_run_flags. When NEXT.json
-also names a tree card (`card`: tree_run, key, optional bands), the run calibrates it (args.card, m5 U54).
+also names a tree card (`card`: tree_run, key, optional bands), the run calibrates it (args.card, m5 U54); when it names
+a design file of the step folder (`comparison`: {design}), the run is a sealed comparison (args.comparison, m5 U57).
 Such a run is a calibration: args.run_ceiling_s 19800, to be launched with retry53.sh (6 h box, USD 20 cap). The brief is
 copied into <run_root>/brief/ and that folder is passed in args.add_dirs, so a Claude understudy can read it.
 
@@ -80,6 +81,14 @@ if science:
         result = m.group(1)[:-len("/m5")] + "/" + card["tree_run"] + "/out/result.json"
         assert os.path.isfile(result) and git("ls-files", "--error-unmatch", "--", os.path.relpath(result, "/home/hal/dev/interp/metis")).returncode == 0, "card result not committed"
         args["card"] = {"result": result, "key": card["key"], **({"bands": card["bands"]} if "bands" in card else {})}
+    # Sealed comparison (U57): NEXT.json may name a design file in the step folder. The pipeline seals it into control/;
+    # it stays in the step folder, which comparison-mode isolation hides from every agent (the repository is hidden).
+    cmp = nxt.get("comparison")
+    if cmp is not None:
+        assert card is None and isinstance(cmp, dict) and set(cmp) == {"design"} and re.fullmatch(r"[\w.-]+\.json", str(cmp["design"])), "comparison"
+        assert not any(o.startswith("--units-") for o in options), "comparison with units"
+        assert git("ls-files", "--error-unmatch", "--", rel + "/" + cmp["design"]).returncode == 0, "design not committed"
+        args["comparison"] = {"design": step + "/" + cmp["design"]}
 if harness:
     args["harness_from"] = m.group(1) + "/" + harness[0]
     assert all(os.path.isfile(os.path.join(args["harness_from"], n)) for n in ("setup.sh", "run_anchors.sh", "run_command.sh")), \
@@ -95,6 +104,13 @@ if stop:
 if stop_r:
     args["stub"] = {"profile": "SKIPPED"}
 os.makedirs(root, exist_ok=bool(science))
-json.dump(args, open(root + "/args.json", "w"), indent=2)
-print("created", "run" + m.group(3), sorted(args), "addendum brief" if addendum else ("science step brief" + (" + card" if "card" in args else "")) if science else "original brief",
+if "card" in args:
+    # U54: no agent-readable copy of the arguments holds args.card (Codex review 2026-11-03). The full arguments go to
+    # control/args.json, which agents never read and retry53.sh passes to the pipeline; the run root's copy omits card.
+    os.makedirs(root + "/control", exist_ok=True)
+    json.dump(args, open(root + "/control/args.json", "w"), indent=2)
+    json.dump({k: v for k, v in args.items() if k != "card"}, open(root + "/args.json", "w"), indent=2)
+else:
+    json.dump(args, open(root + "/args.json", "w"), indent=2)
+print("created", "run" + m.group(3), sorted(args), "addendum brief" if addendum else ("science step brief" + (" + card" if "card" in args else "") + (" + comparison" if "comparison" in args else "")) if science else "original brief",
       "harness reused" if harness else "fresh harness", "stops after profile" if stop else "stops after reproduce" if stop_r else "units check" if check else "units probe" if probe else "full chain")

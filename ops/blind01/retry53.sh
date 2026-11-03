@@ -29,7 +29,8 @@ up=1; for i in 1 2 3; do
   timeout 7200 bash serve/lambda_serve.sh up --dev --types "gpu_1x_h100_pcie gpu_1x_a100_sxm4 gpu_1x_a100 gpu_1x_a10" --max-hours 6 --wait-capacity 180 >> $R/devbox_up.log 2>&1; up=$?
   echo "devbox up attempt $i exit $up"; [ $up = 0 ] && break; down; done
 [ $up = 0 ] || { echo BOX_UP_FAILED; echo CHAIN_DONE; exit 1; }
-timeout 20700 node idea/wf.js --config m5/wf_config.json --script m5/pipeline.js --args $R/args.json --out $R/agent/wf --profile latent_skeptic --family codex > $R/pipeline.log 2>&1; echo "pipeline exit $?"
+ARGS=$R/args.json; [ -f $R/control/args.json ] && ARGS=$R/control/args.json   # card runs (U54): full arguments under control/
+timeout 20700 node idea/wf.js --config m5/wf_config.json --script m5/pipeline.js --args $ARGS --out $R/agent/wf --profile latent_skeptic --family codex > $R/pipeline.log 2>&1; echo "pipeline exit $?"
 down; trap - EXIT
 commit "$MSG"
 bash $P/serve/lambda_serve.sh status 2>&1 | head -1
