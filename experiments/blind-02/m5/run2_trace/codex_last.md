@@ -1,0 +1,18 @@
+{
+  "stop_cause": "no_feasible_menu_method",
+  "propose_model_calls": "none",
+  "seal_predictions": "empty",
+  "seed_question_kind": "mixed",
+  "comparisons_requested": "four_or_more",
+  "comparisons_at_intake": "all",
+  "comparisons_changed": "some",
+  "comparisons_measured": "some",
+  "first_drop_stage": "reproduce",
+  "bottleneck": "undetermined",
+  "units_decomposable": "yes",
+  "units_in_harness": "no",
+  "curve_could_serve": "with_arms_from_seed",
+  "smallest_intervention": "contract_change",
+  "mechanism": "none",
+  "calibration_box_hours": "under_1"
+}
