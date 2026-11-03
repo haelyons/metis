@@ -1,0 +1,69 @@
+{
+  "items": [
+    {
+      "id": "P1",
+      "title": "Angular-search saturation at fixed output count",
+      "summary": "Proposed question: does wider rotational search improve rank1 and best50 DockQ when retained count stays 50 and complete-workflow budgets match? MEGADOCK documents 3,600 versus 54,000 rotations; these establish search sizes, not a quality scaling law (https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md).",
+      "root_link": "Bears directly on additional-search recovery and affordability, extending D/G comparison into search-saturation study (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md#problem-definition).",
+      "compute_open": "More parallel compute buys search width: largest rotation count documented by cited guide is 54,000, without a measured quality-versus-width curve; whether larger or differently distributed angular sets improve rank1 or best50 remains unknown and requires an explicit sampler extension (https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md).",
+      "sequential": "none: rotations already distribute across CPU threads and GPUs, so 54,000 rotations are independent search tasks, with local voxelization/FFT/solution dependencies rather than 54,000 dependent timesteps (https://doi.org/10.1093/bioinformatics/btu532). Proposed comparison needs four cases × two widths = eight docking runs per execution block; single-run GPU busy fraction remains unreported for these inputs, and further distribution pays only when work exceeds dispatch/merge overhead—existing MEGADOCK rotation distribution supplies nearest demonstrated implementation (https://doi.org/10.1093/bioinformatics/btu532).",
+      "source_urls": [
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md",
+        "https://doi.org/10.1093/bioinformatics/btu532"
+      ],
+      "narrowing": "Leaves agreement margins, provenance and controller repair aside; angular coverage tests rigid-body sampling sufficiency, while signed rank1/best50 effects test useful recovery under sealed budgets."
+    },
+    {
+      "id": "P2",
+      "title": "Candidate-pool width and native-blind reranking",
+      "summary": "Proposed question: does rescoring a wider candidate pool rescue rank1 while retaining 50 final poses? MEGADOCK exposes candidate counts and names ZRANK compatibility; ZRANK evaluated 54,000 ZDOCK predictions per case, so transfer requires testing (https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md; https://zlab.wenglab.org/zlab/publications/ZRANKpaper.pdf).",
+      "root_link": "Bears on rank1/best50 divergence and reported 1nr5 ranking loss, deliberately changing root's prohibition on reranking (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md#problem-definition).",
+      "compute_open": "More parallel compute buys rescored samples: largest evaluated ZRANK pool cited is 54,000 poses per case, while MEGADOCK guide's explicit PPI example retains 10,800; above those evidence points, whether more candidates improve native-blind top1/top50 or add scoring distractors remains unknown for these apo cases (https://zlab.wenglab.org/zlab/publications/ZRANKpaper.pdf; https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md).",
+      "sequential": "none: with scoring weights fixed, poses can receive independent energy scores before global sorting; ZRANK scores input structures without iterative minimization (https://zlab.wenglab.org/zlab/publications/ZRANKpaper.pdf). Proposed paired study needs eight upstream docking runs per block, followed by one rescoring evaluation per candidate per pool condition; cited implementation reports no GPU occupancy, and proposed GPU batching requires scoring work to exceed transfer and sorting costs (https://zlab.wenglab.org/zlab/publications/ZRANKpaper.pdf).",
+      "source_urls": [
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md",
+        "https://zlab.wenglab.org/zlab/publications/ZRANKpaper.pdf"
+      ],
+      "narrowing": "Changes selection protocol; rescored quality tests whether ranking, rather than absence of sampled near-native poses, limits recovery."
+    },
+    {
+      "id": "P3",
+      "title": "Apo-panel scaling and case-dependent benefit",
+      "summary": "Proposed question: do dense-search gains and ranking losses persist across a broader sealed apo panel? PINDER-XL lists 1,955 holo test pairs and 342 apo pairs; PINDER evaluation compares holo and apo performance (https://github.com/pinder-org/pinder; https://www.pinder.sh/blog/background).",
+      "root_link": "Bears on generality of signed quality effects, extending root's expressly four-case evidence boundary (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md#gated-prospective-design).",
+      "compute_open": "More parallel compute buys model runs across cases: cited PINDER evaluation reaches 342 apo pairs within a 1,955-pair holo panel but does not measure MEGADOCK C/G/D effects, leaving their distribution across those 342 cases and stability beyond that panel unknown (https://www.pinder.sh/blog/background; https://github.com/pinder-org/pinder).",
+      "sequential": "none: frozen cases and arms form independent docking jobs, matching MEGADOCK's MPI master/worker execution (https://doi.org/10.1093/bioinformatics/btu532). Proposed full listed apo panel needs 342 × three arms = 1,026 docking runs per block before pose evaluation, subject to input eligibility checks; single-run GPU busy fraction remains unreported, and concurrency requires matched resource accounting for proposed budget comparison (https://github.com/pinder-org/pinder).",
+      "source_urls": [
+        "https://github.com/pinder-org/pinder",
+        "https://www.pinder.sh/blog/background",
+        "https://doi.org/10.1093/bioinformatics/btu532"
+      ],
+      "narrowing": "Leaves exact-four-case replication separate; distribution of signed DockQ differences tests generality without counting deterministic repeats as new biological cases."
+    },
+    {
+      "id": "P4",
+      "title": "Sequential atomistic binding and conformational-path sampling",
+      "summary": "Proposed adjacent question: do flexible pathways reveal rearrangements missed by frozen-monomer docking? Weighted-ensemble barnase–barstar study generated 203 independent binding pathways; applicability to requested four cases requires testing (https://pubs.rsc.org/en/content/articlepdf/2019/sc/c8sc04811h).",
+      "root_link": "Bears on apo-input and rigid-transform search limitations, extending frozen-input comparison to physical rearrangement pathways (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md#identity-and-provenance-contract).",
+      "compute_open": "More parallel compute buys trajectory samples and ensemble members: cited association study reached 1,600 concurrent trajectories and 18 microseconds aggregate simulation; whether larger ensembles change pathway coverage or kinetic estimates, especially for these four untested systems, remains unknown (https://pubs.rsc.org/en/content/articlepdf/2019/sc/c8sc04811h).",
+      "sequential": "MD updates wait for prior coordinates/velocities: reported 2-fs timestep and 650 successive 20-ps WE intervals imply up to 6.5 million integration steps per lineage plus inter-interval resampling; one campaign started from 100 configurations × 16 trajectories, independent-campaign count needed for a new system remains undetermined, and reported CPU execution supplies no single-trajectory GPU busy fraction (https://pubs.rsc.org/en/content/articlepdf/2019/sc/c8sc04811h). Direct integration stays ordered; Parareal computes fine time slices concurrently with iterative boundary correction, paying only with cheap accurate coarse dynamics and few corrections—nearest cited trial used two simpler MD examples, not protein binding (https://doi.org/10.1103/PhysRevE.66.057701).",
+      "source_urls": [
+        "https://pubs.rsc.org/en/content/articlepdf/2019/sc/c8sc04811h",
+        "https://doi.org/10.1103/PhysRevE.66.057701"
+      ],
+      "narrowing": "Leaves execution equivalence and original fixed-budget comparison aside; pathway coverage and kinetics probe physical flexibility beyond rigid rotational search."
+    },
+    {
+      "id": "P5",
+      "title": "Fixed-batch docking latency through parallel execution",
+      "summary": "Settled execution example: MEGADOCK reported 98% strong-scaling efficiency at 420 versus 35 nodes for 30,976 docking jobs, demonstrating batch acceleration within measured regime (https://doi.org/10.1093/bioinformatics/btu532).",
+      "root_link": "Bears on execution acceleration; complete-workflow timing and allocation-dollar estimands still need their own measurements (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md#problem-definition).",
+      "compute_open": "settled: parallel hardware reduced fixed-batch docking latency through 420 nodes at 98% scaling efficiency; largest separate workload reported was one million jobs, completed in 11.51 hours, establishing execution acceleration rather than improved ranking or reduced allocation cost (https://doi.org/10.1093/bioinformatics/btu532).",
+      "sequential": "none: MPI distributes protein-pair jobs, while workers distribute rotations across CPU cores and GPUs; MEGADOCK itself supplies tested implementation (https://doi.org/10.1093/bioinformatics/btu532). Scaling study used 30,976 jobs and five timing measurements, with 12 CPU cores and three K20X GPUs per worker node; source does not report one run's fraction of a single GPU (https://doi.org/10.1093/bioinformatics/btu532).",
+      "source_urls": [
+        "https://doi.org/10.1093/bioinformatics/btu532"
+      ],
+      "narrowing": "Holds search breadth and scientific answer fixed; batch completion time measures execution latency, leaving dense-search recovery and fixed-cap affordability unresolved."
+    }
+  ]
+}

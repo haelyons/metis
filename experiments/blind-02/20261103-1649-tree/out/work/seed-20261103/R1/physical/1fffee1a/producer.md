@@ -1,0 +1,582 @@
+{
+  "option_title": "Angular-search saturation at fixed output count",
+  "question": "Does increasing rotations from 3600 to 54000 improve rank1 and best50 DockQ on four apo pairs within matched complete-workflow budgets?",
+  "hypothesis": "Denser angular search improves best50 DockQ by finding better poses, while fixed scoring can leave rank1 worse.",
+  "compute_axis": {
+    "quantity": "Rotational search width per docking job",
+    "unit": "rotations",
+    "levels": [
+      3600,
+      54000
+    ]
+  },
+  "held_fixed": [
+    "DESIGN: four PINDER 2024-02 apo cases: 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo.",
+    "DESIGN: 50 outputs, one prediction per rotation; same scoring, weights, voxel pitch, per-case FFT grid and tie policy. Recover historical resolved settings; no assumed defaults.",
+    "DESIGN: pin eight prepared monomers, four references, preparation code, source tree, patches, binaries including decoygen, compiler flags, FFTW/CUDA/cuFFT/OpenMP, DockQ/Python dependencies and container.",
+    "DESIGN: one H100 PCIe allocation; 26 OpenMP threads, fixed affinity, dynamic threads disabled, serial jobs. Freeze CPU topology, GPU UUID, driver, clock/power policy, MPS state and allocation/billing identity.",
+    "DESIGN: native references only for evaluation; no reranking, native-guided selection, extra poses or ensembles."
+  ],
+  "predictions": {
+    "if_lever": "At 54000 rotations, best50 DockQ rises beyond 0.01 and noise; rank1 changes separately, with both arms completing matched budgets.",
+    "if_not": "At 54000 rotations, best50 DockQ stays within 0.01 or noise, worsens, or fails matched budgets; rank1 may worsen.",
+    "decision_rule": "Per case and metric separately: benefit requires both scientific blocks' dense-minus-standard differences > max(quality_margin, sealed paired error bound); degradation uses negative threshold; otherwise small/unresolved. Affordability requires complete verified four-case portfolios within both sealed wall and dollar caps. Compare dense with GPU standard and CPU standard separately. No imputation for unavailable arms or average replacing opposed signs. Acceleration separately requires 95% lower confidence bound on median CPU/GPU workflow ratio >= speed_ratio.",
+    "noise_rule": "Seal independently justified FFT/arithmetic score bounds before fresh cross-backend comparison. Require exact ranked transform identities and generated pose bytes; score differences within certified absolute-plus-relative bounds; DockQ error <= dockq_tol. Ties crossing error intervals or cutoff ambiguity fail agreement. Both scientific blocks must reproduce quality differences beyond paired error. Seven paired randomized timing blocks; seed 20261103; 10000 paired block-bootstrap resamples, 95% interval. Repeats are not additional biological cases.",
+    "expected": "unsure",
+    "expected_why": "Previously exposed exploratory results motivate best50 gains with mixed rank1, but justified agreement margins and complete-workflow affordability remain unresolved; private provenance [context]."
+  },
+  "compute_tested": "yes",
+  "compute_tested_why": "Rotational width changes; retained predictions and scoring remain fixed. Existing GPU execution supplies parallelism. Two endpoints test additional-search recovery, not a saturation plateau.",
+  "scored_against": "Pinned native complexes evaluated with pinned DockQ [dockq]; report rank1 and maximum among 50 per case. CPU standard anchors GPU standard. Receipts reconciled with allocation ledger anchor cost.",
+  "arms": [
+    {
+      "id": "cpu_standard",
+      "what": "Existing megadock CPU, 3600 rotations, -N 50 -t 1; remaining scientific settings explicit and frozen."
+    },
+    {
+      "id": "gpu_standard",
+      "what": "Existing megadock-gpu, same 3600 rotations, -N 50 -t 1 and scientific settings."
+    },
+    {
+      "id": "gpu_dense",
+      "what": "Existing megadock-gpu with documented -D, 54000 rotations, -N 50 -t 1 [angles]. No sampler extension."
+    }
+  ],
+  "baseline": {
+    "what": "CPU standard anchors agreement and acceleration; GPU standard anchors added-search quality.",
+    "value": 3600,
+    "source_id": "angles"
+  },
+  "anchor": {
+    "what": "CPU standard anchors GPU poses and scores; independent transform reconstruction and DockQ fixtures validate evaluation before dense comparisons.",
+    "tolerance": "DESIGN: exact ranked transform identities and pose bytes; DockQ absolute error <= dockq_tol. Score absolute-plus-relative tolerances remain unset until independent arithmetic/FFT certification in numerical_gate. No tolerance derived from historical score maxima. Certification absent means agreement UNKNOWN and dense inference blocked.",
+    "independent_code": "Planned double-precision transform reconstruction and small-grid direct-correlation oracle; pinned DockQ checked on identical and displaced synthetic dimers and documented example. Not completed measurements.",
+    "source_id": "dockq"
+  },
+  "checks": [
+    "Implement immutable manifest, native access separation, arm/case/repetition scheduler, timeout controller and append-only ledger; exercise failure and termination paths offline before rental.",
+    "Recover missing prepared-byte hashes and resolve recorded source-tag/printed-version discrepancy before launch; private framing reports these gaps [context]. Hash retrieved inputs and references against recovered pins.",
+    "Require exactly 50 finite records per job; reconstruct every pose independently, preserve chains/atoms, compare grids, ranks and scores. Within-backend repeats diagnose determinism but cannot establish cross-backend systematic tolerance.",
+    "Recover historical chain mapping or seal a new uniform prospective policy, including symmetric homodimers. DockQ supports mapping selection [dockq]; never select mapping to favor dense output.",
+    "Time complete workflow from verified prepared-input staging through docking, pose generation, evaluation, validation and export. Report docking-only separately. Cold total adds acquisition/preparation/build/setup and all idle.",
+    "Uninstrumented primary timings; separate GPU diagnostic pass reports activity sampling interval, integrated sampled busy fraction and instrumentation overhead. Record CPU time, GPU identity, exits and allocation start/end.",
+    "Charge shared setup once in actual ledger and consistently to each counterfactual cold arm. Reconcile receipts without summing overlapping spans. Missing receipt means estimated cost.",
+    "Before fresh quality evaluation seal common four-case portfolio caps: round budget_factor times each arm's largest calibrated complete-workflow estimate upward to measured time/billing quantum, sort and deduplicate. Calibration uses synthetic scoring overhead. Seal matching dollar caps and cold/warm accounting separately.",
+    "Preserve negatives, failed agreement, missing outputs, overruns and unavailable budget arms. No adaptive extension or changed cap after quality inspection.",
+    "Reported route gaps, not independently audited: dut/pipeline/m5/SCHEMAS.md A/PREDICTIONS, Propose, Evaluate and adapter cannot express ordered agreement then changed-quality comparisons; m5/pipeline.js negative-menu exit lacks verified bounded calibration [context].",
+    "Reported handoff gaps: dut/pipeline/src/main.js omits arms/decision_rule; launch.js scalar estimate bands cannot establish scientific equivalence; measure stage needs design_args.json/numbered args and concrete controller. Establish design/gate/build/tests/review/launch/post arguments and carry immutable seal before rental [context].",
+    "All cost lines are DESIGN wall-clock time boxes for the whole one-GPU instance, including gaps/idle; no runtime guess or public benchmark is treated as a completion estimate. Total USD39.48 is the scheduled ceiling at quoted rate, with USD60.52 uncommitted below USD100. No guarantee that target yields finish.",
+    "Reprice actual billable quantum, tax and any mandatory storage before rental. Reserve termination/export inside the existing time and dollar caps; reduce work if charges change. Never silently spend the unused USD900."
+  ],
+  "phases": [
+    {
+      "id": "offline",
+      "what": "Planning only now. Before rental build manifest, fixture/oracle checks, scheduler, timer, ledger and controller; recover identities/settings.",
+      "stop_rule": "No rental until prepared hashes, build identities and controller handoffs resolved. No GPU execution in this planning task."
+    },
+    {
+      "id": "calibration",
+      "what": "Bounded native-blind calibration: setup/retrieval/build; one warmup plus three randomized blocks over four cases and three arms; synthetic scoring overhead, billing quantum and idle measurements. No full quality experiment.",
+      "stop_rule": "All-in projection strictly below cal_cap_usd before launch. Timer cal_hours includes setup/retrieval/idle/export. Stop at earlier time or money cap.",
+      "gate": {
+        "on": "projected_cal_usd",
+        "op": "<=",
+        "value": 19.99,
+        "else": "Do not launch; repair route or reduce scope and reseal."
+      }
+    },
+    {
+      "id": "numerical_gate",
+      "what": "Within-backend repeats, small-grid direct-correlation oracle, independent transform reconstruction and scorer fixtures; certify arithmetic/FFT score envelope before cross-backend comparison.",
+      "stop_rule": "Stop at anchor_hours. No independently justified numerical margins means agreement UNKNOWN; cancel dense inference."
+    },
+    {
+      "id": "seal",
+      "what": "Freeze configurations, numeric tolerances, ties, randomized timing schedule, budgets, noise rules and total cap before fresh native evaluation.",
+      "stop_rule": "Proceed only if conservative all-in projection fits budget_usd and remaining allocation timer."
+    },
+    {
+      "id": "comparison",
+      "what": "Run CPU/GPU standard first in both scientific blocks; every case must pass agreement. Then dense outputs and evaluation. Run one warmup plus seven randomized complete-workflow timing blocks.",
+      "stop_rule": "Stop at main_hours or remaining money/time. Failed agreement blocks dense inference. Missing repetitions stay missing; no adaptive extension."
+    },
+    {
+      "id": "export",
+      "what": "Export hashes, outputs, per-case quality/cap tables, diagnostics, phase ledger and receipts; terminate instance.",
+      "stop_rule": "Reserve export_hours. At soft_hours review progress and stop launching blocks that cannot finish with export reserve; never extend hard_hours. Hard termination or remaining-dollar exhaustion wins."
+    }
+  ],
+  "numbers": [
+    {
+      "id": "budget_usd",
+      "name": "Hard card spending cap, including all allocation phases",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 100
+    },
+    {
+      "id": "offered_usd",
+      "name": "User credit ceiling; not this card's spending authority",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 1000
+    },
+    {
+      "id": "standard_rot",
+      "name": "Documented standard angular count",
+      "unit": "rotations",
+      "basis": "CITED",
+      "value": 3600,
+      "source_id": "angles",
+      "quote": "6°刻みの場合54000通りの角度，15°刻みの場合3600通りの角度で計算します．",
+      "page_setting": "MEGADOCK standard angular set"
+    },
+    {
+      "id": "dense_rot",
+      "name": "Documented dense angular count",
+      "unit": "rotations",
+      "basis": "CITED",
+      "value": 54000,
+      "source_id": "angles",
+      "quote": "6°刻みの場合54000通りの角度，15°刻みの場合3600通りの角度で計算します．",
+      "page_setting": "MEGADOCK -D angular set"
+    },
+    {
+      "id": "width_ratio",
+      "name": "Angular width multiplier",
+      "unit": "ratio",
+      "basis": "DERIVED",
+      "expr": "dense_rot / standard_rot"
+    },
+    {
+      "id": "cases",
+      "name": "Frozen apo cases",
+      "unit": "cases",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "arms_n",
+      "name": "CPU standard, GPU standard and GPU dense",
+      "unit": "arms",
+      "basis": "DESIGN",
+      "value": 3
+    },
+    {
+      "id": "retained",
+      "name": "Output poses per completed job",
+      "unit": "poses",
+      "basis": "DESIGN",
+      "value": 50
+    },
+    {
+      "id": "per_rot",
+      "name": "Predictions per rotation",
+      "unit": "poses",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "threads",
+      "name": "OpenMP threads per job",
+      "unit": "threads",
+      "basis": "DESIGN",
+      "value": 26
+    },
+    {
+      "id": "prepared_files",
+      "name": "Prepared monomer byte pins",
+      "unit": "files",
+      "basis": "DESIGN",
+      "value": 8
+    },
+    {
+      "id": "reference_files",
+      "name": "Evaluation reference pins",
+      "unit": "files",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "cal_warm",
+      "name": "Excluded calibration warmup blocks",
+      "unit": "blocks",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "cal_reps",
+      "name": "Native-blind calibration blocks",
+      "unit": "blocks",
+      "basis": "DESIGN",
+      "value": 3
+    },
+    {
+      "id": "cal_jobs",
+      "name": "Calibration target, excluding synthetic checks",
+      "unit": "jobs",
+      "basis": "DERIVED",
+      "expr": "cases * arms_n * (cal_warm + cal_reps)"
+    },
+    {
+      "id": "timing_warm",
+      "name": "Excluded final timing warmup blocks",
+      "unit": "blocks",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "timing_reps",
+      "name": "Paired randomized final timing blocks",
+      "unit": "blocks",
+      "basis": "DESIGN",
+      "value": 7
+    },
+    {
+      "id": "science_reps",
+      "name": "Independent scientific execution blocks",
+      "unit": "blocks",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "final_jobs",
+      "name": "Final docking target, excluding synthetic checks",
+      "unit": "jobs",
+      "basis": "DERIVED",
+      "expr": "cases * arms_n * (timing_warm + timing_reps + science_reps)"
+    },
+    {
+      "id": "final_pose_evals",
+      "name": "Final pose evaluation target, including warmup",
+      "unit": "poses",
+      "basis": "DERIVED",
+      "expr": "final_jobs * retained"
+    },
+    {
+      "id": "quality_margin",
+      "name": "Chosen reporting margin, not biological validity threshold",
+      "unit": "DockQ",
+      "basis": "DESIGN",
+      "value": 0.01
+    },
+    {
+      "id": "dockq_tol",
+      "name": "Maximum allowed numerical disagreement in DockQ",
+      "unit": "DockQ",
+      "basis": "DESIGN",
+      "value": 0.000001
+    },
+    {
+      "id": "speed_ratio",
+      "name": "Minimum acceleration lower confidence bound",
+      "unit": "ratio",
+      "basis": "DESIGN",
+      "value": 1.05
+    },
+    {
+      "id": "ci_percent",
+      "name": "Paired block-bootstrap confidence",
+      "unit": "percent",
+      "basis": "DESIGN",
+      "value": 95
+    },
+    {
+      "id": "bootstrap_reps",
+      "name": "Fixed paired bootstrap resamples",
+      "unit": "resamples",
+      "basis": "DESIGN",
+      "value": 10000
+    },
+    {
+      "id": "schedule_seed",
+      "name": "Fixed randomization/bootstrap seed",
+      "unit": "integer",
+      "basis": "DESIGN",
+      "value": 20261103
+    },
+    {
+      "id": "budget_factor",
+      "name": "Calibrated maximum workflow safety multiplier",
+      "unit": "ratio",
+      "basis": "DESIGN",
+      "value": 1.25
+    },
+    {
+      "id": "cap_candidates",
+      "name": "Maximum common caps before deduplication",
+      "unit": "caps",
+      "basis": "DESIGN",
+      "value": 3
+    },
+    {
+      "id": "cal_hours",
+      "name": "All-in calibration allocation time box",
+      "unit": "hours",
+      "basis": "DESIGN",
+      "value": 3
+    },
+    {
+      "id": "anchor_hours",
+      "name": "Independent numerical gate allocation time box",
+      "unit": "hours",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "main_hours",
+      "name": "Final comparison allocation time box",
+      "unit": "hours",
+      "basis": "DESIGN",
+      "value": 6
+    },
+    {
+      "id": "export_hours",
+      "name": "Diagnostics/export/termination reserve",
+      "unit": "hours",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "cal_cap_usd",
+      "name": "Each later calibration projects strictly below this",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 20
+    },
+    {
+      "id": "cal_projection_limit",
+      "name": "Strict-cap launch gate rounded downward",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 19.99
+    },
+    {
+      "id": "h100_price",
+      "name": "Single-GPU H100 PCIe on-demand price",
+      "unit": "USD/GPU/hour",
+      "basis": "CITED",
+      "value": 3.29,
+      "source_id": "price",
+      "quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "page_setting": "1x NVIDIA H100 PCIe on-demand instance; supplied start-of-run sheet and fetched pricing table"
+    },
+    {
+      "id": "gpu_count",
+      "name": "GPUs per allocated instance",
+      "unit": "GPUs",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "projected_cal_usd",
+      "name": "Time-box calibration projection; reprice before launch",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "cal_hours * gpu_count * h100_price"
+    },
+    {
+      "id": "soft_hours",
+      "name": "Allocation soft-stop checkpoint",
+      "unit": "hours",
+      "basis": "DESIGN",
+      "value": 6
+    },
+    {
+      "id": "hard_hours",
+      "name": "Allocation hard termination",
+      "unit": "hours",
+      "basis": "DESIGN",
+      "value": 12
+    },
+    {
+      "id": "planned_hours",
+      "name": "Nonoverlapping whole-instance time boxes",
+      "unit": "hours",
+      "basis": "DERIVED",
+      "expr": "cal_hours + anchor_hours + main_hours + export_hours"
+    },
+    {
+      "id": "planned_usd",
+      "name": "Allocation time-box total",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "planned_hours * gpu_count * h100_price"
+    },
+    {
+      "id": "unspent_card_usd",
+      "name": "Uncommitted cap buffer; no extra spending line",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "budget_usd - planned_usd"
+    },
+    {
+      "id": "persistent_storage",
+      "name": "No paid persistent filesystem provisioned",
+      "unit": "GiB",
+      "basis": "DESIGN",
+      "value": 0
+    },
+    {
+      "id": "fs_usd_gib_month",
+      "name": "Unused user-supplied example; not verified current tariff",
+      "unit": "USD/GiB/month",
+      "basis": "DESIGN",
+      "value": 0.2
+    },
+    {
+      "id": "human_hours",
+      "name": "Reserved human effort outside GPU credit",
+      "unit": "person-hours",
+      "basis": "DESIGN",
+      "value": 24
+    },
+    {
+      "id": "external_money",
+      "name": "Planned paid services outside Lambda",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 0
+    }
+  ],
+  "cost": {
+    "rates": [
+      {
+        "id": "h100",
+        "gpu": "NVIDIA H100 PCIe",
+        "gpu_memory_gb": 80,
+        "n_gpus": 1,
+        "per_gpu_usd_h": 3.29
+      }
+    ],
+    "lines": [
+      {
+        "id": "cal_box",
+        "phase": "calibration",
+        "what": "All-in calibration including acquisition, build, idle and export",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "cal_hours"
+      },
+      {
+        "id": "anchor_box",
+        "phase": "numerical_gate",
+        "what": "Numerical certification and fixtures",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "anchor_hours"
+      },
+      {
+        "id": "main_box",
+        "phase": "comparison",
+        "what": "Agreement, quality and complete-workflow timings",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "main_hours",
+        "condition": "Only after numerical gate and seal; otherwise unused."
+      },
+      {
+        "id": "export_box",
+        "phase": "export",
+        "what": "Diagnostic/export/receipt/termination reserve",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "export_hours"
+      },
+      {
+        "id": "storage",
+        "phase": "export",
+        "what": "No persistent filesystem; local instance disk and export to existing workspace",
+        "kind": "storage",
+        "usd": "persistent_storage * fs_usd_gib_month"
+      }
+    ],
+    "yields": [
+      "cases",
+      "cal_jobs",
+      "final_jobs",
+      "final_pose_evals"
+    ],
+    "spend_cap_usd": 100,
+    "total_stated": 39.48
+  },
+  "full_scale": [],
+  "outside_budget": [
+    {
+      "what": "DESIGN reserved human engineering, provenance recovery, numerical review and reporting; not measured labor",
+      "qty": 24,
+      "unit": "person-hours"
+    },
+    {
+      "what": "DESIGN paid external services or compute; none planned",
+      "qty": 0,
+      "unit": "USD"
+    },
+    {
+      "what": "DESIGN offered Lambda credit outside this card's spending authority",
+      "qty": 900,
+      "unit": "USD"
+    }
+  ],
+  "restructuring": {
+    "sequential_part": "No 54000-step chain: independent angles retain local voxelization, FFT and solution dependencies [prior].",
+    "method": "none"
+  },
+  "scope_gap": [
+    "Only documented 3600 and 54000 endpoints: no saturation plateau, behavior beyond 54000, nested-set monotonicity or alternative angular samplers.",
+    "USD1000 offered, but stricter supplied USD100 card cap governs. Time boxes buy bounded attempts, not guaranteed completion. No additional GPU spend needed merely to exhaust credit.",
+    "Prepared payloads, historical reports and actual route code outside allowed reading scope were not inspected; reported gaps and exploratory exposure are inherited private context [context]."
+  ],
+  "novelty": {
+    "closest_prior": "MEGADOCK measured runtime through 1000000 docking jobs [prior]; guide documents 54000 rotations [angles], without fixed-50 DockQ width comparisons.",
+    "closest_source_id": "prior",
+    "prior_max_level": null,
+    "left_open": "Whether 54000 versus 3600 rotations improves rank1 or best50 on these four apo cases while completed workflows meet common budgets.",
+    "decides": "no",
+    "searched": true
+  },
+  "limits": "Four previously examined cases; prospective replication after exploratory exposure, not unseen validation. No biological efficacy, population generalization or saturation plateau.",
+  "test_summary": "Build sealed three-arm controller; validate CPU/GPU agreement at 3600 rotations, then compare GPU 54000 against GPU and CPU 3600 under common workflow caps, retaining 50 poses and separate per-case rank1/best50 DockQ.",
+  "sources": [
+    {
+      "id": "angles",
+      "url": "https://www.bi.cs.titech.ac.jp/megadock/usage_ja.html",
+      "quote": "6°刻みの場合54000通りの角度，15°刻みの場合3600通りの角度で計算します．",
+      "supports": "Official standard/dense angular counts; -D selects dense. Sizes, not a quality scaling law."
+    },
+    {
+      "id": "commands",
+      "url": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md",
+      "quote": "MEGADOCK parallelizes rotation calculations by using OpenMP.",
+      "supports": "Existing rotation parallelism; command table also documents CPU/GPU binaries, -N output count, -t per-rotation count and decoygen."
+    },
+    {
+      "id": "price",
+      "url": "https://lambda.ai/pricing",
+      "quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "supports": "Single-GPU on-demand PRICE/GPU/HR row, matching supplied start-of-run sheet; reprice before rental."
+    },
+    {
+      "id": "dockq",
+      "url": "https://raw.githubusercontent.com/bjornwallner/DockQ/master/README.md",
+      "quote": "By default, DockQ will try to find the optimal mapping between interfaces found in the native and in the model.",
+      "supports": "Model/native evaluation and mapping policy; README documents fixed mapping, example and JSON output."
+    },
+    {
+      "id": "prior",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4221127/",
+      "quote": "In this simulation, a half million docking jobs required 5.71 h, while a million jobs required 11.51 h.",
+      "supports": "Published large-batch runtime result on a different axis; no maximum rotation count established for those runs, hence null prior_max_level. Article also describes distributing ligand rotations across CPU cores and GPUs; plan uses existing implementation."
+    },
+    {
+      "id": "context",
+      "url": "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md",
+      "quote": "Run2 quality already seen; fresh runs cannot be unseen holdout or retrospective preregistration.",
+      "supports": "Private provenance only for reported identity, margin and controller gaps and prior exposure; not public evidence or new measurement."
+    }
+  ],
+  "files_read": [
+    "/home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/physical-widener.md",
+    "/home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md"
+  ]
+}

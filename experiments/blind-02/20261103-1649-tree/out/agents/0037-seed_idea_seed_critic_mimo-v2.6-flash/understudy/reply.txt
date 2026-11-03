@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 5,
+      "ref": "card:if_lever",
+      "reason": "Passing selects concurrent scheduling; failure deprioritizes it. Measured workflow speed and output equality directly govern that choice."
+    },
+    {
+      "criterion": "lever",
+      "value": 1,
+      "ref": "plan:predictions.noise_rule",
+      "reason": "Concurrency spans only 4×; noise rule never establishes that 1.05 exceeds timing noise. Two conditions fail or remain unknown."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 1,
+      "ref": "card:anchor",
+      "reason": "Frozen serial outputs and fresh baseline come from same docking method. Equality checks preservation, without independent truth or published-number reproduction."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:closest_prior",
+      "reason": "Published distributed scaling does not answer whether four fixed-thread jobs sharing one host improve workflow time."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:method",
+      "reason": "Only independent docking jobs run side by side; no dependency removed."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring method is none; criterion explicitly permits NA."
+    }
+  ],
+  "decides_by": "compare",
+  "decides_by_reason": "Comparison supplies both paired ratios and equality checks, or records mismatch and unavailable arms; fixed scheduling decision then applies."
+}

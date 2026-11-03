@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "A",
+      "title": "Numerical mechanism audit for CPU/GPU agreement",
+      "summary": "Propose comparing intermediate grids and FFT scores against independent small-grid direct correlations; locate backend divergence before deriving bounds. MEGADOCK publishes explicit correlation equations: https://www.bi.cs.titech.ac.jp/megadock/perform.html. Algorithm audit fits here; Goodfire-style neural feature extraction would require another model.",
+      "root_link": "Addresses missing independently justified C/G score, transform and cutoff-50 agreement margins in framer.",
+      "compute_open": "none",
+      "sequential": "none: proposed fixture × case × backend comparisons split into independent jobs after identities freeze; each local grid → correlation → comparison chain remains ordered, CPU reference needs zero GPU allocation, and GPU diagnostic occupancy remains unmeasured (https://www.bi.cs.titech.ac.jp/megadock/perform.html).",
+      "source_urls": [
+        "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md",
+        "https://www.bi.cs.titech.ac.jp/megadock/perform.html",
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md"
+      ],
+      "narrowing": "Leaves workflow speed, cost and biological validity aside; numerical discrepancies diagnose implementation agreement, but fixture success alone cannot certify full-input tolerances."
+    },
+    {
+      "id": "B",
+      "title": "Fixed-pose score attribution for dense-search ranking failures",
+      "summary": "Propose decomposing retained-pose scores into shape, electrostatic and desolvation contributions, identifying which terms favor dense rank1 over best50; published scoring equations specify these ingredients: https://www.bi.cs.titech.ac.jp/megadock/perform.html. Preserve original ranks; interventions remain separate diagnostics.",
+      "root_link": "Addresses dense best50 gains coexisting with rank1 losses, especially 1nr5, without changing prescribed C/G/D comparison.",
+      "compute_open": "none",
+      "sequential": "none: frozen outputs permit 600 independent pose audits—4 cases × 3 arms × 50 poses—followed by per-case reductions; proposed CPU evaluator needs zero GPU allocation, while optional GPU batching has unmeasured occupancy (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md; https://www.bi.cs.titech.ac.jp/megadock/perform.html).",
+      "source_urls": [
+        "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md",
+        "https://www.bi.cs.titech.ac.jp/megadock/perform.html",
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md"
+      ],
+      "narrowing": "Leaves unsaved poses and biological generalization aside; term contributions explain implemented score preferences rather than establish biological correctness or improved docking."
+    },
+    {
+      "id": "C",
+      "title": "Protein SAE annotations as scoped research extension",
+      "summary": "Goodfire trained Evo 2 SAEs on layer 26 (https://www.goodfire.com/research/interpreting-evo-2); InterPLM reports ESM-2 features associated with binding sites, motifs and domains (https://doi.org/10.1038/s41592-025-02836-7). Propose using protein-SAE annotations to nominate interface hypotheses; this extends research scope rather than resolving frozen MEGADOCK comparison.",
+      "root_link": "Bears indirectly on biological interpretation of case-specific outcomes through an additional learned representation outside frozen three-arm comparison.",
+      "compute_open": "none",
+      "sequential": "none: proposed analysis of already computed protein-SAE activations splits by protein and feature, needing zero GPU allocation and no training runs; unavailable activations require separate model inference whose GPU occupancy remains unmeasured, outside this option (https://doi.org/10.1038/s41592-025-02836-7).",
+      "source_urls": [
+        "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/R1/framer.md",
+        "https://www.goodfire.com/research/interpreting-evo-2",
+        "https://doi.org/10.1038/s41592-025-02836-7"
+      ],
+      "narrowing": "Leaves backend tolerances, runtime, controller and affordability aside; feature activations nominate interface concepts for independent testing, without proving causal docking mechanisms."
+    }
+  ]
+}

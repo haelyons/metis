@@ -1,0 +1,576 @@
+{
+  "option_title": "Agreement before interpreting acceleration or denser search",
+  "question": "Do CPU and GPU standard docking agree across all 50 retained poses on four fixed cases after independent repeatability and error calibration?",
+  "hypothesis": "Independent repeats and numerical error analysis can establish defensible CPU/GPU agreement before acceleration or denser search receives scientific interpretation.",
+  "compute_axis": {
+    "quantity": "Independent same-backend calibration executions per case and backend; cumulative levels, not search density",
+    "unit": "repeats per case per backend",
+    "levels": [
+      2,
+      4
+    ]
+  },
+  "held_fixed": [
+    "DESIGN, from requested protocol: exactly 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo. PINDER release 2024-02; no replacement cases.",
+    "DESIGN source pins: MEGADOCK 9575280c875732553266e26adc607dd892b02616 and PINDER ebeb28a2f8411363cef722b7d293c978f7442672. Hash prepared inputs, native references, mappings, binaries, dependencies, build flags and image before execution. Public build routes: [build].",
+    "DESIGN commands: OMP_NUM_THREADS=26 OMP_DYNAMIC=FALSE; megadock or megadock-gpu -R RECEPTOR -L LIGAND -o OUTPUT -N50 -t1 -v1.2 -e1 -d1 -a-45 -b1 -f3 -r3600. Explicit affinity and single allocated H100 PCIe; no concurrent docking jobs. Command interface and OpenMP documented in [commands].",
+    "Calibration levels add independent process launches, retaining identical inputs/settings. No seeds varied without documented source support. Never change precision, scoring, ranking or retained count in scientific arms.",
+    "Native references inaccessible to docking and calibration decisions. No -D, dense search, native scoring or quality selection in this card. Later rank1 and best50 DockQ remain separate."
+  ],
+  "predictions": {
+    "if_lever": "Four repeats resolve agreement status for all four cases where two repeats leave numerical uncertainty.",
+    "if_not": "Four repeats leave at least one case unresolved, or both repeat levels already give identical agreement status.",
+    "decision_rule": "For each level seal casewise score/grid/coordinate tolerances from same-backend repeats plus independent numerical analysis before a fresh CPU/GPU pair. Pass requires 4/4 cases, 50/50 rows each, all structural checks and normalized errors <=1. Compute benefit only if level 2 is unresolved and level 4 resolves all cases without widening scientific requirements to fit cross-backend observations. Repeat-count result may be failure, not a compute lever.",
+    "noise_rule": "Separate exact bytes from scientific equivalence. Compare repeat files bytewise after excluding volatile logs; never round away score differences. For science, derive per-component error bounds using traced operation precision, grid dimensions, FFT normalization, rounding/serialization and independent higher-precision checks on preselected synthetic inputs and sampled case grids. Add independently measured same-backend variability to that justified error budget. Audit top-50 boundary and adjacent score gaps; allow rank swaps only inside presealed overlapping score intervals with bijective transform/pose correspondence. Compare original rank rows and matched rows; require exact grid dimensions, atom identities and coordinate frames. Freeze numeric bounds and tie policy before fresh cross-backend output is opened. No justified bound means unresolved; no old maximum delta plus epsilon and no runtime ratio as tolerance.",
+    "expected": "unsure",
+    "expected_why": "Repeats can expose instability, but this plan has no independent error anchor yet and cannot predict whether additional repeats resolve it."
+  },
+  "compute_tested": "no",
+  "compute_tested_why": "Necessary validation card. More executions buy evidence about agreement; this plan tests neither search-density gains nor parallel scheduling or throughput.",
+  "scored_against": "CPU standard provides paired reference, not truth. Independent transform reconstruction, synthetic correlation checks and higher-precision error analysis validate mechanics; fresh CPU/GPU outputs face frozen casewise tolerances. Later native-reference DockQ is outside this card [pinder].",
+  "arms": [
+    {
+      "id": "cpu_subset",
+      "what": "First screen: four CPU-only unit commands, same historical settings, compared with supplied historical standard-CPU manifests; no GPU docking or native scoring."
+    },
+    {
+      "id": "cpu_full_control",
+      "what": "Conditional mismatch diagnosis: CPU-only full/control harness, same unit commands, no dense search or native scoring. Separate subset effects from baseline drift."
+    },
+    {
+      "id": "repeat_calibration",
+      "what": "Cumulative 2 then 4 independent standard runs per case per backend, isolated outputs and fixed settings; numerical analysis performed before any cross-backend verdict."
+    },
+    {
+      "id": "fresh_pair",
+      "what": "After calibration seal, one fresh CPU and GPU standard execution per case; compare every retained row, grid metadata and regenerated pose. No dense arm."
+    }
+  ],
+  "baseline": {
+    "what": "Pinned CPU standard: 3600 rotations, 50 retained predictions, 26 threads. Historical manifests are diagnostic references only; no historical score tolerance is accepted.",
+    "value": "Fresh CPU output per case; historical material supplied later, unverified here."
+  },
+  "anchor": {
+    "absent_reason": "No published numerical tolerance or independently reproduced code anchor exists in this plan. Build independent transform and synthetic-correlation checks plus precision/error analysis during calibration. Until these pass and numeric tolerances are sealed, scientific CPU/GPU agreement stays unavailable. Published scaling evidence [prior] is not an accuracy anchor."
+  },
+  "checks": [
+    "Implement plan artifacts before any allocation: units.json, harness_from.json, commands.json, manifest.py, compare.py, calibration.json, controller.py and final report template. Preserve raw outputs and stable per-unit final PDB/docking-output hashes; put volatile logs in separate timing/activity records.",
+    "CPU-only runner must allowlist four CPU-standard units and reject GPU, -D, native scoring and undocumented stages. Unit identity includes input hashes, command, backend, binary hash, environment and relative output names.",
+    "Initial diagnostic acceptance: 0 stable-file byte mismatches. Equality supports repeat/subset assumption only. On mismatch compare subset with new full/control: their equality against a changed historical reference suggests baseline drift; their inequality suggests harness/subsetting differences. Report ambiguity and stop, never relax byte criterion.",
+    "Scientific comparator: require finite scores, exactly 50 unique ranked rows, valid rotations/translations, correct voxel/grid metadata, complete atom correspondence and regenerated pose correspondence. Preserve original order, tie groups and all raw deltas.",
+    "Reject malformed, duplicated, missing or reordered output in comparator fixtures. Independently reconstruct ligand rotation/translation, test identity and known synthetic transforms, and verify decoygen output [commands]. Generated test fixtures are design checks, not producer docking measurements.",
+    "Build separate CPU/GPU binaries using documented routes; record FFTW float configuration, cuFFT/CUDA, compiler optimization and architecture choices [build]. Any portability patch changes binary identity and requires fresh calibration.",
+    "Measure setup, retrieval, build, docking, pose generation, comparison, export and idle separately; sample GPU activity and record full allocation timestamps. Charge all elapsed instance time, including CPU-only work [billing].",
+    "No new box workload while carding. No producer MEASURED pilot claimed. Private records remain user-supplied exploratory context; none was opened or publicly verified.",
+    "Preserve supplied historical negatives as unverified user context: standard transform/DockQ agreement had no acceptance tolerance; dense best50 gains did not imply rank1 gains, with rank1 worse in two cases including 1nr5. No public URL validates these observations. Fresh work is prospective replication, never unseen holdout.",
+    "Store calibration readiness and proposed tolerances separately at repeat levels 2 and 4 before opening the same fresh paired outputs. Level comparisons use these frozen records; do not recalibrate after seeing fresh deltas."
+  ],
+  "phases": [
+    {
+      "id": "author",
+      "what": "No Lambda work: author CPU-only subset/full harnesses and controller. Resolve input/reference hashes and exact command provenance before launch. Obtain missing unit files and harness_from mapping. Establish stage arguments, allocation termination and manifest schema.",
+      "stop_rule": "No launch if provenance, controller or output contracts are missing."
+    },
+    {
+      "id": "screen",
+      "what": "Single H100 instance, CPU-only initial screen within 1 hour inclusive of launch, retrieval/build, four unit commands, manifest comparison and export. If mismatch, only CPU full/control diagnosis within same box.",
+      "stop_rule": "0 byte mismatches required. At 1 hour export and terminate; incomplete work stays unresolved.",
+      "gate": {
+        "on": "stable_mismatches",
+        "op": "<=",
+        "value": 0,
+        "else": "Stop dependent calibration; diagnose subsetting versus baseline drift without changing criterion."
+      }
+    },
+    {
+      "id": "calibrate",
+      "what": "Within 2 additional hours, measure runtime, transfer and repeatability; collect cumulative 2 then 4 repeats for each backend/case, independent mechanics/error checks and top-50 boundary evidence. Record tolerances, precision derivation, tie policy and total workflow forecast before fresh pairs.",
+      "stop_rule": "Calibration allocation budget, including screen and every setup/export/idle minute plus applicable tax/rounding, <=$10 and projected strictly <$20. Shorten time boxes if tax would exceed cap. No full experiment or dense route; unfinished analysis means stop.",
+      "gate": {
+        "on": "calibration_ready",
+        "op": ">=",
+        "value": 1,
+        "else": "No fresh comparison: report absent anchor, missing numeric tolerances or incomplete calibration."
+      }
+    },
+    {
+      "id": "compare",
+      "what": "Within 5 hours after seal, run fresh paired CPU/GPU standard jobs for four cases. Blind comparator consumes frozen tolerances; record casewise rankwise/matchedwise errors and complete workflow cost.",
+      "stop_rule": "Require forecast to fit remaining $40 cap and remaining allocation time before launch. Stop new work at cumulative 6 hours; hard termination by cumulative 9 hours, stricter than requested 12 hours. No dense or quality evaluation."
+    },
+    {
+      "id": "export",
+      "what": "Reserve 1 instance-hour for final manifests, raw rows/PDBs, analysis, transfer, billing reconciliation and verified termination; use earlier phase time where possible.",
+      "stop_rule": "Verify exports by hashes, preserve failures and unavailable verdicts. Terminate by cumulative 9 hours or $40 including billing/tax reserve, whichever first."
+    }
+  ],
+  "numbers": [
+    {
+      "id": "budget_usd",
+      "name": "Available GPU credit ceiling",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 1000
+    },
+    {
+      "id": "card_cap_usd",
+      "name": "Chosen card spending ceiling",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 40
+    },
+    {
+      "id": "cases",
+      "name": "Fixed requested cases",
+      "unit": "cases",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "backends",
+      "name": "CPU and GPU standard backends",
+      "unit": "backends",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "retained",
+      "name": "Retained rows per case",
+      "unit": "poses",
+      "basis": "DESIGN",
+      "value": 50
+    },
+    {
+      "id": "standard_rotations",
+      "name": "Requested standard sampling",
+      "unit": "rotations",
+      "basis": "DESIGN",
+      "value": 3600
+    },
+    {
+      "id": "threads",
+      "name": "Requested OpenMP thread count",
+      "unit": "threads",
+      "basis": "DESIGN",
+      "value": 26
+    },
+    {
+      "id": "pred_per_rotation",
+      "name": "Requested -t setting",
+      "unit": "predictions",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "voxel_pitch",
+      "name": "Requested -v setting",
+      "unit": "angstrom",
+      "basis": "DESIGN",
+      "value": 1.2
+    },
+    {
+      "id": "electrostatic_weight",
+      "name": "Requested -e setting",
+      "unit": "ratio",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "hydrophobic_weight",
+      "name": "Requested -d setting",
+      "unit": "ratio",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "receptor_penalty",
+      "name": "Requested -a setting",
+      "unit": "score",
+      "basis": "DESIGN",
+      "value": -45
+    },
+    {
+      "id": "ligand_penalty",
+      "name": "Requested -b setting",
+      "unit": "score",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "scoring_function",
+      "name": "Requested -f setting",
+      "unit": "selector",
+      "basis": "DESIGN",
+      "value": 3
+    },
+    {
+      "id": "repeat_low",
+      "name": "Initial calibration level",
+      "unit": "repeats",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "repeat_high",
+      "name": "Cumulative calibration ceiling",
+      "unit": "repeats",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "fresh_repeats",
+      "name": "Fresh comparison executions",
+      "unit": "repeats per backend per case",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "screen_units",
+      "name": "CPU units in initial screen",
+      "unit": "units",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "calibration_jobs",
+      "name": "Cumulative calibration executions",
+      "unit": "jobs",
+      "basis": "DERIVED",
+      "expr": "cases * backends * repeat_high"
+    },
+    {
+      "id": "fresh_jobs",
+      "name": "Fresh comparison executions",
+      "unit": "jobs",
+      "basis": "DERIVED",
+      "expr": "cases * backends * fresh_repeats"
+    },
+    {
+      "id": "fresh_rows",
+      "name": "Rankwise cross-backend row pairs",
+      "unit": "row pairs",
+      "basis": "DERIVED",
+      "expr": "cases * retained"
+    },
+    {
+      "id": "fresh_pdbs",
+      "name": "Fresh generated complex PDBs",
+      "unit": "PDBs",
+      "basis": "DERIVED",
+      "expr": "fresh_jobs * retained"
+    },
+    {
+      "id": "control_jobs_max",
+      "name": "Conditional CPU full/control units",
+      "unit": "jobs",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "jobs_max",
+      "name": "Docking launches excluding synthetic analysis",
+      "unit": "jobs",
+      "basis": "DERIVED",
+      "expr": "screen_units + control_jobs_max + calibration_jobs + fresh_jobs"
+    },
+    {
+      "id": "screen_h",
+      "name": "Initial inclusive time box",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "calibrate_h",
+      "name": "Further inclusive calibration time box",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "calibration_h",
+      "name": "Total calibration allocation allowance",
+      "unit": "instance hours",
+      "basis": "DERIVED",
+      "expr": "screen_h + calibrate_h"
+    },
+    {
+      "id": "compare_h",
+      "name": "Fresh comparison time box",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 5
+    },
+    {
+      "id": "export_h",
+      "name": "Inclusive final export allowance",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "soft_h",
+      "name": "Stop launching new work at cumulative time",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 6
+    },
+    {
+      "id": "hard_h",
+      "name": "Hard cumulative termination time",
+      "unit": "instance hours",
+      "basis": "DERIVED",
+      "expr": "screen_h + calibrate_h + compare_h + export_h"
+    },
+    {
+      "id": "calibration_cap",
+      "name": "Inclusive calibration dollar ceiling",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 10
+    },
+    {
+      "id": "calibration_projection_cap",
+      "name": "Projection must be strictly below this",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 20
+    },
+    {
+      "id": "stable_mismatches",
+      "name": "Maximum allowed stable-file byte mismatches; observed count recorded in screen",
+      "unit": "mismatches",
+      "basis": "DESIGN",
+      "value": 0
+    },
+    {
+      "id": "calibration_ready",
+      "name": "Required conjunction of completed repeats, independent checks, justified numeric tolerances and affordable forecast; observed value recorded before compare",
+      "unit": "boolean",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "normalized_error_max",
+      "name": "Maximum error divided by presealed tolerance",
+      "unit": "ratio",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "persistent_gib",
+      "name": "No Lambda persistent filesystem provisioned",
+      "unit": "GiB",
+      "basis": "DESIGN",
+      "value": 0
+    },
+    {
+      "id": "h100_price",
+      "name": "Single H100 PCIe per-GPU hourly price",
+      "unit": "USD/GPU/hour",
+      "basis": "CITED",
+      "value": 3.29,
+      "source_id": "prices",
+      "quote": "$3.29",
+      "page_setting": "Single NVIDIA H100 PCIe instance; supplied starting sheet and fetched pricing table."
+    },
+    {
+      "id": "gpu_count",
+      "name": "Allocated GPUs",
+      "unit": "GPUs",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "fs_usd_gib_month",
+      "name": "Illustrative filesystem price only; not current quote",
+      "unit": "USD/GiB/month",
+      "basis": "PROXY",
+      "value": 0.2,
+      "source_id": "billing",
+      "quote": "$0.20",
+      "page_setting": "Billing documentation example",
+      "differs_in": [
+        "Illustrative rate, not current filesystem offer; no filesystem provisioned here."
+      ],
+      "measured_by": "author"
+    },
+    {
+      "id": "allocation_usd",
+      "name": "Maximum pre-tax instance time boxes",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "hard_h * gpu_count * h100_price"
+    },
+    {
+      "id": "calibration_usd",
+      "name": "Maximum inclusive calibration allocation",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "calibration_h * gpu_count * h100_price"
+    },
+    {
+      "id": "cash_reserve",
+      "name": "Non-compute allowance for tax, billing rounding and incidental charges",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "card_cap_usd - allocation_usd"
+    },
+    {
+      "id": "uncommitted_credit",
+      "name": "Credit retained after maximum card spend",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "budget_usd - card_cap_usd"
+    },
+    {
+      "id": "human_hours",
+      "name": "Unpaid engineering and review allotment",
+      "unit": "person hours",
+      "basis": "DESIGN",
+      "value": 16
+    }
+  ],
+  "cost": {
+    "rates": [
+      {
+        "id": "h100",
+        "gpu": "NVIDIA H100 PCIe",
+        "gpu_memory_gb": 80,
+        "n_gpus": 1,
+        "per_gpu_usd_h": 3.29
+      }
+    ],
+    "lines": [
+      {
+        "id": "screen_box",
+        "phase": "screen",
+        "what": "CPU-only diagnostic; includes retrieval, compilation, optional full/control, idle and initial export",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "screen_h"
+      },
+      {
+        "id": "calibration_box",
+        "phase": "calibrate",
+        "what": "Same-backend repeats and independent numerical checks; includes any relaunch overhead",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "calibrate_h"
+      },
+      {
+        "id": "comparison_box",
+        "phase": "compare",
+        "what": "Fresh standard CPU/GPU agreement pairs after all gates",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "compare_h",
+        "condition": "Scientific tolerances and independent checks sealed; remaining time and money suffice."
+      },
+      {
+        "id": "export_box",
+        "phase": "export",
+        "what": "Final transfer, receipt collection, reconciliation, idle and termination",
+        "kind": "work",
+        "rate": "h100",
+        "hours": "export_h"
+      },
+      {
+        "id": "persistent_storage",
+        "phase": "export",
+        "what": "Use instance-local disk and export before termination; no persistent filesystem",
+        "kind": "storage",
+        "usd": "persistent_gib * fs_usd_gib_month"
+      },
+      {
+        "id": "cash_contingency",
+        "phase": "export",
+        "what": "Tax, minute rounding and incidental charges only; never extra experiments",
+        "kind": "allotment",
+        "usd": "cash_reserve"
+      }
+    ],
+    "yields": [
+      "screen_units",
+      "calibration_jobs",
+      "fresh_jobs",
+      "fresh_rows",
+      "fresh_pdbs"
+    ],
+    "spend_cap_usd": 40,
+    "total_stated": 40
+  },
+  "full_scale": [],
+  "outside_budget": [
+    {
+      "what": "Human engineering/review allotment; DESIGN, not measured effort",
+      "qty": 16,
+      "unit": "person hours"
+    },
+    {
+      "what": "External money authorized: none; use existing local storage/network. Any paid non-Lambda service requires revised budget.",
+      "qty": 0,
+      "unit": "USD"
+    }
+  ],
+  "restructuring": {
+    "sequential_part": "Four gates: CPU repeat screen, independent calibration, frozen tolerances, fresh CPU/GPU comparison.",
+    "method": "none"
+  },
+  "scope_gap": [
+    "Do not spend $1000 merely because available: maximum card commitment $40, maximum inclusive calibration allocation $9.87, pre-tax planned allocation $29.61; retain $960. Conditional outputs, not guaranteed throughput.",
+    "Exact private files were not read under access restriction. Missing implementation evidence: experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158 input/preparation/reference hashes; run2/agent/harness/run_command.sh:8-43 exact commands/environment; run2_trace/REPORT.md stable reference paths. New unit files and harness_from required even if historical commands are reused.",
+    "Cannot verify existing stage arguments/controller from supplied text. Author CPU-only subset/full entry points, manifest exporter, tolerance-sealing stage and fresh comparison stage before any measure execution. Measurement compiler carries uncertain scalar timings/phases, not scientific arms or decision rules.",
+    "Runtime/transfer/repeatability forecasts remain unmeasured. Time boxes impose caps without predicted throughput; screen/calibrate measure these before dependent comparison spending. No guessed timing is used to promise completion.",
+    "Later dense-search quality and fixed-budget acceleration need separate sealed timing/noise rules and rank1/best50 DockQ evaluation; this card provides only prerequisite agreement evidence."
+  ],
+  "novelty": {
+    "closest_prior": "Published MEGADOCK measured scaling across 30,976 docking jobs using up to 420 nodes; it did not establish this four-case numerical tolerance [prior].",
+    "closest_source_id": "prior",
+    "prior_max_level": null,
+    "left_open": "Whether independent repeats and precision analysis justify CPU/GPU agreement for every retained pose on these four fixed inputs.",
+    "decides": "no",
+    "searched": true
+  },
+  "limits": "Four-case execution validation only; no biological efficacy, generalization, dense-search improvement, throughput claim, unseen holdout or tolerance inferred from historical agreement.",
+  "test_summary": "Build CPU-only repeat/control harness first; calibrate independent numerical bounds using 2 then 4 repeats; seal tolerances; compare fresh CPU/GPU standard outputs across four cases and all 50 rows. Budget $40; dense search and quality scoring excluded.",
+  "sources": [
+    {
+      "id": "prices",
+      "url": "https://lambda.ai/pricing",
+      "quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "supports": "Fetched single-instance pricing table corroborates supplied starting sheet: H100 PCIe per-GPU hourly price, memory and host vCPUs. Budget uses one GPU; prices exclude applicable taxes."
+    },
+    {
+      "id": "billing",
+      "url": "https://docs.lambda.ai/public-cloud/billing/",
+      "quote": "ODC prices instances by hourly usage and bills in one-minute increments.",
+      "supports": "All running time is billed through termination, including idle and transport. Filesystem $0.20/GiB/month is explicitly illustrative; actual creation price may differ. Filesystem ingress/egress has no charge; transfer still consumes billed instance time."
+    },
+    {
+      "id": "commands",
+      "url": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+      "quote": "MEGADOCK parallelizes rotation calculations by using OpenMP.",
+      "supports": "Pinned command guide documents CPU/GPU single-node binaries, explicit scoring/sampling flags, OMP_NUM_THREADS and decoygen transform regeneration. Parameters in this card are DESIGN choices fixed by request."
+    },
+    {
+      "id": "build",
+      "url": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+      "quote": "For GPU use, `SM_VERSIONS` can specity the target NVIDIA GPU architectures of the generated binary.",
+      "supports": "Pinned CPU/GPU build routes and architecture selection; FFTW requires float build. No claim that historical dependencies compile unchanged on fresh H100."
+    },
+    {
+      "id": "pinder",
+      "url": "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+      "quote": "A complete evaluation harness with a set of highly efficient pure-python or rust implementations of standard metrics for evaluation, such as DockQ is provided.",
+      "supports": "Public evaluation route for later separate rank1/best50 DockQ; not an agreement anchor and not run in this card."
+    },
+    {
+      "id": "prior",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4221127/",
+      "quote": "Notably, a high scalability (98%) was obtained with the largest number of nodes (420 nodes).",
+      "supports": "Published MEGADOCK study reports scaling over 30,976 docking jobs and averages five timing measurements. Different dataset/hardware and endpoint; no transferable numerical agreement tolerance or repeat-level anchor."
+    }
+  ],
+  "files_read": ["/home/hal/dev/interp/metis/experiments/blind-02/20261103-1649-tree/out/work/seed-20261103/seed/idea/340ca71c/producer.md"]
+}
