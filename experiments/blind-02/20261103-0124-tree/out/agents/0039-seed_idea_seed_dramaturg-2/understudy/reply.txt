@@ -1,0 +1,89 @@
+{
+  "items": [
+    {
+      "ref": "card:question",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Research question and planned comparison; no external factual claim requiring source."
+    },
+    {
+      "ref": "card:hypothesis",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Prediction to test; no source required."
+    },
+    {
+      "ref": "card:if_lever",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Planned success thresholds; no source required."
+    },
+    {
+      "ref": "card:if_not",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Planned failure thresholds; no source required."
+    },
+    {
+      "ref": "card:test_summary",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Workflow, measurements, sampling choices and spending limits describe planned work; no source required."
+    },
+    {
+      "ref": "card:closest_prior",
+      "status": "SUPPORTED",
+      "page_quote": "表：ノード並列時の計算時間と並列化効率（強スケーリング）．計算時間はZLAB Benchmarkの176複合体のbound/unboundの両方を全て計算した352回の計算の積算です．\n#GPUs | 105 | 210 | 315 | 420 | 630 | 840 | 1,050 | 1,260",
+      "note": "Recorded table row appears. Page reports accumulated timing for 352 docking calculations through 1,260 GPUs. Rotation count and matched complete-workflow search budgets are unspecified."
+    },
+    {
+      "ref": "card:left_open",
+      "status": "SUPPORTED",
+      "page_quote": "",
+      "note": "Open research question and planned evaluation scope; no source required."
+    },
+    {
+      "ref": "card:anchor",
+      "status": "PARTIAL",
+      "page_quote": "DockQ = 1/3 (f_nat + 1/(1+(iRMSD/a)^2) + 1/(1+(LRMSD/b)^2))",
+      "note": "Recorded continuous-score quote appears. Equation yields 1 with complete native contacts and zero RMSDs. Validation checks can be planned without citation, but page does not establish asserted CPU/GPU pose agreement."
+    },
+    {
+      "ref": "card:limits",
+      "status": "PARTIAL",
+      "page_quote": "",
+      "note": "Case count and inference restrictions describe plan scope. Claim that exploratory history was already exposed has no source."
+    },
+    {
+      "ref": "src:prior",
+      "status": "SUPPORTED",
+      "page_quote": "#GPUs | 105 | 210 | 315 | 420 | 630 | 840 | 1,050 | 1,260\nThinノードは2ソケットのIntel Xeon X5670 CPU (2.93GHz, 6 cores) と3枚のNVIDIA Tesla K20X (GK110) GPUを搭載しています．",
+      "note": "Recorded quote appears. Page identifies older Xeon/K20X hardware and 352 docking calculations. No rotation count or H100 complete-workflow evidence given. 'Nearest opened' is producer's selection characterization."
+    },
+    {
+      "ref": "src:dockq",
+      "status": "SUPPORTED",
+      "page_quote": "For a given protein-protein or protein-nucleic acid interface, the DockQ score is the average of the fraction of native contacts",
+      "note": "Recorded quote appears verbatim. Equation (1) averages native-contact fraction and two scaled RMSD terms; complete contacts and zero RMSDs yield 1. Engineering thresholds remain design choices."
+    },
+    {
+      "ref": "num:h100_price",
+      "status": "SUPPORTED",
+      "page_quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "note": "Exact row appears in single-GPU instance group under PRICE/GPU/HR; applicable taxes additional.",
+      "page_value": 3.29
+    },
+    {
+      "ref": "num:rot_standard",
+      "status": "UNREACHABLE",
+      "page_quote": "",
+      "note": "Pinned raw README fetch failed twice with Cache miss; direct fetch also failed DNS resolution. Quote and value could not be checked."
+    },
+    {
+      "ref": "num:rot_dense",
+      "status": "UNREACHABLE",
+      "page_quote": "",
+      "note": "Pinned raw README fetch failed twice with Cache miss; direct fetch also failed DNS resolution. Quote and value could not be checked."
+    }
+  ]
+}

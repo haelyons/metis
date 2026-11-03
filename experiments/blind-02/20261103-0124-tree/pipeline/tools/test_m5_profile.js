@@ -1,0 +1,463 @@
+#!/usr/bin/env node
+'use strict'
+
+// Black-box contracts from m5/SCHEMAS.md. Never inspect profiler/pipeline source.
+// Usage: node tools/test_m5_profile.js
+const fs = require('node:fs')
+const path = require('node:path')
+const os = require('node:os')
+const assert = require('node:assert/strict')
+const { spawnSync } = require('node:child_process')
+const ROOT = path.resolve(__dirname, '..')
+const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_profile_'))
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value))
+let checks = 0, failures = 0
+function check(name, run) {
+  checks++
+  try { run(); console.log(`ok ${name}`) }
+  catch (error) { failures++; console.log(`FAIL ${name}: ${error.stack}`) }
+}
+function near(actual, expected) {
+  assert.ok(Number.isFinite(actual) && Math.abs(actual - expected) < 1e-8, `${actual} != ${expected}`)
+}
+function execute(command, args, options = {}) {
+  const logDir = fs.mkdtempSync(path.join(scratch, 'process-'))
+  const stdout = fs.openSync(path.join(logDir, 'stdout'), 'w')
+  const stderr = fs.openSync(path.join(logDir, 'stderr'), 'w')
+  let result
+  try {
+    result = spawnSync(command, args, { cwd: ROOT, timeout: 30000,
+      env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl') },
+      ...options, stdio: ['ignore', stdout, stderr] })
+  } finally { fs.closeSync(stdout); fs.closeSync(stderr) }
+  result.stdout = fs.readFileSync(path.join(logDir, 'stdout'), 'utf8')
+  result.stderr = fs.readFileSync(path.join(logDir, 'stderr'), 'utf8')
+  assert.ifError(result.error)
+  return result
+}
+function csv(directory, { unit = 'ns', total = 10, sums = [2, 1, 0.5, 1.5] } = {}) {
+  const factor = { ns: 1e9, us: 1e6, 'µs': 1e6, ms: 1e3, s: 1 }[unit]
+  const report = (name, rows) => fs.writeFileSync(path.join(directory, `stats_${name}.csv`),
+    `Time (%),Total Time (${unit}),Instances,Name\n` + rows.map(([seconds, name]) => `50,${seconds * factor},1,"${name}"\n`).join(''))
+  report('cuda_gpu_kern_sum', [[sums[0] / 4, 'kernel, one'], [sums[0] * 3 / 4, 'kernel two']])
+  report('cuda_gpu_mem_time_sum', [[sums[1], '[CUDA memcpy Host-to-Device]'], [sums[2], '[CUDA memcpy Device-to-Host]']])
+  report('cuda_api_sum', [[sums[3] / 2, 'cudaLaunchKernel'], [sums[3] / 2, 'cudaMemcpy']])
+  write(path.join(directory, 'raw_wall_s.json'), { total_wall_s: total, start_monotonic_s: 100 })
+  fs.writeFileSync(path.join(directory, 'gpu_util_raw.jsonl'),
+    [{ t: 99, util: 100 }, { t: 100, util: 0 }, { t: 101, util: 50 }, { t: 100 + total + 1, util: 90 }]
+      .map(row => JSON.stringify(row)).join('\n') + '\n')
+}
+function summarise(directory) {
+  return execute('python3', [path.join(ROOT, 'm5/profile_summarise.py'), directory])
+}
+function summariserTests() {
+  for (const unit of ['ns', 'us', 'µs', 'ms', 's']) check(`CSV ${unit}: sums, host remainder, telemetry clock`, () => {
+    const dir = fs.mkdtempSync(path.join(scratch, 'csv-'))
+    csv(dir, { unit })
+    const result = summarise(dir)
+    assert.equal(result.status, 0, result.stderr)
+    assert.deepEqual(read(path.join(dir, 'stages.json')), [
+      { stage: 'kernels', kind: 'compute', wall_s: 2, gpu_s: 2 },
+      { stage: 'memcpy H2D', kind: 'transfer', wall_s: 1, gpu_s: 1 },
+      { stage: 'memcpy D2H', kind: 'transfer', wall_s: 0.5, gpu_s: 0.5 },
+      { stage: 'CUDA API host time', kind: 'other', wall_s: 1.5, gpu_s: null },
+      { stage: 'other host time', kind: 'other', wall_s: 5, gpu_s: null },
+    ])
+    assert.deepEqual(read(path.join(dir, 'total_wall_s.json')), { total_wall_s: 10 })
+    assert.deepEqual(read(path.join(dir, 'gpu_util.json')), [{ t: 0, util: 0 }, { t: 1, util: 50 }])
+    const before = fs.readFileSync(path.join(dir, 'stages.json'))
+    assert.equal(summarise(dir).status, 0)
+    assert.deepEqual(fs.readFileSync(path.join(dir, 'stages.json')), before)
+  })
+  check('overlapping sums scale wall allocations, preserve GPU seconds, invent no timestamps', () => {
+    const dir = fs.mkdtempSync(path.join(scratch, 'overlap-'))
+    csv(dir, { total: 2 })
+    assert.equal(summarise(dir).status, 0)
+    const stages = read(path.join(dir, 'stages.json'))
+    ;[0.8, 0.4, 0.2, 0.6, 0].forEach((seconds, i) => near(stages[i].wall_s, seconds))
+    assert.deepEqual(stages.map(row => row.gpu_s), [2, 1, 0.5, null, null])
+    assert.ok(stages.every(row => !Object.hasOwn(row, 'start_s')))
+    near(stages.reduce((sum, row) => sum + row.wall_s, 0), 2)
+  })
+  check('known Nsight absent-activity skips count as zero', () => {
+    const dir = fs.mkdtempSync(path.join(scratch, 'skips-'))
+    csv(dir)
+    for (const [report, activity] of [
+      ['cuda_gpu_kern_sum', 'CUDA kernel'], ['cuda_gpu_mem_time_sum', 'GPU memory'], ['cuda_api_sum', 'CUDA trace'],
+    ]) fs.writeFileSync(path.join(dir, `stats_${report}.csv`),
+      `SKIPPED: /tmp/x/report.sqlite does not contain ${activity} data.\n`)
+    assert.equal(summarise(dir).status, 0)
+    const stages = read(path.join(dir, 'stages.json'))
+    assert.deepEqual(stages.map(row => row.wall_s), [0, 0, 0, 0, 10])
+    assert.deepEqual(stages.map(row => row.gpu_s), [0, 0, 0, null, null])
+  })
+  // U48: Nsight 2025 writes empty files for skipped reports and logs the skip in stats.log.
+  // Nsight's own wordings (SCHEMAS.md U48); the old memory/API phrases no longer count.
+  const REPORTS = { kernel: ['cuda_gpu_kern_sum', 'CUDA kernel'], memory: ['cuda_gpu_mem_time_sum', 'GPU memory'], api: ['cuda_api_sum', 'CUDA trace'] }
+  const OLD_PHRASES = { memory: 'CUDA memory', api: 'CUDA API' }
+  const skipLine = key => `SKIPPED: /tmp/fixture/baseline.nsys-rep does not contain ${REPORTS[key][1]} data.\n`
+  const oldSkipLine = key => `SKIPPED: /tmp/fixture/baseline.nsys-rep does not contain ${OLD_PHRASES[key]} data.\n`
+  function skipFixture({ files = {}, log } = {}) {
+    const dir = fs.mkdtempSync(path.join(scratch, 'u48-'))
+    csv(dir)
+    for (const [key, content] of Object.entries(files)) {
+      const file = path.join(dir, `stats_${REPORTS[key][0]}.csv`)
+      if (content === null) fs.unlinkSync(file)
+      else fs.writeFileSync(file, content)
+    }
+    if (log !== undefined) fs.writeFileSync(path.join(dir, 'stats.log'), log)
+    return dir
+  }
+  const allSkipsLog = 'Processing [/tmp/fixture/baseline.sqlite] with [cuda_gpu_kern_sum.py]...\n' +
+    ['kernel', 'memory', 'api'].map(skipLine).join('\nProcessing next report...\n')
+  function assertZeroSummary(dir, result) {
+    assert.equal(result.status, 0, result.stderr)
+    const stages = read(path.join(dir, 'stages.json'))
+    assert.deepEqual(stages.map(row => row.stage), ['kernels', 'memcpy H2D', 'memcpy D2H', 'CUDA API host time', 'other host time'])
+    assert.deepEqual(stages.map(row => row.wall_s), [0, 0, 0, 0, 10])
+    assert.deepEqual(stages.map(row => row.gpu_s), [0, 0, 0, null, null])
+    assert.deepEqual(read(path.join(dir, 'total_wall_s.json')), { total_wall_s: 10 })
+    assert.deepEqual(read(path.join(dir, 'gpu_util.json')), [{ t: 0, util: 0 }, { t: 1, util: 50 }])
+  }
+  for (const [name, content] of [['empty (zero-byte)', ''], ['whitespace-only', '\n  \n\t\n   ']]) check(`U48: ${name} CSVs with stats.log skips count as zero`, () => {
+    const dir = skipFixture({ files: { kernel: content, memory: content, api: content }, log: allSkipsLog })
+    assertZeroSummary(dir, summarise(dir))
+  })
+  check('U48: only kernel report empty with its statement; others parsed', () => {
+    const dir = skipFixture({ files: { kernel: '' }, log: skipLine('kernel') })
+    assert.equal(summarise(dir).status, 0)
+    assert.deepEqual(read(path.join(dir, 'stages.json')), [
+      { stage: 'kernels', kind: 'compute', wall_s: 0, gpu_s: 0 },
+      { stage: 'memcpy H2D', kind: 'transfer', wall_s: 1, gpu_s: 1 },
+      { stage: 'memcpy D2H', kind: 'transfer', wall_s: 0.5, gpu_s: 0.5 },
+      { stage: 'CUDA API host time', kind: 'other', wall_s: 1.5, gpu_s: null },
+      { stage: 'other host time', kind: 'other', wall_s: 7, gpu_s: null },
+    ])
+  })
+  for (const [name, options] of [
+    ['empty kernel file, stats.log states only memory/API skips', { files: { kernel: '' }, log: skipLine('memory') + skipLine('api') }],
+    ['empty memory file, stats.log states only kernel/API skips', { files: { memory: '' }, log: skipLine('kernel') + skipLine('api') }],
+    ['empty API file, stats.log states only kernel/memory skips', { files: { api: '' }, log: skipLine('kernel') + skipLine('memory') }],
+    ['whitespace-only kernel file, stats.log states only memory/API skips', { files: { kernel: '\n \n' }, log: skipLine('memory') + skipLine('api') }],
+    ['empty kernel file, no stats.log', { files: { kernel: '' } }],
+    ['whitespace-only kernel file, no stats.log', { files: { kernel: ' \n\n' } }],
+    ['empty kernel file, irrelevant stats.log', { files: { kernel: '' }, log: 'Processing [baseline.sqlite] with [cuda_gpu_kern_sum.py]...\nGenerated report.\n' }],
+    ['empty kernel file, empty stats.log', { files: { kernel: '' }, log: '' }],
+    ['all files empty, no stats.log', { files: { kernel: '', memory: '', api: '' } }],
+    ['absent kernel file, stats.log states only memory/API skips', { files: { kernel: null }, log: skipLine('memory') + skipLine('api') }],
+    ['absent API file, no stats.log', { files: { api: null } }],
+    // Old phrases never occur in Nsight output and no longer count as statements.
+    ['empty memory file, stats.log says only old "CUDA memory data"', { files: { memory: '' }, log: oldSkipLine('memory') }],
+    ['absent memory file, stats.log says only old "CUDA memory data"', { files: { memory: null }, log: oldSkipLine('memory') }],
+    ['empty API file, stats.log says only old "CUDA API data"', { files: { api: '' }, log: oldSkipLine('api') }],
+    ['absent API file, stats.log says only old "CUDA API data"', { files: { api: null }, log: oldSkipLine('api') }],
+    ['all files empty, kernel statement plus old memory/API phrases', { files: { kernel: '', memory: '', api: '' }, log: skipLine('kernel') + oldSkipLine('memory') + oldSkipLine('api') }],
+  ]) check(`U48: ${name} fails parsing`, () => {
+    const dir = skipFixture(options)
+    assert.notEqual(summarise(dir).status, 0)
+  })
+  check('U48: realistic Nsight 2025 stats.log with three empty CSVs counts as zero', () => {
+    const reports = '/opt/nvidia/nsight-systems-cli/2025.3.1/host-linux-x64/reports'
+    const log = [['cuda_gpu_kern_sum', 'CUDA kernel'], ['cuda_gpu_mem_time_sum', 'GPU memory'], ['cuda_api_sum', 'CUDA trace']]
+      .map(([report, activity]) => `Processing [/tmp/x/report.sqlite] with [${reports}/${report}.py]... \n` +
+        `SKIPPED: /tmp/x/report.sqlite does not contain ${activity} data.\n\n`).join('')
+    const dir = skipFixture({ files: { kernel: '', memory: '', api: '' }, log })
+    assertZeroSummary(dir, summarise(dir))
+  })
+  check('U48: absent CSVs with their stats.log statements count as zero', () => {
+    const dir = skipFixture({ files: { kernel: null, memory: null, api: null }, log: allSkipsLog })
+    assertZeroSummary(dir, summarise(dir))
+  })
+  check('U48: absent kernel CSV with its statement; others parsed', () => {
+    const dir = skipFixture({ files: { kernel: null }, log: skipLine('kernel') })
+    assert.equal(summarise(dir).status, 0)
+    const stages = read(path.join(dir, 'stages.json'))
+    assert.deepEqual(stages.map(row => row.wall_s), [0, 1, 0.5, 1.5, 7])
+    assert.deepEqual(stages.map(row => row.gpu_s), [0, 1, 0.5, null, null])
+  })
+  for (const failure of ['missing', 'malformed']) check(`${failure} CSV fails parsing`, () => {
+    const dir = fs.mkdtempSync(path.join(scratch, 'invalid-'))
+    csv(dir)
+    const file = path.join(dir, 'stats_cuda_api_sum.csv')
+    if (failure === 'missing') fs.unlinkSync(file)
+    else fs.writeFileSync(file, 'not,a,report\n')
+    assert.notEqual(summarise(dir).status, 0)
+  })
+}
+function script(file, body) {
+  fs.writeFileSync(file, '#!/bin/bash\nset -eu\n' + body + '\n', { mode: 0o700 })
+}
+function profilerTests() {
+  for (const mode of ['success', 'collection-failure', 'export-failure', 'missing-nsys', 'deb-hash-mismatch', 'deb-success', 'nsight-2025-skips']) check(`profile_nsys.sh: ${mode}`, () => {
+    const deb = mode.startsWith('deb-')
+    const dir = fs.mkdtempSync(path.join(scratch, 'collect-')), bin = path.join(dir, 'bin')
+    fs.mkdirSync(bin)
+    fs.mkdirSync(path.join(dir, 'profiler'))
+    for (const file of ['profile_nsys.sh', 'profile_summarise.py'])
+      fs.copyFileSync(path.join(ROOT, 'm5', file), path.join(dir, 'profiler', file))
+    write(path.join(dir, 'profiler/probe.json'), { nvcc: [], nvidia: { gpus: ['Fixture GPU'] }, apt_sources: [] })
+    if (deb) {
+      const source = path.join(dir, 'nvidia.list')
+      const lines = ['deb https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/ /']
+      fs.writeFileSync(source, lines.join('\n') + '\n')
+      write(path.join(dir, 'profiler/probe.json'), {
+        nvcc: [], nvidia: { gpus: ['Fixture GPU'] }, apt_sources: [{ file: source, lines }], sudo_nopasswd: true,
+      })
+    }
+    // Restricted PATH: installation/network tools cannot reach host tools.
+    for (const tool of ['bash', 'python3', 'mkdir', 'rm', 'date', 'sleep', 'cat', 'dirname', 'head', 'tail', 'grep', 'awk', 'sed', 'uname', 'mktemp', 'readlink', 'find', 'sort', 'tr', 'cut', 'timeout', 'tee', 'ls']) {
+      const located = execute('/bin/bash', ['-c', 'command -v "$1"', 'locate', tool])
+      if (located.status === 0) fs.symlinkSync(located.stdout.trim(), path.join(bin, tool))
+    }
+    for (const tool of ['sudo', 'apt', 'apt-get', 'apt-cache', 'curl', 'wget', 'sha256sum', 'dpkg', 'dpkg-query'])
+      script(path.join(bin, tool), 'printf "%s\\n" "$0 $*" >> "$FAKE_CALLS"\nexit 1')
+    if (deb) {
+      // Route Python download/hash APIs through the same PATH fakes. No real
+      // package can have the official pinned digest, so verification is simulated.
+      fs.writeFileSync(path.join(dir, 'sitecustomize.py'), `import hashlib, io, os, re, subprocess, urllib.request
+real_sha256 = hashlib.sha256
+def download(url, *args, **kwargs):
+    target = os.path.join(os.environ['HOME'], 'download.deb')
+    subprocess.run(['curl', '-o', target, url], check=True)
+    with open(target, 'rb') as stream:
+        return io.BytesIO(stream.read())
+class Digest(str):
+    def __eq__(self, expected):
+        assert re.fullmatch(r'[a-fA-F0-9]{64}', expected)
+        with open(os.environ['FAKE_CALLS'], 'a') as stream:
+            stream.write('checksum ' + expected + '\\n')
+        return self.valid
+    def __ne__(self, expected):
+        return not self == expected
+class Hash:
+    def hexdigest(self):
+        result = subprocess.run(['sha256sum'], input=b'fixture deb\\n', capture_output=True)
+        digest = Digest('0' * 64)
+        digest.valid = result.returncode == 0
+        return digest
+def sha256(data=b'', *args, **kwargs):
+    return Hash() if data == b'fixture deb\\n' else real_sha256(data, *args, **kwargs)
+urllib.request.urlopen = download
+hashlib.sha256 = sha256
+`)
+      script(path.join(bin, 'id'), 'echo 1000')
+      script(path.join(bin, 'sudo'), `printf 'sudo %s\\n' "$*" >> "$FAKE_CALLS"
+test "$1" = -n
+shift
+"$@"`)
+      script(path.join(bin, 'apt-cache'), `printf 'apt-cache %s\\n' "$*" >> "$FAKE_CALLS"
+echo 'nsight-systems-cli - fixture package'`)
+      script(path.join(bin, 'apt-get'), `printf 'apt-get %s\\n' "$*" >> "$FAKE_CALLS"
+[[ " $* " == *" -f "* ]]`)
+      script(path.join(bin, 'curl'), `printf 'curl %s\\n' "$*" >> "$FAKE_CALLS"
+output=
+while (( $# )); do
+  case "$1" in
+    -o|--output) output=$2; shift 2;;
+    https://*) test "$1" = 'https://developer.download.nvidia.com/devtools/repos/ubuntu2204/amd64/NsightSystems-linux-cli-public-2025.3.1.90-3582212.deb'; shift;;
+    *) shift;;
+  esac
+done
+test -n "$output"
+printf 'fixture deb\\n' > "$output"`)
+      script(path.join(bin, 'sha256sum'), `printf 'sha256sum %s\\n' "$*" >> "$FAKE_CALLS"
+if (( $# == 0 )); then
+  test "$(cat)" = 'fixture deb'
+  ${mode === 'deb-hash-mismatch' ? 'exit 1' : ': > "$HOME/verified"'}
+  printf '%064d  -\\n' 0
+  exit 0
+fi
+[[ " $* " == *" -c "* || " $* " == *" --check "* ]]
+IFS= read -r checksum
+printf 'checksum %s\\n' "$checksum" >> "$FAKE_CALLS"
+[[ "$checksum" =~ ^[[:xdigit:]]{64}[[:space:]]+ ]]
+package=\${checksum#*  }
+test "$(cat "$package")" = 'fixture deb'
+${mode === 'deb-hash-mismatch' ? 'exit 1' : ': > "$HOME/verified"'}`)
+      script(path.join(bin, 'dpkg'), `printf 'dpkg %s\\n' "$*" >> "$FAKE_CALLS"
+test "$1" = -i
+test -f "$HOME/verified"
+test "$(cat "$2")" = 'fixture deb'
+python3 -c 'import os, shutil; shutil.copy(os.environ["HOME"] + "/nsys-fixture", os.environ["PATH"] + "/nsys")'`)
+    }
+    script(path.join(bin, 'nvidia-smi'), 'printf "20\\n40\\n"')
+    if (mode !== 'missing-nsys') script(deb ? path.join(dir, 'nsys-fixture') : path.join(bin, 'nsys'), `
+printf '%s\\n' "$*" >> "$FAKE_CALLS"
+case "$1" in
+  --version) echo 'NVIDIA Nsight Systems version fixture';;
+  profile)
+    ${mode === 'collection-failure' ? 'exit 9' : ''}
+    sleep 0.3
+    shift
+    while [[ $1 == -* ]]; do
+      case "$1" in --output=*) output=\${1#*=}; shift;; *) shift;; esac
+    done
+    : > "$output.nsys-rep"
+    "$@"
+    sleep 0.3;;
+  stats)
+    sleep 0.3
+    ${mode === 'export-failure' ? 'exit 9' : `while (( $# )); do
+      if [[ $1 == --output ]]; then output=$2; shift 2; else shift; fi
+    done
+    ${mode !== 'nsight-2025-skips' ? '' : `# Nsight 2025: empty file per skipped report, skip logged (stdout and stderr).
+    # Nsight's own wordings: CUDA kernel / GPU memory / CUDA trace.
+    for pair in 'cuda_gpu_kern_sum:CUDA kernel' 'cuda_gpu_mem_time_sum:GPU memory' 'cuda_api_sum:CUDA trace'; do
+      : > "\${output}_\${pair%%:*}.csv"
+      echo "Processing [\${output}.sqlite] with [/opt/nvidia/nsight-systems-cli/2025.3.1/host-linux-x64/reports/\${pair%%:*}.py]... "
+      echo "SKIPPED: \${output}.sqlite does not contain \${pair#*:} data."
+      echo "SKIPPED: \${output}.sqlite does not contain \${pair#*:} data." >&2
+    done
+    exit 0`}
+    for report in cuda_gpu_kern_sum cuda_gpu_mem_time_sum cuda_api_sum; do
+      printf 'Time (%%),Total Time (ns),Instances,Name\\n100,1000000,1,' > "\${output}_\${report}.csv"
+      case "$report" in
+        cuda_gpu_kern_sum) echo kernel;;
+        cuda_gpu_mem_time_sum) echo '[CUDA memcpy Host-to-Device]';;
+        cuda_api_sum) echo cudaLaunchKernel;;
+      esac >> "\${output}_\${report}.csv"
+    done`}
+    ;;
+  *) exit 8;;
+esac`)
+    script(path.join(dir, 'run_command.sh'), `test "$FIXTURE_ENV" = preserved\nprintf 'baseline sentinel\\n'\nprintf 'executed\\n' >> command-calls\nsleep 0.3`)
+    const out = path.join(dir, 'out')
+    fs.mkdirSync(out)
+    write(path.join(out, 'stages.json'), [{ stage: 'stale' }])
+    const env = { PATH: bin, HOME: dir, TMPDIR: dir, FIXTURE_ENV: 'preserved', FAKE_CALLS: path.join(dir, 'calls'),
+      ...(deb ? { PYTHONPATH: dir, PYTHONDONTWRITEBYTECODE: '1' } : {}),
+      M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl') }
+    const started = process.hrtime.bigint()
+    const result = execute('/bin/bash', [path.join(dir, 'profiler/profile_nsys.sh'), 'run_command.sh', out, '10'], { cwd: dir, env })
+    if (deb) {
+      assert.ok(fs.existsSync(env.FAKE_CALLS), result.stderr + result.stdout)
+      const calls = fs.readFileSync(env.FAKE_CALLS, 'utf8')
+      assert.match(calls, /apt-get .*nsight-systems-cli/)
+      assert.ok(calls.indexOf('apt-get ') < calls.indexOf('curl '), calls + result.stderr + result.stdout)
+      assert.match(calls, /curl .*https:\/\/developer\.download\.nvidia\.com\/devtools\/repos\/ubuntu2204\/amd64\/NsightSystems-linux-cli-public-2025\.3\.1\.90-3582212\.deb/)
+      assert.match(calls, /checksum [a-fA-F0-9]{64}\s+/)
+      if (mode === 'deb-hash-mismatch') {
+        assert.doesNotMatch(calls, /(?:sudo -n )?dpkg /)
+        assert.ok(!fs.existsSync(path.join(bin, 'nsys')))
+      } else {
+        assert.match(calls, /sudo -n dpkg -i /)
+        assert.match(calls, /sudo -n apt-get -f install -y/)
+        assert.ok(calls.indexOf('sha256sum ') < calls.indexOf('dpkg -i '), calls)
+        assert.ok(calls.indexOf('dpkg -i ') < calls.indexOf('profile --trace='), calls)
+      }
+      // SCHEMAS.md: the package goes to a temporary directory outside out/, never out/.
+      const files = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry =>
+        entry.isDirectory() ? files(path.join(directory, entry.name)) : [path.join(directory, entry.name)])
+      for (const file of files(out)) {
+        assert.ok(!file.endsWith('.deb'), `package in out_dir: ${file}`)
+        if (fs.lstatSync(file).isFile()) assert.notEqual(fs.readFileSync(file, 'utf8'), 'fixture deb\n', `package bytes in out_dir: ${file}`)
+      }
+      const inside = target => target === out || target.startsWith(out + path.sep)
+      const downloaded = /^curl .*?(?:-o|--output) (\S+)/m.exec(calls)
+      if (downloaded) assert.ok(!inside(path.resolve(dir, downloaded[1])), `download target in out_dir: ${downloaded[1]}`)
+      // The installed package is the profiler's own temporary copy (the urlopen fake's
+      // $HOME/download.deb belongs to this test); it must be outside out_dir and removed.
+      const installed = /^dpkg -i (\S+)/m.exec(calls)
+      if (installed) {
+        const target = path.resolve(dir, installed[1])
+        assert.ok(!inside(target), `dpkg installed a package from out_dir: ${target}`)
+        if (mode === 'deb-success') assert.ok(!fs.existsSync(target), `package not removed after installation: ${target}`)
+      }
+      if (mode === 'deb-success') assert.ok(installed, 'no dpkg -i call')
+    }
+    if (mode === 'success' || mode === 'deb-success') {
+      assert.equal(result.status, 0, result.stderr + result.stdout)
+      const calls = fs.readFileSync(env.FAKE_CALLS, 'utf8')
+      assert.match(calls, /profile --trace=cuda,nvtx,osrt --sample=none/)
+      assert.match(calls, /stats --report cuda_gpu_kern_sum,cuda_gpu_mem_time_sum,cuda_api_sum --format csv/)
+      assert.equal(fs.readFileSync(path.join(dir, 'command-calls'), 'utf8'), 'executed\n')
+      assert.match(fs.readFileSync(path.join(out, 'baseline.log'), 'utf8'), /baseline sentinel/)
+      assert.ok(fs.existsSync(path.join(out, 'baseline.nsys-rep')))
+      const wall = read(path.join(out, 'total_wall_s.json')).total_wall_s
+      const elapsed = Number(process.hrtime.bigint() - started) / 1e9
+      assert.ok(wall >= 0.3 && wall < elapsed - 0.8, `collection/export overhead included: wall=${wall}, elapsed=${elapsed}`)
+      const stages = read(path.join(out, 'stages.json'))
+      near(stages.reduce((sum, row) => sum + row.wall_s, 0), wall)
+      assert.equal(stages.length, 5)
+      const telemetry = read(path.join(out, 'gpu_util.json'))
+      assert.ok(telemetry.length > 0, 'missing telemetry')
+      assert.ok(telemetry.every(row => row.t >= 0 && row.t <= wall && row.util === 30))
+    } else if (mode === 'nsight-2025-skips') {
+      // U48: empty reports with logged skips are a zero profile, not parse/infra.
+      assert.equal(result.status, 0, result.stderr + result.stdout)
+      assert.doesNotMatch(result.stderr + result.stdout, /M5_PROFILER_INFRA/)
+      assert.ok(!fs.existsSync(path.join(out, 'infra.json')), 'infra.json written')
+      assert.match(fs.readFileSync(env.FAKE_CALLS, 'utf8'), /stats --report cuda_gpu_kern_sum,cuda_gpu_mem_time_sum,cuda_api_sum --format csv/)
+      assert.equal(fs.readFileSync(path.join(dir, 'command-calls'), 'utf8'), 'executed\n')
+      const wall = read(path.join(out, 'total_wall_s.json')).total_wall_s
+      assert.ok(wall >= 0.3, `wall=${wall}`)
+      const stages = read(path.join(out, 'stages.json'))
+      assert.deepEqual(stages.map(row => row.stage), ['kernels', 'memcpy H2D', 'memcpy D2H', 'CUDA API host time', 'other host time'])
+      assert.deepEqual(stages.map(row => row.wall_s), [0, 0, 0, 0, wall])
+      assert.deepEqual(stages.map(row => row.gpu_s), [0, 0, 0, null, null])
+      const telemetry = read(path.join(out, 'gpu_util.json'))
+      assert.ok(telemetry.length > 0, 'missing telemetry')
+    } else {
+      assert.equal(result.status, 2, result.stderr + result.stdout)
+      assert.match(result.stderr + result.stdout, /M5_PROFILER_INFRA/)
+      assert.equal(typeof read(path.join(out, 'infra.json')), 'object')
+      assert.ok(!fs.existsSync(path.join(out, 'stages.json')), 'stale profile survived')
+      if (mode === 'missing-nsys' || mode === 'deb-hash-mismatch') assert.ok(!fs.existsSync(path.join(dir, 'command-calls')))
+    }
+  })
+}
+let profileOnly = null
+try {
+  summariserTests()
+  profilerTests()
+  check('pipeline coverage/gate and shared command contracts; no profile agent or repair', () => {
+    // The U49 host-only cases below run in the same --profile-only pass.
+    const result = execute(process.execPath, [path.join(__dirname, 'test_m5_reproduce.js'), '--profile-only'], { timeout: 1500000 })
+    profileOnly = result
+    assert.equal(result.status, 0, result.stdout + result.stderr)
+    assert.match(result.stdout, /low-coverage/)
+    assert.match(result.stdout, /empty-gpu-util/)
+    assert.match(result.stdout, /fixed profiler uses shared command without profile agent/)
+    for (const mode of ['real', 'valid', 'valid-null', 'timeout', 'rc', 'missing', 'invalid-json'])
+      assert.match(result.stdout, new RegExp(`ok concurrency-${mode}: packet concurrency and headroom fact`))
+  })
+  // U49, SCHEMAS.md "In a host-only profile (packet `host_only` true) ...": each named check must have
+  // run and passed in the --profile-only pass (fake box, fixed-profiler fixture rows).
+  const escape = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const u49 = (label, lines) => check(`U49: ${label}`, () => {
+    assert.ok(profileOnly, '--profile-only pass did not run')
+    for (const line of lines) {
+      const ok = new RegExp(`^ok ${escape(line)}$`, 'm').test(profileOnly.stdout)
+      const failed = new RegExp(`^FAIL ${escape(line)}:.*$`, 'm').exec(profileOnly.stdout)
+      assert.ok(ok, failed ? failed[0].slice(0, 2000) : `check not run: ${line}`)
+    }
+  })
+  const caseLines = (name, extra) => [`${name}: workflow completes`, `${name}: ordered statuses and takeaways`,
+    `${name}: profile packet and facts derived from files`, `${name}: concurrency probe runs only after a passing profile gate`, ...extra]
+  for (const name of ['u49-host-only', 'u49-host-only-within-2pct']) u49(`${name}: host-only profile passes, host_only true, probe runs`, caseLines(name, [
+    `${name}: gate passes despite other host time within 2% of total wall; probe ran`,
+    `${name}: every stage after profile proceeds (diagnostic)`,
+    `${name}: probe log, fetched results, stage unaffected (valid-wide)`,
+    `${name}: packet concurrency and headroom fact (valid-wide)`,
+    `${name}: pipelining and multi-GPU see no transfer or compute time`]))
+  for (const label of ['util-positive', 'kernels-wall', 'h2d-gpu', 'd2h-wall', 'api-wall', 'api-gpu', 'empty-telemetry', 'missing-kernels-row', 'missing-api-row']) {
+    const name = `u49-not-host-only-${label}`
+    u49(`${name}: host_only false, gated as before (numeric), probe not run`, caseLines(name, [`${name}: failure signature`,
+      `${name}: host_only false, 2% wrapper test fails the gate, probe not run`]))
+  }
+  for (const label of ['named-wrapper', 'named-wrapper-underscore', 'low-coverage']) {
+    const name = `u49-host-only-${label}`
+    u49(`${name}: exemption covers only the 2% test`, caseLines(name, [`${name}: failure signature`,
+      `${name}: host-only profile still fails the other gate conditions; probe not run`]))
+  }
+  u49('GPU profiles unchanged: passing GPU profile has host_only false', ['concurrency-valid: profile packet and facts derived from files',
+    'concurrency-valid: ordered statuses and takeaways', 'concurrency-real: profile packet and facts derived from files'])
+  u49('GPU profiles unchanged: row within 2% of total still fails numeric', [9.8, 10, 10.2].flatMap(wall => [
+    `duration-wrapper-${wall}: failure signature`, `duration-wrapper-${wall}: profile packet and facts derived from files`]))
+  u49('parse failure: no packet, host_only null', ['missing-gpu-util: parse failure writes no packet and emits host_only null'])
+  u49('SKIPPED profile record: host_only null', ['u49-profile-skipped: SKIPPED profile record has host_only null'])
+} finally { fs.rmSync(scratch, { recursive: true, force: true }) }
+console.log(`${checks} checks, ${failures} failures`)
+if (!failures) console.log('all checks passed')
+process.exitCode = failures ? 1 : 0

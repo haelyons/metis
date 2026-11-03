@@ -1,0 +1,443 @@
+{
+ "name": "blind-02",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out",
+ "script": "/home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/pipeline/dist/question_tree_v2.js",
+ "script_sha256": "e7cfac852e6ff9c02aefab4ad7f92a227657e46be15b5f53270edc9697907e06",
+ "args": {
+  "seed": 20261103,
+  "pool_k": 0,
+  "picks_per_branch": 1,
+  "require_compute_lever": {
+   "physical": true,
+   "interp": true
+  },
+  "deepen_on_signal": false,
+  "budget_usd": 100,
+  "budget_covers_storage": true,
+  "budget_covers_tax": false,
+  "base": "/home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work",
+  "fixed_roots": [
+   "Can MEGADOCK’s GPU implementation make denser docking search affordable, and does that improve pose recovery within a fixed budget? Small pilot on exactly four unbound PINDER 2024-02 cases: 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo. Compare existing MEGADOCK CPU standard 3600 rotations, GPU standard 3600, and GPU documented dense 54000 (-D). Keep scoring and retained predictions fixed at 50. Pin prepared input bytes, references, binary/dependency/settings/thread/allocation identities. First establish execution correctness and scientific CPU/GPU agreement at identical settings using justified numerical tolerances sealed before fresh comparison. Then assess dense-search DockQ for rank1 and best50 separately, per case; native references only for evaluation. Calibrate runtime before choosing feasible common budgets; seal configurations, timing repetitions, comparison/noise rules and total spending cap before quality evaluation. Report complete workflow time, GPU activity and billed allocation cost, separating setup/retrieval from steady-state work. Keep acceleration, agreement and additional-search quality conclusions separate. Preserve negatives, unavailable budget arms and overruns. No biological efficacy or beyond-four-case inference. Run2 already exposed quality, so fresh executions are prospective replication under new rules, never unseen holdout or retrospective preregistration. Do not substitute throughput of bundled runs for this question. Repository /home/hal/dev/interp/metis: seed experiments/blind-02/m5/BRIEF.md; case preparation/source/reference pins experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158; full prior trace experiments/blind-02/m5/run2_trace/REPORT.md; new assessment experiments/blind-02/science/s01/ASSESSMENT.md. Run2 measured docking totals CPU/GPU/dense 40.07/6.85/69.38 seconds, not complete workflows; standard CPU/GPU transforms and DockQ matched, score max deltas 0.04/0.03/0.04/0.14 with no acceptance tolerance. Dense best50 improved all four observations, rank1 worsened in two including 1nr5. These are exploratory, not sealed conclusions. Historical H100 PCIe rate USD3.29/hour, setup145s, whole unscored bundle median131.9565s; old receipts setup/anchors/freeze/upload/profile/concurrency 145/1571/1402/1424/2832/3448s. Historical allocation and transport observations are estimates for a fresh box, not new producer measurements or public citations. Tree plans only, no box execution. Full card plan ceiling USD100; each later calibration must project below USD20 including setup, retrieval and idle, preferably USD5-10, soft6h/hard12h. Do not run full experiments on calibration route. Identify specific file/section gaps if existing routes cannot implement comparison. Tree PLAN can hold arms, anchor, decision_rule, noise_rule and phases. Measure compilation carries uncertain scalar inputs and phases, not arms/decision_rule; checks 2.5x PROXY or 3x other estimate bands, never scientific equivalence. Measure execution requires missing stage args/controller to be established. Card factual web sources may be checked; do not fabricate citations for private records."
+  ],
+  "seed_ideas": [
+   {
+    "title": "Agreement before interpreting acceleration or denser search",
+    "text": "C1 addresses execution correctness and standard CPU/GPU numerical agreement, prerequisites for interpreting search quality. Full study compares CPU standard and GPU standard on all four cases at identical settings, using all 50 ranked score/transform rows, output grids and pose correspondence, and later separate rank1/best50 DockQ. Cross-backend tolerance currently unknown: justify from independent same-backend repeats plus numerical precision/error analysis before fresh pair, not old observed max score delta0.14 plus epsilon. Exact-repeat diagnostic is distinct from scientific tolerance. Cheapest initial screen: existing m5 U51 units-check against run2 reference, four CPU-standard-only units, same26 threads and per-job commands. Author CPU-only full/control harness and stable per-unit final PDB/docking-output manifest, excluding volatile logs; subset and optional full variability control must not execute dense search or native scoring. Positive byte equality supports repeat/subset assumption; mismatch distinguishes subsetting from baseline drift, never licenses relaxed criterion. Expected box allowance0.25-0.75h/USD0.82-2.47 at historical rate; reserveUSD5, include new export and transport costs. U51 requires new unit files and harness_from; run2 lacks units, so exact reuse alone insufficient. U51 cannot itself execute numerical CPU/GPU agreement verdict. Card must name later agreement/noise validation gate and honest absent anchor if no independent check exists. Repeat-count levels2 and4 may describe calibration effort; do not invent a density effect or throughput hypothesis for this validation card. Seed picks can represent necessary validation without compute-lever claim. Load-bearing unresolved repeatability or runtime assumptions must have cheap measuring phase; broad ratio-band check cannot stand in for numerical tolerance. Materials and exact settings: /home/hal/dev/interp/metis/experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158 and run2/agent/harness/run_command.sh:8-43 under same m5 directory. All four case identities and obligations are in attached root question. Source pin MEGADOCK 9575280c875732553266e26adc607dd892b02616; PINDER source pin ebeb28a2f8411363cef722b7d293c978f7442672. Keep -N50 -t1 -v1.2 -e1 -d1 -a-45 -b1 -f3, standard -r3600 and dense -D. Historical threads26, allocated one H100 PCIe, host26 logical CPUs. Treat future runtime/transport/repeatability as GUESS or appropriately documented PROXY, measured_by before dependent spend; never relabel private historical files as producer's own MEASURED pilot. Preserve historical negatives. Calibration cap preferably USD5-10, projected strictly belowUSD20 including all allocation overhead. No new box workload while carding.",
+    "root_question": "Can MEGADOCK’s GPU implementation make denser docking search affordable, and does that improve pose recovery within a fixed budget? Small pilot on exactly four unbound PINDER 2024-02 cases: 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo. Compare existing MEGADOCK CPU standard 3600 rotations, GPU standard 3600, and GPU documented dense 54000 (-D). Keep scoring and retained predictions fixed at 50. Pin prepared input bytes, references, binary/dependency/settings/thread/allocation identities. First establish execution correctness and scientific CPU/GPU agreement at identical settings using justified numerical tolerances sealed before fresh comparison. Then assess dense-search DockQ for rank1 and best50 separately, per case; native references only for evaluation. Calibrate runtime before choosing feasible common budgets; seal configurations, timing repetitions, comparison/noise rules and total spending cap before quality evaluation. Report complete workflow time, GPU activity and billed allocation cost, separating setup/retrieval from steady-state work. Keep acceleration, agreement and additional-search quality conclusions separate. Preserve negatives, unavailable budget arms and overruns. No biological efficacy or beyond-four-case inference. Run2 already exposed quality, so fresh executions are prospective replication under new rules, never unseen holdout or retrospective preregistration. Do not substitute throughput of bundled runs for this question. Repository /home/hal/dev/interp/metis: seed experiments/blind-02/m5/BRIEF.md; case preparation/source/reference pins experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158; full prior trace experiments/blind-02/m5/run2_trace/REPORT.md; new assessment experiments/blind-02/science/s01/ASSESSMENT.md. Run2 measured docking totals CPU/GPU/dense 40.07/6.85/69.38 seconds, not complete workflows; standard CPU/GPU transforms and DockQ matched, score max deltas 0.04/0.03/0.04/0.14 with no acceptance tolerance. Dense best50 improved all four observations, rank1 worsened in two including 1nr5. These are exploratory, not sealed conclusions. Historical H100 PCIe rate USD3.29/hour, setup145s, whole unscored bundle median131.9565s; old receipts setup/anchors/freeze/upload/profile/concurrency 145/1571/1402/1424/2832/3448s. Historical allocation and transport observations are estimates for a fresh box, not new producer measurements or public citations. Tree plans only, no box execution. Full card plan ceiling USD100; each later calibration must project below USD20 including setup, retrieval and idle, preferably USD5-10, soft6h/hard12h. Do not run full experiments on calibration route. Identify specific file/section gaps if existing routes cannot implement comparison. Tree PLAN can hold arms, anchor, decision_rule, noise_rule and phases. Measure compilation carries uncertain scalar inputs and phases, not arms/decision_rule; checks 2.5x PROXY or 3x other estimate bands, never scientific equivalence. Measure execution requires missing stage args/controller to be established. Card factual web sources may be checked; do not fabricate citations for private records.",
+    "kind": "physical",
+    "root_link": "Agreement is prerequisite for interpreting accelerated standard execution and additional-search recovery.",
+    "compute_open": "Independent repeat/error measurements buy confidence in numerical agreement, not more docking poses.",
+    "sequential": "Setup and same-backend repeatability validation precede justified CPU/GPU comparison; agreement precedes dense recovery evaluation.",
+    "source_urls": [
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+     "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ]
+   },
+   {
+    "title": "Complete-workflow acceleration and dense-search affordability",
+    "text": "C2 addresses CPU/GPU execution acceleration and whether GPU can afford documented dense search relative to CPU standard. Arms CPU standard3600, GPU standard3600, GPU dense54000, all four cases, same scoring and50 retained. Measure complete per-configuration workflow walls, setup/retrieval separately, GPU activity and allocated USD on same H100 host. Historical docking ratio CPU/GPU5.8496; dense/CPU1.7315: no assumption dense is already affordable at CPU-standard wall. Full timing candidate one warmup and seven randomized pairs, 95% paired-median lower bound>=1.05 for worthwhile standard acceleration, subject to independent agreement gate. Cheapest distinguishing calibration: one timing-only harness over all three configurations and all four cases, no native DockQ, uninstrumented per-configuration process timing before trace, cold/warm fetch byte verification and receipts. Use measured timing to choose feasible discrete common caps and total spend before evaluating quality. Dense exceeding all caps rules out that schedule, unavailable arm not zero DockQ. Full plan ceilingUSD100, affordable calibration prerequisite. Lean standalone measure allowance0.3-0.8h/USD0.99-2.63 conditional on execution chain, NOT established runnable. Conservative one m5 run through profile allowance3.6h/USD11.84 using old 3.006h receipts plus reserve. User supplies new_run.py --stop-after-profile, but current m5 pipeline lacks direct profile-stop condition: verify wrapper before launching. Three ordinary per-config runs are not covered by this estimate. A newly authored timing-only anchors script avoids repeating run2 native quality before rules fixed. Preserve same allocation tariff for CPU execution; do not invent CPU-only cloud price. State numerical uncertainties and matched-setting gate in PLAN; carry cost guesses with measuring phases, not fixed DESIGN boxes hiding unestimated work. Materials and exact settings: /home/hal/dev/interp/metis/experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158 and run2/agent/harness/run_command.sh:8-43 under same m5 directory. All four case identities and obligations are in attached root question. Source pin MEGADOCK 9575280c875732553266e26adc607dd892b02616; PINDER source pin ebeb28a2f8411363cef722b7d293c978f7442672. Keep -N50 -t1 -v1.2 -e1 -d1 -a-45 -b1 -f3, standard -r3600 and dense -D. Historical threads26, allocated one H100 PCIe, host26 logical CPUs. Treat future runtime/transport/repeatability as GUESS or appropriately documented PROXY, measured_by before dependent spend; never relabel private historical files as producer's own MEASURED pilot. Preserve historical negatives. Calibration cap preferably USD5-10, projected strictly belowUSD20 including all allocation overhead. No new box workload while carding.",
+    "root_question": "Can MEGADOCK’s GPU implementation make denser docking search affordable, and does that improve pose recovery within a fixed budget? Small pilot on exactly four unbound PINDER 2024-02 cases: 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo. Compare existing MEGADOCK CPU standard 3600 rotations, GPU standard 3600, and GPU documented dense 54000 (-D). Keep scoring and retained predictions fixed at 50. Pin prepared input bytes, references, binary/dependency/settings/thread/allocation identities. First establish execution correctness and scientific CPU/GPU agreement at identical settings using justified numerical tolerances sealed before fresh comparison. Then assess dense-search DockQ for rank1 and best50 separately, per case; native references only for evaluation. Calibrate runtime before choosing feasible common budgets; seal configurations, timing repetitions, comparison/noise rules and total spending cap before quality evaluation. Report complete workflow time, GPU activity and billed allocation cost, separating setup/retrieval from steady-state work. Keep acceleration, agreement and additional-search quality conclusions separate. Preserve negatives, unavailable budget arms and overruns. No biological efficacy or beyond-four-case inference. Run2 already exposed quality, so fresh executions are prospective replication under new rules, never unseen holdout or retrospective preregistration. Do not substitute throughput of bundled runs for this question. Repository /home/hal/dev/interp/metis: seed experiments/blind-02/m5/BRIEF.md; case preparation/source/reference pins experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158; full prior trace experiments/blind-02/m5/run2_trace/REPORT.md; new assessment experiments/blind-02/science/s01/ASSESSMENT.md. Run2 measured docking totals CPU/GPU/dense 40.07/6.85/69.38 seconds, not complete workflows; standard CPU/GPU transforms and DockQ matched, score max deltas 0.04/0.03/0.04/0.14 with no acceptance tolerance. Dense best50 improved all four observations, rank1 worsened in two including 1nr5. These are exploratory, not sealed conclusions. Historical H100 PCIe rate USD3.29/hour, setup145s, whole unscored bundle median131.9565s; old receipts setup/anchors/freeze/upload/profile/concurrency 145/1571/1402/1424/2832/3448s. Historical allocation and transport observations are estimates for a fresh box, not new producer measurements or public citations. Tree plans only, no box execution. Full card plan ceiling USD100; each later calibration must project below USD20 including setup, retrieval and idle, preferably USD5-10, soft6h/hard12h. Do not run full experiments on calibration route. Identify specific file/section gaps if existing routes cannot implement comparison. Tree PLAN can hold arms, anchor, decision_rule, noise_rule and phases. Measure compilation carries uncertain scalar inputs and phases, not arms/decision_rule; checks 2.5x PROXY or 3x other estimate bands, never scientific equivalence. Measure execution requires missing stage args/controller to be established. Card factual web sources may be checked; do not fabricate citations for private records.",
+    "kind": "physical",
+    "root_link": "Whole-workflow timings establish whether acceleration can pay for documented denser sampling under common fixed budgets.",
+    "compute_open": "Search levels3600 and54000 and feasible completed-workflow budgets distinguish GPU acceleration from extra-search cost.",
+    "sequential": "Runtime-only calibration precedes budget sealing; standard CPU/GPU agreement precedes native quality comparison.",
+    "source_urls": [
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+     "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ]
+   },
+   {
+    "title": "Dense search changes candidate recovery and ranking differently",
+    "text": "C3 addresses fixed-budget rank1 versus best50 DockQ separately, with CPU-standard affordability reference. GPU-standard3600 versus GPU-dense54000, all four fixed apo cases, identical scoring and50 retained. No new reranker, CPU-dense arm or extra retained poses. Historical dense best50 rises on all four, but rank1 declines on1aua and1nr5; 1nr5 rank1 falls0.4624993 to0.0229593 while best50 rises0.4624993 to0.5699176. Keep every sign and case; no blanket improvement claim or biological generalization. Candidate meaningful-effect margin0.01 absolute DockQ is DESIGN, not externally justified numerical noise tolerance. Establish scorer/repeat uncertainty independently and seal it before fresh quality evaluation; still report smaller signed differences. CPU/GPU agreement must pass first. Cheapest cost screen shares C2 timing measurement, charged once: which common caps admit both complete searches? If affordable, paired standard/dense output-and-scorer repeats on all four cases distinguish numerical/scorer noise from density effect. Two scientific bundles plus historical setup estimate0.1342h before retrieval; realistic allowance0.5-1.2h/USD1.65-3.95, reserveUSD5. Existing number-band measure can resolve dense-runtime GUESS, not paired quality conclusion; existing m5 baseline/method equivalence and one scalar curve cannot implement this named comparison. Card can hold required arms, independent scorer/setup anchor, two outcomes, per-case decision/noise rules, ordered gates and cost inputs. Explicitly identify executable comparison/calibration contract gap rather than claiming compiled measure runs full plan. Do not repeat known native results merely to create a new measurement; first obtain budget admissibility and agreement. No scientific box launch until executable protocol and seal exist. Materials and exact settings: /home/hal/dev/interp/metis/experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158 and run2/agent/harness/run_command.sh:8-43 under same m5 directory. All four case identities and obligations are in attached root question. Source pin MEGADOCK 9575280c875732553266e26adc607dd892b02616; PINDER source pin ebeb28a2f8411363cef722b7d293c978f7442672. Keep -N50 -t1 -v1.2 -e1 -d1 -a-45 -b1 -f3, standard -r3600 and dense -D. Historical threads26, allocated one H100 PCIe, host26 logical CPUs. Treat future runtime/transport/repeatability as GUESS or appropriately documented PROXY, measured_by before dependent spend; never relabel private historical files as producer's own MEASURED pilot. Preserve historical negatives. Calibration cap preferably USD5-10, projected strictly belowUSD20 including all allocation overhead. No new box workload while carding.",
+    "root_question": "Can MEGADOCK’s GPU implementation make denser docking search affordable, and does that improve pose recovery within a fixed budget? Small pilot on exactly four unbound PINDER 2024-02 cases: 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo. Compare existing MEGADOCK CPU standard 3600 rotations, GPU standard 3600, and GPU documented dense 54000 (-D). Keep scoring and retained predictions fixed at 50. Pin prepared input bytes, references, binary/dependency/settings/thread/allocation identities. First establish execution correctness and scientific CPU/GPU agreement at identical settings using justified numerical tolerances sealed before fresh comparison. Then assess dense-search DockQ for rank1 and best50 separately, per case; native references only for evaluation. Calibrate runtime before choosing feasible common budgets; seal configurations, timing repetitions, comparison/noise rules and total spending cap before quality evaluation. Report complete workflow time, GPU activity and billed allocation cost, separating setup/retrieval from steady-state work. Keep acceleration, agreement and additional-search quality conclusions separate. Preserve negatives, unavailable budget arms and overruns. No biological efficacy or beyond-four-case inference. Run2 already exposed quality, so fresh executions are prospective replication under new rules, never unseen holdout or retrospective preregistration. Do not substitute throughput of bundled runs for this question. Repository /home/hal/dev/interp/metis: seed experiments/blind-02/m5/BRIEF.md; case preparation/source/reference pins experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158; full prior trace experiments/blind-02/m5/run2_trace/REPORT.md; new assessment experiments/blind-02/science/s01/ASSESSMENT.md. Run2 measured docking totals CPU/GPU/dense 40.07/6.85/69.38 seconds, not complete workflows; standard CPU/GPU transforms and DockQ matched, score max deltas 0.04/0.03/0.04/0.14 with no acceptance tolerance. Dense best50 improved all four observations, rank1 worsened in two including 1nr5. These are exploratory, not sealed conclusions. Historical H100 PCIe rate USD3.29/hour, setup145s, whole unscored bundle median131.9565s; old receipts setup/anchors/freeze/upload/profile/concurrency 145/1571/1402/1424/2832/3448s. Historical allocation and transport observations are estimates for a fresh box, not new producer measurements or public citations. Tree plans only, no box execution. Full card plan ceiling USD100; each later calibration must project below USD20 including setup, retrieval and idle, preferably USD5-10, soft6h/hard12h. Do not run full experiments on calibration route. Identify specific file/section gaps if existing routes cannot implement comparison. Tree PLAN can hold arms, anchor, decision_rule, noise_rule and phases. Measure compilation carries uncertain scalar inputs and phases, not arms/decision_rule; checks 2.5x PROXY or 3x other estimate bands, never scientific equivalence. Measure execution requires missing stage args/controller to be established. Card factual web sources may be checked; do not fabricate citations for private records.",
+    "kind": "physical",
+    "root_link": "Separating rank1 from best50 answers whether affordable extra search improves candidate recovery while damaging ranking.",
+    "compute_open": "Documented rotational search width increases3600 to54000 at fixed50 outputs; recovery versus calibrated cost remains prospective question.",
+    "sequential": "Validate agreement and scorer, calibrate costs, seal budgets/rules, then compare dense and standard recovery using native only for evaluation.",
+    "source_urls": [
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+     "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ]
+   },
+   {
+    "title": "CPU host scheduling as workflow affordability calibration",
+    "text": "C4 diagnoses whether independent fixed-input CPU-standard jobs can lower workflow cost, supporting affordability without replacing dense-recovery question. Compare baseline-own four-case serial invocation, four separate serial invocations, widths2 and4, original26 threads/job and unchanged per-unit science. Existing standalone m5 U52 units-probe against run2 reference executes a,b,c2,c4,c4,c2,b,a, exact PDB/docking-output checks, CPU seconds/effective cores, busy fraction, context switches, memory and thread peaks, shared-change counts. Needs new MEGADOCK unit files and CPU-only calibration harness; run2 has no units. Preserve stable paths and every selected final pose, exclude volatile logs. No MPS or GPU scheduling inference from CPU-only route. Prospective advancement: output equality and both repeats at chosen width at least1.05 faster than nearby baseline-own serial; reported mean factor alone not confidence result. Baseline mismatch stops later probe arms; use U51 variability control next, never change criterion. Docking component8*40.07s plus setup145s; practical0.2-0.5h/USD0.66-1.65 with compact summaries, reserveUSD5. Historical whole mixed bundle factor1.0466 with26 threads on26 CPUs does not settle distinct-input unit test; FroDock U52 on same four materials showed2.2976 at width4, but different executable and no transferable speedup claim. High busy/no gain deprioritizes unchanged-thread concurrency; low busy/no gain redirects to launch/I/O analysis. Thread26->13 would be separately sealed follow-up, not hidden optimization now. U52 cannot feed factor into ordinary propose or answer density DockQ. Card should encode scheduling factor as load-bearing GUESS only if full plan depends on it, measuring before spend; distinguish scalar estimate-band check from >=1.05 decision. No fabricated restructuring of independent jobs: method none if only scheduling independent cases. Materials and exact settings: /home/hal/dev/interp/metis/experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158 and run2/agent/harness/run_command.sh:8-43 under same m5 directory. All four case identities and obligations are in attached root question. Source pin MEGADOCK 9575280c875732553266e26adc607dd892b02616; PINDER source pin ebeb28a2f8411363cef722b7d293c978f7442672. Keep -N50 -t1 -v1.2 -e1 -d1 -a-45 -b1 -f3, standard -r3600 and dense -D. Historical threads26, allocated one H100 PCIe, host26 logical CPUs. Treat future runtime/transport/repeatability as GUESS or appropriately documented PROXY, measured_by before dependent spend; never relabel private historical files as producer's own MEASURED pilot. Preserve historical negatives. Calibration cap preferably USD5-10, projected strictly belowUSD20 including all allocation overhead. No new box workload while carding.",
+    "root_question": "Can MEGADOCK’s GPU implementation make denser docking search affordable, and does that improve pose recovery within a fixed budget? Small pilot on exactly four unbound PINDER 2024-02 cases: 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo. Compare existing MEGADOCK CPU standard 3600 rotations, GPU standard 3600, and GPU documented dense 54000 (-D). Keep scoring and retained predictions fixed at 50. Pin prepared input bytes, references, binary/dependency/settings/thread/allocation identities. First establish execution correctness and scientific CPU/GPU agreement at identical settings using justified numerical tolerances sealed before fresh comparison. Then assess dense-search DockQ for rank1 and best50 separately, per case; native references only for evaluation. Calibrate runtime before choosing feasible common budgets; seal configurations, timing repetitions, comparison/noise rules and total spending cap before quality evaluation. Report complete workflow time, GPU activity and billed allocation cost, separating setup/retrieval from steady-state work. Keep acceleration, agreement and additional-search quality conclusions separate. Preserve negatives, unavailable budget arms and overruns. No biological efficacy or beyond-four-case inference. Run2 already exposed quality, so fresh executions are prospective replication under new rules, never unseen holdout or retrospective preregistration. Do not substitute throughput of bundled runs for this question. Repository /home/hal/dev/interp/metis: seed experiments/blind-02/m5/BRIEF.md; case preparation/source/reference pins experiments/blind-02/m5/b01_materials/BRIEF_run1.md:48-158; full prior trace experiments/blind-02/m5/run2_trace/REPORT.md; new assessment experiments/blind-02/science/s01/ASSESSMENT.md. Run2 measured docking totals CPU/GPU/dense 40.07/6.85/69.38 seconds, not complete workflows; standard CPU/GPU transforms and DockQ matched, score max deltas 0.04/0.03/0.04/0.14 with no acceptance tolerance. Dense best50 improved all four observations, rank1 worsened in two including 1nr5. These are exploratory, not sealed conclusions. Historical H100 PCIe rate USD3.29/hour, setup145s, whole unscored bundle median131.9565s; old receipts setup/anchors/freeze/upload/profile/concurrency 145/1571/1402/1424/2832/3448s. Historical allocation and transport observations are estimates for a fresh box, not new producer measurements or public citations. Tree plans only, no box execution. Full card plan ceiling USD100; each later calibration must project below USD20 including setup, retrieval and idle, preferably USD5-10, soft6h/hard12h. Do not run full experiments on calibration route. Identify specific file/section gaps if existing routes cannot implement comparison. Tree PLAN can hold arms, anchor, decision_rule, noise_rule and phases. Measure compilation carries uncertain scalar inputs and phases, not arms/decision_rule; checks 2.5x PROXY or 3x other estimate bands, never scientific equivalence. Measure execution requires missing stage args/controller to be established. Card factual web sources may be checked; do not fabricate citations for private records.",
+    "kind": "physical",
+    "root_link": "Cheaper correct execution of seed CPU-standard work can affect workflow affordability and explain bundle contention.",
+    "compute_open": "Independent unit widths1,2,4 vary scheduling; no added scientific samples or change in retained predictions.",
+    "sequential": "Validate unchanged outputs before counting concurrent throughput; resource screen informs later configuration-budget design, never substitutes for recovery study.",
+    "source_urls": [
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+     "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+     "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+    ]
+   }
+  ]
+ },
+ "models": {
+  "main": "opencode-go/mimo-v2.6-pro",
+  "cheap": "opencode-go/glm-5.3-flash",
+  "by_role": {}
+ },
+ "understudy": {
+  "primary_family": "codex",
+  "disabled_families": [],
+  "mode": "fallback",
+  "on_refusal": "halt",
+  "retry_on": [
+   "timeout",
+   "exit",
+   "runner",
+   "nojson",
+   "schema",
+   "declined"
+  ],
+  "profile": "metis",
+  "families": {
+   "opencode": {
+    "models": {
+     "strong": "opencode-go/mimo-v2.6-pro",
+     "main": "opencode-go/mimo-v2.6-pro",
+     "cheap": "opencode-go/glm-5.3-flash"
+    },
+    "by_role": {}
+   },
+   "claude": {
+    "models": {
+     "strong": "claude/opus",
+     "main": "claude/sonnet",
+     "cheap": "claude/sonnet"
+    },
+    "tools": {
+     "qt-bare": "",
+     "qt-web": "WebFetch,WebSearch",
+     "qt-extract": "Read",
+     "qt-research": "Read,Write,Edit,Glob,Grep,WebFetch,WebSearch",
+     "qt-producer": "Read,Write,Edit,Glob,Grep,WebFetch,WebSearch",
+     "triage-reader": "Read,Grep,Glob,Bash",
+     "triage-runner": "Bash,Read",
+     "triage-author": "Read,Glob,Grep,Write",
+     "ls-general": "Read,Glob,Grep,Bash",
+     "ls-builder": "Read,Write,Edit,Glob,Grep,Bash",
+     "ls-writer": "Read,Write,Glob,Grep,Bash",
+     "ls-fixer": "Bash,Read"
+    }
+   },
+   "codex": {
+    "models": {
+     "strong": "codex/default@high",
+     "main": "codex/default@medium",
+     "cheap": "codex/default@low"
+    }
+   },
+   "cursor": {
+    "models": {
+     "strong": "cursor/default",
+     "main": "cursor/default",
+     "cheap": "cursor/default"
+    }
+   }
+  },
+  "chain": {
+   "opencode": [
+    "codex",
+    "cursor",
+    "claude"
+   ],
+   "claude": [
+    "codex",
+    "opencode"
+   ],
+   "codex": [
+    "cursor",
+    "opencode",
+    "claude"
+   ],
+   "cursor": [
+    "codex",
+    "opencode",
+    "claude"
+   ]
+  },
+  "routes": [
+   {
+    "match": "^build$",
+    "declined_if": "no_files",
+    "_doc": "a build reply whose runner_py/onbox_sh name no existing file declined the work; hands over"
+   }
+  ]
+ },
+ "opencode_version": "1.18.34",
+ "claude_version": "2.1.316 (Claude Code)",
+ "codex_version": "codex-cli 0.166.0",
+ "cursor_version": "2026.10.22-27dcf5f",
+ "node": "v24.18.0",
+ "git": {
+  "repo": "/home/hal/dev/interp/metis",
+  "commit": "32130ec624fb2d58999a73e990a03aff6738dd63",
+  "dirty": true
+ },
+ "ocx_config": {
+  "$schema": "https://opencode.ai/config.json",
+  "autoupdate": false,
+  "share": "disabled",
+  "mcp": {},
+  "provider": {
+   "lambda": {
+    "npm": "@ai-sdk/openai-compatible",
+    "name": "Lambda GPU",
+    "options": {
+     "baseURL": "http://127.0.0.1:18000/v1"
+    },
+    "models": {
+     "gpt-oss-120b": {
+      "name": "GPT OSS 120B",
+      "tool_call": true,
+      "limit": {
+       "context": 32768,
+       "output": 8192
+      }
+     }
+    }
+   }
+  },
+  "permission": {
+   "*": "deny"
+  },
+  "agent": {
+   "qt-bare": {
+    "mode": "primary",
+    "description": "Judge that reads only the text it is given",
+    "prompt": "You read only the text you are given. You use no tools. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny"
+    }
+   },
+   "qt-web": {
+    "mode": "primary",
+    "description": "Checker that fetches the pages it is given",
+    "prompt": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow"
+    }
+   },
+   "qt-research": {
+    "mode": "primary",
+    "description": "Researcher that searches the web and writes notes in its working directory",
+    "prompt": "You read only the files the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-producer": {
+    "mode": "primary",
+    "description": "Producer that researches, plans and writes its plan files in its working directory",
+    "prompt": "You read only what the prompt names; fetch any web page you need. You write files only where the prompt says, inside your working directory. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "webfetch": "allow",
+     "websearch": "allow",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "qt-extract": {
+    "mode": "primary",
+    "description": "Reads one producer file and returns its plan record",
+    "prompt": "You read only the file the prompt names. You return only the JSON asked for.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    }
+   },
+   "triage-author": {
+    "mode": "primary",
+    "description": "Writes ONE new measurement control from a spec, claim-blind. Reads the repo to match conventions; writes a single new file with a model-free selftest and a neutral decision; never edits existing code, never runs anything. Its output is reviewed before the result is trusted.",
+    "prompt": "You write ONE new measurement control from a spec. You build a neutral instrument; you do not know, and must not guess, which outcome would support any hypothesis.\n\n- Claim-blind: you are given a measurement spec, not the claim it bears on. Do not infer a wanted result or tune toward one. Measure the quantity and let the number fall where it does.\n- Read the existing scripts in this repo first (Glob/Grep/Read) to match their conventions, hooks, tokenization, and baselines, so the measurement is correct, not just unbiased. A wrong control is as useless as a biased one.\n- Write exactly ONE new file at the path you are given. Never edit, overwrite, or delete an existing file. No logic beyond what the spec asks.\n- The control must include a model-free `--selftest` and emit a neutral decision: a threshold on the measured number (e.g. \"drop > 30% -> ATTENUATED\"), stated in terms of the measurement only, never in terms of any claim or confound.\n- Do not run it. Writing and running are separate; the runner runs it later, after a human reviews it.\n\nReturn: control_path, the exact run_command (existing launcher + this script, ready for the runner), what it measures, and the neutral decision rule. Output only the JSON.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "write": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Glob, Grep, Write"
+   },
+   "triage-reader": {
+    "mode": "primary",
+    "description": "Read-only grounding check (H3). A claim is grounded by reading the input (the items, labels, or directional-training data a result was computed from) and the outputs (the generations, per-token values, result files), then confirming its numbers reproduce from the raw artifact. Reads in its own context; never runs experiments, never edits. Flags any number whose artifact was never saved as unauditable.",
+    "prompt": "You ground ONE claim by reading the primary artifacts behind it and checking its numbers against the raw data. You read; you do not run experiments (that is the runner) and you do not edit anything.\n\n- Read BOTH sides. The INPUT: the items, labels, or directional-training data a result was computed from. The OUTPUT: the saved generations, the per-token logits / measured values, and the result JSONs. The claim's `evidence` cites where they live; locate them with Glob/Grep.\n- Re-derive the claim's headline number(s) yourself from the raw artifact: load the JSON, recompute the mean / AUROC / count, read the actual generations. Do not trust the summary; reproduce it. Re-derive labels by their STATED MEANING, never by re-running the pipeline under audit (re-running a scorer reproduces its bugs and reports success).\n- Decide:\n  - `reproduces`: your re-derived number matches the claim.\n  - `diverges`: the raw artifact gives a different number (name the gap in `note`).\n  - `unauditable`: the artifact needed to check a number was never saved (say which in `note`). The absence IS the finding, not a failure to look.\n  - `absent`: the cited file does not exist.\n- You read in full so the orchestrator does not have to. Return only the compact verdict, the number(s) you re-derived, and a one-line note, never the raw dump. This preserves the orchestrator's context; it does not replace its reading.\n- Change nothing. No edits, no runs, no commits, no new files. You are a reader.\n\nOutput only the JSON.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "grep": "allow",
+     "glob": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Grep, Glob, Bash"
+   },
+   "triage-runner": {
+    "mode": "primary",
+    "description": "Read-only, non-mutating runner. Runs ONE given control command, returns the control's own result verbatim, confirms teardown. Never edits, commits, or fixes anything. A triager, not a patcher.",
+    "prompt": "You run ONE control command and report what it produced. You are a triager, not a patcher.\n\n- Change nothing. No edits, no commits, no new code, no flag tweaks to make it run. You have no edit tools; if you find yourself wanting them, stop and set matches=\"not_runnable\".\n- Run only the command you are given (an existing script or launcher). If it cannot run without a code change, a new constant, or a model re-pin, set matches=\"not_runnable\" and stop.\n- If the command is long-running, launch it detached and check once when it finishes. Do not poll in a sleep/tail loop.\n- The control decides its own verdict. Read the result it writes and return that decision / those numbers verbatim in `result`. Map `matches`: the control's own verdict supporting the claim -> \"claim\"; supporting the confound -> \"confound\"; unclear or missing -> \"ambiguous\".\n- If the run rents a resource, confirm it is released before returning; `teardown_ok=true` only when nothing remains.\n\nBe literal: report what the control printed, not what you think it means. Output only the JSON.",
+    "permission": {
+     "*": "deny",
+     "bash": "allow",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Bash, Read"
+   },
+   "ls-general": {
+    "mode": "primary",
+    "description": "Reads the files the prompt names and returns the record asked for",
+    "prompt": "You read the files the prompt names and nothing else; you may run read-only shell commands to inspect them. You write no files. You return only the JSON or text asked for. Call tools only in the commentary channel, never in the analysis channel.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Glob, Grep, Bash"
+   },
+   "ls-builder": {
+    "mode": "primary",
+    "description": "Builds the execution layer of one pre-registered experiment",
+    "prompt": "You implement exactly the spec you are given, in the files the prompt names, and run only the local checks it names. You never patch infrastructure or rescope the design: when something is broken or ambiguous you stop and report. You return only the record asked for. Call tools only in the commentary channel, never in the analysis channel.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "write": "allow",
+     "edit": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Write, Edit, Glob, Grep, Bash"
+   },
+   "ls-writer": {
+    "mode": "primary",
+    "description": "Writes the takeaways file under the contract and runs the gates on it",
+    "prompt": "You write the one file the prompt names from the sources it names, run the gate scripts it names on that file, and rewrite until they pass. You return only what the prompt asks for. Call tools only in the commentary channel, never in the analysis channel.",
+    "permission": {
+     "*": "deny",
+     "read": "allow",
+     "write": "allow",
+     "glob": "allow",
+     "grep": "allow",
+     "bash": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Read, Write, Glob, Grep, Bash"
+   },
+   "ls-fixer": {
+    "mode": "primary",
+    "description": "Bounded fixer or verifier working on a held-open box through one ssh helper",
+    "prompt": "You work only through the helper command the prompt names, which runs commands on one remote box; you run nothing else and read no local files. You change the smallest thing that explains a failure, inside the scope the prompt states, and commit every change on the box. You return only the record asked for.",
+    "permission": {
+     "*": "deny",
+     "bash": "allow",
+     "read": "allow",
+     "external_directory": "deny",
+     "doom_loop": "deny"
+    },
+    "tools_md": "Bash, Read"
+   }
+  }
+ },
+ "started": "2026-11-03T01:24:11.748Z",
+ "finished": "2026-11-03T01:45:22.878Z",
+ "totals": {
+  "cost_usd": 0,
+  "tokens": 6744087,
+  "calls": 51,
+  "by_model": {
+   "codex/default@medium": {
+    "calls": 51,
+    "cost_usd": 0,
+    "tokens": 6744087,
+    "failed": 0,
+    "refusals": 0
+   },
+   "opencode-go/qwen3.8-flash": {
+    "calls": 5,
+    "cost_usd": 0,
+    "tokens": 0,
+    "failed": 5,
+    "refusals": 0
+   },
+   "opencode-go/mimo-v2.6-flash": {
+    "calls": 5,
+    "cost_usd": 0,
+    "tokens": 0,
+    "failed": 5,
+    "refusals": 0
+   },
+   "opencode-go/minimax-m3": {
+    "calls": 5,
+    "cost_usd": 0,
+    "tokens": 0,
+    "failed": 5,
+    "refusals": 0
+   },
+   "opencode-go/glm-5.3-flash": {
+    "calls": 10,
+    "cost_usd": 0,
+    "tokens": 0,
+    "failed": 10,
+    "refusals": 0
+   }
+  },
+  "by_family": {
+   "codex": {
+    "calls": 51,
+    "cost_usd": 0,
+    "tokens": 6744087,
+    "failed": 0,
+    "refusals": 0
+   },
+   "opencode": {
+    "calls": 25,
+    "cost_usd": 0,
+    "tokens": 0,
+    "failed": 25,
+    "refusals": 0
+   }
+  },
+  "substitutions": 25,
+  "refusals": 0
+ }
+}

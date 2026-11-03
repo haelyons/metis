@@ -1,0 +1,42 @@
+{
+  "scores": [
+    {
+      "criterion": "stakes",
+      "value": 5,
+      "ref": "card:if_not",
+      "reason": "Outcomes directly decide whether extra calibration earns its cost and whether agreement permits later scientific interpretation."
+    },
+    {
+      "criterion": "lever",
+      "value": 1,
+      "ref": "plan:compute_axis",
+      "reason": "Repeat levels span only 2×; no established noise bound shows predicted decision difference exceeds calibration variability."
+    },
+    {
+      "criterion": "verifiable",
+      "value": 3,
+      "ref": "plan:checks[5]",
+      "reason": "Independent high-precision calculations and audited error bounds provide reference checks, but no published-number reproduction precedes comparison."
+    },
+    {
+      "criterion": "open",
+      "value": 5,
+      "ref": "card:closest_prior",
+      "reason": "Quoted prior addresses precision differences and scalability, leaving repeat-count calibration and case-specific agreement unresolved."
+    },
+    {
+      "criterion": "reshape",
+      "value": 1,
+      "ref": "card:sequential_part",
+      "reason": "Inputs, repeatability, bound sealing and fresh comparison remain sequential; no dependency removed."
+    },
+    {
+      "criterion": "baseline",
+      "value": "NA",
+      "ref": "card:method",
+      "reason": "Restructuring method is none."
+    }
+  ],
+  "decides_by": "fresh",
+  "decides_by_reason": "Calibration failure can stop earlier, but successful calibration requires fresh CPU/GPU comparisons before either repeat level qualifies under decision_rule."
+}

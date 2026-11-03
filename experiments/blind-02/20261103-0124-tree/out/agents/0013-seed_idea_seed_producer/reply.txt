@@ -1,0 +1,443 @@
+{
+  "option_title": "CPU host scheduling as workflow affordability calibration",
+  "question": "Can concurrent CPU docking jobs reduce complete workflow cost while preserving every output across four fixed cases?",
+  "hypothesis": "Concurrent independent jobs may fill idle CPU capacity, reducing workflow time without changing docking calculations or retained poses.",
+  "compute_axis": {
+    "quantity": "Independent CPU docking jobs allowed to run concurrently on one fixed host",
+    "unit": "concurrent jobs",
+    "levels": [1, 2, 4]
+  },
+  "held_fixed": [
+    "DESIGN: exactly these supplied apo cases: 1aua__A1_P24280--1aua__A2_P24280:apo; 1ax2__A1_P16404--1ax2__A2_P16404:apo; 1dv1__A1_P24182--1dv1__B1_P24182:apo; 1nr5__A1_P07547--1nr5__A2_P07547:apo.",
+    "DESIGN: MEGADOCK source 9575280c875732553266e26adc607dd892b02616; PINDER source ebeb28a2f8411363cef722b7d293c978f7442672; prepared input bytes, references, dependencies, binary hashes and environment frozen before launch.",
+    "DESIGN: CPU-only megadock binary; OMP_NUM_THREADS=26; identical whole-host affinity and allocation for every arm. OpenMP thread control documented at https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md.",
+    "DESIGN: unchanged command flags -N50 -t1 -v1.2 -e1 -d1 -a-45 -b1 -f3 -r3600; no -D.",
+    "DESIGN: preserve original relative output paths inside isolated arm/repeat roots; retain every selected final pose from every execution.",
+    "DESIGN: references used only to verify frozen artifacts; no quality-driven selection, changed scientific samples or reduced threads."
+  ],
+  "predictions": {
+    "if_lever": "Width 2 or 4 preserves outputs and achieves at least 1.05 speed factor in both repeats against nearby original serial blocks.",
+    "if_not": "Widths 2 and 4 preserve outputs but fail the 1.05 speed-factor threshold in at least one repeat each.",
+    "decision_rule": "For each concurrent block, divide linearly interpolated bracketing original-serial block time by concurrent block time. Advance a width only if both repeat factors are >=1.05 and every output check passes. If both widths qualify, choose larger minimum repeat factor; exact tie selects smaller width. Any substantive mismatch invalidates throughput conclusions.",
+    "noise_rule": "Seal block order a,b,c2,c4,c4,c2,b,a before execution. Compare each concurrent repeat with bracketing original serial measurements. Report raw times, both factors, minimum and mean. Two repeats provide a screening rule, not statistical confidence. Discordant or failed repeats trigger a separately sealed serial variability control next; never lower threshold or append opportunistic repeats.",
+    "expected": "unsure",
+    "expected_why": "Fixed thread counts may leave exploitable idle capacity or cause contention; this plan assumes neither outcome."
+  },
+  "compute_tested": "partly",
+  "compute_tested_why": "Concurrency varies while host resources remain fixed. Test measures host scheduling efficiency, not benefits from buying additional GPUs or CPU cores.",
+  "scored_against": "Correctness: frozen historical CPU artifacts, then fresh original serial output, using exact scientific-output equality. Performance: complete invocation-to-final-pose wall time against nearby original serial blocks; separate serial units provide launch-overhead control.",
+  "arms": [
+    {
+      "id": "a",
+      "what": "Original four-case serial invocation, unchanged command structure and per-unit science."
+    },
+    {
+      "id": "b",
+      "what": "Four separate CPU unit invocations executed serially, including launch and output handling."
+    },
+    {
+      "id": "c2",
+      "what": "Same four CPU units, maximum two concurrent jobs, 26 threads per job."
+    },
+    {
+      "id": "c4",
+      "what": "Same four CPU units, maximum four concurrent jobs, 26 threads per job."
+    }
+  ],
+  "baseline": {
+    "what": "Fresh original four-case serial invocation on the same allocation, measured at beginning and end. Four separate serial units are an additional control.",
+    "value": "Prospective measurement; no historical runtime substituted."
+  },
+  "anchor": {
+    "what": "Reproduce frozen CPU docking records and every retained pose exactly; then verify separate serial units against fresh original execution.",
+    "tolerance": "0 differing scientific bytes, 0 missing or extra scientific files, identical stable relative paths. Exclude only predeclared volatile logs and timestamps.",
+    "independent_code": "New manifest and byte-comparison verifier; no independent docking implementation claimed."
+  },
+  "checks": [
+    "Before allocation, require frozen input/reference/output manifests and explicit permission-free access to supplied historical artifacts. Missing artifacts block execution.",
+    "Build four CPU unit manifests plus controller, exact-output verifier, process-tree resource recorder, allocation watchdog and compact exporter. CPU build target documented at https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md.",
+    "Initial original serial block must match frozen historical CPU artifacts; separate serial units must then match original serial block before concurrent arms begin.",
+    "Compare prepared PDB hashes, docking scientific records, complete final PDB files and scientific file inventories. Preserve original path obligations through isolated execution roots.",
+    "Generate and retain all 50 poses per case per block. Never compare only rank one or selected successful cases.",
+    "Hash shared inputs before and after every block; record unauthorized shared writes. Never normalize newly discovered differences after seeing results.",
+    "Measure complete block wall time through final pose creation; report docking-only time separately. Record CPU seconds, effective cores, CPU busy fraction, context switches, memory/thread peaks, shared-change counts and GPU activity.",
+    "Stop later probe arms immediately on baseline mismatch. Finish with original serial repeat as drift and repeatability control.",
+    "Interpret high busy without gain as evidence against unchanged-thread concurrency; low busy without gain motivates launch/I/O analysis. Thread reduction requires separate sealed follow-up.",
+    "No cloud workload or local scientific pilot was run while writing this plan."
+  ],
+  "phases": [
+    {
+      "id": "preflight",
+      "what": "Before paid launch, establish unit interface, controller stage arguments, immutable manifests, path obligations, equality exclusions, timer, billing check and sealed comparison rules.",
+      "stop_rule": "Do not allocate until historical artifacts are available and controller can implement all arms. Stop if quoted allocation cannot satisfy fixed host identity or spending cap."
+    },
+    {
+      "id": "setup",
+      "what": "Start allocation watchdog immediately. Retrieve inputs and references, verify hashes, build or verify pinned CPU binary, record dependencies and host identity.",
+      "stop_rule": "Maximum setup_h instance hours. Stop scientific work on deadline, incompatible CPU entitlement, changed input hashes or failed build."
+    },
+    {
+      "id": "anchor",
+      "what": "Execute first original serial block and first separate-serial block. Require exact frozen-reference and fresh-baseline equality before concurrency.",
+      "stop_rule": "Maximum anchor_h instance hours; any scientific mismatch or missing reference stops all later probe arms."
+    },
+    {
+      "id": "probe",
+      "what": "Execute remaining sealed blocks: width 2, width 4, width 4, width 2, separate serial, original serial. Record outputs and complete workflow resource summaries.",
+      "stop_rule": "Maximum probe_h instance hours. Require both repeat factors >=speed_floor for advancement. Incomplete arms remain unavailable; no additional paid box."
+    },
+    {
+      "id": "export",
+      "what": "Export manifests, every retained pose, comparisons, raw timing/resource summaries and billing timestamps; terminate allocation.",
+      "stop_rule": "Maximum export_h instance hours. Whole allocation deadline total_h includes retrieval, setup, idle, export and termination. Hard credit-spend ceiling calibration_cap_usd."
+    }
+  ],
+  "numbers": [
+    {
+      "id": "budget_usd",
+      "name": "Available credit envelope",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 1000
+    },
+    {
+      "id": "card_cap_usd",
+      "name": "Overall card ceiling",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 100
+    },
+    {
+      "id": "calibration_cap_usd",
+      "name": "Calibration hard credit-spend ceiling",
+      "unit": "USD",
+      "basis": "DESIGN",
+      "value": 10
+    },
+    {
+      "id": "gpu_count",
+      "name": "Allocated GPUs; none used for docking",
+      "unit": "GPUs",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "gpu_rate",
+      "name": "H100 PCIe price per GPU",
+      "unit": "USD/GPU/hour",
+      "basis": "CITED",
+      "value": 3.29,
+      "source_id": "lambda",
+      "quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "page_setting": "Single-GPU H100 PCIe instance pricing table."
+    },
+    {
+      "id": "host_vcpus",
+      "name": "Required advertised host vCPUs",
+      "unit": "vCPUs",
+      "basis": "CITED",
+      "value": 26,
+      "source_id": "lambda",
+      "quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "page_setting": "Single-GPU H100 PCIe instance; verify entitlement and topology before execution."
+    },
+    {
+      "id": "gpu_memory",
+      "name": "Advertised GPU memory",
+      "unit": "GB",
+      "basis": "CITED",
+      "value": 80,
+      "source_id": "lambda",
+      "quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "page_setting": "Single-GPU H100 PCIe instance."
+    },
+    {
+      "id": "cases",
+      "name": "Fixed supplied apo cases",
+      "unit": "cases",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "retained",
+      "name": "Retained poses per case per block",
+      "unit": "poses",
+      "basis": "DESIGN",
+      "value": 50
+    },
+    {
+      "id": "rotations",
+      "name": "Standard rotations per docking",
+      "unit": "rotations",
+      "basis": "DESIGN",
+      "value": 3600
+    },
+    {
+      "id": "threads",
+      "name": "Unchanged threads per job",
+      "unit": "threads",
+      "basis": "DESIGN",
+      "value": 26
+    },
+    {
+      "id": "width_serial",
+      "name": "Serial concurrency",
+      "unit": "jobs",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "width_two",
+      "name": "Intermediate concurrency",
+      "unit": "jobs",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "width_four",
+      "name": "Maximum concurrency",
+      "unit": "jobs",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "max_threads",
+      "name": "Requested OpenMP threads at maximum width",
+      "unit": "threads",
+      "basis": "DERIVED",
+      "expr": "threads * width_four"
+    },
+    {
+      "id": "arm_count",
+      "name": "Original serial, separate serial, width two and width four",
+      "unit": "arms",
+      "basis": "DESIGN",
+      "value": 4
+    },
+    {
+      "id": "repeats",
+      "name": "Complete blocks per arm",
+      "unit": "blocks/arm",
+      "basis": "DESIGN",
+      "value": 2
+    },
+    {
+      "id": "blocks",
+      "name": "Maximum complete timing blocks",
+      "unit": "blocks",
+      "basis": "DERIVED",
+      "expr": "arm_count * repeats"
+    },
+    {
+      "id": "docking_jobs",
+      "name": "Maximum docking executions if every arm finishes",
+      "unit": "jobs",
+      "basis": "DERIVED",
+      "expr": "blocks * cases"
+    },
+    {
+      "id": "pose_artifacts",
+      "name": "Retained pose artifacts across all executions",
+      "unit": "pose artifacts",
+      "basis": "DERIVED",
+      "expr": "docking_jobs * retained"
+    },
+    {
+      "id": "unique_pose_slots",
+      "name": "Unique case and rank slots; repetitions add no science",
+      "unit": "case/rank slots",
+      "basis": "DERIVED",
+      "expr": "cases * retained"
+    },
+    {
+      "id": "speed_floor",
+      "name": "Required factor in each concurrent repeat",
+      "unit": "serial/concurrent wall-time ratio",
+      "basis": "DESIGN",
+      "value": 1.05
+    },
+    {
+      "id": "byte_tolerance",
+      "name": "Permitted differing scientific bytes",
+      "unit": "bytes",
+      "basis": "DESIGN",
+      "value": 0
+    },
+    {
+      "id": "setup_h",
+      "name": "Setup and retrieval time box",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 0.5
+    },
+    {
+      "id": "anchor_h",
+      "name": "Initial baseline and equality time box",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 0.25
+    },
+    {
+      "id": "probe_h",
+      "name": "Remaining scheduling blocks time box",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 1
+    },
+    {
+      "id": "export_h",
+      "name": "Export and termination time box",
+      "unit": "instance hours",
+      "basis": "DESIGN",
+      "value": 0.25
+    },
+    {
+      "id": "total_h",
+      "name": "Whole allocation deadline including overhead",
+      "unit": "instance hours",
+      "basis": "DERIVED",
+      "expr": "setup_h + anchor_h + probe_h + export_h"
+    },
+    {
+      "id": "allocation_usd",
+      "name": "Maximum planned allocation charge before tax",
+      "unit": "USD",
+      "basis": "DERIVED",
+      "expr": "total_h * gpu_count * gpu_rate"
+    },
+    {
+      "id": "filesystem_gib",
+      "name": "Paid persistent filesystem provisioned",
+      "unit": "GiB",
+      "basis": "DESIGN",
+      "value": 0
+    },
+    {
+      "id": "human_h",
+      "name": "Human preparation allowance",
+      "unit": "person hours",
+      "basis": "DESIGN",
+      "value": 4
+    }
+  ],
+  "cost": {
+    "rates": [
+      {
+        "id": "h100_pcie",
+        "gpu": "NVIDIA H100 PCIe",
+        "gpu_memory_gb": 80,
+        "n_gpus": 1,
+        "per_gpu_usd_h": 3.29
+      }
+    ],
+    "lines": [
+      {
+        "id": "setup_box",
+        "phase": "setup",
+        "what": "Retrieval, build, identity checks and all associated idle time",
+        "kind": "work",
+        "rate": "h100_pcie",
+        "hours": "setup_h"
+      },
+      {
+        "id": "anchor_box",
+        "phase": "anchor",
+        "what": "Initial original serial and separate serial blocks plus equality checks",
+        "kind": "work",
+        "rate": "h100_pcie",
+        "hours": "anchor_h"
+      },
+      {
+        "id": "probe_box",
+        "phase": "probe",
+        "what": "Remaining sealed blocks, complete pose generation and resource diagnostics",
+        "kind": "work",
+        "rate": "h100_pcie",
+        "hours": "probe_h"
+      },
+      {
+        "id": "export_box",
+        "phase": "export",
+        "what": "Artifact export, final billing record and allocation termination",
+        "kind": "work",
+        "rate": "h100_pcie",
+        "hours": "export_h"
+      }
+    ],
+    "yields": [
+      "cases",
+      "blocks",
+      "docking_jobs",
+      "pose_artifacts",
+      "unique_pose_slots"
+    ],
+    "spend_cap_usd": 10,
+    "total_stated": 6.58
+  },
+  "full_scale": [],
+  "outside_budget": [
+    {
+      "what": "Human preparation design allowance; unpaid by Lambda credits",
+      "qty": 4,
+      "unit": "person hours"
+    },
+    {
+      "what": "Paid persistent filesystem; none provisioned",
+      "qty": 0,
+      "unit": "GiB"
+    }
+  ],
+  "restructuring": {
+    "sequential_part": "One workflow waits for four case jobs and their retained poses before complete output comparison.",
+    "method": "none"
+  },
+  "scope_gap": [
+    "Plan only: producer.md written; no cloud workload or timing pilot performed. Time boxes do not guarantee completion of all blocks.",
+    "User-reported gap, not independently inspected: m5/run2/agent/harness/run_command.sh:8-43 contains original invocation but no MEGADOCK unit interface. Add four manifests and unchanged per-case extraction.",
+    "User-reported dependency, not independently inspected: m5/b01_materials/BRIEF_run1.md:48-158 must supply material hashes, references and stable-path obligations before execution.",
+    "Add CPU-only controller, stage arguments, equality verifier, process-tree recorder, billing watchdog and exporter. Existing measurement execution lacks established stage arguments/controller.",
+    "Seal arms, anchor, decision_rule, noise_rule and phases in PLAN. Scalar estimate-band checks cannot establish scientific equality or satisfy the scheduling decision.",
+    "Supplied private history has no fabricated public citation: mixed-bundle gain did not decide distinct-input scheduling; FroDock gain cannot transfer to MEGADOCK.",
+    "Supplied private negatives remain: exploratory CPU/GPU score differences lacked sealed tolerance; dense search worsened rank-one recovery in two cases. Historical runtime and transport figures are not producer measurements.",
+    "No GPU scheduling, MPS, dense-search quality or DockQ conclusion follows. Any later quality study remains prospective replication because earlier quality was exposed.",
+    "Allocation subtotal excludes applicable tax; confirm credit treatment and billing granularity before launch. Stop if projected charge exceeds calibration_cap_usd. No silent instance substitution.",
+    "Unused credit envelope remains uncommitted. A separate serial variability control or thread-reduction experiment needs a new sealed plan; neither runs automatically here."
+  ],
+  "novelty": {
+    "closest_prior": "MEGADOCK reported 98% scaling at 420 heterogeneous nodes; it did not test fixed-thread CPU job concurrency on one host. [prior]",
+    "closest_source_id": "prior",
+    "prior_max_level": null,
+    "left_open": "Whether widths 2 or 4 preserve every output and exceed 1.05 speed factor twice on one fixed host.",
+    "decides": "no",
+    "searched": true
+  },
+  "limits": "CPU scheduling screen only; no GPU acceleration, dense-search recovery, biological efficacy, population generalization or confidence claim from two repeats.",
+  "test_summary": "Compare original four-case serial invocation, four separate serial units, widths 2 and 4; retain 26 threads per job. Require exact outputs and both concurrent repeats >=1.05 faster than nearby original serial blocks. Allocation time box costs $6.58 before tax.",
+  "sources": [
+    {
+      "id": "lambda",
+      "url": "https://lambda.ai/pricing",
+      "quote": "NVIDIA H100 PCIe | 80 GB | 26 | 225 GiB | 1 TiB SSD | $3.29",
+      "supports": "Single-GPU H100 PCIe rate and advertised host resources; rate matches supplied start-of-run price snapshot. Table row transcribed with column separators."
+    },
+    {
+      "id": "commands",
+      "url": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+      "quote": "MEGADOCK parallelizes rotation calculations by using OpenMP.",
+      "supports": "Pinned command guide; CPU execution, OpenMP thread control, docking parameters and decoy-generation interface. Numerical experiment settings are explicit design choices inherited from supplied task."
+    },
+    {
+      "id": "build",
+      "url": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+      "quote": "After completion of `make` command, a binary file `megadock` will be generated.",
+      "supports": "CPU-node build section provides CPU-only target and build switches; use pinned source rather than changing implementation between arms."
+    },
+    {
+      "id": "prior",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC4221127/",
+      "quote": "Notably, a high scalability (98%) was obtained with the largest number of nodes (420 nodes).",
+      "supports": "Published heterogeneous-node scaling result; different resource axis and workload from this single-host scheduling calibration. Search returned article text; subsequent direct opening encountered browser verification."
+    }
+  ],
+  "files_read": []
+}

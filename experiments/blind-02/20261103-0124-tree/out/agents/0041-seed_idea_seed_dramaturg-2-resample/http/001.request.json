@@ -1,0 +1,121 @@
+{
+ "ts": "2026-11-03T01:41:59.414Z",
+ "method": "POST",
+ "path": "/inference/go/openai/v1/chat/completions",
+ "headers": {
+  "authorization": "[redacted]",
+  "content-type": "application/json",
+  "user-agent": "opencode/1.18.34 ai-sdk/provider-utils/4.0.23 runtime/bun/1.3.14",
+  "x-opencode-client": "cli",
+  "x-opencode-org-id": "[redacted]",
+  "x-opencode-project": "e88b86115ce7ad778057b79f07681a9bda088aaf",
+  "x-opencode-request": "msg_19f11f74b001yGZ5Gpm9AD8ZVi",
+  "x-opencode-session": "ses_e60ee0937ffe87aAXt1ctGAo19",
+  "x-opencode-session-id": "ses_e60ee0937ffe87aAXt1ctGAo19",
+  "connection": "keep-alive",
+  "accept": "*/*",
+  "host": "127.0.0.1:41167",
+  "accept-encoding": "gzip, deflate, br, zstd",
+  "content-length": "8598"
+ },
+ "body": {
+  "model": "glm-5.3-flash",
+  "max_tokens": 32000,
+  "messages": [
+   {
+    "role": "system",
+    "content": "You fetch only the pages the task names or that you need to check its items. You return only the JSON asked for.\nYou are powered by the model named glm-5.3-flash. The exact model ID is opencode-go/glm-5.3-flash\nHere is some useful information about the environment you are running in:\n<env>\n  Working directory: /home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/agents/0041-seed_idea_seed_dramaturg-2-resample/cwd\n  Workspace root folder: /home/hal/dev/interp/metis\n  Is directory a git repo: yes\n  Platform: linux\n  Today's date: Tue Nov 03 2026\n</env>"
+   },
+   {
+    "role": "user",
+    "content": "\"For each item below, fetch its source and check that the recorded quote appears on the page and supports the item. A card item is a field of the plan in the producer's words, with the sources it cites: check each factual claim in it against those sources, and any value it carries against the page; what the plan will build, measure or predict needs no source, but a factual claim with no source is UNSUPPORTED. For a cost input, check that the page states the number for the setting given; whether it applies to this plan is not yours to judge. When the page states a different number for a num or rate item, give it as page_value. Decide only from the pages you fetch and the text below; do not read files. Return one status per item, under its ref: SUPPORTED, PARTIAL, UNSUPPORTED, CONTRADICTED or UNREACHABLE, with the page sentence you relied on.\nItems, one per line:\n{\\\"ref\\\":\\\"card:question\\\",\\\"text\\\":\\\"Can concurrent CPU docking jobs reduce complete workflow cost while preserving every output across four fixed cases?\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:hypothesis\\\",\\\"text\\\":\\\"Concurrent independent jobs may fill idle CPU capacity, reducing workflow time without changing docking calculations or retained poses.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:if_lever\\\",\\\"text\\\":\\\"Width 2 or 4 preserves outputs and achieves at least 1.05 speed factor in both repeats against nearby original serial blocks.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:if_not\\\",\\\"text\\\":\\\"Widths 2 and 4 preserve outputs but fail the 1.05 speed-factor threshold in at least one repeat each.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:test_summary\\\",\\\"text\\\":\\\"Compare original four-case serial run, four separate serial jobs, and 2 or 4 concurrent jobs, keeping 26 threads per job. Require identical outputs and nearby original serial times divided by concurrent times >=1.05 in both repeats. Allocation time limit costs $6.58 before tax.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:closest_prior\\\",\\\"text\\\":\\\"MEGADOCK reported 98% scaling at 420 heterogeneous nodes; it did not test fixed-thread CPU job concurrency on one host. [prior]\\\",\\\"sources\\\":[{\\\"id\\\":\\\"prior\\\",\\\"url\\\":\\\"https://pmc.ncbi.nlm.nih.gov/articles/PMC4221127/\\\",\\\"quote\\\":\\\"Notably, a high scalability (98%) was obtained with the largest number of nodes (420 nodes).\\\"}]}\n{\\\"ref\\\":\\\"card:left_open\\\",\\\"text\\\":\\\"Whether widths 2 or 4 preserve every output and exceed 1.05 speed factor twice on one fixed host.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:anchor\\\",\\\"text\\\":\\\"Reproduce frozen CPU docking records and every retained pose exactly; then verify separate serial units against fresh original execution.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"card:limits\\\",\\\"text\\\":\\\"CPU scheduling screen only; no GPU acceleration, dense-search recovery, biological efficacy, population generalization or confidence claim from two repeats.\\\",\\\"sources\\\":[]}\n{\\\"ref\\\":\\\"src:prior\\\",\\\"url\\\":\\\"https://pmc.ncbi.nlm.nih.gov/articles/PMC4221127/\\\",\\\"quote\\\":\\\"Notably, a high scalability (98%) was obtained with the largest number of nodes (420 nodes).\\\",\\\"supports\\\":\\\"Published heterogeneous-node scaling result; different resource axis and workload from this single-host scheduling calibration. Search returned article text; subsequent direct opening encountered browser verification.\\\"}\n\nReturn only one JSON value, with no other text, that matches this JSON Schema:\n{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"items\\\":{\\\"type\\\":\\\"array\\\",\\\"description\\\":\\\"One entry per item sent, with its ref unchanged.\\\",\\\"items\\\":{\\\"type\\\":\\\"object\\\",\\\"properties\\\":{\\\"ref\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"\\\\\"card:<field>\\\\\", \\\\\"src:<source id>\\\\\", \\\\\"num:<number id>\\\\\" or \\\\\"rate:<rate id>\\\\\", as sent.\\\"},\\\"status\\\":{\\\"type\\\":\\\"string\\\",\\\"enum\\\":[\\\"SUPPORTED\\\",\\\"PARTIAL\\\",\\\"UNSUPPORTED\\\",\\\"CONTRADICTED\\\",\\\"UNREACHABLE\\\"]},\\\"page_quote\\\":{\\\"type\\\":\\\"string\\\",\\\"description\\\":\\\"The text on the page this status rests on.\\\"},\\\"note\\\":{\\\"type\\\":\\\"string\\\"},\\\"page_value\\\":{\\\"type\\\":\\\"number\\\",\\\"description\\\":\\\"num and rate items: the value the page states.\\\"}},\\\"required\\\":[\\\"ref\\\",\\\"status\\\",\\\"page_quote\\\",\\\"note\\\"]}}},\\\"required\\\":[\\\"items\\\"]}\""
+   }
+  ],
+  "tools": [
+   {
+    "type": "function",
+    "function": {
+     "name": "webfetch",
+     "description": "- Fetches content from a specified URL\n- Takes a URL and optional format as input\n- Fetches the URL content, converts to requested format (markdown by default)\n- Returns the content in the specified format\n- Use this tool when you need to retrieve and analyze web content\n\nUsage notes:\n  - IMPORTANT: if another tool is present that offers better web fetching capabilities, is more targeted to the task, or has fewer restrictions, prefer using that tool instead of this one.\n  - The URL must be a fully-formed valid URL\n  - HTTP URLs will be automatically upgraded to HTTPS\n  - Format options: \"markdown\" (default), \"text\", or \"html\"\n  - This tool is read-only and does not modify any files\n  - Results may be summarized if the content is very large\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "url": {
+        "type": "string",
+        "description": "The URL to fetch content from"
+       },
+       "format": {
+        "type": "string",
+        "enum": [
+         "text",
+         "markdown",
+         "html"
+        ],
+        "description": "The format to return the content in (text, markdown, or html). Defaults to markdown.",
+        "default": "markdown"
+       },
+       "timeout": {
+        "type": "number",
+        "description": "Optional timeout in seconds (max 120)"
+       }
+      },
+      "required": [
+       "url"
+      ]
+     }
+    }
+   },
+   {
+    "type": "function",
+    "function": {
+     "name": "websearch",
+     "description": "- Search the web using the session's web search provider - performs real-time web searches and can scrape content from specific URLs\n- Provides up-to-date information for current events and recent data\n- Supports configurable result counts and returns the content from the most relevant websites\n- Use this tool for accessing information beyond knowledge cutoff\n- Searches are performed automatically within a single API call\n\nUsage notes:\n  - Supports live crawling modes when available: 'fallback' (backup if cached unavailable) or 'preferred' (prioritize live crawling)\n  - Search types when available: 'auto' (balanced), 'fast' (quick results), 'deep' (comprehensive search)\n  - Configurable context length for optimal LLM integration\n  - Domain filtering and advanced search options available\n\nThe current year is 2026. You MUST use this year when searching for recent information or current events\n- Example: If the current year is 2026 and the user asks for \"latest AI news\", search for \"AI news 2026\", NOT \"AI news 2025\"\n",
+     "parameters": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+       "query": {
+        "type": "string",
+        "description": "Websearch query"
+       },
+       "numResults": {
+        "type": "number",
+        "description": "Number of search results to return (default: 8)"
+       },
+       "livecrawl": {
+        "type": "string",
+        "enum": [
+         "fallback",
+         "preferred"
+        ],
+        "description": "Live crawl mode - 'fallback': use live crawling as backup if cached content unavailable, 'preferred': prioritize live crawling (default: 'fallback')"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "auto",
+         "fast",
+         "deep"
+        ],
+        "description": "Search type - 'auto': balanced search (default), 'fast': quick results, 'deep': comprehensive search"
+       },
+       "contextMaxCharacters": {
+        "type": "number",
+        "description": "Maximum characters for context string optimized for LLMs (default: 10000)"
+       }
+      },
+      "required": [
+       "query"
+      ]
+     }
+    }
+   }
+  ],
+  "tool_choice": "auto",
+  "stream": true,
+  "stream_options": {
+   "include_usage": true
+  }
+ }
+}

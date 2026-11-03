@@ -1,0 +1,59 @@
+{
+  "items": [
+    {
+      "id": "P1",
+      "title": "Denser rigid-body search: recovery versus ranking",
+      "summary": "Test whether added angular search improves rank1 and best50 DockQ under common workflow budgets; MEGADOCK documents 3,600 standard rotations and 54,000 dense rotations (https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md).",
+      "root_link": "Directly bears on GPU-dense minus GPU-standard rank1 and best50 DockQ under sealed budgets (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md).",
+      "compute_open": "More parallel compute buys search width: largest documented angular search in cited guide is 54,000 rotations; guide supplies settings rather than quality-scaling measurements, leaving whether denser coverage improves either DockQ outcome unknown here (https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md).",
+      "sequential": "none: rotation calculations parallelize through OpenMP and docking jobs distribute through MPI; angles need no preceding angle's result, although decoy reconstruction waits for docking output (https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md).",
+      "source_urls": [
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md",
+        "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md"
+      ],
+      "narrowing": "Leaves protocol repair and numerical acceptance aside; search-width response probes root's added-search value while retaining separate rank1/best50 outcomes (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md)."
+    },
+    {
+      "id": "P2",
+      "title": "Fixed-search docking throughput",
+      "summary": "Developer benchmark reports 352 dockings taking 67.1 hours on one CPU core, 2.26 hours with 12 CPU cores plus one GPU, and 1.02 hours with 12 CPU cores plus three GPUs (https://www.bi.cs.titech.ac.jp/megadock/perform.html).",
+      "root_link": "Bears on CPU-standard/GPU-standard acceleration, whose complete-workflow timing boundary exceeds published docking timings (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md; https://www.bi.cs.titech.ac.jp/megadock/perform.html).",
+      "compute_open": "settled: parallel hardware reduced reported docking workload time from 67.1 hours on one CPU core to 1.02 hours on 12 CPU cores plus three GPUs, establishing compute sensitivity for that benchmark (https://www.bi.cs.titech.ac.jp/megadock/perform.html).",
+      "sequential": "none: independent docking jobs distribute through MPI and rotations parallelize through OpenMP; downstream decoy generation waits for docking output (https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md).",
+      "source_urls": [
+        "https://www.bi.cs.titech.ac.jp/megadock/perform.html",
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/master/doc/README.md",
+        "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md"
+      ],
+      "narrowing": "Leaves search quality and scientific agreement aside; docking time contributes to root's complete-workflow time but cannot establish its full acceleration ratio (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md)."
+    },
+    {
+      "id": "P3",
+      "title": "Massive multimer sampling and long recycling",
+      "summary": "AFsample generated approximately 6,000 models per target and raised mean DockQ from 0.41 to 0.55 against its AlphaFold-Multimer baseline, while retaining confidently wrong orientations for T1187o (https://pmc.ncbi.nlm.nih.gov/articles/PMC10534052/).",
+      "root_link": "Bears on finding good candidate poses versus ranking them first through an alternative method outside root's MEGADOCK arms (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md).",
+      "compute_open": "More parallel compute buys model runs/seeds: largest per-target sample count reported across cited studies is approximately 6,000; whether larger ensembles improve selected rank1 or best50 rather than candidate availability remains unestablished by them (https://pmc.ncbi.nlm.nih.gov/articles/PMC10534052/; https://pmc.ncbi.nlm.nih.gov/articles/PMC11578886/).",
+      "sequential": "Each recycle waits for preceding prediction state; MassiveFold reports one prediction stopping at recycle 164 under a 1,000-recycle cap, while AFsample used approximately 6,000 separate predictions; scheduling reaches one prediction per GPU, but measured per-run GPU busy fraction is unreported (https://pmc.ncbi.nlm.nih.gov/articles/PMC11578886/; https://pmc.ncbi.nlm.nih.gov/articles/PMC10534052/). Recycles remain ordered under that recurrence; independent seeds can run concurrently given sufficient GPU resources, as MassiveFold demonstrated, shortening ensemble completion without removing one seed's dependency chain (https://pmc.ncbi.nlm.nih.gov/articles/PMC11578886/).",
+      "source_urls": [
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC10534052/",
+        "https://pmc.ncbi.nlm.nih.gov/articles/PMC11578886/",
+        "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md"
+      ],
+      "narrowing": "Leaves identical docking inputs and backend equivalence aside; complex-prediction DockQ probes root's distinction between candidate coverage and selection (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md)."
+    },
+    {
+      "id": "P4",
+      "title": "GPU molecular dynamics for native-interface recovery",
+      "summary": "Association study compared 16 ordinary MD runs with one coupled 16-replica exchange simulation per complex; exchange sampled near-native arrangements in five of six cases, leaving 1gcq unresolved after 640 ns per replica (https://onlinelibrary.wiley.com/doi/full/10.1002/jcc.26187).",
+      "root_link": "Bears on added-search pose recovery through molecular simulation outside root's rigid-body docking arms (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md).",
+      "compute_open": "More parallel compute buys independent association seeds/ensemble members: cited association experiment used 16 ordinary trajectories or 16 coupled exchange replicas, reaching 899 ns ordinary and 845 ns per exchange replica; whether additional independent ensembles resolve remaining failures or reproduce force-field-favored wrong orientations remains unknown (https://onlinelibrary.wiley.com/doi/full/10.1002/jcc.26187).",
+      "sequential": "Each integration update waits for preceding positions/velocities and forces; proposed 2-fs steps imply roughly 154–450 million updates for reported 308–899-ns ordinary runs; benchmark used 16 independent ordinary runs or one coupled 16-replica exchange run per pair without establishing sufficient runs for convergence, and reports pmemd.cuda execution without per-run GPU busy fraction or original timestep in main text (https://onlinelibrary.wiley.com/doi/full/10.1002/jcc.26187). Updates remain ordered in ordinary integration; coarse prediction plus concurrent fine corrections could overlap trajectory segments if an inexpensive coarse force field preserves relevant dynamics and converges cheaply—nearest cited physical demonstration applied adaptive Parareal to tungsten defects, leaving protein-association performance untested there (https://arxiv.org/abs/2212.10508).",
+      "source_urls": [
+        "https://onlinelibrary.wiley.com/doi/full/10.1002/jcc.26187",
+        "https://arxiv.org/abs/2212.10508",
+        "file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md"
+      ],
+      "narrowing": "Leaves fixed MEGADOCK scoring and numerical agreement aside; near-native interface recovery provides a geometric proxy requiring validation against root's DockQ endpoints (file:///home/hal/dev/interp/metis/experiments/blind-02/20261103-0124-tree/out/work/seed-20261103/R1/framer.md; https://onlinelibrary.wiley.com/doi/full/10.1002/jcc.26187)."
+    }
+  ]
+}
