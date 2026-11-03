@@ -71,7 +71,8 @@ def validate(value):
                           "units_outcome": ("invalid_units", "failed", "baseline_mismatch",
                                             "outputs_mismatch", "skipped", "measured"),
                           "units_factor_2": float, "units_factor_4": float,
-                          "units_shared_writes": bool}.items():
+                          "units_shared_writes": bool, "card_inputs": int, "card_measured": int,
+                          "card_holds": int, "card_refuted": int}.items():
             if key in facts:
                 schema[key] = spec
     if stage == "propose" and type(facts) is dict:

@@ -24,7 +24,8 @@ return (async () => {
   const fields = {
     intake: ['found', 'anchors_count', 'data', 'licence', 'stock_environment', 'size', 'anchored', 'licence_basis'],
     reproduce: ['anchors_passed', 'anchors_total', 'stock_verified', 'tuned_control_valid', 'units_match', 'units_full_match',
-      'units_outcome', 'units_factor_2', 'units_factor_4', 'units_shared_writes'],
+      'units_outcome', 'units_factor_2', 'units_factor_4', 'units_shared_writes',
+      'card_inputs', 'card_measured', 'card_holds', 'card_refuted'],
     profile: ['profile_complete', 'timed_fraction', 'gpu_telemetry', 'headroom', 'host_only'],
     seal: ['seal_present', 'seal_verified', 'prediction_count'],
     propose: ['method', 'expected_speedup', 'votes_approve', 'votes_total', 'vote_share', 'gate_pass',
@@ -69,8 +70,61 @@ return (async () => {
   const hasValue = value => value != null && (typeof value !== 'string' || value.trim() !== '')
     && (typeof value !== 'object' || Object.keys(value).length > 0)
   const menu = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
+  const sha256 = bytes => createHash('sha256').update(bytes).digest('hex')
+  function writeAtomic(file, text) {
+    const temporary = `${file}.${randomUUID()}.tmp`
+    writeFileSync(temporary, text)
+    renameSync(temporary, file)
+  }
+
+  // Card calibration (U54): agents see only A/card_inputs.json; the record, its values and bands stay in control/.
+  const cardMode = Object.hasOwn(input, 'card')
+  const cardArg = input.card
+  if (cardMode) {
+    // No agent-readable copy of the arguments holds args.card: wf.js records this same object in agent/wf/run.json
+    // before the script starts (rewritten here, before any agent call) and again when it ends (hence the delete).
+    delete input.card
+    const runRecord = agent.journal ? path.join(path.dirname(agent.journal), 'run.json') : null
+    if (runRecord && existsSync(runRecord)) {
+      const info = readJSON(runRecord)
+      if (info?.args && typeof info.args === 'object') delete info.args.card
+      writeAtomic(runRecord, JSON.stringify(info, null, 1))
+    }
+  }
+  const cardInputsPath = path.join(A, 'card_inputs.json')
+  let cardInputs = null
+  function prepareCard() {
+    const card = cardArg
+    const plain = value => value && typeof value === 'object' && !Array.isArray(value)
+    if (!plain(card) || !Object.keys(card).every(key => ['result', 'key', 'bands'].includes(key))
+      || typeof card.result !== 'string' || !card.result.trim() || typeof card.key !== 'string' || !card.key.trim()
+      || Object.hasOwn(input, 'units_check') || Object.hasOwn(input, 'units_probe')) throw new Error('invalid card')
+    const source = path.resolve(card.result)
+    const bytes = readFileSync(source)
+    const calibration = JSON.parse(bytes.toString('utf8'))?.calibration
+    const record = Array.isArray(calibration) ? calibration.find(item => item?.key === card.key) : null
+    if (!plain(record) || record.state !== 'calibration_required' || !Array.isArray(record.required) || !record.required.length
+      || new Set(record.required.map(item => item?.id)).size !== record.required.length
+      || !record.required.every(item => plain(item) && typeof item.id === 'string' && /^[a-z][a-z0-9_]{0,30}$/.test(item.id)
+        && ['GUESS', 'PROXY'].includes(item.basis))) throw new Error('invalid card')
+    const bands = Object.hasOwn(card, 'bands') ? card.bands : {}
+    if (!plain(bands) || !Object.entries(bands).every(([id, band]) => record.required.some(item => item.id === id)
+      && plain(band) && Object.keys(band).length === 1 && Number.isFinite(band.abs) && band.abs > 0)) throw new Error('invalid card')
+    const cardText = JSON.stringify({ source, source_sha256: sha256(bytes), record, bands }, null, 2) + '\n'
+    writeAtomic(path.join(C, 'card.json'), cardText)
+    writeAtomic(path.join(C, 'card_seal.json'), JSON.stringify({ card_sha256: sha256(cardText), sealed_utc: new Date().toISOString() }, null, 2) + '\n')
+    cardInputs = {
+      inputs: record.required.map(item => ({ id: item.id, name: item.name ?? null, unit: item.unit ?? null,
+        measured_by: item.measured_by ?? null, phase: item.phase?.what ?? null })),
+      anchor: Number.isFinite(record.anchor?.published_value) ? { what: record.anchor.what ?? null } : null,
+    }
+    writeAtomic(cardInputsPath, JSON.stringify(cardInputs, null, 2) + '\n')
+  }
 
   async function intake() {
+    if (cardMode) {
+      try { prepareCard() } catch { return failure({ ...nullFacts('intake'), tokens_known: false, gpu_busy_known: false }, 'parse') }
+    }
     if (input.stub?.intake != null) return stub('intake')
     const facts = { ...nullFacts('intake'), tokens_known: false, gpu_busy_known: false }
     const fail = () => {
@@ -105,7 +159,8 @@ When permission is not established, licence="unknown" stays "unknown" and does n
 Report optional licence_basis for the least-covered item among the benchmark code and its required inputs. Use the first value that applies to any item, in this fixed order: "unreachable" (the licence evidence for the item could not be fetched), "none" (no licence, terms of use or owner statement found for the item), "owner" (the item's only basis is a permission stated by the run's owner in the brief), "distribution" (the item's only basis is a licence of the repository, package or archive that distributes it, and that licence does not state that it covers the item), "explicit" (a licence or terms of use states that it covers the item, by name, by path, or as the whole repository, package or archive). This fact records the basis only; it never changes the gate, licence, blockers or any other fact.
 stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
 size is data plus peak working set: tiny <=1 GiB, small <=10 GiB, medium <=100 GiB, large >100 GiB, otherwise unknown.
-Gate: complete files, found, available required data, licence is not "restricted", and stock_environment is not false. Missing published tolerances do not block. Missing evidence must stay unknown.`
+Gate: complete files, found, available required data, licence is not "restricted", and stock_environment is not false. Missing published tolerances do not block. Missing evidence must stay unknown.${cardMode ? `
+This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. EXECUTION.json's representative workload is the protocol of the phases those inputs name (their measured_by and phase), not another workload.` : ''}`
     try {
       const reply = await agent(prompt, { label: 'intake', agentType: 'ls-writer', model: 'sonnet', schema: intakeSchema })
       // Whitelist facts: no benchmark content or arbitrary reply keys can reach S.
@@ -154,6 +209,26 @@ Gate: complete files, found, available required data, licence is not "restricted
   const remoteDirectory = `/tmp/m5-${randomUUID()}`
   const harnessDirectory = path.join(A, 'harness')
   const receiptsDirectory = path.join(C, 'receipts')
+  const extractPath = path.join(harnessDirectory, 'card_extract.json')
+  async function validCardExtract() {
+    const value = readJSON(extractPath)
+    const ids = [...cardInputs.inputs.map(item => item.id), ...(cardInputs.anchor ? ['anchor'] : [])]
+    const exactKeys = (item, keys) => item && typeof item === 'object' && !Array.isArray(item)
+      && Object.keys(item).length === keys.length && keys.every(key => Object.hasOwn(item, key))
+    if (!exactKeys(value, ['rules']) || !Array.isArray(value.rules) || value.rules.length !== ids.length
+      || !value.rules.every((rule, index) => exactKeys(rule, ['id', 'file', 'kind', 'expr']) && rule.id === ids[index]
+        && typeof rule.file === 'string' && rule.file.split('/').every(part => /^[A-Za-z0-9._+=-]+$/.test(part) && part !== '.' && part !== '..')
+        && typeof rule.expr === 'string' && (rule.kind === 'regex'
+          || (rule.kind === 'json' && /^(?:\/(?:[^~/]|~[01])*)*$/.test(rule.expr))))) return false
+    // Python's re decides what a pattern is; exactly one capturing group each.
+    const patterns = value.rules.filter(rule => rule.kind === 'regex').map(rule => rule.expr)
+    if (patterns.length) {
+      try {
+        await exec('python3', ['-I', '-c', 'import re, sys\nsys.exit(0 if all(re.compile(p).groups == 1 for p in sys.argv[1:]) else 1)', ...patterns])
+      } catch { return false }
+    }
+    return true
+  }
   const failure = (facts, error_class) => ({ status: 'FAIL', facts, v1: {
     error_class, exit_code: error_class === 'anchor' ? 4 : error_class === 'timeout' ? 3 : 2,
   } })
@@ -275,7 +350,7 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
       const names = name === 'setup.sh' ? [name] : ['run_anchors.sh', 'run_command.sh']
       const before = new Map(name === 'setup.sh' ? [] : names.map(file => [file, readFileSync(path.join(harnessDirectory, file))]))
       const protectedScripts = new Map([...(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh']),
-        'run_units.sh', 'units.json'].map(file =>
+        'run_units.sh', 'units.json', ...(cardMode ? ['card_extract.json'] : [])].map(file =>
         [file, existsSync(path.join(harnessDirectory, file)) ? readFileSync(path.join(harnessDirectory, file)) : null]))
       const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(harnessDirectory, name))}`
         : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(harnessDirectory)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
@@ -403,12 +478,13 @@ Write three self-contained bash scripts, invoked from a shared remote working di
 - run_command.sh: only the exact measured baseline run command and its complete environment at the fixed representative scale. Run the published binary, save its stdout/stderr for run_anchors.sh to parse, and propagate its exit status. Do not measure stages, sample telemetry, install tools, or write profiling outputs. run_anchors.sh invokes this file; the pipeline profiles this same file.
 Also provide run_evaluation.sh for the published baseline evaluation interface, or make run_anchors.sh handle non-anchor EVAL_MODE. Evaluation uses fresh working directories with baseline-published/, method/, data/, harness/ and payload/ links and absolute BASELINE_DIR, METHOD_DIR, BASELINE_OUT, METHOD_OUT and EVAL_OUT paths. EVAL_PROTOCOL points to the sealed JSON; EVAL_INPUTS and EVAL_SEEDS are JSON encodings of evaluation_inputs and paired_seed_tests. EVAL_INPUTS is an object whose ids array lists the sealed input identities in order; each record's input_id is one of those strings, and every other key (pins, configuration, generated-input descriptions) describes inputs and is never itself an input. EVAL_SEEDS is either {kind:"paired_median",seeds:[integer,...]}, whose seeds are the execution seeds in order, or {kind:"deterministic",...}, whose single execution seed is null; other keys are descriptive. EVAL_COMPUTE_BUDGET is empty except in curve mode. Modes are equivalence, warmup, performance and curve. Run the published configuration on every sealed input/seed, seeds first then input IDs, and write EVAL_OUT/evaluation.json: {records:[{input_id,seed,metrics:{metric_name:finite_number}}],timing_scope,gpu_count,wall_s,compute_budget}. Use null seed for deterministic protocols; timing_scope must equal the seal; wall_s is required for reported_wall scopes; compute_budget is required for curves. Synchronize every used GPU before returning or stopping reported timers; include launch, transfer and merge overhead. Enforce curve budgets in GPU seconds. Always measure actual outputs; never reuse baseline outputs.
 Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
-Return a short completion acknowledgement; the pipeline reads the scripts itself.`
+Return a short completion acknowledgement; the pipeline reads the scripts itself.${cardMode ? `
+This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. The representative run must write outputs under out/ from which each listed input${cardInputs?.anchor ? ', and the anchor quantity that file names,' : ''} can be read. Declare how each one is read in ${JSON.stringify(extractPath)}, exactly {"rules": [...]}: one rule per listed input, in the listed order, with that input's id${cardInputs?.anchor ? ', then one rule with id "anchor"' : ''}. Each rule is exactly {"id", "file", "kind", "expr"}. file is a path relative to out/, made of /-separated components of A-Za-z0-9._+=- characters, none of them "." or "..". kind "json": expr is a JSON Pointer (RFC 6901) into that file, and the value there must be a finite JSON number. kind "regex": expr is a Python re pattern with exactly one capturing group; the file is read as UTF-8 and the last match's group must parse with float() as a finite number. The pipeline reads the values with these rules; no harness script computes, writes or asserts a value for these inputs.` : ''}`
       mkdirSync(harnessDirectory, { recursive: true })
       if (input.harness_from != null) {
         if (typeof input.harness_from !== 'string' || !input.harness_from.trim()) return failure(facts, 'parse')
         const source = path.resolve(input.harness_from)
-        const names = ['setup.sh', 'run_anchors.sh', 'run_command.sh',
+        const names = ['setup.sh', 'run_anchors.sh', 'run_command.sh', ...(cardMode ? ['card_extract.json'] : []),
           ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(source, name)))]
         const scripts = names.map(name => [name, readFileSync(path.join(source, name))])
         harnessSource = { source, files: {} }
@@ -420,6 +496,12 @@ Return a short completion acknowledgement; the pipeline reads the scripts itself
       } else {
         const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
         if (reply == null) return failure(facts, 'parse')
+      }
+      if (cardMode) {
+        // The extraction rules are fixed before the workload runs; no repair changes them.
+        if (!await validCardExtract()) return failure(facts, 'parse')
+        writeAtomic(path.join(C, 'card_extract_seal.json'), JSON.stringify({
+          extract_sha256: sha256(readFileSync(extractPath)), sealed_utc: new Date().toISOString() }, null, 2) + '\n')
       }
       const sample = unitsMode || unitsProbe ? unitSample() : null
       const referenceFile = path.join(destination, 'units_reference.json')
@@ -502,6 +584,20 @@ python3 -I profiler/concurrency_probe.py --units harness/run_units.sh harness/un
       }
       if (anchors.error) return failure(facts, anchors.error)
       if (anchors.rc !== 0) return failure(facts, 'anchor')
+      if (cardMode) {
+        // Card rows are measured and reported, as references are; they never change status, gate or run_valid.
+        const scored = path.join(C, 'card_scored.json')
+        rmSync(scored, { force: true })
+        try {
+          await exec('python3', ['-I', 'm5/score_card.py', C, extractPath, path.join(destination, 'out'),
+            '--run', String(input.tag), '--commit', typeof input.pipeline_commit === 'string' ? input.pipeline_commit : '-'])
+        } catch { return failure(facts, 'parse') }
+        const card = readJSON(scored)
+        facts.card_inputs = card.inputs_total
+        facts.card_measured = card.measured_total
+        facts.card_holds = card.holds_total
+        facts.card_refuted = card.refuted_total
+      }
       const scorePath = path.join(destination, 'anchors_scored.json')
       try {
         await exec('python3', ['m5/score_anchors.py', path.join(A, 'intake', 'anchors.json'),
