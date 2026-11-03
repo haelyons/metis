@@ -34,3 +34,25 @@ Run: `new_run.py .../m5/run5 --brief-from=s04 --stop-after-reproduce`, `retry53.
 | 11 | Run box USD under 5 | 0.70 |
 | 12 | Run box USD under 19.74 (the cap) | 0.97 |
 | 13 | Any stage halted by a model refusal | 0.10 |
+
+## Outcome (added after the run; the sections above are unchanged since the seal f70ef334)
+
+run5 (pushed f9787537): box `gpu_1x_h100_pcie` came up, run box USD 0.01. Intake FAIL in 15 s on the Claude family (Codex at its usage limit): `found` false, `data` unknown, `licence` unknown, `licence_basis` unreachable, blockers `data_unavailable`; recorded tokens 6 in, 1,167 out. A 15 s call with no recorded input beyond the cached prompt suggests the agent answered without reading the materials; whether it declined, lacked file access in the isolated runner, or judged them unreachable is not visible in metadata. Every later stage SKIPPED; no box command ran.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.75 | no | 0.5625 |
+| 2 | 0.90 | yes | 0.0100 |
+| 3 | 0.65 | no (setup never ran) | 0.4225 |
+| 4 | 0.60 | no (SKIPPED) | 0.3600 |
+| 5 | 0.97 | yes | 0.0009 |
+| 6 | 0.92 | not resolved (no box command) | n/a |
+| 7 | 0.85 | yes | 0.0225 |
+| 8 | 0.90 | not resolved | n/a |
+| 9 | 0.85 | not resolved | n/a |
+| 10 | 0.60 | yes | 0.1600 |
+| 11 | 0.70 | yes | 0.0900 |
+| 12 | 0.97 | yes | 0.0009 |
+| 13 | 0.10 | pending: resolved by science step s05's diagnosis of the intake reply | n/a |
+
+Mean Brier 0.181 over 9 scored. Decision row: an intake FAIL, so science step s05 assesses it; if s05 finds the intake reply was a refusal, the refusal row applies (no relaunch; report to the owner).
