@@ -1,0 +1,70 @@
+{
+  "repo": "https://github.com/akiyamalab/MEGADOCK",
+  "commit": "9575280c875732553266e26adc607dd892b02616",
+  "build_commands": [
+    {
+      "command": "make",
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md#d-compile-for-cpu-node-only-thread-parallelization",
+      "working_directory": "MEGADOCK source root at pinned commit",
+      "preconditions": "Set USE_GPU := 0 and USE_MPI := 0 in Makefile; verify float FFTW3 and compiler paths. Builds megadock and decoygen.",
+      "executed": false
+    }
+  ],
+  "run_commands": [
+    {
+      "command": "baseline-published/megadock/megadock -R data/inputs/<prefix>_R.pdb -L data/inputs/<prefix>_L.pdb -o out/<case>/docking.out -N 50 -t 1 -v 1.2 -e 1.0 -d 1.0 -a -45.0 -b 1.0 -f 3 -r 3600",
+      "source": "brief.md#calibration-request-science-step-s02",
+      "expansion": "Use fixed case list, prefix from case ID; execute once each serially.",
+      "executed": false
+    },
+    {
+      "command": "./decoygen [decoy_filename] [used_ligand.pdb] [.outfile] [decoy no.]",
+      "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md#generate-decoy-from-docking-output",
+      "reason": "Published command syntax; apply ranks 1..50 with run2 reconstruction only after identity verified."
+    }
+  ],
+  "published_configuration": {
+    "cpu_target": "OpenMP single-node CPU target",
+    "source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+    "standard_rotation_angles": 3600,
+    "standard_rotation_degrees": 15,
+    "configuration_source": "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+    "selected_case_protocol_source": "brief.md#calibration-request-science-step-s02",
+    "retained_predictions": 50,
+    "voxel_angstrom": 1.2,
+    "scoring": {
+      "t": 1,
+      "e": 1.0,
+      "d": 1.0,
+      "a": -45.0,
+      "b": 1.0,
+      "f": 3
+    },
+    "environment": {
+      "OMP_NUM_THREADS": "26",
+      "OMP_DYNAMIC": "FALSE",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "LC_ALL": "C",
+      "LANG": "C",
+      "CUDA_MPS_*": "preserve inherited values unchanged; no daemon management"
+    },
+    "version_uncertainty": "Retain printed 4.1.3 versus source tag 4.1.4 uncertainty; hash actual binaries."
+  },
+  "evaluator": {
+    "repo": "https://github.com/pinder-org/pinder",
+    "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "source": "brief.md#calibration-request-science-step-s02",
+    "install_commands": null,
+    "reason": "Run2 exact installation commands and dependency lock absent; historical run9 commands are not asserted as run2 installation. No package install performed."
+  },
+  "complete_environment_build_commands": null,
+  "unavailable_reason": "Published MEGADOCK build command known; complete run2 dependency installation/preparation cannot be reconstructed from permitted sources.",
+  "source_citations": [
+    "brief.md#calibration-request-science-step-s02",
+    "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+    "https://github.com/akiyamalab/MEGADOCK/blob/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+    "https://github.com/pinder-org/pinder/blob/ebeb28a2f8411363cef722b7d293c978f7442672/README.md"
+  ]
+}

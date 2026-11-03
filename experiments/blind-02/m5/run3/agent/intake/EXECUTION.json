@@ -1,0 +1,81 @@
+{
+  "representative_scale": {
+    "fixed_cases": [
+      "1aua__A1_P24280--1aua__A2_P24280",
+      "1ax2__A1_P16404--1ax2__A2_P16404",
+      "1dv1__A1_P24182--1dv1__B1_P24182",
+      "1nr5__A1_P07547--1nr5__A2_P07547"
+    ],
+    "configuration": "CPU standard only; one docking invocation per case, 50 saved complexes each; 16 complete evaluator children (four blocks x four cases).",
+    "hardware": "one H100 PCIe 80GB allocation with 26 logical host CPUs; GPU idle for docking",
+    "scale_search": false,
+    "source": "brief.md#calibration-request-science-step-s02"
+  },
+  "inputs": {
+    "case_manifest": "data.json required_inputs, listed order",
+    "prepared_input_identity": "Required run2 hashes and preparation unavailable; stop before execution.",
+    "native_use": "Evaluation only; fixed historical mapping required.",
+    "pins": {
+      "megadock": "9575280c875732553266e26adc607dd892b02616",
+      "pinder": "ebeb28a2f8411363cef722b7d293c978f7442672",
+      "pinder_release": "2024-02"
+    }
+  },
+  "outputs": {
+    "primary": "out/calibration.json",
+    "required_fields": [
+      "protocol identity/hash",
+      "case/configuration",
+      "pins",
+      "setup checks",
+      "native-self smoke values",
+      "16 records: case_id, block, status, wall_s or null, lower_bound_s or null, n_scored",
+      "T_s or null",
+      "per-case maxima",
+      "allowance60_screen pass/fail/unknown",
+      "CPU-standard-only scope",
+      "stage walls",
+      "allocation projection and receipts"
+    ],
+    "raw": "Preserve full 16 CSVs, all 200 pose PDBs, docking outputs, logs, manifests, scripts/binary/dependency hashes, partial/failure artifacts.",
+    "missing_invoice": "unknown; estimated dollars separately use measured allocation wall and verified tariff."
+  },
+  "timing_scope": {
+    "primary": "Parent monotonic timer immediately before fresh child creation through successful child exit plus output existence/size check. Includes Python startup/import, local input I/O, calculation, 50-model validation, CSV serialization/flush and exit.",
+    "excluded_from_primary": "Setup/install, docking/reconstruction, operator retrieval/export; separately timed and charged.",
+    "docking": "Record printed docking timers separately from invocation-to-last-pose monotonic walls; no evaluator import/native access in docking script.",
+    "secondary": "calculation-only timer never substitutes primary.",
+    "cache": "No cache flush/warmup/exclusion; retain all16.",
+    "timeout_s": 180,
+    "censoring": "Confirmed lower bound >60 fails allowance; timeout T unknown, do not substitute 180 as completed timing."
+  },
+  "execution_checks": [
+    "Verified source/material/preparation identity before execution",
+    "Four header lines and 50 finite seven-field ranked rows, positive grid, voxel1.2 and standard sampling",
+    "50 nonempty readable complexes with expected R/L and atom inventories",
+    "Per-case native-self DockQ1 within1e-6 before timing; DESIGN identity check only; failure stops benchmark"
+  ],
+  "harness_contract": {
+    "run_command.sh": "Fresh harness runs four CPU-standard jobs once serially; reconstruct all50; no native/evaluator access.",
+    "run_anchors.sh": "Invoke bash harness/run_command.sh exactly once, then checks, separate self-smoke and evaluator benchmark. Extra calibration outputs under out/; anchors.json remains empty.",
+    "stop": "setup+anchors+freeze only; operator --stop-after-reproduce wrapper must be verified before allocation. No profile, seal, proposal, implementation or evaluation stage.",
+    "contract_gap": "Five intake JSONs cannot enforce wrapper stop, external allocation watchdog, full-child timing or historical preparation identity. No supplied wrapper/harness/run2 records to verify. Stop before paid work; no fallback to three-configuration study.",
+    "single_scalar_limit": "This calibration endpoint expresses CPU-standard evaluator allowance only; it cannot resolve full card runtime, CPU/GPU agreement, dense quality or cost-accuracy comparisons."
+  },
+  "lifecycle": {
+    "allocation_cap_s": 7200,
+    "stop_new_science_s": 5400,
+    "export_termination_reserve_s": 1800,
+    "hard_spend_usd": 10,
+    "historical_tariff_usd_per_h": 3.29,
+    "tariff_status": "Historical only; current compatible tariff/tax/termination projection unverified; no allocation authorized by intake result.",
+    "source": "brief.md#calibration-request-science-step-s02"
+  },
+  "stage_budgets_reason": "No supplied args budgets. No invented per-stage override; external 2-hour lifecycle cap governs any future execution.",
+  "blockers": [
+    "Exact run2 preparation script, prepared-PDB hashes, fixed reference residue/chain mapping and complete dependency lock are not supplied. Brief requires stopping if historical prepared-byte identity cannot be established. Transferability unknown.",
+    "Required fresh evaluator timing harness is specified but not supplied as published executable command. No build or workload was run.",
+    "Stop-after-reproduce wrapper, bounded termination and lifecycle accounting cannot be verified from supplied sources. Stop before paid work."
+  ],
+  "source": "brief.md#calibration-request-science-step-s02"
+}
