@@ -36,3 +36,25 @@ Run: `new_run.py .../m5/run3 --brief-from=s02 --stop-after-reproduce` (args.stub
 | 13 | Run box USD under 19.74 (the cap) | 0.97 |
 
 All predictions are read from signatures, receipts and box metadata.
+
+## Outcome (added after the run; the sections above are unchanged since the seal f8d59f6d)
+
+run3 (pushed 9a0e2af3): `gpu_1x_h100_pcie` (us-west-3), run box USD 0.13. Intake FAIL in 143 s (Codex): `found` true, `data` partial, `licence` unknown, `licence_basis` none, `anchors_count` 0, blockers `data_unavailable`. On the seed alone plus the materials addendum, run1 and run2 intake judged the same materials `available`; here the brief also carried the calibration request. Every later stage SKIPPED; no box command ran, so there are no receipts, and U53 was not exercised.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.85 | no | 0.7225 |
+| 2 | 0.50 | not resolved (given 1) | n/a |
+| 3 | 0.80 | no (setup never ran) | 0.6400 |
+| 4 | 0.70 | no (SKIPPED) | 0.4900 |
+| 5 | 0.60 | not resolved (given 4) | n/a |
+| 6 | 0.97 | yes | 0.0009 |
+| 7 | 0.92 | not resolved (no box command) | n/a |
+| 8 | 0.85 | yes | 0.0225 |
+| 9 | 0.90 | not resolved (no receipts) | n/a |
+| 10 | 0.70 | not resolved | n/a |
+| 11 | 0.60 | yes | 0.1600 |
+| 12 | 0.70 | yes | 0.0900 |
+| 13 | 0.97 | yes | 0.0009 |
+
+Mean Brier 0.266 over 8 scored. Decision row: none of the sealed rows names an intake failure. Nearest rule (the run2 table's "any other stage FAIL or VOID: diagnose with an authorized reader; no criterion change"): science step s03, the authorized reader of this route, diagnoses why intake judged the data partial before any relaunch.
