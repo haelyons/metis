@@ -92,6 +92,12 @@ elif action == "stop":
         print("STOP", n["reason"])
 
 
+if s and "stop_reason" in s and (s["stop_reason"] == "none") != (action != "stop"):
+    bad("stop_reason inconsistent with action")
+if action == "stop" and s and "stop_reason" in s and isinstance(n, dict) and n.get("reason") != s["stop_reason"]:
+    bad("stop reason differs from status")
+
+
 def preds(path):
     try:
         items = json.load(open(path))["items"]
