@@ -1,0 +1,19 @@
+I wrote the four harness scripts in `harness/`: `setup.sh`, `run_command.sh`, `run_anchors.sh` and `run_evaluation.sh`. All four pass a bash syntax check and their embedded Python compiles. None of them has run on the box yet, as instructed.
+
+- **`setup.sh`:**
+  - Clones MEGADOCK at `9575280c` and cuda-samples at `v12.8`.
+  - Picks the CUDA toolkit: a complete root (`/usr/local/cuda` or `/usr/lib/cuda`) if one exists, otherwise the distro layout, checking each path with `ls`.
+  - Installs `libfftw3-dev` through apt only if FFTW is missing.
+  - Builds the CPU and GPU binaries with the brief's exact make commands, then checks the binaries, their linked libraries and the `-h` usage text (exit 0 or 255 accepted).
+  - Downloads the five apo PDBs, checks their hashes, prepares the R/L inputs and checks all eight prepared hashes.
+  - Records pins, binary hashes, host/GPU identity and the setup time to `out/setup/` and `data/setup_record.json`.
+- **`run_command.sh`:** sets the published environment, then runs the 60-job schedule (blocks 0–3 plus block D) one job at a time. It times W/D/P/R for each job, applies the 600 s timeout with process-group kill, assembles and validates the models, and writes `out/timing/...`, `out/timing_calibration.json` and `out/run_command.log`. Earlier outputs are moved to `out/attempts/` rather than overwritten.
+- **`run_anchors.sh`:** runs `run_command.sh` unchanged, records `nvidia-smi` GPU use every second during block D only, checks the logged configuration and environment against the published command, and writes `out/anchors_measured.json` as `{}`.
+- **`run_evaluation.sh`:** runs the published configuration on each sealed input and seed and writes `EVAL_OUT/evaluation.json`. Curve mode stops at the GPU-seconds budget.
+
+Choices and risks:
+1. **Log parsing is unconfirmed.** I haven't seen a real MEGADOCK log, so the per-job checks for the printed rotation, thread and GPU counts, and the "Elapsed time" value, use loose line matching. If the actual wording differs, jobs will be marked `invalid_output` and `run_command.sh` will exit 3. An anchors repair would then be needed.
+2. **CPU GPU-count check is relaxed.** If the CPU binary prints no GPU line at all, the job is accepted and a note is recorded, though the brief asks for a printed count of 0.
+3. **Exit status:** `run_command.sh` exits nonzero when any job fails or produces invalid output. A timeout alone does not, since the brief counts a dense-arm timeout as a valid result.
+4. **Telemetry location:** block D sampling runs in `run_anchors.sh`, triggered by marker files, because `run_command.sh` must not sample telemetry.
+5. **Evaluation guesses:** with no sealed protocol yet, `run_evaluation.sh` takes the case and arm from each input ID. If the ID names no arm, it runs all three.

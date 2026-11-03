@@ -1,0 +1,146 @@
+{
+  "pins": {
+    "megadock_repo": "https://github.com/akiyamalab/MEGADOCK",
+    "megadock_commit": "9575280c875732553266e26adc607dd892b02616",
+    "megadock_commit_expected": "9575280c875732553266e26adc607dd892b02616",
+    "cuda_samples_tag": "v12.8",
+    "pinder_release": "2024-02",
+    "pinder_source_commit": "ebeb28a2f8411363cef722b7d293c978f7442672"
+  },
+  "binary_sha256": {
+    "megadock": "4b85db6e261aad86d5069e8ea8eb77c079fef61ba5cf3556fc07d1756405e600",
+    "megadock-gpu": "a8375a2a79ef48287da07df40aa5b918917bd4418cd9650e75dfafdd1207afda",
+    "decoygen": "74264710f22404c3817e589392a3b22bbc609bb7cb642c0b2daa389f76222187"
+  },
+  "cuda": {
+    "CUDA_LAYOUT": "distro",
+    "CUDA_ROOT": "",
+    "CUDA_NVCC": "/usr/bin/nvcc",
+    "CUDA_INCLUDE": "/usr/include",
+    "CUDA_LIB": "/usr/lib/x86_64-linux-gnu"
+  },
+  "versions": {
+    "nvcc": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Fri_Feb_21_20:23:50_PST_2025\nCuda compilation tools, release 12.8, V12.8.93\nBuild cuda_12.8.r12.8/compiler.35583870_0",
+    "gxx": "g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0",
+    "driver": "570.148.08",
+    "fftw": "libfftw3-dev:amd64\t3.3.8-2ubuntu8",
+    "python": "3.10.12"
+  },
+  "apt_installed": [
+    "libfftw3-dev=3.3.8-2ubuntu8"
+  ],
+  "host": {
+    "gpus_csv": [
+      "0, NVIDIA H100 PCIe, GPU-4584b5ae-c3e2-3fc9-cc5e-b4d40b116323, 570.148.08, 81559 MiB"
+    ],
+    "cpu_model": "Intel(R) Xeon(R) Platinum 8480+",
+    "nproc": 26,
+    "affinity": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25
+    ],
+    "mem_total_kb": 231924772,
+    "kernel": "6.8.0-60-generic"
+  },
+  "setup_checks": {
+    "megadock_commit_valid": true,
+    "cuda_samples_tag_valid": true,
+    "help_usage_valid": {
+      "megadock": true,
+      "megadock-gpu": true
+    },
+    "prepared_hashes_valid": true,
+    "source_hashes": {
+      "6f0e__A1_P24280.pdb": "622eacb7b46e1a4c25d16aa1c56a0546d1b23d31a41aad5c275886159f6d98cd",
+      "3n35__A1_P16404.pdb": "b39b7288e39983302280e4f83a69a3afbeee879fe2c0db13a8072c5c0e06090e",
+      "3g8c__A1_P24182.pdb": "48aa5f4b2ac1e57d855b85d56a9c4a74c4b16f7d165b0fce03535815e26bdb60",
+      "3g8d__A1_P24182.pdb": "1f5320894a6ca42ffd58a164620e159cc6d95d21f978246b3f73f7620885f20c",
+      "1sg6__A1_P07547.pdb": "4a7227a5777521835f4dcb9af450bf5f8be13ebbe10144ab4fdfa7eeb7900da5"
+    },
+    "prepared": {
+      "1aua": {
+        "receptor": {
+          "path": "data/inputs/1aua_R.pdb",
+          "sha256": "162aad227fdbdb6a0600a5b6a4f5b461663ee7ce419798061ea0cd8ae9be6f35",
+          "expected": "162aad227fdbdb6a0600a5b6a4f5b461663ee7ce419798061ea0cd8ae9be6f35",
+          "valid": true
+        },
+        "ligand": {
+          "path": "data/inputs/1aua_L.pdb",
+          "sha256": "f5158ee7030ce712cc5fb419d1e7532d4db2d4b4ddb64b50a5d0d9e45a973600",
+          "expected": "f5158ee7030ce712cc5fb419d1e7532d4db2d4b4ddb64b50a5d0d9e45a973600",
+          "valid": true
+        }
+      },
+      "1ax2": {
+        "receptor": {
+          "path": "data/inputs/1ax2_R.pdb",
+          "sha256": "a9be54841e5e92e301558c198a7188b6765ab34cf30cb5d939b46f99db103d35",
+          "expected": "a9be54841e5e92e301558c198a7188b6765ab34cf30cb5d939b46f99db103d35",
+          "valid": true
+        },
+        "ligand": {
+          "path": "data/inputs/1ax2_L.pdb",
+          "sha256": "8d3948ddc69f493dfeea785aefc09f3de7b191ab7f8250dc102f63dc1d35810e",
+          "expected": "8d3948ddc69f493dfeea785aefc09f3de7b191ab7f8250dc102f63dc1d35810e",
+          "valid": true
+        }
+      },
+      "1dv1": {
+        "receptor": {
+          "path": "data/inputs/1dv1_R.pdb",
+          "sha256": "880a12d8a36e84fc8bea31cb4105284827ce1a985128413e4e8f70582fe52ea2",
+          "expected": "880a12d8a36e84fc8bea31cb4105284827ce1a985128413e4e8f70582fe52ea2",
+          "valid": true
+        },
+        "ligand": {
+          "path": "data/inputs/1dv1_L.pdb",
+          "sha256": "f9c72e23a1f2afe893c672da0412e82fa8345be23902d1d5cc7c17971193f623",
+          "expected": "f9c72e23a1f2afe893c672da0412e82fa8345be23902d1d5cc7c17971193f623",
+          "valid": true
+        }
+      },
+      "1nr5": {
+        "receptor": {
+          "path": "data/inputs/1nr5_R.pdb",
+          "sha256": "ec52d962eacf8e92518ead142a51f6feb18e8d74590ea7048fffc461f52cacf2",
+          "expected": "ec52d962eacf8e92518ead142a51f6feb18e8d74590ea7048fffc461f52cacf2",
+          "valid": true
+        },
+        "ligand": {
+          "path": "data/inputs/1nr5_L.pdb",
+          "sha256": "83ad5cf3938c63172fea2254e31e6fe05d5751d072323ff7ed3463d92af0d1a2",
+          "expected": "83ad5cf3938c63172fea2254e31e6fe05d5751d072323ff7ed3463d92af0d1a2",
+          "valid": true
+        }
+      }
+    }
+  },
+  "stage_walls_s": {
+    "setup": 66.69060492515564
+  }
+}

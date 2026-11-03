@@ -1,0 +1,65 @@
+make: Entering directory '/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/megadock'
+mkdir -p obj_gs
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/control.cpp.o -c src/control.cpp
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/cpu_time.cpp.o -c src/cpu_time.cpp
+--------------------------
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/docking.cpp.o -c src/docking.cpp
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/parameter.cpp.o -c src/parameter.cpp
+make megadock-gpu start
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/pdb_entry.cpp.o -c src/pdb_entry.cpp
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/protein.cpp.o -c src/protein.cpp
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/receptor.cpp.o -c src/receptor.cpp
+--------------------------
+/usr/bin/g++ -fopenmp -DCUFFT -static  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include -o obj_gs/ligand.cpp.o -c src/ligand.cpp
+/usr/bin/nvcc -Xcompiler -fopenmp -arch=sm_90 -use_fast_math -DCUFFT --compiler-options -fno-strict-aliasing  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include  -o obj_gs/fft_process.cu.o -c src/fft_process.cu
+src/control.cpp: In member function ‘virtual void Control::initialize(int, char**)’:
+src/control.cpp:43:23: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
+   43 |     printf("# Using %3d CPU cores, %d GPUs\n", _parallel->nproc2(), _parallel->num_gpu());
+      |                     ~~^                        ~~~~~~~~~~~~~~~~~~~
+      |                       |                                         |
+      |                       int                                       size_t {aka long unsigned int}
+      |                     %3ld
+src/docking.cpp: In member function ‘virtual void Docking::output_detail()’:
+src/docking.cpp:557:12: warning: format not a string literal and no format arguments [-Wformat-security]
+  557 |     sprintf(buff,column_list.c_str());
+      |     ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+src/docking.cpp:706:12: warning: format not a string literal and no format arguments [-Wformat-security]
+  706 |     sprintf(buff,column_list.c_str());
+      |     ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+src/docking.cpp: In member function ‘virtual void Docking::output_calc_time_log()’:
+src/docking.cpp:970:27: warning: format ‘%d’ expects argument of type ‘int’, but argument 4 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
+  970 |         sprintf(buff,"%s,%d,%d,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f"
+      |                          ~^
+      |                           |
+      |                           int
+      |                          %ld
+  971 |                 , calc_id.c_str()
+  972 |                 , _parallel->nproc2(), _parallel->num_gpu()
+      |                   ~~~~~~~~~~~~~~~~~~~
+      |                                    |
+      |                                    size_t {aka long unsigned int}
+/usr/bin/nvcc -Xcompiler -fopenmp -arch=sm_90 -use_fast_math -DCUFFT --compiler-options -fno-strict-aliasing  -O3 -Isrc -I/usr/include -I/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/cuda-samples/Common -I/usr/include  -o obj_gs/main.cu.o -c src/main.cu
+src/fft_process.cu: In member function ‘virtual void FFTProcess::cuda_fft(float*, float*, float*, float*, float*, size_t)’:
+src/fft_process.cu:522:8: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘long unsigned int’ [-Wformat=]
+  522 |         printf(" nf3:%d, nBlocks_nf3:%d, nThreads:%d , nf3=nBlocks_nf3*nThreads\n",nf3,nBlocks_nf3,nThreads);
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~
+      |                                                                             |
+      |                                                                             long unsigned int
+src/fft_process.cu:523:17: warning: format ‘%d’ expects argument of type ‘int’, but argument 3 has type ‘long unsigned int’ [-Wformat=]
+  523 |         fprintf(stderr, " [ERROR] too large FFT size. nf3:%d, nBlocks_nf3:%d\n", nf3, nBlocks_nf3);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~
+      |                                                                          |
+      |                                                                          long unsigned int
+src/fft_process.cu: In member function ‘virtual void FFTProcess::ligand_voxelization_on_gpu(float*, size_t)’:
+src/fft_process.cu:685:8: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘long unsigned int’ [-Wformat=]
+  685 |         printf(" nf3:%d, nBlocks_nf3:%d, nThreads:%d , nf3=nBlocks_nf3*nThreads\n",nf3,nBlocks_nf3,nThreads);
+      |        ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~
+      |                                                                             |
+      |                                                                             long unsigned int
+src/fft_process.cu:686:17: warning: format ‘%d’ expects argument of type ‘int’, but argument 3 has type ‘long unsigned int’ [-Wformat=]
+  686 |         fprintf(stderr, " [ERROR] too large FFT size. nf3:%d, nBlocks_nf3:%d\n", nf3, nBlocks_nf3);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  ~~~
+      |                                                                          |
+      |                                                                          long unsigned int
+/usr/bin/g++ -fPIC -fopenmp -o ./megadock-gpu obj_gs/control.cpp.o obj_gs/cpu_time.cpp.o obj_gs/docking.cpp.o obj_gs/parameter.cpp.o obj_gs/pdb_entry.cpp.o obj_gs/protein.cpp.o obj_gs/receptor.cpp.o obj_gs/ligand.cpp.o obj_gs/fft_process.cu.o obj_gs/main.cu.o -lm -L/usr/lib/x86_64-linux-gnu -lfftw3f -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu -lcudart -lcufft
+make: Leaving directory '/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/megadock'

@@ -1,0 +1,25 @@
+{
+  "representative_scale": "The full sealed calibration schedule: 3 arms (cpu_standard, gpu_standard, gpu_dense) x 4 fixed PINDER 2024-02 apo cases (1aua, 1ax2, 1dv1, 1nr5) x blocks 0-3 (48 primary jobs; block 0 warmup excluded from endpoints) plus diagnostic block D (12 jobs with 1 s nvidia-smi telemetry), serial, one job at a time, each job = one MEGADOCK docking run with -N 50 plus 50 decoygen reconstructions and complex assembly. One fixed scale; no scale search, no reruns beyond the schedule.",
+  "inputs": [
+    "data/inputs/{1aua,1ax2,1dv1,1nr5}_{R,L}.pdb prepared from the five canonical PINDER apo PDBs, all eight SHA-256 verified before docking (data.json)",
+    "baseline-published/megadock/{megadock,megadock-gpu,decoygen} built from commit 9575280c875732553266e26adc607dd892b02616",
+    "Historical evaluator reserves E (brief): 1aua 1.9728683570000385, 1ax2 1.7721286510000027, 1dv1 2.5732721009999295, 1nr5 2.4245986219999622 s, copied verbatim and labelled historical"
+  ],
+  "outputs": [
+    "out/timing_calibration.json: protocol identity (calibration section SHA-256), pins, binary hashes, host/GPU identity, setup checks, every job record {block, order_index, arm, case, status, W_s, D_s, P_s, R_s, lower_bound_s, docking_out_sha256}, evaluator reserves E (historical), per case and arm max and median of W over blocks 1-3, stage walls, scope statement 'timing-only; no native access; no cross-arm comparison'",
+    "out/timing/block_<b>/<arm>/<prefix>/ with docking.out, logs and model_1..50.pdb (never overwritten)",
+    "out/timing/gpu_telemetry.csv (block D)",
+    "out/anchors_measured.json = {}",
+    "out/setup/*-help.log and build logs"
+  ],
+  "scoring_interface": "No scientific scoring. Per-job validation inside W: docking.out has 4 header lines plus 50 rows of 7 finite fields; header grid positive and voxel 1.2; printed rotation count 3600 (standard) or 54000 (gpu_dense); printed thread count 26; printed GPU count 0 (cpu) or 1 (GPU arms); 50 non-empty models whose ATOM/HETATM inventory equals receptor plus ligand inputs with chains exactly R and L. No native reference, DockQ or other-arm output is read.",
+  "timing_scope": "W (primary): parent-Python time.monotonic from immediately before docking process creation to after all 50 model PDBs are written, closed and validated (includes process start, CUDA init, docking, output write, 50 decoygen calls, assembly). Also D (docking process wall), P (MEGADOCK printed Elapsed time), R (reconstruction wall). Per-job timeout 600 s with process-group kill. Build/setup time is recorded as stage walls but excluded from W.",
+  "stage_budgets_s": {
+    "setup": 1800,
+    "anchors": 300,
+    "method_run": 2700
+  },
+  "stage_budget_basis": "Historical docking-only times (brief): CPU standard 7.1-12.0 s, GPU standard 1.4-1.9 s, GPU dense 13.9-19.5 s per case, plus about 1.3 s reconstruction; 60 jobs ~ 60 x (avg ~11 s + 1.3 s + validation) ~ 15 min. method_run 2700 s leaves margin under the brief's hard stop (2 allocated hours / USD 10; stop new scientific work at 75 allocated minutes). Setup covers clone and two MEGADOCK builds. These are estimates, not targets.",
+  "budget_and_stop": "Hard stop at 2 allocated hours or USD 10, whichever first; stop new scientific work at 75 allocated minutes; operator uses --stop-after-reproduce; do not profile, seal, propose, implement or evaluate.",
+  "contract_gaps": "None identified in intake: the timing-only calibration is expressible as a reproduce stage with empty anchors. The harness must not import the evaluator or read native references during timing."
+}

@@ -1,0 +1,32 @@
+{
+  "repo": "https://github.com/akiyamalab/MEGADOCK",
+  "commit": "9575280c875732553266e26adc607dd892b02616",
+  "commit_evidence": "GitHub API: commit exists, message 'upgrade FFTW version', 2022-06-22, tree e399ddc1418518dfd77266b4af1a1c2df5259c8f",
+  "build_commands": [
+    "git clone https://github.com/akiyamalab/MEGADOCK baseline-published/megadock && git -C baseline-published/megadock checkout 9575280c875732553266e26adc607dd892b02616",
+    "git clone --depth 1 --branch v12.8 https://github.com/NVIDIA/cuda-samples baseline-published/cuda-samples",
+    "git -C baseline-published/cuda-samples describe --tags --exact-match",
+    "make -C baseline-published/megadock -j 8 USE_GPU=0 USE_MPI=0 CPPCOMPILER=/usr/bin/g++ FFTW_INSTALL_PATH=/usr FFTW_CFLAGS=-I/usr/include FFTW_LDFLAGS='-lm -L/usr/lib/x86_64-linux-gnu -lfftw3f'",
+    "make -C baseline-published/megadock -j 8 USE_GPU=1 USE_MPI=0 CPPCOMPILER=/usr/bin/g++ SM_VERSIONS=sm_90 \"NVCC=$CUDA_NVCC -Xcompiler -fopenmp -arch=sm_90 -use_fast_math\" \"INCLUDES=-Isrc -I$CUDA_INCLUDE -I$samples/Common\" FFTW_CFLAGS=-I/usr/include \"LIB=-lm -L/usr/lib/x86_64-linux-gnu -lfftw3f -L$CUDA_LIB -Wl,-rpath,$CUDA_LIB -lcudart -lcufft\"",
+    "for binary in megadock megadock-gpu decoygen; do test -x baseline-published/megadock/$binary; ldd baseline-published/megadock/$binary; done",
+    "for binary in megadock megadock-gpu; do OMP_NUM_THREADS=26 CUDA_VISIBLE_DEVICES=0 baseline-published/megadock/$binary -h > out/setup/$binary-help.log 2>&1; rc=$?; [ $rc = 0 -o $rc = 255 ] && grep -q 'Usage: megadock' out/setup/$binary-help.log; done"
+  ],
+  "build_commands_source": "brief.md lines 349-381 (historical run2 setup.sh:52-80, which built both binaries on this box type). The checkout command is the standard git form for the pinned commit; the brief states 'Build both binaries from the same MEGADOCK checkout'. CUDA paths ($CUDA_NVCC, $CUDA_INCLUDE, $CUDA_LIB) are discovered on the box (run4: /usr/bin/nvcc 12.8, /usr/include, /usr/lib/x86_64-linux-gnu).",
+  "run_commands": [
+    "env OMP_NUM_THREADS=26 OMP_DYNAMIC=FALSE OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 LC_ALL=C LANG=C CUDA_VISIBLE_DEVICES=0 baseline-published/megadock/megadock -R data/inputs/<prefix>_R.pdb -L data/inputs/<prefix>_L.pdb -o <job>/docking.out -N 50 -t 1 -v 1.2 -e 1.0 -d 1.0 -a -45.0 -b 1.0 -f 3 -r 3600",
+    "env <same> baseline-published/megadock/megadock-gpu -R data/inputs/<prefix>_R.pdb -L data/inputs/<prefix>_L.pdb -o <job>/docking.out -N 50 -t 1 -v 1.2 -e 1.0 -d 1.0 -a -45.0 -b 1.0 -f 3 -r 3600",
+    "env <same> baseline-published/megadock/megadock-gpu -R data/inputs/<prefix>_R.pdb -L data/inputs/<prefix>_L.pdb -o <job>/docking.out -N 50 -t 1 -v 1.2 -e 1.0 -d 1.0 -a -45.0 -b 1.0 -f 3 -D",
+    "for rank in 1..50: baseline-published/megadock/decoygen <job>/ligand_<rank>.pdb data/inputs/<prefix>_L.pdb <job>/docking.out <rank>; model_<rank>.pdb = receptor records without END + ligand records without END/ENDMDL + one END line"
+  ],
+  "run_commands_source": "brief.md lines 385-393; decoygen usage also documented in MEGADOCK doc/README.md lines 161-193",
+  "published_configuration": {
+    "shared": "-N 50 -t 1 -v 1.2 -e 1.0 -d 1.0 -a -45.0 -b 1.0 -f 3 (all equal to MEGADOCK documented defaults except -N, per doc/README.md lines 68-78)",
+    "standard_sampling": "-r 3600 (15 deg, 3600 angles; documented default)",
+    "dense_sampling": "-D (6 deg, 54000 angles; documented in doc/README.md line 72)",
+    "threads": "OMP_NUM_THREADS=26",
+    "gpu": "1 GPU (CUDA_VISIBLE_DEVICES=0), sm_90",
+    "source": "brief.md lines 387-392; https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+  },
+  "licence": "CC BY-NC 4.0 (explicit LICENSE and README statement); intended-use permission unknown",
+  "builds_run_in_intake": false
+}

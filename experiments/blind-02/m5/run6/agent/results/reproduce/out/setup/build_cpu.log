@@ -1,0 +1,45 @@
+make: Entering directory '/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/megadock'
+mkdir -p obj_cs
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/control.cpp.o -c src/control.cpp
+--------------------------
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/cpu_time.cpp.o -c src/cpu_time.cpp
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/docking.cpp.o -c src/docking.cpp
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/parameter.cpp.o -c src/parameter.cpp
+make megadock start
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/pdb_entry.cpp.o -c src/pdb_entry.cpp
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/protein.cpp.o -c src/protein.cpp
+--------------------------
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/receptor.cpp.o -c src/receptor.cpp
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/ligand.cpp.o -c src/ligand.cpp
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/fft_process.cpp.o -c src/fft_process.cpp
+src/control.cpp: In member function ‘virtual void Control::initialize(int, char**)’:
+src/control.cpp:43:23: warning: format ‘%d’ expects argument of type ‘int’, but argument 2 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
+   43 |     printf("# Using %3d CPU cores, %d GPUs\n", _parallel->nproc2(), _parallel->num_gpu());
+      |                     ~~^                        ~~~~~~~~~~~~~~~~~~~
+      |                       |                                         |
+      |                       int                                       size_t {aka long unsigned int}
+      |                     %3ld
+src/docking.cpp: In member function ‘virtual void Docking::output_detail()’:
+src/docking.cpp:557:12: warning: format not a string literal and no format arguments [-Wformat-security]
+  557 |     sprintf(buff,column_list.c_str());
+      |     ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+src/docking.cpp:706:12: warning: format not a string literal and no format arguments [-Wformat-security]
+  706 |     sprintf(buff,column_list.c_str());
+      |     ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~
+src/docking.cpp: In member function ‘virtual void Docking::output_calc_time_log()’:
+src/docking.cpp:970:27: warning: format ‘%d’ expects argument of type ‘int’, but argument 4 has type ‘size_t’ {aka ‘long unsigned int’} [-Wformat=]
+  970 |         sprintf(buff,"%s,%d,%d,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f"
+      |                          ~^
+      |                           |
+      |                           int
+      |                          %ld
+  971 |                 , calc_id.c_str()
+  972 |                 , _parallel->nproc2(), _parallel->num_gpu()
+      |                   ~~~~~~~~~~~~~~~~~~~
+      |                                    |
+      |                                    size_t {aka long unsigned int}
+/usr/bin/g++ -fopenmp -static  -O3 -Isrc -I/usr/include -o obj_cs/main.cpp.o -c src/main.cpp
+/usr/bin/g++ src/decoygen.cpp -lm -o decoygen
+/usr/bin/g++ src/calcrg.cpp -o calcrg
+/usr/bin/g++ -fPIC -fopenmp -o ./megadock obj_cs/control.cpp.o obj_cs/cpu_time.cpp.o obj_cs/docking.cpp.o obj_cs/parameter.cpp.o obj_cs/pdb_entry.cpp.o obj_cs/protein.cpp.o obj_cs/receptor.cpp.o obj_cs/ligand.cpp.o obj_cs/fft_process.cpp.o obj_cs/main.cpp.o -lm -L/usr/lib/x86_64-linux-gnu -lfftw3f
+make: Leaving directory '/tmp/m5-2395f50f-e075-4d09-b39e-6b21ef59f76e/baseline-published/megadock'

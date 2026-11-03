@@ -1,0 +1,42 @@
+{
+  "availability": "available",
+  "availability_basis": "Anonymous HTTPS HEAD/GET checks from this intake (2026-11-03) returned 200 for all five canonical apo PDB sources, the PINDER source archive and the MEGADOCK source archive; the PINDER source archive was downloaded and its SHA-256 b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd matches the brief. Apo payload hashes were not recomputed in intake; setup must verify them.",
+  "required_inputs": [
+    {"name": "pdbs/6f0e__A1_P24280.pdb", "use": "1aua receptor and ligand source", "url": "https://pinderdata.org/2024-02/pdbs/6f0e__A1_P24280.pdb", "bytes": 192456, "sha256": "622eacb7b46e1a4c25d16aa1c56a0546d1b23d31a41aad5c275886159f6d98cd", "kind": "downloaded"},
+    {"name": "pdbs/3n35__A1_P16404.pdb", "use": "1ax2 receptor and ligand source", "url": "https://pinderdata.org/2024-02/pdbs/3n35__A1_P16404.pdb", "bytes": 151794, "sha256": "b39b7288e39983302280e4f83a69a3afbeee879fe2c0db13a8072c5c0e06090e", "kind": "downloaded"},
+    {"name": "pdbs/3g8c__A1_P24182.pdb", "use": "1dv1 receptor source", "url": "https://pinderdata.org/2024-02/pdbs/3g8c__A1_P24182.pdb", "bytes": 277182, "sha256": "48aa5f4b2ac1e57d855b85d56a9c4a74c4b16f7d165b0fce03535815e26bdb60", "kind": "downloaded"},
+    {"name": "pdbs/3g8d__A1_P24182.pdb", "use": "1dv1 ligand source", "url": "https://pinderdata.org/2024-02/pdbs/3g8d__A1_P24182.pdb", "bytes": 234657, "sha256": "1f5320894a6ca42ffd58a164620e159cc6d95d21f978246b3f73f7620885f20c", "kind": "downloaded"},
+    {"name": "pdbs/1sg6__A1_P07547.pdb", "use": "1nr5 receptor and ligand source", "url": "https://pinderdata.org/2024-02/pdbs/1sg6__A1_P07547.pdb", "bytes": 234171, "sha256": "4a7227a5777521835f4dcb9af450bf5f8be13ebbe10144ab4fdfa7eeb7900da5", "kind": "downloaded"},
+    {"name": "MEGADOCK source", "url": "https://codeload.github.com/akiyamalab/MEGADOCK/tar.gz/9575280c875732553266e26adc607dd892b02616 (or git clone https://github.com/akiyamalab/MEGADOCK and checkout)", "commit": "9575280c875732553266e26adc607dd892b02616", "sha256": null, "sha256_reason": "no archive hash recorded in the brief; the commit is the pin", "kind": "downloaded"},
+    {"name": "NVIDIA cuda-samples headers", "url": "https://github.com/NVIDIA/cuda-samples", "pin": "tag v12.8", "kind": "downloaded, build-only"},
+    {"name": "PINDER source (optional for timing)", "url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672", "bytes": 22835334, "sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd", "kind": "downloaded; not needed for timing (evaluator not imported)"}
+  ],
+  "generated_inputs": [
+    {
+      "name": "data/inputs/<prefix>_R.pdb and _L.pdb for prefixes 1aua, 1ax2, 1dv1, 1nr5",
+      "method": "Change only the chain field (column 22) to R (receptor) or L (ligand) on ATOM/HETATM/ANISOU/TER records of the canonical apo source; retain all other bytes and lines; copy short aliases byte for byte.",
+      "expected_sha256": {
+        "1aua": {"receptor": "162aad227fdbdb6a0600a5b6a4f5b461663ee7ce419798061ea0cd8ae9be6f35", "ligand": "f5158ee7030ce712cc5fb419d1e7532d4db2d4b4ddb64b50a5d0d9e45a973600"},
+        "1ax2": {"receptor": "a9be54841e5e92e301558c198a7188b6765ab34cf30cb5d939b46f99db103d35", "ligand": "8d3948ddc69f493dfeea785aefc09f3de7b191ab7f8250dc102f63dc1d35810e"},
+        "1dv1": {"receptor": "880a12d8a36e84fc8bea31cb4105284827ce1a985128413e4e8f70582fe52ea2", "ligand": "f9c72e23a1f2afe893c672da0412e82fa8345be23902d1d5cc7c17971193f623"},
+        "1nr5": {"receptor": "ec52d962eacf8e92518ead142a51f6feb18e8d74590ea7048fffc461f52cacf2", "ligand": "83ad5cf3938c63172fea2254e31e6fe05d5751d072323ff7ed3463d92af0d1a2"}
+      },
+      "on_mismatch": "stop the run",
+      "source": "brief.md lines 336-347"
+    }
+  ],
+  "excluded_inputs": {
+    "native_reference_complexes": "Listed in the brief with URLs and hashes but must not be read in this timing-only calibration.",
+    "index.parquet, metadata.parquet, mappings, test_set_pdbs.zip, auxiliary apo/AF files": "Not required: case selection and prepared hashes are pinned in the brief.",
+    "FroDock unverified mirror": "Not used; this calibration runs MEGADOCK only."
+  },
+  "missing_data": [],
+  "access_instructions": "Anonymous HTTPS download, no login. Verify recorded SHA-256 for each apo source before preparation; verify the eight prepared hashes before docking.",
+  "licences": {
+    "pinder_data": {"licence": null, "basis": "none", "note": "No licence or terms of use found for the hosted 2024-02 dataset."},
+    "megadock": {"licence": "CC BY-NC 4.0", "basis": "explicit"},
+    "cuda_samples": {"licence": null, "basis": null, "note": "not checked; build-only headers"}
+  },
+  "splits": "Not applicable: four fixed apo cases from PINDER 2024-02 (unit-manifest indices 3, 5, 9, 15), order 1aua, 1ax2, 1dv1, 1nr5.",
+  "seeds": "Not applicable: MEGADOCK FFT search is deterministic for fixed settings; job orders are fixed in the brief, not randomly drawn."
+}
