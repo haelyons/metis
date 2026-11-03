@@ -1,0 +1,17 @@
+{"arms": [
+  {"id": "A0", "role": "baseline", "axis": "none", "needs_new_code": "no", "published": "yes"},
+  {"id": "A1", "role": "variant", "axis": "implementation", "needs_new_code": "no", "published": "yes"},
+  {"id": "A2", "role": "variant", "axis": "configuration", "needs_new_code": "no", "published": "yes"}
+],
+"comparisons": [
+  {"id": "K1", "arm": "A1", "against": "A0", "metric": "result_agreement", "criterion": "equivalence", "direction": "two_sided", "margin_form": "abs", "margin_source": "unknown", "stochastic": "yes", "replicates": "two_to_five", "parts": ["P2"]},
+  {"id": "K2", "arm": "A1", "against": "A0", "metric": "result_agreement", "criterion": "equivalence", "direction": "two_sided", "margin_form": "rel", "margin_source": "unknown", "stochastic": "yes", "replicates": "two_to_five", "parts": ["P2"]},
+  {"id": "K3", "arm": "A1", "against": "A0", "metric": "quality", "criterion": "equivalence", "direction": "two_sided", "margin_form": "abs", "margin_source": "unknown", "stochastic": "yes", "replicates": "two_to_five", "parts": ["P2"]},
+  {"id": "K4", "arm": "A1", "against": "A0", "metric": "throughput", "criterion": "ratio_at_least", "direction": "higher_better", "margin_form": "rel", "margin_source": "design_choice", "stochastic": "yes", "replicates": "six_to_ten", "parts": ["P3"]},
+  {"id": "K5", "arm": "A2", "against": "reference", "metric": "runtime", "criterion": "non_inferiority", "direction": "lower_better", "margin_form": "none", "margin_source": "design_choice", "stochastic": "yes", "replicates": "six_to_ten", "parts": ["P4"]},
+  {"id": "K6", "arm": "A2", "against": "A1", "metric": "quality", "criterion": "superiority", "direction": "two_sided", "margin_form": "abs", "margin_source": "design_choice", "stochastic": "yes", "replicates": "six_to_ten", "parts": ["P5"]},
+  {"id": "K7", "arm": "A2", "against": "A1", "metric": "quality", "criterion": "superiority", "direction": "two_sided", "margin_form": "abs", "margin_source": "design_choice", "stochastic": "yes", "replicates": "six_to_ten", "parts": ["P6"]}
+],
+"compute_facts": ["per_arm_wall", "per_arm_gpu_s", "hardware_identity", "usd"],
+"design": {"same_box": "yes", "inputs": "two_to_five", "order": "interleaved", "who_seals": "science_step", "margin_owner_input": "yes", "arms_need_implement": "none"}
+}
