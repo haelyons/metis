@@ -1,0 +1,7 @@
+You are an independent reviewer (a different model family from the author) of units U54, U55 and U56 in this worktree, branch `units`. Read-only: change nothing. Never read anything under experiments/.
+
+The contract is fixed and was written before the code: `dut/pipeline/m5/SCHEMAS.md`, sections "Card calibration (U54)" and "Card write-back and re-judging (U56)", and in `dut/pipeline/CONTRACT.md` the PLAN field `band?` and the bullet beginning "`calibration` in the return (2026-10-21)" (U55). The implementation and its tests are the last commit (`git show --stat HEAD`, `git show HEAD`); the contract is in commit 69e9194d. Claude wrote both the code and the tests, in separate sessions, the test author without access to the code.
+
+Review the code against the contract only. Report, most severe first, each place where the code does not do what the contract says or does something it forbids: a wrong or missing rule, a behaviour change without `args.card`, a card value, band, gate threshold, prediction or anchor value an agent of the run could read, a seal that does not cover what it must, a test that would pass on a wrong implementation of a contract rule, or a contract rule no test checks. For each, give the file and line, the contract sentence, and a concrete case that shows the defect. Do not report style. If you find nothing, say so.
+
+Write the report to the file named by the `-o` option. End with one line exactly `VERDICT: clean`, `VERDICT: minor` (only defects that change no result) or `VERDICT: defects`.
