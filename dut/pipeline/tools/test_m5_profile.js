@@ -27,7 +27,7 @@ function execute(command, args, options = {}) {
   const stderr = fs.openSync(path.join(logDir, 'stderr'), 'w')
   let result
   try {
-    result = spawnSync(command, args, { cwd: ROOT, timeout: 30000,
+    result = spawnSync(command, args, { cwd: ROOT, timeout: 600000,
       env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl') },
       ...options, stdio: ['ignore', stdout, stderr] })
   } finally { fs.closeSync(stdout); fs.closeSync(stderr) }

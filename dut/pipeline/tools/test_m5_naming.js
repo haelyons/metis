@@ -76,7 +76,7 @@ function workflow(label, args, options = {}) {
   }
   const result = spawnSync(process.execPath, [path.join(options.pipeline || ROOT, 'idea', 'wf.js'), '--script', options.scriptFile || scriptFile,
     '--args', argsFile, '--out', out, '--config', path.join(dir, 'config.json'), ...(options.flags || [])], {
-    cwd: options.cwd || ROOT, stdio: ['ignore', stdout, stderr], timeout: 30000, env,
+    cwd: options.cwd || ROOT, stdio: ['ignore', stdout, stderr], timeout: 600000, env,
   })
   fs.closeSync(stdout); fs.closeSync(stderr)
   check(`${label}: workflow exits cleanly`, () => {

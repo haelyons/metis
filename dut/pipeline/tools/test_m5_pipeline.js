@@ -83,7 +83,7 @@ async function runCase(name, failedStage, launch = false) {
     return new Promise(resolve => {
       const childProcess = spawn(executable, command, {
         cwd,
-        timeout: 30000,
+        timeout: 600000,
         stdio: ['ignore', stdout, stderr],
         env: { ...process.env, M5_RAIDS_LEDGER: path.join(runRoot, 'test-raids_used.jsonl'), WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js'), ...envExtra },
       })

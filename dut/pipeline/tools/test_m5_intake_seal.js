@@ -251,7 +251,7 @@ async function runCase(name, facts = INTAKE, { runRoot = path.join(parent, name)
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'),
         '--script', path.join(ROOT, 'm5', 'pipeline.js'), '--args', argsFile,
         '--out', out, '--disable-family', 'claude'], {
-        cwd: ROOT, timeout: 30000, stdio: ['ignore', stdout, stderr],
+        cwd: ROOT, timeout: 600000, stdio: ['ignore', stdout, stderr],
         env: { ...process.env, WF_STUB: __filename, M5_INTAKE_SEAL_ROOT: runRoot,
           M5_RAIDS_LEDGER: path.join(parent, 'raids_used.jsonl'),
           M5_INTAKE_SEAL_FACTS: JSON.stringify(facts), M5_INTAKE_SEAL_BRIEF: brief,

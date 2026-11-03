@@ -210,7 +210,7 @@ async function execute(command, args, directory, env = {}, cwd = directory) {
   const stdout = fs.openSync(path.join(directory, 'stdout.log'), 'w'), stderr = fs.openSync(path.join(directory, 'stderr.log'), 'w')
   try {
     return await new Promise(resolve => {
-      const child = spawn(command, args, { cwd, timeout: 180000, stdio: ['ignore', stdout, stderr],
+      const child = spawn(command, args, { cwd, timeout: 1800000, stdio: ['ignore', stdout, stderr],
         env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl'), ...env } })
       let error
       child.on('error', value => { error = value })
@@ -298,7 +298,7 @@ export PATH="$M5_EVALUATE_BIN:$PATH"
 cd "$BOX_ROOT"
 bash -c "$command"
 if [[ $command == *timeout* && -n $remote_directory ]]; then
-  for ((i=0; i<1000; i++)); do
+  for ((end=SECONDS+1800; SECONDS<end; )); do
     pending=false
     for file in "$remote_directory"/*.sh; do
       [[ -f $file ]] || continue

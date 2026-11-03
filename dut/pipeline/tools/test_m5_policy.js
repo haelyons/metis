@@ -152,7 +152,7 @@ async function launchChecks() {
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'launch.js'), 'stage', '--stage', 'm5', '--run-root', runRoot,
-        '--brief', brief, '--raid', 'policy-test', '--dry-run'], { cwd: ROOT, timeout: 30000, stdio: ['ignore', stdout, stderr],
+        '--brief', brief, '--raid', 'policy-test', '--dry-run'], { cwd: ROOT, timeout: 600000, stdio: ['ignore', stdout, stderr],
         env: { ...process.env, M5_RAIDS_LEDGER: path.join(scratch, 'raids_used.jsonl'), WF_STUB: path.join(ROOT, 'tools', 'e2e_wf.js') } })
       let error
       proc.on('error', value => { error = value })

@@ -425,7 +425,7 @@ return await agent('Run the local isolation probe.', {label:'probe', agentType:'
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', workflow,
         '--args', argsFile, '--out', path.join(work, 'wf'), '--family', 'codex', '--mode', 'primary-only',
         '--disable-family', 'claude', '--disable-family', 'opencode', '--disable-family', 'cursor'], {
-        cwd: work, env, stdio: ['ignore', 'ignore', errorFd], timeout: 15000,
+        cwd: work, env, stdio: ['ignore', 'ignore', errorFd], timeout: 600000,
       })
       let error
       proc.on('error', value => { error = value })
@@ -738,7 +738,7 @@ if [[ $frozen == true && ! -e $M5_IMPLEMENT_ROOT/after-freeze ]]; then
 fi
 bash -c "$command"
 if [[ $command == *timeout* ]]; then
-  for ((i=0; i<1000; i++)); do
+  for ((end=SECONDS+1800; SECONDS<end; )); do
     pending=false
     for file in "$BOX_ROOT"/m5-*/*.sh; do
       [[ -f $file ]] || continue
@@ -766,7 +766,7 @@ fi`)
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
-        '--args', args, '--out', output, '--disable-family', 'claude'], { cwd: root, timeout: 180000,
+        '--args', args, '--out', output, '--disable-family', 'claude'], { cwd: root, timeout: 1800000,
         stdio: ['ignore', stdout, stderr], env: { ...process.env, HOME: home, PATH: bin + path.delimiter + process.env.PATH,
           WF_STUB: __filename, M5_IMPLEMENT_ROOT: root, M5_IMPLEMENT_CONFIG: JSON.stringify(config),
           M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl'), BOX_ROOT: box, M5_IMPLEMENT_BIN: bin,

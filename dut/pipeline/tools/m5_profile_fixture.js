@@ -4,6 +4,7 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const assert = require('node:assert/strict')
+const boxWalk = require('./m5_box_walk.js')
 const timings = [
   { stage: 'prepare', kind: 'compute', start_s: 0, wall_s: 3, gpu_s: null },
   { stage: 'transfer', kind: 'transfer', start_s: 3, wall_s: 5, gpu_s: 999 },
@@ -75,11 +76,16 @@ sys.exit(3 if mode == "rc" else 0)
 `
 }
 function replace(directory, config) {
-  if (!fs.existsSync(directory)) return
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+  // Runs while a box job may remove entries: vanished entries are skipped (m5_box_walk.js).
+  for (const entry of boxWalk.entries(directory)) {
     const file = path.join(directory, entry.name)
     if (entry.isDirectory()) replace(file, config)
-    else if (entry.isFile() && entry.name === 'profile_nsys.sh') fs.writeFileSync(file, profiler(config))
+    else if (entry.isFile() && entry.name === 'profile_nsys.sh') {
+      // Rewrite only an uploaded original: rewriting an already replaced script truncates it under
+      // a profile job that bash is still reading (the job then ends early with rc 0, outputs partial).
+      const wanted = profiler(config), current = boxWalk.text(file)
+      if (current !== undefined && current !== wanted) fs.writeFileSync(file, wanted)
+    }
   }
 }
 // Exact concurrency.json shape from SCHEMAS.md "Concurrency probe".
