@@ -260,6 +260,8 @@ clusters.forEach((c, i) => c.members.forEach(k => { CLUSTER[k] = i }))
 const PICKED_IN = {}   // cluster index -> picked keys
 for (const p of picked.picks) (PICKED_IN[CLUSTER[p.key]] = PICKED_IN[CLUSTER[p.key]] || []).push(p.key)
 const GIVEN = { budget_usd: ARGS.budget_usd, price_sheet: SHEET, budget_covers_storage: ARGS.budget_covers_storage, budget_covers_tax: ARGS.budget_covers_tax }
+// U55: per card, copies of what cost_eval_plan and gate_plan received, taken then (a later field repair never reaches them)
+const JUDGED = new WeakMap()
 
 // ---------- S6-S9 per pick: producer -> G-plan -> card fields -> dramaturg || critic ----------
 async function runPick(p) {
@@ -318,6 +320,7 @@ async function producePick(c, dir) {
   }
   c.plan = plan
   c.eval = ev
+  JUDGED.set(c, JSON.parse(JSON.stringify({ plan, pick: c.pick, given: GIVEN, gate_args: ARGS })))
   g.annotations.forEach(m => ann(c, m))
   if (g.action === 'repair') return halt(c, 'cost record broken', g.reasons)
   if (g.action === 'halt') return halt(c, 'G-plan', g.reasons)
@@ -480,6 +483,6 @@ const calibration = CTX.map(c => {
   const state = c.halted ? 'not_judged' : !(c.decision && c.decision.result === 'PASS') ? 'rejected' : required.length ? 'calibration_required' : 'no_unmeasured_input'
   return { key: c.pick.key, title: c.pick.title, state, plan_usd: ev.planned ?? null, required, resolved: [],
     anchor: plan.anchor || null, predictions: plan.predictions ? { if_lever: plan.predictions.if_lever, if_not: plan.predictions.if_not, noise_rule: plan.predictions.noise_rule, expected: plan.predictions.expected } : null,
-    judged: c.eval ? { plan: c.plan, pick: c.pick, given: GIVEN, gate_args: ARGS } : null }
+    judged: c.eval ? JUDGED.get(c) ?? null : null }
 })
 return { table, cards, inventory, frontier, log: LOG, result_md, price_sheet: SHEET, calibration }

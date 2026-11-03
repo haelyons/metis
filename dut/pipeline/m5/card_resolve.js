@@ -27,7 +27,39 @@ function treeModules() {
 
 const median = values => {
   const s = [...values].sort((a, b) => a - b), m = Math.floor(s.length / 2)
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2
+  if (s.length % 2) return s[m]
+  const sum = s[m - 1] + s[m]   // halved first only when the sum overflows (then both halves are exact)
+  return Number.isFinite(sum) ? sum / 2 : s[m - 1] / 2 + s[m] / 2
+}
+
+// a scored row holds values U54 allows and agrees with U54's rules for its record item (m5/SCHEMAS.md "Card calibration (U54)")
+const VERDICTS = ['not_measured', 'no_band', 'within_band', 'below_band', 'above_band']
+const BANDED = ['within_band', 'below_band', 'above_band']
+const count = n => Number.isInteger(n) && n >= 0
+function rowValid(row, item) {
+  const m = row.measured_value, lo = row.band_lo, hi = row.band_hi
+  const bound = v => v === null || Number.isFinite(v)
+  if (!['GUESS', 'PROXY'].includes(row.basis) || row.basis !== item.basis || !VERDICTS.includes(row.verdict)
+    || ![null, 'launch', 'card', 'multiplicative'].includes(row.band_source) || !bound(lo) || !bound(hi)
+    || !(row.gate_passed === null || typeof row.gate_passed === 'boolean')
+    || !exactly(row.rule, ['file', 'kind', 'expr']) || !['json', 'regex'].includes(row.rule.kind)) return false
+  if (row.band_source === null && (lo !== null || hi !== null)) return false
+  // the verdict: bounds are written rounded to the nearest double, which keeps each exact comparison non-strict
+  if (m === null ? row.verdict !== 'not_measured'
+    : row.band_source === null ? row.verdict !== 'no_band'
+      : !BANDED.includes(row.verdict)
+        || (row.verdict === 'within_band' && ((lo !== null && m < lo) || (hi !== null && m > hi)))
+        || (row.verdict === 'below_band' && (lo === null || m > lo))
+        || (row.verdict === 'above_band' && (hi === null || m < hi))) return false
+  // the gate: the item's phase gate on its own id with >= or <= and a finite value, decided by the measurement
+  const gate = plain(item.phase) && plain(item.phase.gate) ? item.phase.gate : null
+  const gated = gate && gate.on === item.id && ['>=', '<='].includes(gate.op) && Number.isFinite(gate.value) && m !== null
+  if (row.gate_passed !== (gated ? (gate.op === '>=' ? m >= gate.value : m <= gate.value) : null)) return false
+  const decided_by = row.gate_passed !== null ? 'gate' : BANDED.includes(row.verdict) ? 'band' : null
+  const decision = decided_by === 'gate' ? (row.gate_passed ? 'holds' : 'refuted')
+    : decided_by === 'band' ? (row.verdict === 'within_band' ? 'holds' : 'refuted')
+      : m === null ? 'not_measured' : 'undecidable'
+  return row.decided_by === decided_by && row.decision === decision
 }
 
 function main(argv) {
@@ -63,7 +95,13 @@ function main(argv) {
       || scored.rows.length !== required.length || !scored.rows.every((row, i) => plain(required[i]) && row?.id === required[i].id)
       || !scored.rows.every(row => plain(row) && exactly(row, ROW_KEYS) && typeof row.id === 'string' && plain(row.rule)
         && typeof row.rule.file === 'string' && typeof row.rule.kind === 'string' && typeof row.rule.expr === 'string'
-        && (row.measured_value === null || Number.isFinite(row.measured_value)))) fail('run files invalid')
+        && (row.measured_value === null || Number.isFinite(row.measured_value)))
+      || !scored.rows.every((row, i) => rowValid(row, required[i]))
+      || ![scored.inputs_total, scored.measured_total, scored.holds_total, scored.refuted_total].every(count)
+      || scored.inputs_total !== scored.rows.length
+      || scored.measured_total !== scored.rows.filter(row => row.measured_value !== null).length
+      || scored.holds_total !== scored.rows.filter(row => row.decision === 'holds').length
+      || scored.refuted_total !== scored.rows.filter(row => row.decision === 'refuted').length) fail('run files invalid')
     const key = card.record.key
     if (!result.calibration.some(rec => plain(rec) && rec.key === key)) fail('no calibration record for the card key')
     const box_type = scored.box_type ?? null
