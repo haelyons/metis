@@ -55,4 +55,6 @@ run5 (pushed f9787537): box `gpu_1x_h100_pcie` came up, run box USD 0.01. Intake
 | 12 | 0.97 | yes | 0.0009 |
 | 13 | 0.10 | pending: resolved by science step s05's diagnosis of the intake reply | n/a |
 
-Mean Brier 0.181 over 9 scored. Decision row: an intake FAIL, so science step s05 assesses it; if s05 finds the intake reply was a refusal, the refusal row applies (no relaunch; report to the owner).
+Row 13 resolved afterwards: science step s05 found `intake_failure_cause` no_file_access, not a refusal (the Claude understudy reads only its `--add-dir` folders; fixed by `args.add_dirs`, see `run6.md`), so row 13 is no, Brier 0.0100; mean Brier 0.164 over 10 scored.
+
+Mean Brier 0.181 over 9 scored (before row 13 was resolved). Decision row: an intake FAIL, so science step s05 assesses it; if s05 finds the intake reply was a refusal, the refusal row applies (no relaunch; report to the owner).

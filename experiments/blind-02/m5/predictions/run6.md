@@ -36,3 +36,26 @@ Run: `new_run.py .../m5/run6 --brief-from=s06 --stop-after-reproduce`, `retry53.
 | 12 | Run box USD under 5 | 0.70 |
 | 13 | Run box USD under 19.74 (the cap) | 0.97 |
 | 14 | Any stage halted by a model refusal | 0.08 |
+
+## Outcome (added after the run; the sections above are unchanged since the seal cdd52351)
+
+run6 (pushed 4b5e49a9): `gpu_1x_h100_pcie` (us-west-3), pipeline wall 1,496 s, run box USD 1.37. Intake PASS (205 s, Claude): `data` available, `size` tiny, `stock_environment` true, `licence` unknown, `anchors_count` 0. Reproduce PASS (1,290 s, Claude): setup rc 0 at 77 s on the first attempt, anchors rc 0 at 749 s (0 of 0 published anchors), reproduce-freeze rc 0 at 37 s, every receipt fetched, `stock_verified` true, 257 GPU-seconds (run4 recorded 0 on its own calibration request). Fetched reproduce outputs 1,861 MB in 6,272 files. The add_dirs fix worked: the Claude intake read the brief.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.75 | yes | 0.0625 |
+| 2 | 0.90 | yes | 0.0100 |
+| 3 | 0.75 | yes | 0.0625 |
+| 4 | 0.60 | yes (first attempt) | 0.1600 |
+| 5 | 0.55 | yes | 0.2025 |
+| 6 | 0.97 | yes | 0.0009 |
+| 7 | 0.92 | yes | 0.0064 |
+| 8 | 0.85 | yes | 0.0225 |
+| 9 | 0.90 | yes | 0.0100 |
+| 10 | 0.85 | yes (37 s) | 0.0225 |
+| 11 | 0.55 | yes (1,496 s) | 0.2025 |
+| 12 | 0.70 | yes | 0.0900 |
+| 13 | 0.97 | yes | 0.0009 |
+| 14 | 0.08 | no | 0.0064 |
+
+Mean Brier 0.061 over 14. Decision row: reproduce PASS, so science step s07 reads the measurement.
