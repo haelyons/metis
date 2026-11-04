@@ -4,11 +4,12 @@ const meta = { name: 'm5', description: 'Explicit-run-root scientific pipeline s
 return (async () => {
   const runStarted = Date.now()
   const { default: path } = await import('node:path')
-  const { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, cpSync, renameSync } = await import('node:fs')
+  const { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, cpSync, renameSync,
+    mkdtempSync, lstatSync, chmodSync } = await import('node:fs')
   const { createHash, randomUUID } = await import('node:crypto')
   const { execFile } = await import('node:child_process')
   const { promisify } = await import('node:util')
-  const { homedir } = await import('node:os')
+  const { homedir, tmpdir } = await import('node:os')
   const exec = promisify(execFile)
   const input = (typeof args === 'string' ? JSON.parse(args) : args) || {}
   if (!input.run_root || !input.tag) throw new Error('m5 needs run_root and tag')
@@ -121,7 +122,232 @@ return (async () => {
     writeAtomic(cardInputsPath, JSON.stringify(cardInputs, null, 2) + '\n')
   }
 
+  // Sealed comparison (U57): the design stays in control/; agents see only A/comparison_view.json, from private views.
+  const comparisonMode = Object.hasOwn(input, 'comparison')
+  const comparisonViewPath = path.join(A, 'comparison_view.json')
+  let design = null, hiddenPaths = null
+  const exactObject = (value, keys) => value && typeof value === 'object' && !Array.isArray(value)
+    && Object.keys(value).length === keys.length && keys.every(key => Object.hasOwn(value, key))
+  const pointerPattern = /^(?:\/(?:[^~/]|~[01])*)*$/
+  async function pythonGroups(pairs) {
+    // Python's re decides what a pattern is and how many groups it has: [groups test, pattern] pairs.
+    if (!pairs.length) return true
+    try {
+      await exec('python3', ['-I', '-c', `import re, sys
+a = sys.argv[1:]
+sys.exit(0 if all(re.compile(p).groups >= 1 if t == "some" else re.compile(p).groups == int(t) for t, p in zip(a[0::2], a[1::2])) else 1)`,
+      ...pairs.flat()])
+    } catch { return false }
+    return true
+  }
+  async function validDesign(value) {
+    const text = item => typeof item === 'string' && item.length > 0
+    const sized = (list, low, high) => Array.isArray(list) && list.length >= low && list.length <= high
+    const unique = list => new Set(list).size === list.length
+    const integer = (item, low = -Infinity, high = Infinity) => Number.isInteger(item) && item >= low && item <= high
+    const named = item => typeof item === 'string' && /^[a-z][a-z0-9_]{0,30}$/.test(item)
+    if (!exactObject(value, ['arms', 'inputs', 'outputs', 'metrics', 'evaluator', 'replicates', 'warmup', 'order_seed',
+      'timeout_s', 'budget_s', 'bootstrap_seed', 'bootstrap_resamples', 'comparisons'])) return false
+    const { arms, inputs, outputs, metrics, evaluator, comparisons } = value
+    if (!sized(inputs, 1, 10) || !inputs.every(item => exactObject(item, ['id', 'spec']) && typeof item.id === 'string'
+      && /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(item.id)) || !unique(inputs.map(item => item.id))) return false
+    const resolves = pointer => inputs.every(item => {
+      let node = item.spec
+      for (const raw of pointer.split('/').slice(1)) {
+        const key = raw.replace(/~1/g, '/').replace(/~0/g, '~')
+        if (Array.isArray(node)) {
+          if (!/^(?:0|[1-9][0-9]*)$/.test(key) || Number(key) >= node.length) return false
+          node = node[Number(key)]
+        } else if (node && typeof node === 'object' && Object.hasOwn(node, key)) node = node[key]
+        else return false
+      }
+      return typeof node === 'string' || Number.isFinite(node)
+    })
+    // {input}, {run}, {out}, {spec:<pointer>}; {{ and }} are literal braces; any other brace is invalid.
+    const placeholders = item => {
+      for (let i = 0; i < item.length; i++) {
+        if (item[i] === '}') {
+          if (item[i + 1] !== '}') return false
+          i++
+        } else if (item[i] === '{') {
+          if (item[i + 1] === '{') { i++; continue }
+          const end = item.indexOf('}', i)
+          if (end < 0) return false
+          const token = item.slice(i + 1, end)
+          if (!['input', 'run', 'out'].includes(token) && !(token.startsWith('spec:')
+            && pointerPattern.test(token.slice(5)) && resolves(token.slice(5)))) return false
+          i = end
+        }
+      }
+      return true
+    }
+    if (!sized(arms, 2, 5) || !arms.every((arm, index) => exactObject(arm, ['id', 'what', 'commands', 'env'])
+      && arm.id === `A${index}` && text(arm.what) && sized(arm.commands, 1, 8)
+      && arm.commands.every(command => sized(command, 1, Infinity) && command.every(part => text(part) && placeholders(part)))
+      && (arm.env === null || (exactObject(arm.env, Object.keys(arm.env)) && Object.entries(arm.env).every(([key, item]) =>
+        /^[A-Z_][A-Z0-9_]{0,63}$/.test(key) && !key.startsWith('CMP_') && typeof item === 'string' && placeholders(item)))))) return false
+    if (!sized(outputs, 0, 10) || !unique(outputs.map(item => item?.name))
+      || !outputs.every(item => exactObject(item, ['name', 'what', 'format', 'select']) && named(item.name) && text(item.what)
+        && ['bytes', 'text_numbers', 'json_numbers'].includes(item.format)
+        && (item.select === null || (item.format !== 'json_numbers' && typeof item.select === 'string')))) return false
+    if (!sized(metrics, 1, 10) || !unique(metrics.map(item => item?.name))
+      || !metrics.every(item => exactObject(item, ['name', 'unit', 'what', 'source', 'reduce', 'expect_count'])
+        && named(item.name) && text(item.unit) && text(item.what)
+        && (item.source === 'trusted_wall' ? item.reduce === null && item.expect_count === null
+          : item.source === 'sealed_extraction' && ['first', 'max', 'value_at_max_key'].includes(item.reduce)
+            && (item.expect_count === null || integer(item.expect_count, 1))))) return false
+    if (!(evaluator === null || (exactObject(evaluator, ['what', 'spec', 'timeout_s']) && text(evaluator.what)
+      && (evaluator.timeout_s === null || integer(evaluator.timeout_s, 1))))) return false
+    if (!integer(value.replicates, 1, 30) || !integer(value.warmup, 0, 3) || !integer(value.order_seed)
+      || !integer(value.bootstrap_seed) || !integer(value.bootstrap_resamples, 1000, 1000000) || !integer(value.budget_s, 1)
+      || (Object.hasOwn(input, 'run_ceiling_s') && !(value.budget_s < input.run_ceiling_s))) return false
+    const armIds = arms.map(arm => arm.id), inputIds = inputs.map(item => item.id)
+    const timeout = value.timeout_s
+    if (!(timeout === null || integer(timeout, 1) || (exactObject(timeout, armIds) && armIds.every(id => integer(timeout[id], 1)
+      || (exactObject(timeout[id], inputIds) && inputIds.every(key => integer(timeout[id][key], 1))))))) return false
+    if (!sized(comparisons, 0, 12)) return false
+    const tolerances = { exact: null, elementwise_abs: ['abs'], elementwise_abs_plus_rel_max: ['abs', 'rel'] }
+    const earlier = []
+    for (const item of comparisons) {
+      if (!exactObject(item, ['id', 'arm', 'against', 'measure', 'criterion', 'direction', 'unit', 'pairing', 'rule',
+        'confidence', 'margin', 'threshold', 'strict', 'reference', 'missing', 'given', 'parts'])) return false
+      const output = exactObject(item.measure, ['output', 'comparator'])
+      const perInput = ['per_input_all', 'per_input_each'].includes(item.unit)
+      const ratio = item.criterion === 'ratio_at_least'
+      if (output && !Object.hasOwn(tolerances, item.measure.comparator)) return false
+      const keys = output ? tolerances[item.measure.comparator]
+        : ['non_inferiority', 'superiority'].includes(item.criterion) && item.margin !== null ? ['abs'] : null
+      if (!(typeof item.id === 'string' && /^K[0-9]{1,2}$/.test(item.id) && !earlier.includes(item.id)
+        && armIds.includes(item.arm) && item.against !== item.arm && (armIds.includes(item.against) || item.against === 'reference')
+        && sized(item.parts, 1, Infinity) && item.parts.every(text) && unique(item.parts)
+        && (output ? outputs.some(entry => entry.name === item.measure.output) && armIds.includes(item.against)
+          : exactObject(item.measure, ['metric']) && metrics.some(entry => entry.name === item.measure.metric))
+        && ['agreement', 'non_inferiority', 'superiority', 'ratio_at_least'].includes(item.criterion)
+        && (item.criterion === 'agreement') === output
+        && (['agreement', 'superiority'].includes(item.criterion) ? item.direction === 'two_sided'
+          : ['higher_better', 'lower_better'].includes(item.direction))
+        && (ratio ? item.unit === 'pooled_mean' && item.pairing === 'paired_replicate' && item.rule === 'bootstrap'
+          : item.rule === 'all_pairs' && perInput && ['paired_replicate', 'unpaired'].includes(item.pairing)
+            && (item.criterion !== 'agreement' || item.pairing === 'paired_replicate'))
+        && (item.rule === 'bootstrap' ? Number.isFinite(item.confidence) && item.confidence >= 0.5 && item.confidence < 1
+          : item.confidence === null)
+        && (keys === null ? item.margin === null
+          : exactObject(item.margin, keys) && keys.every(key => Number.isFinite(item.margin[key]) && item.margin[key] >= 0))
+        && (ratio ? Number.isFinite(item.threshold) && item.threshold > 0 && typeof item.strict === 'boolean'
+          : item.threshold === null && item.strict === null)
+        && (item.against === 'reference'
+          ? exactObject(item.reference, ['source', 'values']) && text(item.reference.source)
+            && exactObject(item.reference.values, inputIds) && inputIds.every(id => Number.isFinite(item.reference.values[id]))
+            && perInput && item.pairing === 'unpaired'
+          : item.reference === null)
+        && ['void', 'fail'].includes(item.missing)
+        && Array.isArray(item.given) && unique(item.given) && item.given.every(id => earlier.includes(id)))) return false
+      earlier.push(item.id)
+    }
+    return pythonGroups(outputs.filter(item => item.select !== null).map(item => ['some', item.select]))
+  }
+  async function prepareComparison() {
+    const value = input.comparison
+    if (!exactObject(value, ['design']) || typeof value.design !== 'string' || !value.design.trim() || cardMode
+      || Object.hasOwn(input, 'units_check') || Object.hasOwn(input, 'units_probe')) throw new Error('invalid comparison')
+    const source = path.resolve(value.design)
+    const bytes = readFileSync(source)
+    const parsed = JSON.parse(bytes.toString('utf8'))
+    if (!await validDesign(parsed)) throw new Error('invalid comparison')
+    design = parsed
+    const comparisonText = JSON.stringify({ source, source_sha256: sha256(bytes), design }, null, 2) + '\n'
+    writeAtomic(path.join(C, 'comparison.json'), comparisonText)
+    writeAtomic(path.join(C, 'comparison_seal.json'), JSON.stringify({
+      comparison_sha256: sha256(comparisonText), sealed_utc: new Date().toISOString() }, null, 2) + '\n')
+    const { arms, inputs, outputs, metrics, evaluator, replicates, warmup } = design
+    writeAtomic(comparisonViewPath, JSON.stringify({ arms, inputs, outputs, metrics,
+      evaluator: evaluator === null ? null : { what: evaluator.what, spec: evaluator.spec }, replicates, warmup }, null, 2) + '\n')
+    // Hidden from every agent call: the run, the journal, the design's directory and its git work tree.
+    const parent = path.dirname(source)
+    let top = parent
+    while (!existsSync(path.join(top, '.git')) && path.dirname(top) !== top) top = path.dirname(top)
+    hiddenPaths = [root, path.dirname(agent.journal || path.join(A, 'wf', 'journal.jsonl')), parent,
+      ...(existsSync(path.join(top, '.git')) ? [top] : [])]
+  }
+  const views = []
+  function privateView(label, entries) {
+    const view = mkdtempSync(path.join(tmpdir(), `m5-${label}-`))
+    views.push(view)
+    writeFileSync(path.join(view, 'comparison_view.json'), readFileSync(comparisonViewPath))
+    for (const [name, source] of entries) {
+      if (source) cpSync(source, path.join(view, name), { recursive: true })
+      else mkdirSync(path.join(view, name), { recursive: true })
+    }
+    return view
+  }
+  const isolation = view => ({ isolation: { directory: view, box_access: false, hidden: hiddenPaths } })
+  function copyRegular(from, to, names) {
+    // Only regular files directly under `from`: no links, no subdirectories.
+    let listed
+    try { listed = names ?? readdirSync(from) } catch { return }
+    mkdirSync(to, { recursive: true })
+    for (const name of listed) {
+      try {
+        if (lstatSync(path.join(from, name)).isFile()) writeFileSync(path.join(to, name), readFileSync(path.join(from, name)))
+      } catch { /* A missing file is not copied. */ }
+    }
+  }
+  function removeView(directory) {
+    try {
+      chmodSync(directory, 0o700)
+      for (const name of readdirSync(directory)) {
+        if (lstatSync(path.join(directory, name)).isDirectory()) removeView(path.join(directory, name))
+      }
+    } catch { /* rmSync removes what it can. */ }
+    rmSync(directory, { recursive: true, force: true })
+  }
+  const comparisonFiles = () => [...design.arms.map(arm => `arms/${arm.id}.sh`), 'cmp_files.json', 'cmp_extract.json',
+    'versions.sh', ...(design.evaluator === null ? [] : ['fetch_private.sh', 'evaluate.sh'])]
+  async function validComparisonHarness() {
+    const evaluator = design.evaluator !== null
+    const regular = name => { try { return lstatSync(path.join(harnessDirectory, name)).isFile() } catch { return false } }
+    const adapters = design.arms.map(arm => `${arm.id}.sh`)
+    let listed
+    try { listed = readdirSync(path.join(harnessDirectory, 'arms')) } catch { return false }
+    if (listed.length !== adapters.length || !adapters.every(name => listed.includes(name) && regular(`arms/${name}`)
+      && statSync(path.join(harnessDirectory, 'arms', name)).size > 0)) return false
+    if (!regular('versions.sh') || ['fetch_private.sh', 'evaluate.sh'].some(name =>
+      evaluator ? !regular(name) : existsSync(path.join(harnessDirectory, name)))) return false
+    const relative = (item, part, first) => typeof item === 'string' && first.includes(item.split('/')[0])
+      && item.split('/').every(component => part.test(component) && component !== '.' && component !== '..')
+    const plainPart = /^[A-Za-z0-9._+=-]+$/, globPart = /^[A-Za-z0-9._+=*?[\]-]+$/
+    const first = evaluator ? ['out', 'log', 'eval'] : ['out', 'log']
+    const armIds = design.arms.map(arm => arm.id), names = design.outputs.map(item => item.name)
+    let files, extract
+    try {
+      files = readJSON(path.join(harnessDirectory, 'cmp_files.json'))
+      extract = readJSON(path.join(harnessDirectory, 'cmp_extract.json'))
+    } catch { return false }
+    if (!exactObject(files, ['files']) || !exactObject(files.files, armIds)
+      || !armIds.every(id => exactObject(files.files[id], names) && names.every(name => {
+        const location = files.files[id][name]
+        return relative(location, plainPart, first) || (exactObject(location, ['glob']) && relative(location.glob, globPart, first))
+      }))) return false
+    const reduce = Object.fromEntries(design.metrics.filter(item => item.source === 'sealed_extraction').map(item => [item.name, item.reduce]))
+    const expected = armIds.flatMap(id => Object.keys(reduce).map(name => `${id}/${name}`))
+    if (!exactObject(extract, ['rules']) || !Array.isArray(extract.rules) || extract.rules.length !== expected.length) return false
+    const seen = new Set()
+    for (const rule of extract.rules) {
+      if (!exactObject(rule, ['arm', 'metric', 'file', 'kind', 'expr']) || typeof rule.arm !== 'string'
+        || typeof rule.metric !== 'string') return false
+      const key = `${rule.arm}/${rule.metric}`
+      if (!expected.includes(key) || seen.has(key) || !relative(rule.file, plainPart, ['out', 'log', 'eval'])
+        || typeof rule.expr !== 'string' || !(rule.kind === 'regex' || (rule.kind === 'json' && pointerPattern.test(rule.expr)))) return false
+      seen.add(key)
+    }
+    return pythonGroups(extract.rules.filter(rule => rule.kind === 'regex')
+      .map(rule => [reduce[rule.metric] === 'value_at_max_key' ? '2' : '1', rule.expr]))
+  }
+
   async function intake() {
+    if (comparisonMode) {
+      try { await prepareComparison() } catch { return failure({ ...nullFacts('intake'), tokens_known: false, gpu_busy_known: false }, 'parse') }
+    }
     if (cardMode) {
       try { prepareCard() } catch { return failure({ ...nullFacts('intake'), tokens_known: false, gpu_busy_known: false }, 'parse') }
     }
@@ -139,11 +365,26 @@ return (async () => {
     const brief = typeof input.brief === 'string' && input.brief.trim() ? input.brief : null
     const briefPath = brief && (existsSync(path.resolve(brief)) || path.isAbsolute(brief)
       || /[/\\]|\.(md|txt|json|ya?ml|pdf)$/i.test(brief)) ? path.resolve(brief) : null
+    // Comparison mode: the agent reads and writes only its private view; the pipeline copies intake/ back.
+    let view = null, shownBrief = briefPath, written = directory
+    if (comparisonMode) {
+      try {
+        view = privateView('intake', [['intake', null]])
+        written = path.join(view, 'intake')
+        if (briefPath) {
+          shownBrief = path.join(view, 'brief', path.basename(briefPath))
+          mkdirSync(path.dirname(shownBrief))
+          try {
+            if (statSync(briefPath).isFile()) writeFileSync(shownBrief, readFileSync(briefPath))
+          } catch { /* An unreadable brief stays absent; the agent reports found=false. */ }
+        }
+      } catch { return fail() }
+    }
     const prompt = `Perform scientific benchmark intake in one bounded pass.
 ${briefPath
-  ? `Read the brief file ${JSON.stringify(briefPath)}. Extract its benchmark; if unreadable or unsupported, report found=false. Do not substitute another benchmark. Copy the brief to intake/brief.md when readable.`
+  ? `Read the brief file ${JSON.stringify(shownBrief)}. Extract its benchmark; if unreadable or unsupported, report found=false. Do not substitute another benchmark. Copy the brief to intake/brief.md when readable.`
   : `Search for a public benchmark, inspecting at most three candidates and using at most two search calls. ${brief ? `Search hint: ${JSON.stringify(brief)}.` : ''} If none qualifies, report found=false. Never invent a benchmark, citation, published number, tolerance, pin, or command.`}
-Write only under ${JSON.stringify(directory)}. Never read experiments/, operator/, or control/.
+Write only under ${JSON.stringify(written)}. Never read experiments/, operator/, or control/.
 Never invent a benchmark, citation, published number, tolerance, pin, or command.
 Write all five JSON files, including explicit null/unavailable values and reasons when evidence is missing:
 - benchmark.json: identity, outcome definition, citations, source licences and intended-use permissions, stock CUDA image feasibility and evidence, data plus peak working-set GiB, scoring and repeatability rules; record search candidates if searched.
@@ -160,9 +401,12 @@ Report optional licence_basis for the least-covered item among the benchmark cod
 stock_environment=true means provisionally feasible on the stock image, false means incompatible, null means unknown pending reproduction.
 size is data plus peak working set: tiny <=1 GiB, small <=10 GiB, medium <=100 GiB, large >100 GiB, otherwise unknown.
 Gate: complete files, found, available required data, licence is not "restricted", and stock_environment is not false. Missing published tolerances do not block. Missing evidence must stay unknown.${cardMode ? `
-This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. EXECUTION.json's representative workload is the protocol of the phases those inputs name (their measured_by and phase), not another workload.` : ''}`
+This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. EXECUTION.json's representative workload is the protocol of the phases those inputs name (their measured_by and phase), not another workload.` : ''}${view ? `
+This run compares the arms listed in ${JSON.stringify(path.join(view, 'comparison_view.json'))} on the inputs listed there. Arm A0 is the benchmark: record it in the five files as usual. Also record, in benchmark.json under the JSON key "arms", each other arm's published source, pin and commands, keyed by arm id${design.evaluator === null ? '' : `; in benchmark.json under the JSON key "evaluator", the evaluator's published source, pin and command`}; and in data.json every input any arm${design.evaluator === null ? '' : ' or the evaluator'} needs${design.evaluator === null ? '' : `, marking the evaluator's private data and stating where each private item is published`}.` : ''}`
     try {
-      const reply = await agent(prompt, { label: 'intake', agentType: 'ls-writer', model: 'sonnet', schema: intakeSchema })
+      const reply = await agent(prompt, { label: 'intake', agentType: 'ls-writer', model: 'sonnet', schema: intakeSchema,
+        ...(view ? isolation(view) : {}) })
+      if (view) copyRegular(written, directory)
       // Whitelist facts: no benchmark content or arbitrary reply keys can reach S.
       if (reply != null) {
         for (const key of intakeSchema.required) facts[key] = reply[key]
@@ -293,6 +537,7 @@ This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. EXEC
     const commands = []
     for (const name of names) {
       const remote = `harness/${name}`
+      if (name.includes('/')) commands.push(`mkdir -p ${quote(path.posix.dirname(remote))}`)
       commands.push(`: > ${quote(remote)}`)
       const bytes = readFileSync(path.join(harnessDirectory, name)).toString('base64')
       for (let offset = 0; offset < bytes.length; offset += 24576) {
@@ -352,13 +597,20 @@ Use the probe's discovered paths and versions. Accept either a complete CUDA too
       const protectedScripts = new Map([...(name === 'setup.sh' ? [] : ['setup.sh', 'run_evaluation.sh']),
         'run_units.sh', 'units.json', ...(cardMode ? ['card_extract.json'] : [])].map(file =>
         [file, existsSync(path.join(harnessDirectory, file)) ? readFileSync(path.join(harnessDirectory, file)) : null]))
-      const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(harnessDirectory, name))}`
-        : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(harnessDirectory)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
-      const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). ${scope} using intake evidence. Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is repair attempt ${retry} of ${repairLimit} for this ${name === 'setup.sh' ? 'script' : 'step'}.
+      // Comparison mode: the repair works on copies in its private view; only its permitted scripts come back.
+      const view = comparisonMode ? privateView(name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`,
+        [['intake', path.join(A, 'intake')], ['harness', harnessDirectory]]) : null
+      const shown = view ? path.join(view, 'harness') : harnessDirectory
+      const scope = name === 'setup.sh' ? `Repair only ${JSON.stringify(path.join(shown, name))}`
+        : `Repair run_anchors.sh, run_command.sh, or both under ${JSON.stringify(shown)}, and nothing else. A rewritten run_command.sh must still obey every run_command.sh rule`
+      const viewPrompt = view ? ` The intake files are under ${JSON.stringify(path.join(view, 'intake'))} and the compared arms and inputs are listed in ${JSON.stringify(path.join(view, 'comparison_view.json'))}.` : ''
+      const repair = await agent(`${name} failed (rc ${result.rc}${result.error ? `, output gate: ${result.error}` : ''}). ${scope} using intake evidence.${viewPrompt} Preserve the published pin, configuration and stock image; sudo only for apt. ${harnessRules} Never read experiments/, operator/, or control/. Do not run workloads locally or access the box. This is repair attempt ${retry} of ${repairLimit} for this ${name === 'setup.sh' ? 'script' : 'step'}.
 Budget: ${executionTimeout(timeout)}s resolved now, the time left before the run ceiling, not a target (explicit args budget overrides); failed attempt budget: ${result.budget_s}s; measured elapsed: ${result.wall_s ?? 'unavailable'}s; measured overrun: ${Number.isFinite(result.wall_s) ? Math.max(0, result.wall_s - result.budget_s) : 'unavailable'}s. ${budgetPrompt()}
 ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
-        { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry })
+        { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry,
+          ...(view ? isolation(view) : {}) })
+      if (view) copyRegular(shown, harnessDirectory, names)
       for (const [file, bytes] of protectedScripts) {
         if (bytes === null) rmSync(path.join(harnessDirectory, file), { force: true })
         else writeFileSync(path.join(harnessDirectory, file), bytes)
@@ -465,9 +717,16 @@ PY`
     try {
       await collectBoxProbe('setup')
     } catch (error) { return failure(facts, error.error_class || 'infra') }
+    // The separated users of a comparison with an evaluator need passwordless sudo.
+    if (comparisonMode && design.evaluator !== null && boxProbe.sudo_nopasswd !== true) return failure(facts, 'infra')
     try {
-      const prompt = `Write a baseline harness from ${JSON.stringify(path.join(A, 'intake'))}/*.
-Never read experiments/, operator/, or control/. Write only under ${JSON.stringify(harnessDirectory)}.
+      // Comparison mode: the harness agent writes into its private view; the pipeline copies harness/ back.
+      const view = comparisonMode && input.harness_from == null
+        ? privateView('harness', [['intake', path.join(A, 'intake')], ['harness', null]]) : null
+      const shown = view ? path.join(view, 'harness') : harnessDirectory
+      const evaluator = comparisonMode && design.evaluator !== null
+      const prompt = `Write a baseline harness from ${JSON.stringify(view ? path.join(view, 'intake') : path.join(A, 'intake'))}/*.
+Never read experiments/, operator/, or control/. Write only under ${JSON.stringify(shown)}.
 The operator already started the dev box. Do not start, stop, or access it; the pipeline runs your scripts.
 ${harnessRules}
 ${budgetPrompt()}
@@ -479,13 +738,23 @@ Write three self-contained bash scripts, invoked from a shared remote working di
 Also provide run_evaluation.sh for the published baseline evaluation interface, or make run_anchors.sh handle non-anchor EVAL_MODE. Evaluation uses fresh working directories with baseline-published/, method/, data/, harness/ and payload/ links and absolute BASELINE_DIR, METHOD_DIR, BASELINE_OUT, METHOD_OUT and EVAL_OUT paths. EVAL_PROTOCOL points to the sealed JSON; EVAL_INPUTS and EVAL_SEEDS are JSON encodings of evaluation_inputs and paired_seed_tests. EVAL_INPUTS is an object whose ids array lists the sealed input identities in order; each record's input_id is one of those strings, and every other key (pins, configuration, generated-input descriptions) describes inputs and is never itself an input. EVAL_SEEDS is either {kind:"paired_median",seeds:[integer,...]}, whose seeds are the execution seeds in order, or {kind:"deterministic",...}, whose single execution seed is null; other keys are descriptive. EVAL_COMPUTE_BUDGET is empty except in curve mode. Modes are equivalence, warmup, performance and curve. Run the published configuration on every sealed input/seed, seeds first then input IDs, and write EVAL_OUT/evaluation.json: {records:[{input_id,seed,metrics:{metric_name:finite_number}}],timing_scope,gpu_count,wall_s,compute_budget}. Use null seed for deterministic protocols; timing_scope must equal the seal; wall_s is required for reported_wall scopes; compute_budget is required for curves. Synchronize every used GPU before returning or stopping reported timers; include launch, transfer and merge overhead. Enforce curve budgets in GPU seconds. Always measure actual outputs; never reuse baseline outputs.
 Create output directories, preserve logs, and exit nonzero on failure. Read all intake files for pins, commands, data, scale and protocol. Do not run builds or workloads locally.
 Return a short completion acknowledgement; the pipeline reads the scripts itself.${cardMode ? `
-This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. The representative run must write outputs under out/ from which each listed input${cardInputs?.anchor ? ', and the anchor quantity that file names,' : ''} can be read. Declare how each one is read in ${JSON.stringify(extractPath)}, exactly {"rules": [...]}: one rule per listed input, in the listed order, with that input's id${cardInputs?.anchor ? ', then one rule with id "anchor"' : ''}. Each rule is exactly {"id", "file", "kind", "expr"}. file is a path relative to out/, made of /-separated components of A-Za-z0-9._+=- characters, none of them "." or "..". kind "json": expr is a JSON Pointer (RFC 6901) into that file, and the value there must be a finite JSON number. kind "regex": expr is a Python re pattern with exactly one capturing group; the file is read as UTF-8 and the last match's group must parse with float() as a finite number. The pipeline reads the values with these rules; no harness script computes, writes or asserts a value for these inputs.` : ''}`
+This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. The representative run must write outputs under out/ from which each listed input${cardInputs?.anchor ? ', and the anchor quantity that file names,' : ''} can be read. Declare how each one is read in ${JSON.stringify(extractPath)}, exactly {"rules": [...]}: one rule per listed input, in the listed order, with that input's id${cardInputs?.anchor ? ', then one rule with id "anchor"' : ''}. Each rule is exactly {"id", "file", "kind", "expr"}. file is a path relative to out/, made of /-separated components of A-Za-z0-9._+=- characters, none of them "." or "..". kind "json": expr is a JSON Pointer (RFC 6901) into that file, and the value there must be a finite JSON number. kind "regex": expr is a Python re pattern with exactly one capturing group; the file is read as UTF-8 and the last match's group must parse with float() as a finite number. The pipeline reads the values with these rules; no harness script computes, writes or asserts a value for these inputs.` : ''}${view ? `
+This run compares the arms listed in ${JSON.stringify(path.join(view, 'comparison_view.json'))} on the inputs listed there. A0 is the published baseline: run_anchors.sh and run_command.sh keep their meaning for A0. setup.sh also builds or installs every arm's published program and configuration${evaluator ? ', and the evaluator,' : ''} as published, under the shared run directory or with apt, never under the home directory.${evaluator ? ` setup.sh never fetches, copies or writes the evaluator's private data; only fetch_private.sh does.` : ''} Besides the usual scripts, write under ${JSON.stringify(shown)}:
+- arms/<arm id>.sh, one adapter per arm, A0 included. It only prepares the invocation: it stages the input named by CMP_INPUT (its spec is the JSON in CMP_INPUT_SPEC) under run/, its working directory, or under CMP_OUT. It never runs the arm's program, writes or patches source, or computes, writes or asserts a metric; the pipeline runs the arm's commands itself.${evaluator ? `
+- fetch_private.sh: fetches every input data.json marks as the evaluator's private data from where it is published, writing only under its working directory.
+- evaluate.sh: runs the published, pinned evaluator on the arm output in CMP_ARM_OUT for the input named by CMP_INPUT, reads private data only under CMP_PRIVATE, writes its results under CMP_EVAL_OUT, and never writes elsewhere.` : ''}
+- cmp_files.json, exactly {"files": {...}}, mapping each arm id to an object that maps every output name to a location: a relative path, or exactly {"glob": pattern} with a pattern of relative-path components that may also use *, ?, [ and ]. Locations are relative to the invocation directory, and their first component is out (the arm's files), log (the standard output and error of the arm's adapter and commands)${evaluator ? ' or eval (the evaluator\'s files)' : ''}.
+- cmp_extract.json, exactly {"rules": [...]}, one rule per arm and sealed_extraction metric, each exactly {"arm", "metric", "file", "kind", "expr"}, with file a relative path whose first component is out or log${evaluator ? ' or eval' : ''}. kind "json": expr is a JSON Pointer (RFC 6901) to a finite number, to an array of finite numbers, or (for reduce value_at_max_key) to an array of two-element [key, value] arrays of finite numbers. kind "regex": expr is a Python re pattern with exactly one capturing group, or exactly two (key, then value) for value_at_max_key; matches are parsed with float().
+- versions.sh, which prints one JSON object mapping each arm id${evaluator ? ' and "evaluator"' : ''} to exactly {"version", "executable"}: the program's version string and the path, absolute or relative to the shared run directory, of its main executable file.
+Relative paths are one or more /-separated components made of A-Za-z0-9._+=- characters, none of them "." or "..". The pipeline checks and seals these files before any run; no repair changes them.` : ''}`
       mkdirSync(harnessDirectory, { recursive: true })
+      if (comparisonMode) mkdirSync(path.join(harnessDirectory, 'arms'), { recursive: true })
       if (input.harness_from != null) {
         if (typeof input.harness_from !== 'string' || !input.harness_from.trim()) return failure(facts, 'parse')
         const source = path.resolve(input.harness_from)
         const names = ['setup.sh', 'run_anchors.sh', 'run_command.sh', ...(cardMode ? ['card_extract.json'] : []),
-          ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(source, name)))]
+          ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(source, name))),
+          ...(comparisonMode ? comparisonFiles() : [])]
         const scripts = names.map(name => [name, readFileSync(path.join(source, name))])
         harnessSource = { source, files: {} }
         for (const [name, bytes] of scripts) {
@@ -494,8 +763,19 @@ This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. The 
         }
         writeHarnessSource()
       } else {
-        const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet' })
+        const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet', ...(view ? isolation(view) : {}) })
+        if (view) {
+          copyRegular(shown, harnessDirectory)
+          copyRegular(path.join(shown, 'arms'), path.join(harnessDirectory, 'arms'), design.arms.map(arm => `${arm.id}.sh`))
+        }
         if (reply == null) return failure(facts, 'parse')
+      }
+      if (comparisonMode) {
+        // The comparison files are fixed before any run, sealed, uploaded with the harness, and never repaired.
+        if (!await validComparisonHarness()) return failure(facts, 'parse')
+        writeAtomic(path.join(C, 'arms_seal.json'), JSON.stringify({
+          files: Object.fromEntries(comparisonFiles().map(name => [name, sha256(readFileSync(path.join(harnessDirectory, name)))])),
+          sealed_utc: new Date().toISOString() }, null, 2) + '\n')
       }
       if (cardMode) {
         // The extraction rules are fixed before the workload runs; no repair changes them.
@@ -512,7 +792,8 @@ This run calibrates the inputs listed in ${JSON.stringify(cardInputsPath)}. The 
         writeFileSync(referenceFile, JSON.stringify({ sha256 }, null, 2) + '\n')
       }
       const uploaded = await uploadHarness(['setup.sh', 'run_anchors.sh', 'run_command.sh',
-        ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(harnessDirectory, name)))], destination, 'setup')
+        ...['run_evaluation.sh', 'run_units.sh', 'units.json'].filter(name => existsSync(path.join(harnessDirectory, name))),
+        ...(comparisonMode ? comparisonFiles() : [])], destination, 'setup')
       if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
       const setup = await runHarness('setup.sh', 'setup', destination, 'setup')
       if (setup.error) {
@@ -1073,6 +1354,8 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
   }
   async function evaluate() {
     if (input.stub?.evaluate != null) return stub('evaluate')
+    // The comparison's evaluate (U57b) is not implemented yet.
+    if (comparisonMode) return { ...failure(nullFacts('evaluate'), 'other'), notes: ['comparison_evaluate_not_implemented'] }
     const { default: run } = await import(path.resolve('m5/evaluate.js'))
     return run({ A, C, exec, boxCommand, remoteDirectory, executionTimeout, nullFacts })
   }
@@ -1087,9 +1370,14 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     stageReceipts = []
     const journalOffset = journalText().length
     const started = performance.now(), before = agent.usage?.()
-    const result = stopped_at && stage !== 'takeaways'
+    // A comparison runs reproduce for A0, then evaluate; the method stages never run.
+    const comparisonSkip = comparisonMode && ['profile', 'seal', 'propose', 'implement'].includes(stage)
+    const result = (stopped_at && stage !== 'takeaways') || comparisonSkip
       ? { status: 'SKIPPED', facts: nullFacts(stage) }
       : await run()
+    for (const view of views.splice(0)) {
+      try { removeView(view) } catch { /* A view left behind never changes the stage. */ }
+    }
     const timeouts = stageReceipts.filter(receipt => receipt.rc === 124 || receipt.timed_out === true)
     if (timeouts.length) {
       result.facts.timed_out = true
@@ -1125,12 +1413,12 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     mkdirSync(path.join(C, 'stages'), { recursive: true })
     writeFileSync(path.join(C, 'stages', `${stage}.json`), JSON.stringify({ stage, status: result.status,
       ...v1, ...(stage === 'seal' ? { reason_codes: result.reason_codes ?? [] } : {}),
-      notes: new Set(families).size > 1 ? ['multiple_model_families'] : [] }) + '\n')
+      notes: [...(result.notes ?? []), ...(new Set(families).size > 1 ? ['multiple_model_families'] : [])] }) + '\n')
     await exec('python3', ['m5/signatures.py', 'emit', '--dir', S, '--stage', stage, '--status', result.status,
       '--facts', JSON.stringify(result.facts), '--v1', JSON.stringify(v1)])
     stages.push({ stage, status: result.status })
     log(`${stage}: ${result.status}`)
-    if (!stopped_at && (result.status !== 'PASS' || result.facts.outcome === 'no_feasible_method'
+    if (!stopped_at && !comparisonSkip && (result.status !== 'PASS' || result.facts.outcome === 'no_feasible_method'
       || (stage === 'reproduce' && (Object.hasOwn(input, 'units_check') || Object.hasOwn(input, 'units_probe'))))) stopped_at = stage
   }
   await exec('python3', ['m5/operator_takeaway.py', S, '--raid', raid])
