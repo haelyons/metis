@@ -68,6 +68,16 @@ return (async () => {
     if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) return fallback
     return Math.max(0, Math.min(Date.now(), end) - Math.max(runStarted, start)) / 3600000 * box.price_usd_h
   }
+  // A comparison's bill of the whole box allocation (G6), which may include work outside this run.
+  function allocation() {
+    const field = key => box && box[key] !== undefined ? box[key] : null
+    const price = box && nonnegative(box.price_usd_h) ? box.price_usd_h : null
+    const final = box?.ended_utc != null && box?.hours != null
+    const start = Date.parse(box?.started_utc)
+    const hours = final ? box.hours : Number.isFinite(start) ? (Date.now() - start) / 3600000 : null
+    return { type: field('type'), price_usd_h: price, started_utc: field('started_utc'), ended_utc: final ? box.ended_utc : null,
+      hours, usd: Number.isFinite(hours) && price !== null ? hours * price : null, final }
+  }
   const hasValue = value => value != null && (typeof value !== 'string' || value.trim() !== '')
     && (typeof value !== 'object' || Object.keys(value).length > 0)
   const menu = ['data-parallel over inputs', 'batching', 'multi-GPU', 'ensembles', 'pipelining']
@@ -1354,8 +1364,12 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
   }
   async function evaluate() {
     if (input.stub?.evaluate != null) return stub('evaluate')
-    // The comparison's evaluate (U57b) is not implemented yet.
-    if (comparisonMode) return { ...failure(nullFacts('evaluate'), 'other'), notes: ['comparison_evaluate_not_implemented'] }
+    if (comparisonMode) {
+      const { default: run } = await import(path.resolve('m5/comparison.js'))
+      return run({ A, C, exec, boxCommand, quote, failure, nullFacts, design, runStarted, allocation,
+        ceiling_s: Object.hasOwn(input, 'run_ceiling_s') ? input.run_ceiling_s : 43200,
+        price: box && nonnegative(box.price_usd_h) ? box.price_usd_h : null })
+    }
     const { default: run } = await import(path.resolve('m5/evaluate.js'))
     return run({ A, C, exec, boxCommand, remoteDirectory, executionTimeout, nullFacts })
   }
@@ -1400,6 +1414,11 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
           && current.type === box.type && current.region === box.region && current.price_usd_h === box.price_usd_h))) {
           box = current
           writeFileSync(path.join(C, 'box.json'), JSON.stringify(box) + '\n')
+          // A comparison's compute record: only its allocation is recomputed.
+          const compute = path.join(A, 'results', 'evaluate', 'comparison_compute.json')
+          if (comparisonMode && existsSync(compute)) {
+            writeAtomic(compute, JSON.stringify({ ...readJSON(compute), allocation: allocation() }, null, 2) + '\n')
+          }
         }
       } catch { /* The initial snapshot remains sufficient for an active allocation. */ }
       result.facts.run_box_usd = result.status === 'SKIPPED' ? null : runBoxUSD(stageUSD)
