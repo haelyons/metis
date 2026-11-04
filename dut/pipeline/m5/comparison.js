@@ -55,7 +55,13 @@ python3 profiler/cmp_system.py`, staging, left())
       return versions.error || !plain(value) ? null : value
     } catch { return null }
   }
-  const system = fetched('system.json'), armVersions = fetched('versions.json')
+  // versions.json maps each arm, and the evaluator when present, to exactly {version, executable}.
+  const versionKeys = [...design.arms.map(arm => arm.id), ...(evaluator ? ['evaluator'] : [])]
+  const validVersions = value => value !== null && Object.keys(value).length === versionKeys.length
+    && versionKeys.every(key => Object.hasOwn(value, key) && plain(value[key]) && Object.keys(value[key]).length === 2
+      && typeof value[key].version === 'string' && typeof value[key].executable === 'string')
+  const system = fetched('system.json'), fetchedVersions = fetched('versions.json')
+  const armVersions = validVersions(fetchedVersions) ? fetchedVersions : null
   for (const [name, value] of [['system.json', system], ['versions.json', armVersions]]) {
     if (value !== null) writeAtomic(path.join(results, name), value)
   }
@@ -81,7 +87,15 @@ print(json.dumps(rounds))`, path.join(C, 'comparison.json')])
   const wrapKeys = ['status', 'adapter_rc', 'adapter_wall_s', 'commands', 'gpu_busy_s', 'gpu_busy_known',
     'eval_status', 'eval_rc', 'eval_wall_s', 'eval_gpu_busy_s', 'eval_gpu_busy_known']
   // Keys and types; status ok exactly when every exit status is 0 and every command has a row; eval_status ok only
-  // when eval_rc is 0.
+  // when eval_rc is 0; an exit status null exactly on a timeout (the last process started for the arm part, eval_rc
+  // for the evaluator part, which is also null when skipped).
+  const timeoutNulls = value => {
+    const statuses = [value.adapter_rc, ...value.commands.map(row => plain(row) ? row.rc : undefined)]
+    const last = statuses.at(-1)
+    return statuses.slice(0, -1).every(item => item !== null) && (value.status !== 'timeout' || last === null)
+      && (!['ok', 'failed'].includes(value.status) || last !== null)
+      && (value.eval_rc === null) === ['timeout', 'skipped'].includes(value.eval_status)
+  }
   const exact = (value, keys) => plain(value) && Object.keys(value).length === keys.length
     && keys.every(key => Object.hasOwn(value, key))
   const seconds = (item, nullable = false) => (nullable && item === null) || (Number.isFinite(item) && item >= 0)
@@ -94,11 +108,11 @@ print(json.dumps(rounds))`, path.join(C, 'comparison.json')])
     && typeof value.gpu_busy_known === 'boolean' && rc(value.eval_rc) && seconds(value.eval_wall_s, true)
     && seconds(value.eval_gpu_busy_s, true) && typeof value.eval_gpu_busy_known === 'boolean'
     && value.commands.every(row => exact(row, ['argv', 'rc', 'wall_s', 'executable', 'sha256'])
-      && Array.isArray(row.argv) && row.argv.every(part => typeof part === 'string') && rc(row.rc) && seconds(row.wall_s)
+      && Array.isArray(row.argv) && row.argv.length > 0 && row.argv.every(part => typeof part === 'string') && rc(row.rc) && seconds(row.wall_s)
       && nullableText(row.executable) && nullableText(row.sha256))
     && (value.status === 'ok') === (value.adapter_rc === 0 && value.commands.length === count
       && value.commands.every(row => row.rc === 0))
-    && (value.eval_status !== 'ok' || value.eval_rc === 0)
+    && (value.eval_status !== 'ok' || value.eval_rc === 0) && timeoutNulls(value)
   const invocations = []
   for (const [index, job] of schedule.entries()) {
     const token = `i${index + 1}`

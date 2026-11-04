@@ -286,12 +286,15 @@ sys.exit(0 if all(re.compile(p).groups >= 1 if t == "some" else re.compile(p).gr
     const { arms, inputs, outputs, metrics, evaluator, replicates, warmup } = design
     writeAtomic(comparisonViewPath, JSON.stringify({ arms, inputs, outputs, metrics,
       evaluator: evaluator === null ? null : { what: evaluator.what, spec: evaluator.spec }, replicates, warmup }, null, 2) + '\n')
-    // Hidden from every agent call: the run, the journal, the design's directory and its git work tree.
-    const parent = path.dirname(source)
-    let top = parent
-    while (!existsSync(path.join(top, '.git')) && path.dirname(top) !== top) top = path.dirname(top)
-    hiddenPaths = [root, journal, parent,
-      ...(existsSync(path.join(top, '.git')) ? [top] : [])]
+    // Hidden from every agent call: the run, the journal, the design's directory and its git work tree, each as written
+    // and with every symbolic link resolved (a link's target is readable through the read-only host).
+    hiddenPaths = []
+    for (const parent of [path.dirname(source), path.dirname(real(source))]) {
+      let top = parent
+      while (!existsSync(path.join(top, '.git')) && path.dirname(top) !== top) top = path.dirname(top)
+      hiddenPaths.push(parent, ...(existsSync(path.join(top, '.git')) ? [top] : []))
+    }
+    hiddenPaths = [...new Set([root, real(path.resolve(root)), journal, real(path.resolve(journal)), ...hiddenPaths])]
   }
   const views = []
   function privateView(label, entries) {
@@ -1423,7 +1426,8 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
       try { removeView(view) } catch { /* A view left behind never changes the stage. */ }
     }
     const timeouts = stageReceipts.filter(receipt => receipt.rc === 124 || receipt.timed_out === true)
-    if (timeouts.length) {
+    // Comparison evaluate facts stay null, a timed-out box command included.
+    if (timeouts.length && !(comparisonMode && stage === 'evaluate')) {
       result.facts.timed_out = true
       result.facts.budget_s = timeouts.at(-1).budget_s
       result.facts.overrun = timeouts.some(receipt => receipt.overrun === true)

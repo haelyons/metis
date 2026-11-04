@@ -16,9 +16,10 @@ SEALED=()
 USERS=(cmp-arm)
 if ((EVALUATOR)); then USERS+=(cmp-eval); fi
 
-# Cleanup after a part user: its processes, its entries in the directories it can write, its System V IPC objects.
+# Cleanup after a part user: its processes, its entries in the directories it can write, its System V IPC objects,
+# its crontab and its at jobs.
 cleanup() {
-  local user=$1 dir uid kind
+  local user=$1 dir uid kind job
   sudo -n pkill -KILL -u "$user" || true
   while pgrep -u "$user" >/dev/null; do
     ((SECONDS + 1 <= END)) || return 1
@@ -39,6 +40,10 @@ for item in listed:
     awk -v uid="$uid" 'NR == 1 { for (i = 1; i <= NF; i++) if ($i == "uid") c = i; next } c && $c == uid { print $2 }' \
       "/proc/sysvipc/${kind%%:*}" | while read -r id; do sudo -n ipcrm "${kind#*:}" "$id" || true; done
   done
+  if command -v crontab >/dev/null; then sudo -n crontab -r -u "$user" >/dev/null 2>&1 || true; fi
+  if command -v atq >/dev/null && command -v atrm >/dev/null; then
+    for job in $(sudo -n atq 2>/dev/null | awk -v user="$user" '$NF == user { print $1 }'); do sudo -n atrm "$job" || true; done
+  fi
 }
 
 # 1. The sealed harness files are on the box unchanged; then the part users, system users without login shell or home,
@@ -58,6 +63,14 @@ for device in /dev/nvidia*; do
   group=$(stat -c %G "$device")
   for user in "${USERS[@]}"; do sudo -n usermod -a -G "$group" "$user" || fail "cannot add $user to $group"; done
 done
+# No part user can schedule a job: each is listed in /etc/cron.deny and /etc/at.deny (created when absent).
+for list in /etc/cron.deny /etc/at.deny; do
+  for user in "${USERS[@]}"; do
+    sudo -n grep -qxF -- "$user" "$list" 2>/dev/null && continue
+    { [[ -n $(sudo -n tail -c 1 -- "$list" 2>/dev/null) ]] && echo; echo "$user"; } | sudo -n tee -a -- "$list" >/dev/null \
+      || fail "cannot add $user to $list"
+  done
+done
 
 # 2. cmp-arm reaches no network but loopback.
 for tool in iptables ip6tables; do
@@ -66,7 +79,10 @@ done
 
 # 3. Nothing in the shared run directory is writable by other users; the work, job and private directories are fresh.
 sudo -n rm -rf -- "$P"
-sudo -n chmod -R go-w,o+rX -- "$S" || fail 'cannot restrict the shared run directory'
+# The effect of chmod -R go-w,o+rX, except on the evaluate stage's own box command files (top-level, named after their
+# receipt, created at mode 600), this command's included, which stay private.
+sudo -n find "$S" ! -type l ! \( -type f -perm 600 -path "$SE/[0-9]*-*" ! -path "$SE/*/*" \) \
+  -exec chmod go-w,o+rX -- {} + || fail 'cannot restrict the shared run directory'
 sudo -n rm -rf -- "$S/comparison-work" "$S/comparison-jobs"
 mkdir -m 711 -- "$S/comparison-work"
 mkdir -m 700 -- "$S/comparison-jobs"

@@ -57,6 +57,15 @@ def require(condition):
         raise ValueError("invalid input")
 
 
+def reject_constant(name):
+    raise ValueError("invalid input")
+
+
+def strict(data):
+    """Sealed JSON as intake's JSON.parse reads it: NaN, Infinity and -Infinity are invalid."""
+    return json.loads(data, parse_constant=reject_constant)
+
+
 def relative(path, part=PART, first=("out", "log", "eval")):
     parts = path.split("/") if type(path) is str else []
     return bool(parts) and parts[0] in first and all(part.fullmatch(item) and item not in (".", "..") for item in parts)
@@ -252,7 +261,7 @@ def check_rules(extract, design):
 
 def sealed_harness(c_dir, harness, design):
     """Check every sealed harness file; return the bytes of cmp_files.json and cmp_extract.json."""
-    seal = json.loads((c_dir / "arms_seal.json").read_text())
+    seal = strict((c_dir / "arms_seal.json").read_text())
     require(type(seal) is dict and set(seal) == {"files", "sealed_utc"})
     files = seal["files"]
     names = {f"arms/{arm['id']}.sh" for arm in design["arms"]} | {"cmp_files.json", "cmp_extract.json", "versions.sh"}
@@ -291,7 +300,8 @@ def read(root, rel):
 
 def valid_wrap(value, count):
     """wrap.json's keys and types; status ok exactly when every exit status is 0 and every command (count) has a row;
-    eval_status ok only when eval_rc is 0."""
+    eval_status ok only when eval_rc is 0; an exit status null exactly on a timeout (the last process started for the
+    arm part, eval_rc for the evaluator part, which is also null when skipped)."""
     def seconds(item, nullable=False):
         return nullable and item is None or number(item) and item >= 0
 
@@ -301,14 +311,21 @@ def valid_wrap(value, count):
     if type(value) is not dict or set(value) != WRAP or type(value["commands"]) is not list:
         return False
     rows = value["commands"]
+    if not all(type(row) is dict and "rc" in row for row in rows):
+        return False
+    statuses = [value["adapter_rc"], *(row["rc"] for row in rows)]
     return (value["status"] in ("ok", "failed", "timeout", "invalid")
+            and all(item is not None for item in statuses[:-1])
+            and (value["status"] != "timeout" or statuses[-1] is None)
+            and (value["status"] not in ("ok", "failed") or statuses[-1] is not None)
+            and (value["eval_rc"] is None) == (value["eval_status"] in ("timeout", "skipped"))
             and value["eval_status"] in ("ok", "failed", "timeout", "skipped")
             and rc(value["adapter_rc"]) and seconds(value["adapter_wall_s"]) and seconds(value["gpu_busy_s"])
             and type(value["gpu_busy_known"]) is bool and rc(value["eval_rc"])
             and seconds(value["eval_wall_s"], True) and seconds(value["eval_gpu_busy_s"], True)
             and type(value["eval_gpu_busy_known"]) is bool
             and all(type(row) is dict and set(row) == {"argv", "rc", "wall_s", "executable", "sha256"}
-                    and type(row["argv"]) is list and all(type(part) is str for part in row["argv"])
+                    and type(row["argv"]) is list and row["argv"] and all(type(part) is str for part in row["argv"])
                     and rc(row["rc"]) and seconds(row["wall_s"])
                     and (row["executable"] is None or type(row["executable"]) is str)
                     and (row["sha256"] is None or type(row["sha256"]) is str) for row in rows)
@@ -704,16 +721,16 @@ def main(argv):
     output.unlink(missing_ok=True)  # a failed run never leaves an earlier output in place
     data = (c_dir / "comparison.json").read_bytes()
     digest = hashlib.sha256(data).hexdigest()
-    stamp = json.loads((c_dir / "comparison_seal.json").read_text())
+    stamp = strict((c_dir / "comparison_seal.json").read_text())
     if type(stamp) is not dict or stamp.get("comparison_sha256") != digest:
         raise ValueError("seal mismatch")
-    record = json.loads(data)
+    record = strict(data)
     require(type(record) is dict and set(record) == {"source", "source_sha256", "design"})
     design = record["design"]
     check_design(design)
     files_raw, extract_raw = sealed_harness(c_dir, harness, design)
-    files = check_files(json.loads(files_raw), design)
-    rules = check_rules(json.loads(extract_raw), design)
+    files = check_files(strict(files_raw), design)
+    rules = check_rules(strict(extract_raw), design)
     comparisons, totals = Scorer(design, files, rules, root).score()
     result = dict(comparison_sha256=digest, comparisons=comparisons, totals=totals)
     temporary = output.with_name(f"{output.name}.{os.getpid()}.tmp")
