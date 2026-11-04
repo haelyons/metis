@@ -97,6 +97,23 @@ function comparisonFiles(view) {
   return files
 }
 
+// Symbolic-link tricks of an agent (SCHEMAS.md "Isolation of agent calls": nothing is copied from a view's intake/,
+// harness/ or harness/arms/ that is not a directory, and no copy follows a symbolic link). The decoy lies outside
+// the view and holds exactly the valid-looking files the agent wrote.
+let decoys = 0
+const decoy = (root, title) => path.join(path.dirname(root), `decoy-${title}-${process.pid}-${++decoys}`)
+function linkDirectory(directory, target) {
+  fs.cpSync(directory, target, { recursive: true, verbatimSymlinks: true })
+  fs.rmSync(directory, { recursive: true, force: true })
+  fs.symlinkSync(target, directory)
+}
+function linkFile(file, target) {
+  fs.copyFileSync(file, target)
+  fs.chmodSync(target, 0o700)
+  fs.rmSync(file)
+  fs.symlinkSync(target, file)
+}
+
 // ---- Stub agents ------------------------------------------------------------------------------------------
 module.exports = {
   async run(options) {
@@ -141,6 +158,8 @@ module.exports = {
         // Not regular files directly under intake/: never copied back.
         writeFile(path.join(view, 'intake', 'sub', 'extra.json'), '{"stray": true}\n')
         fs.symlinkSync('benchmark.json', path.join(view, 'intake', 'link.json'))
+        if (cfg.intakeLink === 'dir') linkDirectory(path.join(view, 'intake'), decoy(root, title))
+        if (cfg.intakeLink === 'file') linkFile(path.join(view, 'intake', 'anchors.json'), decoy(root, title))
       }
       record('intake', written)
     }
@@ -158,12 +177,17 @@ module.exports = {
         writeFile(path.join(view, 'harness', 'arms', 'A9.sh'), sh('echo stray adapter'))
         writeFile(path.join(view, 'harness', 'arms', 'notes.txt'), 'stray notes\n')
         writeFile(path.join(view, 'harness', 'sub', 'helper.sh'), sh('echo stray helper'))
+        if (cfg.harnessLink === 'dir') linkDirectory(path.join(view, 'harness'), decoy(root, title))
+        if (cfg.harnessLink === 'arms') linkDirectory(path.join(view, 'harness', 'arms'), decoy(root, title))
+        if (cfg.harnessLink === 'file') linkFile(path.join(view, 'harness', 'arms', 'A1.sh'), decoy(root, title))
       }
       record('harness', written)
     }
     if (title === 'harness-repair') {
       const text = sh('# repaired by harness-repair\n' + SETUP_OK)
       writeFile(path.join(base, 'harness', 'setup.sh'), text, 0o700)
+      if (view && cfg.repairLink === 'dir') linkDirectory(path.join(view, 'harness'), decoy(root, title))
+      if (view && cfg.repairLink === 'file') linkFile(path.join(view, 'harness', 'setup.sh'), decoy(root, title))
       if (view && cfg.repairTamper) {
         // Changes the setup repair may not make: all discarded.
         writeFile(path.join(view, 'harness', 'run_anchors.sh'), sh(STRAY('anchors')))
@@ -265,7 +289,8 @@ const MINIMAL = {
 // none written), designKind ('file'|'directory'|'missing'), git (design inside a git work tree), generated (no
 // harness_from), cmpFiles (relative name -> text or null, overriding comparisonFiles), brief, sudo (true|false|
 // 'absent'|other), setupFailures, anchorsFailures, repairTamper, declineRepairs, ceiling (args.run_ceiling_s),
-// card, unitsCheck, unitsProbe, stub (args.stub) }
+// card, unitsCheck, unitsProbe, stub (args.stub), inside ('root'|'journal'|'design': that path inside the pipeline
+// working directory), intakeLink ('dir'|'file'), harnessLink ('dir'|'arms'|'file'), repairLink ('dir'|'file') }
 const scratch = fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_comparison_pipeline_'))
 const pipeline = path.join(scratch, 'pipeline')
 const ONLY = process.argv[2] ? new RegExp(process.argv[2]) : null
@@ -279,9 +304,11 @@ function check(label, test) {
 async function execute(name, spec) {
   if (ONLY && !ONLY.test(name)) return null
   const caseDir = path.join(scratch, name)
-  const root = path.join(caseDir, 'run')
+  // spec.inside: the run root, the journal directory or the design file inside the pipeline working directory.
+  const root = spec.inside === 'root' ? path.join(pipeline, 'runs', name) : path.join(caseDir, 'run')
   const agent = path.join(root, 'agent'), control = path.join(root, 'control')
-  const science = path.join(caseDir, 'science')
+  const journal = spec.inside === 'journal' ? path.join(pipeline, 'journals', name) : path.join(agent, 'wf')
+  const science = spec.inside === 'design' ? path.join(pipeline, 'designs', name) : path.join(caseDir, 'science')
   const designDir = path.join(science, 'plans')
   const designFile = path.join(designDir, 'design-CMPDESIGN.json')
   const source = path.join(caseDir, 'previous run', 'A', 'harness')
@@ -349,14 +376,15 @@ visit(process.env.BOX_ROOT)
   writeFile(path.join(caseDir, 'bin/fetch'), sh('source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nexec cp -r -- "$source" "$2"'), 0o700)
   const designAbs = typeof args.comparison?.design === 'string' && args.comparison.design ? path.resolve(pipeline, args.comparison.design) : null
   const stubConfig = { setupFailures: spec.setupFailures ?? 0, anchorsFailures: spec.anchorsFailures ?? 0, repairTamper: Boolean(spec.repairTamper),
-    declineRepairs: Boolean(spec.declineRepairs), cmpFiles: spec.generated && args.comparison ? cmpFiles : null, designPath: designAbs }
+    declineRepairs: Boolean(spec.declineRepairs), cmpFiles: spec.generated && args.comparison ? cmpFiles : null, designPath: designAbs,
+    intakeLink: spec.intakeLink ?? null, harnessLink: spec.harnessLink ?? null, repairLink: spec.repairLink ?? null }
   const stderrFile = path.join(caseDir, 'stderr.log')
   const stdout = fs.openSync(path.join(caseDir, 'stdout.log'), 'w'), stderr = fs.openSync(stderrFile, 'w')
   let child
   try {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea/wf.js'), '--script', path.join(pipeline, 'm5/pipeline.js'),
-        '--args', path.join(root, 'control/args.json'), '--out', path.join(agent, 'wf'), '--disable-family', 'claude'], {
+        '--args', path.join(root, 'control/args.json'), '--out', journal, '--disable-family', 'claude'], {
         cwd: pipeline, timeout: 1800000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr],
         env: { ...process.env, HOME: path.join(root, 'home'), M5_RAIDS_LEDGER: path.join(scratch, 'raids.jsonl'),
           WF_STUB: __filename, M5_CMP_ROOT: root, M5_CMP_CONFIG: JSON.stringify(stubConfig), M5_CMP_CALLS: callsFile,
@@ -840,10 +868,10 @@ async function main() {
       // harness_from, evaluator, a design path relative to the pipeline working directory, budget_s just below run_ceiling_s.
       // (A budget other than the hidden 31337, so that time-left figures in prompts cannot match a hidden value.)
       () => execute('cmp-reuse', { comparison: ({ designFile }) => ({ design: path.relative(pipeline, designFile) }), design: REUSE, ceiling: REUSE.budget_s + 1 }),
-      // No evaluator, sudo_nopasswd false, timeout_s per arm and input, generated harness without a brief.
-      () => execute('cmp-noeval', { comparison, design: NOEVAL, generated: true, sudo: false }),
-      // 5 arms, no output, no comparison, timeout_s null, no evaluator, probe without sudo_nopasswd.
-      () => execute('cmp-minimal', { comparison, design: MINIMAL, generated: true, sudo: 'absent' }),
+      // No evaluator, timeout_s per arm and input, generated harness without a brief.
+      () => execute('cmp-noeval', { comparison, design: NOEVAL, generated: true }),
+      // 5 arms, no output, no comparison, timeout_s null, no evaluator.
+      () => execute('cmp-minimal', { comparison, design: MINIMAL, generated: true }),
     ])
     if (plain) {
       statuses(plain, STAGES.map(label => [label, 'PASS']))
@@ -935,7 +963,7 @@ async function main() {
       promptChecks(noeval, plain)
       intakePromptChecks(noeval, false)
       harnessPromptChecks(noeval, false)
-      check('cmp-noeval: sudo_nopasswd false does not matter without an evaluator: harness and setup ran', () => {
+      check('cmp-noeval: calls intake and harness; receipts as usual for A0', () => {
         assert.deepEqual(noeval.calls.map(call => call.label), ['intake', 'harness'])
         assert.deepEqual(noeval.receipts.map(receipt => receipt.operation), RECEIPTS_PASS)
       })
@@ -951,11 +979,14 @@ async function main() {
     }
 
     // 3. Comparison runs that stop at the seal of A0's reproduce: declined repair, sudo rule.
-    const [declined, sudoFalse, sudoAbsent, sudoString] = await inParallel([
+    const [declined, sudoFalse, sudoAbsent, sudoString, sudoNoevalFalse, sudoMinimalAbsent] = await inParallel([
       () => execute('cmp-repair-declined', { comparison, design: BASE, generated: true, setupFailures: 1, declineRepairs: true }),
       () => execute('sudo-false', { comparison, design: BASE, generated: true, sudo: false }),
       () => execute('sudo-absent', { comparison, design: BASE, generated: true, sudo: 'absent' }),
       () => execute('sudo-string', { comparison, design: BASE, sudo: 'true' }),
+      // Separated users run for every comparison, so the rule holds without an evaluator too.
+      () => execute('sudo-noeval-false', { comparison, design: NOEVAL, generated: true, sudo: false }),
+      () => execute('sudo-minimal-absent', { comparison, design: MINIMAL, generated: true, sudo: 'absent' }),
     ])
     if (declined) {
       statuses(declined, failedAt('reproduce'))
@@ -965,10 +996,10 @@ async function main() {
         assert.equal(repair.isolation?.box_access, false)
       })
     }
-    for (const r of [sudoFalse, sudoAbsent, sudoString].filter(Boolean)) {
+    for (const r of [sudoFalse, sudoAbsent, sudoString, sudoNoevalFalse, sudoMinimalAbsent].filter(Boolean)) {
       statuses(r, failedAt('reproduce'))
       errorClass(r, 'reproduce', 'infra')
-      check(`${r.name}: with an evaluator, sudo_nopasswd not true fails right after the probe, before the harness call`, () => {
+      check(`${r.name}: ${r.spec.design.evaluator ? 'with' : 'without'} an evaluator, sudo_nopasswd not true fails right after the probe, before the harness call`, () => {
         assert.deepEqual(r.calls.map(call => call.label), ['intake'])
         assert.deepEqual(r.receipts.map(receipt => receipt.operation), ['upload', 'probe'])
         assert.ok(r.boxLog.every(entry => !entry.harness && !entry.cmp_on_box), 'a harness file reached the box')
@@ -1034,6 +1065,66 @@ async function main() {
     ]
     for (const r of await inParallel(generatedBad.map(([name, value, cmpFiles]) => () => execute(`harness-${name}`, { comparison, design: value, generated: true, cmpFiles }))))
       harnessParse(r, true)
+
+    // 5. Symbolic links in a view: an agent replaces its view's intake/, harness/ or harness/arms/ with a link to
+    // another directory holding valid-looking files, or puts a link to a file there. Nothing is copied from them.
+    const [intakeDir, intakeFile, harnessDir, harnessArms, harnessFile, repairDir, repairFile] = await inParallel([
+      () => execute('link-intake-dir', { comparison, design: BASE, generated: true, intakeLink: 'dir' }),
+      () => execute('link-intake-file', { comparison, design: BASE, generated: true, intakeLink: 'file' }),
+      () => execute('link-harness-dir', { comparison, design: BASE, generated: true, harnessLink: 'dir' }),
+      () => execute('link-harness-arms', { comparison, design: BASE, generated: true, harnessLink: 'arms' }),
+      () => execute('link-harness-file', { comparison, design: BASE, generated: true, harnessLink: 'file' }),
+      () => execute('link-repair-dir', { comparison, design: BASE, generated: true, setupFailures: 1, repairLink: 'dir' }),
+      () => execute('link-repair-file', { comparison, design: BASE, generated: true, setupFailures: 1, repairLink: 'file' }),
+    ])
+    const regularFiles = directory => Object.entries(listing(directory) ?? {}).filter(([, kind]) => !['dir', 'link', 'other'].includes(kind))
+    if (intakeDir) {
+      check('link-intake-dir: nothing is copied from a view intake/ that is a symbolic link to another directory; intake does not pass', () => {
+        assert.deepEqual(regularFiles(path.join(intakeDir.agent, 'intake')), [])
+        assert.notEqual(intakeDir.stage('intake')?.status, 'PASS')
+        assert.ok(!intakeDir.calls.some(call => call.label === 'harness'), 'the harness agent was called')
+      })
+    }
+    if (intakeFile) {
+      check('link-intake-file: a symbolic link to a file in the view intake/ is not copied (anchors.json); the regular files are; intake does not pass', () => {
+        const got = Object.fromEntries(regularFiles(path.join(intakeFile.agent, 'intake')))
+        const want = { ...intakeFile.written('intake') }
+        delete want['anchors.json']
+        assert.deepEqual(got, want)
+        assert.notEqual(intakeFile.stage('intake')?.status, 'PASS')
+      })
+    }
+    if (harnessDir) {
+      check('link-harness-dir: nothing is copied from a view harness/ that is a symbolic link to another directory; no harness file reaches the box', () => {
+        assert.deepEqual(regularFiles(path.join(harnessDir.agent, 'harness')), [])
+        assert.notEqual(harnessDir.stage('reproduce')?.status, 'PASS')
+        assert.ok(harnessDir.boxLog.every(entry => !entry.harness && !entry.cmp_on_box), 'a harness file reached the box')
+        assert.equal(fs.existsSync(path.join(harnessDir.control, 'arms_seal.json')), false)
+      })
+    }
+    for (const r of [harnessArms, harnessFile].filter(Boolean)) {
+      harnessParse(r, true)
+      check(`${r.name}: no adapter is copied from ${r.spec.harnessLink === 'arms' ? 'a view harness/arms/ that is a symbolic link to another directory' : 'a symbolic link to a file in harness/arms/ (A1.sh)'}`, () => {
+        const arms = path.join(r.agent, 'harness', 'arms')
+        const names = fs.existsSync(arms) ? fs.readdirSync(arms).sort() : []
+        assert.deepEqual(names, r.spec.harnessLink === 'arms' ? [] : ['A0.sh'])
+        // The other harness files are copied as usual.
+        assert.equal(sha(fs.readFileSync(path.join(r.agent, 'harness', 'cmp_files.json'))), r.written('harness')['cmp_files.json'])
+      })
+    }
+    for (const r of [repairDir, repairFile].filter(Boolean)) {
+      check(`${r.name}: the setup repair's setup.sh is not copied from ${r.spec.repairLink === 'dir' ? 'a view harness/ that is a symbolic link to another directory' : 'a symbolic link to a file'}: A/harness/setup.sh keeps the harness agent's bytes`, () => {
+        assert.ok(r.calls.some(call => call.label === 'harness-repair'), 'no setup repair')
+        assert.equal(sha(fs.readFileSync(path.join(r.agent, 'harness', 'setup.sh'))), r.written('harness')['setup.sh'])
+        assert.notEqual(r.stage('reproduce')?.status, 'PASS')
+        assert.equal(r.records.find(row => row.stage === 'intake')?.status, 'PASS')
+      })
+    }
+
+    // 6. The run root, the journal directory or the design file inside the pipeline working directory (which the
+    // isolation runner exposes to every agent call): intake fails with parse before any agent call.
+    const inside = await inParallel(['root', 'journal', 'design'].map(where => () => execute(`inside-${where}`, { comparison, design: BASE, inside: where })))
+    for (const r of inside) intakeParse(r)
   } catch (error) { failures++; console.log(`FAIL test harness: ${error.stack}`) }
   finally {
     if (process.argv[3] === 'keep') console.log(`scratch kept: ${scratch}`)

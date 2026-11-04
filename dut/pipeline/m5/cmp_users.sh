@@ -10,6 +10,11 @@ P=$S/cmp-private
 SE=$(printf '%s' "$S" | sed 's/[*?[\\]/\\&/g')
 fail() { echo "comparison users: $*" >&2; exit 1; }
 RULE=(OUTPUT -m owner --uid-owner cmp-arm ! -o lo -j REJECT)
+# Written by the pipeline: 1 when the design has an evaluator, and each file C/arms_seal.json names with its SHA-256.
+EVALUATOR=0
+SEALED=()
+USERS=(cmp-arm)
+if ((EVALUATOR)); then USERS+=(cmp-eval); fi
 
 # Cleanup after a part user: its processes, its entries in the directories it can write, its System V IPC objects.
 cleanup() {
@@ -36,8 +41,14 @@ for item in listed:
   done
 }
 
-# 1. Two system users without login shell or home, in every group that guards a /dev/nvidia* device file.
-for user in cmp-arm cmp-eval; do
+# 1. The sealed harness files are on the box unchanged; then the part users, system users without login shell or home,
+# in every group that guards a /dev/nvidia* device file.
+((${#SEALED[@]})) || fail 'no sealed harness file'
+for ((i = 0; i < ${#SEALED[@]}; i += 2)); do
+  file=$S/harness/${SEALED[i]}
+  [[ -f $file && ! -L $file && $(sha256sum < "$file") == "${SEALED[i + 1]}  -" ]] || fail "harness/${SEALED[i]} is not the sealed file"
+done
+for user in "${USERS[@]}"; do
   id -u "$user" >/dev/null 2>&1 || sudo -n useradd --system --user-group --no-create-home --home-dir /nonexistent \
     --shell /usr/sbin/nologin "$user" || fail "cannot create $user"
 done
@@ -45,7 +56,7 @@ for device in /dev/nvidia*; do
   [[ -c $device || -b $device ]] || continue
   (( (8#$(stat -c %a "$device") & 6) == 6 )) && continue
   group=$(stat -c %G "$device")
-  for user in cmp-arm cmp-eval; do sudo -n usermod -a -G "$group" "$user" || fail "cannot add $user to $group"; done
+  for user in "${USERS[@]}"; do sudo -n usermod -a -G "$group" "$user" || fail "cannot add $user to $group"; done
 done
 
 # 2. cmp-arm reaches no network but loopback.
@@ -59,13 +70,13 @@ sudo -n chmod -R go-w,o+rX -- "$S" || fail 'cannot restrict the shared run direc
 sudo -n rm -rf -- "$S/comparison-work" "$S/comparison-jobs"
 mkdir -m 711 -- "$S/comparison-work"
 mkdir -m 700 -- "$S/comparison-jobs"
-sudo -n install -d -o cmp-eval -g cmp-eval -m 700 -- "$P" || fail 'cannot create cmp-private'
+if ((EVALUATOR)); then sudo -n install -d -o cmp-eval -g cmp-eval -m 700 -- "$P" || fail 'cannot create cmp-private'; fi
 
 # 4. The directories outside the shared run directory each user can write.
-python3 -I - "$SE" > profiler/cmp_writable.json <<'PY' || fail 'cannot list writable directories'
+python3 -I - "$SE" "${USERS[@]}" > profiler/cmp_writable.json <<'PY' || fail 'cannot list writable directories'
 import json, subprocess, sys
 listed = {}
-for user in ("cmp-arm", "cmp-eval"):
+for user in sys.argv[2:]:
     found = subprocess.run(["sudo", "-n", "-u", user, "find", "/", "(", "-path", "/proc", "-o", "-path", "/sys", "-o",
                             "-path", sys.argv[1], ")", "-prune", "-o", "-type", "d", "-writable", "-print0"],
                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL).stdout
@@ -73,6 +84,8 @@ for user in ("cmp-arm", "cmp-eval"):
 json.dump(listed, sys.stdout)
 PY
 
+# Steps 5 to 7 only with an evaluator.
+if ((EVALUATOR)); then
 # 5. The evaluator's private data, fetched by cmp-eval only.
 sudo -n -u cmp-eval mkdir -- "$P/.home" || fail 'cannot create the fetch home'
 VARS=()
@@ -141,12 +154,13 @@ for top in tops:
             if found:
                 sys.exit(1)
 PY
+fi
 
-# 8. Both users see the box user's GPUs; cmp-arm cannot read cmp-private; both network rules are present.
+# 8. The part users see the box user's GPUs; cmp-arm cannot read cmp-private; both network rules are present.
 gpus() { "$@" nvidia-smi -L 2>/dev/null | grep -c '^GPU ' || true; }
 BASE=$(gpus)
-for user in cmp-arm cmp-eval; do
+for user in "${USERS[@]}"; do
   [[ $(gpus sudo -n -u "$user") == "$BASE" ]] || fail "$user does not see the box user's GPUs"
 done
-! sudo -n -u cmp-arm test -r "$P" || fail 'cmp-arm can read cmp-private'
+if ((EVALUATOR)); then ! sudo -n -u cmp-arm test -r "$P" || fail 'cmp-arm can read cmp-private'; fi
 sudo -n iptables -C "${RULE[@]}" && sudo -n ip6tables -C "${RULE[@]}" || fail 'a network rule is missing'

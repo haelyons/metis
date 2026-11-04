@@ -21,23 +21,31 @@ module.exports = async function comparison(context) {
   const budgetLeft = () => design.budget_s - (Date.now() - started) / 1000
   const ceilingLeft = () => ceiling_s - (Date.now() - runStarted) / 1000
   const left = () => Math.floor(Math.min(budgetLeft(), ceilingLeft()))
-  const separated = design.evaluator !== null
+  const evaluator = design.evaluator !== null
   const encode = value => Buffer.from(typeof value === 'string' ? value : JSON.stringify(value)).toString('base64')
   fs.rmSync(results, { recursive: true, force: true })
   fs.rmSync(staging, { recursive: true, force: true })
   fs.mkdirSync(results, { recursive: true })
 
-  // The trusted scripts are written inline, as the profile stage writes its probe.
+  // The trusted scripts are written inline, as the profile stage writes its probe; cmp_users.sh gets whether the design
+  // has an evaluator and the SHA-256 of each sealed harness file, which it checks on the box.
+  let sealed
+  try {
+    sealed = Object.entries(read(path.join(C, 'arms_seal.json')).files).flat()
+  } catch { return failure(facts, 'infra') }
+  const users = fs.readFileSync(path.join(__dirname, 'cmp_users.sh'), 'utf8')
+    .replace(/^EVALUATOR=0$/m, `EVALUATOR=${evaluator ? 1 : 0}`)
+    .replace(/^SEALED=\(\)$/m, () => `SEALED=(${sealed.map(quote).join(' ')})`)
   const uploads = ['set -e', 'mkdir -p profiler']
-  for (const name of ['cmp_users.sh', 'cmp_system.py', 'cmp_wrap.py']) {
-    uploads.push(`printf %s ${quote(encode(fs.readFileSync(path.join(__dirname, name), 'utf8')))} | base64 -d > ${quote(`profiler/${name}`)}`)
+  for (const [name, text] of [['cmp_users.sh', users], ...['cmp_system.py', 'cmp_wrap.py'].map(name =>
+    [name, fs.readFileSync(path.join(__dirname, name), 'utf8')])]) {
+    uploads.push(`printf %s ${quote(encode(text))} | base64 -d > ${quote(`profiler/${name}`)}`)
   }
   const uploaded = await boxCommand('upload', uploads.join('\n'), staging, left())
   if (uploaded.error || uploaded.rc !== 0) return failure(facts, uploaded.error || 'infra')
-  if (separated) {
-    const users = await boxCommand('comparison-users', seconds => `bash profiler/cmp_users.sh ${seconds}`, staging, left())
-    if (users.error || users.rc !== 0) return failure(facts, 'infra')
-  }
+  // Separated users for every comparison.
+  const separated = await boxCommand('comparison-users', seconds => `bash profiler/cmp_users.sh ${seconds}`, staging, left())
+  if (separated.error || separated.rc !== 0) return failure(facts, 'infra')
   const versions = await boxCommand('versions', `mkdir -p out/comparison
 bash harness/versions.sh > out/comparison/versions.json
 python3 profiler/cmp_system.py`, staging, left())
@@ -72,10 +80,25 @@ print(json.dumps(rounds))`, path.join(C, 'comparison.json')])
   }
   const wrapKeys = ['status', 'adapter_rc', 'adapter_wall_s', 'commands', 'gpu_busy_s', 'gpu_busy_known',
     'eval_status', 'eval_rc', 'eval_wall_s', 'eval_gpu_busy_s', 'eval_gpu_busy_known']
-  const validWrap = value => plain(value) && Object.keys(value).length === wrapKeys.length
-    && wrapKeys.every(key => Object.hasOwn(value, key)) && ['ok', 'failed', 'timeout', 'invalid'].includes(value.status)
-    && ['ok', 'failed', 'timeout', 'skipped'].includes(value.eval_status) && Array.isArray(value.commands)
-    && value.commands.every(row => plain(row) && (row.wall_s === null || Number.isFinite(row.wall_s)))
+  // Keys and types; status ok exactly when every exit status is 0 and every command has a row; eval_status ok only
+  // when eval_rc is 0.
+  const exact = (value, keys) => plain(value) && Object.keys(value).length === keys.length
+    && keys.every(key => Object.hasOwn(value, key))
+  const seconds = (item, nullable = false) => (nullable && item === null) || (Number.isFinite(item) && item >= 0)
+  const rc = item => item === null || Number.isInteger(item)
+  const nullableText = item => item === null || typeof item === 'string'
+  const validWrap = (value, count) => exact(value, wrapKeys) && Array.isArray(value.commands)
+    && ['ok', 'failed', 'timeout', 'invalid'].includes(value.status)
+    && ['ok', 'failed', 'timeout', 'skipped'].includes(value.eval_status)
+    && rc(value.adapter_rc) && seconds(value.adapter_wall_s) && seconds(value.gpu_busy_s)
+    && typeof value.gpu_busy_known === 'boolean' && rc(value.eval_rc) && seconds(value.eval_wall_s, true)
+    && seconds(value.eval_gpu_busy_s, true) && typeof value.eval_gpu_busy_known === 'boolean'
+    && value.commands.every(row => exact(row, ['argv', 'rc', 'wall_s', 'executable', 'sha256'])
+      && Array.isArray(row.argv) && row.argv.every(part => typeof part === 'string') && rc(row.rc) && seconds(row.wall_s)
+      && nullableText(row.executable) && nullableText(row.sha256))
+    && (value.status === 'ok') === (value.adapter_rc === 0 && value.commands.length === count
+      && value.commands.every(row => row.rc === 0))
+    && (value.eval_status !== 'ok' || value.eval_rc === 0)
   const invocations = []
   for (const [index, job] of schedule.entries()) {
     const token = `i${index + 1}`
@@ -86,10 +109,11 @@ print(json.dumps(rounds))`, path.join(C, 'comparison.json')])
     const bound = Math.min(budgetLeft(), ceilingLeft())
     const record = { arm: job.arm, input: job.input, mode: job.mode, round: job.round,
       arm_timeout_s: Math.max(0, Math.floor(Math.min(armTimeout(job.arm, job.input), bound))),
-      eval_timeout_s: separated ? Math.max(0, Math.floor(Math.min(design.evaluator.timeout_s ?? Infinity, bound))) : null }
+      eval_timeout_s: evaluator ? Math.max(0, Math.floor(Math.min(design.evaluator.timeout_s ?? Infinity, bound))) : null,
+      left_s: Math.max(0, Math.floor(bound)) }
     const arm = design.arms.find(item => item.id === job.arm)
     const plan = { commands: arm.commands, env: arm.env, spec: design.inputs.find(item => item.id === job.input).spec,
-      separated, evaluator: separated, budget_left_s: Math.max(0, Math.floor(budgetLeft())) }
+      evaluator, budget_left_s: Math.max(0, Math.floor(budgetLeft())) }
     const written = await boxCommand('comparison-job', `set -e
 mkdir -p comparison-jobs comparison-work
 chmod 700 comparison-jobs
@@ -115,12 +139,12 @@ exit 0`, staging, Math.max(1, Math.floor(ceilingLeft())), true)
       if (!ran.error && fs.existsSync(source)) fs.cpSync(source, target, { recursive: true })
       try {
         const value = read(path.join(target, 'wrap.json'))
-        if (validWrap(value)) wrap = value
+        if (validWrap(value, arm.commands.length)) wrap = value
       } catch { /* A missing or invalid wrap.json gives status invalid. */ }
     }
     invocations.push({ job, wrap, status: wrap ? wrap.status : 'invalid' })
   }
-  if (separated) {
+  if (evaluator) {
     // Its outcome is recorded in the stage's receipts and changes no value or outcome.
     await boxCommand('comparison-private-remove', 'sudo -n rm -rf cmp-private', staging, Math.max(1, Math.floor(ceilingLeft())))
   }

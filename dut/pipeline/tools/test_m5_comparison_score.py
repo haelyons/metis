@@ -544,6 +544,26 @@ def invalid_cases():
     bad = design(inputs=['in1'], outputs=[output('o', 'text_numbers')], metrics=[metric('v')], evaluator=True,
                  comparisons=[ni('K1', 'v', 'higher_better', given=['K2']), ni('K2', 'v', 'higher_better')])
     invalid_checks(base('invalid-design-given-later', d=bad), 'a sealed design whose `given` names a later comparison')
+    # Sealed designs that intake would reject (matching seals: execute seals what it writes).
+    def bad_design(change):
+        d = design(inputs=['in1'], outputs=[output('o', 'text_numbers')], metrics=[metric('v')], evaluator=True,
+                   comparisons=[agreement('K1', 'o', 'elementwise_abs', {'abs': 0}), ni('K2', 'v', 'higher_better')])
+        change(d)
+        return d
+    rejected = [
+        ('arm-no-commands', 'an arm with no commands', lambda d: d['arms'][1].update(commands=[])),
+        ('warmup-99', '`warmup` 99', lambda d: d.update(warmup=99)),
+        ('order-seed-fraction', 'a non-integer `order_seed`', lambda d: d.update(order_seed=1.5)),
+        ('order-seed-string', 'a string `order_seed`', lambda d: d.update(order_seed='7')),
+        ('timeout-negative', 'a negative `timeout_s`', lambda d: d.update(timeout_s=-5)),
+        ('timeout-arm-negative', 'a negative per-arm timeout', lambda d: d.update(timeout_s={'A0': 60, 'A1': -1})),
+        ('budget-negative', 'a negative `budget_s`', lambda d: d.update(budget_s=-1)),
+        ('budget-zero', 'a zero `budget_s`', lambda d: d.update(budget_s=0)),
+        ('env-lowercase', 'an invalid `env` name', lambda d: d['arms'][1].update(env={'omp_threads': '4'})),
+        ('env-cmp-prefix', 'an `env` name starting with CMP_', lambda d: d['arms'][1].update(env={'CMP_OUT': '/tmp'})),
+    ]
+    for name, what, change in rejected:
+        invalid_checks(base('invalid-design-' + name, d=bad_design(change)), 'a sealed design intake would reject (%s)' % what)
     # An eval location when the design has no evaluator.
     invalid_checks(base('invalid-eval-location-without-evaluator', evaluator=False,
                         cmp_files_raw=json.dumps({'files': {'A0': {'o': 'eval/o.txt'}, 'A1': {'o': 'out/o.txt'}}}).encode()),
@@ -580,6 +600,57 @@ def wall_cases():
     r = execute('trusted-wall-evaluator', d, cell=lambda k, rnd, a, inp: {'wrap': cells[inp]} if a == 'A1' else {})
     if valid_checks(r):
         value_rows(r, 'K1', {'eok': 4.0, 'efail': None, 'etimeout': None, 'afail': None, 'atimeout': None})
+
+
+def wrap_validity_cases():
+    """SCHEMAS.md Timeouts: a wrap.json is invalid unless it has exactly the keys with their types, `status` is "ok"
+    exactly when adapter_rc and every rc are 0 and the arm has as many command rows as commands, and `eval_status`
+    is "ok" only when eval_rc is 0. An invalid one gives status invalid: every value of the invocation is missing."""
+    def forged(change):
+        w = wrap(ev=True)
+        change(w)
+        return w
+
+    def cmd0(**fields):
+        return lambda w: w['commands'][0].update(fields)
+    cells = {
+        'valid': wrap(ev=True),
+        'okrc': forged(lambda w: w.update(adapter_rc=3)),
+        'okcmdrc': forged(cmd0(rc=2)),
+        'emptycmds': forged(lambda w: w.update(commands=[])),
+        'fewercmds': forged(lambda w: w.update(commands=w['commands'][:1])),
+        'failedzero': forged(lambda w: w.update(status='failed')),
+        'negwall': forged(lambda w: w.update(adapter_wall_s=-1.0)),
+        'negcmdwall': forged(cmd0(wall_s=-0.5)),
+        'nanwall': forged(lambda w: w.update(adapter_wall_s=float('nan'))),
+        'infwall': forged(cmd0(wall_s=float('inf'))),
+        'infevalwall': forged(lambda w: w.update(eval_wall_s=float('inf'))),
+        'neggpu': forged(lambda w: w.update(gpu_busy_s=-1.0)),
+        'rowmissing': forged(lambda w: w['commands'][0].pop('sha256')),
+        'rowextra': forged(cmd0(note='x')),
+        'keymissing': forged(lambda w: w.pop('gpu_busy_known')),
+        'keyextra': forged(lambda w: w.update(note='x')),
+        'evalrc': forged(lambda w: w.update(eval_rc=2)),
+        'strwall': forged(lambda w: w.update(adapter_wall_s='0.5')),
+        'boolrc': forged(lambda w: w.update(adapter_rc=False)),
+    }
+    names = [n for n in cells if n != 'valid']
+    # A design holds at most 10 inputs: the valid control and up to 9 invalid records per run.
+    for part, chunk in enumerate([names[:9], names[9:]], 1):
+        ins = ['valid'] + chunk
+        d = design(inputs=ins, metrics=[metric('wall', 'trusted_wall'), metric('v')], evaluator=True, comparisons=[
+            ni('K1', 'wall', 'lower_better', {'abs': 100}, **vs_ref({i: 0 for i in ins})),
+            ni('K2', 'v', 'lower_better', {'abs': 100}, **vs_ref({i: 0 for i in ins}))])
+
+        def cell(kind, rnd, a, inp):
+            spec = {'files': {'out/m.json': json.dumps({'v': 7})}}
+            if a == 'A1':
+                spec['wrap'] = cells[inp]
+            return spec
+        r = execute('wrap-validity-%d' % part, d, rules={'v': json_rule('out/m.json', '/v')}, cell=cell)
+        if valid_checks(r):
+            value_rows(r, 'K1', {i: (4.0 if i == 'valid' else None) for i in ins})
+            value_rows(r, 'K2', {i: (7 if i == 'valid' else None) for i in ins})
 
 
 def json_extraction_cases():
@@ -1091,6 +1162,7 @@ def main():
             raise SystemExit('m5/score_comparison.py missing')
         invalid_cases()
         wall_cases()
+        wrap_validity_cases()
         json_extraction_cases()
         regex_extraction_cases()
         comparator_cases()

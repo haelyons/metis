@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Run one command detached on the dev box and collect its outputs and receipt.
 # Usage: boxrun.sh --name N --cmd 'CMD' --remote-dir D --timeout SECONDS --fetch REMOTE_SUBDIR --to LOCAL_DIR --receipt FILE.json
+#        [--private true] (the remote command script, log, GPU samples and exit status are created at mode 600)
 set +x
 set -euo pipefail
 umask 077
 BOX=${BOX:-$HOME/.cache/metis-serve/box.sh}
-NAME=; CMD=; DIR=; LIMIT=; SUBDIR=; DEST=; RECEIPT=
+NAME=; CMD=; DIR=; LIMIT=; SUBDIR=; DEST=; RECEIPT=; PRIVATE=false
 GPU_SAMPLES=$(mktemp); RC=; TIMED_OUT=false; FETCHED=false; START=$(date -u +%Y-%m-%dT%H:%M:%SZ); BEGIN=$SECONDS
 die() { echo "$*" >&2; exit 2; }
 finish() {
@@ -42,12 +43,13 @@ while (($#)); do
   (($# >= 2)) || die "Missing value for $1"
   case $1 in
     --name) NAME=$2;; --cmd) CMD=$2;; --remote-dir) DIR=$2;; --timeout) LIMIT=$2;;
-    --fetch) SUBDIR=$2;; --to) DEST=$2;; --receipt) RECEIPT=$2;; *) die "Unknown option: $1";;
+    --fetch) SUBDIR=$2;; --to) DEST=$2;; --receipt) RECEIPT=$2;; --private) PRIVATE=$2;; *) die "Unknown option: $1";;
   esac
   shift 2
 done
 [[ $NAME =~ ^[a-zA-Z0-9_][a-zA-Z0-9_.-]*$ && -n $CMD && -n $DIR && -n $SUBDIR && -n $DEST && -n $RECEIPT ]] || die 'Missing or invalid arguments (see Usage).'
 [[ $LIMIT =~ ^[1-9][0-9]*$ && ${#LIMIT} -le 9 ]] || die 'Timeout must be a positive integer (at most 9 digits).'
+[[ $PRIVATE == true || $PRIVATE == false ]] || die 'Private must be true or false.'
 fetch() {
   if [[ -n ${FETCH:-} ]]; then "$FETCH" "$1" "$2"; return; fi
   local ip mirror ssh
@@ -78,6 +80,12 @@ printf -v script '#!/usr/bin/env bash\ncd -- %q || exit 2\nsamples=%q\n: > "$sam
 # Background only the runner; setup errors must reach the caller.
 printf -v launch 'mkdir -p -- %q && rm -f -- %q %q && printf %%s %q >%q && { setsid nohup bash %q </dev/null >/dev/null 2>&1 & }' \
   "$DIR" "$DIR/$NAME.rc" "$DIR/$NAME.rc.tmp" "$script" "$DIR/$NAME.sh" "$DIR/$NAME.sh"
+if [[ $PRIVATE == true ]]; then
+  # Every remote file of the command is created afresh at mode 600 (umask 077 for the launch and the runner).
+  script="${script%%$'\n'*}"$'\n'"umask 077"$'\n'"${script#*$'\n'}"
+  printf -v launch 'umask 077 && mkdir -p -- %q && rm -f -- %q %q %q %q %q && printf %%s %q >%q && { setsid nohup bash %q </dev/null >/dev/null 2>&1 & }' \
+    "$DIR" "$DIR/$NAME.rc" "$DIR/$NAME.rc.tmp" "$DIR/$NAME.sh" "$DIR/$NAME.log" "$DIR/$NAME.gpu" "$script" "$DIR/$NAME.sh" "$DIR/$NAME.sh"
+fi
 "$BOX" "bash -c $(printf '%q' "$launch")" || die 'Remote launch failed.'
 printf -v poll 'cat -- %q' "$DIR/$NAME.rc"
 deadline=$((BEGIN + LIMIT + 600))
