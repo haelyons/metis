@@ -1,0 +1,193 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "precision": "float",
+    "scaling": "strong",
+    "source": "intake/brief.md",
+    "policy": "One fixed representative scale; edit nOptions and rebuild once. No search, doubling or toy extrapolation; report timeout if budget exceeded."
+  },
+  "inputs": {
+    "specifications": [
+      {
+        "id": "p1",
+        "spec": {
+          "method": "streamed"
+        }
+      },
+      {
+        "id": "p2",
+        "spec": {
+          "method": "threaded"
+        }
+      },
+      {
+        "id": "p3",
+        "spec": {
+          "method": "streamed",
+          "plant": "hidden_link"
+        }
+      }
+    ],
+    "generation": "srand(123), ranges and constants in data.json",
+    "private_reference": "https://raw.githubusercontent.com/karpathy/nanoGPT/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/README.md",
+    "arms": [
+      "A0",
+      "A1"
+    ],
+    "source": [
+      "comparison_view.json",
+      "intake/brief.md"
+    ]
+  },
+  "outputs": {
+    "scientific": [
+      {
+        "name": "reserve",
+        "what": "the Average reserve value the sample prints in its test summary",
+        "format": "text_numbers",
+        "select": "Average reserve\\s*:\\s*(\\S+)"
+      },
+      {
+        "name": "l1",
+        "what": "the L1 norm values the sample prints",
+        "format": "text_numbers",
+        "select": "L1 norm\\s*:\\s*(\\S+)"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "trusted wall seconds of the invocation",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      },
+      {
+        "name": "mc_ms",
+        "unit": "ms",
+        "what": "the Total time (ms.) the sample prints",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_leaks",
+        "unit": "count",
+        "what": "probe: forbidden arm-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_controls_failed",
+        "unit": "count",
+        "what": "probe: arm-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_leaks",
+        "unit": "count",
+        "what": "probe: forbidden evaluator-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_controls_failed",
+        "unit": "count",
+        "what": "probe: evaluator-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      }
+    ],
+    "exit_status": "Preserve benchmark exit status and Test passed/Test failed verdict.",
+    "evaluator_interface": {
+      "command": "bash harness/evaluate.sh",
+      "description": "Shakedown stand-in evaluator: counts the arm's output files and checks the digest of a private reference file",
+      "published_source": null,
+      "pin": null,
+      "reason": "Source and immutable identifier not supplied."
+    },
+    "source": [
+      "comparison_view.json",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp"
+    ]
+  },
+  "timing_scope": {
+    "streamed": "Published host timer: input preprocessing, H2D transfer, GPU pricing, D2H transfer and event completion; excludes allocation/RNG initialization, CPU result finalization, validation and compilation.",
+    "trusted_wall": "Whole arm invocation measured externally, in seconds; distinct from internal mc_ms.",
+    "threaded": "p2 uses the published threaded path; retain its reported internal time and trusted wall separately.",
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L140-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223",
+      "comparison_view.json"
+    ]
+  },
+  "anchor_scale": {
+    "options": 8192,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "command": "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong",
+    "source": "intake/brief.md"
+  },
+  "commands": {
+    "arms": {
+      "A0": {
+        "commands": [
+          [
+            "baseline-published/build-mc/MonteCarloMultiGPU",
+            "--method={spec:/method}",
+            "--scaling=strong"
+          ]
+        ],
+        "env": {
+          "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      },
+      "A1": {
+        "commands": [
+          [
+            "baseline-published/build-mc/MonteCarloMultiGPU",
+            "--method={spec:/method}",
+            "--scaling=strong"
+          ]
+        ],
+        "env": {
+          "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      }
+    },
+    "evaluator": "bash harness/evaluate.sh",
+    "source": "comparison_view.json"
+  },
+  "warmup": 1,
+  "replicates": 2,
+  "scoring_interface": {
+    "reserve": "Check strict >1 using verdict or unrounded statistic; preserve output extraction and exit status.",
+    "l1": "Report only; no published target/tolerance.",
+    "comparison": "Use supplied output selectors and metric definitions; no invented A0/A1 agreement tolerance or evaluator acceptance rule.",
+    "anchors_file": "anchors.json"
+  },
+  "stage_budgets_s": null,
+  "stage_budgets_reason": "No measured runtime evidence supports estimates or overrides. Supplied args budgets are empty; use pipeline defaults.",
+  "budget_policy": {
+    "method_setup": 1200,
+    "method_run": 1200,
+    "tests": 900,
+    "evaluate": 2400,
+    "run_ceiling_s": 43200,
+    "setup_anchors_profile": "Use remaining run-ceiling time when args budgets absent; ceiling is not a target.",
+    "timeout": "Enforce applicable stage budget; do not change scale after timeout."
+  },
+  "gate_scripts": [],
+  "gate_scripts_reason": "No gate scripts named in supplied sources.",
+  "execution_performed": false
+}

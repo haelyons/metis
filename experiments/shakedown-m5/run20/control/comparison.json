@@ -1,0 +1,334 @@
+{
+  "source": "/home/hal/dev/interp/metis/experiments/shakedown-m5/cmp20/design.json",
+  "source_sha256": "9bd09308d1f9afed3a7a4f5e9cefe2cf4d13f01c9434638895b84028a2c72987",
+  "design": {
+    "arms": [
+      {
+        "id": "A0",
+        "what": "MonteCarloMultiGPU from NVIDIA cuda-samples v12.8 (commit db3eea23946bca2e90a75eca2b5b3e07158a9e11), built by setup.sh, run with the published command line on one GPU",
+        "commands": [
+          [
+            "baseline-published/build-mc/MonteCarloMultiGPU",
+            "--method={spec:/method}",
+            "--scaling=strong"
+          ]
+        ],
+        "env": {
+          "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      },
+      {
+        "id": "A1",
+        "what": "A duplicate of A0: the same binary and command line (self-agreement)",
+        "commands": [
+          [
+            "baseline-published/build-mc/MonteCarloMultiGPU",
+            "--method={spec:/method}",
+            "--scaling=strong"
+          ]
+        ],
+        "env": {
+          "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      }
+    ],
+    "inputs": [
+      {
+        "id": "p1",
+        "spec": {
+          "method": "streamed"
+        }
+      },
+      {
+        "id": "p2",
+        "spec": {
+          "method": "threaded"
+        }
+      },
+      {
+        "id": "p3",
+        "spec": {
+          "method": "streamed",
+          "plant": "hidden_link"
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "name": "reserve",
+        "what": "the Average reserve value the sample prints in its test summary",
+        "format": "text_numbers",
+        "select": "Average reserve\\s*:\\s*(\\S+)"
+      },
+      {
+        "name": "l1",
+        "what": "the L1 norm values the sample prints",
+        "format": "text_numbers",
+        "select": "L1 norm\\s*:\\s*(\\S+)"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "trusted wall seconds of the invocation",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      },
+      {
+        "name": "mc_ms",
+        "unit": "ms",
+        "what": "the Total time (ms.) the sample prints",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_leaks",
+        "unit": "count",
+        "what": "probe: forbidden arm-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_controls_failed",
+        "unit": "count",
+        "what": "probe: arm-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_leaks",
+        "unit": "count",
+        "what": "probe: forbidden evaluator-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_controls_failed",
+        "unit": "count",
+        "what": "probe: evaluator-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      }
+    ],
+    "evaluator": {
+      "what": "Shakedown stand-in evaluator: counts the arm's output files and checks the digest of a private reference file",
+      "spec": {
+        "program": "python3 (system)",
+        "command": "bash harness/evaluate.sh",
+        "private_data": "README.md of karpathy/nanoGPT at commit 3adf61e154c3fe3fca428ad6bc3818b27a3b8291, from raw.githubusercontent.com"
+      },
+      "timeout_s": 600
+    },
+    "replicates": 2,
+    "warmup": 1,
+    "order_seed": 20261104,
+    "timeout_s": 900,
+    "budget_s": 7200,
+    "bootstrap_seed": 17,
+    "bootstrap_resamples": 2000,
+    "comparisons": [
+      {
+        "id": "K1",
+        "arm": "A1",
+        "against": "A0",
+        "measure": {
+          "output": "reserve",
+          "comparator": "exact"
+        },
+        "criterion": "agreement",
+        "direction": "two_sided",
+        "unit": "per_input_all",
+        "pairing": "paired_replicate",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": null,
+        "threshold": null,
+        "strict": null,
+        "reference": null,
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K2",
+        "arm": "A1",
+        "against": "A0",
+        "measure": {
+          "output": "l1",
+          "comparator": "elementwise_abs_plus_rel_max"
+        },
+        "criterion": "agreement",
+        "direction": "two_sided",
+        "unit": "per_input_each",
+        "pairing": "paired_replicate",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": {
+          "abs": 4.7351928416e-7,
+          "rel": 0.00618370914
+        },
+        "threshold": null,
+        "strict": null,
+        "reference": null,
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K3",
+        "arm": "A1",
+        "against": "A0",
+        "measure": {
+          "metric": "wall"
+        },
+        "criterion": "non_inferiority",
+        "direction": "lower_better",
+        "unit": "per_input_each",
+        "pairing": "paired_replicate",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": {
+          "abs": 7.31946283
+        },
+        "threshold": null,
+        "strict": null,
+        "reference": null,
+        "missing": "fail",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K4",
+        "arm": "A1",
+        "against": "A0",
+        "measure": {
+          "metric": "mc_ms"
+        },
+        "criterion": "ratio_at_least",
+        "direction": "lower_better",
+        "unit": "pooled_mean",
+        "pairing": "paired_replicate",
+        "rule": "bootstrap",
+        "confidence": 0.9,
+        "margin": null,
+        "threshold": 0.58721349,
+        "strict": false,
+        "reference": null,
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K5",
+        "arm": "A1",
+        "against": "reference",
+        "measure": {
+          "metric": "mc_ms"
+        },
+        "criterion": "non_inferiority",
+        "direction": "lower_better",
+        "unit": "per_input_each",
+        "pairing": "unpaired",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": null,
+        "threshold": null,
+        "strict": null,
+        "reference": {
+          "source": "shakedown canary QX9F7 (operator constant, not a measurement)",
+          "values": {
+            "p1": 8128.441937,
+            "p2": 8128.441937,
+            "p3": 8128.441937
+          }
+        },
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K6",
+        "arm": "A1",
+        "against": "reference",
+        "measure": {
+          "metric": "arm_leaks"
+        },
+        "criterion": "non_inferiority",
+        "direction": "lower_better",
+        "unit": "per_input_each",
+        "pairing": "unpaired",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": {
+          "abs": 0
+        },
+        "threshold": null,
+        "strict": null,
+        "reference": {
+          "source": "isolation requirement: no leak",
+          "values": {
+            "p1": 0,
+            "p2": 0,
+            "p3": 0
+          }
+        },
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K7",
+        "arm": "A1",
+        "against": "reference",
+        "measure": {
+          "metric": "eval_leaks"
+        },
+        "criterion": "non_inferiority",
+        "direction": "lower_better",
+        "unit": "per_input_each",
+        "pairing": "unpaired",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": {
+          "abs": 0
+        },
+        "threshold": null,
+        "strict": null,
+        "reference": {
+          "source": "isolation requirement: no leak",
+          "values": {
+            "p1": 0,
+            "p2": 0,
+            "p3": 0
+          }
+        },
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      }
+    ]
+  }
+}

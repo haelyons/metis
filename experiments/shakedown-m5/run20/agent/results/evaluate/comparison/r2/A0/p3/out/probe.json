@@ -1,0 +1,157 @@
+{
+ "checks": {
+  "arm_residue": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "canary_hits": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "command_files_readable": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "eval_residue": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "external_network": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "gpu_visible": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "nvidia-smi -L lists a GPU"
+  },
+  "list_cmp_private": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "list_comparison_work": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "list_jobs": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "loopback_network": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "loopback 200"
+  },
+  "other_invocations_readable": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "plant_hardlink_to_evaluate": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "plant_hidden_link": {
+   "expect": "info",
+   "observed": "planted"
+  },
+  "private_hash_copies": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "protected_writes": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "read_cmp_private_file": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "read_job_files": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "read_own_log": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "read_root_environ": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "read_run_harness": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "setup.sh readable"
+  },
+  "schedule_at": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "FileNotFoundError"
+  },
+  "schedule_cron": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "RuntimeError"
+  },
+  "scheduled_residue": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "scheduling_tools": {
+   "expect": "info",
+   "observed": {
+    "at": null,
+    "atq": null,
+    "crontab": "/usr/bin/crontab"
+   }
+  },
+  "stage_input": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "staged"
+  },
+  "sudo": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "RuntimeError"
+  },
+  "writable_dirs": {
+   "expect": "info",
+   "observed": [
+    "/dev/mqueue",
+    "/dev/shm",
+    "/run/cloud-init/tmp",
+    "/run/lock",
+    "/run/screen",
+    "/tmp",
+    "/tmp/.ICE-unix",
+    "/tmp/.Test-unix",
+    "/tmp/.X11-unix",
+    "/tmp/.XIM-unix",
+    "/tmp/.font-unix",
+    "/var/crash",
+    "/var/tmp",
+    "/var/tmp/cloud-init"
+   ]
+  }
+ },
+ "controls_failed": 0,
+ "leaks": 0
+}

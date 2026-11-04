@@ -1,0 +1,305 @@
+{
+  "identity": {
+    "name": "MonteCarloMultiGPU",
+    "arm": "A0",
+    "repo": "https://github.com/NVIDIA/cuda-samples",
+    "tag": "v12.8",
+    "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/README.md"
+  },
+  "found": true,
+  "found_basis": "Public executable CUDA sample, source configuration and commands; generated option inputs need no external dataset. Evaluator publication is separately unavailable.",
+  "outcome_definition": {
+    "task": "Monte Carlo European call-option pricing against analytic Black-Scholes",
+    "reserve": "Sum Confidence/abs(MC-BS) for errors >1e-6 divided by all options; pass strictly above 1.0.",
+    "l1": "sum(abs(BS-MC))/sum(abs(BS)); no published target or tolerance.",
+    "confidence": "Discounted 1.96 times estimated standard error; not an acceptance tolerance.",
+    "performance": "Streamed Total time (ms.); trusted invocation wall seconds recorded separately.",
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L426-L486",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L167-L179"
+    ]
+  },
+  "citations": [
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/README.md",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_gold.cpp",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+    "intake/brief.md",
+    "comparison_view.json",
+    "https://raw.githubusercontent.com/karpathy/nanoGPT/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/README.md",
+    "https://github.com/karpathy/nanoGPT/blob/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/LICENSE"
+  ],
+  "source_licences_and_intended_use": [
+    {
+      "item": "A0 and A1 sample source and generated option inputs",
+      "licence": "NVIDIA BSD-3-Clause-style",
+      "status": "permitted",
+      "basis": "explicit",
+      "source": [
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L1-L26"
+      ],
+      "intended_use": "Local execution and modification permitted; retain required notices on redistribution; no endorsement using contributor names."
+    },
+    {
+      "item": "Evaluator private README.md",
+      "licence": "MIT",
+      "status": "permitted",
+      "basis": "explicit",
+      "source": "https://github.com/karpathy/nanoGPT/blob/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/LICENSE",
+      "intended_use": "Use and copying of associated documentation permitted with preservation of notice."
+    },
+    {
+      "item": "Operator-written evaluator harness/evaluate.sh",
+      "licence": null,
+      "status": "unknown",
+      "basis": "none",
+      "source": [
+        "intake/brief.md",
+        "comparison_view.json"
+      ],
+      "reason": "No published evaluator source, immutable pin, licence or explicit intended-use permission supplied. The nanoGPT MIT licence covers the private reference documentation, not this evaluator."
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "none",
+  "licence_reason": "Sample and all required data have explicit permission; permission for required operator-written evaluator code is not established.",
+  "stock_environment": true,
+  "stock_environment_evidence": {
+    "target": "Lambda Stack, Ubuntu 22.04, CUDA Toolkit 12.8, driver 570 (brief)",
+    "requirements": [
+      "CUDA-capable GPU",
+      "Host C/C++ compiler",
+      "CMake >=3.20",
+      "CUDA 12.8 development toolkit including cuRAND"
+    ],
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-installation-guide-linux/index.html#system-requirements",
+      "https://docs.nvidia.com/cuda/archive/12.8.0/cuda-toolkit-release-notes/index.html#cuda-driver",
+      "intake/brief.md"
+    ],
+    "assessment": "Provisionally feasible from published source and target documentation; no build or workload performed.",
+    "unverified": [
+      "Installed driver patch and GPU",
+      "Installed development toolchain",
+      "Actual build/runtime compatibility"
+    ],
+    "architecture_list": [
+      50,
+      52,
+      60,
+      61,
+      70,
+      72,
+      75,
+      80,
+      86,
+      87,
+      89,
+      90,
+      100,
+      101,
+      120
+    ]
+  },
+  "size": {
+    "category": "unknown",
+    "data_gib": null,
+    "peak_working_set_gib": null,
+    "total_gib": null,
+    "reason": "Exact peak includes GPU geometry-dependent RNG storage, CUDA context and runtime overhead; no published or measured complete peak.",
+    "known_private_file_bytes": 13850,
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L289-L298",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L144-L158"
+    ]
+  },
+  "scoring": {
+    "anchors": [
+      {
+        "id": "mc-bs-reserve",
+        "quantity": "Average reserve: mean confidence-width / absolute MC-minus-BS error",
+        "published_value": 1.0,
+        "tolerance": 0,
+        "comparison": ">",
+        "uncertainty": null,
+        "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L426-L486",
+        "kind": "anchor",
+        "configuration": {
+          "options": 8192,
+          "paths_per_option": 262144,
+          "gpus": 1
+        },
+        "boundary_rule": "Use verdict or unrounded statistic at six-decimal output boundary."
+      },
+      {
+        "id": "sample-pass",
+        "quantity": "Final verdict: 1 for Test passed; 0 for Test failed!",
+        "published_value": 1,
+        "tolerance": 0,
+        "comparison": "==",
+        "uncertainty": null,
+        "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L485-L486",
+        "kind": "anchor",
+        "configuration": {
+          "options": 8192,
+          "paths_per_option": 262144,
+          "gpus": 1
+        }
+      }
+    ],
+    "l1_published_value": null,
+    "l1_tolerance": null,
+    "l1_reason": "No published expected L1 value or acceptance threshold.",
+    "comparison_outputs": [
+      {
+        "name": "reserve",
+        "what": "the Average reserve value the sample prints in its test summary",
+        "format": "text_numbers",
+        "select": "Average reserve\\s*:\\s*(\\S+)"
+      },
+      {
+        "name": "l1",
+        "what": "the L1 norm values the sample prints",
+        "format": "text_numbers",
+        "select": "L1 norm\\s*:\\s*(\\S+)"
+      }
+    ],
+    "comparison_metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "trusted wall seconds of the invocation",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      },
+      {
+        "name": "mc_ms",
+        "unit": "ms",
+        "what": "the Total time (ms.) the sample prints",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_leaks",
+        "unit": "count",
+        "what": "probe: forbidden arm-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_controls_failed",
+        "unit": "count",
+        "what": "probe: arm-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_leaks",
+        "unit": "count",
+        "what": "probe: forbidden evaluator-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_controls_failed",
+        "unit": "count",
+        "what": "probe: evaluator-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      }
+    ],
+    "evaluator_acceptance_rule": null,
+    "evaluator_acceptance_reason": "View describes output counting and reference-digest checking but does not publish evaluator implementation or numeric acceptance criterion.",
+    "self_agreement_is_published_anchor": false
+  },
+  "repeatability": {
+    "warmup": 1,
+    "replicates": 2,
+    "host_seed": 123,
+    "gpu_seed_rule": "curand_init(blockIdx.x + gridDim.x * device_id, threadIdx.x, 0, ...)",
+    "record": [
+      "GPU model/count",
+      "multiprocessor count and grid size",
+      "CUDA toolkit and driver",
+      "libc version",
+      "source revision and scale modification",
+      "build configuration"
+    ],
+    "reason": "GPU geometry changes random streams; host rand() depends on libc. GPU Boost may vary timings.",
+    "source": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+      "intake/brief.md",
+      "comparison_view.json"
+    ]
+  },
+  "arms": {
+    "A1": {
+      "published_source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/README.md",
+      "repo": "https://github.com/NVIDIA/cuda-samples",
+      "pin": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+      "commands": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method={spec:/method}",
+          "--scaling=strong"
+        ]
+      ],
+      "resolved_commands": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method=streamed",
+          "--scaling=strong"
+        ],
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method=threaded",
+          "--scaling=strong"
+        ]
+      ],
+      "env": {
+        "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+        "CUDA_VISIBLE_DEVICES": "0"
+      },
+      "description": "Duplicate of A0 binary and command; no independent scientific method or anchor.",
+      "source": [
+        "comparison_view.json",
+        "intake/brief.md",
+        "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp"
+      ]
+    }
+  },
+  "evaluator": {
+    "published_source": null,
+    "pin": null,
+    "command": "bash harness/evaluate.sh",
+    "program": "python3 (system)",
+    "source": [
+      "comparison_view.json",
+      "intake/brief.md"
+    ],
+    "unavailable_reason": "Operator-written stand-in; no public implementation URL or immutable identifier supplied. Do not substitute nanoGPT as evaluator code.",
+    "private_data": [
+      "https://raw.githubusercontent.com/karpathy/nanoGPT/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/README.md"
+    ],
+    "licence": null
+  },
+  "search_candidates": [],
+  "search_method": "No benchmark search; fetched only supplied public sources.",
+  "gate_scripts": {
+    "commands": [],
+    "reason": "No intake gate script path or command is named in the prompt, brief or comparison view."
+  }
+}
