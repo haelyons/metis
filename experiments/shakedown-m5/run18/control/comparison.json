@@ -1,0 +1,191 @@
+{
+  "source": "/home/hal/dev/interp/metis/experiments/shakedown-m5/cmp18/design.json",
+  "source_sha256": "c009feea8811b18707abb8d54fef2b10bccce5e3fd1f08b9be71f68031300bd6",
+  "design": {
+    "arms": [
+      {
+        "id": "A0",
+        "what": "MonteCarloMultiGPU from NVIDIA cuda-samples v12.8 (commit db3eea23946bca2e90a75eca2b5b3e07158a9e11), built by setup.sh, run with the published command line on one GPU",
+        "commands": [
+          [
+            "baseline-published/build-mc/MonteCarloMultiGPU",
+            "--method={spec:/method}",
+            "--scaling=strong"
+          ]
+        ],
+        "env": {
+          "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      },
+      {
+        "id": "A1",
+        "what": "A duplicate of A0: the same binary and command line (self-agreement)",
+        "commands": [
+          [
+            "baseline-published/build-mc/MonteCarloMultiGPU",
+            "--method={spec:/method}",
+            "--scaling=strong"
+          ]
+        ],
+        "env": {
+          "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+          "CUDA_VISIBLE_DEVICES": "0"
+        }
+      }
+    ],
+    "inputs": [
+      {
+        "id": "p1",
+        "spec": {
+          "method": "streamed"
+        }
+      },
+      {
+        "id": "p3",
+        "spec": {
+          "method": "streamed",
+          "plant": "hidden_link"
+        }
+      }
+    ],
+    "outputs": [
+      {
+        "name": "reserve",
+        "what": "the Average reserve value the sample prints in its test summary",
+        "format": "text_numbers",
+        "select": "Average reserve\\s*:\\s*(\\S+)"
+      },
+      {
+        "name": "l1",
+        "what": "the L1 norm values the sample prints",
+        "format": "text_numbers",
+        "select": "L1 norm\\s*:\\s*(\\S+)"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "trusted wall seconds of the invocation",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      },
+      {
+        "name": "mc_ms",
+        "unit": "ms",
+        "what": "the Total time (ms.) the sample prints",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_leaks",
+        "unit": "count",
+        "what": "probe: forbidden arm-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_controls_failed",
+        "unit": "count",
+        "what": "probe: arm-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      }
+    ],
+    "evaluator": null,
+    "replicates": 2,
+    "warmup": 0,
+    "order_seed": 20261104,
+    "timeout_s": 900,
+    "budget_s": 5400,
+    "bootstrap_seed": 17,
+    "bootstrap_resamples": 2000,
+    "comparisons": [
+      {
+        "id": "K1",
+        "arm": "A1",
+        "against": "A0",
+        "measure": {
+          "output": "reserve",
+          "comparator": "exact"
+        },
+        "criterion": "agreement",
+        "direction": "two_sided",
+        "unit": "per_input_all",
+        "pairing": "paired_replicate",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": null,
+        "threshold": null,
+        "strict": null,
+        "reference": null,
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K3",
+        "arm": "A1",
+        "against": "A0",
+        "measure": {
+          "metric": "wall"
+        },
+        "criterion": "non_inferiority",
+        "direction": "lower_better",
+        "unit": "per_input_each",
+        "pairing": "paired_replicate",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": {
+          "abs": 7.31946283
+        },
+        "threshold": null,
+        "strict": null,
+        "reference": null,
+        "missing": "fail",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      },
+      {
+        "id": "K6",
+        "arm": "A1",
+        "against": "reference",
+        "measure": {
+          "metric": "arm_leaks"
+        },
+        "criterion": "non_inferiority",
+        "direction": "lower_better",
+        "unit": "per_input_each",
+        "pairing": "unpaired",
+        "rule": "all_pairs",
+        "confidence": null,
+        "margin": {
+          "abs": 0
+        },
+        "threshold": null,
+        "strict": null,
+        "reference": {
+          "source": "isolation requirement: no leak",
+          "values": {
+            "p1": 0,
+            "p3": 0
+          }
+        },
+        "missing": "void",
+        "given": [],
+        "parts": [
+          "shakedown"
+        ]
+      }
+    ]
+  }
+}

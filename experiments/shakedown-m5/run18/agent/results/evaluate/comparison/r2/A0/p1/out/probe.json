@@ -1,0 +1,125 @@
+{
+ "checks": {
+  "arm_residue": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "canary_hits": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "command_files_readable": {
+   "expect": "none",
+   "leak": true,
+   "observed": [
+    "0009-comparison-users.gpu",
+    "0009-comparison-users.log",
+    "0009-comparison-users.sh"
+   ]
+  },
+  "eval_residue": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "external_network": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "gpu_visible": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "nvidia-smi -L lists a GPU"
+  },
+  "list_cmp_private": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "FileNotFoundError"
+  },
+  "list_comparison_work": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "list_jobs": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "loopback_network": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "loopback 200"
+  },
+  "other_invocations_readable": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "plant_hardlink_to_evaluate": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "FileNotFoundError"
+  },
+  "private_hash_copies": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "protected_writes": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "read_cmp_private_file": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "FileNotFoundError"
+  },
+  "read_job_files": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "read_own_log": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "PermissionError"
+  },
+  "read_root_environ": {
+   "expect": "none",
+   "leak": false,
+   "observed": []
+  },
+  "read_run_harness": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "setup.sh readable"
+  },
+  "read_writable_list": {
+   "expect": "allowed",
+   "failed": true,
+   "observed": "PermissionError: [Errno 13] Permission denied: '/tmp/m5-4b0cb666-6726-4522-8acb-a9398c89b556/profiler/cmp_writable.json'"
+  },
+  "stage_input": {
+   "expect": "allowed",
+   "failed": false,
+   "observed": "staged"
+  },
+  "sudo": {
+   "expect": "denied",
+   "leak": false,
+   "observed": "RuntimeError"
+  },
+  "unlisted_writable_dirs": {
+   "expect": "none",
+   "failed": true,
+   "observed": "PermissionError: [Errno 13] Permission denied: '/tmp/m5-4b0cb666-6726-4522-8acb-a9398c89b556/profiler/cmp_writable.json'"
+  }
+ },
+ "controls_failed": 2,
+ "leaks": 1
+}

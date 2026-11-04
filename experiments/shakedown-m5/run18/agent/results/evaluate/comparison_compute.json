@@ -1,0 +1,266 @@
+{
+  "invocations": [
+    {
+      "round": 1,
+      "arm": "A0",
+      "input": "p1",
+      "status": "ok",
+      "wall_s": 3.8882751840000083,
+      "gpu_busy_s": 1,
+      "gpu_busy_known": true,
+      "eval_status": "skipped",
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0.001393298607600003
+    },
+    {
+      "round": 1,
+      "arm": "A1",
+      "input": "p1",
+      "status": "ok",
+      "wall_s": 2.9852739300000053,
+      "gpu_busy_s": 1,
+      "gpu_busy_known": true,
+      "eval_status": "skipped",
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0.001069723158250002
+    },
+    {
+      "round": 1,
+      "arm": "A1",
+      "input": "p3",
+      "status": "invalid",
+      "wall_s": null,
+      "gpu_busy_s": null,
+      "gpu_busy_known": false,
+      "eval_status": null,
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0
+    },
+    {
+      "round": 1,
+      "arm": "A0",
+      "input": "p3",
+      "status": "invalid",
+      "wall_s": null,
+      "gpu_busy_s": null,
+      "gpu_busy_known": false,
+      "eval_status": null,
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0
+    },
+    {
+      "round": 2,
+      "arm": "A0",
+      "input": "p3",
+      "status": "invalid",
+      "wall_s": null,
+      "gpu_busy_s": null,
+      "gpu_busy_known": false,
+      "eval_status": null,
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0
+    },
+    {
+      "round": 2,
+      "arm": "A0",
+      "input": "p1",
+      "status": "ok",
+      "wall_s": 2.834535270999936,
+      "gpu_busy_s": 1,
+      "gpu_busy_known": true,
+      "eval_status": "skipped",
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0.0010157084721083105
+    },
+    {
+      "round": 2,
+      "arm": "A1",
+      "input": "p1",
+      "status": "ok",
+      "wall_s": 2.935680821999881,
+      "gpu_busy_s": 1,
+      "gpu_busy_known": true,
+      "eval_status": "skipped",
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0.0010519522945499574
+    },
+    {
+      "round": 2,
+      "arm": "A1",
+      "input": "p3",
+      "status": "invalid",
+      "wall_s": null,
+      "gpu_busy_s": null,
+      "gpu_busy_known": false,
+      "eval_status": null,
+      "eval_wall_s": null,
+      "eval_gpu_busy_s": null,
+      "attributed_usd": 0
+    }
+  ],
+  "arms": [
+    {
+      "arm": "A0",
+      "invocations": 4,
+      "wall_s": 6.722810454999944,
+      "gpu_busy_s": 2,
+      "gpu_busy_known": false,
+      "eval_wall_s": 0,
+      "eval_gpu_busy_s": 0,
+      "attributed_usd": 0.002409007079708313
+    },
+    {
+      "arm": "A1",
+      "invocations": 4,
+      "wall_s": 5.920954751999886,
+      "gpu_busy_s": 2,
+      "gpu_busy_known": false,
+      "eval_wall_s": 0,
+      "eval_gpu_busy_s": 0,
+      "attributed_usd": 0.0021216754527999594
+    }
+  ],
+  "all_invocations": {
+    "invocations": 8,
+    "wall_s": 12.64376520699983,
+    "eval_wall_s": 0,
+    "attributed_usd": 0.004530682532508273
+  },
+  "system": {
+    "cpu_model": "Intel(R) Xeon(R) Platinum 8358 CPU @ 2.60GHz",
+    "cpu_logical": 30,
+    "kernel": "6.8.0-60-generic",
+    "driver_version": "570.148.08",
+    "cuda_version": "12.8",
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA A10",
+        "uuid": "GPU-f10ce977-7bbd-35da-12af-0d1abe3074cc",
+        "memory_total": "23028 MiB"
+      }
+    ],
+    "executables": {
+      "A0": {
+        "version": "cuda-samples db3eea23946bca2e90a75eca2b5b3e07158a9e11 MonteCarloMultiGPU",
+        "executable": "baseline-published/build-mc/MonteCarloMultiGPU",
+        "sha256": "a26a737a211e3de3956f5d990349ebee4ae2eefffe02fa1854962e4d97c531ed",
+        "libraries": [
+          {
+            "name": "libcurand.so.10",
+            "path": "/lib/x86_64-linux-gnu/libcurand.so.10",
+            "sha256": "f9bea038a2703b721571fd45a299a898141fd8cb264a5912635c95116f5960fe"
+          },
+          {
+            "name": "libstdc++.so.6",
+            "path": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+            "sha256": "41c4cd10be11160dec736958a59eb0553357ad77008e9ba56250d4fd8698b8ec"
+          },
+          {
+            "name": "libm.so.6",
+            "path": "/lib/x86_64-linux-gnu/libm.so.6",
+            "sha256": "297737a3541eb0bbe4c288045edc483321f24c21a237972c51d589cf2864a0b7"
+          },
+          {
+            "name": "libc.so.6",
+            "path": "/lib/x86_64-linux-gnu/libc.so.6",
+            "sha256": "6813de4f45796f58134ca3f06b3179344ddfea192cad73ea0af35375b1b66e76"
+          },
+          {
+            "name": "librt.so.1",
+            "path": "/lib/x86_64-linux-gnu/librt.so.1",
+            "sha256": "90fb160909274fd6e967ecded88653c1ceeec579b9e92bdada2e7a1d0ca04c69"
+          },
+          {
+            "name": "libpthread.so.0",
+            "path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+            "sha256": "fdfd7d83a335ba12bd73e857f95a798dae0355f37935231966fd088647978e23"
+          },
+          {
+            "name": "libdl.so.2",
+            "path": "/lib/x86_64-linux-gnu/libdl.so.2",
+            "sha256": "b970e7f9969a175b5e0726977ee998753fd7cc10512937dafc24ce659508a16a"
+          },
+          {
+            "name": "libgcc_s.so.1",
+            "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+            "sha256": "39c9bb846d8491ec41e89b7d34b824e7b6e7ff37d7b9de549305a15c2f7a6cf7"
+          }
+        ]
+      },
+      "A1": {
+        "version": "cuda-samples db3eea23946bca2e90a75eca2b5b3e07158a9e11 MonteCarloMultiGPU",
+        "executable": "baseline-published/build-mc/MonteCarloMultiGPU",
+        "sha256": "a26a737a211e3de3956f5d990349ebee4ae2eefffe02fa1854962e4d97c531ed",
+        "libraries": [
+          {
+            "name": "libcurand.so.10",
+            "path": "/lib/x86_64-linux-gnu/libcurand.so.10",
+            "sha256": "f9bea038a2703b721571fd45a299a898141fd8cb264a5912635c95116f5960fe"
+          },
+          {
+            "name": "libstdc++.so.6",
+            "path": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+            "sha256": "41c4cd10be11160dec736958a59eb0553357ad77008e9ba56250d4fd8698b8ec"
+          },
+          {
+            "name": "libm.so.6",
+            "path": "/lib/x86_64-linux-gnu/libm.so.6",
+            "sha256": "297737a3541eb0bbe4c288045edc483321f24c21a237972c51d589cf2864a0b7"
+          },
+          {
+            "name": "libc.so.6",
+            "path": "/lib/x86_64-linux-gnu/libc.so.6",
+            "sha256": "6813de4f45796f58134ca3f06b3179344ddfea192cad73ea0af35375b1b66e76"
+          },
+          {
+            "name": "librt.so.1",
+            "path": "/lib/x86_64-linux-gnu/librt.so.1",
+            "sha256": "90fb160909274fd6e967ecded88653c1ceeec579b9e92bdada2e7a1d0ca04c69"
+          },
+          {
+            "name": "libpthread.so.0",
+            "path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+            "sha256": "fdfd7d83a335ba12bd73e857f95a798dae0355f37935231966fd088647978e23"
+          },
+          {
+            "name": "libdl.so.2",
+            "path": "/lib/x86_64-linux-gnu/libdl.so.2",
+            "sha256": "b970e7f9969a175b5e0726977ee998753fd7cc10512937dafc24ce659508a16a"
+          },
+          {
+            "name": "libgcc_s.so.1",
+            "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+            "sha256": "39c9bb846d8491ec41e89b7d34b824e7b6e7ff37d7b9de549305a15c2f7a6cf7"
+          }
+        ]
+      }
+    }
+  },
+  "versions": {
+    "A0": {
+      "version": "cuda-samples db3eea23946bca2e90a75eca2b5b3e07158a9e11 MonteCarloMultiGPU",
+      "executable": "baseline-published/build-mc/MonteCarloMultiGPU"
+    },
+    "A1": {
+      "version": "cuda-samples db3eea23946bca2e90a75eca2b5b3e07158a9e11 MonteCarloMultiGPU",
+      "executable": "baseline-published/build-mc/MonteCarloMultiGPU"
+    }
+  },
+  "allocation": {
+    "type": "gpu_1x_a10",
+    "price_usd_h": 1.29,
+    "started_utc": "2026-11-04T11:01:56Z",
+    "ended_utc": null,
+    "hours": 0.2615327777777778,
+    "usd": 0.33737728333333333,
+    "final": false
+  }
+}

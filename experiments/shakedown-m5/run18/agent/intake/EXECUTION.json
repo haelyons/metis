@@ -1,0 +1,152 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "method": "streamed",
+    "scaling": "strong",
+    "precision": "float",
+    "source": "intake/brief.md",
+    "rule": "One fixed timing scale, no search or doubling. Source nOptions edit and one rebuild required. Timeout if budget exceeded; do not substitute a smaller scale. Require printed fields to match; tiny GPU adjustment may reduce option count and invalidates this scale."
+  },
+  "inputs": {
+    "data_file": "data.json",
+    "comparison_inputs": [
+      {
+        "id": "p1",
+        "spec": {
+          "method": "streamed"
+        }
+      },
+      {
+        "id": "p3",
+        "spec": {
+          "method": "streamed",
+          "plant": "hidden_link"
+        }
+      }
+    ],
+    "arms": [
+      "A0",
+      "A1"
+    ],
+    "environment": {
+      "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+      "CUDA_VISIBLE_DEVICES": "0"
+    },
+    "generated_inputs": "Same published generation and RNG scheme in both arms."
+  },
+  "outputs": {
+    "extractions": [
+      {
+        "name": "reserve",
+        "what": "the Average reserve value the sample prints in its test summary",
+        "format": "text_numbers",
+        "select": "Average reserve\\s*:\\s*(\\S+)"
+      },
+      {
+        "name": "l1",
+        "what": "the L1 norm values the sample prints",
+        "format": "text_numbers",
+        "select": "L1 norm\\s*:\\s*(\\S+)"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "trusted wall seconds of the invocation",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      },
+      {
+        "name": "mc_ms",
+        "unit": "ms",
+        "what": "the Total time (ms.) the sample prints",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_leaks",
+        "unit": "count",
+        "what": "probe: forbidden arm-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_controls_failed",
+        "unit": "count",
+        "what": "probe: arm-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      }
+    ],
+    "additional": [
+      "process exit status",
+      "Test passed / Test failed!",
+      "printed GPU/options/paths fields",
+      "GPU/toolkit/libc details"
+    ],
+    "published_scoring": "Anchors in anchors.json apply to original 8192-option case. Report L1 without invented threshold. No evaluator is provided.",
+    "comparison_scoring": "Record two replicates per arm and input; no warmup. No published cross-arm tolerance supplied."
+  },
+  "timing_scope": {
+    "primary": "Streamed Total time (ms.): host timer around preprocessing, H2D copy, GPU pricing, D2H copy and completion event waits.",
+    "excluded": "Compilation, allocation and RNG initialization before interval; CPU finalization and analytic validation after interval.",
+    "wall": "Trusted wall seconds cover invocation separately.",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223",
+      "comparison_view.json"
+    ]
+  },
+  "commands": {
+    "published": "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong",
+    "comparison": {
+      "A0": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method={spec:/method}",
+          "--scaling=strong"
+        ]
+      ],
+      "A1": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method={spec:/method}",
+          "--scaling=strong"
+        ]
+      ]
+    }
+  },
+  "anchor_scale": {
+    "options": 8192,
+    "paths_per_option": 262144,
+    "gpus": 1
+  },
+  "replicates": 2,
+  "warmup": 0,
+  "evaluator": null,
+  "evaluator_reason": "Explicit null in comparison view.",
+  "budgets": {
+    "supplied_args": {},
+    "run_ceiling_s": 43200,
+    "per_script_defaults_s": {
+      "method_setup": 1200,
+      "method_run": 1200,
+      "tests": 900,
+      "evaluate": 2400
+    },
+    "stage_policy": "Setup, anchors and profile use time remaining before run ceiling when args budgets absent. No stage estimates supported; timeout instead of scale changes."
+  },
+  "expected_runtime_s": null,
+  "expected_runtime_reason": "Unmeasured; no published runtime for representative scale.",
+  "sources": [
+    "intake/brief.md",
+    "comparison_view.json"
+  ]
+}

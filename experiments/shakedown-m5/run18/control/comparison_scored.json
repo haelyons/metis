@@ -1,0 +1,155 @@
+{
+  "comparison_sha256": "853cada7a76a4bcd8663668d72ea61e1d54a034c9dbc985847be84f8257bac6c",
+  "comparisons": [
+    {
+      "id": "K1",
+      "arm": "A1",
+      "against": "A0",
+      "criterion": "agreement",
+      "unit": "per_input_all",
+      "outcome": "void",
+      "rows": [
+        {
+          "input": "p1",
+          "n": 2,
+          "n_missing": 0,
+          "estimate": null,
+          "lo": null,
+          "hi": null,
+          "margin_value": null,
+          "threshold": null,
+          "outcome": "supported",
+          "sign": null,
+          "reason": null,
+          "pairs": [
+            {
+              "replicate": 1,
+              "agrees": true,
+              "missing": false,
+              "max_abs_error": 0.0,
+              "max_rel_error": 0.0
+            },
+            {
+              "replicate": 2,
+              "agrees": true,
+              "missing": false,
+              "max_abs_error": 0.0,
+              "max_rel_error": 0.0
+            }
+          ]
+        },
+        {
+          "input": "p3",
+          "n": 0,
+          "n_missing": 2,
+          "estimate": null,
+          "lo": null,
+          "hi": null,
+          "margin_value": null,
+          "threshold": null,
+          "outcome": "void",
+          "sign": null,
+          "reason": "missing_values",
+          "pairs": [
+            {
+              "replicate": 1,
+              "agrees": null,
+              "missing": true,
+              "max_abs_error": null,
+              "max_rel_error": null
+            },
+            {
+              "replicate": 2,
+              "agrees": null,
+              "missing": true,
+              "max_abs_error": null,
+              "max_rel_error": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K3",
+      "arm": "A1",
+      "against": "A0",
+      "criterion": "non_inferiority",
+      "unit": "per_input_each",
+      "outcome": "per_input",
+      "rows": [
+        {
+          "input": "p1",
+          "n": 2,
+          "n_missing": 0,
+          "estimate": -0.40092785150002896,
+          "lo": -0.903001254000003,
+          "hi": 0.10114555099994504,
+          "margin_value": 7.31946283,
+          "threshold": null,
+          "outcome": "supported",
+          "sign": null,
+          "reason": null,
+          "pairs": null
+        },
+        {
+          "input": "p3",
+          "n": 0,
+          "n_missing": 4,
+          "estimate": null,
+          "lo": null,
+          "hi": null,
+          "margin_value": 7.31946283,
+          "threshold": null,
+          "outcome": "not_supported",
+          "sign": null,
+          "reason": "missing_values",
+          "pairs": null
+        }
+      ]
+    },
+    {
+      "id": "K6",
+      "arm": "A1",
+      "against": "reference",
+      "criterion": "non_inferiority",
+      "unit": "per_input_each",
+      "outcome": "per_input",
+      "rows": [
+        {
+          "input": "p1",
+          "n": 2,
+          "n_missing": 0,
+          "estimate": 1.0,
+          "lo": 1.0,
+          "hi": 1.0,
+          "margin_value": 0,
+          "threshold": null,
+          "outcome": "not_supported",
+          "sign": null,
+          "reason": null,
+          "pairs": null
+        },
+        {
+          "input": "p3",
+          "n": 0,
+          "n_missing": 2,
+          "estimate": null,
+          "lo": null,
+          "hi": null,
+          "margin_value": null,
+          "threshold": null,
+          "outcome": "void",
+          "sign": null,
+          "reason": "missing_values",
+          "pairs": null
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "supported": 2,
+    "not_supported": 2,
+    "inconclusive": 0,
+    "void": 2
+  }
+}

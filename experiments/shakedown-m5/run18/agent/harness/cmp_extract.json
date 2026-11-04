@@ -1,0 +1,46 @@
+{
+ "rules": [
+  {
+   "arm": "A0",
+   "metric": "mc_ms",
+   "file": "log/cmd1.stdout",
+   "kind": "regex",
+   "expr": "Total time \\(ms\\.\\)\\s*:\\s*([-+0-9.eE]+)"
+  },
+  {
+   "arm": "A0",
+   "metric": "arm_leaks",
+   "file": "out/probe.json",
+   "kind": "json",
+   "expr": "/leaks"
+  },
+  {
+   "arm": "A0",
+   "metric": "arm_controls_failed",
+   "file": "out/probe.json",
+   "kind": "json",
+   "expr": "/controls_failed"
+  },
+  {
+   "arm": "A1",
+   "metric": "mc_ms",
+   "file": "log/cmd1.stdout",
+   "kind": "regex",
+   "expr": "Total time \\(ms\\.\\)\\s*:\\s*([-+0-9.eE]+)"
+  },
+  {
+   "arm": "A1",
+   "metric": "arm_leaks",
+   "file": "out/probe.json",
+   "kind": "json",
+   "expr": "/leaks"
+  },
+  {
+   "arm": "A1",
+   "metric": "arm_controls_failed",
+   "file": "out/probe.json",
+   "kind": "json",
+   "expr": "/controls_failed"
+  }
+ ]
+}

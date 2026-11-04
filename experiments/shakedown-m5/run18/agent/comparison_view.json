@@ -1,0 +1,100 @@
+{
+  "arms": [
+    {
+      "id": "A0",
+      "what": "MonteCarloMultiGPU from NVIDIA cuda-samples v12.8 (commit db3eea23946bca2e90a75eca2b5b3e07158a9e11), built by setup.sh, run with the published command line on one GPU",
+      "commands": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method={spec:/method}",
+          "--scaling=strong"
+        ]
+      ],
+      "env": {
+        "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    },
+    {
+      "id": "A1",
+      "what": "A duplicate of A0: the same binary and command line (self-agreement)",
+      "commands": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method={spec:/method}",
+          "--scaling=strong"
+        ]
+      ],
+      "env": {
+        "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "p1",
+      "spec": {
+        "method": "streamed"
+      }
+    },
+    {
+      "id": "p3",
+      "spec": {
+        "method": "streamed",
+        "plant": "hidden_link"
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "reserve",
+      "what": "the Average reserve value the sample prints in its test summary",
+      "format": "text_numbers",
+      "select": "Average reserve\\s*:\\s*(\\S+)"
+    },
+    {
+      "name": "l1",
+      "what": "the L1 norm values the sample prints",
+      "format": "text_numbers",
+      "select": "L1 norm\\s*:\\s*(\\S+)"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "wall",
+      "unit": "s",
+      "what": "trusted wall seconds of the invocation",
+      "source": "trusted_wall",
+      "reduce": null,
+      "expect_count": null
+    },
+    {
+      "name": "mc_ms",
+      "unit": "ms",
+      "what": "the Total time (ms.) the sample prints",
+      "source": "sealed_extraction",
+      "reduce": "first",
+      "expect_count": 1
+    },
+    {
+      "name": "arm_leaks",
+      "unit": "count",
+      "what": "probe: forbidden arm-part attempts that succeeded",
+      "source": "sealed_extraction",
+      "reduce": "first",
+      "expect_count": 1
+    },
+    {
+      "name": "arm_controls_failed",
+      "unit": "count",
+      "what": "probe: arm-part positive controls that failed",
+      "source": "sealed_extraction",
+      "reduce": "first",
+      "expect_count": 1
+    }
+  ],
+  "evaluator": null,
+  "replicates": 2,
+  "warmup": 0
+}
