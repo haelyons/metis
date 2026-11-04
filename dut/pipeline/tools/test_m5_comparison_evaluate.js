@@ -163,10 +163,12 @@ while i < len(args):
     break
 cmd = args[i:]
 log("sudo", target=target, cmd=cmd)
-# /etc/cron.deny and /etc/at.deny are the case's fixture files (as the box command text is rewritten in bin/box):
+# /etc/cron.deny, /etc/at.deny, /etc/cron.allow and /etc/at.allow are the case's fixture files (as the box command
+# text is rewritten in bin/box):
 # in arguments, and in a script file that a root command runs (read from a rewritten copy).
 def deny_paths(text):
-    return text.replace("/etc/cron.deny", CFG["cronDeny"]).replace("/etc/at.deny", CFG["atDeny"])
+    text = text.replace("/etc/cron.deny", CFG["cronDeny"]).replace("/etc/at.deny", CFG["atDeny"])
+    return text.replace("/etc/cron.allow", CFG["cronAllow"]).replace("/etc/at.allow", CFG["atAllow"])
 def deny_file(arg):
     try:
         if target in (None, "root") and os.path.isfile(arg) and os.path.getsize(arg) < 4000000:
@@ -1131,8 +1133,9 @@ function check(label, test) {
 // { arm, eval } (ipcmk options of the arm parts and the evaluator parts), deny ({ cron, at }: text of an existing
 // /etc/cron.deny or /etc/at.deny; absent otherwise), cronJobs (every adapter and evaluate.sh install a crontab and
 // an at job), noCronTools (no crontab, at, atq or atrm on the box), versions (printed versions.json -> the one
-// versions.sh prints instead), boxTimeout ('private-remove': that box command ends as a timeout) }
-// /etc/cron.deny and /etc/at.deny on the box are the case's files fake/etc/cron.deny and fake/etc/at.deny: bin/box
+// versions.sh prints instead), boxTimeout ('private-remove': that box command ends as a timeout), allow ({ cron, at }:
+// text of an existing /etc/cron.allow or /etc/at.allow; absent otherwise) }
+// /etc/cron.deny, /etc/at.deny, /etc/cron.allow and /etc/at.allow on the box are the case's files fake/etc/<name>: bin/box
 // rewrites the paths in the command text, and the fake sudo in its arguments and in a script file it runs as root.
 async function execute(name, spec) {
   if (ONLY && !ONLY.test(name)) return null
@@ -1153,11 +1156,18 @@ async function execute(name, spec) {
     privateReadable: Boolean(spec.privateReadable), brokenRules: spec.brokenRules ?? {}, gpuLines: spec.gpuLines ?? {}, utilNA: Boolean(spec.utilNA),
     stuck: spec.stuck ?? null, writable, marks: { 'cmp-arm': 'cmparm-', 'cmp-eval': 'cmpeval-' }, gpus: GPUS, driver: DRIVER, cuda: CUDA,
     cpuModel: CPU_MODEL, cpuCount: CPU_COUNT, caseDir, failChown: Boolean(spec.failChown),
-    cronDeny: path.join(fake, 'etc', 'cron.deny'), atDeny: path.join(fake, 'etc', 'at.deny'), boxTimeout: spec.boxTimeout ?? null }
+    cronDeny: path.join(fake, 'etc', 'cron.deny'), atDeny: path.join(fake, 'etc', 'at.deny'),
+    cronAllow: path.join(fake, 'etc', 'cron.allow'), atAllow: path.join(fake, 'etc', 'at.allow'), boxTimeout: spec.boxTimeout ?? null }
   fs.mkdirSync(path.join(fake, 'etc'), { recursive: true })
   if (spec.deny?.cron !== undefined) fs.writeFileSync(cfg.cronDeny, spec.deny.cron)
   if (spec.deny?.at !== undefined) fs.writeFileSync(cfg.atDeny, spec.deny.at)
-  const denySeen = path.join(caseDir, 'deny-seen.log')
+  if (spec.allow?.cron !== undefined) fs.writeFileSync(cfg.cronAllow, spec.allow.cron)
+  if (spec.allow?.at !== undefined) fs.writeFileSync(cfg.atAllow, spec.allow.at)
+  const denySeen = path.join(caseDir, 'deny-seen.log'), allowSeen = path.join(caseDir, 'allow-seen.log')
+  // Whether <user> is a line of /etc/cron.allow and /etc/at.allow while a part runs: "<who> <cron> <at>", each 1, 0
+  // or x (the file is absent).
+  const recordAllow = (who, user) => `{ a=; for f in ${q(cfg.cronAllow)} ${q(cfg.atAllow)}; do if [[ -e $f ]]; then if grep -qx ${user} "$f"; then a+=" 1"; else a+=" 0"; fi; else a+=" x"; fi; done; ` +
+    `printf '%s%s\\n' ${who} "$a" >> ${q(allowSeen)}; } 2>/dev/null\n`
   if (spec.usersExist) fs.writeFileSync(cfg.users, JSON.stringify(['cmp-arm', 'cmp-eval']))
   const fakeFiles = { ...FAKE_FILES, ...(spec.noCronTools ? {} : Object.fromEntries(CRON_TOOLS.map(tool => [tool, 'cron']))), ...(spec.boxTimeout ? { timeout: 'timeout' } : {}) }
   for (const [tool, kind] of Object.entries(fakeFiles))
@@ -1200,7 +1210,7 @@ async function execute(name, spec) {
         `printf 'adapter-out %s\\n' ${arm.id}\nprintf 'adapter-err %s\\n' ${arm.id} >&2\nprintf '%s\\n' "$CMP_INPUT" > "$CMP_OUT/input.txt"\n` +
         worldWrites.join('\n') + '\n' + (ipcArm ? `ipcmk ${ipcArm} >/dev/null\n` : '') + cronJobs +
         // Whether cmp-arm is a line of the deny files while the arm part runs.
-        `{ if grep -qx cmp-arm ${q(cfg.cronDeny)}; then c=1; else c=0; fi; if grep -qx cmp-arm ${q(cfg.atDeny)}; then t=1; else t=0; fi; printf '%s %s\\n' "$c" "$t" >> ${q(denySeen)}; } 2>/dev/null\n` +
+        `{ if grep -qx cmp-arm ${q(cfg.cronDeny)}; then c=1; else c=0; fi; if grep -qx cmp-arm ${q(cfg.atDeny)}; then t=1; else t=0; fi; printf '%s %s\\n' "$c" "$t" >> ${q(denySeen)}; } 2>/dev/null\n` + recordAllow('arm', 'cmp-arm') +
         `mode=$(python3 -c ${q(`import json, os\ns = json.loads(os.environ["CMP_INPUT_SPEC"])\nprint(s.get("${key}", "ok") if isinstance(s, dict) else "ok")`)})\n` +
         `amode=$(python3 -c ${q(`import json, os\ns = json.loads(os.environ["CMP_INPUT_SPEC"])\nprint(s.get("adapter_${key}", "") if isinstance(s, dict) else "")`)})\n` +
         `if [[ $amode == sleep5 ]]; then sleep 5; fi\nif [[ $amode == useleft ]]; then python3 -c ${q(USELEFT_PY)}; fi\n` +
@@ -1219,7 +1229,7 @@ async function execute(name, spec) {
         `touch "$HOME/cmpeval-home-$$" ${q(path.join(world, 'etmp'))}/cmpeval-fetch-$$\n` + (spec.fetchExtra ?? '') + '\n'
       files['evaluate.sh'] = '#!/usr/bin/env bash\nset -u\n' + RECORD + `FAKE_FD1=$fd1 FAKE_FD2=$fd2 python3 -c ${q(EVAL_PY)}\n` +
         `printf 'evaluated\\n'\nprintf 'evaluator-err\\n' >&2\ntouch ${q(path.join(world, 'etmp'))}/cmpeval-x-$$ ${q(path.join(world, 'tmp'))}/cmpeval-t-$$\n` +
-        (ipcEval ? `ipcmk ${ipcEval} >/dev/null\n` : '') + cronJobs +
+        (ipcEval ? `ipcmk ${ipcEval} >/dev/null\n` : '') + cronJobs + recordAllow('eval', 'cmp-eval') +
         'if [[ -e $CMP_ARM_OUT/evalfail ]]; then exit 4; fi\nif [[ -e $CMP_ARM_OUT/evalsleep ]]; then sleep 120; fi\n' +
         'printf \'{"score": 1}\\n\' > "$CMP_EVAL_OUT/score.json"\nexit 0\n'
     }
@@ -1263,9 +1273,10 @@ visit(process.env.BOX_ROOT, 0)
   // mode are readable by other users.
   writeFile(path.join(caseDir, 'bin/box'), sh('command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\numask 022\n' +
     `cron_deny=${q(cfg.cronDeny)}\nat_deny=${q(cfg.atDeny)}\ncommand=\${command//\\/etc\\/cron.deny/$cron_deny}\ncommand=\${command//\\/etc\\/at.deny/$at_deny}\n` +
+    `cron_allow=${q(cfg.cronAllow)}\nat_allow=${q(cfg.atAllow)}\ncommand=\${command//\\/etc\\/cron.allow/$cron_allow}\ncommand=\${command//\\/etc\\/at.allow/$at_allow}\n` +
     `export PATH=${q(fakeBin)}:${boxPath ? q(boxPath) : '"$PATH"'}\nexport HOME=${q(boxHome)}\nexport PYTHONPATH=${q(fakePython)}\nexport CMP_LEAK=leaked SUDO_LEAK=leaked FAKE_KEEP=keepme\n` +
     'cd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n' + refresh +
-    'if [[ $command == *timeout* ]]; then\n  for ((end=SECONDS+1800; SECONDS<end; )); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0'), 0o700)
+    'if [[ $command == *timeout* ]]; then\n  for ((end=SECONDS+1800; SECONDS<end; )); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file && ${file##*/} == [0-9][0-9][0-9][0-9]-* ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0'), 0o700)
   // spec.forge: after each copy, every fetched wrap.json whose sibling out/input.txt names a forged input is
   // replaced by the forged text (the pipeline then reads a wrap.json the contract says is invalid).
   const forgeScript = path.join(caseDir, 'forge.js')
@@ -1343,6 +1354,7 @@ visit(process.argv[2])
   }
   return { name, spec, caseDir, root, agent, control, box, world, boxHome, fakeBin, source, design, evaluator, records, receipts, S, order, jobs,
     cronDeny: cfg.cronDeny, atDeny: cfg.atDeny, denySeen: fs.existsSync(denySeen) ? fs.readFileSync(denySeen, 'utf8').split('\n').filter(Boolean) : [],
+    cronAllow: cfg.cronAllow, atAllow: cfg.atAllow, allowSeen: fs.existsSync(allowSeen) ? fs.readFileSync(allowSeen, 'utf8').split('\n').filter(Boolean) : [],
     inv, wrapAt, fetched, startMs, privateBytes, privateSecond, writable, files, sharedBox, allocation, ended,
     log: rows(cfg.log), calls: rows(callsFile), stage: label => records.find(row => row.stage === label),
     ops: receipts.map(receipt => receipt.operation) }
@@ -1998,6 +2010,25 @@ function usersChecks(r, { created }) {
     assert.ok(r.denySeen.length > 0, 'no arm part recorded the deny files')
     assert.deepEqual([...new Set(r.denySeen)], ['1 1'], 'cmp-arm (cron.deny at.deny) while arm parts ran')
   })
+  const allowState = kind => r.spec.allow?.[kind] !== undefined ? `${kind}.allow existing: every part user removed, its other lines kept in order` : `no ${kind}.allow: none created`
+  check(`${r.name}: users step 1: /etc/cron.allow and /etc/at.allow (${allowState('cron')}; ${allowState('at')}), and no part user is a line of an allow list while a part runs`, () => {
+    const linesOf = text => text.split('\n').map(line => line.trim()).filter(Boolean)
+    for (const [kind, file] of [['cron', r.cronAllow], ['at', r.atAllow]]) {
+      const before = r.spec.allow?.[kind]
+      if (before === undefined) { assert.equal(fs.existsSync(file), false, `/etc/${kind}.allow created`); continue }
+      assert.ok(fs.existsSync(file), `/etc/${kind}.allow removed`)
+      const want = linesOf(before).filter(line => !partUsers.includes(line))
+      assert.deepEqual(linesOf(fs.readFileSync(file, 'utf8')), want, `/etc/${kind}.allow`)
+    }
+    const flag = kind => r.spec.allow?.[kind] !== undefined ? '0' : 'x'
+    const arm = r.allowSeen.filter(line => line.startsWith('arm ')), evaluated = r.allowSeen.filter(line => line.startsWith('eval '))
+    assert.ok(arm.length > 0, 'no arm part recorded the allow lists')
+    assert.deepEqual([...new Set(arm)], [`arm ${flag('cron')} ${flag('at')}`], 'cmp-arm (cron.allow at.allow) while arm parts ran')
+    if (r.evaluator && anyEvaluated(r)) {
+      assert.ok(evaluated.length > 0, 'no evaluator part recorded the allow lists')
+      assert.deepEqual([...new Set(evaluated)], [`eval ${flag('cron')} ${flag('at')}`], 'cmp-eval (cron.allow at.allow) while evaluator parts ran')
+    }
+  })
   const ruleOf = row => {
     const a = row.argv.filter(arg => arg !== '-w' && arg !== '--wait')
     const op = a.findIndex(arg => ['-A', '-I', '-C', '--append', '--insert', '--check'].includes(arg))
@@ -2147,6 +2178,55 @@ function removedBeforeNextPart(r, made) {
     if (next !== undefined) assert.ok(removed < next, `${label} removed only after the next part started`)
   }
 }
+// Cleanup order (SCHEMAS.md Separated users, cleanup): after every part (each arm part, each evaluator part and the
+// private-data fetch), the user's crontab is removed (crontab -r -u <user>, as root) and every at job of the user is
+// removed (atq, then atrm of each of its jobs) before the cleanup's first pkill -KILL -u <user>.
+function cleanupOrderCheck(r) {
+  check(`${r.name}: cleanup order: after every arm part, evaluator part and the fetch, crontab -r -u <user> and atrm of each of the user's at jobs (listed by atq) run as root before the first pkill -KILL -u <user> of that cleanup`, () => {
+    const indexed = r.log.map((row, index) => ({ row, index }))
+    const parts = indexed.filter(({ row }) => row.tool === 'sudo' && row.cmd?.[0] === 'env' && ['cmp-arm', 'cmp-eval'].includes(row.target) &&
+      (/harness\/arms\/A\d\.sh$/.test(row.cmd.at(-1)) || /\/harness\/evaluate\.sh$/.test(row.cmd.at(-1)) || /\/harness\/fetch_private\.sh$/.test(row.cmd.at(-1))))
+    assert.ok(parts.some(({ row }) => row.target === 'cmp-arm'), 'no arm part')
+    if (r.evaluator) assert.ok(parts.some(({ row }) => /fetch_private\.sh$/.test(row.cmd.at(-1))), 'no fetch')
+    if (anyEvaluated(r)) assert.ok(parts.some(({ row }) => /evaluate\.sh$/.test(row.cmd.at(-1))), 'no evaluator part')
+    const isKill = (item, user) => item.tool === 'pkill' && item.ctx === 'root' && JSON.stringify(item.argv) === JSON.stringify(['-KILL', '-u', user])
+    for (const { row, index } of parts) {
+      const user = row.target, where = `${user} part at log row ${index} (${path.basename(row.cmd.at(-1))})`
+      const kill = r.log.findIndex((item, j) => j > index && isKill(item, user))
+      assert.ok(kill > index, `${where}: no pkill -KILL -u ${user} after it`)
+      const between = r.log.slice(index + 1, kill)
+      assert.ok(between.some(item => item.tool === 'crontab' && ['remove', 'remove-none'].includes(item.op) && item.user === user && item.ctx === 'root' &&
+        item.argv.includes('-r') && item.argv.includes('-u')), `${where}: no crontab -r -u ${user} (as root) before the first pkill of its cleanup`)
+      assert.ok(between.some(item => item.tool === 'atq' && item.ctx === 'root'), `${where}: no atq (as root) before the first pkill of its cleanup`)
+      // Every at job this part made is removed before the kill.
+      const made = r.log.map((item, j) => ({ item, j })).filter(({ item, j }) => j > index && j < kill && item.tool === 'at' && item.owner === user)
+      for (const { item } of made) assert.ok(between.some(other => other.tool === 'atrm' && (other.removed ?? []).includes(item.id)), `${where}: at job ${item.id} not removed before the first pkill`)
+      const tab = between.findIndex(item => item.tool === 'crontab' && item.op === 'install' && item.user === user)
+      if (tab >= 0) assert.ok(between.slice(tab).some(item => item.tool === 'crontab' && item.op === 'remove' && item.user === user), `${where}: its crontab not removed before the first pkill`)
+    }
+  })
+}
+// The mode-600 exemption of users step 3 is only for the evaluate stage's own box command files: a top-level file
+// at mode 600 whose name is not of the form NNNN-<name>.sh|log|gpu|rc (setup.sh writes them, before the users step)
+// gets the effect of chmod -R go-w,o+rX (604), seen by every part and after the run.
+const LOOKALIKES = ['2026-input.bin', '0012-notes.txt', '12-short.log', 'notes.sh', '0013-notes.sh.bak']
+const LOOKALIKE_SETUP = LOOKALIKES.map(name => `printf 'lookalike\\n' > ${q(name)}\nchmod 600 ${q(name)}`).join('\n')
+function lookalikeCheck(r) {
+  check(`${r.name}: users step 3: top-level files at mode 600 written before the users step whose names are not box command file names (${LOOKALIKES.join(', ')}) become readable by other users (604) while every part runs and after the run`, () => {
+    const snapshots = []
+    for (let i = 0; i < runCount(r); i++) {
+      const arm = path.join(r.inv(i), 'out', 'adapter.json'), evaluated = path.join(r.fetched(r.order[i]), 'eval', 'eval-record.json')
+      if (fs.existsSync(arm)) snapshots.push([`i${i + 1} arm part`, read(arm).boxEntries])
+      if (fs.existsSync(evaluated)) snapshots.push([`i${i + 1} evaluator part`, read(evaluated).boxEntries])
+    }
+    assert.ok(snapshots.length > 0, 'no part record')
+    for (const [where, entries] of snapshots) for (const name of LOOKALIKES) {
+      assert.ok(entries?.[name], `${where}: ${name} is not on the box`)
+      assert.deepEqual(entries[name], ['604', 'file'], `${where}: ${name}`)
+    }
+    for (const name of LOOKALIKES) assert.equal(modeOf(path.join(r.S, name)), '604', `${name} after the run`)
+  })
+}
 function ipcKindsCheck(r, armKind, evalKind, label) {
   check(`${r.name}: ${label}`, () => {
     const made = r.log.map((row, index) => ({ row, index })).filter(({ row }) => row.tool === 'ipcmk')
@@ -2205,7 +2285,7 @@ async function main() {
     ])
     // Cron and at (with an existing cron.deny; noeval has an existing at.deny), no cron tools, message queues and
     // semaphore arrays, the second set of forged wrap.json records, invalid versions.json, a timed-out box command.
-    const [cron, noCron, ipc2, forged2, versLacks, versExtra, versRow, boxTimeout] = await inParallel([
+    const [cron, noCron, ipc2, forged2, versLacks, versExtra, versRow, boxTimeout, allow] = await inParallel([
       // A larger budget: the cron and at cleanup adds tool calls to every part, and budget_s 40 can run out by i2.
       () => execute('cron', { design: { ...SMALL, budget_s: 300 }, cronJobs: true, deny: { cron: '# cron.deny of the box\ndaemon\nnobody\n' } }),
       () => execute('nocron', { design: SMALL, noCronTools: true }),
@@ -2215,6 +2295,10 @@ async function main() {
       () => execute('versions-extra-key', { design: VERS, versions: value => ({ ...value, A9: { version: '9', executable: 'bin/alt' } }) }),
       () => execute('versions-row', { design: VERS, versions: value => ({ ...value, A1: { ...value.A1, note: 'x' } }) }),
       () => execute('box-timeout', { design: SMALL, boxTimeout: 'private-remove' }),
+      // Existing allow lists that name both part users among other users (cmp-armory is another user; at.allow has no
+      // final newline); deny lists absent; top-level files at mode 600 whose names look like box command files.
+      () => execute('allow', { design: { ...SMALL, budget_s: 300 }, cronJobs: true, setupExtra: () => LOOKALIKE_SETUP,
+        allow: { cron: '# cron.allow of the box\nroot\ncmp-arm\nalice\ncmp-eval\ncmp-armory\n', at: 'cmp-eval\nroot\ncmp-arm\nbob' } }),
     ])
     if (cron) {
       commonChecks(cron)
@@ -2237,6 +2321,18 @@ async function main() {
       check('cron: every invocation still ends ok with eval ok', () => {
         assert.ok(runCount(cron) > 0, 'no invocation')
         for (let i = 0; i < runCount(cron); i++) assert.deepEqual([cron.wrapAt(i)?.status, cron.wrapAt(i)?.eval_status], ['ok', 'ok'], `i${i + 1}`)
+      })
+      cleanupOrderCheck(cron)
+    }
+    if (allow) {
+      commonChecks(allow)
+      sudoPartChecks(allow)
+      usersChecks(allow, { created: true })
+      cleanupOrderCheck(allow)
+      lookalikeCheck(allow)
+      check('allow: every invocation ends ok with eval ok', () => {
+        assert.ok(runCount(allow) > 0, 'no invocation')
+        for (let i = 0; i < runCount(allow); i++) assert.deepEqual([allow.wrapAt(i)?.status, allow.wrapAt(i)?.eval_status], ['ok', 'ok'], `i${i + 1}`)
       })
     }
     if (noCron) {
