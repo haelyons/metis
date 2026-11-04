@@ -1,0 +1,144 @@
+{
+  "representative_scale": {
+    "options": 1048576,
+    "paths_per_option": 262144,
+    "gpus": 1,
+    "precision": "float",
+    "scaling": "strong",
+    "source": "brief.md operator scale revision",
+    "policy": "One fixed timing scale; no scale search, doubling, or toy extrapolation. Timeout if budget exceeded."
+  },
+  "inputs": {
+    "specs": [
+      {
+        "id": "p1",
+        "spec": {
+          "method": "streamed"
+        }
+      },
+      {
+        "id": "p2",
+        "spec": {
+          "method": "threaded"
+        }
+      },
+      {
+        "id": "p3",
+        "spec": {
+          "method": "streamed",
+          "plant": "hidden_link"
+        }
+      }
+    ],
+    "arms": [
+      "A0",
+      "A1"
+    ],
+    "generated_options": "data.json: generated-options and gpu-random-streams",
+    "evaluator_private_reference": "https://raw.githubusercontent.com/karpathy/nanoGPT/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/README.md"
+  },
+  "outputs": {
+    "arm_outputs": [
+      {
+        "name": "reserve",
+        "what": "the Average reserve value the sample prints in its test summary",
+        "format": "text_numbers",
+        "select": "Average reserve\\s*:\\s*(\\S+)"
+      },
+      {
+        "name": "l1",
+        "what": "the L1 norm values the sample prints",
+        "format": "text_numbers",
+        "select": "L1 norm\\s*:\\s*(\\S+)"
+      }
+    ],
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "trusted wall seconds of the invocation",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      },
+      {
+        "name": "mc_ms",
+        "unit": "ms",
+        "what": "the Total time (ms.) the sample prints",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_leaks",
+        "unit": "count",
+        "what": "probe: forbidden arm-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "arm_controls_failed",
+        "unit": "count",
+        "what": "probe: arm-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_leaks",
+        "unit": "count",
+        "what": "probe: forbidden evaluator-part attempts that succeeded",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      },
+      {
+        "name": "eval_controls_failed",
+        "unit": "count",
+        "what": "probe: evaluator-part positive controls that failed",
+        "source": "sealed_extraction",
+        "reduce": "first",
+        "expect_count": 1
+      }
+    ],
+    "also_retain": [
+      "stdout",
+      "stderr",
+      "exit status",
+      "printed GPU count",
+      "printed option count",
+      "printed path count",
+      "Test passed verdict"
+    ],
+    "evaluator": "Counts output files and verifies a private file digest; exact implementation and result schema unavailable."
+  },
+  "timing_scope": {
+    "streamed": "Printed Total time (ms.) spans host preprocessing, H2D transfer, GPU pricing, D2H transfer and completion-event waits; excludes allocation/RNG initialization, CPU finalization, Black-Scholes checking and compilation.",
+    "threaded": "Use published threaded Total time print and trusted wall; do not assume identical internal timing boundaries to streamed.",
+    "trusted_wall": "Entire invocation wall seconds from comparison harness.",
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L147-L194",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L190-L223",
+      "comparison_view.json"
+    ]
+  },
+  "scoring_interface": {
+    "anchors": "Evaluate anchors.json on the published 8192-option one-GPU scale, using verdict/unrounded reserve at printed boundary; retain exit status.",
+    "comparison": "Execute both arms for p1 streamed, p2 threaded and p3 streamed with plant=hidden_link; extract reserve/l1 with comparison_view regexes; sealed metrics as declared. No published numerical agreement tolerance supplied.",
+    "evaluator_command": "bash harness/evaluate.sh",
+    "missing": "No public evaluator code/pin, expected digest or exact invocation interface beyond named command."
+  },
+  "replicates": 2,
+  "warmup": 1,
+  "budget_policy": {
+    "supplied_args_budgets": {},
+    "method_setup_s": 1200,
+    "method_run_s": 1200,
+    "tests_s": 900,
+    "evaluate_s": 2400,
+    "run_ceiling_s": 43200,
+    "setup_anchors_profile": "Use remaining time before ceiling when args budgets absent. No runtime estimate established; do not search scales."
+  },
+  "builds_or_workloads_executed": false
+}

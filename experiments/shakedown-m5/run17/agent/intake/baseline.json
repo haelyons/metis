@@ -1,0 +1,76 @@
+{
+  "repo": "https://github.com/NVIDIA/cuda-samples",
+  "commit": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+  "pin": "v12.8",
+  "build_commands": [
+    "python3 -m pip install --user cmake==3.31.6",
+    "export PATH=\"$HOME/.local/bin:$PATH\"",
+    "git clone --branch v12.8 --depth 1 https://github.com/NVIDIA/cuda-samples.git",
+    "cd cuda-samples",
+    "git checkout --detach db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+    "sample=Samples/5_Domain_Specific/MonteCarloMultiGPU",
+    "cmake -S \"$sample\" -B build-mc -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_COMPILER=/usr/local/cuda-12.8/bin/nvcc",
+    "cmake --build build-mc --target MonteCarloMultiGPU --parallel"
+  ],
+  "build_command_sources": [
+    "brief.md",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/README.md",
+    "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/CMakeLists.txt",
+    "https://pypi.org/project/cmake/3.31.6/"
+  ],
+  "build_notes": "pip CMake install optional if >=3.20 already installed. Commands recorded only, never executed. Host compiler and CUDA development toolkit assumed supplied by stock image; no installer command invented.",
+  "run_commands": [
+    "CUDA_VISIBLE_DEVICES=0 ./build-mc/MonteCarloMultiGPU --method=streamed --scaling=strong"
+  ],
+  "run_command_source": "brief.md; command-line processing in https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+  "comparison_run_commands": {
+    "A0": {
+      "commands": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method={spec:/method}",
+          "--scaling=strong"
+        ]
+      ],
+      "env": {
+        "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    },
+    "A1": {
+      "commands": [
+        [
+          "baseline-published/build-mc/MonteCarloMultiGPU",
+          "--method={spec:/method}",
+          "--scaling=strong"
+        ]
+      ],
+      "env": {
+        "LD_LIBRARY_PATH": "/usr/local/cuda/lib64:/usr/lib/cuda/lib64:/usr/lib/x86_64-linux-gnu",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    }
+  },
+  "published_configuration": {
+    "nOptions": 8192,
+    "PATH_N": 262144,
+    "scaling": "strong",
+    "GPU_N": 1,
+    "precision": "float by default",
+    "THREAD_N": 256,
+    "MAX_OPTIONS_per_GPU": 1048576,
+    "sources": [
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu",
+      "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/realtype.h"
+    ]
+  },
+  "representative_modification": {
+    "nOptions": 1048576,
+    "PATH_N": 262144,
+    "GPU_N": 1,
+    "source": "brief.md, Scale (operator revision after raid jackhammer)",
+    "instructions": "Change host nOptions once to 1024 * 1024 and rebuild with the recorded CMake commands. Preserve upstream 8192-option binary/configuration for anchors.",
+    "published_upstream_scale": false
+  }
+}

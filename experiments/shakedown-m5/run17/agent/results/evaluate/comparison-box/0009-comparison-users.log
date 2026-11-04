@@ -1,0 +1,2 @@
+REJECT  all opt -- in * out !lo  0.0.0.0/0  -> 0.0.0.0/0   owner UID match 998 reject-with icmp-port-unreachable
+REJECT  all opt    in * out !lo  ::/0  -> ::/0   owner UID match 998 reject-with icmp6-port-unreachable

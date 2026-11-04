@@ -1,0 +1,115 @@
+{
+  "availability": "available",
+  "required_inputs": [
+    {
+      "id": "generated-options",
+      "consumers": [
+        "A0",
+        "A1"
+      ],
+      "kind": "generated",
+      "availability": "available",
+      "download_required": false,
+      "access_instructions": "Generated in the pinned binary with srand(123); S in [5,50], X in [10,25], T in [1,5], R=0.06, V=0.10.",
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarloMultiGPU.cpp#L316-L327",
+      "pin": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+      "hash": null,
+      "hash_reason": "Generated in memory; no published input-file hash.",
+      "licence": "NVIDIA sample grant",
+      "licence_source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+      "splits": null,
+      "splits_reason": "No training/test dataset split.",
+      "seed": 123
+    },
+    {
+      "id": "gpu-random-streams",
+      "consumers": [
+        "A0",
+        "A1"
+      ],
+      "kind": "generated",
+      "availability": "available",
+      "access_instructions": "cuRAND initialization in sample; no external download or seed CLI.",
+      "source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/Samples/5_Domain_Specific/MonteCarloMultiGPU/MonteCarlo_kernel.cu#L131-L138",
+      "pin": "db3eea23946bca2e90a75eca2b5b3e07158a9e11",
+      "hash": null,
+      "hash_reason": "Geometry-dependent generated values.",
+      "licence": "NVIDIA sample grant; cuRAND supplied with CUDA",
+      "licence_source": "https://github.com/NVIDIA/cuda-samples/blob/db3eea23946bca2e90a75eca2b5b3e07158a9e11/LICENSE",
+      "splits": null,
+      "seed": "blockIdx.x + gridDim.x * device_id; sequence threadIdx.x; offset 0"
+    },
+    {
+      "id": "comparison-specs",
+      "consumers": [
+        "A0",
+        "A1"
+      ],
+      "kind": "supplied",
+      "availability": "available",
+      "items": [
+        {
+          "id": "p1",
+          "spec": {
+            "method": "streamed"
+          }
+        },
+        {
+          "id": "p2",
+          "spec": {
+            "method": "threaded"
+          }
+        },
+        {
+          "id": "p3",
+          "spec": {
+            "method": "streamed",
+            "plant": "hidden_link"
+          }
+        }
+      ],
+      "access_instructions": "comparison_view.json; substitute spec.method into --method. p3 also carries plant=hidden_link, whose harness handling is not published.",
+      "pin": null,
+      "pin_reason": "No immutable comparison-view identifier supplied.",
+      "licence": null,
+      "licence_reason": "Run configuration supplied by owner; no separate licence stated.",
+      "splits": null,
+      "seeds": null
+    },
+    {
+      "id": "evaluator-private-reference",
+      "consumers": [
+        "evaluator"
+      ],
+      "kind": "published_file",
+      "private": true,
+      "availability": "available",
+      "published_at": "https://raw.githubusercontent.com/karpathy/nanoGPT/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/README.md",
+      "access_instructions": "Fetch exactly this pinned raw README.md; it is private to the evaluator in the comparison, despite being publicly published.",
+      "pin": "3adf61e154c3fe3fca428ad6bc3818b27a3b8291",
+      "hash": null,
+      "hash_reason": "Expected evaluator digest not supplied; do not invent it.",
+      "licence": "MIT",
+      "licence_source": "https://github.com/karpathy/nanoGPT/blob/3adf61e154c3fe3fca428ad6bc3818b27a3b8291/LICENSE",
+      "licence_basis": "explicit",
+      "splits": null,
+      "seeds": null
+    },
+    {
+      "id": "arm-output-files",
+      "consumers": [
+        "evaluator"
+      ],
+      "kind": "generated",
+      "availability": "available",
+      "access_instructions": "Outputs produced by arm invocations; evaluator counts files.",
+      "published_at": null,
+      "reason": "Runtime outputs, not missing external data; exact file layout unspecified.",
+      "pin": null,
+      "licence": null,
+      "licence_reason": "Generated outputs; no separate output licence statement supplied."
+    }
+  ],
+  "missing_required_data": [],
+  "evaluator_implementation_gap": "Private reference accessible; evaluator source, expected digest, and exact file interface remain unpublished in supplied evidence."
+}
