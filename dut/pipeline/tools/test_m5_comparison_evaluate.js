@@ -21,7 +21,9 @@
 // shuffled from arm-major order; `env -i` may carry a working-directory option (-C) before the variables; the
 // writable listing may use -print0; the evaluator part's streams may be logged as log/evaluator.*; boxrun's remote
 // files of a command are the top-level files of the shared run directory named <receipt name>.<suffix>.
-// The fakes also stand in for ipcs, ipcmk and ipcrm (a fixture table of System V objects, see the ipc fake).
+// The fakes also stand in for ipcs, ipcmk and ipcrm (a fixture table of System V objects, see the ipc fake), for
+// crontab, at, atq and atrm (a fixture table of crontabs and at jobs, see the cron fake), and, in one case, for
+// timeout. /etc/cron.deny and /etc/at.deny are fixture files (see execute).
 // Usage: node tools/test_m5_comparison_evaluate.js [case-name regex] [keep | debug [log count]]
 const fs = require('node:fs')
 const path = require('node:path')
@@ -103,7 +105,7 @@ function realTool(name) {
   }
   return null
 }
-const REAL = Object.fromEntries(['find', 'id', 'getent', 'pkill', 'pgrep', 'ldd', 'install'].map(name => [name, realTool(name)]))
+const REAL = Object.fromEntries(['find', 'id', 'getent', 'pkill', 'pgrep', 'ldd', 'install', 'timeout'].map(name => [name, realTool(name)]))
 
 // ---- Fakes (python3), each with its case configuration inlined ------------------------------------------------
 const PRELUDE = String.raw`#!/usr/bin/env python3
@@ -161,6 +163,24 @@ while i < len(args):
     break
 cmd = args[i:]
 log("sudo", target=target, cmd=cmd)
+# /etc/cron.deny and /etc/at.deny are the case's fixture files (as the box command text is rewritten in bin/box):
+# in arguments, and in a script file that a root command runs (read from a rewritten copy).
+def deny_paths(text):
+    return text.replace("/etc/cron.deny", CFG["cronDeny"]).replace("/etc/at.deny", CFG["atDeny"])
+def deny_file(arg):
+    try:
+        if target in (None, "root") and os.path.isfile(arg) and os.path.getsize(arg) < 4000000:
+            with open(arg, errors="surrogateescape") as handle:
+                text = handle.read()
+            if text != deny_paths(text):
+                copy = os.path.join(CFG["state"], "denyfix-%d-%s" % (os.getpid(), os.path.basename(arg)))
+                with open(copy, "w", errors="surrogateescape") as handle:
+                    handle.write(deny_paths(text))
+                return copy
+    except OSError:
+        pass
+    return deny_paths(arg)
+cmd = [deny_file(x) for x in cmd]
 if "-n" not in opts or not cmd:
     sys.stderr.write("fake sudo: -n and a command are required\n")
     sys.exit(1)
@@ -532,7 +552,7 @@ if tool == "ipcmk":
     key = "0x%08x" % (0x51ab0000 + len(objects))
     objects.append(dict(kind=kind, id=ident, key=key, owner=me, removed=False))
     save()
-    log("ipcmk", id=ident, owner=me)
+    log("ipcmk", id=ident, owner=me, kind=kind)
     print({"m": "Shared memory id: %d", "q": "Message queue id: %d", "s": "Semaphore id: %d"}[kind] % ident)
     sys.exit(0)
 if tool == "ipcs":
@@ -604,6 +624,136 @@ save()
 log("ipcrm", removed=removed)
 sys.exit(1 if failed else 0)
 `,
+  // crontab, at, atq and atrm: a fixture table of crontabs per user and at jobs. A part runs under env -i, so its
+  // user is the one whose sudo process is an ancestor. crontab -u needs root for another user; atq lists every job
+  // for root (with the owner in the last column) and the caller's own otherwise; atrm removes as root or as owner.
+  cron: String.raw`
+tool = os.path.basename(sys.argv[0])
+a = sys.argv[1:]
+store = os.path.join(CFG["state"], "cron.json")
+try:
+    with open(store) as handle:
+        state = json.load(handle)
+except OSError:
+    state = {"tabs": {}, "jobs": []}
+def save():
+    tmp = store + ".%d" % os.getpid()
+    with open(tmp, "w") as handle:
+        json.dump(state, handle)
+    os.replace(tmp, store)
+def part_user():
+    starts = {}
+    for target in UIDS:
+        directory = os.path.join(CFG["state"], "procs-" + target)
+        for name in (os.listdir(directory) if os.path.isdir(directory) else []):
+            try:
+                with open(os.path.join(directory, name)) as handle:
+                    starts[int(name)] = (target, handle.read())
+            except (OSError, ValueError):
+                pass
+    pid = os.getpid()
+    while pid > 1:
+        try:
+            with open("/proc/%d/stat" % pid) as handle:
+                rest = handle.read().rsplit(")", 1)[1].split()
+        except OSError:
+            return None
+        if pid in starts and starts[pid][1] == rest[19]:
+            return starts[pid][0]
+        pid = int(rest[1])
+    return None
+me = os.environ.get("FAKE_SUDO_USER") or ("root" if is_root() else (part_user() or CFG["boxUser"]))
+if tool == "crontab":
+    user = me
+    if "-u" in a and a.index("-u") + 1 < len(a):
+        user = a[a.index("-u") + 1]
+        if me != "root" and user != me:
+            log("crontab", op="denied", user=user)
+            sys.stderr.write("crontab: must be privileged to use -u\n")
+            sys.exit(1)
+    rest = [x for k, x in enumerate(a) if not x.startswith("-") and not (k > 0 and a[k - 1] == "-u")]
+    if "-r" in a:
+        found = user in state["tabs"]
+        state["tabs"].pop(user, None)
+        save()
+        log("crontab", op="remove" if found else "remove-none", user=user)
+        if not found:
+            sys.stderr.write("no crontab for %s\n" % user)
+        sys.exit(0 if found else 1)
+    if "-l" in a:
+        log("crontab", op="list", user=user)
+        if user not in state["tabs"]:
+            sys.stderr.write("no crontab for %s\n" % user)
+            sys.exit(1)
+        sys.stdout.write(state["tabs"][user])
+        sys.exit(0)
+    source = rest[0] if rest else "-"
+    if source == "-":
+        text = sys.stdin.read()
+    else:
+        with open(source) as handle:
+            text = handle.read()
+    state["tabs"][user] = text
+    save()
+    log("crontab", op="install", user=user)
+    sys.exit(0)
+if tool in ("at", "batch"):
+    sys.stdin.read()
+    ident = len(state["jobs"]) + 1
+    state["jobs"].append(dict(id=ident, owner=me, removed=False))
+    save()
+    log("at", id=ident, owner=me)
+    sys.stderr.write("job %d at Thu Nov  5 10:00:00 2026\n" % ident)
+    sys.exit(0)
+live = [j for j in state["jobs"] if not j["removed"]]
+if tool == "atq":
+    log("atq")
+    for j in live:
+        if me == "root" or j["owner"] == me:
+            print("%d\tThu Nov  5 10:00:00 2026 a %s" % (j["id"], j["owner"]))
+    sys.exit(0)
+removed, failed = [], False
+for x in a:
+    if x.startswith("-"):
+        continue
+    hit = [j for j in live if str(j["id"]) == x]
+    if hit and (me == "root" or hit[0]["owner"] == me):
+        hit[0]["removed"] = True
+        removed.append(hit[0]["id"])
+    else:
+        failed = True
+save()
+log("atrm", removed=removed)
+sys.exit(1 if failed else 0)
+`,
+  // timeout (only in cases with spec.boxTimeout): the box command that removes cmp-private ends as a timeout
+  // (exit 124) after it ran; every other command runs under the real timeout.
+  timeout: String.raw`
+import subprocess
+a = sys.argv[1:]
+j = 0
+while j < len(a) and a[j].startswith("-") and a[j] != "--":
+    j += 2 if a[j] in ("-k", "-s", "--kill-after", "--signal") else 1
+if j < len(a) and a[j] == "--":
+    j += 1
+cmd = a[j + 1:]
+def content(x):
+    try:
+        if os.path.isfile(x):
+            with open(x, errors="replace") as handle:
+                return handle.read()
+    except OSError:
+        pass
+    return x
+text = "\n".join(content(x) for x in cmd)
+others = ("iptables", "cmp_wrap", "comparison-work", "comparison-jobs", "fetch_private", "cron.deny", "useradd", "versions.sh")
+hit = CFG["boxTimeout"] == "private-remove" and "cmp-private" in text and "rm " in text and not any(w in text for w in others)
+log("timeout", hit=hit)
+if hit:
+    subprocess.call([CFG["real"]["timeout"]] + a)
+    sys.exit(124)
+real("timeout")
+`,
 }
 // The user database for Python programs on the box (no -I): pwd and grp also know cmp-arm and cmp-eval once created.
 const SITECUSTOMIZE = String.raw`import grp, json, pwd
@@ -641,6 +791,8 @@ pwd.getpwnam, pwd.getpwuid, grp.getgrnam, grp.getgrgid = getpwnam, getpwuid, get
 const FAKE_FILES = { sudo: 'sudo', 'nvidia-smi': 'nvidia-smi', iptables: 'rules', ip6tables: 'rules', pkill: 'procs', pgrep: 'procs',
   lscpu: 'lscpu', ldd: 'ldd', find: 'find', id: 'id', getent: 'getent', ipcrm: 'ipc', ipcs: 'ipc', ipcmk: 'ipc',
   chown: 'account', chgrp: 'account', useradd: 'account', adduser: 'account', usermod: 'account', groupadd: 'account', gpasswd: 'account', install: 'account' }
+// Cron and at tools: on the box unless a case has none (spec.noCronTools: they are not on its PATH at all).
+const CRON_TOOLS = ['crontab', 'at', 'batch', 'atq', 'atrm']
 
 // ---- Programs and harness scripts on the box ------------------------------------------------------------------
 // The published program of the fixture. It records its arguments, environment, working directory and standard
@@ -698,12 +850,23 @@ def mode(p):
     return format(os.stat(p).st_mode & 0o7777, "o")
 def names(p):
     return sorted(os.listdir(p)) if os.path.isdir(p) else None
+def entries(p):
+    found = {}
+    for n in os.listdir(p):
+        try:
+            st = os.lstat(os.path.join(p, n))
+        except OSError:
+            continue
+        kind = "link" if os.path.islink(os.path.join(p, n)) else "dir" if os.path.isdir(os.path.join(p, n)) else "file"
+        found[n] = [format(st.st_mode & 0o7777, "o"), kind]
+    return found
 run = {n: (os.readlink(n) if os.path.islink(n) else "notlink") for n in os.listdir(".")}
 row = dict(env={k: v for k, v in os.environ.items() if not k.startswith("FAKE_FD")}, cwd=os.getcwd(), S=S, inv=inv,
     fd1=os.environ["FAKE_FD1"], fd2=os.environ["FAKE_FD2"], invList=names(inv), invMode=mode(inv),
     logMode=mode(os.path.join(inv, "log")), outList=names(out), evalList=names(os.path.join(inv, "eval")),
     homeList=names(os.environ.get("HOME", "/nonexistent")), ehomeList=names(os.path.join(inv, "ehome")), run=run, shared=names(S),
-    boxFiles={n: mode(os.path.join(S, n)) for n in os.listdir(S) if os.path.isfile(os.path.join(S, n)) and not os.path.islink(os.path.join(S, n))})
+    boxFiles={n: mode(os.path.join(S, n)) for n in os.listdir(S) if os.path.isfile(os.path.join(S, n)) and not os.path.islink(os.path.join(S, n))},
+    boxEntries=entries(S))
 with open(os.path.join(out, "adapter.json"), "w") as handle:
     json.dump(row, handle)`
 // Adapter mode useleft: sleep until 0.6 s before the invocation's left_s runs out, counted from the creation of
@@ -731,6 +894,16 @@ def ancestors():
         found.append(cmd)
         pid = parent
     return found
+def entries(p):
+    found = {}
+    for n in os.listdir(p):
+        try:
+            st = os.lstat(os.path.join(p, n))
+        except OSError:
+            continue
+        kind = "link" if os.path.islink(os.path.join(p, n)) else "dir" if os.path.isdir(os.path.join(p, n)) else "file"
+        found[n] = [format(st.st_mode & 0o7777, "o"), kind]
+    return found
 P = os.environ.get("CMP_PRIVATE", "")
 private = {}
 for top, dirs, files in os.walk(P):
@@ -743,7 +916,7 @@ row = dict(env={k: v for k, v in os.environ.items() if not k.startswith("FAKE_FD
     private=private, privateMode=format(os.stat(P).st_mode & 0o7777, "o") if os.path.isdir(P) else None,
     armOut=sorted(os.listdir(os.environ["CMP_ARM_OUT"])), evalList=sorted(os.listdir(os.environ["CMP_EVAL_OUT"])),
     homeList=sorted(os.listdir(os.environ["HOME"])) if os.path.isdir(os.environ.get("HOME", "")) else None,
-    fd1=os.environ["FAKE_FD1"], fd2=os.environ["FAKE_FD2"])
+    fd1=os.environ["FAKE_FD1"], fd2=os.environ["FAKE_FD2"], boxEntries=entries(os.getcwd()))
 with open(os.path.join(os.environ["CMP_EVAL_OUT"], "eval-record.json"), "w") as handle:
     json.dump(row, handle)`
 const FETCH_PY = String.raw`import json, os, sys
@@ -910,6 +1083,33 @@ const FORGERIES = (() => {
     'f-evalrc': edit(value => { value.eval_rc = 2 }),
   }
 })()
+// wrap.json validity, second set (exit statuses null on timeout; argv is the substituted, non-empty argument
+// vector). K1 compares out/result.txt exactly, which both arms write identically: supported only for f-valid.
+const FORGED2 = {
+  ...FORGED, inputs: ['f-valid', 'f-evaltimeout-rc', 'f-timeout-adapterrc', 'f-emptyargv'].map(id => ({ id, spec: { case: 'k', a0: 'ok', a1: 'ok' } })),
+  comparisons: [{ id: 'K1', arm: 'A1', against: 'A0', measure: { output: 'res', comparator: 'exact' }, criterion: 'agreement', direction: 'two_sided',
+    unit: 'per_input_each', pairing: 'paired_replicate', rule: 'all_pairs', confidence: null, margin: null, threshold: null, strict: null,
+    reference: null, missing: 'void', given: [], parts: ['main'] }],
+}
+const FORGERIES2 = (() => {
+  const base = () => JSON.parse(FORGERIES['f-valid'])
+  const edit = change => { const value = base(); change(value); return JSON.stringify(value) + '\n' }
+  return {
+    'f-valid': FORGERIES['f-valid'],
+    // eval_status "timeout" with a non-null eval_rc.
+    'f-evaltimeout-rc': edit(value => { value.eval_status = 'timeout'; value.eval_rc = 0 }),
+    // status "timeout" with no command started (the adapter timed out) and a non-null adapter_rc.
+    'f-timeout-adapterrc': edit(value => { value.status = 'timeout'; value.adapter_rc = 0; value.commands = []; value.eval_status = 'skipped'; value.eval_rc = null; value.eval_wall_s = null; value.eval_gpu_busy_s = null; value.eval_gpu_busy_known = false }),
+    // a command row with an empty argv.
+    'f-emptyargv': edit(value => { value.commands[0].argv = [] }),
+  }
+})()
+// Compute versions: one cheap run per invalid versions.json.
+const VERS = {
+  arms: simpleArms(['A0', 'A1']), inputs: [{ id: 'x', spec: { case: 'k', a0: 'ok', a1: 'ok' } }],
+  outputs: [RES], metrics: [WALL], evaluator: null, replicates: 1, warmup: 0, order_seed: 1,
+  timeout_s: 600, budget_s: 600, bootstrap_seed: 0, bootstrap_resamples: 1000, comparisons: [],
+}
 
 // ---- One workflow run -------------------------------------------------------------------------------------
 const scratch = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_comparison_evaluate_')))
@@ -927,7 +1127,13 @@ function check(label, test) {
 // spec: { design (null: no args.comparison), boxName, ceiling, box ('none' | 'open' | 'refresh'), stub, usersExist,
 // privateReadable, brokenRules, gpuLines, utilNA, stuck, setupExtra, fetchExtra, ipc (every adapter and evaluate.sh
 // leave a System V shared-memory segment), failChown (chown of an invocation's run/ or out/ to the box user fails),
-// forge (input id -> wrap.json text written over every fetched wrap.json of that input) }
+// forge (input id -> wrap.json text written over every fetched wrap.json of that input), ipc may also be
+// { arm, eval } (ipcmk options of the arm parts and the evaluator parts), deny ({ cron, at }: text of an existing
+// /etc/cron.deny or /etc/at.deny; absent otherwise), cronJobs (every adapter and evaluate.sh install a crontab and
+// an at job), noCronTools (no crontab, at, atq or atrm on the box), versions (printed versions.json -> the one
+// versions.sh prints instead), boxTimeout ('private-remove': that box command ends as a timeout) }
+// /etc/cron.deny and /etc/at.deny on the box are the case's files fake/etc/cron.deny and fake/etc/at.deny: bin/box
+// rewrites the paths in the command text, and the fake sudo in its arguments and in a script file it runs as root.
 async function execute(name, spec) {
   if (ONLY && !ONLY.test(name)) return null
   const caseDir = path.join(scratch, name)
@@ -946,10 +1152,34 @@ async function execute(name, spec) {
   const cfg = { log: path.join(fake, 'log.jsonl'), state, users: path.join(state, 'users.json'), real: REAL, boxUser: BOX_USER, boxUid: BOX_UID,
     privateReadable: Boolean(spec.privateReadable), brokenRules: spec.brokenRules ?? {}, gpuLines: spec.gpuLines ?? {}, utilNA: Boolean(spec.utilNA),
     stuck: spec.stuck ?? null, writable, marks: { 'cmp-arm': 'cmparm-', 'cmp-eval': 'cmpeval-' }, gpus: GPUS, driver: DRIVER, cuda: CUDA,
-    cpuModel: CPU_MODEL, cpuCount: CPU_COUNT, caseDir, failChown: Boolean(spec.failChown) }
+    cpuModel: CPU_MODEL, cpuCount: CPU_COUNT, caseDir, failChown: Boolean(spec.failChown),
+    cronDeny: path.join(fake, 'etc', 'cron.deny'), atDeny: path.join(fake, 'etc', 'at.deny'), boxTimeout: spec.boxTimeout ?? null }
+  fs.mkdirSync(path.join(fake, 'etc'), { recursive: true })
+  if (spec.deny?.cron !== undefined) fs.writeFileSync(cfg.cronDeny, spec.deny.cron)
+  if (spec.deny?.at !== undefined) fs.writeFileSync(cfg.atDeny, spec.deny.at)
+  const denySeen = path.join(caseDir, 'deny-seen.log')
   if (spec.usersExist) fs.writeFileSync(cfg.users, JSON.stringify(['cmp-arm', 'cmp-eval']))
-  for (const [tool, kind] of Object.entries(FAKE_FILES))
+  const fakeFiles = { ...FAKE_FILES, ...(spec.noCronTools ? {} : Object.fromEntries(CRON_TOOLS.map(tool => [tool, 'cron']))), ...(spec.boxTimeout ? { timeout: 'timeout' } : {}) }
+  for (const [tool, kind] of Object.entries(fakeFiles))
     writeFile(path.join(fakeBin, tool), PRELUDE.replace('CFG_JSON', () => JSON.stringify(JSON.stringify(cfg))) + FAKES[kind], 0o755)
+  // spec.noCronTools: the box PATH is the fakes plus links to every other program of this host's PATH.
+  let boxPath = null
+  if (spec.noCronTools) {
+    boxPath = path.join(fake, 'shim')
+    fs.mkdirSync(boxPath, { recursive: true })
+    for (const directory of (process.env.PATH ?? '').split(path.delimiter).filter(Boolean)) {
+      let names = []
+      try { names = fs.readdirSync(directory) } catch { continue }
+      for (const entry of names) {
+        const file = path.join(directory, entry), link = path.join(boxPath, entry)
+        if (CRON_TOOLS.includes(entry) || fs.existsSync(link)) continue
+        try { if (!fs.statSync(file).isFile()) continue; fs.accessSync(file, fs.constants.X_OK) } catch { continue }
+        fs.symlinkSync(file, link)
+      }
+    }
+  }
+  const ipcArm = spec.ipc === true ? '-M 4096' : spec.ipc?.arm, ipcEval = spec.ipc === true ? '-M 4096' : spec.ipc?.eval
+  const cronJobs = spec.cronJobs ? 'printf \'* * * * * true\\n\' | crontab - 2>/dev/null\necho true | at now + 1 hour 2>/dev/null\n' : ''
   const fakePython = path.join(fake, 'python')
   writeFile(path.join(fakePython, 'sitecustomize.py'), SITECUSTOMIZE.replace('USERS_JSON', () => JSON.stringify(cfg.users)))
 
@@ -968,7 +1198,9 @@ async function execute(name, spec) {
         'touch data/cmparm-keep-$$ "$CMP_OUT/cmparm-out-$$"']
       files[`arms/${arm.id}.sh`] = '#!/usr/bin/env bash\nset -u\n' + RECORD + `FAKE_FD1=$fd1 FAKE_FD2=$fd2 python3 -c ${q(ADAPTER_PY)}\n` +
         `printf 'adapter-out %s\\n' ${arm.id}\nprintf 'adapter-err %s\\n' ${arm.id} >&2\nprintf '%s\\n' "$CMP_INPUT" > "$CMP_OUT/input.txt"\n` +
-        worldWrites.join('\n') + '\n' + (spec.ipc ? 'ipcmk -M 4096 >/dev/null\n' : '') +
+        worldWrites.join('\n') + '\n' + (ipcArm ? `ipcmk ${ipcArm} >/dev/null\n` : '') + cronJobs +
+        // Whether cmp-arm is a line of the deny files while the arm part runs.
+        `{ if grep -qx cmp-arm ${q(cfg.cronDeny)}; then c=1; else c=0; fi; if grep -qx cmp-arm ${q(cfg.atDeny)}; then t=1; else t=0; fi; printf '%s %s\\n' "$c" "$t" >> ${q(denySeen)}; } 2>/dev/null\n` +
         `mode=$(python3 -c ${q(`import json, os\ns = json.loads(os.environ["CMP_INPUT_SPEC"])\nprint(s.get("${key}", "ok") if isinstance(s, dict) else "ok")`)})\n` +
         `amode=$(python3 -c ${q(`import json, os\ns = json.loads(os.environ["CMP_INPUT_SPEC"])\nprint(s.get("adapter_${key}", "") if isinstance(s, dict) else "")`)})\n` +
         `if [[ $amode == sleep5 ]]; then sleep 5; fi\nif [[ $amode == useleft ]]; then python3 -c ${q(USELEFT_PY)}; fi\n` +
@@ -978,7 +1210,8 @@ async function execute(name, spec) {
     files['cmp_extract.json'] = JSON.stringify({ rules: [] }) + '\n'
     const versions = { A0: { version: '1.0', executable: 'bin/solver' }, A1: { version: '1.1-alt', executable: '@PWD@/bin/alt' },
       A2: { version: '0.9', executable: 'bin/missing-tool' }, evaluator: { version: '2.0', executable: 'bin/scorer' } }
-    const printed = Object.fromEntries(Object.entries(versions).filter(([key]) => key === 'evaluator' ? evaluator : design.arms.some(arm => arm.id === key)))
+    const listed = Object.fromEntries(Object.entries(versions).filter(([key]) => key === 'evaluator' ? evaluator : design.arms.some(arm => arm.id === key)))
+    const printed = spec.versions ? spec.versions(clone(listed)) : listed
     files['versions.sh'] = sh(`python3 -c 'import os, sys; print(sys.argv[1].replace("@PWD@", os.getcwd()))' ${q(JSON.stringify(printed))}`)
     if (evaluator) {
       files['fetch_private.sh'] = '#!/usr/bin/env bash\nset -eu\n' + `python3 -c ${q(FETCH_PY)} ${q(path.join(caseDir, 'fetch-record.json'))}\n` +
@@ -986,7 +1219,7 @@ async function execute(name, spec) {
         `touch "$HOME/cmpeval-home-$$" ${q(path.join(world, 'etmp'))}/cmpeval-fetch-$$\n` + (spec.fetchExtra ?? '') + '\n'
       files['evaluate.sh'] = '#!/usr/bin/env bash\nset -u\n' + RECORD + `FAKE_FD1=$fd1 FAKE_FD2=$fd2 python3 -c ${q(EVAL_PY)}\n` +
         `printf 'evaluated\\n'\nprintf 'evaluator-err\\n' >&2\ntouch ${q(path.join(world, 'etmp'))}/cmpeval-x-$$ ${q(path.join(world, 'tmp'))}/cmpeval-t-$$\n` +
-        (spec.ipc ? 'ipcmk -M 4096 >/dev/null\n' : '') +
+        (ipcEval ? `ipcmk ${ipcEval} >/dev/null\n` : '') + cronJobs +
         'if [[ -e $CMP_ARM_OUT/evalfail ]]; then exit 4; fi\nif [[ -e $CMP_ARM_OUT/evalsleep ]]; then sleep 120; fi\n' +
         'printf \'{"score": 1}\\n\' > "$CMP_EVAL_OUT/score.json"\nexit 0\n'
     }
@@ -1029,7 +1262,8 @@ visit(process.env.BOX_ROOT, 0)
   // The box runs every command under umask 022 (a common default), so files a command creates without an explicit
   // mode are readable by other users.
   writeFile(path.join(caseDir, 'bin/box'), sh('command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\numask 022\n' +
-    `export PATH=${q(fakeBin)}:"$PATH"\nexport HOME=${q(boxHome)}\nexport PYTHONPATH=${q(fakePython)}\nexport CMP_LEAK=leaked SUDO_LEAK=leaked FAKE_KEEP=keepme\n` +
+    `cron_deny=${q(cfg.cronDeny)}\nat_deny=${q(cfg.atDeny)}\ncommand=\${command//\\/etc\\/cron.deny/$cron_deny}\ncommand=\${command//\\/etc\\/at.deny/$at_deny}\n` +
+    `export PATH=${q(fakeBin)}:${boxPath ? q(boxPath) : '"$PATH"'}\nexport HOME=${q(boxHome)}\nexport PYTHONPATH=${q(fakePython)}\nexport CMP_LEAK=leaked SUDO_LEAK=leaked FAKE_KEEP=keepme\n` +
     'cd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n' + refresh +
     'if [[ $command == *timeout* ]]; then\n  for ((end=SECONDS+1800; SECONDS<end; )); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0'), 0o700)
   // spec.forge: after each copy, every fetched wrap.json whose sibling out/input.txt names a forged input is
@@ -1108,6 +1342,7 @@ visit(process.argv[2])
     for (const entry of fs.readdirSync(box)) if (entry.startsWith('m5-') && fs.existsSync(writableFile(path.join(box, entry)))) console.log(`DEBUG ${name} cmp_writable.json ${fs.readFileSync(writableFile(path.join(box, entry)), 'utf8')}`)
   }
   return { name, spec, caseDir, root, agent, control, box, world, boxHome, fakeBin, source, design, evaluator, records, receipts, S, order, jobs,
+    cronDeny: cfg.cronDeny, atDeny: cfg.atDeny, denySeen: fs.existsSync(denySeen) ? fs.readFileSync(denySeen, 'utf8').split('\n').filter(Boolean) : [],
     inv, wrapAt, fetched, startMs, privateBytes, privateSecond, writable, files, sharedBox, allocation, ended,
     log: rows(cfg.log), calls: rows(callsFile), stage: label => records.find(row => row.stage === label),
     ops: receipts.map(receipt => receipt.operation) }
@@ -1244,6 +1479,42 @@ function commonChecks(r) {
       seen++
     }
     assert.ok(seen > 0, 'no adapter record')
+  })
+  check(`${r.name}: while any part runs (arm or evaluator), every remote file of every box command of the evaluate stage on the box (the uploads before comparison-users and comparison-users' own script, log and GPU samples included) is at mode 600; the shared run directory's other entries keep the modes the contract gives them`, () => {
+    const receipts = evaluateReceipts(r), users = receipts.find(receipt => receipt.operation === 'comparison-users')
+    assert.ok(users, 'no comparison-users receipt in the evaluate stage')
+    const earlier = r.receipts.slice(0, r.ops.lastIndexOf('reproduce-freeze') + 1)
+    const snapshots = []
+    for (let i = 0; i < runCount(r); i++) {
+      const arm = path.join(r.inv(i), 'out', 'adapter.json'), evaluated = path.join(r.fetched(r.order[i]), 'eval', 'eval-record.json')
+      if (fs.existsSync(arm)) snapshots.push([`i${i + 1} arm part`, read(arm).boxEntries])
+      if (fs.existsSync(evaluated)) snapshots.push([`i${i + 1} evaluator part`, read(evaluated).boxEntries])
+    }
+    assert.ok(snapshots.length > 0, 'no part record')
+    const bits = mode => parseInt(mode, 8)
+    for (const [where, entries] of snapshots) {
+      assert.ok(entries && typeof entries === 'object', `${where}: no listing of the shared run directory`)
+      const names = Object.keys(entries), own = new Set()
+      for (const receipt of receipts) for (const name of receiptFiles(names, receipt)) {
+        own.add(name)
+        assert.equal(entries[name][0], '600', `${where}: ${name} (${receipt.operation}) at mode ${entries[name][0]}`)
+      }
+      assert.ok(receiptFiles(names, users).includes(`${users.name}.sh`), `${where}: comparison-users' own script is not on the box`)
+      // Step 3: earlier stages' files lose group and other write and gain other read; work folders as created.
+      for (const receipt of earlier) for (const name of receiptFiles(names, receipt)) {
+        if (own.has(name) || entries[name][1] !== 'file') continue
+        const mode = bits(entries[name][0])
+        assert.ok((mode & 0o022) === 0 && (mode & 0o004) !== 0, `${where}: ${name} (${receipt.operation}, an earlier stage) at mode ${entries[name][0]}`)
+      }
+      for (const name of ['data', 'bin', 'lib', 'harness', 'baseline-published']) {
+        assert.ok(entries[name], `${where}: no ${name}/`)
+        const mode = bits(entries[name][0])
+        assert.ok((mode & 0o022) === 0 && (mode & 0o005) === 0o005, `${where}: ${name}/ at mode ${entries[name][0]}`)
+      }
+      assert.equal(entries['comparison-work']?.[0], '711', `${where}: comparison-work/`)
+      assert.equal(entries['comparison-jobs']?.[0], '700', `${where}: comparison-jobs/`)
+      if (r.evaluator) assert.equal(entries['cmp-private']?.[0], '750', `${where}: cmp-private/`)
+    }
   })
   check(`${r.name}: only intake is called (harness_from); every call is isolated`, () => {
     assert.deepEqual(r.calls.map(call => call.label), ['intake'])
@@ -1714,6 +1985,19 @@ function usersChecks(r, { created }) {
       assert.match(shellValue, /(nologin|\/false)$/, `${user}: login shell`)
     }
   })
+  check(`${r.name}: users step 1: ${partUsers.join(' and ')} ${r.evaluator ? 'are lines' : 'is a line (no cmp-eval: no evaluator)'} of /etc/cron.deny and /etc/at.deny (each ${['cron', 'at'].map(kind => r.spec.deny?.[kind] !== undefined ? `${kind}.deny existing, its other lines kept` : `${kind}.deny created`).join(', ')}), before any arm part runs`, () => {
+    for (const [kind, file] of [['cron', r.cronDeny], ['at', r.atDeny]]) {
+      assert.ok(fs.existsSync(file), `/etc/${kind}.deny not created`)
+      const lines = fs.readFileSync(file, 'utf8').split('\n').map(line => line.trim()).filter(Boolean)
+      for (const user of partUsers) assert.ok(lines.includes(user), `/etc/${kind}.deny lacks ${user}: ${JSON.stringify(lines)}`)
+      if (!r.evaluator) assert.ok(!lines.includes('cmp-eval'), `/etc/${kind}.deny names cmp-eval without an evaluator`)
+      const before = (r.spec.deny?.[kind] ?? '').split('\n').map(line => line.trim()).filter(Boolean)
+      const kept = lines.filter(line => before.includes(line))
+      assert.deepEqual(kept, before, `/etc/${kind}.deny: the existing lines are not kept in order`)
+    }
+    assert.ok(r.denySeen.length > 0, 'no arm part recorded the deny files')
+    assert.deepEqual([...new Set(r.denySeen)], ['1 1'], 'cmp-arm (cron.deny at.deny) while arm parts ran')
+  })
   const ruleOf = row => {
     const a = row.argv.filter(arg => arg !== '-w' && arg !== '--wait')
     const op = a.findIndex(arg => ['-A', '-I', '-C', '--append', '--insert', '--check'].includes(arg))
@@ -1850,6 +2134,29 @@ function usersFailure(r, label, evidence) {
   check(`${r.name}: ${label}: the failing check ran`, () => evidence(r))
 }
 
+// Fake-log indices where a part starts (an adapter or evaluate.sh through sudo ... env -i).
+const partStarts = r => r.log.map((row, index) => ({ row, index })).filter(({ row }) => row.tool === 'sudo' && row.cmd?.[0] === 'env' &&
+  (/\/harness\/evaluate\.sh$/.test(row.cmd.at(-1)) || /harness\/arms\/A\d\.sh$/.test(row.cmd.at(-1)))).map(({ index }) => index)
+// Each made object (fake-log index, label, removal test) is removed after it was made and before the next part starts.
+function removedBeforeNextPart(r, made) {
+  const starts = partStarts(r)
+  for (const { index, label, removes } of made) {
+    const removed = r.log.findIndex((item, j) => j > index && removes(item))
+    assert.ok(removed > index, `${label} never removed`)
+    const next = starts.find(start => start > index)
+    if (next !== undefined) assert.ok(removed < next, `${label} removed only after the next part started`)
+  }
+}
+function ipcKindsCheck(r, armKind, evalKind, label) {
+  check(`${r.name}: ${label}`, () => {
+    const made = r.log.map((row, index) => ({ row, index })).filter(({ row }) => row.tool === 'ipcmk')
+    assert.ok(made.some(({ row }) => row.owner === 'cmp-arm' && row.kind === armKind), `no ${armKind} object of an arm part`)
+    assert.ok(made.some(({ row }) => row.owner === 'cmp-eval' && row.kind === evalKind), `no ${evalKind} object of an evaluator part`)
+    removedBeforeNextPart(r, made.map(({ row, index }) => ({ index, label: `${row.kind} object ${row.id} of ${row.owner}`,
+      removes: item => item.tool === 'ipcrm' && (item.removed ?? []).includes(row.id) })))
+  })
+}
+
 // ---- Main ---------------------------------------------------------------------------------------------------
 async function inParallel(jobs, width = 6) {
   const results = new Array(jobs.length)
@@ -1870,7 +2177,7 @@ async function main() {
       // Evaluator; brackets in the box root, so <S> must be escaped in the cleanup's -path patterns; the allocation
       // record gains its confirmed end before takeaways.
       () => execute('main', { design: MAIN, boxName: 'box[1]', box: 'refresh' }),
-      () => execute('noeval', { design: NOEVAL, ceiling: NOEVAL.budget_s + 1 }),
+      () => execute('noeval', { design: NOEVAL, ceiling: NOEVAL.budget_s + 1, deny: { at: '# at.deny of the box\nwww-data\n' } }),
       () => execute('budget', { design: BUDGET, box: 'none', utilNA: true }),
       () => execute('stuck', { design: SMALL, usersExist: true, stuck: 'cmp-arm' }),
       () => execute('plain', { design: null, stub: { profile: 'PASS', seal: 'PASS', propose: 'PASS', implement: 'PASS' } }),
@@ -1896,6 +2203,104 @@ async function main() {
       () => execute('ipc', { design: SMALL, ipc: true }),
       () => execute('forged', { design: FORGED, forge: FORGERIES }),
     ])
+    // Cron and at (with an existing cron.deny; noeval has an existing at.deny), no cron tools, message queues and
+    // semaphore arrays, the second set of forged wrap.json records, invalid versions.json, a timed-out box command.
+    const [cron, noCron, ipc2, forged2, versLacks, versExtra, versRow, boxTimeout] = await inParallel([
+      // A larger budget: the cron and at cleanup adds tool calls to every part, and budget_s 40 can run out by i2.
+      () => execute('cron', { design: { ...SMALL, budget_s: 300 }, cronJobs: true, deny: { cron: '# cron.deny of the box\ndaemon\nnobody\n' } }),
+      () => execute('nocron', { design: SMALL, noCronTools: true }),
+      () => execute('ipc2', { design: SMALL, ipc: { arm: '-Q', eval: '-S 1' } }),
+      () => execute('forged2', { design: FORGED2, forge: FORGERIES2 }),
+      () => execute('versions-lacks-arm', { design: VERS, versions: value => { delete value.A1; return value } }),
+      () => execute('versions-extra-key', { design: VERS, versions: value => ({ ...value, A9: { version: '9', executable: 'bin/alt' } }) }),
+      () => execute('versions-row', { design: VERS, versions: value => ({ ...value, A1: { ...value.A1, note: 'x' } }) }),
+      () => execute('box-timeout', { design: SMALL, boxTimeout: 'private-remove' }),
+    ])
+    if (cron) {
+      commonChecks(cron)
+      sudoPartChecks(cron)
+      usersChecks(cron, { created: true })
+      check('cron: every crontab and at job an arm part or an evaluator part installs is removed (crontab -r -u <user>; atrm of each job atq lists) before the next part runs', () => {
+        const indexed = cron.log.map((row, index) => ({ row, index }))
+        const tabs = indexed.filter(({ row }) => row.tool === 'crontab' && row.op === 'install')
+        const jobs = indexed.filter(({ row }) => row.tool === 'at')
+        for (const user of ['cmp-arm', 'cmp-eval']) {
+          assert.ok(tabs.some(({ row }) => row.user === user), `no crontab installed by ${user}`)
+          assert.ok(jobs.some(({ row }) => row.owner === user), `no at job of ${user}`)
+        }
+        removedBeforeNextPart(cron, [
+          ...tabs.map(({ row, index }) => ({ index, label: `crontab of ${row.user}`,
+            removes: item => item.tool === 'crontab' && item.op === 'remove' && item.user === row.user && item.argv.includes('-r') && item.argv.includes('-u') })),
+          ...jobs.map(({ row, index }) => ({ index, label: `at job ${row.id} of ${row.owner}`,
+            removes: item => item.tool === 'atrm' && (item.removed ?? []).includes(row.id) }))])
+      })
+      check('cron: every invocation still ends ok with eval ok', () => {
+        assert.ok(runCount(cron) > 0, 'no invocation')
+        for (let i = 0; i < runCount(cron); i++) assert.deepEqual([cron.wrapAt(i)?.status, cron.wrapAt(i)?.eval_status], ['ok', 'ok'], `i${i + 1}`)
+      })
+    }
+    if (noCron) {
+      commonChecks(noCron)
+      sudoPartChecks(noCron)
+      usersChecks(noCron, { created: true })
+      check('nocron: a box without crontab, at, atq or atrm passes: every invocation ends ok with eval ok', () => {
+        assert.ok(runCount(noCron) > 0, 'no invocation')
+        for (let i = 0; i < runCount(noCron); i++) assert.deepEqual([noCron.wrapAt(i)?.status, noCron.wrapAt(i)?.eval_status], ['ok', 'ok'], `i${i + 1}`)
+        assert.deepEqual(noCron.log.filter(row => CRON_TOOLS.includes(row.tool)).map(row => row.tool), [], 'a cron tool ran')
+      })
+    }
+    if (ipc2) {
+      commonChecks(ipc2)
+      ipcKindsCheck(ipc2, 'q', 's', 'ipc2: every System V message queue an arm part leaves and every semaphore array an evaluator part leaves is removed before the next part runs')
+    }
+    if (forged2) {
+      check('forged2: comparison_compute.json: each invalid wrap.json (eval_status timeout with a non-null eval_rc, status timeout with a non-null adapter_rc and no command started, a command row with an empty argv) gives status invalid and null values; the valid control is used', () => {
+        const compute = read(path.join(forged2.agent, 'results', 'evaluate', 'comparison_compute.json'))
+        assert.equal(compute.invocations.length, forged2.order.length)
+        compute.invocations.forEach((row, i) => {
+          const job = forged2.order[i], where = `row ${i + 1} ${job.arm}/${job.input}`
+          if (job.input === 'f-valid') {
+            assert.equal(row.status, 'ok', `${where} status (the forged valid record was not read)`)
+            near(row.wall_s, 1.5, `${where} wall_s`)
+          } else invalidRow(row, where)
+        })
+      })
+      check('forged2: through the scorer, each of these invalid wrap.json records is a missing value (exact agreement of out/result.txt void, missing_values); the valid control is supported', () => {
+        const rows = read(path.join(forged2.control, 'comparison_scored.json')).comparisons[0].rows
+        assert.deepEqual(rows.map(row => row.input), FORGED2.inputs.map(item => item.id))
+        for (const row of rows) {
+          if (row.input === 'f-valid') assert.equal(row.outcome, 'supported', row.input)
+          else assert.deepEqual([row.outcome, row.reason], ['void', 'missing_values'], row.input)
+        }
+      })
+    }
+    for (const [r, what] of [[versLacks, 'lacks an arm'], [versExtra, 'has an extra key'], [versRow, 'has a row that is not exactly {version, executable}']]) {
+      if (!r) continue
+      statuses(r, CMP_PASS)
+      check(`${r.name}: comparison_compute.json versions is null when versions.json ${what}`, () => {
+        const compute = read(path.join(r.agent, 'results', 'evaluate', 'comparison_compute.json'))
+        assert.ok(Object.hasOwn(compute, 'versions'), 'no versions key')
+        assert.equal(compute.versions, null)
+      })
+    }
+    if (boxTimeout) {
+      const facts = () => boxTimeout.stage('evaluate')?.facts
+      check('box-timeout: the comparison-private-remove box command timed out (a receipt with timed_out true or rc 124)', () => {
+        const removal = boxTimeout.receipts.filter(receipt => receipt.operation === 'comparison-private-remove')
+        assert.ok(removal.length > 0, `no comparison-private-remove receipt: ${JSON.stringify(boxTimeout.ops)}`)
+        assert.ok(removal.some(receipt => receipt.timed_out === true || receipt.rc === 124), `no timeout: ${JSON.stringify(removal.map(receipt => [receipt.rc, receipt.timed_out]))}`)
+      })
+      check('box-timeout: evaluate facts stay null in comparison mode when an evaluate box command times out (timed_out, budget_s and overrun included, when present)', () => {
+        assert.ok(facts(), 'no evaluate record')
+        for (const key of FACTS) assert.ok(Object.hasOwn(facts(), key), `facts lack ${key}`)
+        for (const [key, value] of Object.entries(facts())) assert.equal(value, null, `facts.${key}`)
+        for (const key of ['timed_out', 'budget_s', 'overrun']) assert.equal(facts()[key] ?? null, null, `facts.${key}`)
+      })
+      check('box-timeout: the removal\'s outcome changes no outcome: evaluate PASS with C/comparison_scored.json written', () => {
+        assert.equal(boxTimeout.stage('evaluate')?.status, 'PASS')
+        assert.ok(fs.existsSync(path.join(boxTimeout.control, 'comparison_scored.json')))
+      })
+    }
     for (const [r, file] of [[tamperAdapter, 'harness/arms/A1.sh'], [tamperEvaluate, 'harness/evaluate.sh'], [tamperVersions, 'harness/versions.sh']]) {
       usersFailure(r, `${file} changed on the box after the upload`, value => {
         assert.deepEqual(value.log.filter(row => ['useradd', 'adduser'].includes(row.tool)).map(row => row.argv), [], 'users created before the hash check')

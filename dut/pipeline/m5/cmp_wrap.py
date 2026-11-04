@@ -172,6 +172,15 @@ class Invocation:
                     column = row.index("uid")
                 elif column is not None and len(row) > column and row[0].isdigit() and row[column] in (user, str(uid)):
                     sudo("ipcrm", flag, row[0])
+        # The user's crontab and at jobs, each only when the tool is installed.
+        if shutil.which("crontab"):
+            sudo("crontab", "-r", "-u", user)
+        if shutil.which("atq") and shutil.which("atrm"):
+            listing = subprocess.run(["sudo", "-n", "atq"], stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
+                                     stderr=subprocess.DEVNULL, text=True).stdout
+            for row in (line.split() for line in listing.splitlines()):
+                if len(row) > 1 and row[-1] == user:
+                    sudo("atrm", row[0])
         return left
 
     def process(self, user, argv, cwd, env, name, end):

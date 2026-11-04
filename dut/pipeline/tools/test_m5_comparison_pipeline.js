@@ -286,7 +286,8 @@ const MINIMAL = {
 
 // ---- One workflow run -------------------------------------------------------------------------------------
 // spec: { comparison (args value, or function of {designFile, caseDir}), design (value or raw text; undefined =
-// none written), designKind ('file'|'directory'|'missing'), git (design inside a git work tree), generated (no
+// none written), designKind ('file'|'directory'|'missing'|'link': a symbolic link to a design in a git work tree
+// elsewhere), git (design inside a git work tree), generated (no
 // harness_from), cmpFiles (relative name -> text or null, overriding comparisonFiles), brief, sudo (true|false|
 // 'absent'|other), setupFailures, anchorsFailures, repairTamper, declineRepairs, ceiling (args.run_ceiling_s),
 // card, unitsCheck, unitsProbe, stub (args.stub), inside ('root'|'journal'|'design': that path inside the pipeline
@@ -317,6 +318,14 @@ async function execute(name, spec) {
   for (const directory of [box, reference, path.join(root, 'home'), designDir]) fs.mkdirSync(directory, { recursive: true })
   if (spec.git) fs.mkdirSync(path.join(science, '.git'))
   const kind = spec.designKind ?? 'file'
+  // designKind 'link': designFile is a symbolic link to a file in a git work tree elsewhere (outside the pipeline
+  // working directory and outside the link's own folder).
+  const linkTree = path.join(caseDir, 'elsewhere', 'CMPTREE'), linkTarget = path.join(linkTree, 'deep', 'plans', 'design-CMPTARGET.json')
+  if (kind === 'link') {
+    fs.mkdirSync(path.join(linkTree, '.git'), { recursive: true })
+    writeFile(linkTarget, JSON.stringify(spec.design, null, 1) + '\n')
+    fs.symlinkSync(linkTarget, designFile)
+  }
   if (kind === 'file' && spec.design !== undefined) writeFile(designFile, typeof spec.design === 'string' ? spec.design : JSON.stringify(spec.design, null, 1) + '\n')
   if (kind === 'directory') fs.mkdirSync(designFile, { recursive: true })
   const designValue = spec.design && typeof spec.design === 'object' ? spec.design : null
@@ -408,6 +417,7 @@ visit(process.env.BOX_ROOT)
   const written = label => { const file = path.join(caseDir, `written-${label}.json`); return fs.existsSync(file) ? read(file) : null }
   const remote = fs.readdirSync(box).filter(entry => entry.startsWith('m5-')).map(entry => path.join(box, entry, 'harness')).find(dir => fs.existsSync(dir)) ?? null
   return { name, spec, caseDir, root, agent, control, source, designFile, designAbs, designDir, science, brief, records, receipts, cmpFiles,
+    linkTree: kind === 'link' ? linkTree : null, linkTarget: kind === 'link' ? linkTarget : null,
     calls: rows(callsFile), boxLog: rows(path.join(caseDir, 'box-state.jsonl')), first: fs.existsSync(firstFile) ? read(firstFile) : null,
     written, remote, stage: label => records.find(row => row.stage === label) }
 }
@@ -460,8 +470,10 @@ function controlFileChecks(r, value, sourceFile = r.designFile) {
   check(`${r.name}: C/comparison.json exactly {source, source_sha256, design}`, () => {
     const record = read(cmpFile)
     assert.deepEqual(Object.keys(record).sort(), ['design', 'source', 'source_sha256'])
-    assert.equal(record.source, sourceFile, 'source is not the absolute design path')
-    assert.equal(record.source_sha256, sha(fs.readFileSync(sourceFile)))
+    // A design reached through a symbolic link may be recorded by the link's path or by its target's.
+    const sources = [].concat(sourceFile)
+    assert.ok(sources.includes(record.source), `source ${record.source} is not the absolute design path (${sources.join(' or ')})`)
+    assert.equal(record.source_sha256, sha(fs.readFileSync(sources[0])))
     assert.deepEqual(record.design, value)
   })
   check(`${r.name}: C/comparison_seal.json exactly {comparison_sha256, sealed_utc}`, () => {
@@ -496,9 +508,9 @@ function controlFileChecks(r, value, sourceFile = r.designFile) {
 }
 // Isolation of every agent call: descriptor, view contents at the call, views removed afterwards.
 const strip = (listingValue, prefix) => Object.fromEntries(Object.entries(listingValue ?? {}).map(([key, value]) => [prefix + key, value]))
-function isolationChecks(r, { journal = path.join(r.agent, 'wf'), gitTop = null } = {}) {
+function isolationChecks(r, { journal = path.join(r.agent, 'wf'), gitTop = null, extraHidden = [] } = {}) {
   const viewSha = sha(fs.readFileSync(path.join(r.agent, 'comparison_view.json')))
-  const hiddenWanted = [r.root, journal, path.dirname(r.designAbs), ...(gitTop ? [gitTop] : [])]
+  const hiddenWanted = [r.root, journal, path.dirname(r.designAbs), ...(gitTop ? [gitTop] : []), ...extraHidden]
   check(`${r.name}: every agent call is dispatched with isolation (fresh view under the temporary directory, box_access false)`, () => {
     assert.ok(r.calls.length > 0, 'no agent call')
     const seen = new Set()
@@ -514,10 +526,11 @@ function isolationChecks(r, { journal = path.join(r.agent, 'wf'), gitTop = null 
       seen.add(iso.directory)
     }
   })
-  check(`${r.name}: isolation hidden holds the run root, the journal directory, the design's folder${gitTop ? ' and its git work tree' : ''}`, () => {
+  check(`${r.name}: isolation hidden holds the run root, the journal directory, the design's folder${gitTop ? ' and its git work tree' : ''}${extraHidden.length ? `, and ${extraHidden.map(item => path.relative(r.caseDir, item)).join(', ')}` : ''}`, () => {
     for (const call of r.calls) {
       const hidden = (call.isolation?.hidden ?? []).map(entry => path.resolve(entry))
-      for (const wanted of hiddenWanted) assert.ok(hidden.includes(path.resolve(wanted)), `${call.label}: hidden ${JSON.stringify(hidden)} lacks ${wanted}`)
+      const real = file => { try { return fs.realpathSync(file) } catch { return path.resolve(file) } }
+      for (const wanted of hiddenWanted) assert.ok(hidden.includes(path.resolve(wanted)) || hidden.includes(real(wanted)), `${call.label}: hidden ${JSON.stringify(hidden)} lacks ${wanted}`)
     }
   })
   for (const call of r.calls) check(`${r.name}: ${call.label} view holds exactly what the contract lists`, () => {
@@ -1125,6 +1138,23 @@ async function main() {
     // isolation runner exposes to every agent call): intake fails with parse before any agent call.
     const inside = await inParallel(['root', 'journal', 'design'].map(where => () => execute(`inside-${where}`, { comparison, design: BASE, inside: where })))
     for (const r of inside) intakeParse(r)
+
+    // 7. A design path reached through a symbolic link outside the pipeline working directory, whose target lies in
+    // a git work tree elsewhere: every agent call hides the target's folder and that work tree, besides the link's folder.
+    const [viaLink] = await inParallel([() => execute('design-link', { comparison, design: BASE, designKind: 'link', generated: true, setupFailures: 1 })])
+    if (viaLink) {
+      statuses(viaLink, CMP_PASS)
+      controlFileChecks(viaLink, BASE, [viaLink.designFile, viaLink.linkTarget])
+      isolationChecks(viaLink, { extraHidden: [path.dirname(viaLink.linkTarget), viaLink.linkTree] })
+      promptChecks(viaLink, plain)
+      check('design-link: calls are intake, harness and one setup repair, each hiding the link target\'s folder and its work tree', () => {
+        assert.deepEqual(viaLink.calls.map(call => call.label), ['intake', 'harness', 'harness-repair'])
+      })
+      check('design-link: no prompt names the link target, its folder or its work tree', () => {
+        for (const call of viaLink.calls) for (const needle of [viaLink.linkTarget, path.dirname(viaLink.linkTarget), viaLink.linkTree, 'CMPTARGET', 'CMPTREE'])
+          assert.ok(!call.prompt.includes(needle), `${call.label} prompt names ${needle}`)
+      })
+    }
   } catch (error) { failures++; console.log(`FAIL test harness: ${error.stack}`) }
   finally {
     if (process.argv[3] === 'keep') console.log(`scratch kept: ${scratch}`)

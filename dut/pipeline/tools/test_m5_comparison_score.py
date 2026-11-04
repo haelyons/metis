@@ -564,6 +564,23 @@ def invalid_cases():
     ]
     for name, what, change in rejected:
         invalid_checks(base('invalid-design-' + name, d=bad_design(change)), 'a sealed design intake would reject (%s)' % what)
+    # Sealed design bytes holding NaN, Infinity or -Infinity (not JSON): in an input's spec and in the evaluator's
+    # spec. The harness and invocations are built from the finite design; the seals match the written bytes.
+    for where in ('input', 'evaluator'):
+        for token, value in (('nan', float('nan')), ('infinity', float('inf')), ('minus-infinity', float('-inf'))):
+            good_d = bad_design(lambda d: None)
+            sealed_d = json.loads(json.dumps(good_d))
+            if where == 'input':
+                sealed_d['inputs'][0]['spec']['scale'] = value
+            else:
+                sealed_d['evaluator']['spec']['scale'] = value
+            raw = (json.dumps({'source': '/nonexistent/designs/comparison-design.json', 'source_sha256': 'a' * 64,
+                               'design': sealed_d}, indent=1) + '\n').encode()
+            spelled = {'nan': b'NaN', 'infinity': b'Infinity', 'minus-infinity': b'-Infinity'}[token]
+            r = base('invalid-design-%s-spec-%s' % (where, token), d=good_d, comparison_raw=raw)
+            check('%s: the sealed bytes hold %s' % (r.name, spelled.decode()), lambda raw=raw, spelled=spelled: assert_(
+                spelled in raw, 'fixture'))
+            invalid_checks(r, 'a sealed design whose bytes hold %s in the %s spec (matching seals)' % (spelled.decode(), where))
     # An eval location when the design has no evaluator.
     invalid_checks(base('invalid-eval-location-without-evaluator', evaluator=False,
                         cmp_files_raw=json.dumps({'files': {'A0': {'o': 'eval/o.txt'}, 'A1': {'o': 'out/o.txt'}}}).encode()),
@@ -633,10 +650,19 @@ def wrap_validity_cases():
         'evalrc': forged(lambda w: w.update(eval_rc=2)),
         'strwall': forged(lambda w: w.update(adapter_wall_s='0.5')),
         'boolrc': forged(lambda w: w.update(adapter_rc=False)),
+        # Exit statuses are null on timeout: eval_status "timeout" with an eval_rc (0, and nonzero).
+        'evaltimeoutrc': forged(lambda w: w.update(eval_status='timeout', eval_rc=0)),
+        'evaltimeoutrc9': forged(lambda w: w.update(eval_status='timeout', eval_rc=9)),
+        # status "timeout" with no command started (the adapter timed out) and a non-null adapter_rc.
+        'timeoutadapterrc': forged(lambda w: w.update(status='timeout', adapter_rc=0, commands=[], eval_status='skipped',
+                                                      eval_rc=None, eval_wall_s=None, eval_gpu_busy_s=None,
+                                                      eval_gpu_busy_known=False)),
+        # A command row's argv is the substituted, non-empty argument vector.
+        'emptyargv': forged(cmd0(argv=[])),
     }
     names = [n for n in cells if n != 'valid']
     # A design holds at most 10 inputs: the valid control and up to 9 invalid records per run.
-    for part, chunk in enumerate([names[:9], names[9:]], 1):
+    for part, chunk in enumerate([names[:9], names[9:18], names[18:]], 1):
         ins = ['valid'] + chunk
         d = design(inputs=ins, metrics=[metric('wall', 'trusted_wall'), metric('v')], evaluator=True, comparisons=[
             ni('K1', 'wall', 'lower_better', {'abs': 100}, **vs_ref({i: 0 for i in ins})),
