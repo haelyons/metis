@@ -1,0 +1,385 @@
+{
+  "arms": [
+    {
+      "id": "A0",
+      "what": "Seed configuration 1: the published MEGADOCK CPU build with standard rotational sampling and the shared scoring settings, followed by reconstruction of every ranked model with the published decoygen and assembly of each model as receptor records, then ligand records, then one END line.",
+      "commands": [
+        [
+          "baseline-published/megadock/megadock",
+          "-R",
+          "{spec:/prepared/receptor}",
+          "-L",
+          "{spec:/prepared/ligand}",
+          "-o",
+          "{out}/docking.out",
+          "-N",
+          "50",
+          "-t",
+          "1",
+          "-v",
+          "1.2",
+          "-e",
+          "1.0",
+          "-d",
+          "1.0",
+          "-a",
+          "-45.0",
+          "-b",
+          "1.0",
+          "-f",
+          "3",
+          "-r",
+          "3600"
+        ],
+        [
+          "bash",
+          "-c",
+          "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+          "{out}",
+          "{spec:/prepared/receptor}",
+          "{spec:/prepared/ligand}"
+        ]
+      ],
+      "env": {
+        "OMP_NUM_THREADS": "26",
+        "OMP_DYNAMIC": "FALSE",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "LC_ALL": "C",
+        "LANG": "C",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    },
+    {
+      "id": "A1",
+      "what": "Seed configuration 2: the published MEGADOCK GPU build with the same sampling and scientific settings as A0, followed by the same reconstruction and assembly as A0.",
+      "commands": [
+        [
+          "baseline-published/megadock/megadock-gpu",
+          "-R",
+          "{spec:/prepared/receptor}",
+          "-L",
+          "{spec:/prepared/ligand}",
+          "-o",
+          "{out}/docking.out",
+          "-N",
+          "50",
+          "-t",
+          "1",
+          "-v",
+          "1.2",
+          "-e",
+          "1.0",
+          "-d",
+          "1.0",
+          "-a",
+          "-45.0",
+          "-b",
+          "1.0",
+          "-f",
+          "3",
+          "-r",
+          "3600"
+        ],
+        [
+          "bash",
+          "-c",
+          "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+          "{out}",
+          "{spec:/prepared/receptor}",
+          "{spec:/prepared/ligand}"
+        ]
+      ],
+      "env": {
+        "OMP_NUM_THREADS": "26",
+        "OMP_DYNAMIC": "FALSE",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "LC_ALL": "C",
+        "LANG": "C",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    },
+    {
+      "id": "A2",
+      "what": "Duplicate of A0: the same commands and environment as A0, run as a separate invocation.",
+      "commands": [
+        [
+          "baseline-published/megadock/megadock",
+          "-R",
+          "{spec:/prepared/receptor}",
+          "-L",
+          "{spec:/prepared/ligand}",
+          "-o",
+          "{out}/docking.out",
+          "-N",
+          "50",
+          "-t",
+          "1",
+          "-v",
+          "1.2",
+          "-e",
+          "1.0",
+          "-d",
+          "1.0",
+          "-a",
+          "-45.0",
+          "-b",
+          "1.0",
+          "-f",
+          "3",
+          "-r",
+          "3600"
+        ],
+        [
+          "bash",
+          "-c",
+          "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+          "{out}",
+          "{spec:/prepared/receptor}",
+          "{spec:/prepared/ligand}"
+        ]
+      ],
+      "env": {
+        "OMP_NUM_THREADS": "26",
+        "OMP_DYNAMIC": "FALSE",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "LC_ALL": "C",
+        "LANG": "C",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    },
+    {
+      "id": "A3",
+      "what": "Duplicate of A1: the same commands and environment as A1, run as a separate invocation.",
+      "commands": [
+        [
+          "baseline-published/megadock/megadock-gpu",
+          "-R",
+          "{spec:/prepared/receptor}",
+          "-L",
+          "{spec:/prepared/ligand}",
+          "-o",
+          "{out}/docking.out",
+          "-N",
+          "50",
+          "-t",
+          "1",
+          "-v",
+          "1.2",
+          "-e",
+          "1.0",
+          "-d",
+          "1.0",
+          "-a",
+          "-45.0",
+          "-b",
+          "1.0",
+          "-f",
+          "3",
+          "-r",
+          "3600"
+        ],
+        [
+          "bash",
+          "-c",
+          "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+          "{out}",
+          "{spec:/prepared/receptor}",
+          "{spec:/prepared/ligand}"
+        ]
+      ],
+      "env": {
+        "OMP_NUM_THREADS": "26",
+        "OMP_DYNAMIC": "FALSE",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "LC_ALL": "C",
+        "LANG": "C",
+        "CUDA_VISIBLE_DEVICES": "0"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "f1a19",
+      "spec": {
+        "pinder_release": "2024-02",
+        "pinder_system": "1a19__A1_P11540--1a19__B1_P11540",
+        "kind": "holo test-set monomers",
+        "receptor_source": {
+          "name": "test_set_pdbs/1a19__A1_P11540-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__A1_P11540-R.pdb",
+          "bytes": 58320,
+          "sha256": "08cba0488510ac98b618ab9b963306d7d67459bcab501b54e9dd8214f8f63e63"
+        },
+        "ligand_source": {
+          "name": "test_set_pdbs/1a19__B1_P11540-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__B1_P11540-L.pdb",
+          "bytes": 58320,
+          "sha256": "9d02d5646d3ba8b13699e83d11ec1d4ed833888e1aa2522d944de0393332bde7"
+        },
+        "prepared": {
+          "receptor": "data/fixtures/f1a19/R.pdb",
+          "ligand": "data/fixtures/f1a19/L.pdb"
+        },
+        "reference": {
+          "access": "evaluator private data only",
+          "name": "pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+          "bytes": 116559,
+          "sha256": "9b112ee5082081cb9c111a3015449c72161332819251d200f6971e3f3336c7f2"
+        }
+      }
+    },
+    {
+      "id": "f1dtd",
+      "spec": {
+        "pinder_release": "2024-02",
+        "pinder_system": "1dtd__A1_P48052--1dtd__B1_P81511",
+        "kind": "holo test-set monomers",
+        "receptor_source": {
+          "name": "test_set_pdbs/1dtd__A1_P48052-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__A1_P48052-R.pdb",
+          "bytes": 192132,
+          "sha256": "2075e71ae732971c2f78286b554a5baad632f38b383decb8ff8859cd88807394"
+        },
+        "ligand_source": {
+          "name": "test_set_pdbs/1dtd__B1_P81511-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__B1_P81511-L.pdb",
+          "bytes": 38313,
+          "sha256": "b693ffc0dc24f0cf4ba456bcb7ca115a8f1879e747aa3c87245aeec727315797"
+        },
+        "prepared": {
+          "receptor": "data/fixtures/f1dtd/R.pdb",
+          "ligand": "data/fixtures/f1dtd/L.pdb"
+        },
+        "reference": {
+          "access": "evaluator private data only",
+          "name": "pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+          "bytes": 230364,
+          "sha256": "95c095234280fb888c3ef9441f3393fc816223a960131f7dcddab2c0dbae9706"
+        }
+      }
+    },
+    {
+      "id": "f1glj",
+      "spec": {
+        "pinder_release": "2024-02",
+        "pinder_system": "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+        "kind": "holo test-set monomers",
+        "receptor_source": {
+          "name": "test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+          "bytes": 316791,
+          "sha256": "7131a9741f10136dce36e02b8282a5df0cafc97021fd932c7cf0a92cf8eae87a"
+        },
+        "ligand_source": {
+          "name": "test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+          "bytes": 316791,
+          "sha256": "887d53373e51eaa7a717841c3038ebb2e6c31796aad2927a93b698f379c72ca5"
+        },
+        "prepared": {
+          "receptor": "data/fixtures/f1glj/R.pdb",
+          "ligand": "data/fixtures/f1glj/L.pdb"
+        },
+        "reference": {
+          "access": "evaluator private data only",
+          "name": "pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+          "bytes": 633501,
+          "sha256": "b9650bb0452f3f6def3954f96a30be7e2fa5f246bf308385dcd0b6ea7756903c"
+        }
+      }
+    },
+    {
+      "id": "f1ht8",
+      "spec": {
+        "pinder_release": "2024-02",
+        "pinder_system": "1ht8__A1_P05979--1ht8__B1_P05979",
+        "kind": "holo test-set monomers",
+        "receptor_source": {
+          "name": "test_set_pdbs/1ht8__A1_P05979-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__A1_P05979-R.pdb",
+          "bytes": 362718,
+          "sha256": "b51981e47c916bb095d67a38bdbab04464a3581d85e51898c33bb2ad44bd5da0"
+        },
+        "ligand_source": {
+          "name": "test_set_pdbs/1ht8__B1_P05979-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__B1_P05979-L.pdb",
+          "bytes": 362718,
+          "sha256": "02e7cb2b1d019063502be0dac261bcc39c8f2b7c558a58af9d9e77ab0b7838d7"
+        },
+        "prepared": {
+          "receptor": "data/fixtures/f1ht8/R.pdb",
+          "ligand": "data/fixtures/f1ht8/L.pdb"
+        },
+        "reference": {
+          "access": "evaluator private data only",
+          "name": "pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+          "bytes": 725355,
+          "sha256": "db9192a30142d9d8f364ff13b4191841af7f4aa0ecd85b688fb8b9cef70fffd9"
+        }
+      }
+    }
+  ],
+  "outputs": [
+    {
+      "name": "transforms",
+      "what": "The rotation and translation fields of every ranked prediction row of the arm's docking.out (all fields of the row except the last), in file order.",
+      "format": "text_numbers",
+      "select": "^[ \\t]*([-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+)[ \\t]+[-+0-9.eE]+[ \\t]*$"
+    },
+    {
+      "name": "scores",
+      "what": "The score field (the last field) of every ranked prediction row of the arm's docking.out, in file order.",
+      "format": "text_numbers",
+      "select": "^[ \\t]*[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+([-+0-9.eE]+)[ \\t]*$"
+    },
+    {
+      "name": "coords",
+      "what": "The x, y and z coordinate columns of every ATOM and HETATM record of the arm's assembled models, models taken in rank order.",
+      "format": "text_numbers",
+      "select": "^(?:ATOM  |HETATM).{24}(.{24})"
+    },
+    {
+      "name": "dockq",
+      "what": "The evaluator's DockQ value for each of the arm's assembled models, as one JSON array in rank order, in a file that holds no other number.",
+      "format": "json_numbers",
+      "select": null
+    }
+  ],
+  "metrics": [
+    {
+      "name": "wall",
+      "unit": "s",
+      "what": "Trusted wall of the invocation: adapter and arm commands, plus the evaluator part.",
+      "source": "trusted_wall",
+      "reduce": null,
+      "expect_count": null
+    }
+  ],
+  "evaluator": {
+    "what": "The published DockQ implementation of PINDER (pinder_eval, BiotiteDockQ) at the pinned source, scoring each assembled model of one invocation against the input's native complex with the model's chains R and L mapped to the native's receptor and ligand chains.",
+    "spec": {
+      "program": "pinder (pinder.eval.dockq, BiotiteDockQ)",
+      "repository": "https://github.com/pinder-org/pinder",
+      "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+      "archive_url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+      "archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+      "private_data": "for each input, the native complex named in spec.reference, fetched by fetch_private.sh from its URL and checked against its SHA-256 and byte count",
+      "reads": "the model_<rank>.pdb files under CMP_ARM_OUT, in rank order",
+      "writes": "CMP_EVAL_OUT/dockq.json, one JSON array of the DockQ values in rank order and no other number; any per-model detail goes to a separate file under CMP_EVAL_OUT"
+    }
+  },
+  "replicates": 6,
+  "warmup": 1
+}

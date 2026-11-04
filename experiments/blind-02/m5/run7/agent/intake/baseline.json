@@ -1,0 +1,121 @@
+{
+  "repo": "https://github.com/akiyamalab/MEGADOCK",
+  "commit": "9575280c875732553266e26adc607dd892b02616",
+  "build_commands": [
+    "if [[ ! -d baseline-published/cuda-samples/.git ]]; then\n    git clone --depth 1 --branch v12.8 https://github.com/NVIDIA/cuda-samples baseline-published/cuda-samples\nfi\ngit -C baseline-published/cuda-samples describe --tags --exact-match\nsamples=$(pwd)/baseline-published/cuda-samples\nmake -C baseline-published/megadock -j 8 USE_GPU=0 USE_MPI=0 \\\n    CPPCOMPILER=/usr/bin/g++ FFTW_INSTALL_PATH=/usr \\\n    FFTW_CFLAGS=-I/usr/include FFTW_LDFLAGS='-lm -L/usr/lib/x86_64-linux-gnu -lfftw3f'\nmake -C baseline-published/megadock -j 8 USE_GPU=1 USE_MPI=0 \\\n    CPPCOMPILER=/usr/bin/g++ SM_VERSIONS=sm_90 \\\n    \"NVCC=$CUDA_NVCC -Xcompiler -fopenmp -arch=sm_90 -use_fast_math\" \\\n    \"INCLUDES=-Isrc -I$CUDA_INCLUDE -I$samples/Common\" \\\n    FFTW_CFLAGS=-I/usr/include \\\n    \"LIB=-lm -L/usr/lib/x86_64-linux-gnu -lfftw3f -L$CUDA_LIB -Wl,-rpath,$CUDA_LIB -lcudart -lcufft\""
+  ],
+  "run_commands": [
+    [
+      "baseline-published/megadock/megadock",
+      "-R",
+      "{spec:/prepared/receptor}",
+      "-L",
+      "{spec:/prepared/ligand}",
+      "-o",
+      "{out}/docking.out",
+      "-N",
+      "50",
+      "-t",
+      "1",
+      "-v",
+      "1.2",
+      "-e",
+      "1.0",
+      "-d",
+      "1.0",
+      "-a",
+      "-45.0",
+      "-b",
+      "1.0",
+      "-f",
+      "3",
+      "-r",
+      "3600"
+    ],
+    [
+      "bash",
+      "-c",
+      "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+      "{out}",
+      "{spec:/prepared/receptor}",
+      "{spec:/prepared/ligand}"
+    ]
+  ],
+  "published_configuration": {
+    "description": "Seed configuration 1: the published MEGADOCK CPU build with standard rotational sampling and the shared scoring settings, followed by reconstruction of every ranked model with the published decoygen and assembly of each model as receptor records, then ligand records, then one END line.",
+    "commands": [
+      [
+        "baseline-published/megadock/megadock",
+        "-R",
+        "{spec:/prepared/receptor}",
+        "-L",
+        "{spec:/prepared/ligand}",
+        "-o",
+        "{out}/docking.out",
+        "-N",
+        "50",
+        "-t",
+        "1",
+        "-v",
+        "1.2",
+        "-e",
+        "1.0",
+        "-d",
+        "1.0",
+        "-a",
+        "-45.0",
+        "-b",
+        "1.0",
+        "-f",
+        "3",
+        "-r",
+        "3600"
+      ],
+      [
+        "bash",
+        "-c",
+        "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+        "{out}",
+        "{spec:/prepared/receptor}",
+        "{spec:/prepared/ligand}"
+      ]
+    ],
+    "env": {
+      "OMP_NUM_THREADS": "26",
+      "OMP_DYNAMIC": "FALSE",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "LC_ALL": "C",
+      "LANG": "C",
+      "CUDA_VISIBLE_DEVICES": "0"
+    },
+    "sampling": "3600 rotations for every arm",
+    "retained_predictions": 50,
+    "source": [
+      "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+      "../comparison_view.json"
+    ],
+    "scope": "The specified fixture configuration is supplied by the owner brief/view using published MEGADOCK code; no independently published numerical results for these exact fixtures are asserted."
+  },
+  "sources": {
+    "repo": "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+    "commit": "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+    "build_commands": "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+    "run_commands": "../comparison_view.json",
+    "published_configuration": [
+      "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+      "../comparison_view.json"
+    ]
+  },
+  "build_status": "Recorded commands only; no builds or workloads executed. CUDA path variables must be discovered and bound on target as stated in brief.",
+  "evaluator_build_commands": [
+    "python3 -m venv --system-site-packages \"$VENV\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade \"setuptools>=64\" \"setuptools_scm>=8\" packaging wheel 2>&1 \\\n  | tee \"$SOUT/pip_install_build_tools.log\"\nSETUPTOOLS_SCM_PRETEND_VERSION=\"$PINDER_SCM_VERSION\" SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PINDER=\"$PINDER_SCM_VERSION\" \\\n  \"$VPY\" -m pip install --no-cache-dir --no-build-isolation \"$WORK/$BP/pinder-src\" 2>&1 | tee \"$SOUT/pip_install_pinder.log\"\n\"$VPY\" -m pip install --no-cache-dir fire 2>&1 | tee \"$SOUT/pip_install_fire.log\"\nprintf 'numpy<2\\n' > \"$SOUT/venv_constraints.txt\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade -c \"$SOUT/venv_constraints.txt\" networkx pandas scikit-learn 2>&1 \\\n  | tee \"$SOUT/pip_install_venv_refresh.log\""
+  ],
+  "evaluator_build_source": "brief.md, Run9 recorded build/install excerpt",
+  "build_dependencies": {
+    "cuda_samples_pin": "v12.8",
+    "missing_lock": null,
+    "reason": "No complete immutable OS/dependency lock supplied."
+  }
+}

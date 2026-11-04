@@ -1,0 +1,8 @@
+#!/tmp/m5-259707aa-3568-4ed2-8ca5-ffc495eeeb34/baseline-published/evaluator-venv/bin/python
+# -*- coding: utf-8 -*-
+import re
+import sys
+from nbformat.sign import TrustNotebookApp
+if __name__ == '__main__':
+    sys.argv[0] = re.sub(r'(-script\.pyw|\.exe)?$', '', sys.argv[0])
+    sys.exit(TrustNotebookApp.launch_instance())

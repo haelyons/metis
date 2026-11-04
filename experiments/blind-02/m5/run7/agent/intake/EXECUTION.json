@@ -1,0 +1,574 @@
+{
+  "representative_scale": {
+    "fixed_inputs": [
+      "f1a19",
+      "f1dtd",
+      "f1glj",
+      "f1ht8"
+    ],
+    "arms": [
+      "A0",
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "rotations": 3600,
+    "retained_predictions": 50,
+    "replicates": 6,
+    "warmup": 1,
+    "source": "../comparison_view.json",
+    "scale_search": false
+  },
+  "inputs": [
+    {
+      "id": "f1a19",
+      "pinder_release": "2024-02",
+      "pinder_system": "1a19__A1_P11540--1a19__B1_P11540",
+      "split": "holo test-set monomers",
+      "required_items": [
+        {
+          "name": "test_set_pdbs/1a19__A1_P11540-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__A1_P11540-R.pdb",
+          "bytes": 58320,
+          "sha256": "08cba0488510ac98b618ab9b963306d7d67459bcab501b54e9dd8214f8f63e63",
+          "role": "receptor_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__A1_P11540-R.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1a19/receptor_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__A1_P11540-R.pdb",
+            "status": 200,
+            "content_length": "58320",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.492280+00:00"
+          }
+        },
+        {
+          "name": "test_set_pdbs/1a19__B1_P11540-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__B1_P11540-L.pdb",
+          "bytes": 58320,
+          "sha256": "9d02d5646d3ba8b13699e83d11ec1d4ed833888e1aa2522d944de0393332bde7",
+          "role": "ligand_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__B1_P11540-L.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1a19/ligand_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__B1_P11540-L.pdb",
+            "status": 200,
+            "content_length": "58320",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.421840+00:00"
+          }
+        },
+        {
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "name": "pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+          "bytes": 116559,
+          "sha256": "9b112ee5082081cb9c111a3015449c72161332819251d200f6971e3f3336c7f2",
+          "role": "reference",
+          "required": true,
+          "availability": "available",
+          "private": true,
+          "published_at": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "Only fetch_private.sh may fetch the payload; evaluator reads under CMP_PRIVATE; arms and setup must not read it.",
+          "reachability": {
+            "item": "f1a19/reference",
+            "url": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+            "status": 200,
+            "content_length": "116559",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.453415+00:00"
+          }
+        }
+      ],
+      "generated_inputs": {
+        "prepared_paths": {
+          "receptor": "data/fixtures/f1a19/R.pdb",
+          "ligand": "data/fixtures/f1a19/L.pdb"
+        },
+        "method": "Change only chain column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records, keeping every other byte and line. Record prepared hashes during setup.",
+        "hashes": null,
+        "reason": "Prepared files are generated deterministically during setup, not missing source data."
+      }
+    },
+    {
+      "id": "f1dtd",
+      "pinder_release": "2024-02",
+      "pinder_system": "1dtd__A1_P48052--1dtd__B1_P81511",
+      "split": "holo test-set monomers",
+      "required_items": [
+        {
+          "name": "test_set_pdbs/1dtd__A1_P48052-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__A1_P48052-R.pdb",
+          "bytes": 192132,
+          "sha256": "2075e71ae732971c2f78286b554a5baad632f38b383decb8ff8859cd88807394",
+          "role": "receptor_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__A1_P48052-R.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1dtd/receptor_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__A1_P48052-R.pdb",
+            "status": 200,
+            "content_length": "192132",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.454063+00:00"
+          }
+        },
+        {
+          "name": "test_set_pdbs/1dtd__B1_P81511-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__B1_P81511-L.pdb",
+          "bytes": 38313,
+          "sha256": "b693ffc0dc24f0cf4ba456bcb7ca115a8f1879e747aa3c87245aeec727315797",
+          "role": "ligand_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__B1_P81511-L.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1dtd/ligand_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__B1_P81511-L.pdb",
+            "status": 200,
+            "content_length": "38313",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.465235+00:00"
+          }
+        },
+        {
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "name": "pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+          "bytes": 230364,
+          "sha256": "95c095234280fb888c3ef9441f3393fc816223a960131f7dcddab2c0dbae9706",
+          "role": "reference",
+          "required": true,
+          "availability": "available",
+          "private": true,
+          "published_at": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "Only fetch_private.sh may fetch the payload; evaluator reads under CMP_PRIVATE; arms and setup must not read it.",
+          "reachability": {
+            "item": "f1dtd/reference",
+            "url": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+            "status": 200,
+            "content_length": "230364",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.546087+00:00"
+          }
+        }
+      ],
+      "generated_inputs": {
+        "prepared_paths": {
+          "receptor": "data/fixtures/f1dtd/R.pdb",
+          "ligand": "data/fixtures/f1dtd/L.pdb"
+        },
+        "method": "Change only chain column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records, keeping every other byte and line. Record prepared hashes during setup.",
+        "hashes": null,
+        "reason": "Prepared files are generated deterministically during setup, not missing source data."
+      }
+    },
+    {
+      "id": "f1glj",
+      "pinder_release": "2024-02",
+      "pinder_system": "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+      "split": "holo test-set monomers",
+      "required_items": [
+        {
+          "name": "test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+          "bytes": 316791,
+          "sha256": "7131a9741f10136dce36e02b8282a5df0cafc97021fd932c7cf0a92cf8eae87a",
+          "role": "receptor_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1glj/receptor_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+            "status": 200,
+            "content_length": "316791",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.473510+00:00"
+          }
+        },
+        {
+          "name": "test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+          "bytes": 316791,
+          "sha256": "887d53373e51eaa7a717841c3038ebb2e6c31796aad2927a93b698f379c72ca5",
+          "role": "ligand_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1glj/ligand_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+            "status": 200,
+            "content_length": "316791",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.432833+00:00"
+          }
+        },
+        {
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "name": "pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+          "bytes": 633501,
+          "sha256": "b9650bb0452f3f6def3954f96a30be7e2fa5f246bf308385dcd0b6ea7756903c",
+          "role": "reference",
+          "required": true,
+          "availability": "available",
+          "private": true,
+          "published_at": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "Only fetch_private.sh may fetch the payload; evaluator reads under CMP_PRIVATE; arms and setup must not read it.",
+          "reachability": {
+            "item": "f1glj/reference",
+            "url": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+            "status": 200,
+            "content_length": "633501",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.462602+00:00"
+          }
+        }
+      ],
+      "generated_inputs": {
+        "prepared_paths": {
+          "receptor": "data/fixtures/f1glj/R.pdb",
+          "ligand": "data/fixtures/f1glj/L.pdb"
+        },
+        "method": "Change only chain column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records, keeping every other byte and line. Record prepared hashes during setup.",
+        "hashes": null,
+        "reason": "Prepared files are generated deterministically during setup, not missing source data."
+      }
+    },
+    {
+      "id": "f1ht8",
+      "pinder_release": "2024-02",
+      "pinder_system": "1ht8__A1_P05979--1ht8__B1_P05979",
+      "split": "holo test-set monomers",
+      "required_items": [
+        {
+          "name": "test_set_pdbs/1ht8__A1_P05979-R.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__A1_P05979-R.pdb",
+          "bytes": 362718,
+          "sha256": "b51981e47c916bb095d67a38bdbab04464a3581d85e51898c33bb2ad44bd5da0",
+          "role": "receptor_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__A1_P05979-R.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1ht8/receptor_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__A1_P05979-R.pdb",
+            "status": 200,
+            "content_length": "362718",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.512408+00:00"
+          }
+        },
+        {
+          "name": "test_set_pdbs/1ht8__B1_P05979-L.pdb",
+          "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__B1_P05979-L.pdb",
+          "bytes": 362718,
+          "sha256": "02e7cb2b1d019063502be0dac261bcc39c8f2b7c558a58af9d9e77ab0b7838d7",
+          "role": "ligand_source",
+          "required": true,
+          "availability": "available",
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "private": false,
+          "published_at": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__B1_P05979-L.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "setup.sh stages this input for every arm.",
+          "reachability": {
+            "item": "f1ht8/ligand_source",
+            "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__B1_P05979-L.pdb",
+            "status": 200,
+            "content_length": "362718",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.415299+00:00"
+          }
+        },
+        {
+          "access": "anonymous HTTPS; verify recorded byte count and SHA-256 before execution",
+          "name": "pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+          "bytes": 725355,
+          "sha256": "db9192a30142d9d8f364ff13b4191841af7f4aa0ecd85b688fb8b9cef70fffd9",
+          "role": "reference",
+          "required": true,
+          "availability": "available",
+          "private": true,
+          "published_at": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+          "licence": null,
+          "licence_permission": "unknown",
+          "licence_basis": "none",
+          "licence_reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files.",
+          "pin_source": "../comparison_view.json",
+          "hash_verified_during_intake": false,
+          "access_boundary": "Only fetch_private.sh may fetch the payload; evaluator reads under CMP_PRIVATE; arms and setup must not read it.",
+          "reachability": {
+            "item": "f1ht8/reference",
+            "url": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+            "status": 200,
+            "content_length": "725355",
+            "check": "HEAD only; no private content read",
+            "time_utc": "2026-11-04T18:15:54.382166+00:00"
+          }
+        }
+      ],
+      "generated_inputs": {
+        "prepared_paths": {
+          "receptor": "data/fixtures/f1ht8/R.pdb",
+          "ligand": "data/fixtures/f1ht8/L.pdb"
+        },
+        "method": "Change only chain column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records, keeping every other byte and line. Record prepared hashes during setup.",
+        "hashes": null,
+        "reason": "Prepared files are generated deterministically during setup, not missing source data."
+      }
+    }
+  ],
+  "outputs": {
+    "declared": [
+      {
+        "name": "transforms",
+        "what": "The rotation and translation fields of every ranked prediction row of the arm's docking.out (all fields of the row except the last), in file order.",
+        "format": "text_numbers",
+        "select": "^[ \\t]*([-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+)[ \\t]+[-+0-9.eE]+[ \\t]*$"
+      },
+      {
+        "name": "scores",
+        "what": "The score field (the last field) of every ranked prediction row of the arm's docking.out, in file order.",
+        "format": "text_numbers",
+        "select": "^[ \\t]*[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+([-+0-9.eE]+)[ \\t]*$"
+      },
+      {
+        "name": "coords",
+        "what": "The x, y and z coordinate columns of every ATOM and HETATM record of the arm's assembled models, models taken in rank order.",
+        "format": "text_numbers",
+        "select": "^(?:ATOM  |HETATM).{24}(.{24})"
+      },
+      {
+        "name": "dockq",
+        "what": "The evaluator's DockQ value for each of the arm's assembled models, as one JSON array in rank order, in a file that holds no other number.",
+        "format": "json_numbers",
+        "select": null
+      }
+    ],
+    "mapping": {
+      "transforms": "out/docking.out",
+      "scores": "out/docking.out",
+      "coords": {
+        "glob": "out/model_*.pdb"
+      },
+      "dockq": "eval/dockq.json"
+    },
+    "model_order": "Numerical rank 1 through 50, not lexicographic glob ordering.",
+    "dockq_format": "One JSON array of DockQ values in rank order, no other number; components in separate file.",
+    "source": [
+      "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+      "../comparison_view.json"
+    ]
+  },
+  "timing_scope": {
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "Trusted wall of the invocation: adapter and arm commands, plus the evaluator part.",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      }
+    ],
+    "includes": "Trusted invocation wall: adapter, arm docking/reconstruction commands and evaluator.",
+    "exclusions": "Setup timing is outside this invocation wall metric; no GPU activity or allocation cost interface supplied.",
+    "source": "../comparison_view.json"
+  },
+  "scoring_interface": {
+    "published_source": "https://github.com/pinder-org/pinder",
+    "pin": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "archive_url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+    "archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+    "command": "evaluate.sh",
+    "command_source": "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+    "command_status": "Brief-specified harness entrypoint; implementation is not supplied in intake. This is not claimed as an upstream shell command.",
+    "published_program": "pinder (pinder.eval.dockq, BiotiteDockQ)",
+    "upstream_entrypoint": "pinder_eval",
+    "upstream_entrypoint_source": "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+    "interface": {
+      "what": "The published DockQ implementation of PINDER (pinder_eval, BiotiteDockQ) at the pinned source, scoring each assembled model of one invocation against the input's native complex with the model's chains R and L mapped to the native's receptor and ligand chains.",
+      "spec": {
+        "program": "pinder (pinder.eval.dockq, BiotiteDockQ)",
+        "repository": "https://github.com/pinder-org/pinder",
+        "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+        "archive_url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+        "archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+        "private_data": "for each input, the native complex named in spec.reference, fetched by fetch_private.sh from its URL and checked against its SHA-256 and byte count",
+        "reads": "the model_<rank>.pdb files under CMP_ARM_OUT, in rank order",
+        "writes": "CMP_EVAL_OUT/dockq.json, one JSON array of the DockQ values in rank order and no other number; any per-model detail goes to a separate file under CMP_EVAL_OUT"
+      }
+    },
+    "install_commands": "python3 -m venv --system-site-packages \"$VENV\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade \"setuptools>=64\" \"setuptools_scm>=8\" packaging wheel 2>&1 \\\n  | tee \"$SOUT/pip_install_build_tools.log\"\nSETUPTOOLS_SCM_PRETEND_VERSION=\"$PINDER_SCM_VERSION\" SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PINDER=\"$PINDER_SCM_VERSION\" \\\n  \"$VPY\" -m pip install --no-cache-dir --no-build-isolation \"$WORK/$BP/pinder-src\" 2>&1 | tee \"$SOUT/pip_install_pinder.log\"\n\"$VPY\" -m pip install --no-cache-dir fire 2>&1 | tee \"$SOUT/pip_install_fire.log\"\nprintf 'numpy<2\\n' > \"$SOUT/venv_constraints.txt\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade -c \"$SOUT/venv_constraints.txt\" networkx pandas scikit-learn 2>&1 \\\n  | tee \"$SOUT/pip_install_venv_refresh.log\"",
+    "install_commands_source": "brief.md, Run9 recorded build/install excerpt; historical variable layout requires binding during harness setup.",
+    "private_inputs": [
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+        "bytes": 116559,
+        "sha256": "9b112ee5082081cb9c111a3015449c72161332819251d200f6971e3f3336c7f2"
+      },
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+        "bytes": 230364,
+        "sha256": "95c095234280fb888c3ef9441f3393fc816223a960131f7dcddab2c0dbae9706"
+      },
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+        "bytes": 633501,
+        "sha256": "b9650bb0452f3f6def3954f96a30be7e2fa5f246bf308385dcd0b6ea7756903c"
+      },
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+        "bytes": 725355,
+        "sha256": "db9192a30142d9d8f364ff13b4191841af7f4aa0ecd85b688fb8b9cef70fffd9"
+      }
+    ]
+  },
+  "repeatability": {
+    "replicates": 6,
+    "warmup": 1,
+    "schedule_owner": "pipeline",
+    "retries": "Preserve failures/timeouts; no invocation outside the pipeline schedule.",
+    "seed": null,
+    "seed_reason": "No RNG seed specified in source; fixed cases, rotational sampling, settings and thread environment are supplied.",
+    "tolerances": null,
+    "tolerance_reason": "No published fixture acceptance tolerances; agents and harness must not compute or assert tolerances or cross-arm differences.",
+    "anchors": "No published anchors exist for these fixtures, per brief; anchors.json is empty. Smoke execution is not an anchor.",
+    "scoring": "Evaluator records 50 DockQ values in rank order and no other number. Pipeline records and compares raw outputs; agents produce no DockQ summary or comparison."
+  },
+  "budget_policy": {
+    "supplied_args_budgets": {},
+    "run_ceiling_s": 43200,
+    "default_script_seconds": {
+      "method_setup": 1200,
+      "method_run": 1200,
+      "tests": 900,
+      "evaluate": 2400
+    },
+    "setup_anchors_profile": "Use time remaining before run ceiling because no args budgets were supplied; ceiling is not a target.",
+    "estimates_s": null,
+    "reason": "No measured costs for this fixed fixture workload; no invented runtime estimates or overrides."
+  },
+  "contract_limitations": [
+    {
+      "scope": "seed experiment",
+      "gap": "This recording view has no denser-sampling arm and uses four holo fixtures rather than the four apo pilot cases. It cannot answer the seed question about additional search or biological efficacy. The brief explicitly excludes the seed experiment from this run."
+    },
+    {
+      "scope": "accounting",
+      "gap": "The supplied view records trusted invocation wall time including evaluation, but supplies no GPU-activity or billed-allocation-cost interface or total spending cap. Those seed requirements cannot be inferred from wall time."
+    },
+    {
+      "scope": "execution budgets",
+      "gap": "No measured per-invocation runtime for these fixtures or setup cost is supplied. Completion within defaults is unverified; this intake runs no workloads or calibration."
+    }
+  ],
+  "gate_validation": {
+    "named_intake_gate_scripts": [],
+    "reason": "Prompt and brief name no intake gate executable. Named setup/run/evaluate scripts are downstream harness contracts and workloads, which intake must not run.",
+    "validation": "Parse five JSON files; check required nonempty baseline/execution keys and empty anchors array; verify exact view arm commands/pins and required public/private input inventory."
+  }
+}

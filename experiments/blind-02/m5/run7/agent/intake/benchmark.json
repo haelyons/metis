@@ -1,0 +1,408 @@
+{
+  "identity": {
+    "name": "MEGADOCK CPU/GPU comparison recording run on four pinned PINDER 2024-02 holo fixtures",
+    "baseline_arm": "A0",
+    "repo": "https://github.com/akiyamalab/MEGADOCK",
+    "commit": "9575280c875732553266e26adc607dd892b02616",
+    "request": "science step s27",
+    "source": [
+      "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+      "../comparison_view.json"
+    ]
+  },
+  "found": true,
+  "found_basis": "Public executable MEGADOCK source pinned by brief, exact CPU/GPU and reconstruction commands in view, accessible required structural inputs.",
+  "outcome_definition": {
+    "outputs": [
+      {
+        "name": "transforms",
+        "what": "The rotation and translation fields of every ranked prediction row of the arm's docking.out (all fields of the row except the last), in file order.",
+        "format": "text_numbers",
+        "select": "^[ \\t]*([-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+)[ \\t]+[-+0-9.eE]+[ \\t]*$"
+      },
+      {
+        "name": "scores",
+        "what": "The score field (the last field) of every ranked prediction row of the arm's docking.out, in file order.",
+        "format": "text_numbers",
+        "select": "^[ \\t]*[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+([-+0-9.eE]+)[ \\t]*$"
+      },
+      {
+        "name": "coords",
+        "what": "The x, y and z coordinate columns of every ATOM and HETATM record of the arm's assembled models, models taken in rank order.",
+        "format": "text_numbers",
+        "select": "^(?:ATOM  |HETATM).{24}(.{24})"
+      },
+      {
+        "name": "dockq",
+        "what": "The evaluator's DockQ value for each of the arm's assembled models, as one JSON array in rank order, in a file that holds no other number.",
+        "format": "json_numbers",
+        "select": null
+      }
+    ],
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "Trusted wall of the invocation: adapter and arm commands, plus the evaluator part.",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      }
+    ],
+    "interface": "50 ranked transforms and scores, 50 assembled coordinate models, and 50 evaluator DockQ values per invocation; pipeline owns comparisons."
+  },
+  "citations": [
+    {
+      "title": "MEGADOCK 4.0: an ultra-high-performance protein-protein docking software for heterogeneous supercomputers",
+      "url": "https://doi.org/10.1093/bioinformatics/btu532",
+      "source": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/README.md"
+    },
+    {
+      "title": "MEGADOCK pinned executable source",
+      "url": "https://github.com/akiyamalab/MEGADOCK/tree/9575280c875732553266e26adc607dd892b02616"
+    },
+    {
+      "title": "PINDER pinned source and DockQ evaluator",
+      "url": "https://github.com/pinder-org/pinder/tree/ebeb28a2f8411363cef722b7d293c978f7442672"
+    },
+    {
+      "title": "Owner comparison request and commands",
+      "source": [
+        "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+        "../comparison_view.json"
+      ]
+    }
+  ],
+  "source_licences": [
+    {
+      "item": "MEGADOCK code (all arms, including decoygen)",
+      "licence": "CC-BY-NC-4.0",
+      "source": [
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/README.md",
+        "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/LICENSE"
+      ],
+      "basis": "explicit",
+      "intended_use": "local scientific comparison recording run",
+      "permission": "unknown",
+      "reason": "Noncommercial use is allowed subject to terms; commercial use requires prior authorization. The brief does not establish whether this run meets the noncommercial condition."
+    },
+    {
+      "item": "PINDER evaluator code",
+      "licence": "Apache-2.0",
+      "source": [
+        "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+        "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/LICENSE"
+      ],
+      "basis": "explicit",
+      "permission": "permitted",
+      "reason": "Repository code is published with the Apache-2.0 licence."
+    },
+    {
+      "item": "All twelve required hosted PINDER input structures, including four native references",
+      "licence": null,
+      "source": [
+        "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+        "https://pinder-org.github.io/pinder/readme.html"
+      ],
+      "basis": "none",
+      "permission": "unknown",
+      "reason": "Sources describe public access and an Apache-2.0 code licence, but no statement explicitly covering the hosted data was established. Public availability and upstream PDB provenance alone do not establish coverage of these prepared files."
+    }
+  ],
+  "licence": "unknown",
+  "licence_basis": "none",
+  "stock_environment": true,
+  "stock_CUDA_image": {
+    "feasible": true,
+    "provisional": true,
+    "evidence": "brief.md, Comparison request (science step s27), Materials, pins and preparation reports both binaries built and ran on this box type with FFTW, OpenMP, CUDA and NVIDIA samples v12.8 headers; GPU flags target sm_90.",
+    "requirements": [
+      "C++ compiler with OpenMP",
+      "FFTW single precision",
+      "CUDA nvcc, cudart and cuFFT",
+      "NVIDIA CUDA samples Common headers v12.8",
+      "Python environment with pinned PINDER and DockQ dependencies"
+    ],
+    "reproduction_performed": false,
+    "base_image_digest": null,
+    "reason": "No image digest or complete dependency lock supplied; historical success is provisional evidence."
+  },
+  "memory": {
+    "required_structure_bytes": 3411882,
+    "required_structure_GiB": 0.003177562728524208,
+    "data_basis": "Sum of twelve exact source byte counts in comparison_view.json, including evaluator-private references; excludes generated models and software.",
+    "peak_working_set_GiB": null,
+    "combined_GiB": null,
+    "size": "unknown",
+    "reason": "No published or reproduced peak working set is available for the fixed four-fixture CPU/GPU workflow. No extrapolation from tiny input files."
+  },
+  "scoring_and_repeatability": {
+    "replicates": 6,
+    "warmup": 1,
+    "schedule_owner": "pipeline",
+    "retries": "Preserve failures/timeouts; no invocation outside the pipeline schedule.",
+    "seed": null,
+    "seed_reason": "No RNG seed specified in source; fixed cases, rotational sampling, settings and thread environment are supplied.",
+    "tolerances": null,
+    "tolerance_reason": "No published fixture acceptance tolerances; agents and harness must not compute or assert tolerances or cross-arm differences.",
+    "anchors": "No published anchors exist for these fixtures, per brief; anchors.json is empty. Smoke execution is not an anchor.",
+    "scoring": "Evaluator records 50 DockQ values in rank order and no other number. Pipeline records and compares raw outputs; agents produce no DockQ summary or comparison."
+  },
+  "anchors_count": 0,
+  "anchored": false,
+  "search_candidates": [
+    {
+      "query": "PINDER dataset license pinderdata license",
+      "candidate": "https://github.com/pinder-org/pinder",
+      "disposition": "Relevant code licence and documentation; hosted-data licence scope not established.",
+      "selected_benchmark_changed": false
+    }
+  ],
+  "arms": {
+    "A1": {
+      "id": "A1",
+      "what": "Seed configuration 2: the published MEGADOCK GPU build with the same sampling and scientific settings as A0, followed by the same reconstruction and assembly as A0.",
+      "commands": [
+        [
+          "baseline-published/megadock/megadock-gpu",
+          "-R",
+          "{spec:/prepared/receptor}",
+          "-L",
+          "{spec:/prepared/ligand}",
+          "-o",
+          "{out}/docking.out",
+          "-N",
+          "50",
+          "-t",
+          "1",
+          "-v",
+          "1.2",
+          "-e",
+          "1.0",
+          "-d",
+          "1.0",
+          "-a",
+          "-45.0",
+          "-b",
+          "1.0",
+          "-f",
+          "3",
+          "-r",
+          "3600"
+        ],
+        [
+          "bash",
+          "-c",
+          "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+          "{out}",
+          "{spec:/prepared/receptor}",
+          "{spec:/prepared/ligand}"
+        ]
+      ],
+      "env": {
+        "OMP_NUM_THREADS": "26",
+        "OMP_DYNAMIC": "FALSE",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "LC_ALL": "C",
+        "LANG": "C",
+        "CUDA_VISIBLE_DEVICES": "0"
+      },
+      "published_source": "https://github.com/akiyamalab/MEGADOCK",
+      "pin": "9575280c875732553266e26adc607dd892b02616",
+      "command_source": "../comparison_view.json",
+      "build_source": "brief.md, Comparison request (science step s27), Materials, pins and preparation"
+    },
+    "A2": {
+      "id": "A2",
+      "what": "Duplicate of A0: the same commands and environment as A0, run as a separate invocation.",
+      "commands": [
+        [
+          "baseline-published/megadock/megadock",
+          "-R",
+          "{spec:/prepared/receptor}",
+          "-L",
+          "{spec:/prepared/ligand}",
+          "-o",
+          "{out}/docking.out",
+          "-N",
+          "50",
+          "-t",
+          "1",
+          "-v",
+          "1.2",
+          "-e",
+          "1.0",
+          "-d",
+          "1.0",
+          "-a",
+          "-45.0",
+          "-b",
+          "1.0",
+          "-f",
+          "3",
+          "-r",
+          "3600"
+        ],
+        [
+          "bash",
+          "-c",
+          "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+          "{out}",
+          "{spec:/prepared/receptor}",
+          "{spec:/prepared/ligand}"
+        ]
+      ],
+      "env": {
+        "OMP_NUM_THREADS": "26",
+        "OMP_DYNAMIC": "FALSE",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "LC_ALL": "C",
+        "LANG": "C",
+        "CUDA_VISIBLE_DEVICES": "0"
+      },
+      "published_source": "https://github.com/akiyamalab/MEGADOCK",
+      "pin": "9575280c875732553266e26adc607dd892b02616",
+      "command_source": "../comparison_view.json",
+      "build_source": "brief.md, Comparison request (science step s27), Materials, pins and preparation"
+    },
+    "A3": {
+      "id": "A3",
+      "what": "Duplicate of A1: the same commands and environment as A1, run as a separate invocation.",
+      "commands": [
+        [
+          "baseline-published/megadock/megadock-gpu",
+          "-R",
+          "{spec:/prepared/receptor}",
+          "-L",
+          "{spec:/prepared/ligand}",
+          "-o",
+          "{out}/docking.out",
+          "-N",
+          "50",
+          "-t",
+          "1",
+          "-v",
+          "1.2",
+          "-e",
+          "1.0",
+          "-d",
+          "1.0",
+          "-a",
+          "-45.0",
+          "-b",
+          "1.0",
+          "-f",
+          "3",
+          "-r",
+          "3600"
+        ],
+        [
+          "bash",
+          "-c",
+          "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+          "{out}",
+          "{spec:/prepared/receptor}",
+          "{spec:/prepared/ligand}"
+        ]
+      ],
+      "env": {
+        "OMP_NUM_THREADS": "26",
+        "OMP_DYNAMIC": "FALSE",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+        "LC_ALL": "C",
+        "LANG": "C",
+        "CUDA_VISIBLE_DEVICES": "0"
+      },
+      "published_source": "https://github.com/akiyamalab/MEGADOCK",
+      "pin": "9575280c875732553266e26adc607dd892b02616",
+      "command_source": "../comparison_view.json",
+      "build_source": "brief.md, Comparison request (science step s27), Materials, pins and preparation"
+    }
+  },
+  "evaluator": {
+    "published_source": "https://github.com/pinder-org/pinder",
+    "pin": "ebeb28a2f8411363cef722b7d293c978f7442672",
+    "archive_url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+    "archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+    "command": "evaluate.sh",
+    "command_source": "brief.md, Comparison request (science step s27), Materials, pins and preparation",
+    "command_status": "Brief-specified harness entrypoint; implementation is not supplied in intake. This is not claimed as an upstream shell command.",
+    "published_program": "pinder (pinder.eval.dockq, BiotiteDockQ)",
+    "upstream_entrypoint": "pinder_eval",
+    "upstream_entrypoint_source": "https://raw.githubusercontent.com/pinder-org/pinder/ebeb28a2f8411363cef722b7d293c978f7442672/README.md",
+    "interface": {
+      "what": "The published DockQ implementation of PINDER (pinder_eval, BiotiteDockQ) at the pinned source, scoring each assembled model of one invocation against the input's native complex with the model's chains R and L mapped to the native's receptor and ligand chains.",
+      "spec": {
+        "program": "pinder (pinder.eval.dockq, BiotiteDockQ)",
+        "repository": "https://github.com/pinder-org/pinder",
+        "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+        "archive_url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+        "archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+        "private_data": "for each input, the native complex named in spec.reference, fetched by fetch_private.sh from its URL and checked against its SHA-256 and byte count",
+        "reads": "the model_<rank>.pdb files under CMP_ARM_OUT, in rank order",
+        "writes": "CMP_EVAL_OUT/dockq.json, one JSON array of the DockQ values in rank order and no other number; any per-model detail goes to a separate file under CMP_EVAL_OUT"
+      }
+    },
+    "install_commands": "python3 -m venv --system-site-packages \"$VENV\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade \"setuptools>=64\" \"setuptools_scm>=8\" packaging wheel 2>&1 \\\n  | tee \"$SOUT/pip_install_build_tools.log\"\nSETUPTOOLS_SCM_PRETEND_VERSION=\"$PINDER_SCM_VERSION\" SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PINDER=\"$PINDER_SCM_VERSION\" \\\n  \"$VPY\" -m pip install --no-cache-dir --no-build-isolation \"$WORK/$BP/pinder-src\" 2>&1 | tee \"$SOUT/pip_install_pinder.log\"\n\"$VPY\" -m pip install --no-cache-dir fire 2>&1 | tee \"$SOUT/pip_install_fire.log\"\nprintf 'numpy<2\\n' > \"$SOUT/venv_constraints.txt\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade -c \"$SOUT/venv_constraints.txt\" networkx pandas scikit-learn 2>&1 \\\n  | tee \"$SOUT/pip_install_venv_refresh.log\"",
+    "install_commands_source": "brief.md, Run9 recorded build/install excerpt; historical variable layout requires binding during harness setup.",
+    "private_inputs": [
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+        "bytes": 116559,
+        "sha256": "9b112ee5082081cb9c111a3015449c72161332819251d200f6971e3f3336c7f2"
+      },
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+        "bytes": 230364,
+        "sha256": "95c095234280fb888c3ef9441f3393fc816223a960131f7dcddab2c0dbae9706"
+      },
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+        "bytes": 633501,
+        "sha256": "b9650bb0452f3f6def3954f96a30be7e2fa5f246bf308385dcd0b6ea7756903c"
+      },
+      {
+        "access": "evaluator private data only",
+        "name": "pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+        "bytes": 725355,
+        "sha256": "db9192a30142d9d8f364ff13b4191841af7f4aa0ecd85b688fb8b9cef70fffd9"
+      }
+    ]
+  },
+  "contract_limitations": [
+    {
+      "scope": "seed experiment",
+      "gap": "This recording view has no denser-sampling arm and uses four holo fixtures rather than the four apo pilot cases. It cannot answer the seed question about additional search or biological efficacy. The brief explicitly excludes the seed experiment from this run."
+    },
+    {
+      "scope": "accounting",
+      "gap": "The supplied view records trusted invocation wall time including evaluation, but supplies no GPU-activity or billed-allocation-cost interface or total spending cap. Those seed requirements cannot be inferred from wall time."
+    },
+    {
+      "scope": "execution budgets",
+      "gap": "No measured per-invocation runtime for these fixtures or setup cost is supplied. Completion within defaults is unverified; this intake runs no workloads or calibration."
+    }
+  ],
+  "gate": {
+    "complete_files": true,
+    "found": true,
+    "data": "available",
+    "licence": "unknown",
+    "stock_environment": true,
+    "passes_stated_intake_gate": true,
+    "reason": "Unknown permission and missing tolerances do not block the specified gate; no workload was run."
+  }
+}
