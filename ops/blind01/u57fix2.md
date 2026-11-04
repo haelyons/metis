@@ -1,0 +1,8 @@
+[x-m5u57fix2-impl]
+Working directory dut/pipeline/. Do not read anything under experiments/. Do not edit tests (tools/test_*, tools/e2e_*, tools/m5_profile_fixture.js, tools/m5_smoke_pin.js, tools/run_failures_only.js). The contract is fixed: do not edit m5/SCHEMAS.md or CONTRACT.md. Make the smallest change; match the surrounding style and comment density.
+
+The U57/U58 fix round (uncommitted in this worktree) passes every suite but one check of tools/test_m5_comparison_evaluate.js:
+FAIL ipc: every System V shared-memory segment an arm part or an evaluator part leaves is removed before the next part runs: segment 32768 of cmp-arm never removed
+Cause: `cleanup` in m5/cmp_wrap.py finds the user's System V IPC objects by reading /proc/sysvipc/{shm,msg,sem} directly, as the box user. The suite's fakes expose System V objects only through `ipcs`, `ipcmk` and `ipcrm` (see the ipc fake in the suite). The contract (Separated users, cleanup: "remove every System V IPC object the user owns") fixes the effect, not the mechanism.
+Change only that loop: list each kind as root with util-linux `sudo -n ipcs -m -c`, `-q -c` and `-s -c` (creators/owners format: a header row holding `uid`, then one row per object whose first column is its id), and remove every object whose `uid` (owner) column is the user's name or numeric uid with `sudo -n ipcrm -m|-q|-s <id>`, as now. Root sees every object of the namespace, so the listing no longer depends on the box user's view. Keep the rest of cleanup unchanged.
+Then run `node tools/test_m5_comparison_evaluate.js`, `node tools/test_m5_comparison_pipeline.js`, `python3 tools/test_m5_comparison_score.py` and `node tools/test_m5_isolation.js`, and report each summary line. End with a final message even if checks fail.
