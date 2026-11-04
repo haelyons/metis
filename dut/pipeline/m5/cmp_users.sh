@@ -16,10 +16,15 @@ SEALED=()
 USERS=(cmp-arm)
 if ((EVALUATOR)); then USERS+=(cmp-eval); fi
 
-# Cleanup after a part user: its processes, its entries in the directories it can write, its System V IPC objects,
-# its crontab and its at jobs.
+# Cleanup after a part user: its crontab and its at jobs, its processes, its entries in the directories it can write,
+# its System V IPC objects.
 cleanup() {
   local user=$1 dir uid kind job
+  # First its crontab and at jobs, so that no job of the user starts after its processes are killed.
+  if command -v crontab >/dev/null; then sudo -n crontab -r -u "$user" >/dev/null 2>&1 || true; fi
+  if command -v atq >/dev/null && command -v atrm >/dev/null; then
+    for job in $(sudo -n atq 2>/dev/null | awk -v user="$user" '$NF == user { print $1 }'); do sudo -n atrm "$job" || true; done
+  fi
   sudo -n pkill -KILL -u "$user" || true
   while pgrep -u "$user" >/dev/null; do
     ((SECONDS + 1 <= END)) || return 1
@@ -40,10 +45,6 @@ for item in listed:
     awk -v uid="$uid" 'NR == 1 { for (i = 1; i <= NF; i++) if ($i == "uid") c = i; next } c && $c == uid { print $2 }' \
       "/proc/sysvipc/${kind%%:*}" | while read -r id; do sudo -n ipcrm "${kind#*:}" "$id" || true; done
   done
-  if command -v crontab >/dev/null; then sudo -n crontab -r -u "$user" >/dev/null 2>&1 || true; fi
-  if command -v atq >/dev/null && command -v atrm >/dev/null; then
-    for job in $(sudo -n atq 2>/dev/null | awk -v user="$user" '$NF == user { print $1 }'); do sudo -n atrm "$job" || true; done
-  fi
 }
 
 # 1. The sealed harness files are on the box unchanged; then the part users, system users without login shell or home,
@@ -63,7 +64,15 @@ for device in /dev/nvidia*; do
   group=$(stat -c %G "$device")
   for user in "${USERS[@]}"; do sudo -n usermod -a -G "$group" "$user" || fail "cannot add $user to $group"; done
 done
-# No part user can schedule a job: each is listed in /etc/cron.deny and /etc/at.deny (created when absent).
+# No part user can schedule a job: each is listed in /etc/cron.deny and /etc/at.deny (created when absent), and removed
+# from /etc/cron.allow and /etc/at.allow when either exists, as an allow list takes precedence over its deny list.
+for list in /etc/cron.allow /etc/at.allow; do
+  sudo -n test -e "$list" || continue
+  for user in "${USERS[@]}"; do
+    sudo -n grep -qxF -- "$user" "$list" || continue
+    sudo -n sed -i "/^${user}\$/d" -- "$list" || fail "cannot remove $user from $list"
+  done
+done
 for list in /etc/cron.deny /etc/at.deny; do
   for user in "${USERS[@]}"; do
     sudo -n grep -qxF -- "$user" "$list" 2>/dev/null && continue
@@ -79,9 +88,11 @@ done
 
 # 3. Nothing in the shared run directory is writable by other users; the work, job and private directories are fresh.
 sudo -n rm -rf -- "$P"
-# The effect of chmod -R go-w,o+rX, except on the evaluate stage's own box command files (top-level, named after their
-# receipt, created at mode 600), this command's included, which stay private.
-sudo -n find "$S" ! -type l ! \( -type f -perm 600 -path "$SE/[0-9]*-*" ! -path "$SE/*/*" \) \
+# The effect of chmod -R go-w,o+rX, except on the evaluate stage's own box command files (top-level, named
+# NNNN-<name>.sh|log|gpu|rc as boxrun.sh names them, at mode 600), this command's included, which stay private.
+BOX=(-name '[0-9][0-9][0-9][0-9]-?*.sh' -o -name '[0-9][0-9][0-9][0-9]-?*.log' -o -name '[0-9][0-9][0-9][0-9]-?*.gpu'
+  -o -name '[0-9][0-9][0-9][0-9]-?*.rc')
+sudo -n find "$S" ! -type l ! \( -type f -perm 600 -path "$SE/*" ! -path "$SE/*/*" \( "${BOX[@]}" \) \) \
   -exec chmod go-w,o+rX -- {} + || fail 'cannot restrict the shared run directory'
 sudo -n rm -rf -- "$S/comparison-work" "$S/comparison-jobs"
 mkdir -m 711 -- "$S/comparison-work"
