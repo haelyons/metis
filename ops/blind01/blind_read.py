@@ -100,6 +100,24 @@ try:
 except FileNotFoundError:
     print("(no pipeline.log)")
 
+print("== comparison-users failure (counts of m5/cmp_users.sh's own fixed fail phrases only)")
+USERS = ("is not the sealed file", "no sealed harness file", "cannot create cmp-", "cannot add cmp-",
+         "cannot remove cmp-", "cannot add the ", "cannot restrict the shared run directory", "cannot create cmp-private",
+         "cannot list writable directories", "cannot create the fetch home", "fetch_private.sh exited",
+         "processes left after fetch_private.sh", "cmp-private holds other than regular files and directories",
+         "a copy of private data lies outside cmp-private", "cmp-arm can read cmp-private", "a network rule is missing",
+         "does not see the box user's GPUs")
+hits, logs = {}, 0
+for d, ds, fs in os.walk(ROOT):
+    for n in fs:
+        if re.fullmatch(r"\d{4}-comparison-users\.log", n):
+            logs += 1
+            text = open(os.path.join(d, n), errors="replace").read()
+            for p in USERS:
+                if text.count(p):
+                    hits[p] = hits.get(p, 0) + text.count(p)
+print("logs", logs, hits or "none of the fixed phrases")
+
 print("== fetched output sizes (bytes and file counts per stage folder only)")
 res = os.path.join(ROOT, "agent", "results")
 for stage in sorted(os.listdir(res)) if os.path.isdir(res) else []:
