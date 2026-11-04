@@ -2,8 +2,8 @@
 """Trusted wrapper of one sealed-comparison invocation (U57): python3 profiler/cmp_wrap.py i<k>.
 
 Run from the shared run directory. Reads comparison-jobs/i<k>.json (the job) and comparison-jobs/i<k>.run.json (the
-arm's commands and env, the input's spec, whether parts run as separated users, and the time left in budget_s), builds
-comparison-work/i<k>/, runs the arm part and then the evaluator part, and writes wrap.json last."""
+arm's commands and env, the input's spec, whether the design has an evaluator, and the time left in budget_s), builds
+comparison-work/i<k>/, runs the arm part as cmp-arm and then the evaluator part as cmp-eval, and writes wrap.json last."""
 import hashlib
 import json
 import math
@@ -11,7 +11,6 @@ import os
 import pwd
 import re
 import shutil
-import signal
 import stat
 import subprocess
 import sys
@@ -103,13 +102,15 @@ class Sampler:
 
 class Invocation:
     def __init__(self, token):
+        self.started = time.monotonic()
         self.shared = os.getcwd()
         with open(os.path.join("comparison-jobs", f"{token}.json")) as handle:
             self.job = json.load(handle)
         with open(os.path.join("comparison-jobs", f"{token}.run.json")) as handle:
             self.plan = json.load(handle)
-        self.deadline = time.monotonic() + self.plan["budget_left_s"]
-        self.separated = self.plan["separated"]
+        self.deadline = self.started + self.plan["budget_left_s"]
+        # Every part ends by left_s after the wrapper started.
+        self.limit = self.started + self.job["left_s"]
         self.directory = os.path.join(self.shared, "comparison-work", token)
         self.paths = {name: os.path.join(self.directory, name) for name in ("run", "out", "log", "eval", "home", "ehome")}
         # The wrapper's environment without any CMP_, SUDO_ or HOME name.
@@ -118,11 +119,9 @@ class Invocation:
 
     def build(self):
         os.makedirs(os.path.dirname(self.directory), exist_ok=True)
+        os.chmod(os.path.dirname(self.directory), 0o711)
         if os.path.lexists(self.directory):
-            if self.separated:
-                sudo("rm", "-rf", "--", self.directory)
-            else:
-                shutil.rmtree(self.directory)
+            sudo("rm", "-rf", "--", self.directory)
         os.mkdir(self.directory)
         os.chmod(self.directory, 0o711)
         for name, mode in (("run", 0o755), ("out", 0o755), ("log", 0o700), ("eval", 0o700), ("home", 0o700),
@@ -132,8 +131,8 @@ class Invocation:
         for name in sorted(os.listdir(self.shared)):
             if name not in LINKED_NOT:
                 os.symlink(os.path.join(self.shared, name), os.path.join(self.paths["run"], name))
-        if self.separated:
-            sudo("chown", "-R", "-h", f"{ARM}:", self.paths["run"], self.paths["out"], self.paths["home"])
+        sudo("chown", "-R", "-h", f"{ARM}:", self.paths["run"], self.paths["out"], self.paths["home"])
+        if self.plan["evaluator"]:
             sudo("chown", f"{EVAL}:", self.paths["eval"], self.paths["ehome"])
 
     def kill(self, user):
@@ -160,46 +159,37 @@ class Invocation:
                 sudo("find", item, "-mindepth", "1", "-user", user, "!", "-path", escaped, "!", "-path", f"{escaped}/*",
                      "-delete")
         uid = pwd.getpwnam(user).pw_uid
-        for kind, flag in (("shm", "-m"), ("msg", "-q"), ("sem", "-s")):
+        for flag in ("-m", "-q", "-s"):
+            # Listed as root (util-linux creators/owners format), so every object of the namespace is seen.
             try:
-                with open(f"/proc/sysvipc/{kind}") as handle:
-                    rows = [line.split() for line in handle]
+                listing = subprocess.run(["sudo", "-n", "ipcs", flag, "-c"], stdin=subprocess.DEVNULL,
+                                         stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, text=True).stdout
             except OSError:
                 continue
-            if rows and "uid" in rows[0]:
-                column = rows[0].index("uid")
-                for row in rows[1:]:
-                    if len(row) > column and row[column] == str(uid):
-                        sudo("ipcrm", flag, row[1])
+            column = None
+            for row in (line.split() for line in listing.splitlines()):
+                if "uid" in row:
+                    column = row.index("uid")
+                elif column is not None and len(row) > column and row[0].isdigit() and row[column] in (user, str(uid)):
+                    sudo("ipcrm", flag, row[0])
         return left
 
     def process(self, user, argv, cwd, env, name, end):
         """One process of a part: (rc, wall_s, timed out); rc is None on a timeout."""
-        if self.separated:
-            command = ["sudo", "-n", "-u", user, "--", "env", "-i", "-C", cwd,
-                       *(f"{key}={value}" for key, value in env.items()), *argv]
-            options = {}
-        else:
-            command, options = argv, dict(cwd=cwd, env=env)
+        command = ["sudo", "-n", "-u", user, "--", "env", "-i", "-C", cwd,
+                   *(f"{key}={value}" for key, value in env.items()), *argv]
         log = self.paths["log"]
         with open(os.path.join(log, f"{name}.stdout"), "wb") as out, open(os.path.join(log, f"{name}.stderr"), "wb") as err:
             start = time.perf_counter()
             try:
-                child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=out, stderr=err, start_new_session=True,
-                                         **options)
+                child = subprocess.Popen(command, stdin=subprocess.DEVNULL, stdout=out, stderr=err, start_new_session=True)
             except OSError as error:
                 return 127 if isinstance(error, FileNotFoundError) else 126, time.perf_counter() - start, False
             try:
                 rc = child.wait(timeout=max(0.0, end - time.monotonic()))
             except subprocess.TimeoutExpired:
-                # The part's whole process group; with separated users every process of the part user.
-                if self.separated:
-                    self.kill(user)
-                else:
-                    try:
-                        os.killpg(child.pid, signal.SIGKILL)
-                    except OSError:
-                        pass
+                # Every process of the part user, as in cleanup.
+                self.kill(user)
                 wall = time.perf_counter() - start
                 try:
                     child.wait(timeout=30)
@@ -222,7 +212,7 @@ class Invocation:
     def arm_part(self):
         job, plan = self.job, self.plan
         spec = plan["spec"]
-        end = time.monotonic() + job["arm_timeout_s"]
+        end = min(time.monotonic() + job["arm_timeout_s"], self.limit)
         variables = {**self.base, "HOME": self.paths["home"], "CMP_INPUT": job["input"],
                      "CMP_INPUT_SPEC": json.dumps(spec), "CMP_OUT": self.paths["out"]}
         values = {"input": job["input"], "run": self.paths["run"], "out": self.paths["out"]}
@@ -248,28 +238,42 @@ class Invocation:
         return status, record
 
     def after_arm(self, status):
-        """Separated users: clean up after cmp-arm and hand run/ and out/ to the box user."""
+        """Clean up after cmp-arm and hand run/ and out/ to the box user; any failure here makes the invocation invalid."""
+        failed = []
         if not self.cleanup(ARM):
-            status = "invalid"
+            failed.append("processes")
         sudo("rm", "-rf", "--", self.paths["home"])
-        sudo("chown", "-R", "-h", f"{os.getuid()}:{os.getgid()}", self.paths["run"], self.paths["out"])
-        os.chmod(self.paths["run"], 0o700)
-        for root, dirs, names in os.walk(self.paths["out"]):
-            for name in dirs + names:
-                mode = os.lstat(os.path.join(root, name)).st_mode
-                if not (stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
-                    status = "invalid"
-        subprocess.run(["chmod", "-R", "go-w,o+rX", "--", self.paths["out"]], **QUIET)
-        return status
+        if sudo("chown", "-R", "-h", f"{os.getuid()}:{os.getgid()}", self.paths["run"], self.paths["out"]) != 0:
+            failed.append("chown")
+        # Owner access to everything under out/, whatever modes the arm left (chmod -R fixes a directory before reading
+        # it, and never follows a link).
+        if subprocess.run(["chmod", "-R", "u+rwX", "--", self.paths["out"]], **QUIET).returncode != 0:
+            failed.append("chmod")
+        try:
+            os.chmod(self.paths["run"], 0o700)
+            for root, dirs, names in os.walk(self.paths["out"], onerror=lambda error: failed.append("walk")):
+                for name in dirs + names:
+                    mode = os.lstat(os.path.join(root, name)).st_mode
+                    if not (stat.S_ISREG(mode) or stat.S_ISDIR(mode)):
+                        failed.append("type")
+        except OSError:
+            failed.append("check")
+        if subprocess.run(["chmod", "-R", "go-w,o+rX", "--", self.paths["out"]], **QUIET).returncode != 0:
+            failed.append("modes")
+        return "invalid" if failed else status
 
     def evaluator_part(self):
         job = self.job
+        if self.limit - time.monotonic() < 1:
+            # Less than 1 s of left_s: the evaluator part is not run.
+            return True, dict(eval_status="timeout", eval_rc=None, eval_wall_s=None, eval_gpu_busy_s=None,
+                              eval_gpu_busy_known=False)
         variables = {**self.base, "HOME": self.paths["ehome"], "CMP_INPUT": job["input"],
                      "CMP_INPUT_SPEC": json.dumps(self.plan["spec"]), "CMP_ARM_OUT": self.paths["out"],
                      "CMP_EVAL_OUT": self.paths["eval"], "CMP_PRIVATE": os.path.join(self.shared, "cmp-private")}
         sampler = Sampler()
         rc, wall, timed = self.process(EVAL, ["bash", os.path.join(self.shared, "harness", "evaluate.sh")], self.shared,
-                                       variables, "evaluator", time.monotonic() + job["eval_timeout_s"])
+                                       variables, "evaluator", min(time.monotonic() + job["eval_timeout_s"], self.limit))
         busy, known = sampler.finish()
         left = self.cleanup(EVAL)
         sudo("rm", "-rf", "--", self.paths["ehome"])
@@ -280,8 +284,7 @@ class Invocation:
     def run(self):
         self.build()
         status, record = self.arm_part()
-        if self.separated:
-            status = self.after_arm(status)
+        status = self.after_arm(status)
         evaluation = dict(eval_status="skipped", eval_rc=None, eval_wall_s=None, eval_gpu_busy_s=None,
                           eval_gpu_busy_known=False)
         if self.plan["evaluator"] and status == "ok":

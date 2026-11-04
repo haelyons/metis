@@ -5,7 +5,7 @@ return (async () => {
   const runStarted = Date.now()
   const { default: path } = await import('node:path')
   const { mkdirSync, existsSync, readFileSync, writeFileSync, readdirSync, rmSync, statSync, cpSync, renameSync,
-    mkdtempSync, lstatSync, chmodSync } = await import('node:fs')
+    mkdtempSync, lstatSync, chmodSync, openSync, closeSync, fstatSync, realpathSync, constants: fsConstants } = await import('node:fs')
   const { createHash, randomUUID } = await import('node:crypto')
   const { execFile } = await import('node:child_process')
   const { promisify } = await import('node:util')
@@ -264,6 +264,20 @@ sys.exit(0 if all(re.compile(p).groups >= 1 if t == "some" else re.compile(p).gr
     const bytes = readFileSync(source)
     const parsed = JSON.parse(bytes.toString('utf8'))
     if (!await validDesign(parsed)) throw new Error('invalid comparison')
+    // The isolation runner exposes the pipeline working directory to every agent call: the run root, the journal
+    // directory and the design must lie outside it, as written and with every symbolic link resolved.
+    const real = target => {
+      try { return realpathSync(target) } catch {
+        return path.dirname(target) === target ? target : path.join(real(path.dirname(target)), path.basename(target))
+      }
+    }
+    const inside = (target, directory) => {
+      const relative = path.relative(directory, target)
+      return relative === '' || (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative))
+    }
+    const journal = path.dirname(agent.journal || path.join(A, 'wf', 'journal.jsonl'))
+    if ([root, journal, source].some(item => inside(path.resolve(item), path.resolve('.'))
+      || inside(real(path.resolve(item)), real(path.resolve('.'))))) throw new Error('invalid comparison')
     design = parsed
     const comparisonText = JSON.stringify({ source, source_sha256: sha256(bytes), design }, null, 2) + '\n'
     writeAtomic(path.join(C, 'comparison.json'), comparisonText)
@@ -276,7 +290,7 @@ sys.exit(0 if all(re.compile(p).groups >= 1 if t == "some" else re.compile(p).gr
     const parent = path.dirname(source)
     let top = parent
     while (!existsSync(path.join(top, '.git')) && path.dirname(top) !== top) top = path.dirname(top)
-    hiddenPaths = [root, path.dirname(agent.journal || path.join(A, 'wf', 'journal.jsonl')), parent,
+    hiddenPaths = [root, journal, parent,
       ...(existsSync(path.join(top, '.git')) ? [top] : [])]
   }
   const views = []
@@ -291,15 +305,26 @@ sys.exit(0 if all(re.compile(p).groups >= 1 if t == "some" else re.compile(p).gr
     return view
   }
   const isolation = view => ({ isolation: { directory: view, box_access: false, hidden: hiddenPaths } })
-  function copyRegular(from, to, names) {
-    // Only regular files directly under `from`: no links, no subdirectories.
-    let listed
-    try { listed = names ?? readdirSync(from) } catch { return }
+  function copyRegular(view, relative, to, names) {
+    // Only regular files directly under the view's `relative` directory: nothing when it, or a directory above it in
+    // the view, is not a directory (a symbolic link included); no links, no subdirectories; no copy follows a link.
+    let from = view, listed
+    try {
+      for (const part of relative.split('/')) {
+        from = path.join(from, part)
+        if (!lstatSync(from).isDirectory()) return
+      }
+      listed = names ?? readdirSync(from)
+    } catch { return }
     mkdirSync(to, { recursive: true })
     for (const name of listed) {
+      let handle = null
       try {
-        if (lstatSync(path.join(from, name)).isFile()) writeFileSync(path.join(to, name), readFileSync(path.join(from, name)))
-      } catch { /* A missing file is not copied. */ }
+        handle = openSync(path.join(from, name), fsConstants.O_RDONLY | fsConstants.O_NOFOLLOW | fsConstants.O_NONBLOCK)
+        if (fstatSync(handle).isFile()) writeFileSync(path.join(to, name), readFileSync(handle))
+      } catch { /* A missing file or a link is not copied. */ } finally {
+        if (handle !== null) closeSync(handle)
+      }
     }
   }
   function removeView(directory) {
@@ -416,7 +441,7 @@ This run compares the arms listed in ${JSON.stringify(path.join(view, 'compariso
     try {
       const reply = await agent(prompt, { label: 'intake', agentType: 'ls-writer', model: 'sonnet', schema: intakeSchema,
         ...(view ? isolation(view) : {}) })
-      if (view) copyRegular(written, directory)
+      if (view) copyRegular(view, 'intake', directory)
       // Whitelist facts: no benchmark content or arbitrary reply keys can reach S.
       if (reply != null) {
         for (const key of intakeSchema.required) facts[key] = reply[key]
@@ -503,6 +528,8 @@ This run compares the arms listed in ${JSON.stringify(path.join(view, 'compariso
     return seconds
   }
   const budgetPrompt = () => `Script budgets in seconds: setup.sh=${executionTimeout('setup')}, run_anchors.sh=${executionTimeout('anchors')}, fixed profiler=${executionTimeout('profile')} (resolved now: time left before the run ceiling, not a target; explicit args budgets override); run_evaluation.sh=${executionTimeout('method_run')} per invocation (also run_anchors.sh when used as the evaluation adapter); complete evaluation scorer=${executionTimeout('evaluate')}. Use one fixed scale from EXECUTION.json, no scale search or doubling loops, and finish well within the budget.`
+  // Comparison evaluate: every box command creates its remote files at mode 600, so no part user reads a job.
+  let privateRemote = false
   async function boxCommand(name, command, destination, timeout, retry = false) {
     const seconds = typeof timeout === 'string' ? executionTimeout(timeout) : timeout
     if (seconds < 1) {
@@ -522,7 +549,7 @@ This run compares the arms listed in ${JSON.stringify(path.join(view, 'compariso
     try {
       await exec('bash', ['m5/boxrun.sh', '--name', id, '--cmd', command,
         '--remote-dir', remoteDirectory, '--timeout', String(seconds), '--fetch', 'out',
-        '--to', destination, '--receipt', receiptPath])
+        '--to', destination, '--receipt', receiptPath, ...(privateRemote ? ['--private', 'true'] : [])])
     } catch {
       commandFailed = true
       // boxrun's receipt, never command output, determines the public failure class.
@@ -620,7 +647,7 @@ ${boxProbePrompt()}
 Log tail (at most 200 lines):\n${tail}`,
         { label: name === 'setup.sh' ? 'harness-repair' : `${operation}-repair`, agentType: 'ls-writer', model: 'sonnet', retry,
           ...(view ? isolation(view) : {}) })
-      if (view) copyRegular(shown, harnessDirectory, names)
+      if (view) copyRegular(view, 'harness', harnessDirectory, names)
       for (const [file, bytes] of protectedScripts) {
         if (bytes === null) rmSync(path.join(harnessDirectory, file), { force: true })
         else writeFileSync(path.join(harnessDirectory, file), bytes)
@@ -727,8 +754,8 @@ PY`
     try {
       await collectBoxProbe('setup')
     } catch (error) { return failure(facts, error.error_class || 'infra') }
-    // The separated users of a comparison with an evaluator need passwordless sudo.
-    if (comparisonMode && design.evaluator !== null && boxProbe.sudo_nopasswd !== true) return failure(facts, 'infra')
+    // The separated users of every comparison need passwordless sudo.
+    if (comparisonMode && boxProbe.sudo_nopasswd !== true) return failure(facts, 'infra')
     try {
       // Comparison mode: the harness agent writes into its private view; the pipeline copies harness/ back.
       const view = comparisonMode && input.harness_from == null
@@ -775,8 +802,8 @@ Relative paths are one or more /-separated components made of A-Za-z0-9._+=- cha
       } else {
         const reply = await agent(prompt, { label: 'harness', agentType: 'ls-writer', model: 'sonnet', ...(view ? isolation(view) : {}) })
         if (view) {
-          copyRegular(shown, harnessDirectory)
-          copyRegular(path.join(shown, 'arms'), path.join(harnessDirectory, 'arms'), design.arms.map(arm => `${arm.id}.sh`))
+          copyRegular(view, 'harness', harnessDirectory)
+          copyRegular(view, 'harness/arms', path.join(harnessDirectory, 'arms'), design.arms.map(arm => `${arm.id}.sh`))
         }
         if (reply == null) return failure(facts, 'parse')
       }
@@ -1366,9 +1393,12 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     if (input.stub?.evaluate != null) return stub('evaluate')
     if (comparisonMode) {
       const { default: run } = await import(path.resolve('m5/comparison.js'))
-      return run({ A, C, exec, boxCommand, quote, failure, nullFacts, design, runStarted, allocation,
-        ceiling_s: Object.hasOwn(input, 'run_ceiling_s') ? input.run_ceiling_s : 43200,
-        price: box && nonnegative(box.price_usd_h) ? box.price_usd_h : null })
+      privateRemote = true
+      try {
+        return await run({ A, C, exec, boxCommand, quote, failure, nullFacts, design, runStarted, allocation,
+          ceiling_s: Object.hasOwn(input, 'run_ceiling_s') ? input.run_ceiling_s : 43200,
+          price: box && nonnegative(box.price_usd_h) ? box.price_usd_h : null })
+      } finally { privateRemote = false }
     }
     const { default: run } = await import(path.resolve('m5/evaluate.js'))
     return run({ A, C, exec, boxCommand, remoteDirectory, executionTimeout, nullFacts })
@@ -1405,7 +1435,8 @@ Prepared packet:\n${evidence}\nProposal:\n${JSON.stringify(proposal)}`,
     v1.usd = box && nonnegative(box.price_usd_h)
       ? stageReceipts.reduce((sum, receipt) => sum + (nonnegative(receipt.wall_s) ? receipt.wall_s : 0), 0) / 3600 * box.price_usd_h : 0
     stageUSD += v1.usd
-    if (stageReceipts.length) result.facts.gpu_busy_known = stageReceipts.every(receipt => receipt.gpu_busy_known === true)
+    // Comparison evaluate facts stay null; its compute is in comparison_compute.json.
+    if (stageReceipts.length && !(comparisonMode && stage === 'evaluate')) result.facts.gpu_busy_known =stageReceipts.every(receipt => receipt.gpu_busy_known === true)
     if (stage === 'takeaways') {
       // A down during the run may have completed the allocation since the snapshot.
       try {

@@ -62,19 +62,73 @@ def relative(path, part=PART, first=("out", "log", "eval")):
     return bool(parts) and parts[0] in first and all(part.fullmatch(item) and item not in (".", "..") for item in parts)
 
 
+def text(value):
+    return type(value) is str and value != ""
+
+
+def integer(value, low=None):
+    return type(value) is int and (low is None or value >= low)
+
+
+def check_placeholders(item, inputs):
+    """{input}, {run}, {out} and {spec:<pointer>} resolving to a string or finite number in every input's spec; {{ and
+    }} are literal braces; any other brace is invalid."""
+    def resolves(expr):
+        for item in inputs:
+            node = item["spec"]
+            for raw in expr.split("/")[1:]:
+                key = raw.replace("~1", "/").replace("~0", "~")
+                if type(node) is list:
+                    require(re.fullmatch(r"0|[1-9][0-9]*", key) and int(key) < len(node))
+                    node = node[int(key)]
+                else:
+                    require(type(node) is dict and key in node)
+                    node = node[key]
+            require(type(node) is str or number(node))
+
+    index = 0
+    while index < len(item):
+        if item[index] == "}":
+            require(item[index + 1:index + 2] == "}")
+            index += 1
+        elif item[index] == "{" and item[index + 1:index + 2] == "{":
+            index += 1
+        elif item[index] == "{":
+            end = item.find("}", index)
+            require(end >= 0)
+            token = item[index + 1:end]
+            if token not in ("input", "run", "out"):
+                require(token.startswith("spec:") and POINTER.fullmatch(token[5:]))
+                resolves(token[5:])
+            index = end
+        index += 1
+
+
 def check_design(design):
+    """Every rule intake applies to a design."""
     require(type(design) is dict and set(design) == DESIGN)
     arms, inputs, outputs, metrics = (design[key] for key in ("arms", "inputs", "outputs", "metrics"))
-    require(type(arms) is list and 2 <= len(arms) <= 5
-            and all(type(arm) is dict and set(arm) == {"id", "what", "commands", "env"} and arm["id"] == f"A{i}"
-                    for i, arm in enumerate(arms)))
     require(type(inputs) is list and 1 <= len(inputs) <= 10
             and all(type(item) is dict and set(item) == {"id", "spec"} and type(item["id"]) is str
                     and INPUT.fullmatch(item["id"]) for item in inputs)
             and len({item["id"] for item in inputs}) == len(inputs))
+    require(type(arms) is list and 2 <= len(arms) <= 5
+            and all(type(arm) is dict and set(arm) == {"id", "what", "commands", "env"} and arm["id"] == f"A{i}"
+                    and text(arm["what"]) and type(arm["commands"]) is list and 1 <= len(arm["commands"]) <= 8
+                    and all(type(command) is list and command and all(text(part) for part in command)
+                            for command in arm["commands"])
+                    and (arm["env"] is None or type(arm["env"]) is dict)
+                    for i, arm in enumerate(arms)))
+    for arm in arms:
+        for part in (part for command in arm["commands"] for part in command):
+            check_placeholders(part, inputs)
+        for key, value in (arm["env"] or {}).items():
+            require(re.fullmatch(r"[A-Z_][A-Z0-9_]{0,63}", key) and not key.startswith("CMP_") and type(value) is str)
+            check_placeholders(value, inputs)
     require(type(outputs) is list and len(outputs) <= 10
             and all(type(item) is dict and set(item) == {"name", "what", "format", "select"} and type(item["name"]) is str
-                    and NAME.fullmatch(item["name"]) and item["format"] in ("bytes", "text_numbers", "json_numbers")
+                    and NAME.fullmatch(item["name"]) and text(item["what"])
+                    and item["format"] in ("bytes", "text_numbers", "json_numbers")
                     for item in outputs)
             and len({item["name"] for item in outputs}) == len(outputs))
     for item in outputs:
@@ -83,7 +137,8 @@ def check_design(design):
                 and re.compile(select).groups >= 1)
     require(type(metrics) is list and 1 <= len(metrics) <= 10
             and all(type(item) is dict and set(item) == {"name", "unit", "what", "source", "reduce", "expect_count"}
-                    and type(item["name"]) is str and NAME.fullmatch(item["name"]) for item in metrics)
+                    and type(item["name"]) is str and NAME.fullmatch(item["name"]) and text(item["unit"])
+                    and text(item["what"]) for item in metrics)
             and len({item["name"] for item in metrics}) == len(metrics))
     for item in metrics:
         if item["source"] == "trusted_wall":
@@ -92,11 +147,19 @@ def check_design(design):
             count = item["expect_count"]
             require(item["source"] == "sealed_extraction" and item["reduce"] in ("first", "max", "value_at_max_key")
                     and (count is None or type(count) is int and count > 0))
-    resamples = design["bootstrap_resamples"]
-    require((design["evaluator"] is None or type(design["evaluator"]) is dict)
+    resamples, evaluator = design["bootstrap_resamples"], design["evaluator"]
+    require((evaluator is None or type(evaluator) is dict and set(evaluator) == {"what", "spec", "timeout_s"}
+             and text(evaluator["what"]) and (evaluator["timeout_s"] is None or integer(evaluator["timeout_s"], 1)))
             and type(design["replicates"]) is int and 1 <= design["replicates"] <= 30
+            and integer(design["warmup"], 0) and design["warmup"] <= 3 and integer(design["order_seed"])
+            and integer(design["budget_s"], 1)
             and type(design["bootstrap_seed"]) is int and type(resamples) is int and 1000 <= resamples <= 1000000
             and type(design["comparisons"]) is list and len(design["comparisons"]) <= 12)
+    timeout, ids, input_ids = design["timeout_s"], {arm["id"] for arm in arms}, {item["id"] for item in inputs}
+    require(timeout is None or integer(timeout, 1)
+            or type(timeout) is dict and set(timeout) == ids
+            and all(integer(value, 1) or type(value) is dict and set(value) == input_ids
+                    and all(integer(item, 1) for item in value.values()) for value in timeout.values()))
     earlier = []
     for comparison in design["comparisons"]:
         check_comparison(comparison, design, earlier)
@@ -226,18 +289,41 @@ def read(root, rel):
     return (Path(root) / rel).read_bytes()
 
 
-def load(path):
-    """An invocation: its directory and its wrap.json, None when missing or invalid."""
+def valid_wrap(value, count):
+    """wrap.json's keys and types; status ok exactly when every exit status is 0 and every command (count) has a row;
+    eval_status ok only when eval_rc is 0."""
+    def seconds(item, nullable=False):
+        return nullable and item is None or number(item) and item >= 0
+
+    def rc(item):
+        return item is None or type(item) is int
+
+    if type(value) is not dict or set(value) != WRAP or type(value["commands"]) is not list:
+        return False
+    rows = value["commands"]
+    return (value["status"] in ("ok", "failed", "timeout", "invalid")
+            and value["eval_status"] in ("ok", "failed", "timeout", "skipped")
+            and rc(value["adapter_rc"]) and seconds(value["adapter_wall_s"]) and seconds(value["gpu_busy_s"])
+            and type(value["gpu_busy_known"]) is bool and rc(value["eval_rc"])
+            and seconds(value["eval_wall_s"], True) and seconds(value["eval_gpu_busy_s"], True)
+            and type(value["eval_gpu_busy_known"]) is bool
+            and all(type(row) is dict and set(row) == {"argv", "rc", "wall_s", "executable", "sha256"}
+                    and type(row["argv"]) is list and all(type(part) is str for part in row["argv"])
+                    and rc(row["rc"]) and seconds(row["wall_s"])
+                    and (row["executable"] is None or type(row["executable"]) is str)
+                    and (row["sha256"] is None or type(row["sha256"]) is str) for row in rows)
+            and (value["status"] == "ok") == (value["adapter_rc"] == 0 and len(rows) == count
+                                               and all(row["rc"] == 0 for row in rows))
+            and (value["eval_status"] != "ok" or value["eval_rc"] == 0))
+
+
+def load(path, count):
+    """An invocation: its directory and its wrap.json, None when missing or invalid (count: the arm's commands)."""
     try:
         value = json.loads(read(path, "wrap.json"))
     except (OSError, ValueError, RecursionError):
         value = None
-    if (type(value) is not dict or set(value) != WRAP or value["status"] not in ("ok", "failed", "timeout", "invalid")
-            or value["eval_status"] not in ("ok", "failed", "timeout", "skipped")
-            or type(value["commands"]) is not list
-            or not all(type(row) is dict and "wall_s" in row for row in value["commands"])):
-        value = None
-    return dict(dir=path, wrap=value)
+    return dict(dir=path, wrap=value if valid_wrap(value, count) else None)
 
 
 def ok(job, location=None):
@@ -491,7 +577,8 @@ class Scorer:
     def job(self, arm, replicate, item):
         key = (arm, replicate, item)
         if key not in self.jobs:
-            self.jobs[key] = load(self.root / f"r{replicate}" / arm / item)
+            count = len(next(entry for entry in self.design["arms"] if entry["id"] == arm)["commands"])
+            self.jobs[key] = load(self.root / f"r{replicate}" / arm / item, count)
         return self.jobs[key]
 
     def value(self, metric, arm, replicate, item):

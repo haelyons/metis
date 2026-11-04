@@ -19,8 +19,9 @@
 // Conventions the contract leaves open, fixed here: rounds are numbered from 1 within their kind (w1.., r1.., as in
 // tools/test_m5_comparison_score.py) in the job file, the fetch folders and the compute rows; a round's pairs are
 // shuffled from arm-major order; `env -i` may carry a working-directory option (-C) before the variables; the
-// writable listing may use -print0; the evaluator part's streams may be logged as log/evaluator.*; tokens_known and
-// gpu_busy_known stay the common telemetry facts in comparison mode.
+// writable listing may use -print0; the evaluator part's streams may be logged as log/evaluator.*; boxrun's remote
+// files of a command are the top-level files of the shared run directory named <receipt name>.<suffix>.
+// The fakes also stand in for ipcs, ipcmk and ipcrm (a fixture table of System V objects, see the ipc fake).
 // Usage: node tools/test_m5_comparison_evaluate.js [case-name regex] [keep | debug [log count]]
 const fs = require('node:fs')
 const path = require('node:path')
@@ -85,7 +86,7 @@ const NOT_LINKED = ['out', 'profiler', 'concurrency-work', 'evaluation-work', 'u
 const COMPARISON_OPS = ['comparison-users', 'versions', 'comparison-job', 'comparison', 'comparison-private-remove']
 const WRAP_KEYS = ['adapter_rc', 'adapter_wall_s', 'commands', 'eval_gpu_busy_known', 'eval_gpu_busy_s', 'eval_rc', 'eval_status', 'eval_wall_s', 'gpu_busy_known', 'gpu_busy_s', 'status']
 const COMMAND_KEYS = ['argv', 'executable', 'rc', 'sha256', 'wall_s']
-const JOB_KEYS = ['arm', 'arm_timeout_s', 'eval_timeout_s', 'input', 'mode', 'round']
+const JOB_KEYS = ['arm', 'arm_timeout_s', 'eval_timeout_s', 'input', 'left_s', 'mode', 'round']
 const INV_KEYS = ['arm', 'attributed_usd', 'eval_gpu_busy_s', 'eval_status', 'eval_wall_s', 'gpu_busy_known', 'gpu_busy_s', 'input', 'round', 'status', 'wall_s']
 const ARM_KEYS = ['arm', 'attributed_usd', 'eval_gpu_busy_s', 'eval_wall_s', 'gpu_busy_known', 'gpu_busy_s', 'invocations', 'wall_s']
 const namesArm = text => /(^|[^A-Za-z0-9])A[0-9]([^A-Za-z0-9]|$)/.test(String(text))
@@ -102,7 +103,7 @@ function realTool(name) {
   }
   return null
 }
-const REAL = Object.fromEntries(['find', 'id', 'getent', 'pkill', 'pgrep', 'ldd', 'install', 'ipcs'].map(name => [name, realTool(name)]))
+const REAL = Object.fromEntries(['find', 'id', 'getent', 'pkill', 'pgrep', 'ldd', 'install'].map(name => [name, realTool(name)]))
 
 // ---- Fakes (python3), each with its case configuration inlined ------------------------------------------------
 const PRELUDE = String.raw`#!/usr/bin/env python3
@@ -203,6 +204,11 @@ if tool in ("chown", "chgrp"):
     if not is_root() and (owner not in ("", CFG["boxUser"], CFG["boxUid"]) or group.startswith("cmp-") or group == "root"):
         sys.stderr.write(tool + ": Operation not permitted\n")
         sys.exit(1)
+    if CFG["failChown"] and tool == "chown" and owner in (CFG["boxUser"], CFG["boxUid"]):
+        paths = [os.path.abspath(x).rstrip("/") for x in a if not x.startswith("-")][1:]
+        if any("/comparison-work/i" in p and (p.endswith("/out") or p.endswith("/run")) for p in paths):
+            sys.stderr.write("chown: changing ownership: Operation not permitted (fixture)\n")
+            sys.exit(1)
     sys.exit(0)
 if tool in ("useradd", "adduser"):
     if not is_root():
@@ -479,9 +485,124 @@ if len(a) >= 2 and a[0] in ("passwd", "group") and a[1] in UIDS:
     sys.exit(0)
 real("getent")
 `,
-  ipcrm: String.raw`
-log("ipcrm")
-sys.exit(0)
+  // System V IPC: ipcmk creates an object owned by the calling (part) user in the fixture's table; ipcs lists the
+  // table in util-linux's format (with -c as creators/owners); ipcrm removes by id, key or --all, as root or as
+  // the object's owner, and logs what it removed.
+  ipc: String.raw`
+tool = os.path.basename(sys.argv[0])
+a = sys.argv[1:]
+store = os.path.join(CFG["state"], "ipc.json")
+try:
+    with open(store) as handle:
+        objects = json.load(handle)
+except OSError:
+    objects = []
+def save():
+    tmp = store + ".%d" % os.getpid()
+    with open(tmp, "w") as handle:
+        json.dump(objects, handle)
+    os.replace(tmp, store)
+def part_user():
+    # A part runs under env -i, which drops FAKE_SUDO_USER: its user is the one whose sudo process is an ancestor.
+    starts = {}
+    for target in UIDS:
+        directory = os.path.join(CFG["state"], "procs-" + target)
+        for name in (os.listdir(directory) if os.path.isdir(directory) else []):
+            try:
+                with open(os.path.join(directory, name)) as handle:
+                    starts[int(name)] = (target, handle.read())
+            except (OSError, ValueError):
+                pass
+    pid = os.getpid()
+    while pid > 1:
+        try:
+            with open("/proc/%d/stat" % pid) as handle:
+                rest = handle.read().rsplit(")", 1)[1].split()
+        except OSError:
+            return None
+        if pid in starts and starts[pid][1] == rest[19]:
+            return starts[pid][0]
+        pid = int(rest[1])
+    return None
+me = os.environ.get("FAKE_SUDO_USER") or ("root" if is_root() else (part_user() or CFG["boxUser"]))
+live = [o for o in objects if not o["removed"]]
+if tool == "ipcmk":
+    kind = "m" if ("-M" in a or "--shmem" in a) else "q" if ("-Q" in a or "--queue" in a) else "s"
+    ident = 32768 + len(objects)
+    key = "0x%08x" % (0x51ab0000 + len(objects))
+    objects.append(dict(kind=kind, id=ident, key=key, owner=me, removed=False))
+    save()
+    log("ipcmk", id=ident, owner=me)
+    print({"m": "Shared memory id: %d", "q": "Message queue id: %d", "s": "Semaphore id: %d"}[kind] % ident)
+    sys.exit(0)
+if tool == "ipcs":
+    log("ipcs")
+    kinds = [k for k, flags in (("m", ("-m", "--shmems")), ("q", ("-q", "--queues")), ("s", ("-s", "--semaphores"))) if any(f in a for f in flags)] or ["m", "q", "s"]
+    creators = "-c" in a or "--creator" in a
+    titles = {"m": "Shared Memory Segments", "q": "Message Queues", "s": "Semaphore Arrays"}
+    names = {"m": "shmid", "q": "msqid", "s": "semid"}
+    for k in ["q", "m", "s"]:
+        if k not in kinds:
+            continue
+        rows = [o for o in live if o["kind"] == k]
+        print("")
+        if creators:
+            print("------ %s Creators/Owners --------" % {"m": "Shared Memory Segment", "q": "Message Queues", "s": "Semaphore Arrays"}[k])
+            print("%-10s %-10s %-10s %-10s %-10s %-10s" % (names[k], "perms", "cuid", "cgid", "uid", "gid"))
+            for o in rows:
+                print("%-10d %-10s %-10s %-10s %-10s %-10s" % (o["id"], "600", o["owner"], o["owner"], o["owner"], o["owner"]))
+        else:
+            print("------ %s --------" % titles[k])
+            extra = {"m": "bytes      nattch     status", "q": "used-bytes   messages", "s": "nsems"}[k]
+            print("%-10s %-10s %-10s %-10s %s" % ("key", names[k], "owner", "perms", extra))
+            for o in rows:
+                tail = {"m": "4096       0", "q": "0            0", "s": "1"}[k]
+                print("%-10s %-10d %-10s %-10s %s" % (o["key"], o["id"], o["owner"], "600", tail))
+        print("")
+    sys.exit(0)
+# ipcrm
+removed, failed, j = [], False, 0
+def drop(match):
+    global failed
+    hit = [o for o in live if match(o) and not o["removed"]]
+    for o in hit:
+        if is_root() or o["owner"] == me:
+            o["removed"] = True
+            removed.append(o["id"])
+        else:
+            failed = True
+    if not hit:
+        failed = True
+idflags = {"-m": "m", "--shmem-id": "m", "-q": "q", "--queue-id": "q", "-s": "s", "--semaphore-id": "s"}
+keyflags = {"-M": "m", "--shmem-key": "m", "-Q": "q", "--queue-key": "q", "-S": "s", "--semaphore-key": "s"}
+while j < len(a):
+    x, value = a[j], None
+    if "=" in x and x.startswith("--"):
+        x, value = x.split("=", 1)
+    if x in idflags or x in keyflags:
+        if value is None:
+            j += 1
+            value = a[j] if j < len(a) else ""
+        kind = idflags.get(x) or keyflags.get(x)
+        if x in idflags:
+            drop(lambda o: o["kind"] == kind and str(o["id"]) == value)
+        else:
+            drop(lambda o: o["kind"] == kind and o["key"].lower() == value.lower())
+    elif x in ("-a", "--all"):
+        want = {"shm": "m", "msg": "q", "sem": "s"}.get(value or "", None)
+        for o in live:
+            if (want is None or o["kind"] == want) and (is_root() or o["owner"] == me) and not o["removed"]:
+                o["removed"] = True
+                removed.append(o["id"])
+    elif x in ("shm", "msg", "sem") and j + 1 < len(a):
+        kind = {"shm": "m", "msg": "q", "sem": "s"}[x]
+        for value in a[j + 1:]:
+            drop(lambda o: o["kind"] == kind and str(o["id"]) == value)
+        break
+    j += 1
+save()
+log("ipcrm", removed=removed)
+sys.exit(1 if failed else 0)
 `,
 }
 // The user database for Python programs on the box (no -I): pwd and grp also know cmp-arm and cmp-eval once created.
@@ -518,7 +639,7 @@ def getgrgid(gid):
 pwd.getpwnam, pwd.getpwuid, grp.getgrnam, grp.getgrgid = getpwnam, getpwuid, getgrnam, getgrgid
 `
 const FAKE_FILES = { sudo: 'sudo', 'nvidia-smi': 'nvidia-smi', iptables: 'rules', ip6tables: 'rules', pkill: 'procs', pgrep: 'procs',
-  lscpu: 'lscpu', ldd: 'ldd', find: 'find', id: 'id', getent: 'getent', ipcrm: 'ipcrm',
+  lscpu: 'lscpu', ldd: 'ldd', find: 'find', id: 'id', getent: 'getent', ipcrm: 'ipc', ipcs: 'ipc', ipcmk: 'ipc',
   chown: 'account', chgrp: 'account', useradd: 'account', adduser: 'account', usermod: 'account', groupadd: 'account', gpasswd: 'account', install: 'account' }
 
 // ---- Programs and harness scripts on the box ------------------------------------------------------------------
@@ -562,6 +683,8 @@ if [[ $rec == one ]]; then
 fi
 case $mode in
   symlink) ln -s /etc/hostname "$CMP_OUT/link";;
+  hidelink) mkdir -p "$CMP_OUT/hid"; ln -s /etc/hostname "$CMP_OUT/hid/link"; chmod 000 "$CMP_OUT/hid";;
+  hideout) ln -s /etc/hostname "$CMP_OUT/hlink"; chmod 000 "$CMP_OUT";;
   evalfail) printf x > "$CMP_OUT/evalfail";;
   evalsleep) printf x > "$CMP_OUT/evalsleep";;
 esac
@@ -579,9 +702,19 @@ run = {n: (os.readlink(n) if os.path.islink(n) else "notlink") for n in os.listd
 row = dict(env={k: v for k, v in os.environ.items() if not k.startswith("FAKE_FD")}, cwd=os.getcwd(), S=S, inv=inv,
     fd1=os.environ["FAKE_FD1"], fd2=os.environ["FAKE_FD2"], invList=names(inv), invMode=mode(inv),
     logMode=mode(os.path.join(inv, "log")), outList=names(out), evalList=names(os.path.join(inv, "eval")),
-    homeList=names(os.environ.get("HOME", "/nonexistent")), ehomeList=names(os.path.join(inv, "ehome")), run=run, shared=names(S))
+    homeList=names(os.environ.get("HOME", "/nonexistent")), ehomeList=names(os.path.join(inv, "ehome")), run=run, shared=names(S),
+    boxFiles={n: mode(os.path.join(S, n)) for n in os.listdir(S) if os.path.isfile(os.path.join(S, n)) and not os.path.islink(os.path.join(S, n))})
 with open(os.path.join(out, "adapter.json"), "w") as handle:
     json.dump(row, handle)`
+// Adapter mode useleft: sleep until 0.6 s before the invocation's left_s runs out, counted from the creation of
+// run/'s links (right after the wrapper starts), so that the arm part ends ok with less than 1 s left.
+const USELEFT_PY = String.raw`import json, os, time
+inv = os.path.dirname(os.getcwd())
+S = os.path.dirname(os.path.realpath("harness"))
+with open(os.path.join(S, "comparison-jobs", os.path.basename(inv) + ".json")) as handle:
+    job = json.load(handle)
+end = os.lstat("harness").st_mtime + job["left_s"] - 0.6
+time.sleep(max(0.0, end - time.time()))`
 const EVAL_PY = String.raw`import json, os
 def ancestors():
     found, pid = [], os.getppid()
@@ -741,6 +874,42 @@ for s in range(1000):
     if p[0][0] == "A0":
         print(s)
         break`, null)
+// Time left (SCHEMAS.md Timeouts): with an evaluator and no timeouts, A0 runs first. LEFT_SKIP: A0's adapter sleeps
+// until 0.6 s before left_s runs out, so the evaluator part has less than 1 s. LEFT_CAP: A0's adapter sleeps 5 s and
+// its evaluator part would sleep 120 s, beyond left_s.
+const EVALUATOR_UNCAPPED = { what: 'published scorer', spec: { program: 'scorer' }, timeout_s: null }
+const LEFT_SKIP = { ...BUDGET, evaluator: EVALUATOR_UNCAPPED, replicates: 1, inputs: [{ id: 'x', spec: { case: 'k', a0: 'ok', a1: 'ok', adapter_a0: 'useleft' } }] }
+const LEFT_CAP = { ...BUDGET, evaluator: EVALUATOR_UNCAPPED, replicates: 1, inputs: [{ id: 'x', spec: { case: 'k', a0: 'evalsleep', a1: 'ok', adapter_a0: 'sleep5' } }] }
+// Wrapper step 2: A0 leaves a symbolic link in an unreadable subdirectory of out/, A1 one in an unreadable out/.
+const HIDE = { ...SMALL, replicates: 1, budget_s: 120, inputs: [{ id: 'x', spec: { case: 'k', a0: 'hidelink', a1: 'hideout' } }] }
+// wrap.json validity: each input's fetched wrap.json (both arms) is replaced by a record the contract says is
+// invalid, except f-valid's, a valid record whose values must reach the compute file and the scorer.
+const FORGED = {
+  arms: simpleArms(['A0', 'A1']), outputs: [RES], metrics: [WALL], evaluator: EVALUATOR_UNCAPPED,
+  inputs: ['f-valid', 'f-okrc', 'f-empty', 'f-negwall', 'f-nanwall', 'f-infwall', 'f-rowmissing', 'f-rowextra', 'f-evalrc']
+    .map(id => ({ id, spec: { case: 'k', a0: 'ok', a1: 'ok' } })),
+  replicates: 1, warmup: 0, order_seed: 11, timeout_s: 600, budget_s: 900, bootstrap_seed: 0, bootstrap_resamples: 1000,
+  comparisons: [{ id: 'K1', arm: 'A1', against: 'A0', measure: { metric: 'wall' }, criterion: 'non_inferiority', direction: 'lower_better',
+    unit: 'per_input_each', pairing: 'unpaired', rule: 'all_pairs', confidence: null, margin: null, threshold: null, strict: null,
+    reference: null, missing: 'void', given: [], parts: ['main'] }],
+}
+const FORGERIES = (() => {
+  const base = () => ({ status: 'ok', adapter_rc: 0, adapter_wall_s: 0.5,
+    commands: [{ argv: ['bin/solver', '--mode', 'ok'], rc: 0, wall_s: 1.0, executable: '/usr/bin/true', sha256: '0'.repeat(64) }],
+    gpu_busy_s: 1.0, gpu_busy_known: true, eval_status: 'ok', eval_rc: 0, eval_wall_s: 0.25, eval_gpu_busy_s: 0.5, eval_gpu_busy_known: true })
+  const edit = change => { const value = base(); change(value); return JSON.stringify(value) + '\n' }
+  return {
+    'f-valid': edit(() => {}),
+    'f-okrc': edit(value => { value.adapter_rc = 3 }),
+    'f-empty': edit(value => { value.commands = [] }),
+    'f-negwall': edit(value => { value.adapter_wall_s = -1 }),
+    'f-nanwall': edit(() => {}).replace('"adapter_wall_s":0.5', '"adapter_wall_s":NaN'),
+    'f-infwall': edit(() => {}).replace('"wall_s":1,', '"wall_s":1e999,'),
+    'f-rowmissing': edit(value => { delete value.commands[0].sha256 }),
+    'f-rowextra': edit(value => { value.commands[0].note = 'x' }),
+    'f-evalrc': edit(value => { value.eval_rc = 2 }),
+  }
+})()
 
 // ---- One workflow run -------------------------------------------------------------------------------------
 const scratch = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'test_m5_comparison_evaluate_')))
@@ -756,7 +925,9 @@ function check(label, test) {
 }
 
 // spec: { design (null: no args.comparison), boxName, ceiling, box ('none' | 'open' | 'refresh'), stub, usersExist,
-// privateReadable, brokenRules, gpuLines, utilNA, stuck, setupExtra, fetchExtra }
+// privateReadable, brokenRules, gpuLines, utilNA, stuck, setupExtra, fetchExtra, ipc (every adapter and evaluate.sh
+// leave a System V shared-memory segment), failChown (chown of an invocation's run/ or out/ to the box user fails),
+// forge (input id -> wrap.json text written over every fetched wrap.json of that input) }
 async function execute(name, spec) {
   if (ONLY && !ONLY.test(name)) return null
   const caseDir = path.join(scratch, name)
@@ -775,7 +946,7 @@ async function execute(name, spec) {
   const cfg = { log: path.join(fake, 'log.jsonl'), state, users: path.join(state, 'users.json'), real: REAL, boxUser: BOX_USER, boxUid: BOX_UID,
     privateReadable: Boolean(spec.privateReadable), brokenRules: spec.brokenRules ?? {}, gpuLines: spec.gpuLines ?? {}, utilNA: Boolean(spec.utilNA),
     stuck: spec.stuck ?? null, writable, marks: { 'cmp-arm': 'cmparm-', 'cmp-eval': 'cmpeval-' }, gpus: GPUS, driver: DRIVER, cuda: CUDA,
-    cpuModel: CPU_MODEL, cpuCount: CPU_COUNT, caseDir }
+    cpuModel: CPU_MODEL, cpuCount: CPU_COUNT, caseDir, failChown: Boolean(spec.failChown) }
   if (spec.usersExist) fs.writeFileSync(cfg.users, JSON.stringify(['cmp-arm', 'cmp-eval']))
   for (const [tool, kind] of Object.entries(FAKE_FILES))
     writeFile(path.join(fakeBin, tool), PRELUDE.replace('CFG_JSON', () => JSON.stringify(JSON.stringify(cfg))) + FAKES[kind], 0o755)
@@ -791,13 +962,16 @@ async function execute(name, spec) {
   if (design) {
     for (const arm of design.arms) {
       const key = arm.id.toLowerCase()
-      const worldWrites = evaluator ? [
+      // Separated users run for every comparison, so the arm part always leaves files for the cleanup.
+      const worldWrites = [
         `touch ${q(box)}/cmparm-stray-$$ ${q(path.join(world, 'tmp'))}/cmparm-x-$$ ${q(path.join(world, 'tmp', 'sub'))}/cmparm-y-$$ ${q(path.join(world, 'shm'))}/cmparm-z-$$`,
-        'touch data/cmparm-keep-$$ "$CMP_OUT/cmparm-out-$$"'] : []
+        'touch data/cmparm-keep-$$ "$CMP_OUT/cmparm-out-$$"']
       files[`arms/${arm.id}.sh`] = '#!/usr/bin/env bash\nset -u\n' + RECORD + `FAKE_FD1=$fd1 FAKE_FD2=$fd2 python3 -c ${q(ADAPTER_PY)}\n` +
         `printf 'adapter-out %s\\n' ${arm.id}\nprintf 'adapter-err %s\\n' ${arm.id} >&2\nprintf '%s\\n' "$CMP_INPUT" > "$CMP_OUT/input.txt"\n` +
-        worldWrites.join('\n') + '\n' +
+        worldWrites.join('\n') + '\n' + (spec.ipc ? 'ipcmk -M 4096 >/dev/null\n' : '') +
         `mode=$(python3 -c ${q(`import json, os\ns = json.loads(os.environ["CMP_INPUT_SPEC"])\nprint(s.get("${key}", "ok") if isinstance(s, dict) else "ok")`)})\n` +
+        `amode=$(python3 -c ${q(`import json, os\ns = json.loads(os.environ["CMP_INPUT_SPEC"])\nprint(s.get("adapter_${key}", "") if isinstance(s, dict) else "")`)})\n` +
+        `if [[ $amode == sleep5 ]]; then sleep 5; fi\nif [[ $amode == useleft ]]; then python3 -c ${q(USELEFT_PY)}; fi\n` +
         'if [[ $mode == adapterfail ]]; then exit 5; fi\nexit 0\n'
     }
     files['cmp_files.json'] = JSON.stringify({ files: Object.fromEntries(design.arms.map(arm => [arm.id, { res: 'out/result.txt' }])) }) + '\n'
@@ -812,6 +986,7 @@ async function execute(name, spec) {
         `touch "$HOME/cmpeval-home-$$" ${q(path.join(world, 'etmp'))}/cmpeval-fetch-$$\n` + (spec.fetchExtra ?? '') + '\n'
       files['evaluate.sh'] = '#!/usr/bin/env bash\nset -u\n' + RECORD + `FAKE_FD1=$fd1 FAKE_FD2=$fd2 python3 -c ${q(EVAL_PY)}\n` +
         `printf 'evaluated\\n'\nprintf 'evaluator-err\\n' >&2\ntouch ${q(path.join(world, 'etmp'))}/cmpeval-x-$$ ${q(path.join(world, 'tmp'))}/cmpeval-t-$$\n` +
+        (spec.ipc ? 'ipcmk -M 4096 >/dev/null\n' : '') +
         'if [[ -e $CMP_ARM_OUT/evalfail ]]; then exit 4; fi\nif [[ -e $CMP_ARM_OUT/evalsleep ]]; then sleep 120; fi\n' +
         'printf \'{"score": 1}\\n\' > "$CMP_EVAL_OUT/score.json"\nexit 0\n'
     }
@@ -851,11 +1026,35 @@ function visit(directory, depth) {
 visit(process.env.BOX_ROOT, 0)
 `)
   const refresh = spec.box === 'refresh' ? `if [[ $command == *cmp-private* ]]; then printf '%s\\n' ${q(JSON.stringify(ended))} > ${q(sharedBox)}; fi\n` : ''
-  writeFile(path.join(caseDir, 'bin/box'), sh('command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\n' +
+  // The box runs every command under umask 022 (a common default), so files a command creates without an explicit
+  // mode are readable by other users.
+  writeFile(path.join(caseDir, 'bin/box'), sh('command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\numask 022\n' +
     `export PATH=${q(fakeBin)}:"$PATH"\nexport HOME=${q(boxHome)}\nexport PYTHONPATH=${q(fakePython)}\nexport CMP_LEAK=leaked SUDO_LEAK=leaked FAKE_KEEP=keepme\n` +
     'cd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n' + refresh +
     'if [[ $command == *timeout* ]]; then\n  for ((end=SECONDS+1800; SECONDS<end; )); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0'), 0o700)
-  writeFile(path.join(caseDir, 'bin/fetch'), sh('source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nexec cp -r -- "$source" "$2"'), 0o700)
+  // spec.forge: after each copy, every fetched wrap.json whose sibling out/input.txt names a forged input is
+  // replaced by the forged text (the pipeline then reads a wrap.json the contract says is invalid).
+  const forgeScript = path.join(caseDir, 'forge.js')
+  fs.writeFileSync(forgeScript, `
+const fs = require('node:fs'), path = require('node:path')
+const forge = ${JSON.stringify(spec.forge ?? {})}
+function visit(directory) {
+  let entries = []
+  try { entries = fs.readdirSync(directory, { withFileTypes: true }) } catch { return }
+  for (const entry of entries) {
+    const file = path.join(directory, entry.name)
+    if (entry.isDirectory()) visit(file)
+    else if (entry.isFile() && entry.name === 'wrap.json') {
+      let input = null
+      try { input = fs.readFileSync(path.join(directory, 'out', 'input.txt'), 'utf8').trim() } catch {}
+      if (input !== null && Object.hasOwn(forge, input)) fs.writeFileSync(file, forge[input])
+    }
+  }
+}
+visit(process.argv[2])
+`)
+  writeFile(path.join(caseDir, 'bin/fetch'), sh('source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nrc=0\ncp -r -- "$source" "$2" || rc=$?\n' +
+    (spec.forge ? `"$M5_TEST_NODE" ${q(forgeScript)} "$2"\n` : '') + 'exit $rc'), 0o700)
 
   const callsFile = path.join(caseDir, 'calls.jsonl'), stderrFile = path.join(caseDir, 'stderr.log')
   const stdout = fs.openSync(path.join(caseDir, 'stdout.log'), 'w'), stderr = fs.openSync(stderrFile, 'w')
@@ -964,18 +1163,87 @@ function envCommand(cmd) {
 }
 const envOfSudo = cmd => envCommand(cmd).vars
 
+// SCHEMAS.md Timeouts: a wrap.json is valid only with exactly the wrapper keys and their types, `status` "ok" exactly
+// when adapter_rc and every command's rc are 0 and the arm has as many command rows as commands, and `eval_status`
+// "ok" only when eval_rc is 0. An invalid one gives status invalid and missing values.
+const finiteOrNull = value => value === null || (typeof value === 'number' && Number.isFinite(value) && value >= 0)
+const intOrNull = value => value === null || Number.isInteger(value)
+function wrapValid(wrap, commandCount) {
+  if (!wrap || typeof wrap !== 'object' || Array.isArray(wrap)) return false
+  if (JSON.stringify(Object.keys(wrap).sort()) !== JSON.stringify(WRAP_KEYS)) return false
+  if (!['ok', 'failed', 'timeout', 'invalid'].includes(wrap.status) || !['ok', 'failed', 'timeout', 'skipped'].includes(wrap.eval_status)) return false
+  if (!intOrNull(wrap.adapter_rc) || !intOrNull(wrap.eval_rc)) return false
+  for (const key of ['adapter_wall_s', 'gpu_busy_s', 'eval_wall_s', 'eval_gpu_busy_s']) if (!finiteOrNull(wrap[key])) return false
+  if (typeof wrap.gpu_busy_known !== 'boolean' || typeof wrap.eval_gpu_busy_known !== 'boolean') return false
+  if (!Array.isArray(wrap.commands)) return false
+  for (const row of wrap.commands) {
+    if (!row || typeof row !== 'object' || JSON.stringify(Object.keys(row).sort()) !== JSON.stringify(COMMAND_KEYS)) return false
+    if (!Array.isArray(row.argv) || !row.argv.every(item => typeof item === 'string') || !intOrNull(row.rc) || !finiteOrNull(row.wall_s)) return false
+    if (!(row.executable === null || typeof row.executable === 'string') || !(row.sha256 === null || typeof row.sha256 === 'string')) return false
+  }
+  const allZero = wrap.adapter_rc === 0 && wrap.commands.every(row => row.rc === 0) && wrap.commands.length === commandCount
+  if ((wrap.status === 'ok') !== allZero) return false
+  if (wrap.eval_status === 'ok' && wrap.eval_rc !== 0) return false
+  return true
+}
+const commandCountOf = (r, job) => r.design.arms.find(arm => arm.id === job.arm).commands.length
+const armWallOf = wrap => (wrap.adapter_wall_s ?? 0) + wrap.commands.reduce((sum, row) => sum + (row.wall_s ?? 0), 0)
+// The box files of the receipt (SCHEMAS.md "Remote command files"): top-level files of the shared run directory
+// named <receipt name>.<suffix> (script, log, GPU samples, exit status).
+const receiptFiles = (names, receipt) => names.filter(name => name.startsWith(`${receipt.name}.`))
+const evaluateReceipts = r => {
+  const from = r.ops.lastIndexOf('reproduce-freeze') + 1
+  const to = r.ops.reduce((last, op, i) => COMPARISON_OPS.includes(op) ? i : last, -1)
+  return from > 0 && to >= from ? r.receipts.slice(from, to + 1) : []
+}
+// Users step 3 grants other users read access to every file of the shared run directory, so only the files of the
+// evaluate stage's commands after comparison-users keep the mode they were created with.
+const afterUsersReceipts = r => {
+  const receipts = evaluateReceipts(r)
+  const users = receipts.findIndex(receipt => receipt.operation === 'comparison-users')
+  return users >= 0 ? receipts.slice(users + 1) : []
+}
+
+// The run's clock starts at the latest when the pipeline writes C/comparison.json (before intake), so the time left
+// before the ceiling is at most the ceiling minus the time since then (the process spawn is too early under load).
+const runStartBound = r => fs.statSync(path.join(r.control, 'comparison.json')).mtimeMs
+
 function commonChecks(r) {
   statuses(r, CMP_PASS)
-  // tokens_known and gpu_busy_known are the common telemetry facts every stage carries (receipt telemetry owns
-  // gpu_busy_known); the evaluation's own result facts are null.
-  check(`${r.name}: evaluate facts keep every existing key; every evaluation result fact is null in comparison mode`, () => {
+  check(`${r.name}: evaluate facts keep every existing key, each null in comparison mode (gpu_busy_known and tokens_known included), with receipts present`, () => {
     const facts = r.stage('evaluate')?.facts
     assert.ok(facts, 'no evaluate record')
+    assert.ok(evaluateReceipts(r).length > 0, 'no evaluate receipt')
     for (const key of FACTS) assert.ok(Object.hasOwn(facts, key), `facts lack ${key}`)
-    for (const [key, value] of Object.entries(facts)) {
-      if (key === 'tokens_known' || key === 'gpu_busy_known') assert.ok(value === null || typeof value === 'boolean', `facts.${key} ${value}`)
-      else assert.equal(value, null, `facts.${key}`)
+    for (const key of FACTS) assert.equal(facts[key], null, `facts.${key}`)
+  })
+  check(`${r.name}: every box command of the evaluate stage after comparison-users keeps its remote files (script, log, GPU samples, exit status) at mode 600 under umask 022, the job command's script included`, () => {
+    const receipts = afterUsersReceipts(r)
+    assert.ok(receipts.length > 0, 'no evaluate receipt after comparison-users')
+    const names = fs.readdirSync(r.S, { withFileTypes: true }).filter(entry => entry.isFile()).map(entry => entry.name)
+    let jobScripts = 0
+    for (const receipt of receipts) {
+      const mine = receiptFiles(names, receipt)
+      assert.ok(mine.length > 0, `${receipt.name}: no remote file named after the receipt`)
+      for (const name of mine) assert.equal(modeOf(path.join(r.S, name)), '600', `${name} (${receipt.operation})`)
+      if (receipt.operation === 'comparison-job') { assert.ok(mine.includes(`${receipt.name}.sh`), `${receipt.name}: no command script`); jobScripts++ }
     }
+    assert.equal(jobScripts, runCount(r), 'comparison-job receipts')
+  })
+  check(`${r.name}: while an arm part runs, the remote files of the evaluate stage's box commands after comparison-users already on the box (its own comparison command's script and log included) are at mode 600`, () => {
+    const receipts = afterUsersReceipts(r), comparisons = receipts.filter(receipt => receipt.operation === 'comparison')
+    let seen = 0
+    for (let i = 0; i < runCount(r); i++) {
+      const file = path.join(r.inv(i), 'out', 'adapter.json')
+      if (!fs.existsSync(file)) continue
+      const boxFiles = read(file).boxFiles ?? {}
+      const names = Object.keys(boxFiles)
+      for (const receipt of receipts) for (const name of receiptFiles(names, receipt)) assert.equal(boxFiles[name], '600', `i${i + 1}: ${name} at mode ${boxFiles[name]} while the arm part ran`)
+      const own = comparisons[i]
+      assert.ok(own && receiptFiles(names, own).includes(`${own.name}.sh`), `i${i + 1}: its comparison command's script is not on the box while it runs`)
+      seen++
+    }
+    assert.ok(seen > 0, 'no adapter record')
   })
   check(`${r.name}: only intake is called (harness_from); every call is isolated`, () => {
     assert.deepEqual(r.calls.map(call => call.label), ['intake'])
@@ -1007,6 +1275,28 @@ function commonChecks(r) {
       const want = r.order[i]
       assert.deepEqual([job.arm, job.input, job.mode, job.round], [want.arm, want.input, want.mode, want.round], `i${i + 1}`)
     })
+  })
+  check(`${r.name}: job left_s: the time left in budget_s (and before the run ceiling), positive, never growing; the resolved timeouts never exceed it`, () => {
+    let previous = Infinity
+    r.jobs.slice(0, runCount(r)).forEach((job, i) => {
+      assert.ok(typeof job.left_s === 'number' && Number.isFinite(job.left_s) && job.left_s > 0 && job.left_s <= r.design.budget_s, `i${i + 1} left_s ${job.left_s}`)
+      assert.ok(job.left_s <= previous + 1e-9, `i${i + 1}: left_s grew (${previous} -> ${job.left_s})`)
+      previous = job.left_s
+      if (r.spec.ceiling !== undefined) {
+        const written = fs.statSync(path.join(r.S, 'comparison-jobs', `i${i + 1}.json`)).mtimeMs
+        assert.ok(job.left_s <= r.spec.ceiling - (written - runStartBound(r)) / 1000 + 5, `i${i + 1}: left_s ${job.left_s} above the time left before the ceiling`)
+      }
+      assert.ok(job.arm_timeout_s <= job.left_s + 1, `i${i + 1}: arm_timeout_s ${job.arm_timeout_s} above left_s ${job.left_s}`)
+      if (r.evaluator) assert.ok(job.eval_timeout_s <= job.left_s + 1, `i${i + 1}: eval_timeout_s ${job.eval_timeout_s} above left_s ${job.left_s}`)
+    })
+  })
+  check(`${r.name}: neither part runs past left_s: the arm part's wall plus the evaluator part's wall stay within the job's left_s`, () => {
+    for (let i = 0; i < runCount(r); i++) {
+      const wrap = r.wrapAt(i), job = r.jobs[i]
+      if (!wrap || !job) continue
+      const total = armWallOf(wrap) + (wrap.eval_wall_s ?? 0)
+      assert.ok(total <= job.left_s + 2, `i${i + 1}: ${total} s of parts with left_s ${job.left_s}`)
+    }
   })
   check(`${r.name}: job files at mode 600 in comparison-jobs/ (700); comparison-work/ at 711; invocation directories i<k> only for jobs run`, () => {
     assert.equal(modeOf(path.join(r.S, 'comparison-jobs')), '700')
@@ -1163,6 +1453,12 @@ function armEnv(r, env, i, job, where) {
   assert.equal(env.FAKE_SUDO_USER, undefined, `${where}: the environment is not built with env -i`)
   assert.equal(env.FAKE_SUDO_ROOT, undefined, `${where}: the part runs as root`)
 }
+function invalidRow(row, where) {
+  assert.equal(row.status, 'invalid', `${where} status`)
+  for (const key of ['wall_s', 'gpu_busy_s', 'eval_wall_s', 'eval_gpu_busy_s']) assert.equal(row[key], null, `${where} ${key}`)
+  assert.ok(row.attributed_usd === null || row.attributed_usd === 0, `${where} attributed_usd ${row.attributed_usd}`)
+  assert.ok(row.gpu_busy_known === null || row.gpu_busy_known === false, `${where} gpu_busy_known ${row.gpu_busy_known}`)
+}
 function computeChecks(r) {
   const compute = read(path.join(r.agent, 'results', 'evaluate', 'comparison_compute.json'))
   assert.deepEqual(Object.keys(compute).sort(), ['all_invocations', 'allocation', 'arms', 'invocations', 'system', 'versions'])
@@ -1175,6 +1471,11 @@ function computeChecks(r) {
     if (!wrap) {
       assert.equal(row.status, 'not_run', `row ${i + 1}`)
       for (const key of ['wall_s', 'gpu_busy_s', 'eval_wall_s', 'eval_gpu_busy_s', 'attributed_usd']) assert.equal(row[key], null, `row ${i + 1} ${key}`)
+      return
+    }
+    if (!wrapValid(wrap, commandCountOf(r, job))) {
+      // An invalid wrap.json (for example status "invalid" with every exit status 0): status invalid, missing values.
+      invalidRow(row, `row ${i + 1}`)
       return
     }
     assert.equal(row.status, wrap.status, `row ${i + 1} status`)
@@ -1239,7 +1540,10 @@ function sudoPartChecks(r) {
       assert.deepEqual(tails.slice(1), wrap.commands.map(item => item.argv), `i${k}: commands`)
     }
   })
-  check(`${r.name}: the evaluator part runs only after an ok arm part, as sudo -n -u cmp-eval -- env -i <variables> bash <shared>/harness/evaluate.sh from the shared run directory`, () => {
+  if (!r.evaluator) check(`${r.name}: without an evaluator, nothing runs as cmp-eval`, () => {
+    assert.deepEqual(r.log.filter(row => row.ctx === 'cmp-eval' || (row.tool === 'sudo' && row.target === 'cmp-eval')).map(row => [row.tool, row.argv]), [])
+  })
+  if (r.evaluator) check(`${r.name}: the evaluator part runs only after an ok arm part, as sudo -n -u cmp-eval -- env -i <variables> bash <shared>/harness/evaluate.sh from the shared run directory`, () => {
     for (let k = 1; k <= runCount(r); k++) {
       const [from, to] = segment(r, k), wrap = r.wrapAt(k - 1)
       const parts = partRows(r, from, to, 'cmp-eval', '/harness/evaluate.sh')
@@ -1293,7 +1597,7 @@ function sudoPartChecks(r) {
       const toArm = chowns.filter(item => item.owner === 'cmp-arm' && item.index < firstArm)
       for (const dir of ['run', 'out', 'home']) assert.ok(covered(toArm, dir), `i${k}: ${dir}/ not chowned to cmp-arm before the arm part`)
       const toEval = chowns.filter(item => item.owner === 'cmp-eval' && item.index < firstArm)
-      for (const dir of ['eval', 'ehome']) assert.ok(covered(toEval, dir), `i${k}: ${dir}/ not chowned to cmp-eval before the arm part`)
+      if (r.evaluator) for (const dir of ['eval', 'ehome']) assert.ok(covered(toEval, dir), `i${k}: ${dir}/ not chowned to cmp-eval before the arm part`)
       assert.ok(chowns.every(item => item.ctx === 'root'), `i${k}: chown without sudo`)
       const killArm = r.log.slice(lastArm, to).findIndex(row => row.tool === 'pkill' && row.ctx === 'root' && JSON.stringify(row.argv) === JSON.stringify(['-KILL', '-u', 'cmp-arm']))
       assert.ok(killArm >= 0, `i${k}: no pkill -KILL -u cmp-arm (as root) after the arm part`)
@@ -1305,7 +1609,7 @@ function sudoPartChecks(r) {
       const finds = r.log.slice(after, backIndex).filter(row => row.tool === 'find' && row.argv.includes('-delete') && row.argv.includes('cmp-arm'))
       assert.ok(finds.length > 0, `i${k}: no cleanup find for cmp-arm before the chown back`)
       const evalParts = partRows(r, from, to, 'cmp-eval', '/harness/evaluate.sh')
-      if (wrap.status === 'ok') {
+      if (wrap.status === 'ok' && r.evaluator && !(wrap.eval_status === 'timeout' && wrap.eval_wall_s === null)) {
         assert.ok(evalParts.length === 1 && evalParts[0].index > backIndex, `i${k}: the evaluator part does not follow the chown back`)
         const killEval = r.log.slice(evalParts[0].index, to).findIndex(row => row.tool === 'pkill' && row.ctx === 'root' && JSON.stringify(row.argv) === JSON.stringify(['-KILL', '-u', 'cmp-eval']))
         assert.ok(killEval >= 0, `i${k}: no pkill -KILL -u cmp-eval after the evaluator part`)
@@ -1322,7 +1626,9 @@ function sudoPartChecks(r) {
     }
     for (let k = 1; k <= runCount(r); k++) {
       const [from, to] = segment(r, k)
-      for (const user of ['cmp-arm', ...(r.wrapAt(k - 1).status === 'ok' ? ['cmp-eval'] : [])]) {
+      const wrap = r.wrapAt(k - 1)
+      const evaluated = r.evaluator && wrap.status === 'ok' && !(wrap.eval_status === 'timeout' && wrap.eval_wall_s === null)
+      for (const user of ['cmp-arm', ...(evaluated ? ['cmp-eval'] : [])]) {
         const finds = r.log.slice(from, to).filter(row => row.tool === 'find' && row.argv.includes('-delete') && row.argv.includes(user))
         assert.deepEqual(finds.map(row => row.argv[0]).sort(), tops(user), `i${k} ${user}: directories`)
         for (const row of finds) assert.deepEqual(row.argv, [row.argv[0], '-mindepth', '1', '-user', user, '!', '-path', S, '!', '-path', S + '/*', '-delete'], `i${k} ${user}`)
@@ -1362,7 +1668,15 @@ function sudoPartChecks(r) {
     }
     assert.ok(seen > 0 || !anyEvaluated(r), 'no evaluator record')
   })
-  check(`${r.name}: after the last invocation, comparison-private-remove removes cmp-private with sudo -n rm -rf`, () => {
+  if (!r.evaluator) check(`${r.name}: without an evaluator, no cmp-private, no private-data fetch and no comparison-private-remove`, () => {
+    assert.ok(!comparisonOps(r).includes('comparison-private-remove'), JSON.stringify(comparisonOps(r)))
+    assert.equal(fs.existsSync(path.join(r.S, 'cmp-private')), false)
+    assert.ok(!r.log.some(row => row.tool === 'sudo' && (row.cmd ?? []).some(arg => /fetch_private\.sh$/.test(arg))), 'fetch_private.sh ran')
+    // Naming cmp-private in step 3's exclusion is allowed; creating or handing it to a user is not.
+    assert.ok(!r.log.some(row => ['chown', 'install'].includes(row.tool) && row.argv.some(arg => /cmp-private/.test(arg))), 'cmp-private created or chowned')
+    assert.ok(!r.log.some(row => row.tool === 'sudo' && ['mkdir', 'install', 'chown'].includes(row.cmd?.[0]) && row.cmd.some(arg => /cmp-private/.test(arg))), 'cmp-private created through sudo')
+  })
+  if (r.evaluator) check(`${r.name}: after the last invocation, comparison-private-remove removes cmp-private with sudo -n rm -rf`, () => {
     const ops = comparisonOps(r)
     assert.equal(ops.at(-1), 'comparison-private-remove')
     assert.equal(ops.filter(op => op === 'comparison-private-remove').length, 1)
@@ -1384,10 +1698,12 @@ function usersChecks(r, { created }) {
     assert.equal(ops.filter(op => op === 'comparison-users').length, 1)
     assert.ok(ops.indexOf('comparison-users') < ops.indexOf('comparison-job'))
   })
-  check(`${r.name}: users step 1: ${created ? 'creates the system users cmp-arm and cmp-eval without login shell or home' : 'existing users are not created again'}`, () => {
+  const partUsers = r.evaluator ? ['cmp-arm', 'cmp-eval'] : ['cmp-arm']
+  check(`${r.name}: users step 1: ${created ? `creates the system user${r.evaluator ? 's cmp-arm and cmp-eval' : ' cmp-arm (and no cmp-eval: no evaluator)'} without login shell or home` : 'existing users are not created again'}`, () => {
     const adds = r.log.filter(row => ['useradd', 'adduser'].includes(row.tool))
     if (!created) { assert.deepEqual(adds, []); return }
-    for (const user of ['cmp-arm', 'cmp-eval']) {
+    if (!r.evaluator) assert.deepEqual(adds.filter(row => row.argv.includes('cmp-eval')).map(row => row.argv), [], 'cmp-eval created without an evaluator')
+    for (const user of partUsers) {
       const row = adds.find(item => item.argv.at(-1) === user)
       assert.ok(row, `${user} not created`)
       assert.equal(row.ctx, 'root', `${user}: without sudo`)
@@ -1427,8 +1743,8 @@ function usersChecks(r, { created }) {
     for (const [file, mode] of Object.entries(want)) assert.equal(modeOf(path.join(S, file)), mode, file)
   })
   check(`${r.name}: users step 4: profiler/cmp_writable.json maps each user to the sorted directories printed by sudo -n -u <user> find / \\( -path /proc -o -path /sys -o -path <S> \\) -prune -o -type d -writable -print`, () => {
-    assert.deepEqual(read(path.join(S, 'profiler', 'cmp_writable.json')), { 'cmp-arm': [...r.writable['cmp-arm']].sort(), 'cmp-eval': [...r.writable['cmp-eval']].sort() })
-    for (const user of ['cmp-arm', 'cmp-eval']) {
+    assert.deepEqual(read(path.join(S, 'profiler', 'cmp_writable.json')), Object.fromEntries(partUsers.map(user => [user, [...r.writable[user]].sort()])))
+    for (const user of partUsers) {
       const row = r.log.find(item => item.tool === 'find' && item.ctx === user && item.argv.includes('-writable'))
       assert.ok(row, `${user}: no listing`)
       const shared = row.argv[9], print = row.argv.at(-1)
@@ -1439,6 +1755,30 @@ function usersChecks(r, { created }) {
       assert.ok(r.log.some(item => item.tool === 'sudo' && item.target === user && item.cmd[0] === 'find' && item.argv.includes('-n')), `${user}: listing not through sudo -n -u`)
     }
   })
+  if (!r.evaluator) {
+    check(`${r.name}: without an evaluator, users steps 5 to 7 do not run: no cmp-private, no fetch_private.sh, no chown to cmp-eval`, () => {
+      assert.ok(!r.log.some(row => row.tool === 'sudo' && (row.cmd ?? []).some(arg => /fetch_private\.sh$/.test(arg))), 'fetch_private.sh ran')
+      assert.ok(!r.log.some(row => row.tool === 'chown' && row.argv.some(arg => /cmp-eval|cmp-private/.test(arg))), 'chown to cmp-eval or of cmp-private')
+      assert.ok(!r.log.some(row => row.tool === 'install' && row.argv.some(arg => /cmp-private/.test(arg))), 'cmp-private created')
+      assert.equal(fs.existsSync(path.join(S, 'cmp-private')), false)
+    })
+    check(`${r.name}: without an evaluator, users step 8: nvidia-smi -L as cmp-arm, iptables -C and ip6tables -C of the added rules; no test -r of cmp-private; users, rules, listing, checks in order`, () => {
+      const nvidia = sudoTo('cmp-arm', cmd => JSON.stringify(cmd) === '["nvidia-smi","-L"]')
+      const listing = idx(row => row.tool === 'find' && row.argv.includes('-writable'))
+      const user = created ? idx(row => ['useradd', 'adduser'].includes(row.tool)) : 0
+      const rule = idx(row => row.tool === 'iptables' && ['-A', '-I', '--append', '--insert'].includes(ruleOf(row)?.op))
+      before(user, rule, 'users before rules'); before(rule, listing, 'rules before the listing'); before(listing, nvidia, 'listing before nvidia-smi -L')
+      assert.equal(sudoTo('cmp-arm', cmd => cmd[0] === 'test'), -1, 'test -r without cmp-private')
+      for (const tool of ['iptables', 'ip6tables']) {
+        const add = r.log.find(row => row.tool === tool && ['-A', '-I', '--append', '--insert'].includes(ruleOf(row)?.op))
+        const checkAt = r.log.findLastIndex(row => row.tool === tool && ['-C', '--check'].includes(ruleOf(row)?.op) && JSON.stringify(ruleOf(row).spec) === JSON.stringify(ruleOf(add).spec))
+        before(listing, checkAt, `${tool} -C of the added rule`)
+      }
+      const firstPart = sudoTo('cmp-arm', cmd => cmd[0] === 'env')
+      before(nvidia, firstPart, 'checks before the first arm part')
+    })
+    return
+  }
   check(`${r.name}: users step 5: fetch_private.sh runs as cmp-eval (env -i) in cmp-private with HOME and TMPDIR cmp-private/.home, which is empty and removed afterwards; then cmp-eval is cleaned up`, () => {
     const fetchAt = sudoTo('cmp-eval', cmd => cmd.at(-1) === path.join(S, 'harness', 'fetch_private.sh'))
     assert.ok(fetchAt >= 0, 'fetch_private.sh not run through sudo -u cmp-eval')
@@ -1543,6 +1883,117 @@ async function main() {
       () => execute('fail-nonregular', { design: SMALL, fetchExtra: 'ln -s private.dat alias.dat' }),
       () => execute('fail-fetch', { design: SMALL, fetchExtra: 'exit 3' }),
     ])
+    // Users step 1: a sealed harness file changed on the box after the upload (setup.sh runs after it).
+    const tamper = file => ({ design: SMALL, setupExtra: () => `printf '\\n# changed on the box after upload\\n' >> ${q('harness/' + file)}` })
+    const [tamperAdapter, tamperEvaluate, tamperVersions, leftSkip, leftCap, hide, chownFail, ipc, forged] = await inParallel([
+      () => execute('tamper-adapter', tamper('arms/A1.sh')),
+      () => execute('tamper-evaluate', tamper('evaluate.sh')),
+      () => execute('tamper-versions', tamper('versions.sh')),
+      () => execute('left-skip', { design: LEFT_SKIP }),
+      () => execute('left-cap', { design: LEFT_CAP }),
+      () => execute('hide', { design: HIDE }),
+      () => execute('chown-fail', { design: SMALL, failChown: true }),
+      () => execute('ipc', { design: SMALL, ipc: true }),
+      () => execute('forged', { design: FORGED, forge: FORGERIES }),
+    ])
+    for (const [r, file] of [[tamperAdapter, 'harness/arms/A1.sh'], [tamperEvaluate, 'harness/evaluate.sh'], [tamperVersions, 'harness/versions.sh']]) {
+      usersFailure(r, `${file} changed on the box after the upload`, value => {
+        assert.deepEqual(value.log.filter(row => ['useradd', 'adduser'].includes(row.tool)).map(row => row.argv), [], 'users created before the hash check')
+        const harnessRuns = value.log.filter(row => row.tool === 'sudo' && ['cmp-arm', 'cmp-eval'].includes(row.target) && (row.cmd ?? []).some(arg => /harness\//.test(arg)))
+        assert.deepEqual(harnessRuns.map(row => row.cmd), [], 'a harness script ran as a part user')
+      })
+    }
+    if (leftSkip) {
+      commonChecks(leftSkip)
+      check('left-skip: when the arm part used up the time left, the evaluator part is not run: eval_status "timeout", eval_rc and eval_wall_s null', () => {
+        assert.ok(runCount(leftSkip) >= 1, 'no invocation')
+        assert.equal(leftSkip.order[0].arm, 'A0')
+        const wrap = leftSkip.wrapAt(0), job = leftSkip.jobs[0]
+        assert.equal(wrap.status, 'ok', 'the arm part ends ok before left_s')
+        assert.ok(armWallOf(wrap) <= job.left_s, `arm wall ${armWallOf(wrap)} with left_s ${job.left_s}`)
+        assert.deepEqual([wrap.eval_status, wrap.eval_rc, wrap.eval_wall_s], ['timeout', null, null])
+        const [from, to] = segment(leftSkip, 1)
+        assert.deepEqual(partRows(leftSkip, from, to, 'cmp-eval', '/harness/evaluate.sh').map(({ row }) => row.cmd), [], 'the evaluator part ran')
+      })
+    }
+    if (leftCap) {
+      commonChecks(leftCap)
+      check('left-cap: the wrapper caps the evaluator part by left_s minus the seconds since it started (a 5 s arm part, then an evaluator that sleeps)', () => {
+        const wrap = leftCap.wrapAt(0), job = leftCap.jobs[0]
+        assert.equal(leftCap.order[0].arm, 'A0')
+        assert.equal(wrap.status, 'ok')
+        assert.ok(armWallOf(wrap) >= 4.5, `arm wall ${armWallOf(wrap)}`)
+        assert.equal(wrap.eval_status, 'timeout')
+        assert.ok(typeof wrap.eval_wall_s === 'number' && wrap.eval_wall_s >= 1, `eval_wall_s ${wrap.eval_wall_s}`)
+        assert.ok(armWallOf(wrap) + wrap.eval_wall_s <= job.left_s + 1.5, `parts ${armWallOf(wrap) + wrap.eval_wall_s} s with left_s ${job.left_s}`)
+      })
+    }
+    if (hide) {
+      commonChecks(hide)
+      check('hide: a symbolic link in an unreadable subdirectory of out/ (A0) or in an unreadable out/ (A1) makes the invocation invalid; the evaluator does not run', () => {
+        assert.equal(runCount(hide), 2)
+        for (let i = 0; i < 2; i++) {
+          const wrap = hide.wrapAt(i)
+          assert.deepEqual([wrap.status, wrap.eval_status], ['invalid', 'skipped'], `i${i + 1} ${hide.order[i].arm}`)
+        }
+        assert.deepEqual(hide.log.filter(row => row.tool === 'sudo' && row.target === 'cmp-eval' && /evaluate\.sh$/.test(row.cmd?.at(-1) ?? '')).map(row => row.cmd), [])
+      })
+      check('hide: owner access is restored under out/ (chmod -R u+rwX): the unreadable directories are readable again', () => {
+        for (let i = 0; i < 2; i++) {
+          const out = path.join(hide.inv(i), 'out')
+          assert.ok(fs.readdirSync(out).length > 0, `i${i + 1} out/`)
+          if (hide.order[i].arm === 'A0') assert.deepEqual(fs.readdirSync(path.join(out, 'hid')), ['link'])
+        }
+      })
+    }
+    if (chownFail) {
+      check('chown-fail: a failed ownership change of run/ or out/ after the arm part makes every invocation invalid; the evaluator does not run', () => {
+        assert.ok(runCount(chownFail) > 0, 'no invocation')
+        assert.ok(chownFail.log.some(row => row.tool === 'chown' && isBoxUser(chownOwner(row).owner) && chownOwner(row).paths.some(p => /\/comparison-work\/i\d+\/(out|run)$/.test(p))), 'no chown back to the box user')
+        for (let i = 0; i < runCount(chownFail); i++) assert.deepEqual([chownFail.wrapAt(i)?.status, chownFail.wrapAt(i)?.eval_status], ['invalid', 'skipped'], `i${i + 1}`)
+        assert.deepEqual(chownFail.log.filter(row => row.tool === 'sudo' && row.target === 'cmp-eval' && /evaluate\.sh$/.test(row.cmd?.at(-1) ?? '')).map(row => row.cmd), [])
+        assert.equal(chownFail.stage('evaluate')?.status, 'PASS')
+      })
+    }
+    if (ipc) {
+      commonChecks(ipc)
+      check('ipc: every System V shared-memory segment an arm part or an evaluator part leaves is removed before the next part runs', () => {
+        const made = ipc.log.map((row, index) => ({ row, index })).filter(({ row }) => row.tool === 'ipcmk')
+        assert.ok(made.some(({ row }) => row.owner === 'cmp-arm'), 'no segment of an arm part')
+        assert.ok(made.some(({ row }) => row.owner === 'cmp-eval'), 'no segment of an evaluator part')
+        const starts = ipc.log.map((row, index) => ({ row, index })).filter(({ row }) => row.tool === 'sudo' && row.cmd?.[0] === 'env' &&
+          (/\/harness\/evaluate\.sh$/.test(row.cmd.at(-1)) || /harness\/arms\/A\d\.sh$/.test(row.cmd.at(-1)))).map(({ index }) => index)
+        for (const { row, index } of made) {
+          const removed = ipc.log.findIndex((item, j) => j > index && item.tool === 'ipcrm' && (item.removed ?? []).includes(row.id))
+          assert.ok(removed > index, `segment ${row.id} of ${row.owner} never removed`)
+          const next = starts.find(start => start > index)
+          if (next !== undefined) assert.ok(removed < next, `segment ${row.id} of ${row.owner} removed only after the next part started`)
+        }
+      })
+    }
+    if (forged) {
+      check('forged: comparison_compute.json: each invalid wrap.json (ok with a nonzero adapter_rc, no command rows, a negative, NaN or infinite wall, a command row with a missing or extra key, eval ok with a nonzero eval_rc) gives status invalid and null values; the valid control is used', () => {
+        const compute = read(path.join(forged.agent, 'results', 'evaluate', 'comparison_compute.json'))
+        assert.equal(compute.invocations.length, forged.order.length)
+        compute.invocations.forEach((row, i) => {
+          const job = forged.order[i], where = `row ${i + 1} ${job.arm}/${job.input}`
+          if (job.input === 'f-valid') {
+            assert.equal(row.status, 'ok', `${where} status (the forged valid record was not read)`)
+            near(row.wall_s, 1.5, `${where} wall_s`)
+            near(row.eval_wall_s, 0.25, `${where} eval_wall_s`)
+            near(row.attributed_usd, 1.75 / 3600 * PRICE, `${where} attributed_usd`)
+          } else invalidRow(row, where)
+        })
+      })
+      check('forged: through the scorer, each invalid wrap.json is a missing value (void, missing_values); the valid control is supported', () => {
+        const rows = read(path.join(forged.control, 'comparison_scored.json')).comparisons[0].rows
+        for (const row of rows) {
+          if (row.input === 'f-valid') assert.equal(row.outcome, 'supported', row.input)
+          else assert.deepEqual([row.outcome, row.reason], ['void', 'missing_values'], row.input)
+        }
+        assert.deepEqual(rows.map(row => row.input), FORGED.inputs.map(item => item.id))
+      })
+    }
 
     if (main) {
       commonChecks(main)
@@ -1624,14 +2075,19 @@ async function main() {
 
     if (noeval) {
       commonChecks(noeval)
-      check('noeval: without an evaluator, no separated users: no comparison-users, no sudo, no user, rule or cmp-private; the shared run directory keeps its modes', () => {
+      // Separated users run for every comparison: cmp-arm only, without an evaluator.
+      sudoPartChecks(noeval)
+      usersChecks(noeval, { created: true })
+      check('noeval: without an evaluator, comparison-users still runs once, before the first invocation, and every arm part runs as cmp-arm', () => {
         const ops = comparisonOps(noeval)
-        assert.ok(!ops.includes('comparison-users') && !ops.includes('comparison-private-remove'), JSON.stringify(ops))
-        assert.deepEqual(noeval.log.filter(row => ['sudo', 'useradd', 'adduser', 'iptables', 'ip6tables', 'chown', 'pkill'].includes(row.tool)).map(row => row.tool), [])
-        assert.equal(fs.existsSync(path.join(noeval.S, 'cmp-private')), false)
-        assert.equal(fs.existsSync(path.join(noeval.S, 'profiler', 'cmp_writable.json')), false)
-        assert.equal(modeOf(path.join(noeval.S, 'data', 'wide.txt')), '666')
-        assert.equal(modeOf(path.join(noeval.S, 'data', 'closed')), '700')
+        assert.equal(ops.filter(op => op === 'comparison-users').length, 1, JSON.stringify(ops))
+        assert.ok(ops.indexOf('comparison-users') < ops.indexOf('comparison-job'))
+        const adapters = noeval.log.filter(row => row.tool === 'sudo' && /harness\/arms\/A\d\.sh$/.test(row.cmd?.at(-1) ?? ''))
+        assert.equal(adapters.length, runCount(noeval))
+        assert.ok(adapters.every(row => row.target === 'cmp-arm'), 'an adapter not run as cmp-arm')
+        const solver = noeval.log.filter(row => row.tool === 'sudo' && row.cmd?.[0] === 'env' && envCommand(row.cmd).argv[0] === 'bin/solver')
+        assert.equal(solver.length, runCount(noeval))
+        assert.ok(solver.every(row => row.target === 'cmp-arm'), 'a command not run as cmp-arm')
       })
       check('noeval: two warmup rounds (w1, w2) and two replicate rounds of three arms, every invocation ok and eval skipped', () => {
         assert.equal(runCount(noeval), 12)
@@ -1644,7 +2100,7 @@ async function main() {
       check('noeval: arm_timeout_s is the smallest of timeout_s, the time left in budget_s and the time left before the run ceiling', () => {
         noeval.jobs.forEach((job, i) => {
           const written = fs.statSync(path.join(noeval.S, 'comparison-jobs', `i${i + 1}.json`)).mtimeMs
-          const ceilingLeft = NOEVAL.budget_s + 1 - (written - noeval.startMs) / 1000
+          const ceilingLeft = NOEVAL.budget_s + 1 - (written - runStartBound(noeval)) / 1000
           if (job.arm === 'A0') assert.equal(job.arm_timeout_s, 600, `i${i + 1}`)
           if (job.arm === 'A2') assert.equal(job.arm_timeout_s, 7, `i${i + 1}`)
           if (job.arm === 'A1') assert.ok(job.arm_timeout_s > 0 && job.arm_timeout_s <= ceilingLeft + 5, `i${i + 1}: ${job.arm_timeout_s} above the time left before the ceiling (${ceilingLeft})`)
@@ -1709,6 +2165,16 @@ async function main() {
           assert.equal(fs.existsSync(path.join(plain.root, file)), false, file)
         assert.deepEqual(plain.log.filter(row => row.tool === 'sudo'), [])
       })
+      check('plain: without args.comparison boxrun\'s remote files are as before: under umask 022 each command\'s log and exit status are created readable (644)', () => {
+        const names = fs.readdirSync(plain.S, { withFileTypes: true }).filter(entry => entry.isFile()).map(entry => entry.name)
+        let seen = 0
+        for (const receipt of plain.receipts) for (const suffix of ['.log', '.rc']) {
+          if (!names.includes(receipt.name + suffix)) continue
+          seen++
+          assert.equal(modeOf(path.join(plain.S, receipt.name + suffix)), '644', receipt.name + suffix)
+        }
+        assert.ok(seen > 0, 'no remote log or exit status named after a receipt')
+      })
     }
 
     const [gpu, readable, rules, dupHome, dupRun, dupArm, nonregular, fetchFail] = failed
@@ -1728,7 +2194,16 @@ async function main() {
   } catch (error) { failures++; console.log(`FAIL test harness: ${error.stack}`) }
   finally {
     if (process.argv[3] === 'keep') console.log(`scratch kept: ${scratch}`)
-    else fs.rmSync(scratch, { recursive: true, force: true })
+    else {
+      // Directories an arm part made unreadable (case hide) are opened again before the removal.
+      ;(function unlock(directory) {
+        try { fs.chmodSync(directory, 0o700) } catch {}
+        let entries = []
+        try { entries = fs.readdirSync(directory, { withFileTypes: true }) } catch { return }
+        for (const entry of entries) if (entry.isDirectory()) unlock(path.join(directory, entry.name))
+      })(scratch)
+      fs.rmSync(scratch, { recursive: true, force: true })
+    }
   }
   console.log(failures ? `${failures} failure(s) (${checks} checks)` : `all ${checks} checks passed`)
   process.exitCode = failures ? 1 : 0

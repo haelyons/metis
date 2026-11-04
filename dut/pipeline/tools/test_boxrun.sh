@@ -313,6 +313,35 @@ check 'detached: command finished after runner kill' test -f "$remote/finished"
 check 'detached: exit code appears after runner kill' \
     test "$(cat "$remote/detached.rc" 2>/dev/null)" = 0
 
+# SCHEMAS.md "Remote command files" sets mode 600 only for the comparison evaluate stage's box commands; without
+# args.comparison boxrun's remote files are as before: on a box running under umask 022, the command's script,
+# log and exit status are created with the same mode as a file the command itself creates (644).
+mode_of() { stat -c %a -- "$1" 2>/dev/null || echo missing; }
+cat > "$scratch/bin/umask-box" <<'SH'
+#!/usr/bin/env bash
+umask 022
+cd -- "$BOX_ROOT" || exit 1
+exec bash -c "$1"
+SH
+chmod +x "$scratch/bin/umask-box"
+remote=$BOX_ROOT/umask_default
+mkdir -p "$remote" "$scratch/umask_default/out"
+BOX=$scratch/bin/umask-box FETCH=$scratch/bin/fetch timeout --kill-after=2s 105s bash "$runner" \
+    --name umask_default --cmd "$prepare" --remote-dir "$remote" --timeout 10 --fetch artifacts \
+    --to "$scratch/umask_default/out" --receipt "$scratch/umask_default/receipt.json" \
+    > "$scratch/umask_default/runner.log" 2>&1
+check 'umask_default: runner exit 0' test "$?" -eq 0
+created=$(mode_of "$remote/artifacts/result.txt")
+check "umask_default: a file the command creates is at 644 under umask 022 (got $created)" test "$created" = 644
+for suffix in rc log; do
+    got=$(mode_of "$remote/umask_default.$suffix")
+    check "umask_default: remote .$suffix at the command's own file mode $created, as before (got $got)" test "$got" = "$created"
+done
+if [[ -f $remote/umask_default.sh ]]; then
+    got=$(mode_of "$remote/umask_default.sh")
+    check "umask_default: remote command script not restricted to 600 (got $got)" test "$got" != 600
+fi
+
 for pid in "${pids[@]}"; do
     wait "$pid" || { echo 'FAIL: test worker crashed'; failures=$((failures + 1)); }
 done
