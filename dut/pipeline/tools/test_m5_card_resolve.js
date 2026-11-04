@@ -5,7 +5,8 @@
 // (U56)", with the card records of "Card calibration (U54)" and the `calibration` record of CONTRACT.md (U55).
 // Never inspect m5/card_resolve.js, src/ or git history. Every run root is built by hand (control/card.json,
 // card_seal.json and card_scored.json in their contract shapes); the tool is run as a program and only its exit
-// status, its output file and the files around it are read.
+// status, its output file and the files around it are read. treeCases() also runs the built tree under idea/wf.js
+// with the stub agents of tools/test_tree_calibration_u55.js, to obtain the tree's own gate reasons black-box.
 // Usage: node tools/test_m5_card_resolve.js
 const fs = require('node:fs')
 const path = require('node:path')
@@ -86,16 +87,46 @@ const RESULT = { table: '| Pick | Result |', cards: ['card one', 'card two'], in
   result_md: '# r', price_sheet: SHEET, calibration: [REC_A, REC_B, REC_C, REC_D, REC_E] }
 
 // ---- Hand-built run roots ---------------------------------------------------------------------------------
-// rows: [{ id, measured, verdict, decision, decided_by?, rule? }] for the record's `required` ids.
-function scoredRow(record, spec) {
-  const item = record.required.find(entry => entry.id === spec.id) ?? { id: spec.id, name: null, unit: null, basis: 'GUESS', value: 1 }
-  const decidedBy = spec.decided_by !== undefined ? spec.decided_by
-    : ['holds', 'refuted'].includes(spec.decision) ? 'band' : null
-  return { id: spec.id, name: item.name ?? null, unit: item.unit ?? null, basis: item.basis, value: item.value,
-    band_source: 'multiplicative', band_lo: 1, band_hi: 100000, measured_value: spec.measured, verdict: spec.verdict,
-    gate_passed: decidedBy === 'gate' ? spec.decision === 'holds' : null, decided_by: decidedBy, decision: spec.decision,
-    rule: spec.rule ?? { file: `card/${spec.id}.json`, kind: 'json', expr: `/value/${spec.id}` } }
+// A card_scored.json row exactly as U54 computes it (m5/SCHEMAS.md "Card calibration (U54)", Scoring): since the
+// second review card_resolve.js rejects rows whose fields disagree with U54's rules, every fixture row is built here.
+const finiteNumber = x => typeof x === 'number' && Number.isFinite(x)
+function u54Row(item, rule, measured, bands = {}) {
+  const value = item.value
+  const own = item.band
+  const ownAbs = own && typeof own === 'object' && !Array.isArray(own) && Object.keys(own).join() === 'abs' && finiteNumber(own.abs) && own.abs > 0
+  let source = null, lo = null, hi = null
+  if ((Object.hasOwn(bands, item.id) || ownAbs) && finiteNumber(value)) {
+    const half = Object.hasOwn(bands, item.id) ? bands[item.id].abs : own.abs
+    source = Object.hasOwn(bands, item.id) ? 'launch' : 'card'
+    lo = value - half; hi = value + half
+  } else if (finiteNumber(value) && value !== 0) {
+    const k = item.basis === 'PROXY' ? 2.5 : 3
+    source = 'multiplicative'
+    ;[lo, hi] = value > 0 ? [value / k, value * k] : [value * k, value / k]
+  }
+  const verdict = measured === null ? 'not_measured' : lo === null ? 'no_band'
+    : measured < lo ? 'below_band' : measured > hi ? 'above_band' : 'within_band'
+  const gate = item.phase && typeof item.phase === 'object' ? item.phase.gate : null
+  const gatePassed = gate && typeof gate === 'object' && gate.on === item.id && ['>=', '<='].includes(gate.op) && finiteNumber(gate.value)
+    && typeof measured === 'number' ? (gate.op === '>=' ? measured >= gate.value : measured <= gate.value) : null
+  const decidedBy = typeof gatePassed === 'boolean' ? 'gate' : ['within_band', 'below_band', 'above_band'].includes(verdict) ? 'band' : null
+  const decision = decidedBy === 'gate' ? (gatePassed ? 'holds' : 'refuted') : decidedBy === 'band' ? (verdict === 'within_band' ? 'holds' : 'refuted')
+    : measured === null ? 'not_measured' : 'undecidable'
+  return { id: item.id, name: item.name ?? null, unit: item.unit ?? null, basis: item.basis, value: item.value ?? null,
+    band_source: source, band_lo: lo, band_hi: hi, measured_value: measured, verdict, gate_passed: gatePassed, decided_by: decidedBy,
+    decision, rule }
 }
+// rows: [{ id, measured, decision?, rule? }] for the record's `required` ids; `decision` is the fixture's intent,
+// checked against what U54 gives (a mismatch is a fixture error).
+function scoredRow(record, spec, bands = {}) {
+  const item = record.required.find(entry => entry.id === spec.id) ?? { id: spec.id, name: null, unit: null, basis: 'GUESS', value: 1 }
+  const row = u54Row(item, spec.rule ?? { file: `card/${spec.id}.json`, kind: 'json', expr: `/value/${spec.id}` }, spec.measured, bands)
+  if (spec.decision !== undefined && row.decision !== spec.decision)
+    throw new Error(`fixture: ${record.key} ${spec.id} measured ${spec.measured} gives ${row.decision}, not ${spec.decision}`)
+  return row
+}
+const totalsOf = rows => ({ inputs_total: rows.length, measured_total: rows.filter(row => typeof row.measured_value === 'number').length,
+  holds_total: rows.filter(row => row.decision === 'holds').length, refuted_total: rows.filter(row => row.decision === 'refuted').length })
 // opts: { record, rows, run, commit, box: {type, started_utc} | null, result (file), bands }
 function makeRun(dir, opts) {
   const control = path.join(dir, 'control')
@@ -103,13 +134,11 @@ function makeRun(dir, opts) {
   const card = { source: opts.result, source_sha256: sha(resultBytes), record: opts.record, bands: opts.bands ?? {} }
   const cardBytes = writeJSON(path.join(control, 'card.json'), card)
   writeJSON(path.join(control, 'card_seal.json'), { card_sha256: sha(cardBytes), sealed_utc: '2026-11-03T10:00:00Z' })
-  const rows = opts.rows.map(spec => scoredRow(opts.record, spec))
+  const rows = opts.rows.map(spec => scoredRow(opts.record, spec, opts.bands ?? {}))
   const box = opts.box === undefined ? { type: 'gpu_1x_a10', started_utc: '2026-11-03T09:00:00Z' } : opts.box
   writeJSON(path.join(control, 'card_scored.json'), { key: opts.record.key, run: opts.run, pipeline_commit: opts.commit ?? null,
     box_type: box?.type ?? null, box_started_utc: box?.started_utc ?? null, card_sha256: sha(cardBytes),
-    extract_sha256: 'e'.repeat(64), predictions: opts.record.predictions ?? null, anchor: null, rows,
-    inputs_total: rows.length, measured_total: rows.filter(row => typeof row.measured_value === 'number').length,
-    holds_total: rows.filter(row => row.decision === 'holds').length, refuted_total: rows.filter(row => row.decision === 'refuted').length })
+    extract_sha256: 'e'.repeat(64), predictions: opts.record.predictions ?? null, anchor: null, rows, ...totalsOf(rows) })
   // Box and agent files a real run also holds; the tool reads only control/.
   writeJSON(path.join(control, 'box.json'), box ?? {})
   writeJSON(path.join(dir, 'agent', 'card_inputs.json'), { inputs: [], anchor: null })
@@ -133,7 +162,7 @@ function setup(name, resultValue = RESULT) {
   fs.mkdirSync(dir, { recursive: true })
   const result = path.join(dir, 'tree run', 'result.json')
   const resultBytes = writeJSON(result, resultValue)
-  return { dir, result, resultBytes, outDir: path.join(dir, 'resolved'), out: path.join(dir, 'resolved', 'calibration.json') }
+  return { dir, result, resultBytes, resultValue, outDir: path.join(dir, 'resolved'), out: path.join(dir, 'resolved', 'calibration.json') }
 }
 function resolve(argv, cwd = ROOT) {
   const proc = spawnSync(process.execPath, [TOOL, ...argv], { cwd, encoding: 'utf8', timeout: 60000 })
@@ -160,7 +189,7 @@ function okRun(name, c, runs, argv = null, cwd = ROOT) {
     assert.deepEqual(Object.keys(value).sort(), ['calibration', 'source', 'source_sha256'])
     assert.equal(value.source, c.result, 'source is not the absolute path of result.json')
     assert.equal(value.source_sha256, sha(c.resultBytes))
-    assert.ok(Array.isArray(value.calibration) && value.calibration.length === RESULT.calibration.length, 'calibration length')
+    assert.ok(Array.isArray(value.calibration) && value.calibration.length === c.resultValue.calibration.length, 'calibration length')
   })
   return value
 }
@@ -206,6 +235,186 @@ function refused(name, c, runs, argv, { outIsInput = null } = {}) {
   })
 }
 
+// ---- Tree runs (stub agents) ------------------------------------------------------------------------------
+// The tree bundle under idea/wf.js with the stub runner of tools/test_tree_calibration_u55.js (WF_STUB), as that
+// suite runs it; U55_PLAN_OVERRIDES makes the producer return a given plan for a given option title.
+const WF = path.join(ROOT, 'idea', 'wf.js')
+const BUNDLE = path.join(ROOT, 'dist', 'question_tree_v2.js')
+const STUB = path.join(ROOT, 'tools', 'test_tree_calibration_u55.js')
+const TREE_ARGS = { seed: 1, fixed_roots: ['root one', 'root two'], seed_ideas: ['an idea from the human'], budget_usd: 1000,
+  require_compute_lever: { physical: true, interp: true }, pool_k: 3, picks_per_branch: 2 }
+function treeRun(name, overrides = null) {
+  const dir = path.join(scratch, 'tree')
+  fs.mkdirSync(path.join(dir, 'home'), { recursive: true })
+  fs.mkdirSync(path.join(dir, 'base'), { recursive: true })
+  const args = path.join(dir, 'args.json')
+  if (!fs.existsSync(args)) writeJSON(args, { ...TREE_ARGS, base: path.join(dir, 'base') })
+  const out = path.join(dir, name), log = path.join(dir, `${name}.log`), prompts = path.join(dir, `${name}-prompts.jsonl`)
+  const env = { ...process.env, HOME: path.join(dir, 'home'), WF_STUB: STUB, U55_CALLS: path.join(dir, `${name}-calls.jsonl`),
+    U55_PROMPTS: prompts, U55_BUNDLE: BUNDLE }
+  if (overrides) env.U55_PLAN_OVERRIDES = path.join(dir, `${name}-plans.json`), writeJSON(env.U55_PLAN_OVERRIDES, overrides)
+  const fd = fs.openSync(log, 'w')
+  let proc
+  try {
+    proc = spawnSync(process.execPath, [WF, '--script', BUNDLE, '--args', args, '--out', out, '--disable-family', 'claude'],
+      { cwd: ROOT, env, timeout: 300000, killSignal: 'SIGKILL', stdio: ['ignore', fd, fd] })
+  } finally { fs.closeSync(fd) }
+  const resultFile = path.join(out, 'result.json')
+  const result = fs.existsSync(resultFile) ? read(resultFile) : null
+  check(`tree ${name}: the stub tree run completes (fixture)`, () => {
+    assert.ifError(proc.error)
+    assert.equal(proc.status, 0, `exit ${proc.status} ${proc.signal}; ${fs.readFileSync(log, 'utf8').slice(-600)}`)
+    assert.ok(result && !result.error && Array.isArray(result.calibration), `result error: ${result?.error}`)
+  })
+  const promptRows = fs.existsSync(prompts) ? fs.readFileSync(prompts, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
+  return { out, result, prompts: promptRows }
+}
+// The plan the contract's re-judging evaluates: each measured id's numbers entry without rests_on, source_id, quote
+// and page_setting, merged with the MEASURED number of the latest measured entry, value = the median.
+function rejudgedPlan(plan, measured) {
+  const copy = clone(plan)
+  copy.numbers = copy.numbers.map(entry => {
+    if (!Object.hasOwn(measured, entry.id)) return entry
+    const { rests_on, source_id, quote, page_setting, ...rest } = entry
+    return { ...rest, ...measured[entry.id].number, value: measured[entry.id].median }
+  })
+  return copy
+}
+
+// Exact gate_reasons (second review): CONTRACT.md does not state gate_plan's reason strings, so the expected reasons
+// are the tree's own. T1 runs the tree on the stub's plans; two of its calibration_required records (the random
+// picks of R2) are the judged records card_resolve.js re-judges. T2 runs the tree again (same arguments, so the same
+// picks, given and gate arguments) with the producer returning, for those two picks, exactly the plan re-judging must
+// evaluate (rejudgedPlan); what the tree's gate says about that plan is what rejudged must say.
+//   R (repair): echo basalt flow. steps_per_h measured 1900 (run-1) and 2100 (run-2): median 2000, provenance of
+//     run-2; slow_f (GUESS, rests_on) measured 1 by run-2. Planned 2054.85 > 1000 >= total_stated 868.22: repair.
+//     The tree's reasons are the lines of its REPAIR_EXPR prompt ("These cost expressions failed a check:").
+//   H (halt): echo basalt probe, its judged plan's total_stated set to 2500. steps_per_h measured 2100 (run-1) and
+//     1900 (run-2). Planned 2054.85 > 1000 and total_stated > 1000: halt. The tree's reasons are in its log.
+// T3 (item 7 of the review) runs the same picks with the plan re-judging must NOT evaluate: R with rests_on,
+// source_id, quote and page_setting retained, H with the provenance of the earliest measured entry (run-1).
+const KEY_R = 'R2:physical:W1', KEY_H = 'R2:interp:W1'
+function repairReasons(tree, label) {
+  const row = tree.prompts.find(entry => entry.kind === 'REPAIR_EXPR' && String(entry.title).startsWith(label))
+  const m = row && /These cost expressions failed a check:\n([\s\S]*?)\nRewrite only/.exec(row.body)
+  return m ? m[1].split('\n') : null
+}
+// What the tree's gate said about a pick's plan: "repair" with the REPAIR_EXPR prompt's lines; "halt" with the
+// halted card's text ("**Halted at G-plan.** <reasons>"; the budget halt is one condition, so one reason); else "ok".
+// Plus the evaluation's planned spend (the record's plan_usd) and its uncertain ids (the record's required ids).
+function treeOutcome(tree, key, label) {
+  const i = tree.result?.calibration?.findIndex(record => record.key === key) ?? -1
+  const record = tree.result?.calibration?.[i]
+  const halted = /\*\*Halted at G-plan\.\*\* ([^\n]*)/.exec(String(tree.result?.cards?.[i] ?? ''))
+  const repair = repairReasons(tree, label)
+  return { action: repair ? 'repair' : halted ? 'halt' : 'ok', reasons: repair ?? (halted ? [halted[1]] : []),
+    planned: record?.plan_usd ?? null, uncertain: record?.required?.map(item => item.id) ?? null }
+}
+
+function treeCases() {
+  const t1 = treeRun('t1')
+  const records = t1.result?.calibration ?? []
+  const baseR = records.find(record => record.key === KEY_R), baseH = records.find(record => record.key === KEY_H)
+  check('tree t1: the two R2 random picks are calibration_required with judged, steps_per_h, slow_f, fudge_f (fixture)', () => {
+    for (const record of [baseR, baseH]) {
+      assert.ok(record, 'record missing')
+      assert.equal(record.state, 'calibration_required', record.key)
+      assert.ok(record.judged && record.judged.plan, `${record.key} judged`)
+      assert.deepEqual(record.required.map(item => item.id), ['steps_per_h', 'slow_f', 'fudge_f'], record.key)
+    }
+  })
+  if (!baseR?.judged || !baseH?.judged) return
+  const recR = clone(baseR), recH = clone(baseH)
+  recH.judged.plan.cost.total_stated = 2500
+  const result = { ...clone(t1.result), calibration: records.map(record => record.key === KEY_R ? recR : record.key === KEY_H ? recH : record) }
+
+  // The card_resolve.js side: one result.json, two run roots naming both records.
+  const c = setup('tree-rejudge', result)
+  const fileRule = (id, i) => ({ file: `card/run${i}/${id}.json`, kind: i === 1 ? 'json' : 'regex', expr: i === 1 ? `/${id}` : `${id}=([0-9.]+)` })
+  const runs = [1, 2].map(i => ({ i, dir: path.join(c.dir, `run-${i}`), box: { type: `gpu_8x_h100_v${i}`, started_utc: `2026-11-0${i}T00:00:00Z` } }))
+  const rowsR = i => [{ id: 'steps_per_h', measured: i === 1 ? 1900 : 2100, rule: fileRule('steps_per_h', i) },
+    { id: 'slow_f', measured: i === 1 ? null : 1, rule: fileRule('slow_f', i) }, { id: 'fudge_f', measured: null, rule: fileRule('fudge_f', i) }]
+  const rowsH = i => [{ id: 'steps_per_h', measured: i === 1 ? 2100 : 1900, rule: fileRule('steps_per_h', i) },
+    { id: 'slow_f', measured: null, rule: fileRule('slow_f', i) }, { id: 'fudge_f', measured: null, rule: fileRule('fudge_f', i) }]
+  // Each run root names one record; run roots: R1 (R, run-1), R2 (R, run-2), H1, H2.
+  const roots = []
+  for (const [record, rowsOf, tag] of [[recR, rowsR, 'r'], [recH, rowsH, 'h']]) for (const run of runs)
+    roots.push(makeRun(path.join(c.dir, `${tag}-run-${run.i}`), { result: c.result, record, run: `${tag}${run.i}`, commit: `k${run.i}`,
+      box: run.box, rows: rowsOf(run.i) }))
+  const value = okRun('tree-rejudge', c, roots)
+  const out = key => value?.calibration?.find(record => record.key === key)
+
+  // The MEASURED number the contract merges for an id: the latest (or, for T3, the earliest) measured entry's.
+  const measuredOf = (rootsOfRecord, id, which) => {
+    const entries = rootsOfRecord.flatMap(run => run.rows.filter(row => row.id === id && row.measured_value !== null).map(row => entryFor(run, row)))
+    const values = entries.map(entry => entry.measured_value).sort((a, b) => a - b)
+    const median = values.length % 2 ? values[(values.length - 1) / 2] : (values[values.length / 2 - 1] + values[values.length / 2]) / 2
+    return { number: (which === 'earliest' ? entries[0] : entries[entries.length - 1]).number, median }
+  }
+  const rootsR = roots.slice(0, 2), rootsH = roots.slice(2)
+  const cleanR = rejudgedPlan(recR.judged.plan, { steps_per_h: measuredOf(rootsR, 'steps_per_h'), slow_f: measuredOf(rootsR, 'slow_f') })
+  const cleanH = rejudgedPlan(recH.judged.plan, { steps_per_h: measuredOf(rootsH, 'steps_per_h') })
+  const t2 = treeRun('t2', { [recR.title]: cleanR, [recH.title]: cleanH })
+  const treeR = treeOutcome(t2, KEY_R, 'R2:physical:random'), treeH = treeOutcome(t2, KEY_H, 'R2:interp:random')
+  check('tree t2: the tree repairs plan R and halts plan H, each for its budget condition (fixture)', () => {
+    assert.equal(treeR.action, 'repair', JSON.stringify(treeR))
+    assert.equal(treeH.action, 'halt', JSON.stringify(treeH))
+    for (const outcome of [treeR, treeH]) {
+      assert.ok(outcome.reasons.length >= 1 && outcome.reasons.every(reason => typeof reason === 'string' && reason.length > 0), JSON.stringify(outcome))
+      near(outcome.planned, RATE * (2 + 124750 / 2000), 'tree planned')
+    }
+  })
+  const wants = [[KEY_R, recR, rootsR, treeR, ['steps_per_h', 'slow_f']], [KEY_H, recH, rootsH, treeH, ['steps_per_h']]]
+  for (const [key, original, rootsOfRecord, tree, measuredIds] of wants) {
+    const record = out(key)
+    if (!record) continue
+    check(`tree-rejudge: ${key}: resolved entries of both runs; state refuted (the gate refutes 1900 and 2100)`, () => {
+      assert.deepEqual(record.resolved, rootsOfRecord.flatMap(run => run.rows.map(row => entryFor(run, row))))
+      assert.equal(record.state, 'refuted')
+    })
+    check(`tree-rejudge: ${key}: gate_action and gate_reasons exactly the tree's own for the re-judged plan (${tree.action}: ${JSON.stringify(tree.reasons)})`, () => {
+      assert.ok(record.rejudged && typeof record.rejudged === 'object', `rejudged ${JSON.stringify(record.rejudged)}`)
+      assert.equal(record.rejudged.gate_action, tree.action)
+      assert.deepEqual(record.rejudged.gate_reasons, tree.reasons)
+    })
+    check(`tree-rejudge: ${key}: rejudged measured_ids, plan_usd_before/after and uncertain_after agree with the tree's evaluation`, () => {
+      assert.deepEqual(record.rejudged.measured_ids, measuredIds)
+      assert.equal(record.rejudged.plan_usd_before, original.plan_usd)
+      near(record.rejudged.plan_usd_after, tree.planned, 'plan_usd_after')
+      assert.deepEqual(record.rejudged.uncertain_after, tree.uncertain)
+    })
+  }
+
+  // Item 7 of the review: the replaced numbers drop rests_on, source_id, quote and page_setting and take the latest
+  // measured entry's provenance. T3 gives the tree the plans a tool that did otherwise would evaluate. Whether any
+  // of rejudged's outputs (action, reasons, planned spend, uncertain ids) can tell them apart from the contract's
+  // plans is printed below. In this tree they cannot (the tool runs this tree's cost_eval_plan and gate_plan): a
+  // MEASURED number's quote is not checked (only CITED and PROXY are, CONTRACT.md cost.js), and rests_on,
+  // source_id, page_setting, command, output, output_line and machine reach only annotations and card text, which
+  // rejudged does not carry. So no black-box output of card_resolve.js reveals these two rules; the exact checks
+  // above pin everything rejudged does carry.
+  const keep = (plan, record, ids) => {
+    const copy = clone(plan)
+    for (const id of ids) {
+      const original = record.judged.plan.numbers.find(entry => entry.id === id)
+      const entry = copy.numbers.find(number => number.id === id)
+      for (const field of ['rests_on', 'source_id', 'quote', 'page_setting']) if (Object.hasOwn(original, field)) entry[field] = original[field]
+    }
+    return copy
+  }
+  const retained = keep(cleanR, recR, ['steps_per_h', 'slow_f'])
+  const earliest = rejudgedPlan(recH.judged.plan, { steps_per_h: measuredOf(rootsH, 'steps_per_h', 'earliest') })
+  check('tree t3 fixture: the T3 plans differ from the T2 plans (retained fields; earliest provenance)', () => {
+    assert.notDeepEqual(retained, cleanR)
+    assert.notDeepEqual(earliest, cleanH)
+  })
+  const t3 = treeRun('t3', { [recR.title]: retained, [recH.title]: earliest })
+  const t3R = treeOutcome(t3, KEY_R, 'R2:physical:random'), t3H = treeOutcome(t3, KEY_H, 'R2:interp:random')
+  const same = (a, b) => JSON.stringify(a) === JSON.stringify(b)
+  console.log(`note: retained rests_on/source_id/quote/page_setting ${same(t3R, treeR) ? 'give the same' : 'change the'} action, reasons, planned spend and uncertain ids (not counted)`)
+  console.log(`note: the earliest entry's provenance ${same(t3H, treeH) ? 'gives the same' : 'changes the'} action, reasons, planned spend and uncertain ids (not counted)`)
+}
+
 function main() {
   try {
     assert.ok(fs.existsSync(TOOL), 'm5/card_resolve.js missing')
@@ -239,7 +448,7 @@ function main() {
             rule: { file: 'logs/run.log', kind: 'regex', expr: 'latency=([0-9.]+)' } }] })
       const first = makeRun(path.join(c.dir, 'run-one'), { result: c.result, record: REC_B, run: 'r1', commit: 'abc',
         rows: [{ id: 'a_rate', measured: 39, verdict: 'within_band', decision: 'holds' },
-          { id: 'b_lat', measured: 9, verdict: 'not_measured', decision: 'undecidable', decided_by: null }] })
+          { id: 'b_lat', measured: null, verdict: 'not_measured', decision: 'not_measured' }] })
       // Argument order: the second-built run first.
       const value = okRun('several-runs', c, [second, first])
       namedRecord('several-runs', value, REC_B, {
@@ -263,25 +472,34 @@ function main() {
       number: measured === null ? null : { id, name: `name of ${id}`, unit: `unit of ${id}`, basis: 'MEASURED', value: measured,
         differs_in: [], command: 'bash harness/run_command.sh', output: 'earlier/agent/results/reproduce/out/card/x.json',
         output_line: 'json: /x', machine: null } })
+    // An `undecidable` row needs an input with no band (U54: value 0); one that also holds in another run takes a
+    // launch band in that run (`bands`, per run).
+    const valueZero = (...ids) => record => { for (const item of record.required) if (ids.includes(item.id)) item.value = 0 }
     const stateCases = [
-      // [name, existing entries of B, runs: [[a decision, b decision], ...], expected state]
+      // [name, existing entries of B, runs: [[a decision, b decision], ...], expected state, record change, launch bands per run]
       ['state-any-refuted', [], [['holds', 'holds'], ['refuted', 'not_measured']], 'refuted'],
       ['state-refuted-over-all-holds', [], [['holds', 'refuted'], ['holds', 'holds']], 'refuted'],
-      ['state-all-hold-across-runs', [], [['holds', 'not_measured'], ['undecidable', 'holds']], 'calibrated'],
-      ['state-one-unheld-unchanged', [], [['holds', 'undecidable'], ['holds', 'not_measured']], 'calibration_required'],
+      ['state-all-hold-across-runs', [], [['holds', 'not_measured'], ['undecidable', 'holds']], 'calibrated', valueZero('a_rate'),
+        [{ a_rate: { abs: 10 } }, {}]],
+      ['state-one-unheld-unchanged', [], [['holds', 'undecidable'], ['holds', 'not_measured']], 'calibration_required', valueZero('b_lat')],
       ['state-existing-refuted', [existing('b_lat', 'refuted', 9)], [['holds', 'holds']], 'refuted'],
       ['state-existing-holds', [existing('b_lat', 'holds', 2.5)], [['holds', 'not_measured']], 'calibrated'],
       ['state-existing-other-id-refuted', [existing('old_id', 'refuted', 1)], [['holds', 'holds']], 'calibrated'],
     ]
-    const measuredFor = decision => decision === 'not_measured' ? null : decision === 'refuted' ? 999 : 3
-    const verdictFor = decision => ({ holds: 'within_band', refuted: 'above_band', not_measured: 'not_measured', undecidable: 'no_band' })[decision]
-    for (const [name, prior, decisions, state] of stateCases) {
+    // holds: the card's own value (inside its band); refuted: far above the band; undecidable: any number (no band).
+    const measuredFor = (record, id, decision) => {
+      const value = record.required.find(item => item.id === id).value
+      return decision === 'not_measured' ? null : decision === 'refuted' ? value * 100 + 1000 : decision === 'undecidable' ? 1 : value
+    }
+    for (const [name, prior, decisions, state, change = null, bandsPerRun = []] of stateCases) {
       const result = clone(RESULT)
       result.calibration[1].resolved = prior
+      if (change) change(result.calibration[1])
+      const named = result.calibration[1]
       const c = setup(name, result)
-      const runs = decisions.map(([a, b], i) => makeRun(path.join(c.dir, `run-${i + 1}`), { result: c.result, record: result.calibration[1],
-        run: `run-${i + 1}`, commit: `c${i}`, rows: [{ id: 'a_rate', measured: measuredFor(a), verdict: verdictFor(a), decision: a },
-          { id: 'b_lat', measured: measuredFor(b), verdict: verdictFor(b), decision: b }] }))
+      const runs = decisions.map(([a, b], i) => makeRun(path.join(c.dir, `run-${i + 1}`), { result: c.result, record: named,
+        run: `run-${i + 1}`, commit: `c${i}`, bands: bandsPerRun[i] ?? {}, rows: [{ id: 'a_rate', measured: measuredFor(named, 'a_rate', a), decision: a },
+          { id: 'b_lat', measured: measuredFor(named, 'b_lat', b), decision: b }] }))
       fs.mkdirSync(c.outDir, { recursive: true })
       const r = resolve([c.result, ...runs.map(run => run.dir), '--out', c.out])
       check(`${name}: exit 0`, () => assert.equal(r.status, 0, why(r)))
@@ -314,8 +532,8 @@ function main() {
     //   planned <= 1000                              -> "ok", and then no reason (reasons explain a halt or a repair)
     //   planned > 1000 and total_stated (868.22) <= 1000 -> "repair"
     //   planned > 1000 and total_stated > 1000       -> "halt"
-    // Reason strings are not stated in the contract, so for "repair"/"halt" only a non-empty list of strings is
-    // required. `uncertain_after` is forced: the plan's only GUESS/PROXY input is steps_per_h (DESIGN and DERIVED
+    // Reason strings are not stated in the contract, so here for "repair"/"halt" only a non-empty list of strings is
+    // required; treeCases() compares them exactly with the reasons the tree itself gives for the same plan. `uncertain_after` is forced: the plan's only GUESS/PROXY input is steps_per_h (DESIGN and DERIVED
     // are never uncertain), so it is [] once steps_per_h is MEASURED and ["steps_per_h"] while it is not. A merge
     // that kept the PROXY basis would also keep the quote check ("about 5,000 ...") and fail it: "repair", not "ok".
     const gateFor = (median, totalStated = PLAN.cost.total_stated) => planned(median) <= 1000 ? 'ok'
@@ -385,6 +603,34 @@ function main() {
     rejudge('rejudge-stated-over-measured-within', [6300], { wantMedian: 6300, wantIds: ['steps_per_h'], mutate: statedOver,
       wantAction: 'ok' })
 
+    // 5a. The median without overflow (second review): two runs each measuring 1e308 give a MEASURED value of 1e308
+    // (a sum first would be Infinity). The judged plan's sweep hours are steps_per_h / scale with scale a DESIGN
+    // 1e306, so the median shows in plan_usd_after: 63.84 + 31.92 * 100 = 3255.84 for 1e308 (Infinity for an
+    // overflowed median; 1596 + 63.84 for a halved one).
+    {
+      const result = clone(RESULT)
+      const plan = result.calibration[0].judged.plan
+      plan.numbers.splice(2, 0, { id: 'scale', name: 'steps per sweep hour unit', unit: 'steps', basis: 'DESIGN', value: 1e306 })
+      plan.numbers.find(n => n.id === 't_main').expr = 'steps_per_h / scale'
+      const c = setup('median-no-overflow', result)
+      const runs = [0, 1].map(i => makeRun(path.join(c.dir, `run-${i + 1}`), { result: c.result, record: result.calibration[0],
+        run: `run-${i + 1}`, commit: null, rows: [{ id: 'steps_per_h', measured: 1e308, decision: 'holds' }] }))
+      const value = okRun('median-no-overflow', c, runs)
+      const record = value?.calibration[0]
+      if (record) {
+        check('median-no-overflow: entries carry measured_value and number.value 1e308', () => assert.deepEqual(record.resolved,
+          runs.flatMap(run => run.rows.map(row => entryFor(run, row)))))
+        check('median-no-overflow: rejudged with steps_per_h = 1e308: plan_usd_after 3255.84 (finite), measured_ids, uncertain_after []', () => {
+          assert.ok(record.rejudged && typeof record.rejudged === 'object', `rejudged ${JSON.stringify(record.rejudged)}`)
+          assert.ok(Number.isFinite(record.rejudged.plan_usd_after), `plan_usd_after ${record.rejudged.plan_usd_after}`)
+          near(record.rejudged.plan_usd_after, RATE * 2 + RATE * 100, 'plan_usd_after')
+          assert.deepEqual(record.rejudged.measured_ids, ['steps_per_h'])
+          assert.deepEqual(record.rejudged.uncertain_after, [])
+          assert.ok(['halt', 'repair', 'ok'].includes(record.rejudged.gate_action), `gate_action ${record.rejudged.gate_action}`)
+        })
+      }
+    }
+
     // 5b. Merging with two required ids whose `required` order (steps_per_h, eff) is not alphabetical order.
     // The judged plan's sweep hours are steps / steps_per_h / eff, so the evaluation shows which value each id took.
     // What the merged numbers look like inside the copied plan is not part of `rejudged`; the observable parts are the
@@ -441,6 +687,8 @@ function main() {
       // Only steps_per_h measured: eff keeps its GUESS value and stays uncertain.
       merge('merge-only-first-id', [[6300, null]], { wantIds: ['steps_per_h'], steps: 6300, eff: 2, uncertain: ['eff'] })
     }
+
+    treeCases()
 
     // 6. A relative result path from another working directory: `source` is absolute.
     {
@@ -512,9 +760,74 @@ function main() {
       ['scored-rows-duplicate-id', scored(v => { v.rows[1] = { ...v.rows[0] } })],
       ['scored-rows-empty', scored(v => { v.rows = [] })],
     )
+    // Second review of U56: exact keys and identity, but a field value U54 does not allow, or one that disagrees with
+    // U54's rules for its row. Rows: [0] a_rate measured 40 (PROXY 40, band [16, 100], no gate: within_band / band /
+    // holds); [1] b_lat unmeasured (not_measured). `retotal` keeps the four totals equal to the counts, so only the
+    // named field is wrong.
+    const retotal = v => Object.assign(v, totalsOf(v.rows))
+    const row = (i, fields, keepTotals = false) => scored(v => { Object.assign(v.rows[i], fields); if (!keepTotals) retotal(v) })
+    failing.push(
+      ['value-unmeasured-holds', row(1, { decision: 'holds' })],
+      ['value-unmeasured-holds-band-labels', row(1, { verdict: 'within_band', decided_by: 'band', decision: 'holds' })],
+      ['value-unmeasured-refuted', row(1, { verdict: 'above_band', decided_by: 'band', decision: 'refuted' })],
+      ['value-unmeasured-undecidable', row(1, { decision: 'undecidable' })],
+      ['value-verdict-unknown', row(0, { verdict: 'inside_band' })],
+      ['value-verdict-null', row(0, { verdict: null })],
+      ['value-decided-by-unknown', row(0, { decided_by: 'judge' })],
+      ['value-decision-unknown', row(0, { decision: 'held' })],
+      ['value-decision-null', row(0, { decision: null })],
+      ['value-verdict-against-band', row(0, { verdict: 'above_band', decision: 'refuted' })],
+      ['value-verdict-below-against-band', row(0, { verdict: 'below_band', decision: 'refuted' })],
+      ['value-verdict-not-measured-with-number', row(0, { verdict: 'not_measured', decided_by: null, decision: 'not_measured' })],
+      ['value-verdict-no-band-with-band', row(0, { verdict: 'no_band', decided_by: null, decision: 'undecidable' })],
+      ['value-decision-against-verdict', row(0, { decision: 'refuted' })],
+      ['value-undecidable-with-band', row(0, { decided_by: null, decision: 'undecidable' })],
+      ['value-decided-by-null-with-band', row(0, { decided_by: null })],
+      ['value-decided-by-gate-without-gate', row(0, { decided_by: 'gate' })],
+      ['value-gate-passed-without-gate', row(0, { gate_passed: true, decided_by: 'gate', decision: 'holds' })],
+      ['value-gate-passed-string', row(0, { gate_passed: 'true' })],
+      ['value-gate-passed-number', row(0, { gate_passed: 1 })],
+      ['value-basis-not-records', row(0, { basis: 'GUESS' })],
+      ['value-basis-measured', row(0, { basis: 'MEASURED' })],
+      ['value-rule-kind-unknown', row(0, { rule: { file: 'card/a_rate.json', kind: 'yaml', expr: '/value/a_rate' } })],
+      ['value-rule-kind-uppercase', row(0, { rule: { file: 'card/a_rate.json', kind: 'JSON', expr: '/value/a_rate' } })],
+      ['total-negative', scored(v => { v.refuted_total = -1 })],
+      ['total-fractional', scored(v => { v.measured_total = 1.5 })],
+      ['total-boolean', scored(v => { v.holds_total = true })],
+      ['total-string', scored(v => { v.inputs_total = '2' })],
+      ['total-not-count-inputs', scored(v => { v.inputs_total = 3 })],
+      ['total-not-count-measured', scored(v => { v.measured_total = 2 })],
+      ['total-not-count-holds', scored(v => { v.holds_total = 0 })],
+      ['total-not-count-refuted', scored(v => { v.refuted_total = 1 })],
+    )
     for (const [name, mutate] of failing) {
       const { c, runs, argv } = base(name, mutate)
       refused(name, c, runs.filter(run => fs.existsSync(run.dir)), argv)
+    }
+    // Gate rows (A: steps_per_h's phase gate `>= 3000`; band [2000, 12500]). Measured 6300: gate_passed true,
+    // decided_by gate, holds; measured 2500: within_band but gate_passed false, refuted.
+    for (const [name, measured, fields] of [
+      ['gate-passed-false-against-measurement', 6300, { gate_passed: false, decision: 'refuted' }],
+      ['gate-passed-true-against-measurement', 2500, { gate_passed: true, decision: 'holds' }],
+      ['gate-decision-against-gate', 6300, { decision: 'refuted' }],
+      ['gate-band-decides-a-gated-row', 2500, { gate_passed: null, decided_by: 'band', decision: 'holds' }],
+      ['gate-decided-by-band', 6300, { decided_by: 'band' }],
+      ['gate-passed-null-with-gate', 6300, { gate_passed: null, decided_by: 'band' }],
+    ]) {
+      const c = setup(name)
+      const good = makeRun(path.join(c.dir, 'run-good'), { result: c.result, record: REC_A, run: 'g', commit: null,
+        rows: [{ id: 'steps_per_h', measured: 7000, decision: 'holds' }] })
+      const run = makeRun(path.join(c.dir, 'run-one'), { result: c.result, record: REC_A, run: 'r', commit: null,
+        rows: [{ id: 'steps_per_h', measured, decision: measured >= 3000 ? 'holds' : 'refuted' }] })
+      scored(v => { Object.assign(v.rows[0], fields); retotal(v) })(c, run)
+      refused(name, c, [good, run], [c.result, good.dir, run.dir, '--out', c.out])
+    }
+    // The same two run roots unmodified are accepted (the refusals above come from the changed field alone).
+    {
+      const c = setup('gate-rows-unmodified')
+      const runs = [7000, 2500].map((measured, i) => makeRun(path.join(c.dir, `run-${i}`), { result: c.result, record: REC_A, run: `r${i}`,
+        commit: null, rows: [{ id: 'steps_per_h', measured, decision: measured >= 3000 ? 'holds' : 'refuted' }] }))
+      okRun('gate-rows-unmodified', c, runs)
     }
     {
       const { c, runs } = base('result-missing')

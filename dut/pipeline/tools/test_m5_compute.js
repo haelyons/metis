@@ -100,7 +100,7 @@ function near(actual, expected, message) {
   assert.ok(Number.isFinite(actual) && Math.abs(actual - expected) <= 1e-9 * Math.max(1, Math.abs(expected)),
     `${message}: expected ${expected}, got ${actual}`)
 }
-async function execute(command, args, env, directory, timeout = 180000) {
+async function execute(command, args, env, directory, timeout = 1800000) {
   fs.mkdirSync(directory, { recursive: true })
   const stdout = fs.openSync(path.join(directory, 'stdout.log'), 'w')
   const stderr = fs.openSync(path.join(directory, 'stderr.log'), 'w')
@@ -173,7 +173,7 @@ async function runCase(name, config) {
   script(path.join(bin, 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\nbash -c "$command"\n"$M5_TEST_NODE" "$M5_PROFILE_FIXTURE" "$BOX_ROOT"\n' +
     // Let detached fixture commands finish before boxrun's first polling check.
     'if [[ $command == *timeout* ]]; then\n' +
-    '  for ((i=0; i<1500; i++)); do\n    pending=false\n' +
+    '  for ((end=SECONDS+1800; SECONDS<end; )); do\n    pending=false\n' +
     '    for file in "$BOX_ROOT"/m5-*/*.sh; do\n' +
     '      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n' +
     '    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi')

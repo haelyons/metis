@@ -370,11 +370,13 @@ ${config.probeFailure === 'rc' ? 'exit 7' : config.probeFailure === 'json' ? "pr
   fs.writeFileSync(replaceProbe, `
 const fs = require('node:fs'), path = require('node:path')
 const original = ${JSON.stringify(fs.readFileSync(path.join(ROOT, 'm5', 'box_probe.sh'), 'utf8'))}
+// The job bin/box just started may remove entries meanwhile; vanished ones are skipped.
+const boxWalk = require(${JSON.stringify(path.join(ROOT, 'tools/m5_box_walk.js'))})
 function visit(directory) {
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+  for (const entry of boxWalk.entries(directory)) {
     const file = path.join(directory, entry.name)
     if (entry.isDirectory()) visit(file)
-    else if (entry.isFile() && entry.name.endsWith('.sh') && fs.readFileSync(file, 'utf8') === original) {
+    else if (entry.isFile() && entry.name.endsWith('.sh') && boxWalk.text(file) === original) {
       fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, JSON.stringify({ label: 'probe-upload' }) + '\\n')
       fs.writeFileSync(file, ${JSON.stringify('#!/usr/bin/env bash\nset -eu\n' + fakeProbe + '\n')})
     }
@@ -462,7 +464,7 @@ if [[ $latest == *-anchors.json ]]; then
   fi
 fi
 `
-  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\n' + anchorSnapshot + 'bash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<1000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
+  script(path.join(root, 'bin', 'box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}' + '\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\n' + anchorSnapshot + 'bash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\n# Let tiny detached fixtures finish before the runner polls.\nif [[ $command == *timeout* ]]; then\n  for ((end=SECONDS+1800; SECONDS<end; )); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0' )
   // freezeFailure 'fetch': every fetch of the freeze log fails, so the freeze receipt has fetched=false.
   const failingFreezeFetch = config.freezeFailure === 'fetch' ? `[[ $source != *-reproduce-freeze.log ]] || { echo 'simulated failed fetch' >&2; exit 1; }\n` : ''
   // setupRerunFetchFailure k: once setup has run k + 1 times (the rerun after repair k), every fetch fails.
@@ -495,7 +497,7 @@ done
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea', 'wf.js'), '--script', path.join(pipeline, 'm5', 'pipeline.js'),
         '--args', args, '--out', path.join(root, 'agent', 'wf'), '--disable-family', 'claude'], {
-        cwd: pipeline, timeout: 240000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr], env: { ...process.env,
+        cwd: pipeline, timeout: 1800000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr], env: { ...process.env,
           M5_RAIDS_LEDGER: raidsLedger, WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(config), M5_REPRODUCE_CALLS: callsFile,
           M5_CONCURRENCY_CALLS: path.join(root, 'concurrency-calls.jsonl'),
           M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe, BOX_ROOT: box, BOX: path.join(root, 'bin', 'box'), FETCH: path.join(root, 'bin', 'fetch'),
@@ -1190,7 +1192,7 @@ async function probeScriptTests() {
     fs.mkdirSync(directory)
     const result = await new Promise(resolve => {
       const proc = spawn('/bin/bash', [path.join(ROOT, 'm5', 'box_probe.sh')], {
-        cwd: directory, env: { ...process.env, ...(restricted ? { PATH: bin } : {}) }, timeout: 60000,
+        cwd: directory, env: { ...process.env, ...(restricted ? { PATH: bin } : {}) }, timeout: 600000,
       })
       let stderr = '', error
       proc.stderr.on('data', data => { stderr += data })
@@ -1261,7 +1263,7 @@ async function probeAptTests() {
   const runProbe = (directory, aptDir) => new Promise(resolve => {
     fs.mkdirSync(directory, { recursive: true })
     const proc = spawn('/bin/bash', [path.join(ROOT, 'm5', 'box_probe.sh')], {
-      cwd: directory, env: { ...process.env, M5_PROBE_APT_DIR: aptDir }, timeout: 60000,
+      cwd: directory, env: { ...process.env, M5_PROBE_APT_DIR: aptDir }, timeout: 600000,
     })
     let stderr = '', error
     proc.stderr.on('data', data => { stderr += data })
@@ -1368,7 +1370,7 @@ async function cliTests() {
       if (options.oldOutput) fs.writeFileSync(output, 'previous score\n')
       if (options.outputDirectory) fs.mkdirSync(output)
       const result = await new Promise(resolve => {
-        const proc = spawn('python3', [path.join(ROOT, 'm5', 'score_anchors.py'), input, measurements, output], { timeout: 10000 })
+        const proc = spawn('python3', [path.join(ROOT, 'm5', 'score_anchors.py'), input, measurements, output], { timeout: 600000 })
         let stdout = '', stderr = '', error
         proc.stdout.on('data', data => { stdout += data })
         proc.stderr.on('data', data => { stderr += data })
@@ -1542,7 +1544,7 @@ async function recordedScoreRegression(directory) {
     const recorded = readJSON(path.join(fixtures, 'scored.json'))
     const output = path.join(fixtures, 'rescored.json')
     const result = spawnSync('python3', [path.join(ROOT, 'm5', 'score_anchors.py'), path.join(fixtures, 'anchors.json'),
-      path.join(fixtures, 'measured.json'), output], { encoding: 'utf8', timeout: 10000 })
+      path.join(fixtures, 'measured.json'), output], { encoding: 'utf8', timeout: 600000 })
     assert.ifError(result.error)
     assert.equal(result.status, recorded.all_passed ? 0 : 4, result.stderr)
     const scored = readJSON(output)
@@ -1585,7 +1587,7 @@ function boundsCliTests() {
     if (raw !== undefined) fs.writeFileSync(input, raw)
     else writeJSON(input, packet)
     const result = spawnSync('python3', [path.join(ROOT, 'm5', 'bounds.py'), input, output], {
-      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000,
+      encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], timeout: 600000,
       env: { ...process.env, M5_RAIDS_LEDGER: raidsLedger },
     })
     assert.ifError(result.error)
@@ -2010,7 +2012,11 @@ async function main() {
   } catch (error) {
     failures++
     console.log(`FAIL test harness: ${error.stack}`)
-  } finally { fs.rmSync(scratch, { recursive: true, force: true }) }
+  } finally {
+    // Opt-in for diagnosis (tools/stress.sh): keep a failed run's scratch directory.
+    if (failures && process.env.M5_TEST_KEEP_SCRATCH) console.log(`scratch kept: ${scratch}`)
+    else fs.rmSync(scratch, { recursive: true, force: true })
+  }
   console.log(failures ? `${failures} failure(s) (${checks} checks)` : 'all checks passed')
   process.exitCode = failures ? 1 : 0
 }

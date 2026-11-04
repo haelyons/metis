@@ -90,10 +90,23 @@ function bandForms(S) {
 // plan_usd, is its own: 126000 less 250 per place of the title's first word (at most 2,000 steps, under the
 // stated-versus-computed flag). Two titles get restructured plans.
 const WORDS = ['alpha', 'bravo', 'charlie', 'delta', 'echo', 'foxtrot', 'golf', 'hotel']
+// Second review of U55: `judged` holds copies taken at evaluation. The `alpha` picks' plans have a hypothesis over
+// the card field cap (22 words, CONTRACT.md "Card fields"), so the tree repairs that text field after the plan was
+// evaluated (S7: gate_cardfields, then repair fields once); the REPAIR_FIELDS stub returns SHORT_HYPOTHESIS for it.
+const LONG_HYPOTHESIS = 'Success levels off well before the largest step count because the fixed dataset and not the training ' +
+  'compute limits what the policy can learn from the same small set of demonstrations'
+const SHORT_HYPOTHESIS = 'Success levels off early because the fixed dataset limits learning.'
+// U55_PLAN_OVERRIDES: a JSON file {title: plan}; the producer returns that plan for that title (other suites run
+// the tree with plans they build, through this stub).
 function producerPlan(S, title) {
+  if (process.env.U55_PLAN_OVERRIDES && title) {
+    const overrides = JSON.parse(fs.readFileSync(process.env.U55_PLAN_OVERRIDES, 'utf8'))
+    if (Object.hasOwn(overrides, title)) return clone(overrides[title])
+  }
   const p = clone(process.env.U55_BAND_FORMS ? bandForms(S).plan : variant(S).plan)
   p.option_title = title ?? PLAN.option_title
   p.numbers.find(number => number.id === 'steps').value = 126000 - 250 * (WORDS.indexOf(String(title).split(' ')[0]) + 1)
+  if (title && /^alpha /.test(title)) p.hypothesis = LONG_HYPOTHESIS
   return title && /^(bravo|foxtrot) /.test(title) ? { ...p, restructuring: RESTRUCTURED, compute_tested: 'no' } : p
 }
 // The planned spend the cost rules give such a plan: pilot 2 h plus sweep hours, both at 8 x 3.99 $/h.
@@ -139,7 +152,7 @@ function reply(kind, tag, prompt, S) {
       const restructured = !prompt.includes('\ncard:method: none\n')
       return { scores: card[b].map(c => ({ criterion: c, value: c === 'baseline' && !restructured ? 'NA' : 4, ref: 'card:question', reason })), decides_by: PLAN.phases[0].id, decides_by_reason: reason }
     }
-    case 'REPAIR_FIELDS': return { fields: {} }
+    case 'REPAIR_FIELDS': return prompt.includes(LONG_HYPOTHESIS) ? { fields: { hypothesis: SHORT_HYPOTHESIS } } : { fields: {} }
     case 'REPAIR_EXPR': return { numbers: [], lines: [] }
   }
   return undefined
@@ -151,6 +164,8 @@ module.exports = {
     fs.appendFileSync(process.env.U55_CALLS, JSON.stringify({ title, kind: kind ?? null }) + '\n')
     if (!kind) return unavailable()
     const body = prompt.slice(0, prompt.length - promptSuffix(S[kind]).length)
+    // U55_PROMPTS: a file collecting the repair prompts the tree sends (what it asks an agent to repair).
+    if (process.env.U55_PROMPTS && /^REPAIR_/.test(kind)) fs.appendFileSync(process.env.U55_PROMPTS, JSON.stringify({ title, kind, body }) + '\n')
     const value = reply(kind, String(title).replace(/@.*$/, ''), body, S)
     return value === null || value === undefined ? unavailable() : ok(value)
   },
@@ -169,7 +184,7 @@ function check(label, test) {
 const rows = file => fs.existsSync(file) ? fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).map(JSON.parse) : []
 // One tree run under wf.js; every run of this suite shares the same args (and so the same base directory).
 async function treeRun(name, extraArgs = [], env = {}, bundle = BUNDLE) {
-  const out = path.join(scratch, name), calls = path.join(scratch, `${name}-calls.jsonl`)
+  const out = path.join(scratch, name), calls = path.join(scratch, `${name}-calls.jsonl`), prompts = path.join(scratch, `${name}-prompts.jsonl`)
   const stdoutFile = path.join(scratch, `${name}-stdout.log`), stderrFile = path.join(scratch, `${name}-stderr.log`)
   const stdout = fs.openSync(stdoutFile, 'w'), stderr = fs.openSync(stderrFile, 'w')
   let child
@@ -177,7 +192,7 @@ async function treeRun(name, extraArgs = [], env = {}, bundle = BUNDLE) {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea/wf.js'), '--script', bundle, '--args', path.join(scratch, 'args.json'),
         '--out', out, '--disable-family', 'claude', ...extraArgs], { cwd: ROOT, timeout: 300000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr],
-        env: { ...process.env, HOME: path.join(scratch, 'home'), WF_STUB: __filename, U55_CALLS: calls, U55_BUNDLE: bundle, ...env } })
+        env: { ...process.env, HOME: path.join(scratch, 'home'), WF_STUB: __filename, U55_CALLS: calls, U55_PROMPTS: prompts, U55_BUNDLE: bundle, ...env } })
       let error
       proc.on('error', value => { error = value })
       proc.on('close', (status, signal) => resolve({ status, signal, error }))
@@ -191,7 +206,49 @@ async function treeRun(name, extraArgs = [], env = {}, bundle = BUNDLE) {
     assert.ok(result && !result.error, `result error: ${result?.error}`)
     assert.ok(Array.isArray(result.calibration) && result.calibration.length === result.cards.length, 'one calibration record per card')
   })
-  return { name, out, result, calls: rows(calls), journal: rows(path.join(out, 'journal.jsonl')) }
+  return { name, out, result, calls: rows(calls), prompts: rows(prompts), journal: rows(path.join(out, 'journal.jsonl')) }
+}
+
+// ---- The pick each record's plan was judged with, from the stub's replies and CONTRACT.md -------------------
+// Option scores (stub OPTION_SCORES): value 1 + ((i + criterion length) % 5) for option W<i>. §2.3: totals sum every
+// criterion but reshape; compute_open_status settled/none overwrites open to 1 (W4's compute_open is "none");
+// sequential_status none overwrites reshape to 1 (W4). §3 pick.js and §5: eligible = distance != ELSEWHERE and not
+// gated (W3 is ELSEWHERE; W4 is gated: compute_open none and sequential none, with require_compute_lever true);
+// the reshape route (reshape >= 4 and stakes >= 3, highest reshape + stakes) gives the top pick; picks_per_branch 2
+// gives one random pick, the next eligible option; ELSEWHERE options (W3) are the pool candidates. `rank` is the
+// 1-based place among all options of the branch by total (the fixture has no tied totals, checked below);
+// `tie_note` is '' on every pick but a top pick, and a top pick with no tie has nothing to note; no collision
+// (every option is its own cluster), so `replaced` is []. Seed picks have root, branch, rank and total null.
+function optionScores(branch, i) {
+  const value = criterion => 1 + ((i + criterion.length) % 5)
+  const scores = Object.fromEntries(crit[branch].map(criterion => [criterion, value(criterion)]))
+  if (i === 4) { scores.open = 1; scores.reshape = 1 }
+  const total = Object.entries(scores).filter(([criterion]) => criterion !== 'reshape').reduce((a, [, v]) => a + v, 0)
+  return { scores, total }
+}
+function branchTable(branch) {
+  const options = [1, 2, 3, 4].map(i => ({ id: `W${i}`, i, ...optionScores(branch, i), eligible: i <= 2 }))
+  for (const option of options) option.rank = 1 + options.filter(other => other.total > option.total).length
+  const eligible = options.filter(option => option.eligible && option.scores.reshape >= 4 && option.scores.stakes >= 3)
+  const best = Math.max(...eligible.map(option => option.scores.reshape + option.scores.stakes))
+  const tops = eligible.filter(option => option.scores.reshape + option.scores.stakes === best)
+  return { options, top: tops.length === 1 ? tops[0].id : null }
+}
+// Besides pick_run's fields, the pick the tree evaluates carries the option's `id` and `title` (the stub's OPTIONS
+// reply; for the seed pick, the seed's 1-based place and the seed idea's text): both are fixed by the stub's inputs.
+function optionTitle(root, branch, i) {
+  return `${(root === 'R1' ? ['alpha', 'bravo', 'charlie', 'delta'] : ['echo', 'foxtrot', 'golf', 'hotel'])[i - 1]} ${root === 'R1' ? 'quartz' : 'basalt'} ${branch === 'interp' ? 'probe' : 'flow'}`
+}
+function expectedPick(key, seedIdeas) {
+  if (key.startsWith('seed:')) {
+    const n = Number(key.split(':')[2])
+    return { key, id: String(n), title: seedIdeas[n - 1], root: null, branch: null, kind: 'seed', rank: null, total: null, tie_note: '', replaced: [] }
+  }
+  const [root, branch, id] = key.split(':')
+  const table = branchTable(branch)
+  const option = table.options.find(entry => entry.id === id)
+  const kind = id === table.top ? 'top' : id === 'W3' ? 'pool' : option.eligible ? 'random' : null
+  return { key, id, title: optionTitle(root, branch, option.i), root, branch, kind, rank: option.rank, total: option.total, tie_note: '', replaced: [] }
 }
 
 async function main() {
@@ -204,6 +261,10 @@ async function main() {
       budget_usd: 1500, budget_covers_storage: false, budget_covers_tax: true, require_compute_lever: { physical: true, interp: true },
       pool_k: 3, picks_per_branch: 2 }
     fs.writeFileSync(path.join(scratch, 'args.json'), JSON.stringify(ARGS))
+    // gate_plan's args: the run's budget and gate arguments (CONTRACT.md main.js Args, all but seed, base,
+    // fixed_roots and seed_ideas), with the defaults filled in (deepen_on_signal false is the only one ARGS omits).
+    const GATE_ARGS = { budget_usd: ARGS.budget_usd, budget_covers_storage: ARGS.budget_covers_storage, budget_covers_tax: ARGS.budget_covers_tax,
+      require_compute_lever: ARGS.require_compute_lever, deepen_on_signal: false, pool_k: ARGS.pool_k, picks_per_branch: ARGS.picks_per_branch }
     const S = await schemas()
     const v = variant(S)
     check('fixture: the producer plan (no slow_f band) validates against the bundle plan schema', () => assert.deepEqual(v.baseValid, []))
@@ -289,6 +350,42 @@ async function main() {
       check(`run1: ${record.key}: judged.gate_args carries the run's budget and gate arguments`, () => {
         for (const key of ['budget_usd', 'require_compute_lever', 'pool_k', 'picks_per_branch'])
           assert.deepEqual(record.judged.gate_args[key], ARGS[key], `gate_args.${key}`)
+      })
+      // Second review of U55: the whole pick and the whole arguments object, every field, exactly.
+      check(`run1: ${record.key}: judged.pick is exactly the pick the stub's scores determine (every field)`, () => {
+        assert.deepEqual(record.judged.pick, expectedPick(record.key, ARGS.seed_ideas))
+      })
+      check(`run1: ${record.key}: judged.gate_args is exactly the run's arguments object`, () => {
+        assert.deepEqual(record.judged.gate_args, GATE_ARGS)
+      })
+    }
+    check('run1: pick fixture: no tied totals in a branch, one reshape-route top per branch (fixture sanity)', () => {
+      for (const branch of ['physical', 'interp']) {
+        const table = branchTable(branch)
+        assert.equal(new Set(table.options.map(option => option.total)).size, 4, `${branch} totals ${table.options.map(option => option.total)}`)
+        assert.equal(table.top, 'W2', `${branch} top`)
+      }
+    })
+    check('run1: every non-seed judged pick is W1 (random), W2 (top) or W3 (pool); a seed pick is judged (fixture sanity)', () => {
+      for (const record of judgedRecords) assert.ok(/^seed:|:W[123]$/.test(record.key), record.key)
+      assert.ok(judgedRecords.some(record => record.key.startsWith('seed:')), 'no judged seed pick')
+      assert.ok(judgedRecords.some(record => /:W3$/.test(record.key)), 'no judged pool pick')
+    })
+
+    // Second review of U55: judged.plan is the plan as evaluated. The alpha picks' overlong hypothesis is repaired
+    // after evaluation (the card shows the repaired text); judged.plan keeps the evaluated, overlong one.
+    const alpha = judgedRecords.filter(record => /^alpha /.test(record.title))
+    check('run1: the tree asked for the alpha hypothesis to be repaired, and the cards show the repaired text (fixture sanity)', () => {
+      assert.ok(alpha.length >= 1, `no judged alpha pick: ${judgedRecords.map(record => record.title)}`)
+      assert.ok(first.prompts.some(row => row.kind === 'REPAIR_FIELDS' && row.body.includes(LONG_HYPOTHESIS)), 'no REPAIR_FIELDS call with the overlong hypothesis')
+      const cards = first.result?.cards ?? []
+      assert.ok(cards.some(text => String(text).includes(SHORT_HYPOTHESIS)), 'no card shows the repaired hypothesis')
+      assert.ok(!cards.some(text => String(text).includes(LONG_HYPOTHESIS)), 'a card shows the overlong hypothesis')
+    })
+    for (const record of alpha) {
+      check(`run1: ${record.key}: judged.plan holds the plan as evaluated (overlong hypothesis), not the repaired one`, () => {
+        assert.equal(record.judged.plan.hypothesis, LONG_HYPOTHESIS)
+        assert.deepEqual(record.judged.plan, producerPlan(S, record.title))
       })
     }
 

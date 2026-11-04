@@ -159,12 +159,13 @@ async function runCase(name, config) {
   // existing reproduce test. Actual boxrun, timeout and receipt logic stays real.
   const probe = fs.readFileSync(path.join(ROOT, 'm5/box_probe.sh'), 'utf8')
   fs.writeFileSync(path.join(root, 'probe.js'), `const fs = require('node:fs'), path = require('node:path')
+// The job bin/box just started may remove entries meanwhile; vanished ones are skipped.
+const boxWalk = require(${JSON.stringify(path.join(ROOT, 'tools/m5_box_walk.js'))})
 function visit(dir) {
-  if (!fs.existsSync(dir)) return
-  for (const e of fs.readdirSync(dir, {withFileTypes:true})) {
+  for (const e of boxWalk.entries(dir)) {
     const file = path.join(dir,e.name)
     if(e.isDirectory()) visit(file)
-    else if(e.isFile() && e.name.endsWith('.sh') && fs.readFileSync(file,'utf8') === ${JSON.stringify(probe)})
+    else if(e.isFile() && e.name.endsWith('.sh') && boxWalk.text(file) === ${JSON.stringify(probe)})
       fs.writeFileSync(file, ${JSON.stringify('#!/usr/bin/env bash\nmkdir -p out\nprintf \'{"nvidia":{"gpus":["Fixture GPU"]},"nvcc":[],"cmake":null}\\n\' > out/probe.json\n')})
   }
 }
@@ -181,7 +182,7 @@ cd "$M5_BUDGET_ROOT"
 bash -c "$command"
 if [[ -n $remote_directory ]]; then "$M5_TEST_NODE" "$M5_BUDGET_ROOT/probe.js" "$remote_directory"; fi
 if [[ $command == *timeout* && -n $remote_directory ]]; then
-  for ((i=0; i<700; i++)); do
+  for ((end=SECONDS+1800; SECONDS<end; )); do
     pending=false
     for file in "$remote_directory"/*.sh; do
       [[ -f $file ]] || continue
@@ -208,7 +209,7 @@ fi`)
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea/wf.js'), '--script', path.join(ROOT, 'm5/pipeline.js'),
         '--args', args, '--out', out, '--disable-family', 'claude'], {
-        cwd: ROOT, timeout: Math.max(1, Math.min(45000, deadline - Date.now())), killSignal: 'SIGKILL',
+        cwd: ROOT, timeout: Math.max(1, deadline - Date.now()), killSignal: 'SIGKILL',
         stdio: ['ignore', stdout, stderr], env: { ...process.env, HOME: home, TMPDIR: root,
           PYTHONDONTWRITEBYTECODE: '1', PATH: bin + path.delimiter + process.env.PATH,
           M5_RAIDS_LEDGER: path.join(scratch, 'ledger.jsonl'), WF_STUB: __filename,

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Score a card's calibration inputs from the run's outputs (U54); exit 0/written, 1/invalid input."""
 import argparse
+from fractions import Fraction
 import hashlib
 import json
 import math
@@ -23,6 +24,15 @@ def number(value):
         return math.isfinite(float(value))
     except OverflowError:
         return False
+
+
+def written(exact, integral):
+    """An exact value as written: null when no finite double holds it; an integer when every operand was one."""
+    try:
+        value = float(exact)
+    except OverflowError:
+        return None
+    return int(exact) if integral else value
 
 
 def sealed(file, seal, key):
@@ -94,33 +104,38 @@ def measure(rule, out):
 
 
 def band(item, bands):
-    """Return (band_source, lo, hi): launch or card absolute band, else multiplicative, else nulls."""
+    """Return (band_source, lo, hi, lo integral, hi integral), bounds exact: launch or card absolute band, else
+    multiplicative, else nulls."""
     value = item.get("value")
     if not number(value):
-        return None, None, None
+        return None, None, None, False, False
     own = item.get("band")
     absolute = bands.get(item["id"]) if item["id"] in bands else (
         own if type(own) is dict and set(own) == {"abs"} and number(own["abs"]) and own["abs"] > 0 else None)
+    exact = Fraction(value)
     if absolute is not None:
         x = absolute["abs"]
-        return ("launch" if item["id"] in bands else "card"), value - x, value + x
+        integral = type(value) is int and type(x) is int
+        return ("launch" if item["id"] in bands else "card"), exact - Fraction(x), exact + Fraction(x), integral, integral
     k = 2.5 if item["basis"] == "PROXY" else 3
+    integral = type(value) is int and type(k) is int
     if value > 0:
-        return "multiplicative", value / k, value * k
+        return "multiplicative", exact / Fraction(k), exact * Fraction(k), False, integral
     if value < 0:
-        return "multiplicative", value * k, value / k
-    return None, None, None
+        return "multiplicative", exact * Fraction(k), exact / Fraction(k), integral, False
+    return None, None, None, False, False
 
 
 def row(item, rule, bands, out):
     measured = measure(rule, out)
-    source, lo, hi = band(item, bands)
+    source, lo, hi, lo_integral, hi_integral = band(item, bands)
     if measured is None:
         verdict = "not_measured"
-    elif source is None or not (number(lo) and number(hi)):
-        source, lo, hi, verdict = None, None, None, "no_band"
+    elif source is None:
+        verdict = "no_band"
     else:
-        verdict = "within_band" if lo <= measured <= hi else "below_band" if measured < lo else "above_band"
+        exact = Fraction(measured)
+        verdict = "within_band" if lo <= exact <= hi else "below_band" if exact < lo else "above_band"
     phase = item.get("phase")
     gate = phase.get("gate") if type(phase) is dict else None
     gate_passed = None
@@ -134,7 +149,9 @@ def row(item, rule, bands, out):
     else:
         decided_by, decision = None, "not_measured" if measured is None else "undecidable"
     return dict(id=item["id"], name=item.get("name"), unit=item.get("unit"), basis=item["basis"],
-                value=item.get("value"), band_source=source, band_lo=lo, band_hi=hi, measured_value=measured,
+                value=item.get("value"), band_source=source,
+                band_lo=None if lo is None else written(lo, lo_integral),
+                band_hi=None if hi is None else written(hi, hi_integral), measured_value=measured,
                 verdict=verdict, gate_passed=gate_passed, decided_by=decided_by, decision=decision,
                 rule={key: rule[key] for key in ("file", "kind", "expr")})
 
@@ -142,19 +159,19 @@ def row(item, rule, bands, out):
 def anchor_row(anchor, rule, out):
     published, tolerance = anchor["published_value"], anchor.get("tolerance")
     measured = measure(rule, out)
-    difference = measured - published if measured is not None else None
-    if difference is not None and not math.isfinite(difference):
-        difference = None
+    # exact: the difference and the limit are never lost to double overflow
+    difference = Fraction(measured) - Fraction(published) if measured is not None else None
     limit = None
     if number(tolerance) and tolerance >= 0:
-        limit = tolerance
+        limit = Fraction(tolerance)
     elif type(tolerance) is dict and len(tolerance) == 1:
         (kind, amount), = tolerance.items()
         if kind in ("abs", "rel") and number(amount) and amount >= 0:
-            limit = amount if kind == "abs" else amount * abs(published)
+            limit = Fraction(amount) if kind == "abs" else Fraction(amount) * abs(Fraction(published))
     passed = abs(difference) <= limit if difference is not None and limit is not None else None
     return dict(published_value=published, tolerance=tolerance, measured_value=measured,
-                difference=difference, passed=passed)
+                difference=None if difference is None else written(difference, type(measured) is int and type(published) is int),
+                passed=passed)
 
 
 def box():
@@ -195,12 +212,33 @@ def main():
         temporary.unlink(missing_ok=True)
 
 
+def c_dir(argv):
+    """The C dir argument as the parser reads it (the first positional), or None when absent."""
+    value = False
+    for i, arg in enumerate(argv):
+        if value:
+            value = False
+        elif arg == "--":
+            return argv[i + 1] if i + 1 < len(argv) else None
+        elif arg.startswith("-") and arg != "-":
+            value = "=" not in arg and len(arg) > 2 and any(name.startswith(arg) for name in ("--run", "--commit"))
+        else:
+            return arg
+    return None
+
+
 class Parser(argparse.ArgumentParser):
     def error(self, message):
         self.exit(1, "invalid command arguments\n")
 
 
 if __name__ == "__main__":
+    # an earlier output is removed before anything else, argument parsing included, whenever the C dir argument is present
+    if c_dir(sys.argv[1:]) is not None:
+        try:
+            (Path(c_dir(sys.argv[1:])) / "card_scored.json").unlink(missing_ok=True)
+        except OSError:
+            pass  # main() removes it again and fails on what this could not
     parser = Parser(description=__doc__)
     parser.add_argument("control")
     parser.add_argument("extract")

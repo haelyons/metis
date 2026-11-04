@@ -504,11 +504,103 @@ def review_cases():
               lambda proc=proc: assert_(SENT.encode() not in proc.stdout + proc.stderr, 'sentinel in diagnostics'))
 
 
+def second_review_cases():
+    """Second review of U54 (2026-11-03): exact arithmetic (no bound, difference or comparison lost to double
+    overflow; a number that cannot be written as a finite double is written as null), and invalid arguments after
+    an earlier successful run."""
+    def fields(row, keys=('band_source', 'band_lo', 'band_hi', 'measured_value', 'verdict', 'gate_passed', 'decided_by',
+                          'decision')):
+        return [row[key] for key in keys]
+
+    def exit0(r):
+        check('%s: exit 0 and control/card_scored.json written' % r.name, lambda: (
+            assert_(r.rc == 0, 'exit %s; stderr %s' % (r.rc, r.stderr[-600:])), assert_(r.exists, 'no card_scored.json')))
+        no_leak(r)
+        if r.exists:
+            check('%s: exact keys of the file and every row' % r.name, lambda: (
+                assert_(sorted(r.scored) == sorted(TOP_KEYS), 'keys %s' % sorted(r.scored)),
+                [assert_(sorted(row) == sorted(ROW_KEYS), 'row keys %s' % sorted(row)) for row in r.scored['rows']]))
+        return r.exists
+
+    files = {'e/v.json': json.dumps({'big': 1e308, 'neg': -1e308, 'third': 3e307}), M: METRICS}
+    big = 'e/v.json'
+    # GUESS 1e308: multiplicative band [1e308/3, 3e308]; 3e308 is no finite double, so band_hi is written as null.
+    r = execute('exact-guess-1e308', [
+        item('g_big', 'GUESS', 1e308, json_rule(big, '/big'), 1e308),
+        item('g_neg', 'GUESS', -1e308, json_rule(big, '/neg'), -1e308),
+        item('g_below', 'GUESS', 1e308, json_rule(big, '/third'), 3e307),
+        item('l_big', 'PROXY', 1e308, json_rule(big, '/big'), 1e308),
+        item('thr', 'PROXY', 5, r_('thr'), 2)], bands={'l_big': {'abs': 1e308}}, files=files)
+    if exit0(r):
+        rows = {row['id']: row for row in r.scored['rows']}
+        check('exact-guess-1e308: card 1e308 (GUESS) measured 1e308 is within_band / holds; band_hi (3e308) null', lambda: same(
+            fields(rows['g_big']), ['multiplicative', 1e308 / 3, None, 1e308, 'within_band', None, 'band', 'holds'], 'g_big'))
+        check('exact-guess-1e308: card -1e308 measured -1e308 is within_band / holds; band_lo (-3e308) null', lambda: same(
+            fields(rows['g_neg']), ['multiplicative', None, -1e308 / 3, -1e308, 'within_band', None, 'band', 'holds'], 'g_neg'))
+        check('exact-guess-1e308: card 1e308 measured 3e307 is below_band (exact lower bound 1e308/3) / refuted', lambda: same(
+            fields(rows['g_below']), ['multiplicative', 1e308 / 3, None, 3e307, 'below_band', None, 'band', 'refuted'], 'g_below'))
+        check('exact-guess-1e308: launch band abs 1e308 around 1e308 is [0, null]; measured 1e308 holds', lambda: same(
+            fields(rows['l_big']), ['launch', 0, None, 1e308, 'within_band', None, 'band', 'holds'], 'l_big'))
+        check('exact-guess-1e308: totals', lambda: same(
+            [r.scored[k] for k in ('inputs_total', 'measured_total', 'holds_total', 'refuted_total')], [5, 5, 4, 1]))
+
+    # The same card unmeasured: exit 0 with an unmeasured row.
+    r = execute('exact-guess-1e308-unmeasured', [item('g_big', 'GUESS', 1e308, json_rule('e/none.json', '/big'), None)],
+                files={M: METRICS})
+    if exit0(r):
+        check('exact-guess-1e308-unmeasured: an unmeasured row (band_hi null) and totals 1/0/0/0', lambda: (
+            same(fields(r.scored['rows'][0]), ['multiplicative', 1e308 / 3, None, None, 'not_measured', None, None,
+                                               'not_measured'], 'g_big'),
+            same([r.scored[k] for k in ('inputs_total', 'measured_total', 'holds_total', 'refuted_total')], [1, 0, 0, 0])))
+
+    # Anchor published -1e308, measured 1e308: the difference 2e308 is no finite double (null); passed is false
+    # for tolerance 1, {abs: 1} and {rel: 1} (|2e308| > 1e308).
+    for name, tolerance in (('number', 1), ('abs', {'abs': 1}), ('rel', {'rel': 1})):
+        anchor = {'what': 'reproduce the published rate', 'published_value': -1e308, 'tolerance': tolerance, 'source_id': 's2'}
+        r = execute('exact-anchor-overflow-' + name, [item('thr', 'PROXY', 5, r_('thr'), 2)], anchor=anchor,
+                    rules_extra=[dict(json_rule(big, '/big'), id='anchor')], files=files)
+        if exit0(r):
+            check('%s: anchor -1e308 measured 1e308, tolerance %s: difference null, passed false' % (r.name, json.dumps(tolerance)),
+                  lambda r=r, tolerance=tolerance: same(r.scored['anchor'], {
+                      'published_value': -1e308, 'tolerance': tolerance, 'measured_value': 1e308, 'difference': None,
+                      'passed': False}, 'anchor'))
+    # And one that passes although the difference overflows the double range of an intermediate: published 1e308,
+    # measured 1e308, tolerance {rel: 1e308} (t * |published| = 1e616): difference 0, passed true.
+    anchor = {'what': 'reproduce the published rate', 'published_value': 1e308, 'tolerance': {'rel': 1e308}}
+    r = execute('exact-anchor-rel-overflow', [item('thr', 'PROXY', 5, r_('thr'), 2)], anchor=anchor,
+                rules_extra=[dict(json_rule(big, '/big'), id='anchor')], files=files)
+    if exit0(r):
+        check('exact-anchor-rel-overflow: rel tolerance 1e308 of 1e308: difference 0, passed true', lambda: same(
+            r.scored['anchor'], {'published_value': 1e308, 'tolerance': {'rel': 1e308}, 'measured_value': 1e308,
+                                 'difference': 0, 'passed': True}, 'anchor'))
+
+    # Invalid arguments after an earlier successful run: exit 1 and no card_scored.json left.
+    for name, argv in (('run-omitted', lambda c, e, o: [c, e, o, '--commit', '-']),
+                       ('run-without-value', lambda c, e, o: [c, e, o, '--commit', '-', '--run']),
+                       ('commit-omitted', lambda c, e, o: [c, e, o, '--run', 'x']),
+                       ('out-dir-omitted', lambda c, e, o: [c, e, '--run', 'x', '--commit', '-']),
+                       ('unknown-option', lambda c, e, o: [c, e, o, '--run', 'x', '--commit', '-', '--bogus'])):
+        first = execute('stale-args-' + name, [item('thr', 'PROXY', 5, r_('thr'), 2)], files={M: METRICS})
+        check('stale-args-%s: the first run exits 0 and writes card_scored.json' % name,
+              lambda first=first: assert_(first.rc == 0 and first.exists, 'exit %s' % first.rc))
+        out = os.path.join(first.root, 'agent', 'results', 'reproduce', 'out')
+        extract = os.path.join(first.root, 'agent', 'harness', 'card_extract.json')
+        proc = subprocess.run([sys.executable, '-I', SCRIPT] + argv(first.control, extract, out), cwd=SCRATCH,
+                              capture_output=True, timeout=120)
+        scored = os.path.join(first.control, 'card_scored.json')
+        check('stale-args-%s: the rerun with invalid arguments exits 1 and leaves no card_scored.json' % name,
+              lambda proc=proc, scored=scored, first=first: (
+                  assert_(proc.returncode == 1, 'exit %s; %s' % (proc.returncode, proc.stderr[-300:])),
+                  assert_(not os.path.exists(scored), 'the earlier card_scored.json is still there'),
+                  assert_(sorted(os.listdir(first.control)) == sorted(first.before), 'control/ holds %s' % os.listdir(first.control))))
+
+
 def main():
     try:
         if not os.path.isfile(SCRIPT):
             raise SystemExit('m5/score_card.py missing')
         review_cases()
+        second_review_cases()
         # 1. Bands, gates, verdicts and decisions on one card.
         bands = execute('bands-and-gates', BAND_ITEMS, bands=BANDS, files={M: METRICS})
         valid_checks(bands)

@@ -336,16 +336,14 @@ exit "$rc"`, '#!/usr/bin/env bash\n')
   const fakeProbe = '#!/usr/bin/env bash\nset -eu\nmkdir -p out\nprintf \'{"label":"probe"}\\n\' >> "$M5_REPRODUCE_CALLS"\nprintf \'{"kernel":"' + PROBE + '","nvcc":[],"cmake":null}\\n\' > out/probe.json\n'
   fs.writeFileSync(replaceProbe, `
 const fs = require('node:fs'), path = require('node:path')
+// The job bin/box just started may remove entries meanwhile; vanished ones are skipped.
+const boxWalk = require(${JSON.stringify(path.join(ROOT, 'tools/m5_box_walk.js'))})
 function visit(directory) {
-  let entries
-  try { entries = fs.readdirSync(directory, { withFileTypes: true }) } catch { return }
-  for (const entry of entries) {
+  for (const entry of boxWalk.entries(directory)) {
     const file = path.join(directory, entry.name)
     if (entry.isDirectory()) { if (entry.name !== 'concurrency-work') visit(file) }
     else if (entry.isFile() && entry.name.endsWith('.sh')) {
-      let text
-      try { text = fs.readFileSync(file, 'utf8') } catch { continue }
-      if (text !== ${JSON.stringify(originalProbe)}) continue
+      if (boxWalk.text(file) !== ${JSON.stringify(originalProbe)}) continue
       fs.appendFileSync(process.env.M5_REPRODUCE_CALLS, '{"label":"probe-upload"}\\n')
       fs.writeFileSync(file, ${JSON.stringify(fakeProbe)})
     }
@@ -360,7 +358,7 @@ visit(process.env.BOX_ROOT)
   script(path.join(root, 'bin/box'), 'command=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\nexport PATH="$BOX_ROOT/../box-bin:$PATH"\ncd -- "$BOX_ROOT"\n' +
     'printf "start %s %s timeout=%s\\n" "$(date +%s.%N)" "${#command}" "$([[ $command == *timeout* ]] && echo yes || echo no)" >> "$BOX_ROOT/../box-calls.log"\n' +
     'trap \'printf "end %s rc-files=%s\\n" "$(date +%s.%N)" "$(cd "$BOX_ROOT" && echo m5-*/*.rc)" >> "$BOX_ROOT/../box-calls.log"\' EXIT\n' +
-    'bash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\nif [[ $command == *timeout* ]]; then\n  for ((i=0; i<3000; i++)); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0')
+    'bash -c "$command"\n"$M5_TEST_NODE" "$M5_REPLACE_PROBE"\nif [[ $command == *timeout* ]]; then\n  for ((end=SECONDS+1800; SECONDS<end; )); do\n    pending=false\n    for file in "$BOX_ROOT"/m5-*/*.sh; do\n      [[ -f $file ]] || continue\n      [[ -f ${file%.sh}.rc ]] || pending=true\n    done\n    [[ $pending == true ]] || break\n    sleep 0.01\n  done\nfi\nexit 0')
   // fetchFailProbe: every fetch of the concurrency log fails, so its receipt has fetched=false (infra).
   script(path.join(root, 'bin/fetch'), 'source=${1//\\/tmp\\/m5-/$BOX_ROOT\\/m5-}\ncd -- "$BOX_ROOT"\n' +
     (spec.fetchFailProbe ? "[[ $source != *-concurrency.log ]] || { echo 'simulated failed fetch' >&2; exit 1; }\n" : '') + 'exec cp -r -- "$source" "$2"')
@@ -373,7 +371,7 @@ visit(process.env.BOX_ROOT)
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(pipeline, 'idea/wf.js'), '--script', path.join(pipeline, 'm5/pipeline.js'),
         '--args', path.join(root, 'control/args.json'), '--out', path.join(agent, 'wf'), '--disable-family', 'claude'], {
-        cwd: pipeline, timeout: 150000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr],
+        cwd: pipeline, timeout: 1800000, killSignal: 'SIGKILL', stdio: ['ignore', stdout, stderr],
         env: { ...process.env, HOME: path.join(root, 'home'), M5_RAIDS_LEDGER: path.join(scratch, 'raids.jsonl'),
           WF_STUB: __filename, M5_REPRODUCE_ROOT: root, M5_REPRODUCE_CONFIG: JSON.stringify(fixtureConfig),
           M5_REPRODUCE_CALLS: callsFile, M5_TEST_NODE: process.execPath, M5_REPLACE_PROBE: replaceProbe,

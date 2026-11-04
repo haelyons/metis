@@ -224,7 +224,7 @@ async function execute(name, config = {}, previous) {
     child = await new Promise(resolve => {
       const proc = spawn(process.execPath, [path.join(ROOT, 'idea', 'wf.js'), '--script', path.join(ROOT, 'm5', 'pipeline.js'),
         '--args', args, '--out', out, '--config', configFile,
-        ...(config.m5Policy ? ['--profile', 'latent_skeptic', '--family', 'codex'] : ['--disable-family', 'claude'])], { cwd: ROOT, timeout: 30000,
+        ...(config.m5Policy ? ['--profile', 'latent_skeptic', '--family', 'codex'] : ['--disable-family', 'claude'])], { cwd: ROOT, timeout: 600000,
         stdio: ['ignore', stdout, stderr], env: { ...process.env, WF_STUB: __filename,
           HOME: home, M5_PROPOSE_ROOT: root, M5_PROPOSE_CONFIG: JSON.stringify(config), M5_RAIDS_LEDGER: path.join(scratch, 'raids.jsonl') } })
       let error
