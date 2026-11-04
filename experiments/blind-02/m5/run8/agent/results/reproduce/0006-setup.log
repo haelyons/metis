@@ -1,0 +1,32 @@
+-rwxr-xr-x 1 root root    59 Mar 19  2025 /usr/bin/nvcc
+-rw-r--r-- 1 root root 98574 Mar 20  2025 /usr/include/cuda_runtime.h
+lrwxrwxrwx 1 root root    15 Mar 20  2025 /usr/lib/x86_64-linux-gnu/libcudart.so -> libcudart.so.12
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2025 NVIDIA Corporation
+Built on Fri_Feb_21_20:23:50_PST_2025
+Cuda compilation tools, release 12.8, V12.8.93
+Build cuda_12.8.r12.8/compiler.35583870_0
+HEAD is now at 9575280 upgrade FFTW version
+make: Entering directory '/tmp/m5-0c18e078-250b-4ffb-9d85-d2b77b351266/baseline-published/megadock'
+mkdir -p obj_cs
+--------------------------
+make megadock start
+--------------------------
+/usr/bin/g++ -fPIC -fopenmp -o ./megadock obj_cs/control.cpp.o obj_cs/cpu_time.cpp.o obj_cs/docking.cpp.o obj_cs/parameter.cpp.o obj_cs/pdb_entry.cpp.o obj_cs/protein.cpp.o obj_cs/receptor.cpp.o obj_cs/ligand.cpp.o obj_cs/fft_process.cpp.o obj_cs/main.cpp.o -lm -L/usr/lib/x86_64-linux-gnu -lfftw3f
+make: Leaving directory '/tmp/m5-0c18e078-250b-4ffb-9d85-d2b77b351266/baseline-published/megadock'
+make: Entering directory '/tmp/m5-0c18e078-250b-4ffb-9d85-d2b77b351266/baseline-published/megadock'
+mkdir -p obj_gs
+--------------------------
+make megadock-gpu start
+--------------------------
+/usr/bin/g++ -fPIC -fopenmp -o ./megadock-gpu obj_gs/control.cpp.o obj_gs/cpu_time.cpp.o obj_gs/docking.cpp.o obj_gs/parameter.cpp.o obj_gs/pdb_entry.cpp.o obj_gs/protein.cpp.o obj_gs/receptor.cpp.o obj_gs/ligand.cpp.o obj_gs/fft_process.cu.o obj_gs/main.cu.o -lm -L/usr/lib/x86_64-linux-gnu -lfftw3f -L/usr/lib/x86_64-linux-gnu -Wl,-rpath,/usr/lib/x86_64-linux-gnu -lcudart -lcufft
+make: Leaving directory '/tmp/m5-0c18e078-250b-4ffb-9d85-d2b77b351266/baseline-published/megadock'
+ELF file    1: megadock-gpu.1.sm_90.cubin
+ELF file    2: megadock-gpu.2.sm_90.cubin
+Traceback (most recent call last):
+  File "<stdin>", line 6, in <module>
+  File "/usr/lib/python3.10/pathlib.py", line 1134, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/usr/lib/python3.10/pathlib.py", line 1119, in open
+    return self._accessor.open(self, mode, buffering, encoding, errors,
+FileNotFoundError: [Errno 2] No such file or directory: 'harness/published.json'

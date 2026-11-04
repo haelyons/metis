@@ -1,0 +1,393 @@
+{
+  "representative_scale": {
+    "fixed_inputs": [
+      "f1a19",
+      "f1dtd",
+      "f1glj",
+      "f1ht8"
+    ],
+    "arms": [
+      "A0",
+      "A1",
+      "A2",
+      "A3"
+    ],
+    "replicates": 6,
+    "warmup": 0,
+    "rotations": 3600,
+    "retained_models_per_invocation": 50,
+    "scale_search": false,
+    "scope": "Exactly the supplied comparison recording run; no toy extrapolation or original-seed apo run."
+  },
+  "inputs": [
+    {
+      "id": "f1a19",
+      "pinder_release": "2024-02",
+      "system": "1a19__A1_P11540--1a19__B1_P11540",
+      "split": "holo test-set monomers",
+      "required_by": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "evaluator"
+      ],
+      "receptor_source": {
+        "name": "test_set_pdbs/1a19__A1_P11540-R.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__A1_P11540-R.pdb",
+        "bytes": 58320,
+        "sha256": "08cba0488510ac98b618ab9b963306d7d67459bcab501b54e9dd8214f8f63e63",
+        "available": true
+      },
+      "ligand_source": {
+        "name": "test_set_pdbs/1a19__B1_P11540-L.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1a19__B1_P11540-L.pdb",
+        "bytes": 58320,
+        "sha256": "9d02d5646d3ba8b13699e83d11ec1d4ed833888e1aa2522d944de0393332bde7",
+        "available": true
+      },
+      "prepared": {
+        "paths": {
+          "receptor": "data/fixtures/f1a19/R.pdb",
+          "ligand": "data/fixtures/f1a19/L.pdb"
+        },
+        "status": "generated inputs; not yet generated",
+        "method": "Change only column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records; preserve all other bytes and lines.",
+        "sha256": null,
+        "hash_reason": "Must be recorded by setup after deterministic preparation."
+      },
+      "reference": {
+        "access": "evaluator private data only",
+        "name": "pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+        "bytes": 116559,
+        "sha256": "9b112ee5082081cb9c111a3015449c72161332819251d200f6971e3f3336c7f2",
+        "available": true,
+        "private": true,
+        "published_at": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+        "required_by": [
+          "evaluator"
+        ],
+        "access_in_execution": "Only fetch_private.sh may fetch; verify bytes/hash and store under CMP_PRIVATE; arms/setup/adapters must not read it."
+      },
+      "licence": null,
+      "licence_basis": "none",
+      "permission": "unknown",
+      "licence_reason": "Code repository licence does not explicitly cover separately hosted PINDER structural files. No input-specific licence, terms or owner permission found in examined sources.",
+      "seed": null,
+      "seed_reason": "Fixed named fixtures; no random selection or seed prescribed."
+    },
+    {
+      "id": "f1dtd",
+      "pinder_release": "2024-02",
+      "system": "1dtd__A1_P48052--1dtd__B1_P81511",
+      "split": "holo test-set monomers",
+      "required_by": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "evaluator"
+      ],
+      "receptor_source": {
+        "name": "test_set_pdbs/1dtd__A1_P48052-R.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__A1_P48052-R.pdb",
+        "bytes": 192132,
+        "sha256": "2075e71ae732971c2f78286b554a5baad632f38b383decb8ff8859cd88807394",
+        "available": true
+      },
+      "ligand_source": {
+        "name": "test_set_pdbs/1dtd__B1_P81511-L.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1dtd__B1_P81511-L.pdb",
+        "bytes": 38313,
+        "sha256": "b693ffc0dc24f0cf4ba456bcb7ca115a8f1879e747aa3c87245aeec727315797",
+        "available": true
+      },
+      "prepared": {
+        "paths": {
+          "receptor": "data/fixtures/f1dtd/R.pdb",
+          "ligand": "data/fixtures/f1dtd/L.pdb"
+        },
+        "status": "generated inputs; not yet generated",
+        "method": "Change only column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records; preserve all other bytes and lines.",
+        "sha256": null,
+        "hash_reason": "Must be recorded by setup after deterministic preparation."
+      },
+      "reference": {
+        "access": "evaluator private data only",
+        "name": "pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+        "bytes": 230364,
+        "sha256": "95c095234280fb888c3ef9441f3393fc816223a960131f7dcddab2c0dbae9706",
+        "available": true,
+        "private": true,
+        "published_at": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+        "required_by": [
+          "evaluator"
+        ],
+        "access_in_execution": "Only fetch_private.sh may fetch; verify bytes/hash and store under CMP_PRIVATE; arms/setup/adapters must not read it."
+      },
+      "licence": null,
+      "licence_basis": "none",
+      "permission": "unknown",
+      "licence_reason": "Code repository licence does not explicitly cover separately hosted PINDER structural files. No input-specific licence, terms or owner permission found in examined sources.",
+      "seed": null,
+      "seed_reason": "Fixed named fixtures; no random selection or seed prescribed."
+    },
+    {
+      "id": "f1glj",
+      "pinder_release": "2024-02",
+      "system": "1glj__A1_P0A6F3--1glj__B1_P0A6F3",
+      "split": "holo test-set monomers",
+      "required_by": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "evaluator"
+      ],
+      "receptor_source": {
+        "name": "test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__A1_P0A6F3-R.pdb",
+        "bytes": 316791,
+        "sha256": "7131a9741f10136dce36e02b8282a5df0cafc97021fd932c7cf0a92cf8eae87a",
+        "available": true
+      },
+      "ligand_source": {
+        "name": "test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1glj__B1_P0A6F3-L.pdb",
+        "bytes": 316791,
+        "sha256": "887d53373e51eaa7a717841c3038ebb2e6c31796aad2927a93b698f379c72ca5",
+        "available": true
+      },
+      "prepared": {
+        "paths": {
+          "receptor": "data/fixtures/f1glj/R.pdb",
+          "ligand": "data/fixtures/f1glj/L.pdb"
+        },
+        "status": "generated inputs; not yet generated",
+        "method": "Change only column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records; preserve all other bytes and lines.",
+        "sha256": null,
+        "hash_reason": "Must be recorded by setup after deterministic preparation."
+      },
+      "reference": {
+        "access": "evaluator private data only",
+        "name": "pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+        "bytes": 633501,
+        "sha256": "b9650bb0452f3f6def3954f96a30be7e2fa5f246bf308385dcd0b6ea7756903c",
+        "available": true,
+        "private": true,
+        "published_at": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+        "required_by": [
+          "evaluator"
+        ],
+        "access_in_execution": "Only fetch_private.sh may fetch; verify bytes/hash and store under CMP_PRIVATE; arms/setup/adapters must not read it."
+      },
+      "licence": null,
+      "licence_basis": "none",
+      "permission": "unknown",
+      "licence_reason": "Code repository licence does not explicitly cover separately hosted PINDER structural files. No input-specific licence, terms or owner permission found in examined sources.",
+      "seed": null,
+      "seed_reason": "Fixed named fixtures; no random selection or seed prescribed."
+    },
+    {
+      "id": "f1ht8",
+      "pinder_release": "2024-02",
+      "system": "1ht8__A1_P05979--1ht8__B1_P05979",
+      "split": "holo test-set monomers",
+      "required_by": [
+        "A0",
+        "A1",
+        "A2",
+        "A3",
+        "evaluator"
+      ],
+      "receptor_source": {
+        "name": "test_set_pdbs/1ht8__A1_P05979-R.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__A1_P05979-R.pdb",
+        "bytes": 362718,
+        "sha256": "b51981e47c916bb095d67a38bdbab04464a3581d85e51898c33bb2ad44bd5da0",
+        "available": true
+      },
+      "ligand_source": {
+        "name": "test_set_pdbs/1ht8__B1_P05979-L.pdb",
+        "url": "https://pinderdata.org/2024-02/test_set_pdbs/1ht8__B1_P05979-L.pdb",
+        "bytes": 362718,
+        "sha256": "02e7cb2b1d019063502be0dac261bcc39c8f2b7c558a58af9d9e77ab0b7838d7",
+        "available": true
+      },
+      "prepared": {
+        "paths": {
+          "receptor": "data/fixtures/f1ht8/R.pdb",
+          "ligand": "data/fixtures/f1ht8/L.pdb"
+        },
+        "status": "generated inputs; not yet generated",
+        "method": "Change only column 22 to R for receptor and L for ligand on ATOM, HETATM, ANISOU and TER records; preserve all other bytes and lines.",
+        "sha256": null,
+        "hash_reason": "Must be recorded by setup after deterministic preparation."
+      },
+      "reference": {
+        "access": "evaluator private data only",
+        "name": "pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+        "url": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+        "bytes": 725355,
+        "sha256": "db9192a30142d9d8f364ff13b4191841af7f4aa0ecd85b688fb8b9cef70fffd9",
+        "available": true,
+        "private": true,
+        "published_at": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+        "required_by": [
+          "evaluator"
+        ],
+        "access_in_execution": "Only fetch_private.sh may fetch; verify bytes/hash and store under CMP_PRIVATE; arms/setup/adapters must not read it."
+      },
+      "licence": null,
+      "licence_basis": "none",
+      "permission": "unknown",
+      "licence_reason": "Code repository licence does not explicitly cover separately hosted PINDER structural files. No input-specific licence, terms or owner permission found in examined sources.",
+      "seed": null,
+      "seed_reason": "Fixed named fixtures; no random selection or seed prescribed."
+    }
+  ],
+  "outputs": {
+    "definitions": [
+      {
+        "name": "transforms",
+        "what": "The rotation and translation fields of every ranked prediction row of the arm's docking.out (all fields of the row except the last), in file order.",
+        "format": "text_numbers",
+        "select": "^[ \\t]*([-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+)[ \\t]+[-+0-9.eE]+[ \\t]*$"
+      },
+      {
+        "name": "scores",
+        "what": "The score field (the last field) of every ranked prediction row of the arm's docking.out, in file order.",
+        "format": "text_numbers",
+        "select": "^[ \\t]*[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+[-+0-9.eE]+[ \\t]+([-+0-9.eE]+)[ \\t]*$"
+      },
+      {
+        "name": "coords",
+        "what": "The x, y and z coordinate columns of every ATOM and HETATM record of the arm's assembled models, models taken in rank order.",
+        "format": "text_numbers",
+        "select": "^(?:ATOM  |HETATM).{24}(.{24})"
+      },
+      {
+        "name": "dockq",
+        "what": "The evaluator's DockQ value for each of the arm's assembled models, as one JSON array in rank order, in a file that holds no other number.",
+        "format": "json_numbers",
+        "select": null
+      }
+    ],
+    "paths": {
+      "transforms": "out/docking.out",
+      "scores": "out/docking.out",
+      "coords": {
+        "glob": "out/model_*.pdb"
+      },
+      "dockq": "eval/dockq.json"
+    },
+    "assembly": "Run both commands for each arm as specified by view. Receptor records then decoygen ligand records then one END line; 50 ranked assembled models.",
+    "evaluator_contract": {
+      "program": "pinder (pinder.eval.dockq, BiotiteDockQ)",
+      "repository": "https://github.com/pinder-org/pinder",
+      "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+      "archive_url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+      "archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+      "private_data": "for each input, the native complex named in spec.reference, fetched by fetch_private.sh from its URL and checked against its SHA-256 and byte count",
+      "reads": "the model_<rank>.pdb files under CMP_ARM_OUT, in rank order",
+      "invocation": "BiotiteDockQ is constructed with parallel_io=False (models read in the evaluator's own process). The evaluator's Python code is a regular file kept in the harness and run by evaluate.sh as the venv interpreter followed by that file's path, never as a program read from standard input: PINDER's parallel reader starts its workers with the spawn method, which re-imports the main program from its file.",
+      "writes": "CMP_EVAL_OUT/dockq.json, one JSON array of the DockQ values in rank order and no other number; any per-model detail goes to a separate file under CMP_EVAL_OUT",
+      "published_source": "https://github.com/pinder-org/pinder/tree/ebeb28a2f8411363cef722b7d293c978f7442672",
+      "pin": "ebeb28a2f8411363cef722b7d293c978f7442672",
+      "command": "\"$VPY\" harness/evaluate_dockq.py",
+      "command_source": "intake/brief.md, Comparison request, evaluator invocation correction",
+      "command_status": "Harness invocation specified by brief; not an upstream standalone script. The harness Python file is not supplied during intake.",
+      "api": {
+        "class": "pinder.eval.dockq.BiotiteDockQ",
+        "parallel_io": false,
+        "decoy_receptor_chain": [
+          "R"
+        ],
+        "decoy_ligand_chain": [
+          "L"
+        ],
+        "native_chains": "Map to receptor and ligand chains of the corresponding native complex; exact labels must be established by evaluator."
+      },
+      "private_inputs": [
+        {
+          "access": "evaluator private data only",
+          "name": "pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1a19__A1_P11540--1a19__B1_P11540.pdb",
+          "bytes": 116559,
+          "sha256": "9b112ee5082081cb9c111a3015449c72161332819251d200f6971e3f3336c7f2"
+        },
+        {
+          "access": "evaluator private data only",
+          "name": "pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1dtd__A1_P48052--1dtd__B1_P81511.pdb",
+          "bytes": 230364,
+          "sha256": "95c095234280fb888c3ef9441f3393fc816223a960131f7dcddab2c0dbae9706"
+        },
+        {
+          "access": "evaluator private data only",
+          "name": "pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1glj__A1_P0A6F3--1glj__B1_P0A6F3.pdb",
+          "bytes": 633501,
+          "sha256": "b9650bb0452f3f6def3954f96a30be7e2fa5f246bf308385dcd0b6ea7756903c"
+        },
+        {
+          "access": "evaluator private data only",
+          "name": "pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+          "url": "https://pinderdata.org/2024-02/pdbs/1ht8__A1_P05979--1ht8__B1_P05979.pdb",
+          "bytes": 725355,
+          "sha256": "db9192a30142d9d8f364ff13b4191841af7f4aa0ecd85b688fb8b9cef70fffd9"
+        }
+      ]
+    }
+  },
+  "timing_scope": {
+    "metrics": [
+      {
+        "name": "wall",
+        "unit": "s",
+        "what": "Trusted wall of the invocation: adapter and arm commands, plus the evaluator part.",
+        "source": "trusted_wall",
+        "reduce": null,
+        "expect_count": null
+      }
+    ],
+    "includes": "Adapter and arm commands, reconstruction and model assembly, plus evaluator part within trusted invocation wall.",
+    "setup": "Outside trusted invocation wall; no setup duration measured.",
+    "complete_workflow_time": null,
+    "GPU_activity": null,
+    "billed_allocation_cost": null,
+    "reason": "These extra quantities have no measurement interface or price supplied in the view."
+  },
+  "scheduling": {
+    "args_budgets": {},
+    "run_ceiling_s": 43200,
+    "script_defaults_s": {
+      "method_setup": 1200,
+      "method_run": 1200,
+      "tests": 900,
+      "evaluate": 2400
+    },
+    "setup_anchors_profile": "Use time remaining before run ceiling when args budget is absent; ceiling is not a target.",
+    "stage_estimates_s": null,
+    "reason": "No calibration performed during intake; no evidence-based runtime estimates supplied.",
+    "rules": "Pipeline schedule only. Preserve failure/timeout files; do not rerun invocations. Never compute or assert inter-arm differences, tolerances or DockQ summaries in harness."
+  },
+  "anchor_interface": {
+    "published_anchors": [],
+    "run_anchors.sh": "Writes out/anchors_measured.json as {}; no measurements or acceptance claims.",
+    "run_command.sh": "Brief permits A0 two commands once on f1a19 only as build smoke check; intake did not run it."
+  },
+  "contract_limitations": [
+    "This recording request contains no denser-search arm, no comparative tolerance and no quality summary. It cannot establish the original seed question about denser-search quality under a fixed spending cap. This is explicit scope, not a substituted experiment.",
+    "Only trusted invocation wall is a metric in the view. GPU activity, billed allocation cost and a total spending cap are not supplied. They cannot be claimed from this view.",
+    "Evaluator harness file and chain mapping implementation are specified but not supplied; execution preparation must implement them before paid work."
+  ],
+  "gates": {
+    "named_intake_gate_scripts": [],
+    "reason": "Neither supplied source names an intake gate script. setup.sh, run_anchors.sh, evaluate.sh and other harness scripts are execution interfaces, not supplied intake validators.",
+    "policy": "Complete files; found; all required data available; licence not restricted; stock_environment not false. Unknown permissions and absent tolerances do not block."
+  }
+}
