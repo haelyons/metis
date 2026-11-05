@@ -1,0 +1,61 @@
+{
+  "status": "ok",
+  "adapter_rc": 0,
+  "adapter_wall_s": 0.06393693099971642,
+  "commands": [
+    {
+      "argv": [
+        "baseline-published/megadock/megadock",
+        "-R",
+        "data/fixtures/f1dtd/R.pdb",
+        "-L",
+        "data/fixtures/f1dtd/L.pdb",
+        "-o",
+        "/tmp/m5-6f2660da-ab98-4021-bea7-4c187e4919f9/comparison-work/i82/out/docking.out",
+        "-N",
+        "50",
+        "-t",
+        "1",
+        "-v",
+        "1.2",
+        "-e",
+        "1.0",
+        "-d",
+        "1.0",
+        "-a",
+        "-45.0",
+        "-b",
+        "1.0",
+        "-f",
+        "3",
+        "-r",
+        "3600"
+      ],
+      "rc": 0,
+      "wall_s": 10.413375078000172,
+      "executable": "/tmp/m5-6f2660da-ab98-4021-bea7-4c187e4919f9/baseline-published/megadock/megadock",
+      "sha256": "4b85db6e261aad86d5069e8ea8eb77c079fef61ba5cf3556fc07d1756405e600"
+    },
+    {
+      "argv": [
+        "bash",
+        "-c",
+        "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+        "/tmp/m5-6f2660da-ab98-4021-bea7-4c187e4919f9/comparison-work/i82/out",
+        "data/fixtures/f1dtd/R.pdb",
+        "data/fixtures/f1dtd/L.pdb"
+      ],
+      "rc": 0,
+      "wall_s": 0.31455389400025524,
+      "executable": "/usr/bin/bash",
+      "sha256": "59474588a312b6b6e73e5a42a59bf71e62b55416b6c9d5e4a6e1c630c2a9ecd4"
+    }
+  ],
+  "gpu_busy_s": 0.0,
+  "gpu_busy_known": true,
+  "eval_status": "ok",
+  "eval_rc": 0,
+  "eval_wall_s": 2.6718083410000872,
+  "eval_gpu_busy_s": 0.0,
+  "eval_gpu_busy_known": true
+}

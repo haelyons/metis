@@ -1,0 +1,29 @@
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 30 threads.
+# Using CUDA device 0: NVIDIA A100-SXM4-40GB
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [30 / 1]
+
+ Usage: megadock -R [receptor.pdb] -L [ligand.pdb] [more options]
+
+ Available options:
+  -o filename    : set the output filename (default to "$R-$L.out")
+  -O             : output docking detail files
+  -N integer     : set the number of output predictions (default to 2000)
+  -t integer     : set the number of predictions per each rotation (default to 1)
+  -F integer     : set the number of FFT point (default to none)
+  -v float       : set the voxel size (default to 1.2)
+  -D             : set the 6 deg. (54000 angles) of rotational sampling
+                   (default to none, 15 deg. (3600 angles) of rotational sampling)
+  -r integer     : set the number of rotational sampling angles 
+                   (54000: 54000 angles, 1: 1 angles, 24: 24 angles, default to 3600 angles)
+  -e float       : set the electrostatics term ratio (default to 1.0)
+  -d float       : set the hydrophobic term ratio (default to 1.0)
+  -a float       : set the rPSC receptor core penalty (default to -45.0)
+  -b float       : set the rPSC ligand core penalty (default to 1.0)
+  -f 1/2/3       : set function 
+                   (1: rPSC, 2: rPSC+Elec, 3: rPSC+Elec+RDE, default to 3)
+  -h             : show this message
+

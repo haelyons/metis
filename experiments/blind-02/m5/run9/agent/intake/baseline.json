@@ -1,0 +1,150 @@
+{
+  "repo": "https://github.com/akiyamalab/MEGADOCK",
+  "commit": "9575280c875732553266e26adc607dd892b02616",
+  "build_commands": [
+    "python3 -m venv --system-site-packages \"$VENV\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade \"setuptools>=64\" \"setuptools_scm>=8\" packaging wheel 2>&1 \\\n  | tee \"$SOUT/pip_install_build_tools.log\"\nSETUPTOOLS_SCM_PRETEND_VERSION=\"$PINDER_SCM_VERSION\" SETUPTOOLS_SCM_PRETEND_VERSION_FOR_PINDER=\"$PINDER_SCM_VERSION\" \\\n  \"$VPY\" -m pip install --no-cache-dir --no-build-isolation \"$WORK/$BP/pinder-src\" 2>&1 | tee \"$SOUT/pip_install_pinder.log\"\n\"$VPY\" -m pip install --no-cache-dir fire 2>&1 | tee \"$SOUT/pip_install_fire.log\"\nprintf 'numpy<2\\n' > \"$SOUT/venv_constraints.txt\"\n\"$VPY\" -m pip install --no-cache-dir --upgrade -c \"$SOUT/venv_constraints.txt\" networkx pandas scikit-learn 2>&1 \\\n  | tee \"$SOUT/pip_install_venv_refresh.log\"",
+    "if [[ ! -d baseline-published/cuda-samples/.git ]]; then\n    git clone --depth 1 --branch v12.8 https://github.com/NVIDIA/cuda-samples baseline-published/cuda-samples\nfi\ngit -C baseline-published/cuda-samples describe --tags --exact-match\nsamples=$(pwd)/baseline-published/cuda-samples\nmake -C baseline-published/megadock -j 8 USE_GPU=0 USE_MPI=0 \\\n    CPPCOMPILER=/usr/bin/g++ FFTW_INSTALL_PATH=/usr \\\n    FFTW_CFLAGS=-I/usr/include FFTW_LDFLAGS='-lm -L/usr/lib/x86_64-linux-gnu -lfftw3f'\nmake -C baseline-published/megadock -j 8 USE_GPU=1 USE_MPI=0 \\\n    CPPCOMPILER=/usr/bin/g++ SM_VERSIONS=sm_90 \\\n    \"NVCC=$CUDA_NVCC -Xcompiler -fopenmp -arch=sm_90 -use_fast_math\" \\\n    \"INCLUDES=-Isrc -I$CUDA_INCLUDE -I$samples/Common\" \\\n    FFTW_CFLAGS=-I/usr/include \\\n    \"LIB=-lm -L/usr/lib/x86_64-linux-gnu -lfftw3f -L$CUDA_LIB -Wl,-rpath,$CUDA_LIB -lcudart -lcufft\""
+  ],
+  "build_commands_source": "intake/brief.md, historical build/install excerpts and Materials, pins and preparation; published build guide https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md",
+  "build_notes": [
+    "Historical GPU example targets sm_90; replace only with the single actual box target as explicitly instructed in the brief.",
+    "CPU and GPU are built from the same pinned checkout; retain both executables and decoygen.",
+    "PINDER install excerpt is included because evaluator installation is required; no FroDock build is part of this run.",
+    "CUDA paths and prerequisite package presence are discovered on the box; no undisclosed apt install command is invented.",
+    "Published commands are recorded only, never run by intake."
+  ],
+  "run_commands": [
+    [
+      "baseline-published/megadock/megadock",
+      "-R",
+      "{spec:/prepared/receptor}",
+      "-L",
+      "{spec:/prepared/ligand}",
+      "-o",
+      "{out}/docking.out",
+      "-N",
+      "50",
+      "-t",
+      "1",
+      "-v",
+      "1.2",
+      "-e",
+      "1.0",
+      "-d",
+      "1.0",
+      "-a",
+      "-45.0",
+      "-b",
+      "1.0",
+      "-f",
+      "3",
+      "-r",
+      "3600"
+    ],
+    [
+      "bash",
+      "-c",
+      "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+      "{out}",
+      "{spec:/prepared/receptor}",
+      "{spec:/prepared/ligand}"
+    ]
+  ],
+  "run_commands_source": "comparison_view.json arms[A0]; https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md",
+  "published_configuration": {
+    "id": "A0",
+    "what": "Seed configuration 1: the published MEGADOCK CPU build with standard rotational sampling and the shared scoring settings, followed by reconstruction of every ranked model with the published decoygen and assembly of each model as receptor records, then ligand records, then one END line.",
+    "commands": [
+      [
+        "baseline-published/megadock/megadock",
+        "-R",
+        "{spec:/prepared/receptor}",
+        "-L",
+        "{spec:/prepared/ligand}",
+        "-o",
+        "{out}/docking.out",
+        "-N",
+        "50",
+        "-t",
+        "1",
+        "-v",
+        "1.2",
+        "-e",
+        "1.0",
+        "-d",
+        "1.0",
+        "-a",
+        "-45.0",
+        "-b",
+        "1.0",
+        "-f",
+        "3",
+        "-r",
+        "3600"
+      ],
+      [
+        "bash",
+        "-c",
+        "set -euo pipefail; for r in $(seq 1 50); do baseline-published/megadock/decoygen \"lig_$r.pdb\" \"$2\" \"$0/docking.out\" \"$r\" > \"decoygen_$r.log\" 2>&1; grep -v '^END' \"$1\" > \"$0/model_$r.pdb\"; grep -v -E '^(END|ENDMDL)' \"lig_$r.pdb\" >> \"$0/model_$r.pdb\"; echo END >> \"$0/model_$r.pdb\"; done",
+        "{out}",
+        "{spec:/prepared/receptor}",
+        "{spec:/prepared/ligand}"
+      ]
+    ],
+    "env": {
+      "OMP_NUM_THREADS": "26",
+      "OMP_DYNAMIC": "FALSE",
+      "OPENBLAS_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "NUMEXPR_NUM_THREADS": "1",
+      "LC_ALL": "C",
+      "LANG": "C",
+      "CUDA_VISIBLE_DEVICES": "0"
+    }
+  },
+  "published_configuration_source": "comparison_view.json arms[A0]; intake/brief.md Comparison request; pinned MEGADOCK command guide",
+  "dependencies": [
+    {
+      "repo": "https://github.com/NVIDIA/cuda-samples",
+      "pin": "v12.8",
+      "role": "Build headers only"
+    },
+    {
+      "program": "pinder (pinder.eval.dockq, BiotiteDockQ)",
+      "repository": "https://github.com/pinder-org/pinder",
+      "commit": "ebeb28a2f8411363cef722b7d293c978f7442672",
+      "archive_url": "https://codeload.github.com/pinder-org/pinder/tar.gz/ebeb28a2f8411363cef722b7d293c978f7442672",
+      "archive_sha256": "b577532820ebbe5c16432b78c5e9c197690e863cb70a0a35a8ebcbe5277b76dd",
+      "private_data": "for each input, the native complex named in spec.reference, fetched by fetch_private.sh from its URL and checked against its SHA-256 and byte count. fetch_private.sh is self-contained: it carries each input's reference name, URL, byte count and SHA-256 in its own text and reads no other file under harness/, because only the sealed comparison files and the usual harness scripts are uploaded to the box.",
+      "reads": "the model_<rank>.pdb files under CMP_ARM_OUT, in rank order; the native complex under CMP_PRIVATE at the name, byte count and SHA-256 given by spec.reference in CMP_INPUT_SPEC",
+      "invocation": "BiotiteDockQ is constructed with parallel_io=False (models read in the evaluator's own process). evaluate.sh is self-contained: it carries the evaluator's Python program in its own text, writes it at each call to a regular file under CMP_EVAL_OUT, and runs it as the venv interpreter followed by that file's path. It never runs a program read from standard input (PINDER's parallel reader starts its workers with the spawn method, which re-imports the main program from its file) and never runs or reads any other file under harness/, which is not uploaded to the box.",
+      "writes": "CMP_EVAL_OUT/dockq.json, one JSON array of the DockQ values in rank order and no other number; any per-model detail goes to a separate file under CMP_EVAL_OUT"
+    }
+  ],
+  "citations": [
+    {
+      "title": "MEGADOCK pinned published source",
+      "url": "https://github.com/akiyamalab/MEGADOCK/tree/9575280c875732553266e26adc607dd892b02616"
+    },
+    {
+      "title": "MEGADOCK build guide",
+      "url": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/BUILD.md"
+    },
+    {
+      "title": "MEGADOCK command guide",
+      "url": "https://raw.githubusercontent.com/akiyamalab/MEGADOCK/9575280c875732553266e26adc607dd892b02616/doc/README.md"
+    },
+    {
+      "title": "MEGADOCK 4.0, Ohue et al., Bioinformatics 30(22):3281\u20133283 (2014)",
+      "url": "https://doi.org/10.1093/bioinformatics/btu532"
+    },
+    {
+      "title": "Comparison request, science step s29",
+      "source": "intake/brief.md, Comparison request (science step s29)"
+    },
+    {
+      "title": "Sealed comparison specification",
+      "source": "comparison_view.json"
+    }
+  ]
+}

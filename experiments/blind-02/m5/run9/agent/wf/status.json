@@ -1,0 +1,74 @@
+{
+ "card": "args",
+ "kind": "workflow",
+ "run_dir": "/home/hal/dev/interp/metis/experiments/blind-02/m5/run9/agent/wf",
+ "stage": "done",
+ "started": "2026-11-04T23:13:56.616Z",
+ "calls": [
+  {
+   "id": "0001 intake",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "claude/opus",
+   "chain": [
+    "claude/opus",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 123938,
+   "cost_usd": 0,
+   "tokens": 475634,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  },
+  {
+   "id": "0002 harness",
+   "stage": "",
+   "model": "codex/default@medium",
+   "understudy": "claude/opus",
+   "chain": [
+    "claude/opus",
+    "opencode-go/mimo-v2.6-pro"
+   ],
+   "mode": "fallback",
+   "state": "ok",
+   "attempts": 1,
+   "ms": 293004,
+   "cost_usd": 0,
+   "tokens": 911771,
+   "kind": "none",
+   "by": "codex/default@medium",
+   "errors": []
+  }
+ ],
+ "cost_usd": 0,
+ "tokens": 1387405,
+ "by_model": {
+  "codex/default@medium": {
+   "calls": 2,
+   "cost_usd": 0,
+   "tokens": 1387405,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "by_family": {
+  "codex": {
+   "calls": 2,
+   "cost_usd": 0,
+   "tokens": 1387405,
+   "failed": 0,
+   "refusals": 0
+  }
+ },
+ "substitutions": 0,
+ "refusals": 0,
+ "done": true,
+ "updated": "2026-11-05T00:30:04.387Z",
+ "go": [
+  "codex/default@medium: $0.000 over 2 calls"
+ ]
+}
