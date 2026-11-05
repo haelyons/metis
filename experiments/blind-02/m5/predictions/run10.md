@@ -57,6 +57,8 @@ run10 (pushed 9a0a8130): no H100 capacity; `gpu_1x_a100_sxm4` (us-east-1, USD 1.
 | 11 | 0.97 | yes | 0.0009 |
 | 12 | 0.03 | no | 0.0009 |
 | 13 | 0.90 | yes | 0.0100 |
-| 14 | 0.60 | pending (science step s34) | — |
+| 14 | 0.60 | yes (s34 `invocations_failed` none, 3fe6fc53) | 0.1600 |
 
-Mean Brier 0.071 over 13 resolved. Decision row: evaluate PASS, so science step s34 reads the scored comparisons, scores s31's predictions and states what the main comparison decides.
+Mean Brier 0.077 over 14 resolved. Decision row: evaluate PASS, so science step s34 reads the scored comparisons, scores s31's predictions and states what the main comparison decides.
+
+s34 (3fe6fc53): `design_ran_as_sealed` yes, `invocations_failed` none, `isolation_concern` none, `scorer_check` agrees, `comparisons_supported` most, `comparisons_void_or_inconclusive` none, `question_answered` partly, `next_action` stop, `stop_reason` no_justified_test; s33's 20 predictions all resolved, 17 true, mean Brier 0.117. The route stops: no justified test remains. The result for the owner is `science/s34/RESULT.md` (unread by the operator).
