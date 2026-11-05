@@ -1,0 +1,205 @@
+{
+  "cpu_model": "AMD EPYC 7J13 64-Core Processor",
+  "cpu_logical": 30,
+  "kernel": "6.8.0-60-generic",
+  "driver_version": "570.148.08",
+  "cuda_version": "12.8",
+  "gpus": [
+    {
+      "index": 0,
+      "name": "NVIDIA A100-SXM4-40GB",
+      "uuid": "GPU-c527ef85-ca39-5b0b-3197-e97f02203aab",
+      "memory_total": "40960 MiB"
+    }
+  ],
+  "executables": {
+    "A0": {
+      "version": "9575280c875732553266e26adc607dd892b02616",
+      "executable": "baseline-published/megadock/megadock",
+      "sha256": "4b85db6e261aad86d5069e8ea8eb77c079fef61ba5cf3556fc07d1756405e600",
+      "libraries": [
+        {
+          "name": "libfftw3f.so.3",
+          "path": "/lib/x86_64-linux-gnu/libfftw3f.so.3",
+          "sha256": "95278056042c7857623c84eb7088151a3305d0af8873ee2ab92af667feef5518"
+        },
+        {
+          "name": "libstdc++.so.6",
+          "path": "/lib/x86_64-linux-gnu/libstdc++.so.6",
+          "sha256": "41c4cd10be11160dec736958a59eb0553357ad77008e9ba56250d4fd8698b8ec"
+        },
+        {
+          "name": "libm.so.6",
+          "path": "/lib/x86_64-linux-gnu/libm.so.6",
+          "sha256": "297737a3541eb0bbe4c288045edc483321f24c21a237972c51d589cf2864a0b7"
+        },
+        {
+          "name": "libgomp.so.1",
+          "path": "/lib/x86_64-linux-gnu/libgomp.so.1",
+          "sha256": "92da9020425dac4bac9737cc8f5f74d9df382e349a4514415e897e5f6740da9c"
+        },
+        {
+          "name": "libgcc_s.so.1",
+          "path": "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+          "sha256": "39c9bb846d8491ec41e89b7d34b824e7b6e7ff37d7b9de549305a15c2f7a6cf7"
+        },
+        {
+          "name": "libc.so.6",
+          "path": "/lib/x86_64-linux-gnu/libc.so.6",
+          "sha256": "6813de4f45796f58134ca3f06b3179344ddfea192cad73ea0af35375b1b66e76"
+        }
+      ]
+    },
+    "A1": {
+      "version": "9575280c875732553266e26adc607dd892b02616",
+      "executable": "baseline-published/megadock/megadock-gpu",
+      "sha256": "25311e4280c924498488f26b52593f9d49d32b23ef5500b63c267202a7637f4f",
+      "libraries": [
+        {
+          "name": "libfftw3f.so.3",
+          "path": "/usr/lib/x86_64-linux-gnu/libfftw3f.so.3",
+          "sha256": "95278056042c7857623c84eb7088151a3305d0af8873ee2ab92af667feef5518"
+        },
+        {
+          "name": "libcudart.so.12",
+          "path": "/usr/lib/x86_64-linux-gnu/libcudart.so.12",
+          "sha256": "c3a75b33af334a3486d197dbd1584a2985183ba4688d237a2be5f2f679329920"
+        },
+        {
+          "name": "libcufft.so.11",
+          "path": "/usr/lib/x86_64-linux-gnu/libcufft.so.11",
+          "sha256": "db7a606984097fdb7ad04f4bd09ade30b493e7cb360bb400037ff634dc208425"
+        },
+        {
+          "name": "libstdc++.so.6",
+          "path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6",
+          "sha256": "41c4cd10be11160dec736958a59eb0553357ad77008e9ba56250d4fd8698b8ec"
+        },
+        {
+          "name": "libm.so.6",
+          "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+          "sha256": "297737a3541eb0bbe4c288045edc483321f24c21a237972c51d589cf2864a0b7"
+        },
+        {
+          "name": "libgomp.so.1",
+          "path": "/usr/lib/x86_64-linux-gnu/libgomp.so.1",
+          "sha256": "92da9020425dac4bac9737cc8f5f74d9df382e349a4514415e897e5f6740da9c"
+        },
+        {
+          "name": "libgcc_s.so.1",
+          "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+          "sha256": "39c9bb846d8491ec41e89b7d34b824e7b6e7ff37d7b9de549305a15c2f7a6cf7"
+        },
+        {
+          "name": "libc.so.6",
+          "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "sha256": "6813de4f45796f58134ca3f06b3179344ddfea192cad73ea0af35375b1b66e76"
+        },
+        {
+          "name": "libdl.so.2",
+          "path": "/lib/x86_64-linux-gnu/libdl.so.2",
+          "sha256": "b970e7f9969a175b5e0726977ee998753fd7cc10512937dafc24ce659508a16a"
+        },
+        {
+          "name": "libpthread.so.0",
+          "path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+          "sha256": "fdfd7d83a335ba12bd73e857f95a798dae0355f37935231966fd088647978e23"
+        },
+        {
+          "name": "librt.so.1",
+          "path": "/lib/x86_64-linux-gnu/librt.so.1",
+          "sha256": "90fb160909274fd6e967ecded88653c1ceeec579b9e92bdada2e7a1d0ca04c69"
+        }
+      ]
+    },
+    "A2": {
+      "version": "9575280c875732553266e26adc607dd892b02616",
+      "executable": "baseline-published/megadock/megadock-gpu",
+      "sha256": "25311e4280c924498488f26b52593f9d49d32b23ef5500b63c267202a7637f4f",
+      "libraries": [
+        {
+          "name": "libfftw3f.so.3",
+          "path": "/usr/lib/x86_64-linux-gnu/libfftw3f.so.3",
+          "sha256": "95278056042c7857623c84eb7088151a3305d0af8873ee2ab92af667feef5518"
+        },
+        {
+          "name": "libcudart.so.12",
+          "path": "/usr/lib/x86_64-linux-gnu/libcudart.so.12",
+          "sha256": "c3a75b33af334a3486d197dbd1584a2985183ba4688d237a2be5f2f679329920"
+        },
+        {
+          "name": "libcufft.so.11",
+          "path": "/usr/lib/x86_64-linux-gnu/libcufft.so.11",
+          "sha256": "db7a606984097fdb7ad04f4bd09ade30b493e7cb360bb400037ff634dc208425"
+        },
+        {
+          "name": "libstdc++.so.6",
+          "path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6",
+          "sha256": "41c4cd10be11160dec736958a59eb0553357ad77008e9ba56250d4fd8698b8ec"
+        },
+        {
+          "name": "libm.so.6",
+          "path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+          "sha256": "297737a3541eb0bbe4c288045edc483321f24c21a237972c51d589cf2864a0b7"
+        },
+        {
+          "name": "libgomp.so.1",
+          "path": "/usr/lib/x86_64-linux-gnu/libgomp.so.1",
+          "sha256": "92da9020425dac4bac9737cc8f5f74d9df382e349a4514415e897e5f6740da9c"
+        },
+        {
+          "name": "libgcc_s.so.1",
+          "path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+          "sha256": "39c9bb846d8491ec41e89b7d34b824e7b6e7ff37d7b9de549305a15c2f7a6cf7"
+        },
+        {
+          "name": "libc.so.6",
+          "path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "sha256": "6813de4f45796f58134ca3f06b3179344ddfea192cad73ea0af35375b1b66e76"
+        },
+        {
+          "name": "libdl.so.2",
+          "path": "/lib/x86_64-linux-gnu/libdl.so.2",
+          "sha256": "b970e7f9969a175b5e0726977ee998753fd7cc10512937dafc24ce659508a16a"
+        },
+        {
+          "name": "libpthread.so.0",
+          "path": "/lib/x86_64-linux-gnu/libpthread.so.0",
+          "sha256": "fdfd7d83a335ba12bd73e857f95a798dae0355f37935231966fd088647978e23"
+        },
+        {
+          "name": "librt.so.1",
+          "path": "/lib/x86_64-linux-gnu/librt.so.1",
+          "sha256": "90fb160909274fd6e967ecded88653c1ceeec579b9e92bdada2e7a1d0ca04c69"
+        }
+      ]
+    },
+    "evaluator": {
+      "version": "0.0.0+gebeb28a2",
+      "executable": "baseline-published/evaluator-venv/bin/python",
+      "sha256": "06dbd62e710b9db111c59f99e1173ed57aadbf20b1f694b551975e00834344d7",
+      "libraries": [
+        {
+          "name": "libm.so.6",
+          "path": "/lib/x86_64-linux-gnu/libm.so.6",
+          "sha256": "297737a3541eb0bbe4c288045edc483321f24c21a237972c51d589cf2864a0b7"
+        },
+        {
+          "name": "libexpat.so.1",
+          "path": "/lib/x86_64-linux-gnu/libexpat.so.1",
+          "sha256": "8988be6b05235a57035b70f3c743f9c73072debe85e88f65e5cbe66a75bc43a6"
+        },
+        {
+          "name": "libz.so.1",
+          "path": "/lib/x86_64-linux-gnu/libz.so.1",
+          "sha256": "64c206f0146cc58bbddc4f22054436f4ff278f5a554aa3ce6921ddf7e9133370"
+        },
+        {
+          "name": "libc.so.6",
+          "path": "/lib/x86_64-linux-gnu/libc.so.6",
+          "sha256": "6813de4f45796f58134ca3f06b3179344ddfea192cad73ea0af35375b1b66e76"
+        }
+      ]
+    }
+  }
+}

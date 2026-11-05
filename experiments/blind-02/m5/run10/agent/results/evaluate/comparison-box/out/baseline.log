@@ -1,0 +1,317 @@
++ export OMP_NUM_THREADS=26 OMP_DYNAMIC=FALSE OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 LC_ALL=C LANG=C CUDA_VISIBLE_DEVICES=0
++ OMP_NUM_THREADS=26
++ OMP_DYNAMIC=FALSE
++ OPENBLAS_NUM_THREADS=1
++ MKL_NUM_THREADS=1
++ NUMEXPR_NUM_THREADS=1
++ LC_ALL=C
++ LANG=C
++ CUDA_VISIBLE_DEVICES=0
++ baseline-published/megadock/megadock -R data/inputs/1aua_R.pdb -L data/inputs/1aua_L.pdb -o out/docking.out -N 50 -t 1 -v 1.2 -e 1 -d 1 -a -45.0 -b 1 -f 3 -r 3600
+ MEGADOCK ver. 4.1.3 for CPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Output file = out/docking.out
+# Using  26 CPU cores, 0 GPUs
+
+Receptor = data/inputs/1aua_R.pdb
+Receptor max size = 58.394
+Required voxel size = 74.394
+Number of grid = 63
+FFT N = 126
+
+Ligand = data/inputs/1aua_L.pdb
+Ligand max size = 60.897
+Required voxel size = 66.897
+Number of grid = 56
+FFT N = 112
+Memory requirement (/node)  = 1.3 GB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1aua_L.pdb
+Target receptors:
+ data/inputs/1aua_R.pdb
+
+   >Ligand rotation =   360 /  3600 ( 7)
+   >Ligand rotation =   720 /  3600 ( 7)
+   >Ligand rotation =  1080 /  3600 (14)
+   >Ligand rotation =  1440 /  3600 (12)
+   >Ligand rotation =  1800 /  3600 (19)
+   >Ligand rotation =  2160 /  3600 ( 2)
+   >Ligand rotation =  2520 /  3600 (15)
+   >Ligand rotation =  2880 /  3600 ( 4)
+   >Ligand rotation =  3240 /  3600 (11)
+   >Ligand rotation =  3600 /  3600 (13)
+
+CPU time (initialize)         =     0.02 sec. ( 0.2%)
+CPU time (receptor process)   =     0.21 sec. ( 1.8%)
+CPU time (docking)            =    11.17 sec. (98.0%)
+  | Ligand voxelization       =     0.61 sec. ( 5.3%)
+  | Ligand FFT                =     5.04 sec. (44.2%)
+  | Convolution               =     0.31 sec. ( 2.7%)
+  | Inverse FFT               =     4.92 sec. (43.2%)
+  | Sort score (each core)    =     0.25 sec. ( 2.2%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    11.49 sec.
+++ seq 1 50
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_1.pdb data/inputs/1aua_L.pdb out/docking.out 1
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_1.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_2.pdb data/inputs/1aua_L.pdb out/docking.out 2
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_2.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_3.pdb data/inputs/1aua_L.pdb out/docking.out 3
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_3.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_4.pdb data/inputs/1aua_L.pdb out/docking.out 4
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_4.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_5.pdb data/inputs/1aua_L.pdb out/docking.out 5
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_5.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_6.pdb data/inputs/1aua_L.pdb out/docking.out 6
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_6.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_7.pdb data/inputs/1aua_L.pdb out/docking.out 7
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_7.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_8.pdb data/inputs/1aua_L.pdb out/docking.out 8
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_8.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_9.pdb data/inputs/1aua_L.pdb out/docking.out 9
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_9.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_10.pdb data/inputs/1aua_L.pdb out/docking.out 10
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_10.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_11.pdb data/inputs/1aua_L.pdb out/docking.out 11
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_11.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_12.pdb data/inputs/1aua_L.pdb out/docking.out 12
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_12.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_13.pdb data/inputs/1aua_L.pdb out/docking.out 13
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_13.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_14.pdb data/inputs/1aua_L.pdb out/docking.out 14
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_14.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_15.pdb data/inputs/1aua_L.pdb out/docking.out 15
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_15.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_16.pdb data/inputs/1aua_L.pdb out/docking.out 16
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_16.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_17.pdb data/inputs/1aua_L.pdb out/docking.out 17
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_17.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_18.pdb data/inputs/1aua_L.pdb out/docking.out 18
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_18.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_19.pdb data/inputs/1aua_L.pdb out/docking.out 19
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_19.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_20.pdb data/inputs/1aua_L.pdb out/docking.out 20
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_20.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_21.pdb data/inputs/1aua_L.pdb out/docking.out 21
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_21.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_22.pdb data/inputs/1aua_L.pdb out/docking.out 22
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_22.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_23.pdb data/inputs/1aua_L.pdb out/docking.out 23
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_23.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_24.pdb data/inputs/1aua_L.pdb out/docking.out 24
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_24.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_25.pdb data/inputs/1aua_L.pdb out/docking.out 25
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_25.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_26.pdb data/inputs/1aua_L.pdb out/docking.out 26
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_26.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_27.pdb data/inputs/1aua_L.pdb out/docking.out 27
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_27.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_28.pdb data/inputs/1aua_L.pdb out/docking.out 28
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_28.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_29.pdb data/inputs/1aua_L.pdb out/docking.out 29
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_29.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_30.pdb data/inputs/1aua_L.pdb out/docking.out 30
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_30.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_31.pdb data/inputs/1aua_L.pdb out/docking.out 31
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_31.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_32.pdb data/inputs/1aua_L.pdb out/docking.out 32
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_32.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_33.pdb data/inputs/1aua_L.pdb out/docking.out 33
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_33.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_34.pdb data/inputs/1aua_L.pdb out/docking.out 34
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_34.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_35.pdb data/inputs/1aua_L.pdb out/docking.out 35
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_35.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_36.pdb data/inputs/1aua_L.pdb out/docking.out 36
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_36.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_37.pdb data/inputs/1aua_L.pdb out/docking.out 37
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_37.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_38.pdb data/inputs/1aua_L.pdb out/docking.out 38
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_38.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_39.pdb data/inputs/1aua_L.pdb out/docking.out 39
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_39.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_40.pdb data/inputs/1aua_L.pdb out/docking.out 40
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_40.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_41.pdb data/inputs/1aua_L.pdb out/docking.out 41
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_41.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_42.pdb data/inputs/1aua_L.pdb out/docking.out 42
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_42.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_43.pdb data/inputs/1aua_L.pdb out/docking.out 43
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_43.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_44.pdb data/inputs/1aua_L.pdb out/docking.out 44
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_44.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_45.pdb data/inputs/1aua_L.pdb out/docking.out 45
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_45.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_46.pdb data/inputs/1aua_L.pdb out/docking.out 46
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_46.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_47.pdb data/inputs/1aua_L.pdb out/docking.out 47
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_47.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_48.pdb data/inputs/1aua_L.pdb out/docking.out 48
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_48.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_49.pdb data/inputs/1aua_L.pdb out/docking.out 49
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_49.pdb
++ echo END
++ for r in $(seq 1 50)
++ baseline-published/megadock/decoygen out/lig_50.pdb data/inputs/1aua_L.pdb out/docking.out 50
++ grep -v '^END' data/inputs/1aua_R.pdb
++ grep -v -E '^(END|ENDMDL)' out/lig_50.pdb
++ echo END

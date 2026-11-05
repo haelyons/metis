@@ -1,0 +1,68 @@
+ MEGADOCK ver. 4.1.3 for GPU & single node
+      megadock@bi.c.titech.ac.jp   lastupdated: 26 March, 2019
+
+# Using OpenMP parallelization: 26 threads.
+# Using CUDA device 0: NVIDIA A100-SXM4-40GB
+# CUFFT version : 11303
+# Number of available [threads / GPUs] : [26 / 1]
+# Number of output = 50
+# Set number of scores per one angle = 1
+# Set voxel size   = 1.2
+# Set electric term ratio = 1
+# Set ACE term ratio = 1
+#Set score Function = 3
+# Set 54,000 rotational angles (6 degree)
+# Output file = /tmp/m5-974d14d2-6a89-4d67-9552-7f750ae90182/comparison-work/i10/out/docking.out
+# Using  26 CPU cores, 1 GPUs
+
+Receptor = data/inputs/1dv1_R.pdb
+Receptor max size = 64.737
+Required voxel size = 80.737
+Number of grid = 70
+FFT N = 140
+
+Ligand = data/inputs/1dv1_L.pdb
+Ligand max size = 62.4549
+Required voxel size = 68.4549
+Number of grid = 60
+FFT N = 120
+Memory requirement (/node)  = 1.8 GB
+# GPU Memory : Use 508.8 MB ( 1.0%), Free 39933.6 MB (98.0%), Total 40442.4 MB
+
+---------- Start docking calculations
+
+Ligand = data/inputs/1dv1_L.pdb
+Target receptors:
+ data/inputs/1dv1_R.pdb
+
+   >Ligand rotation =  5400 / 54000 ( 0)
+   >Ligand rotation = 10800 / 54000 ( 0)
+   >Ligand rotation = 16200 / 54000 ( 0)
+   >Ligand rotation = 21600 / 54000 ( 0)
+   >Ligand rotation = 27000 / 54000 ( 6)
+   >Ligand rotation = 32400 / 54000 ( 5)
+   >Ligand rotation = 37800 / 54000 ( 0)
+   >Ligand rotation = 43200 / 54000 ( 0)
+   >Ligand rotation = 48600 / 54000 ( 0)
+   >Ligand rotation = 54000 / 54000 ( 0)
+
+CPU time (initialize)         =     0.33 sec. ( 1.1%)
+CPU time (receptor process)   =     0.22 sec. ( 0.8%)
+CPU time (docking)            =    28.77 sec. (98.1%)
+  | Ligand voxelization       =    12.05 sec. (41.1%)
+    | ligvox_copy_htod        =     1.10 sec. ( 3.7%)
+    | ligvox_kernel_init      =     1.41 sec. ( 4.8%)
+    | ligvox_kernel_fill_core =     4.50 sec. (15.4%)
+    | ligvox_kernel_cut_surf  =     0.73 sec. ( 2.5%)
+    | ligvox_kernel_fill_surf =     3.03 sec. (10.3%)
+    | ligvox_kernel_elec      =     0.61 sec. ( 2.1%)
+    | ligvox_kernel_set_array =     0.67 sec. ( 2.3%)
+  | Ligand FFT                =     4.80 sec. (16.4%)
+  | Convolution               =     2.83 sec. ( 9.6%)
+  | Inverse FFT               =     4.87 sec. (16.6%)
+  | Sort score (each core)    =     4.26 sec. (14.5%)
+  | Sort score (merge)        =     0.00 sec. ( 0.0%)
+CPU time (detailed output)    =     0.00 sec. ( 0.0%)
+CPU time (output)             =     0.00 sec. ( 0.0%)
+
+Elapsed time                  =    29.47 sec.

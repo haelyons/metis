@@ -1,0 +1,34 @@
+Collecting setuptools>=64
+  Downloading setuptools-84.2.1-py3-none-any.whl (876 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 876.3/876.3 KB 5.5 MB/s eta 0:00:00
+Collecting setuptools_scm>=8
+  Downloading setuptools_scm-10.3.4-py3-none-any.whl (33 kB)
+Requirement already satisfied: packaging in /usr/lib/python3/dist-packages (21.3)
+Collecting packaging
+  Downloading packaging-26.3-py3-none-any.whl (129 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 130.0/130.0 KB 151.5 MB/s eta 0:00:00
+Requirement already satisfied: wheel in /usr/lib/python3/dist-packages (0.37.1)
+Collecting wheel
+  Downloading wheel-0.48.0-py3-none-any.whl (33 kB)
+Requirement already satisfied: typing-extensions>=4.1 in /usr/lib/python3/dist-packages (from setuptools_scm>=8) (4.10.0)
+Collecting tomli>=1
+  Downloading tomli-2.5.0-py3-none-any.whl (14 kB)
+Collecting vcs-versioning<3,>=2.5.0.dev0
+  Downloading vcs_versioning-2.6.0-py3-none-any.whl (123 kB)
+     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 123.2/123.2 KB 207.9 MB/s eta 0:00:00
+Installing collected packages: tomli, setuptools, packaging, wheel, vcs-versioning, setuptools_scm
+  Attempting uninstall: setuptools
+    Found existing installation: setuptools 59.6.0
+    Uninstalling setuptools-59.6.0:
+      Successfully uninstalled setuptools-59.6.0
+  Attempting uninstall: packaging
+    Found existing installation: packaging 21.3
+    Not uninstalling packaging at /usr/lib/python3/dist-packages, outside environment /tmp/m5-974d14d2-6a89-4d67-9552-7f750ae90182/baseline-published/evaluator-venv
+    Can't uninstall 'packaging'. No files were found to uninstall.
+  Attempting uninstall: wheel
+    Found existing installation: wheel 0.37.1
+    Not uninstalling wheel at /usr/lib/python3/dist-packages, outside environment /tmp/m5-974d14d2-6a89-4d67-9552-7f750ae90182/baseline-published/evaluator-venv
+    Can't uninstall 'wheel'. No files were found to uninstall.
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+pipx 1.0.0 requires argcomplete>=1.9.4, but you have argcomplete 1.8.1 which is incompatible.
+Successfully installed packaging-26.3 setuptools-84.2.1 setuptools_scm-10.3.4 tomli-2.5.0 vcs-versioning-2.6.0 wheel-0.48.0
