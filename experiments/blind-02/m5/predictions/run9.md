@@ -37,3 +37,26 @@ Run: `new_run.py .../m5/run9 --brief-from=s29` (no other flags), `retry53.sh` (b
 | 12 | Run box USD under 19.74 (the cap) | 0.95 |
 | 13 | Any stage halted by a model refusal | 0.05 |
 | 14 | blind-02 ledger after the run under USD 30 | 0.90 |
+
+## Outcome (added after the run; the sections above are unchanged since the seal 30652405)
+
+run9 (pushed 793fc7ae): no H100 capacity; `gpu_1x_a100_sxm4` (us-east-1, USD 1.99/h), pipeline wall 4,567 s, run box USD 2.52; ledger USD 11.10 of 100. Intake PASS (124 s, Codex), reproduce PASS (464 s; setup rc 0 at 113 s on the first attempt, anchors rc 0, 0 of 0, freeze rc 0), profile to implement SKIPPED, evaluate PASS (3,978 s against `budget_s` 16,200; 76.5 GPU-seconds). Evaluate receipts: `comparison-users` rc 0 at 29 s (no fixed fail phrase in its log), versions rc 0, then 96 invocations (the whole design: 4 arms, 4 inputs, 6 replicates), every `comparison-job` (median 7 s, 7 to 8 s) and `comparison` (median 29 s, 28 to 53 s) rc 0 and none timed out, then `comparison-private-remove` rc 0. About 36 s per invocation from the two receipts, as in the public probe run20; run7's 960 s per invocation was the failing evaluator, not the workload.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.85 | yes | 0.0225 |
+| 2 | 0.80 | yes | 0.0400 |
+| 3 | 0.75 | yes | 0.0625 |
+| 4 | 0.55 | yes | 0.2025 |
+| 5 | 0.55 | yes | 0.2025 |
+| 6 | 0.45 | no (A100) | 0.2025 |
+| 7 | 0.70 | yes (96) | 0.0900 |
+| 8 | 0.45 | no (3,978 s of 16,200) | 0.2025 |
+| 9 | 0.40 | pending (science step s30) | — |
+| 10 | 0.55 | yes (1.27 h) | 0.2025 |
+| 11 | 0.65 | yes | 0.1225 |
+| 12 | 0.95 | yes | 0.0025 |
+| 13 | 0.05 | no | 0.0025 |
+| 14 | 0.90 | yes | 0.0100 |
+
+Mean Brier 0.105 over 13 resolved. Decision row: evaluate PASS, so science step s30 applies s27's sealed tolerance rule to run9, scores s29's predictions, and designs the main comparison or the next test.
