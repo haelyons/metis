@@ -37,3 +37,26 @@ Run: `new_run.py .../m5/run10 --brief-from=s33` (no other flags), `retry53.sh` (
 | 12 | Any stage halted by a model refusal | 0.03 |
 | 13 | blind-02 ledger after the run under USD 25 | 0.90 |
 | 14 | Science step s34 reports no failed invocation (given evaluate PASS) | 0.60 |
+
+## Outcome (added after the run; the sections above are unchanged since the seal 677dc1d6)
+
+run10 (pushed 9a0a8130): no H100 capacity; `gpu_1x_a100_sxm4` (us-east-1, USD 1.99/h), pipeline wall 4,964 s, run box USD 2.74; ledger USD 14.06 of 100. Intake PASS (139 s, Codex), reproduce PASS (395 s; setup rc 0 at 145 s on the first attempt, anchors rc 0, 0 of 0, freeze rc 0), profile to implement SKIPPED, evaluate PASS (4,430 s against `budget_s` 14,400; 647.6 GPU-seconds). Evaluate receipts: `comparison-users` rc 0 at 29 s (no fixed fail phrase in its log), versions rc 0, then 96 invocations, every `comparison-job` (median 7 s) and `comparison` (median 30 s, 29 to 52 s) rc 0 and none timed out, then `comparison-private-remove` rc 0.
+
+| # | P | Outcome | Brier |
+|---|---|---|---|
+| 1 | 0.90 | yes | 0.0100 |
+| 2 | 0.85 | yes | 0.0225 |
+| 3 | 0.85 | yes | 0.0225 |
+| 4 | 0.75 | yes | 0.0625 |
+| 5 | 0.65 | yes | 0.1225 |
+| 6 | 0.70 | yes (96) | 0.0900 |
+| 7 | 0.55 | yes (1.23 h) | 0.2025 |
+| 8 | 0.40 | no (A100) | 0.1600 |
+| 9 | 0.60 | yes (1.38 h) | 0.1600 |
+| 10 | 0.75 | yes | 0.0625 |
+| 11 | 0.97 | yes | 0.0009 |
+| 12 | 0.03 | no | 0.0009 |
+| 13 | 0.90 | yes | 0.0100 |
+| 14 | 0.60 | pending (science step s34) | — |
+
+Mean Brier 0.071 over 13 resolved. Decision row: evaluate PASS, so science step s34 reads the scored comparisons, scores s31's predictions and states what the main comparison decides.
